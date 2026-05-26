@@ -23,6 +23,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
+import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -241,6 +243,14 @@ class HomeViewModelTest {
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
+
+        // Device-calendar prefs: stub Flow getters so combine() in observeCalendars can emit,
+        // and stub suspend variants used by loadCalendars. Default = feature off, no enabled IDs.
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
+        every { dataStore.hiddenDeviceCalendarIds } returns flowOf(emptySet())
+        coEvery { dataStore.getDeviceCalendarsEnabled() } returns false
+        coEvery { dataStore.getEnabledDeviceCalendarIds() } returns emptySet()
     }
 
     @After
@@ -249,7 +259,9 @@ class HomeViewModelTest {
     }
 
     private fun createViewModel(
-        dayCodeSequence: MutableList<Int>? = null
+        dayCodeSequence: MutableList<Int>? = null,
+        calendarProviderRepository: org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository =
+            org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository()
     ): HomeViewModel {
         val provider: () -> Int = if (dayCodeSequence != null) {
             { dayCodeSequence.removeAt(0) }
@@ -264,7 +276,7 @@ class HomeViewModelTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
-            calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
+            calendarProviderRepository = calendarProviderRepository,
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             ioDispatcher = testDispatcher,
             currentDayCodeProvider = provider
@@ -3540,5 +3552,149 @@ class HomeViewModelTest {
         )
         val calendar = testCalendars.find { it.color == calendarColor }
         return DisplayEvent.Room(event, occurrence, calendar)
+    }
+
+    // ==================== Device Calendar Picker Filter ====================
+    // The new-event calendar picker (uiState.deviceCalendarGroups) must respect the
+    // same gate-and-filter as the navigation drawer's device-calendar section:
+    //   - master toggle dataStore.deviceCalendarsEnabled
+    //   - per-calendar set dataStore.enabledDeviceCalendarIds
+    // Reference behavior at HomeViewModel.observeDeviceCalendarDrawerState (~L923-948).
+
+    private fun deviceCal(
+        id: Long,
+        name: String = "Cal $id",
+        accessLevel: Int = 700
+    ): DeviceCalendar = DeviceCalendar(
+        id = id,
+        displayName = name,
+        color = 0xFF000000.toInt(),
+        accountName = "acct",
+        accountType = "local",
+        visible = true,
+        accessLevel = accessLevel
+    )
+
+    @Test
+    fun `device picker is empty when master toggle off`() = runTest {
+        // observeCalendars Flow path
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(setOf(10L, 20L))
+        val fake = FakeCalendarProviderRepository().apply {
+            calendars = listOf(deviceCal(10L), deviceCal(20L))
+        }
+
+        val viewModel = createViewModel(calendarProviderRepository = fake)
+        advanceUntilIdle()
+
+        assertTrue(
+            "Master toggle off → no device groups regardless of system calendars",
+            viewModel.uiState.value.deviceCalendarGroups.isEmpty()
+        )
+    }
+
+    @Test
+    fun `device picker shows only enabled writable calendars when master on`() = runTest {
+        // observeCalendars Flow path + writableOnly preservation
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(setOf(10L, 30L))
+        val fake = FakeCalendarProviderRepository().apply {
+            calendars = listOf(
+                deviceCal(10L, accessLevel = 700), // enabled + writable → included
+                deviceCal(20L, accessLevel = 700), // writable but NOT enabled → excluded
+                deviceCal(30L, accessLevel = 200)  // enabled but READ-ONLY → excluded by writableOnly
+            )
+        }
+
+        val viewModel = createViewModel(calendarProviderRepository = fake)
+        advanceUntilIdle()
+
+        val ids = viewModel.uiState.value.deviceCalendarGroups
+            .flatMap { it.pickerCalendars }
+            .map { it.id }
+        assertEquals(listOf(10L), ids)
+    }
+
+    @Test
+    fun `device picker is empty when master on but no calendars enabled`() = runTest {
+        // observeCalendars Flow path edge case
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
+        val fake = FakeCalendarProviderRepository().apply {
+            calendars = listOf(deviceCal(10L), deviceCal(20L))
+        }
+
+        val viewModel = createViewModel(calendarProviderRepository = fake)
+        advanceUntilIdle()
+
+        assertTrue(
+            "Master on with empty enabled set → no device groups (matches drawer)",
+            viewModel.uiState.value.deviceCalendarGroups.isEmpty()
+        )
+    }
+
+    @Test
+    fun `device picker updates reactively when enabled IDs change`() = runTest {
+        // observeCalendars reactive Flow update
+        val enabledIdsFlow = MutableStateFlow<Set<Long>>(emptySet())
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
+        every { dataStore.enabledDeviceCalendarIds } returns enabledIdsFlow
+        val fake = FakeCalendarProviderRepository().apply {
+            calendars = listOf(deviceCal(10L))
+        }
+
+        val viewModel = createViewModel(calendarProviderRepository = fake)
+        advanceUntilIdle()
+
+        assertTrue(
+            "Initially no IDs enabled → empty groups",
+            viewModel.uiState.value.deviceCalendarGroups.isEmpty()
+        )
+
+        enabledIdsFlow.value = setOf(10L)
+        advanceUntilIdle()
+
+        val ids = viewModel.uiState.value.deviceCalendarGroups
+            .flatMap { it.pickerCalendars }
+            .map { it.id }
+        assertEquals(
+            "After enabling id=10 in DataStore, picker reflects change without manual refresh",
+            listOf(10L),
+            ids
+        )
+    }
+
+    @Test
+    fun `loadCalendars (refreshCalendars) respects gate-and-filter`() = runTest {
+        // loadCalendars suspend path. Configure Flow path to emit empty so observeCalendars
+        // produces no device groups; configure suspend path to emit enabled. This isolates
+        // loadCalendars — the post-refreshCalendars assertion can only be true if the
+        // suspend path filtered correctly.
+        every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
+        every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
+        coEvery { dataStore.getDeviceCalendarsEnabled() } returns true
+        coEvery { dataStore.getEnabledDeviceCalendarIds() } returns setOf(10L)
+        val fake = FakeCalendarProviderRepository().apply {
+            calendars = listOf(deviceCal(10L), deviceCal(20L))
+        }
+
+        val viewModel = createViewModel(calendarProviderRepository = fake)
+        advanceUntilIdle()
+        assertTrue(
+            "Flow path produces empty groups (master off via Flow stub)",
+            viewModel.uiState.value.deviceCalendarGroups.isEmpty()
+        )
+
+        viewModel.refreshCalendars()
+        advanceUntilIdle()
+
+        val ids = viewModel.uiState.value.deviceCalendarGroups
+            .flatMap { it.pickerCalendars }
+            .map { it.id }
+        assertEquals(
+            "refreshCalendars (loadCalendars suspend path) populates only enabled IDs",
+            listOf(10L),
+            ids
+        )
     }
 }

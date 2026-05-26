@@ -1061,11 +1061,33 @@
     <string name="inbox_organizer_suffix">(skipuleggjandi)</string>
     <string name="menu_invites">Boð</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dagsetning</string>
+    <string name="jump_to_date">Fara á dagsetningu</string>
     <string name="menu_about">Um</string>
     <string name="menu_more">Meira-valmynd</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meira-valmynd, %d boð bíður</item>
         <item quantity="other">Meira-valmynd, %d boð bíða</item>
+    </plurals>
+    <string name="share_availability_rail_label">Deila stöðu</string>
+    <string name="share_availability_sheet_title">Deila stöðu</string>
+    <string name="share_availability_hours_label">Vinnutími: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Meðhöndla heilsdagsviðburði sem upptekna</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Heilsdagsviðburðir eru hunsaðir</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Dagur með heilsdagsviðburði er fullbókaður</string>
+    <string name="share_availability_share_button">Deila</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Engar lausar lotur sem eru að minnsta kosti klukkustund á völdu tímabili.</string>
+    <string name="share_availability_chooser_title">Deila stöðu</string>
+    <string name="share_availability_share_failed">Ekkert forrit til staðar fyrir deilingu</string>
+    <string name="share_from_kashcal_footer">Deilt frá KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Næsti %1$d dagur</item>
+        <item quantity="other">Næstu %1$d dagar</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Laus næsta %1$d dag (%2$s – %3$s):</item>
+        <item quantity="other">Laus næstu %1$d daga (%2$s – %3$s):</item>
     </plurals>
 </resources>

@@ -1006,10 +1006,30 @@
     <string name="inbox_organizer_suffix">(组织者)</string>
     <string name="menu_invites">邀请</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">日期</string>
+    <string name="jump_to_date">跳转到日期</string>
     <string name="menu_about">关于</string>
     <string name="menu_more">更多菜单</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">更多菜单,%d 个邀请待处理</item>
+    </plurals>
+    <string name="share_availability_rail_label">分享可用时段</string>
+    <string name="share_availability_sheet_title">分享可用时段</string>
+    <string name="share_availability_hours_label">工作时间：%1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">将全天事件视为忙碌</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">全天事件被忽略</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">有全天事件的日期全天忙碌</string>
+    <string name="share_availability_share_button">分享</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">所选范围内没有至少一小时的空闲时段。</string>
+    <string name="share_availability_chooser_title">分享可用时段</string>
+    <string name="share_availability_share_failed">没有可用于分享的应用</string>
+    <string name="share_from_kashcal_footer">来自 KashCal 分享</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">未来 %1$d 天</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">未来 %1$d 天空闲时段（%2$s – %3$s）：</item>
     </plurals>
 </resources>

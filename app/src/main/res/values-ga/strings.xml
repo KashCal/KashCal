@@ -1192,7 +1192,7 @@
     <string name="inbox_organizer_suffix">(eagraí)</string>
     <string name="menu_invites">Cuirí</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dáta</string>
+    <string name="jump_to_date">Téigh go dáta</string>
     <string name="menu_about">Maidir le</string>
     <string name="menu_more">Roghchlár Tuilleadh</string>
     <plurals name="menu_more_with_invites">
@@ -1202,4 +1202,35 @@
         <item quantity="many">Roghchlár Tuilleadh, %d gcuireadh ar feitheamh</item>
         <item quantity="other">Roghchlár Tuilleadh, %d cuireadh ar feitheamh</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Comhroinn infhaighteacht</string>
+    <string name="share_availability_sheet_title">Comhroinn infhaighteacht</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">An chéad lá %1$d eile</item>
+        <item quantity="two">An chéad %1$d lá eile</item>
+        <item quantity="few">An chéad %1$d lá eile</item>
+        <item quantity="many">An chéad %1$d lá eile</item>
+        <item quantity="other">An chéad %1$d lá eile</item>
+    </plurals>
+    <string name="share_availability_hours_label">Uaireanta oibre: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Caith le himeachtaí lá iomlán mar ghnóthach</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Déantar imeachtaí lá iomlán a neamhshuim</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Tá lá le himeacht lá iomlán go hiomlán gnóthach</string>
+    <string name="share_availability_share_button">Comhroinn</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Saor an chéad lá %1$d eile (%2$s – %3$s):</item>
+        <item quantity="two">Saor an chéad %1$d lá eile (%2$s – %3$s):</item>
+        <item quantity="few">Saor an chéad %1$d lá eile (%2$s – %3$s):</item>
+        <item quantity="many">Saor an chéad %1$d lá eile (%2$s – %3$s):</item>
+        <item quantity="other">Saor an chéad %1$d lá eile (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Níl aon bhloic shaora ar feadh uair an chloig ar a laghad sa raon roghnaithe.</string>
+    <string name="share_availability_chooser_title">Comhroinn infhaighteacht</string>
+    <string name="share_availability_share_failed">Níl aon aip ar fáil le roinnt</string>
+    <string name="share_from_kashcal_footer">Roinnte ó KashCal</string>
+
 </resources>

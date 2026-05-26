@@ -1066,7 +1066,7 @@
     <string name="inbox_organizer_suffix">(organizatorius)</string>
     <string name="menu_invites">Kvietimai</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Data</string>
+    <string name="jump_to_date">Eiti į datą</string>
     <string name="menu_about">Apie</string>
     <string name="menu_more">Meniu „Daugiau“</string>
     <plurals name="menu_more_with_invites">
@@ -1075,4 +1075,32 @@
         <item quantity="many">Meniu „Daugiau“, laukia %d kvietimo</item>
         <item quantity="other">Meniu „Daugiau“, laukia %d kvietimų</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Bendrinti pasiekiamumą</string>
+    <string name="share_availability_sheet_title">Bendrinti pasiekiamumą</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Kita %1$d diena</item>
+        <item quantity="few">Kitos %1$d dienos</item>
+        <item quantity="many">Kitų %1$d dienos</item>
+        <item quantity="other">Kitos %1$d dienų</item>
+    </plurals>
+    <string name="share_availability_hours_label">Darbo valandos: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Laikyti visos dienos įvykius užimtais</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Visos dienos įvykiai ignoruojami</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Diena su visos dienos įvykiu yra visiškai užimta</string>
+    <string name="share_availability_share_button">Bendrinti</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Laisva kitą %1$d dieną (%2$s – %3$s):</item>
+        <item quantity="few">Laisva kitas %1$d dienas (%2$s – %3$s):</item>
+        <item quantity="many">Laisva kitų %1$d dienos (%2$s – %3$s):</item>
+        <item quantity="other">Laisva kitas %1$d dienų (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Pasirinktame intervale nėra laisvų bent valandos blokų.</string>
+    <string name="share_availability_chooser_title">Bendrinti pasiekiamumą</string>
+    <string name="share_availability_share_failed">Nėra programėlės, kuria galima dalintis</string>
+    <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
 </resources>

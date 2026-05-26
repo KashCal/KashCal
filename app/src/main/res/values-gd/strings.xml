@@ -1150,7 +1150,7 @@
     <string name="inbox_organizer_suffix">(eagraiche)</string>
     <string name="menu_invites">Cuiridhean</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Ceann-là</string>
+    <string name="jump_to_date">Rach gu ceann-là</string>
     <string name="menu_about">Mu dhèidhinn</string>
     <string name="menu_more">Clàr-taice Barrachd</string>
     <plurals name="menu_more_with_invites">
@@ -1159,4 +1159,33 @@
         <item quantity="few">Clàr-taice Barrachd, %d cuiridhean ri làimh</item>
         <item quantity="other">Clàr-taice Barrachd, %d cuireadh ri làimh</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Co-roinn ri-fhaotainneachd</string>
+    <string name="share_availability_sheet_title">Co-roinn ri-fhaotainneachd</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">An ath %1$d latha</item>
+        <item quantity="two">An ath %1$d latha</item>
+        <item quantity="few">An ath %1$d làithean</item>
+        <item quantity="other">An ath %1$d làithean</item>
+    </plurals>
+    <string name="share_availability_hours_label">Uairean obrach: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Dèilig ri tachartasan an latha gu lèir mar trang</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Tha tachartasan an latha gu lèir air an leigeil seachad</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Tha latha le tachartas an latha gu lèir gu tur trang</string>
+    <string name="share_availability_share_button">Co-roinn</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Saor an ath %1$d latha (%2$s – %3$s):</item>
+        <item quantity="two">Saor an ath %1$d latha (%2$s – %3$s):</item>
+        <item quantity="few">Saor an ath %1$d làithean (%2$s – %3$s):</item>
+        <item quantity="other">Saor an ath %1$d làithean (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Chan eil blocaichean saora de uair a thìde air a\' char as lugha san raon a thaghadh.</string>
+    <string name="share_availability_chooser_title">Co-roinn ri-fhaotainneachd</string>
+    <string name="share_availability_share_failed">Chan eil aplacaid ann airson co-roinneadh</string>
+    <string name="share_from_kashcal_footer">Air co-roinneadh o KashCal</string>
+
 </resources>

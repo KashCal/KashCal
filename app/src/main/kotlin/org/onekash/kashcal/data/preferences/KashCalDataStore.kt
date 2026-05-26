@@ -765,6 +765,68 @@ class KashCalDataStore(
         setICloudUrlMigrationCompleted(false)
     }
 
+    // ========== Share Availability ==========
+
+    /**
+     * Number of days to include in the share-availability summary.
+     * Default: 7. Valid range: 1..14.
+     */
+    val shareAvailabilityDays: Flow<Int>
+        get() = getPreference(PreferencesKeys.SHARE_AVAILABILITY_DAYS, SHARE_AVAILABILITY_DEFAULT_DAYS)
+
+    suspend fun setShareAvailabilityDays(days: Int) {
+        setPreference(PreferencesKeys.SHARE_AVAILABILITY_DAYS, sanitizeShareAvailabilityDays(days))
+    }
+
+    /**
+     * Working-hours window start, expressed as minutes from midnight.
+     * Default: 540 (09:00). Valid range: 0..1440.
+     */
+    val shareAvailabilityWorkStartMinutes: Flow<Int>
+        get() = getPreference(
+            PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN,
+            SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN
+        )
+
+    suspend fun setShareAvailabilityWorkStartMinutes(minutes: Int) {
+        val safe = sanitizeWorkStartMin(
+            minutes,
+            currentEnd = shareAvailabilityWorkEndMinutes.first()
+        )
+        setPreference(PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN, safe)
+    }
+
+    /**
+     * Working-hours window end, expressed as minutes from midnight.
+     * Default: 1020 (17:00). Valid range: 0..1440 (1440 = end of day).
+     * The window is required to be at least 60 minutes wide; out-of-range or
+     * inverted values are rejected and the default is restored.
+     */
+    val shareAvailabilityWorkEndMinutes: Flow<Int>
+        get() = getPreference(
+            PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN,
+            SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN
+        )
+
+    suspend fun setShareAvailabilityWorkEndMinutes(minutes: Int) {
+        val safe = sanitizeWorkEndMin(
+            minutes,
+            currentStart = shareAvailabilityWorkStartMinutes.first()
+        )
+        setPreference(PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN, safe)
+    }
+
+    /**
+     * Treat all-day events as busy when computing free blocks.
+     * Default: false (all-day events ignored).
+     */
+    val shareAvailabilityIncludeAllDay: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY, false)
+
+    suspend fun setShareAvailabilityIncludeAllDay(include: Boolean) {
+        setPreference(PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY, include)
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set
@@ -782,6 +844,64 @@ class KashCalDataStore(
 
         // Other defaults
         const val DEFAULT_EVENT_DURATION_MINUTES = 30
+
+        // Share-availability defaults
+        const val SHARE_AVAILABILITY_DEFAULT_DAYS = 7
+        const val SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN = 9 * 60 // 09:00 (540)
+        const val SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN = 17 * 60 // 17:00 (1020)
+        const val SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN = 60
+        const val SHARE_AVAILABILITY_MAX_DAYS = 14
+        const val SHARE_AVAILABILITY_MAX_MINUTES = 1440 // end-of-day sentinel
+
+        /**
+         * Snap a candidate days value into [1, SHARE_AVAILABILITY_MAX_DAYS].
+         * Used by both the setter and the backup importer so a malformed
+         * backup cannot persist out-of-range values.
+         */
+        fun sanitizeShareAvailabilityDays(days: Int): Int =
+            if (days in 1..SHARE_AVAILABILITY_MAX_DAYS) days else SHARE_AVAILABILITY_DEFAULT_DAYS
+
+        /**
+         * Snap a candidate workStart value into a valid window. If the result
+         * would invert or shrink the window below 60 minutes against the
+         * supplied [currentEnd], fall back to the default.
+         */
+        fun sanitizeWorkStartMin(minutes: Int, currentEnd: Int): Int {
+            if (minutes !in 0 until SHARE_AVAILABILITY_MAX_MINUTES) {
+                return SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN
+            }
+            val end = if (currentEnd in (SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN)..SHARE_AVAILABILITY_MAX_MINUTES) {
+                currentEnd
+            } else {
+                SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN
+            }
+            return if (end - minutes >= SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN) {
+                minutes
+            } else {
+                SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN
+            }
+        }
+
+        /**
+         * Snap a candidate workEnd value into a valid window. 1440 is allowed
+         * as the end-of-day sentinel; values that would invert or shrink the
+         * window below 60 minutes against [currentStart] fall back to default.
+         */
+        fun sanitizeWorkEndMin(minutes: Int, currentStart: Int): Int {
+            if (minutes !in 1..SHARE_AVAILABILITY_MAX_MINUTES) {
+                return SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN
+            }
+            val start = if (currentStart in 0 until SHARE_AVAILABILITY_MAX_MINUTES) {
+                currentStart
+            } else {
+                SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN
+            }
+            return if (minutes - start >= SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN) {
+                minutes
+            } else {
+                SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN
+            }
+        }
 
         // Theme values
         const val THEME_SYSTEM = "system"

@@ -1057,11 +1057,33 @@
     <string name="inbox_organizer_suffix">(ஏற்பாட்டாளர்)</string>
     <string name="menu_invites">அழைப்புகள்</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">தேதி</string>
+    <string name="jump_to_date">தேதிக்குச் செல்</string>
     <string name="menu_about">பற்றி</string>
     <string name="menu_more">மேலும் மெனு</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">மேலும் மெனு, %d அழைப்பு நிலுவையில்</item>
         <item quantity="other">மேலும் மெனு, %d அழைப்புகள் நிலுவையில்</item>
+    </plurals>
+    <string name="share_availability_rail_label">கிடைக்கும் நேரத்தைப் பகிர்</string>
+    <string name="share_availability_sheet_title">கிடைக்கும் நேரத்தைப் பகிர்</string>
+    <string name="share_availability_hours_label">பணிநேரம்: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">முழு நாள் நிகழ்வுகளை பிஸியாகக் கருது</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">முழு நாள் நிகழ்வுகள் புறக்கணிக்கப்படுகின்றன</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">முழு நாள் நிகழ்வு உள்ள நாள் முழுமையாக பிஸியாக உள்ளது</string>
+    <string name="share_availability_share_button">பகிர்</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">தேர்ந்தெடுக்கப்பட்ட வரம்பில் குறைந்தது ஒரு மணி நேர காலி பிளாக்குகள் இல்லை.</string>
+    <string name="share_availability_chooser_title">கிடைக்கும் நேரத்தைப் பகிர்</string>
+    <string name="share_availability_share_failed">பகிர்வதற்கு எந்த ஆப்ஸும் இல்லை</string>
+    <string name="share_from_kashcal_footer">KashCal-இலிருந்து பகிரப்பட்டது</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">அடுத்த %1$d நாள்</item>
+        <item quantity="other">அடுத்த %1$d நாட்கள்</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">அடுத்த %1$d நாள் காலி (%2$s – %3$s):</item>
+        <item quantity="other">அடுத்த %1$d நாட்களில் காலி (%2$s – %3$s):</item>
     </plurals>
 </resources>

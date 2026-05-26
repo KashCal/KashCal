@@ -1057,11 +1057,33 @@
     <string name="inbox_organizer_suffix">(আয়োজক)</string>
     <string name="menu_invites">আমন্ত্রণ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">তারিখ</string>
+    <string name="jump_to_date">তারিখে যান</string>
     <string name="menu_about">সম্পর্কে</string>
     <string name="menu_more">আরও মেনু</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">আরও মেনু, %d আমন্ত্রণ অপেক্ষমাণ</item>
         <item quantity="other">আরও মেনু, %d আমন্ত্রণ অপেক্ষমাণ</item>
+    </plurals>
+    <string name="share_availability_rail_label">প্রাপ্যতা শেয়ার করুন</string>
+    <string name="share_availability_sheet_title">প্রাপ্যতা শেয়ার করুন</string>
+    <string name="share_availability_hours_label">কাজের সময়: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">সারাদিনের ইভেন্টগুলিকে ব্যস্ত হিসেবে গণ্য করুন</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">সারাদিনের ইভেন্ট উপেক্ষা করা হয়</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">সারাদিনের ইভেন্টযুক্ত দিন সম্পূর্ণ ব্যস্ত</string>
+    <string name="share_availability_share_button">শেয়ার করুন</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">নির্বাচিত পরিসরে কমপক্ষে এক ঘণ্টার কোনো খালি ব্লক নেই।</string>
+    <string name="share_availability_chooser_title">প্রাপ্যতা শেয়ার করুন</string>
+    <string name="share_availability_share_failed">শেয়ার করার জন্য কোনো অ্যাপ নেই</string>
+    <string name="share_from_kashcal_footer">KashCal থেকে শেয়ার করা হয়েছে</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">পরের %1$d দিন</item>
+        <item quantity="other">পরের %1$d দিন</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">পরের %1$d দিনে খালি (%2$s – %3$s):</item>
+        <item quantity="other">পরের %1$d দিনে খালি (%2$s – %3$s):</item>
     </plurals>
 </resources>

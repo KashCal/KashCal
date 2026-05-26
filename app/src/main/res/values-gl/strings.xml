@@ -1053,11 +1053,36 @@
     <string name="inbox_organizer_suffix">(organizador)</string>
     <string name="menu_invites">Invitacións</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Data</string>
+    <string name="jump_to_date">Ir á data</string>
     <string name="menu_about">Acerca de</string>
     <string name="menu_more">Menú máis</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Menú máis, %d invitación pendente</item>
         <item quantity="other">Menú máis, %d invitacións pendentes</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Compartir dispoñibilidade</string>
+    <string name="share_availability_sheet_title">Compartir dispoñibilidade</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Próximo %1$d día</item>
+        <item quantity="other">Próximos %1$d días</item>
+    </plurals>
+    <string name="share_availability_hours_label">Horario laboral: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Tratar eventos de día completo como ocupados</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Os eventos de día completo ignóranse</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Un día con evento de día completo está totalmente ocupado</string>
+    <string name="share_availability_share_button">Compartir</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Libre o próximo %1$d día (%2$s – %3$s):</item>
+        <item quantity="other">Libre os próximos %1$d días (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Non hai bloques libres de polo menos unha hora no rango seleccionado.</string>
+    <string name="share_availability_chooser_title">Compartir dispoñibilidade</string>
+    <string name="share_availability_share_failed">Non hai ningunha aplicación para compartir</string>
+    <string name="share_from_kashcal_footer">Compartido desde KashCal</string>
+
 </resources>

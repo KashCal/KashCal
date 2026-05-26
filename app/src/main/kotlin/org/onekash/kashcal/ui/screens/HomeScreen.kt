@@ -42,12 +42,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.ViewSidebar
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -84,7 +84,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -105,10 +104,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -132,8 +129,8 @@ import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
 import org.onekash.kashcal.ui.components.InvitationInboxSheet
+import org.onekash.kashcal.ui.components.OverflowSheet
 import org.onekash.kashcal.ui.components.formatBadgeCount
-import org.onekash.kashcal.ui.components.RightNavigationRail
 import org.onekash.kashcal.ui.components.overflowContentDescription
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.TopBarLogoButton
@@ -207,6 +204,7 @@ fun HomeScreen(
     onSearchDateSelected: (Long) -> Unit = {},
     // Settings callback
     onSettingsClick: () -> Unit = {},
+    onShareAvailabilityClick: () -> Unit = {},
     // Invitation inbox surface (count + open + dismiss + RSVP)
     pendingInvitesCount: Int = 0,
     pendingInvitations: List<org.onekash.kashcal.domain.reader.PendingInvitation> = emptyList(),
@@ -384,50 +382,15 @@ fun HomeScreen(
     )
 
     val drawerScope = rememberCoroutineScope()
-    val rightRailState = rememberDrawerState(DrawerValue.Closed)
     var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
-    val incomingLayoutDirection = LocalLayoutDirection.current
-    val flippedDirection = remember(incomingLayoutDirection) {
-        if (incomingLayoutDirection == LayoutDirection.Ltr) LayoutDirection.Rtl else LayoutDirection.Ltr
-    }
-    BackHandler(enabled = rightRailState.isOpen) {
-        drawerScope.launch { rightRailState.close() }
-    }
+    var showOverflowSheet by rememberSaveable { mutableStateOf(false) }
 
-    CompositionLocalProvider(LocalLayoutDirection provides flippedDirection) {
-    ModalNavigationDrawer(
-        drawerState = rightRailState,
-        gesturesEnabled = rightRailState.isOpen,
-        drawerContent = {
-            CompositionLocalProvider(LocalLayoutDirection provides incomingLayoutDirection) {
-                RightNavigationRail(
-                    currentViewMode = uiState.viewMode,
-                    pendingInvitesCount = pendingInvitesCount,
-                    onInvitesClick = {
-                        drawerScope.launch { rightRailState.close() }
-                        onOpenInvitationInbox()
-                    },
-                    onJumpToDateClick = {
-                        drawerScope.launch { rightRailState.close() }
-                        showJumpToDatePicker = true
-                    },
-                    onInsightsClick = {
-                        drawerScope.launch { rightRailState.close() }
-                        onViewSelect(ViewMode.INSIGHTS)
-                    },
-                    onSettingsClick = {
-                        drawerScope.launch { rightRailState.close() }
-                        onSettingsClick()
-                    },
-                    onAboutClick = {
-                        drawerScope.launch { rightRailState.close() }
-                        onInfoClick()
-                    }
-                )
-            }
-        }
-    ) {
-    CompositionLocalProvider(LocalLayoutDirection provides incomingLayoutDirection) {
+    // Captures view mode + date right before "Jump to date" navigates so a
+    // back press restores both. Cleared once consumed (or set to null when no
+    // jump is pending).
+    var preJumpViewMode by rememberSaveable { mutableStateOf<ViewMode?>(null) }
+    var preJumpDate by rememberSaveable { mutableStateOf(0L) }
+
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
         drawerContent = {
@@ -442,7 +405,11 @@ fun HomeScreen(
                     onViewSelect(mode)
                 },
                 onToggleCalendar = onDrawerToggleCalendar,
-                onToggleDeviceCalendarVisibility = onDrawerToggleDeviceCalendarVisibility
+                onToggleDeviceCalendarVisibility = onDrawerToggleDeviceCalendarVisibility,
+                onSettingsClick = {
+                    drawerScope.launch { drawerState?.close() }
+                    onSettingsClick()
+                }
             )
         }
     ) {
@@ -469,17 +436,11 @@ fun HomeScreen(
                 onSearchQueryChange = onSearchQueryChange,
                 onMenuClick = {
                     drawerScope.launch {
-                        if (rightRailState.isOpen) rightRailState.close()
                         if (drawerState?.isOpen == true) drawerState.close() else drawerState?.open()
                     }
                 },
                 onGoToToday = onGoToToday,
-                onRailToggleClick = {
-                    drawerScope.launch {
-                        if (drawerState?.isOpen == true) drawerState.close()
-                        if (rightRailState.isOpen) rightRailState.close() else rightRailState.open()
-                    }
-                },
+                onOverflowClick = { showOverflowSheet = true },
                 pendingInvitesCount = pendingInvitesCount,
                 onTitleClick = {
                     if (uiState.viewMode.isTimeGrid) onWeekDatePickerRequest()
@@ -871,19 +832,46 @@ fun HomeScreen(
         )
     }
 
-    // Right-rail "Jump to date" — uses the same month-grid sheet as the
-    // week view so a tap navigates immediately. Switches to DAY before
-    // navigating so the pager page is computed in day-mode, not week-mode.
+    // "Jump to date" — uses the same month-grid sheet as the week view so a
+    // tap navigates immediately. Switches to DAY before navigating so the
+    // pager page is computed in day-mode, not week-mode.
     if (showJumpToDatePicker) {
         WeekViewDatePickerSheet(
             currentWeekStartMs = uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis(),
             onDateSelected = { dateMs ->
+                preJumpViewMode = uiState.viewMode
+                preJumpDate = uiState.selectedDate
                 onViewSelect(ViewMode.DAY)
                 onWeekDateSelected(dateMs)
                 showJumpToDatePicker = false
             },
             onDismiss = { showJumpToDatePicker = false },
             firstDayOfWeek = uiState.firstDayOfWeek
+        )
+    }
+
+    // Back press after a Jump-to-date navigation restores the view + date the
+    // user was on before the jump. Single-shot — clears the snapshot so a
+    // second back press falls through to normal back behavior.
+    val pending = preJumpViewMode
+    BackHandler(enabled = pending != null && !showJumpToDatePicker && !showOverflowSheet) {
+        onViewSelect(pending!!)
+        if (preJumpDate != 0L) onWeekDateSelected(preJumpDate)
+        preJumpViewMode = null
+        preJumpDate = 0L
+    }
+
+    if (showOverflowSheet) {
+        OverflowSheet(
+            currentViewMode = uiState.viewMode,
+            pendingInvitesCount = pendingInvitesCount,
+            onInvitesClick = onOpenInvitationInbox,
+            onJumpToDateClick = { showJumpToDatePicker = true },
+            onShareAvailabilityClick = onShareAvailabilityClick,
+            onInsightsClick = { onViewSelect(ViewMode.INSIGHTS) },
+            onSettingsClick = onSettingsClick,
+            onAboutClick = onInfoClick,
+            onDismiss = { showOverflowSheet = false }
         )
     }
 
@@ -942,11 +930,9 @@ fun HomeScreen(
 
     }
 
-    }
-    }
-    }
-
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -962,7 +948,7 @@ private fun HomeTopAppBar(
     onSearchQueryChange: (String) -> Unit,
     onMenuClick: () -> Unit,
     onGoToToday: () -> Unit,
-    onRailToggleClick: () -> Unit,
+    onOverflowClick: () -> Unit,
     onTitleClick: () -> Unit,
     onViewSelect: (ViewMode) -> Unit
 ) {
@@ -1053,9 +1039,9 @@ private fun HomeTopAppBar(
                     }
                 },
                 actions = {
-                    RailToggleButton(
+                    OverflowButton(
                         pendingInvitesCount = pendingInvitesCount,
-                        onClick = onRailToggleClick
+                        onClick = onOverflowClick
                     )
                 }
             )
@@ -1121,9 +1107,9 @@ private fun HomeTopAppBar(
                             modifier = Modifier.size(26.dp)
                         )
                     }
-                    RailToggleButton(
+                    OverflowButton(
                         pendingInvitesCount = pendingInvitesCount,
-                        onClick = onRailToggleClick
+                        onClick = onOverflowClick
                     )
                 }
             )
@@ -1132,14 +1118,14 @@ private fun HomeTopAppBar(
 }
 
 /**
- * AppBar rail toggle. Renders a sidebar glyph with a numeric badge when
- * [pendingInvitesCount] > 0; tapping invokes [onClick] to toggle the
- * right navigation rail. Accessibility label resolves through the same
- * [overflowContentDescription] helper the rail items use, so the
- * announcement and badge never disagree on the count.
+ * Top-bar overflow button. Renders the universal three-dot glyph with a
+ * numeric badge when [pendingInvitesCount] > 0; tapping invokes [onClick]
+ * to open the [OverflowSheet]. Accessibility label resolves through the
+ * same [overflowContentDescription] helper the sheet's Invites row uses,
+ * so the announcement and badge never disagree on the count.
  */
 @Composable
-private fun RailToggleButton(
+private fun OverflowButton(
     pendingInvitesCount: Int,
     onClick: () -> Unit
 ) {
@@ -1165,7 +1151,7 @@ private fun RailToggleButton(
             }
         ) {
             Icon(
-                Icons.AutoMirrored.Outlined.ViewSidebar,
+                Icons.Default.MoreVert,
                 contentDescription = triggerDescription,
                 modifier = Modifier.size(26.dp)
             )

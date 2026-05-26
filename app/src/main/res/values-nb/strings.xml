@@ -1059,11 +1059,33 @@
     <string name="inbox_organizer_suffix">(arrangør)</string>
     <string name="menu_invites">Invitasjoner</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dato</string>
+    <string name="jump_to_date">Gå til dato</string>
     <string name="menu_about">Om</string>
     <string name="menu_more">Mer-meny</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Mer-meny, %d invitasjon venter</item>
         <item quantity="other">Mer-meny, %d invitasjoner venter</item>
+    </plurals>
+    <string name="share_availability_rail_label">Del tilgjengelighet</string>
+    <string name="share_availability_sheet_title">Del tilgjengelighet</string>
+    <string name="share_availability_hours_label">Arbeidstid: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Behandle heldagshendelser som opptatt</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Heldagshendelser ignoreres</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">En dag med en heldagshendelse er helt opptatt</string>
+    <string name="share_availability_share_button">Del</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Ingen ledige blokker på minst én time i det valgte intervallet.</string>
+    <string name="share_availability_chooser_title">Del tilgjengelighet</string>
+    <string name="share_availability_share_failed">Ingen app tilgjengelig for deling</string>
+    <string name="share_from_kashcal_footer">Delt fra KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Neste %1$d dag</item>
+        <item quantity="other">Neste %1$d dager</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Ledig den neste %1$d dagen (%2$s – %3$s):</item>
+        <item quantity="other">Ledig de neste %1$d dagene (%2$s – %3$s):</item>
     </plurals>
 </resources>

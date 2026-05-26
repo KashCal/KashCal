@@ -1111,7 +1111,7 @@
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Povabila</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Datum</string>
+    <string name="jump_to_date">Pojdi na datum</string>
     <string name="menu_about">O aplikaciji</string>
     <string name="menu_more">Meni Več</string>
     <plurals name="menu_more_with_invites">
@@ -1120,4 +1120,32 @@
         <item quantity="few">Meni Več, %d čakajoča povabila</item>
         <item quantity="other">Meni Več, %d čakajočih povabil</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Deli razpoložljivost</string>
+    <string name="share_availability_sheet_title">Deli razpoložljivost</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Naslednji %1$d dan</item>
+        <item quantity="two">Naslednja %1$d dneva</item>
+        <item quantity="few">Naslednji %1$d dnevi</item>
+        <item quantity="other">Naslednjih %1$d dni</item>
+    </plurals>
+    <string name="share_availability_hours_label">Delovni čas: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Obravnavaj celodnevne dogodke kot zasedene</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Celodnevni dogodki so prezrti</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Dan s celodnevnim dogodkom je popolnoma zaseden</string>
+    <string name="share_availability_share_button">Deli</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Prosto naslednji %1$d dan (%2$s – %3$s):</item>
+        <item quantity="two">Prosto naslednja %1$d dneva (%2$s – %3$s):</item>
+        <item quantity="few">Prosto naslednji %1$d dnevi (%2$s – %3$s):</item>
+        <item quantity="other">Prosto naslednjih %1$d dni (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">V izbranem obdobju ni prostih blokov vsaj eno uro.</string>
+    <string name="share_availability_chooser_title">Deli razpoložljivost</string>
+    <string name="share_availability_share_failed">Ni aplikacije za skupno rabo</string>
+    <string name="share_from_kashcal_footer">Deljeno iz KashCal</string>
 </resources>

@@ -1094,7 +1094,7 @@
     <string name="inbox_organizer_suffix">(організатор)</string>
     <string name="menu_invites">Запрошення</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Дата</string>
+    <string name="jump_to_date">Перейти до дати</string>
     <string name="menu_about">Про застосунок</string>
     <string name="menu_more">Меню «Ще»</string>
     <plurals name="menu_more_with_invites">
@@ -1103,4 +1103,32 @@
         <item quantity="many">Меню «Ще», %d запрошень очікують</item>
         <item quantity="other">Меню «Ще», %d запрошення очікують</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Поділитися доступністю</string>
+    <string name="share_availability_sheet_title">Поділитися доступністю</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Наступний %1$d день</item>
+        <item quantity="few">Наступні %1$d дні</item>
+        <item quantity="many">Наступні %1$d днів</item>
+        <item quantity="other">Наступні %1$d днів</item>
+    </plurals>
+    <string name="share_availability_hours_label">Робочі години: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Вважати події на весь день зайнятістю</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Події на весь день ігноруються</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">День з подією на весь день повністю зайнятий</string>
+    <string name="share_availability_share_button">Поділитися</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Вільно наступний %1$d день (%2$s – %3$s):</item>
+        <item quantity="few">Вільно наступні %1$d дні (%2$s – %3$s):</item>
+        <item quantity="many">Вільно наступні %1$d днів (%2$s – %3$s):</item>
+        <item quantity="other">Вільно наступні %1$d днів (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">У вибраному діапазоні немає вільних блоків від години.</string>
+    <string name="share_availability_chooser_title">Поділитися доступністю</string>
+    <string name="share_availability_share_failed">Немає програми для надсилання</string>
+    <string name="share_from_kashcal_footer">Надіслано з KashCal</string>
 </resources>

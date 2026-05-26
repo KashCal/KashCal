@@ -698,6 +698,7 @@
     <string name="cd_open_rail">Open kieslys</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Sluit kieslys</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Kalenderaansig</string>
     <string name="cd_active_view">Aktiewe aansig</string>
 
@@ -1066,11 +1067,33 @@
     <string name="inbox_organizer_suffix">(reëlaar)</string>
     <string name="menu_invites">Uitnodigings</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Datum</string>
+    <string name="jump_to_date">Gaan na datum</string>
     <string name="menu_about">Aangaande</string>
     <string name="menu_more">Meer-kieslys</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meer-kieslys, %d uitnodiging hangende</item>
         <item quantity="other">Meer-kieslys, %d uitnodigings hangende</item>
     </plurals>
+    <string name="share_availability_rail_label">Deel beskikbaarheid</string>
+    <string name="share_availability_sheet_title">Deel beskikbaarheid</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Volgende %1$d dag</item>
+        <item quantity="other">Volgende %1$d dae</item>
+    </plurals>
+    <string name="share_availability_hours_label">Werksure: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Hanteer heeldag-gebeurtenisse as besig</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Heeldag-gebeurtenisse word geïgnoreer</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">\'n Dag met \'n heeldag-gebeurtenis is heeltemal besig</string>
+    <string name="share_availability_share_button">Deel</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Vry vir die volgende %1$d dag (%2$s – %3$s):</item>
+        <item quantity="other">Vry vir die volgende %1$d dae (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Geen vry blokke van ten minste een uur in die geselekteerde reeks nie.</string>
+    <string name="share_availability_chooser_title">Deel beskikbaarheid</string>
+    <string name="share_availability_share_failed">Geen app beskikbaar om te deel nie</string>
+    <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
 </resources>

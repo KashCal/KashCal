@@ -1059,11 +1059,33 @@
     <string name="inbox_organizer_suffix">(organisator)</string>
     <string name="menu_invites">Uitnodigingen</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Datum</string>
+    <string name="jump_to_date">Naar datum gaan</string>
     <string name="menu_about">Over</string>
     <string name="menu_more">Meer-menu</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meer-menu, %d uitnodiging in afwachting</item>
         <item quantity="other">Meer-menu, %d uitnodigingen in afwachting</item>
+    </plurals>
+    <string name="share_availability_rail_label">Beschikbaarheid delen</string>
+    <string name="share_availability_sheet_title">Beschikbaarheid delen</string>
+    <string name="share_availability_hours_label">Werkuren: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Hele dag-evenementen als bezet behandelen</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Hele dag-evenementen worden genegeerd</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Een dag met een hele dag-evenement is volledig bezet</string>
+    <string name="share_availability_share_button">Delen</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Geen vrije blokken van ten minste een uur in het geselecteerde bereik.</string>
+    <string name="share_availability_chooser_title">Beschikbaarheid delen</string>
+    <string name="share_availability_share_failed">Geen app beschikbaar om te delen</string>
+    <string name="share_from_kashcal_footer">Gedeeld vanuit KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Volgende %1$d dag</item>
+        <item quantity="other">Volgende %1$d dagen</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Vrij op de volgende %1$d dag (%2$s – %3$s):</item>
+        <item quantity="other">Vrij op de volgende %1$d dagen (%2$s – %3$s):</item>
     </plurals>
 </resources>

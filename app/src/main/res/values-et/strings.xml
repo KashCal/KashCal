@@ -1014,11 +1014,35 @@
     <string name="inbox_organizer_suffix">(korraldaja)</string>
     <string name="menu_invites">Kutsed</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Kuupäev</string>
+    <string name="jump_to_date">Mine kuupäevale</string>
     <string name="menu_about">Teave</string>
     <string name="menu_more">Menüü „Veel“</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Menüü „Veel“, %d kutse ootel</item>
         <item quantity="other">Menüü „Veel“, %d kutset ootel</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Jaga saadavust</string>
+    <string name="share_availability_sheet_title">Jaga saadavust</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Järgmine %1$d päev</item>
+        <item quantity="other">Järgmised %1$d päeva</item>
+    </plurals>
+    <string name="share_availability_hours_label">Tööaeg: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Käsitle täispäevaseid sündmusi hõivatuna</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Täispäevased sündmused jäetakse arvestamata</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Päev täispäevase sündmusega on täielikult hõivatud</string>
+    <string name="share_availability_share_button">Jaga</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Vaba järgmise %1$d päeva jooksul (%2$s – %3$s):</item>
+        <item quantity="other">Vaba järgmise %1$d päeva jooksul (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Valitud vahemikus pole vähemalt tunniseid vabu plokke.</string>
+    <string name="share_availability_chooser_title">Jaga saadavust</string>
+    <string name="share_availability_share_failed">Pole rakendust jagamiseks</string>
+    <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
 </resources>

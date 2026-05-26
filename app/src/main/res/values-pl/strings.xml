@@ -1142,7 +1142,7 @@
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Zaproszenia</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Data</string>
+    <string name="jump_to_date">Przejdź do daty</string>
     <string name="menu_about">O aplikacji</string>
     <string name="menu_more">Menu więcej</string>
     <plurals name="menu_more_with_invites">
@@ -1151,4 +1151,32 @@
         <item quantity="many">Menu więcej, %d oczekujących zaproszeń</item>
         <item quantity="other">Menu więcej, %d oczekujących zaproszeń</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Udostępnij dostępność</string>
+    <string name="share_availability_sheet_title">Udostępnij dostępność</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Następny %1$d dzień</item>
+        <item quantity="few">Następne %1$d dni</item>
+        <item quantity="many">Następne %1$d dni</item>
+        <item quantity="other">Następne %1$d dni</item>
+    </plurals>
+    <string name="share_availability_hours_label">Godziny pracy: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Traktuj wydarzenia całodniowe jako zajęte</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Wydarzenia całodniowe są ignorowane</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Dzień z wydarzeniem całodniowym jest całkowicie zajęty</string>
+    <string name="share_availability_share_button">Udostępnij</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Wolne przez następny %1$d dzień (%2$s – %3$s):</item>
+        <item quantity="few">Wolne przez następne %1$d dni (%2$s – %3$s):</item>
+        <item quantity="many">Wolne przez następne %1$d dni (%2$s – %3$s):</item>
+        <item quantity="other">Wolne przez następne %1$d dni (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Brak wolnych bloków co najmniej godzinnych w wybranym zakresie.</string>
+    <string name="share_availability_chooser_title">Udostępnij dostępność</string>
+    <string name="share_availability_share_failed">Brak aplikacji do udostępniania</string>
+    <string name="share_from_kashcal_footer">Udostępnione z KashCal</string>
 </resources>

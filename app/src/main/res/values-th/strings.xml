@@ -1006,10 +1006,30 @@
     <string name="inbox_organizer_suffix">(ผู้จัด)</string>
     <string name="menu_invites">คำเชิญ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">วันที่</string>
+    <string name="jump_to_date">ไปยังวันที่</string>
     <string name="menu_about">เกี่ยวกับ</string>
     <string name="menu_more">เมนูเพิ่มเติม</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">เมนูเพิ่มเติม มีคำเชิญรอดำเนินการ %d รายการ</item>
+    </plurals>
+    <string name="share_availability_rail_label">แชร์เวลาว่าง</string>
+    <string name="share_availability_sheet_title">แชร์เวลาว่าง</string>
+    <string name="share_availability_hours_label">เวลาทำงาน: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">ถือว่ากิจกรรมตลอดวันเป็นไม่ว่าง</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">กิจกรรมตลอดวันจะถูกละเว้น</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">วันที่มีกิจกรรมตลอดวันจะไม่ว่างทั้งวัน</string>
+    <string name="share_availability_share_button">แชร์</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ไม่มีช่วงเวลาว่างอย่างน้อยหนึ่งชั่วโมงในช่วงที่เลือก</string>
+    <string name="share_availability_chooser_title">แชร์เวลาว่าง</string>
+    <string name="share_availability_share_failed">ไม่มีแอปสำหรับแชร์</string>
+    <string name="share_from_kashcal_footer">แชร์จาก KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">%1$d วันถัดไป</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">ว่างใน %1$d วันถัดไป (%2$s – %3$s):</item>
     </plurals>
 </resources>

@@ -785,4 +785,101 @@ class EventsDaoFtsTest : BaseDaoTest() {
         assertEquals(1, results.size)
         assertEquals("Active Meeting", results[0].event.title)
     }
+
+    // ========== Synthetic master leak prevention (issue #227 AC9) ==========
+
+    /**
+     * Issue #227 AC9: ICS-synthesized placeholder masters carry the sentinel
+     * `X-KASHCAL-SYNTHETIC-MASTER` in extra_properties. They are FK targets
+     * for orphan exceptions, not real events. They must never surface in
+     * `search` (FTS), `searchWithOccurrence` (next-occurrence), or
+     * `suggestTitlesByPrefix` (autocomplete).
+     *
+     * Critically, the filter targets the SENTINEL — not status='CANCELLED' —
+     * because CalDAV/iCloud servers and the device CalendarProvider both
+     * persist legitimate cancelled events with status='CANCELLED' (RFC 5545
+     * §3.8.1.11), and those should still be searchable.
+     */
+    @Test
+    fun `search excludes synthetic master but keeps genuine cancelled events`() = runTest {
+        // Synthetic master (issue #227 placeholder)
+        eventsDao.insert(createEvent(title = "Synthetic Placeholder").copy(
+            status = "CANCELLED",
+            extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")
+        ))
+        // Genuine cancelled event from CalDAV/iCloud/device-calendar
+        eventsDao.insert(createEvent(title = "Real Cancelled Meeting").copy(
+            status = "CANCELLED"
+        ))
+        // Normal active event
+        eventsDao.insert(createEvent(title = "Active Meeting"))
+
+        val results = eventsDao.search("Meeting* OR Placeholder*")
+        val titles = results.map { it.title }.toSet()
+
+        assertTrue(
+            "search must NOT return synthetic placeholder",
+            "Synthetic Placeholder" !in titles
+        )
+        assertTrue(
+            "search MUST keep genuine cancelled events (CalDAV/iCloud/device)",
+            "Real Cancelled Meeting" in titles
+        )
+        assertTrue("search returns active events", "Active Meeting" in titles)
+    }
+
+    @Test
+    fun `searchWithOccurrence excludes synthetic master but keeps genuine cancelled events`() = runTest {
+        eventsDao.insert(createEvent(title = "Synthetic Placeholder").copy(
+            status = "CANCELLED",
+            extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")
+        ))
+        eventsDao.insert(createEvent(title = "Real Cancelled Standup").copy(
+            status = "CANCELLED"
+        ))
+        eventsDao.insert(createEvent(title = "Active Standup"))
+
+        val results = eventsDao.searchWithOccurrence("Standup* OR Placeholder*", System.currentTimeMillis())
+        val titles = results.map { it.event.title }.toSet()
+
+        assertTrue("synthetic excluded", "Synthetic Placeholder" !in titles)
+        assertTrue("genuine cancelled kept", "Real Cancelled Standup" in titles)
+        assertTrue("active kept", "Active Standup" in titles)
+    }
+
+    @Test
+    fun `suggestTitlesByPrefix excludes synthetic master but keeps genuine cancelled events`() = runTest {
+        val now = System.currentTimeMillis()
+        val sinceMs = now - 30L * 24 * 3600 * 1000
+        val untilMs = now + 30L * 24 * 3600 * 1000
+
+        // Two genuine cancelled events with same title — meets minFreq=2
+        eventsDao.insert(createEvent(title = "Real Cancelled", startTs = now - 1000).copy(
+            status = "CANCELLED"
+        ))
+        eventsDao.insert(createEvent(title = "Real Cancelled", startTs = now - 500).copy(
+            status = "CANCELLED"
+        ))
+        // Two synthetic placeholders with same title — would meet minFreq=2
+        eventsDao.insert(createEvent(title = "Synthetic Placeholder", startTs = now - 800).copy(
+            status = "CANCELLED",
+            extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")
+        ))
+        eventsDao.insert(createEvent(title = "Synthetic Placeholder", startTs = now - 600).copy(
+            status = "CANCELLED",
+            extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")
+        ))
+
+        val suggestions = eventsDao.suggestTitlesByPrefix(
+            prefix = "",
+            sinceMs = sinceMs,
+            untilMs = untilMs,
+            minFreq = 2,
+            limit = 10
+        )
+        val titles = suggestions.map { it.title }.toSet()
+
+        assertTrue("synthetic excluded", "Synthetic Placeholder" !in titles)
+        assertTrue("genuine cancelled kept", "Real Cancelled" in titles)
+    }
 }

@@ -1067,11 +1067,33 @@
     <string name="inbox_organizer_suffix">(tagapag-organisa)</string>
     <string name="menu_invites">Mga Imbitasyon</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Petsa</string>
+    <string name="jump_to_date">Pumunta sa petsa</string>
     <string name="menu_about">Tungkol</string>
     <string name="menu_more">Higit pang menu</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Higit pang menu, %d imbitasyon ang nakabinbin</item>
         <item quantity="other">Higit pang menu, %d na imbitasyon ang nakabinbin</item>
+    </plurals>
+    <string name="share_availability_rail_label">Ibahagi ang availability</string>
+    <string name="share_availability_sheet_title">Ibahagi ang availability</string>
+    <string name="share_availability_hours_label">Oras ng trabaho: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Ituring ang mga buong araw na event bilang abala</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Ang mga buong araw na event ay binabalewala</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Ang araw na may buong araw na event ay ganap na abala</string>
+    <string name="share_availability_share_button">Ibahagi</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Walang libreng bloke ng hindi bababa sa isang oras sa napiling saklaw.</string>
+    <string name="share_availability_chooser_title">Ibahagi ang availability</string>
+    <string name="share_availability_share_failed">Walang app na magagamit para sa pagbabahagi</string>
+    <string name="share_from_kashcal_footer">Ibinahagi mula sa KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Susunod na %1$d araw</item>
+        <item quantity="other">Susunod na %1$d araw</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Libre sa susunod na %1$d araw (%2$s – %3$s):</item>
+        <item quantity="other">Libre sa susunod na %1$d araw (%2$s – %3$s):</item>
     </plurals>
 </resources>

@@ -44,6 +44,10 @@ object ExportablePreferences {
         PreferencesKeys.ANNIVERSARY_REMINDER.name to PrefKind.INT,
         PreferencesKeys.DEVICE_CALENDARS_ENABLED.name to PrefKind.BOOL,
         PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.SHARE_AVAILABILITY_DAYS.name to PrefKind.INT,
+        PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN.name to PrefKind.INT,
+        PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN.name to PrefKind.INT,
+        PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY.name to PrefKind.BOOL,
     )
 
     val KEYS: List<Preferences.Key<*>> = listOf(
@@ -80,9 +84,14 @@ object ExportablePreferences {
         // Device calendars master toggles only (ID sets excluded — not portable)
         PreferencesKeys.DEVICE_CALENDARS_ENABLED,
         PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED,
+        // Share-availability sheet preferences
+        PreferencesKeys.SHARE_AVAILABILITY_DAYS,
+        PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN,
+        PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN,
+        PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY,
     ).also {
-        require(it.size == 26) {
-            "KEYS size drifted; expected 26 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 30) {
+            "KEYS size drifted; expected 30 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

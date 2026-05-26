@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -61,6 +62,7 @@ fun InvitationInboxSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .fillMaxHeight(0.5f)
                     .clickable(onClick = onDismiss)
                     .padding(horizontal = 16.dp, vertical = 48.dp),
                 contentAlignment = Alignment.Center

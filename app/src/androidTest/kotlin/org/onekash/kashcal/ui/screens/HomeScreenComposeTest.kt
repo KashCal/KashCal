@@ -1,7 +1,5 @@
 package org.onekash.kashcal.ui.screens
 
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -772,10 +770,10 @@ class HomeScreenComposeTest {
         composeTestRule.onNodeWithText("Syncing calendars...").assertDoesNotExist()
     }
 
-    // ==================== Right Navigation Rail Tests ====================
+    // ==================== Overflow Sheet Tests ====================
 
     @Test
-    fun homeScreen_topBarShowsRailToggleNotThreeDot() {
+    fun homeScreen_topBarShowsOverflowButton() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -793,7 +791,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railToggleAccessibilityLabelMatchesHelperWhenInvitesPending() {
+    fun homeScreen_overflowAccessibilityLabelMatchesHelperWhenInvitesPending() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -811,7 +809,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_tapRailToggleRevealsThreeRailItems() {
+    fun homeScreen_tapOverflowRevealsAllSixSheetRows() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -826,12 +824,15 @@ class HomeScreenComposeTest {
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
         composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Date").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Share availability").assertIsDisplayed()
         composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
         composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("About").assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_railInvitesClickInvokesCallback() {
+    fun homeScreen_sheetInvitesClickInvokesCallback() {
         var invitesClicked = false
 
         composeTestRule.setContent {
@@ -853,7 +854,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railInsightsClickInvokesViewSelect() {
+    fun homeScreen_sheetInsightsClickInvokesViewSelect() {
         var selectedView: ViewMode? = null
 
         composeTestRule.setContent {
@@ -875,7 +876,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railSettingsClickInvokesCallback() {
+    fun homeScreen_sheetSettingsClickInvokesCallback() {
         var settingsClicked = false
 
         composeTestRule.setContent {
@@ -897,28 +898,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railTapToggleAgainClosesRail() {
-        composeTestRule.setContent {
-            HomeScreen(
-                uiState = createDefaultUiState(),
-                isOnline = true,
-                onDateSelected = {},
-                onGoToToday = {},
-                onSetViewingMonth = { _, _ -> },
-                onClearNavigateToToday = {},
-                onClearNavigateToMonth = {}
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
-    }
-
-    @Test
-    fun homeScreen_railInvitesItemHidesChipWhenCountZero() {
+    fun homeScreen_sheetInvitesItemHidesChipWhenCountZero() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -938,7 +918,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railTogglePresentInAgendaView() {
+    fun homeScreen_overflowButtonPresentInAgendaView() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
@@ -955,7 +935,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_railInsightsRowRendersWhileInInsightsView() {
+    fun homeScreen_overflowSheetInsightsRowRendersWhileInInsightsView() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(viewMode = ViewMode.INSIGHTS),
@@ -973,7 +953,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_backButtonClosesRail() {
+    fun homeScreen_backButtonClosesSheet() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -989,50 +969,6 @@ class HomeScreenComposeTest {
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
         composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
         Espresso.pressBack()
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
-    }
-
-    @Test
-    fun homeScreen_openingRailClosesLeftDrawer() {
-        composeTestRule.setContent {
-            HomeScreen(
-                uiState = createDefaultUiState(),
-                isOnline = true,
-                onDateSelected = {},
-                onGoToToday = {},
-                onSetViewingMonth = { _, _ -> },
-                onClearNavigateToToday = {},
-                onClearNavigateToMonth = {},
-                drawerState = rememberDrawerState(DrawerValue.Closed)
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("Open drawer").performClick()
-        composeTestRule.onNodeWithText("Calendars").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Calendars").assertDoesNotExist()
-    }
-
-    @Test
-    fun homeScreen_openingLeftDrawerClosesRail() {
-        composeTestRule.setContent {
-            HomeScreen(
-                uiState = createDefaultUiState(),
-                isOnline = true,
-                onDateSelected = {},
-                onGoToToday = {},
-                onSetViewingMonth = { _, _ -> },
-                onClearNavigateToToday = {},
-                onClearNavigateToMonth = {},
-                drawerState = rememberDrawerState(DrawerValue.Closed)
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Open drawer").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
     }

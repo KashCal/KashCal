@@ -1006,10 +1006,30 @@
     <string name="inbox_organizer_suffix">(主催者)</string>
     <string name="menu_invites">招待</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">日付</string>
+    <string name="jump_to_date">日付へ移動</string>
     <string name="menu_about">このアプリについて</string>
     <string name="menu_more">その他のメニュー</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">その他のメニュー、%d 件保留中</item>
+    </plurals>
+    <string name="share_availability_rail_label">空き状況を共有</string>
+    <string name="share_availability_sheet_title">空き状況を共有</string>
+    <string name="share_availability_hours_label">勤務時間: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">終日イベントを多忙として扱う</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">終日イベントは無視されます</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">終日イベントがある日は完全に多忙となります</string>
+    <string name="share_availability_share_button">共有</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">選択した範囲に1時間以上の空きブロックがありません。</string>
+    <string name="share_availability_chooser_title">空き状況を共有</string>
+    <string name="share_availability_share_failed">共有できるアプリがありません</string>
+    <string name="share_from_kashcal_footer">KashCalから共有</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">次の %1$d 日間</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">次の %1$d 日間（%2$s – %3$s）の空き時間：</item>
     </plurals>
 </resources>

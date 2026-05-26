@@ -40,21 +40,60 @@ class InsightsRepository @Inject constructor(
         val startTs = periodStart.atStartOfDay(zone).toInstant().toEpochMilli()
         val endTs = periodEnd.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
+        val (allOccurrences, calendarMap, roomCalendarIds) =
+            loadOccurrencesForRange(startTs, endTs, periodStart, periodEnd)
+
+        val stats = computeStats(allOccurrences, calendarMap, periodStart, periodEnd, startTs, endTs, zone)
+        stats to allOccurrences
+    }
+
+    /**
+     * Returns merged Room + device-calendar occurrences for an arbitrary time
+     * range. Visibility, cancellation, and pending-delete filtering are
+     * inherited from getOccurrencesWithEventsForInsights and the device-side
+     * visible-calendars filter — callers do not need to refilter.
+     *
+     * The range is treated as half-open [startTs, endTs). The Room query uses
+     * an inclusive upper bound, so we pass endTs-1 to the DAO; the device side
+     * uses day codes, which we derive in [zone] (the caller's zone, not
+     * systemDefault).
+     *
+     * Used by share-availability to take a snapshot of the user's calendar
+     * over the next N days without going through the AnalysisPeriod
+     * (week/month) machinery.
+     */
+    suspend fun getOccurrencesForRange(
+        startTs: Long,
+        endTs: Long,
+        zone: ZoneId = ZoneId.systemDefault()
+    ): List<InsightOccurrence> = withContext(ioDispatcher) {
+        if (endTs <= startTs) return@withContext emptyList()
+        val startDate = Instant.ofEpochMilli(startTs).atZone(zone).toLocalDate()
+        val endDate = Instant.ofEpochMilli(endTs - 1).atZone(zone).toLocalDate()
+        // DAO uses `start_ts <= :endTs` (inclusive); subtract 1ms so an event
+        // starting exactly at the half-open upper bound is excluded.
+        val (allOccurrences, _, _) = loadOccurrencesForRange(startTs, endTs - 1, startDate, endDate)
+        allOccurrences
+    }
+
+    private suspend fun loadOccurrencesForRange(
+        startTs: Long,
+        endTs: Long,
+        rangeStart: LocalDate,
+        rangeEnd: LocalDate
+    ): Triple<List<InsightOccurrence>, Map<Long, Pair<String, Int>>, List<Long>> {
         val roomOccurrences = occurrencesDao.getOccurrencesWithEventsForInsights(startTs, endTs)
         val roomOccs: List<InsightOccurrence> = roomOccurrences.map {
             SimpleOccurrence(it.startTs, it.endTs, it.event.isAllDay, it.startDay, it.endDay, it.calendarId)
         }
-
-        val startDayCode = localDateToDayCode(periodStart)
-        val endDayCode = localDateToDayCode(periodEnd)
+        val startDayCode = localDateToDayCode(rangeStart)
+        val endDayCode = localDateToDayCode(rangeEnd)
         val (deviceOccs, deviceCalendarMeta) = queryDeviceOccurrences(startDayCode, endDayCode)
         val allOccurrences = roomOccs + deviceOccs
-
-        val calendarMap = buildCalendarMap(roomOccurrences.map { it.calendarId }.distinct()).toMutableMap()
+        val roomCalIds = roomOccurrences.map { it.calendarId }.distinct()
+        val calendarMap = buildCalendarMap(roomCalIds).toMutableMap()
         calendarMap.putAll(deviceCalendarMeta)
-
-        val stats = computeStats(allOccurrences, calendarMap, periodStart, periodEnd, startTs, endTs, zone)
-        stats to allOccurrences
+        return Triple(allOccurrences, calendarMap, roomCalIds)
     }
 
     suspend fun getDelta(

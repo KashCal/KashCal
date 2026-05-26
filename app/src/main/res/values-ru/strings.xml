@@ -1094,7 +1094,7 @@
     <string name="inbox_organizer_suffix">(организатор)</string>
     <string name="menu_invites">Приглашения</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Дата</string>
+    <string name="jump_to_date">Перейти к дате</string>
     <string name="menu_about">О приложении</string>
     <string name="menu_more">Меню «Ещё»</string>
     <plurals name="menu_more_with_invites">
@@ -1103,4 +1103,32 @@
         <item quantity="many">Меню «Ещё», %d приглашений ожидают</item>
         <item quantity="other">Меню «Ещё», %d приглашения ожидают</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Поделиться доступностью</string>
+    <string name="share_availability_sheet_title">Поделиться доступностью</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Следующий %1$d день</item>
+        <item quantity="few">Следующие %1$d дня</item>
+        <item quantity="many">Следующие %1$d дней</item>
+        <item quantity="other">Следующие %1$d дней</item>
+    </plurals>
+    <string name="share_availability_hours_label">Рабочие часы: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Считать события на весь день занятостью</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">События на весь день игнорируются</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">День с событием на весь день полностью занят</string>
+    <string name="share_availability_share_button">Поделиться</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Свободно в следующий %1$d день (%2$s – %3$s):</item>
+        <item quantity="few">Свободно в следующие %1$d дня (%2$s – %3$s):</item>
+        <item quantity="many">Свободно в следующие %1$d дней (%2$s – %3$s):</item>
+        <item quantity="other">Свободно в следующие %1$d дней (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">В выбранном диапазоне нет свободных блоков длительностью от часа.</string>
+    <string name="share_availability_chooser_title">Поделиться доступностью</string>
+    <string name="share_availability_share_failed">Нет приложения для отправки</string>
+    <string name="share_from_kashcal_footer">Отправлено из KashCal</string>
 </resources>

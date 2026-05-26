@@ -187,6 +187,104 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
         }
     }
 
+    /**
+     * Issue #227 Bug A trigger-aware end-to-end: a synthetic master
+     * (status=CANCELLED, originalEventId=null) inserted via the production
+     * synthesis path must NOT trip the master-uniqueness trigger, even
+     * when an orphan exception with the same UID was previously
+     * mistakenly inserted as a standalone (no synthesis path) — the
+     * legacy-orphan sweep must run first.
+     *
+     * This test mirrors the production sequence: insert one synthetic
+     * master per UID, then insert each orphan exception linked to it.
+     * The trigger fires on (uid, calendar_id, original_event_id IS NULL)
+     * collisions, so the test pins that the synthesis order yields no
+     * collision.
+     */
+    @Test
+    fun `synthetic master plus linked orphan exceptions persist without trigger abort`() = runBlocking {
+        val uid = "orphan-uid@example.com"
+        val recId1 = nowMs
+        val recId2 = nowMs + 86_400_000L
+
+        // Step 1: synthesize the master for the orphan UID.
+        val syntheticId = db.eventsDao().insert(
+            Event(
+                uid = uid,
+                importId = uid,
+                calendarId = calendarId,
+                title = "Orphan Series",
+                startTs = recId1,
+                endTs = recId1, // zero-duration synthetic
+                dtstamp = nowMs,
+                status = "CANCELLED",
+                rrule = null,
+                caldavUrl = "ics_subscription:1:$uid",
+                syncStatus = SyncStatus.SYNCED,
+                extraProperties = mapOf(SYNTHETIC_MASTER_EXTRA_KEY to "true")
+            )
+        )
+        assertNotEquals("Synthetic must be persisted", 0L, syntheticId)
+
+        // Step 2: insert two orphan exceptions linked to the synthetic.
+        val exceptionId1 = db.eventsDao().insert(
+            Event(
+                uid = uid,
+                importId = "$uid:RECID:20260101T000000Z",
+                calendarId = calendarId,
+                title = "Orphan Exception 1",
+                startTs = recId1,
+                endTs = recId1 + 3_600_000L,
+                dtstamp = nowMs,
+                originalEventId = syntheticId,
+                originalInstanceTime = recId1,
+                caldavUrl = "ics_subscription:1:$uid:RECID:20260101T000000Z",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+        val exceptionId2 = db.eventsDao().insert(
+            Event(
+                uid = uid,
+                importId = "$uid:RECID:20260102T000000Z",
+                calendarId = calendarId,
+                title = "Orphan Exception 2",
+                startTs = recId2,
+                endTs = recId2 + 3_600_000L,
+                dtstamp = nowMs,
+                originalEventId = syntheticId,
+                originalInstanceTime = recId2,
+                caldavUrl = "ics_subscription:1:$uid:RECID:20260102T000000Z",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+
+        assertNotEquals(
+            "Both exception inserts succeeded — trigger did not fire",
+            0L,
+            exceptionId1
+        )
+        assertNotEquals(
+            "Both exception inserts succeeded — trigger did not fire",
+            0L,
+            exceptionId2
+        )
+        assertNotEquals(
+            "Distinct exception row ids",
+            exceptionId1,
+            exceptionId2
+        )
+
+        // Verify final state: 1 master + 2 linked exceptions.
+        val masters = db.eventsDao().getAllMasterEventsForCalendar(calendarId)
+            .filter { it.uid == uid }
+        assertEquals("Exactly one master row for the orphan UID", 1, masters.size)
+        assertEquals(
+            "The master row is the synthetic",
+            syntheticId,
+            masters.single().id
+        )
+    }
+
     private fun buildMaster(
         uid: String,
         startTs: Long,

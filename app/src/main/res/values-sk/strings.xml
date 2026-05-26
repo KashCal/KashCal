@@ -1111,7 +1111,7 @@
     <string name="inbox_organizer_suffix">(organizátor)</string>
     <string name="menu_invites">Pozvánky</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dátum</string>
+    <string name="jump_to_date">Prejsť na dátum</string>
     <string name="menu_about">O aplikácii</string>
     <string name="menu_more">Ponuka Viac</string>
     <plurals name="menu_more_with_invites">
@@ -1120,4 +1120,32 @@
         <item quantity="many">Ponuka Viac, %d čakajúcich pozvánok</item>
         <item quantity="other">Ponuka Viac, %d čakajúcich pozvánok</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Zdieľať dostupnosť</string>
+    <string name="share_availability_sheet_title">Zdieľať dostupnosť</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Ďalší %1$d deň</item>
+        <item quantity="few">Ďalšie %1$d dni</item>
+        <item quantity="many">Ďalších %1$d dňa</item>
+        <item quantity="other">Ďalších %1$d dní</item>
+    </plurals>
+    <string name="share_availability_hours_label">Pracovný čas: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Považovať celodenné udalosti za obsadené</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Celodenné udalosti sa ignorujú</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Deň s celodennou udalosťou je úplne obsadený</string>
+    <string name="share_availability_share_button">Zdieľať</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Voľno v ďalšom %1$d dni (%2$s – %3$s):</item>
+        <item quantity="few">Voľno v ďalších %1$d dňoch (%2$s – %3$s):</item>
+        <item quantity="many">Voľno v ďalších %1$d dňa (%2$s – %3$s):</item>
+        <item quantity="other">Voľno v ďalších %1$d dňoch (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Vo vybranom rozsahu nie sú žiadne voľné bloky aspoň hodinové.</string>
+    <string name="share_availability_chooser_title">Zdieľať dostupnosť</string>
+    <string name="share_availability_share_failed">Žiadna aplikácia na zdieľanie</string>
+    <string name="share_from_kashcal_footer">Zdieľané z KashCal</string>
 </resources>

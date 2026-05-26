@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.DefaultCalendar
@@ -72,6 +73,13 @@ import java.util.Locale
 import javax.inject.Inject
 
 private const val TAG = "HomeViewModel"
+
+private data class CalendarsSnapshot(
+    val calendars: List<org.onekash.kashcal.data.db.entity.Calendar>,
+    val groups: List<CalendarGroup>,
+    val validatedDefault: DefaultCalendar?,
+    val deviceGroups: List<CalendarGroup>
+)
 
 /**
  * ViewModel for the HomeScreen (main calendar view).
@@ -287,7 +295,8 @@ class HomeViewModel(
                     models = AttendeeUiModel.fromRoom(
                         attendees = rows,
                         currentAccount = account,
-                        organizerAddress = event?.organizerEmail
+                        organizerAddress = event?.organizerEmail,
+                        organizerName = event?.organizerName
                     ),
                     isCurrentUserOnList = AttendeeUiModel.isCurrentUserOnList(
                         rows, account, event?.organizerEmail
@@ -327,7 +336,8 @@ class HomeViewModel(
                     AttendeeUiModel.fromRoom(
                         attendees = rows,
                         currentAccount = account,
-                        organizerAddress = event?.organizerEmail
+                        organizerAddress = event?.organizerEmail,
+                        organizerName = event?.organizerName
                     )
                 }
             }
@@ -820,51 +830,57 @@ class HomeViewModel(
     private fun observeCalendars() {
         viewModelScope.launch {
             try {
-                // Combine calendars, accounts, and user preference
                 combine(
                     eventCoordinator.getAllCalendars(),
                     eventCoordinator.getAllAccounts(),
-                    dataStore.defaultCalendar
-                ) { calendars, accounts, userPrefDefault ->
-                    // Validate the default calendar exists
+                    dataStore.defaultCalendar,
+                    dataStore.deviceCalendarsEnabled,
+                    dataStore.enabledDeviceCalendarIds
+                ) { calendars, accounts, userPrefDefault, deviceEnabled, enabledIds ->
                     val validatedDefault = when (userPrefDefault) {
                         is DefaultCalendar.Room -> {
-                            // Validate Room calendar exists
                             if (calendars.any { it.id == userPrefDefault.calendarId }) userPrefDefault
                             else null
                         }
-                        is DefaultCalendar.Device -> {
-                            // Device calendar validation happens at event creation time
-                            // For UI display, just pass through (picker handles availability)
-                            userPrefDefault
-                        }
+                        is DefaultCalendar.Device -> userPrefDefault
                         null -> null
                     }
-                    // Group calendars by account for UI display
                     val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
-                    Triple(calendars, groups, validatedDefault)
-                }.collect { (calendars, groups, validatedDefault) ->
-                    // Also load device calendars for EventFormSheet picker
-                    val deviceCalendars = try {
-                        calendarProviderRepository.getDeviceCalendars()
-                    } catch (_: Exception) {
-                        emptyList()
-                    }
+                    val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
-
+                    CalendarsSnapshot(calendars, groups, validatedDefault, deviceGroups)
+                }.collect { snap ->
                     _uiState.update {
                         it.copy(
-                            calendars = calendars.toPersistentList(),
-                            calendarGroups = groups.toPersistentList(),
-                            deviceCalendarGroups = deviceGroups.toPersistentList(),
-                            defaultCalendar = validatedDefault
+                            calendars = snap.calendars.toPersistentList(),
+                            calendarGroups = snap.groups.toPersistentList(),
+                            deviceCalendarGroups = snap.deviceGroups.toPersistentList(),
+                            defaultCalendar = snap.validatedDefault
                         )
                     }
-                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, ${groups.size} groups, ${deviceGroups.size} device groups, default=$validatedDefault")
+                    Log.d(TAG, "Calendars updated: ${snap.calendars.size} calendars, ${snap.groups.size} groups, ${snap.deviceGroups.size} device groups, default=${snap.validatedDefault}")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error observing calendars", e)
             }
+        }
+    }
+
+    /**
+     * Apply the user's device-calendar enable preference to the system list:
+     * returns empty unless the master toggle is on AND at least one calendar
+     * is enabled in DataStore. Mirrors the drawer's behavior so all surfaces
+     * stay symmetric.
+     */
+    private suspend fun loadFilteredDeviceCalendars(
+        enabled: Boolean,
+        enabledIds: Set<Long>
+    ): List<DeviceCalendar> {
+        if (!enabled || enabledIds.isEmpty()) return emptyList()
+        return try {
+            calendarProviderRepository.getDeviceCalendars().filter { it.id in enabledIds }
+        } catch (_: Exception) {
+            emptyList()
         }
     }
 
@@ -875,40 +891,35 @@ class HomeViewModel(
     private fun loadCalendars() {
         viewModelScope.launch {
             try {
-                val (calendars, groups, validatedDefault) = withContext(ioDispatcher) {
+                val snap = withContext(ioDispatcher) {
                     val cals = eventCoordinator.getAllCalendars().first()
                     val accounts = eventCoordinator.getAllAccounts().first()
-                    // Get default calendar preference and validate
                     val userPrefDefault = dataStore.getDefaultCalendar()
                     val validDefault = when (userPrefDefault) {
                         is DefaultCalendar.Room -> {
                             if (cals.any { it.id == userPrefDefault.calendarId }) userPrefDefault
                             else null
                         }
-                        is DefaultCalendar.Device -> userPrefDefault // Validated at event creation
+                        is DefaultCalendar.Device -> userPrefDefault
                         null -> null
                     }
-                    // Group calendars by account for UI
                     val calGroups = CalendarGroup.fromCalendarsAndAccounts(cals, accounts)
-                    Triple(cals, calGroups, validDefault)
+                    val deviceEnabled = dataStore.getDeviceCalendarsEnabled()
+                    val enabledIds = dataStore.getEnabledDeviceCalendarIds()
+                    val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
+                    val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
+                    CalendarsSnapshot(cals, calGroups, validDefault, deviceGroups)
                 }
-                // Also load device calendars for EventFormSheet picker
-                val deviceCalendars = try {
-                    calendarProviderRepository.getDeviceCalendars()
-                } catch (_: Exception) {
-                    emptyList()
-                }
-                val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
 
                 _uiState.update {
                     it.copy(
-                        calendars = calendars.toPersistentList(),
-                        calendarGroups = groups.toPersistentList(),
-                        deviceCalendarGroups = deviceGroups.toPersistentList(),
-                        defaultCalendar = validatedDefault
+                        calendars = snap.calendars.toPersistentList(),
+                        calendarGroups = snap.groups.toPersistentList(),
+                        deviceCalendarGroups = snap.deviceGroups.toPersistentList(),
+                        defaultCalendar = snap.validatedDefault
                     )
                 }
-                Log.d(TAG, "Loaded ${calendars.size} calendars, ${groups.size} groups, ${deviceGroups.size} device groups, default=$validatedDefault")
+                Log.d(TAG, "Loaded ${snap.calendars.size} calendars, ${snap.groups.size} groups, ${snap.deviceGroups.size} device groups, default=${snap.validatedDefault}")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading calendars", e)
             }
@@ -929,16 +940,7 @@ class HomeViewModel(
             ) { enabled, enabledIds ->
                 Pair(enabled, enabledIds)
             }.collect { (enabled, enabledIds) ->
-                val deviceCalendars = if (enabled && enabledIds.isNotEmpty()) {
-                    try {
-                        calendarProviderRepository.getDeviceCalendars()
-                            .filter { it.id in enabledIds }
-                    } catch (_: Exception) {
-                        emptyList()
-                    }
-                } else {
-                    emptyList()
-                }
+                val deviceCalendars = loadFilteredDeviceCalendars(enabled, enabledIds)
                 _uiState.update {
                     it.copy(
                         deviceCalendarsEnabled = enabled,
@@ -2138,6 +2140,14 @@ class HomeViewModel(
 
     fun toggleAppInfoSheet() {
         _uiState.update { it.copy(showAppInfoSheet = !it.showAppInfoSheet) }
+    }
+
+    fun openShareAvailabilitySheet() {
+        _uiState.update { it.copy(showShareAvailabilitySheet = true) }
+    }
+
+    fun dismissShareAvailabilitySheet() {
+        _uiState.update { it.copy(showShareAvailabilitySheet = false) }
     }
 
     fun openInvitationInbox() {

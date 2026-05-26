@@ -1057,11 +1057,33 @@
     <string name="inbox_organizer_suffix">(ଆୟୋଜକ)</string>
     <string name="menu_invites">ନିମନ୍ତ୍ରଣଗୁଡ଼ିକ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ତାରିଖ</string>
+    <string name="jump_to_date">ତାରିଖକୁ ଯାଆନ୍ତୁ</string>
     <string name="menu_about">ବିଷୟରେ</string>
     <string name="menu_more">ଅଧିକ ମେନୁ</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
         <item quantity="other">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
+    </plurals>
+    <string name="share_availability_rail_label">ଉପଲବ୍ଧତା ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_availability_sheet_title">ଉପଲବ୍ଧତା ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_availability_hours_label">କାର୍ଯ୍ୟ ସମୟ: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">ସମ୍ପୂର୍ଣ୍ଣ ଦିନର ଇଭେଣ୍ଟକୁ ବ୍ୟସ୍ତ ଭାବେ ଗଣନା କରନ୍ତୁ</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">ସମ୍ପୂର୍ଣ୍ଣ ଦିନର ଇଭେଣ୍ଟ ଅଣଦେଖା କରାଯାଏ</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">ସମ୍ପୂର୍ଣ୍ଣ ଦିନର ଇଭେଣ୍ଟ ଥିବା ଦିନ ସମ୍ପୂର୍ଣ୍ଣ ବ୍ୟସ୍ତ</string>
+    <string name="share_availability_share_button">ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ବଚ୍ଛିତ ପରିସରରେ ଅତି କମ୍‌ରେ ଗୋଟିଏ ଘଣ୍ଟାର କୌଣସି ମୁକ୍ତ ବ୍ଲକ୍ ନାହିଁ।</string>
+    <string name="share_availability_chooser_title">ଉପଲବ୍ଧତା ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_availability_share_failed">ସେୟାର କରିବାକୁ କୌଣସି ଆପ ଉପଲବ୍ଧ ନାହିଁ</string>
+    <string name="share_from_kashcal_footer">KashCalରୁ ସେୟାର କରାଯାଇଛି</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ପରବର୍ତ୍ତୀ %1$d ଦିନ</item>
+        <item quantity="other">ପରବର୍ତ୍ତୀ %1$d ଦିନ</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">ପରବର୍ତ୍ତୀ %1$d ଦିନରେ ମୁକ୍ତ (%2$s – %3$s):</item>
+        <item quantity="other">ପରବର୍ତ୍ତୀ %1$d ଦିନରେ ମୁକ୍ତ (%2$s – %3$s):</item>
     </plurals>
 </resources>

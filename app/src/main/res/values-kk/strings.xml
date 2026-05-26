@@ -698,6 +698,7 @@
     <string name="cd_open_rail">Мәзірді ашу</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Мәзірді жабу</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Күнтізбе көрінісі</string>
     <string name="cd_active_view">Белсенді көрініс</string>
 
@@ -1069,11 +1070,33 @@
     <string name="inbox_organizer_suffix">(ұйымдастырушы)</string>
     <string name="menu_invites">Шақырулар</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Күні</string>
+    <string name="jump_to_date">Күнге өту</string>
     <string name="menu_about">Туралы</string>
     <string name="menu_more">Қосымша мәзір</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Қосымша мәзір, %d шақыру күтілуде</item>
         <item quantity="other">Қосымша мәзір, %d шақыру күтілуде</item>
     </plurals>
+    <string name="share_availability_rail_label">Қолжетімділікті бөлісу</string>
+    <string name="share_availability_sheet_title">Қолжетімділікті бөлісу</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Келесі %1$d күн</item>
+        <item quantity="other">Келесі %1$d күн</item>
+    </plurals>
+    <string name="share_availability_hours_label">Жұмыс уақыты: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Бүкіл күнгі іс-шараларды бос емес деп санау</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Бүкіл күнгі іс-шаралар еленбейді</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Бүкіл күнгі іс-шарасы бар күн толығымен бос емес</string>
+    <string name="share_availability_share_button">Бөлісу</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Келесі %1$d күн бос (%2$s – %3$s):</item>
+        <item quantity="other">Келесі %1$d күн бос (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Таңдалған аралықта кемінде бір сағаттық бос блоктар жоқ.</string>
+    <string name="share_availability_chooser_title">Қолжетімділікті бөлісу</string>
+    <string name="share_availability_share_failed">Бөлісу үшін қолданба жоқ</string>
+    <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
 </resources>

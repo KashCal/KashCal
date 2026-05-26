@@ -1006,10 +1006,30 @@
     <string name="inbox_organizer_suffix">(주최자)</string>
     <string name="menu_invites">초대</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">날짜</string>
+    <string name="jump_to_date">날짜로 이동</string>
     <string name="menu_about">정보</string>
     <string name="menu_more">더보기 메뉴</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">더보기 메뉴, 대기 중인 초대 %d건</item>
+    </plurals>
+    <string name="share_availability_rail_label">가용성 공유</string>
+    <string name="share_availability_sheet_title">가용성 공유</string>
+    <string name="share_availability_hours_label">근무 시간: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">종일 일정을 바쁨으로 처리</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">종일 일정은 무시됩니다</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">종일 일정이 있는 날은 완전히 바쁨</string>
+    <string name="share_availability_share_button">공유</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">선택한 범위에서 한 시간 이상의 여유 블록이 없습니다.</string>
+    <string name="share_availability_chooser_title">가용성 공유</string>
+    <string name="share_availability_share_failed">공유할 수 있는 앱이 없습니다</string>
+    <string name="share_from_kashcal_footer">KashCal에서 공유됨</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">다음 %1$d일</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">다음 %1$d일 동안 여유 시간 (%2$s – %3$s):</item>
     </plurals>
 </resources>

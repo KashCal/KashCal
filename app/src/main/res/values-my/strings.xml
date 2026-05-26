@@ -1025,10 +1025,30 @@
     <string name="inbox_organizer_suffix">(စီစဉ်သူ)</string>
     <string name="menu_invites">ဖိတ်ကြားချက်များ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ရက်စွဲ</string>
+    <string name="jump_to_date">ရက်စွဲသို့သွားရန်</string>
     <string name="menu_about">အကြောင်း</string>
     <string name="menu_more">အခြားမီနူး</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>
+    </plurals>
+    <string name="share_availability_rail_label">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <string name="share_availability_sheet_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <string name="share_availability_hours_label">အလုပ်ချိန်: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">တစ်ရက်လုံး ပွဲများကို အလုပ်များသည်ဟု သတ်မှတ်ပါ</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">တစ်ရက်လုံး ပွဲများကို လျစ်လျူရှုသည်</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">တစ်ရက်လုံး ပွဲရှိသော နေ့သည် အပြည့်အဝ အလုပ်များသည်</string>
+    <string name="share_availability_share_button">မျှဝေရန်</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ရွေးချယ်ထားသော အပိုင်းအခြားတွင် အနည်းဆုံး တစ်နာရီ အားလပ်သော အပိုင်းများ မရှိပါ။</string>
+    <string name="share_availability_chooser_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <string name="share_availability_share_failed">မျှဝေရန် အက်ပ် မရှိပါ</string>
+    <string name="share_from_kashcal_footer">KashCal မှ မျှဝေထားသည်</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">နောက် %1$d ရက်</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">နောက် %1$d ရက်အတွင်း အားလပ် (%2$s – %3$s):</item>
     </plurals>
 </resources>

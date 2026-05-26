@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -331,6 +332,18 @@ class SettingsActivity : ComponentActivity() {
                 }
 
                 val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
+
+                BackHandler(
+                    enabled = showAccountsScreen ||
+                        showBirthdaysAnniversariesScreen ||
+                        showSubscriptionsScreen ||
+                        showDeviceCalendarsScreen
+                ) {
+                    showAccountsScreen = false
+                    showBirthdaysAnniversariesScreen = false
+                    showSubscriptionsScreen = false
+                    showDeviceCalendarsScreen = false
+                }
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     // State-based navigation between settings and detail screens

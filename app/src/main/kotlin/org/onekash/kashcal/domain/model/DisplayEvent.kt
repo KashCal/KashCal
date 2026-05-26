@@ -128,8 +128,13 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
  * Same format as EventQuickViewSheet share: title, date/time, location, footer.
  *
  * @param timePattern Time format pattern (e.g., "h:mm a" or "HH:mm")
+ * @param footer Trailing line appended after a blank line (caller-resolved
+ * so the helper stays Context-free and unit-testable).
  */
-fun DisplayEvent.Device.buildShareText(timePattern: String = "h:mm a"): String = buildString {
+fun DisplayEvent.Device.buildShareText(
+    timePattern: String = "h:mm a",
+    footer: String = "Shared from KashCal"
+): String = buildString {
     appendLine(title)
 
     val dateFormat = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEMMMd"), Locale.getDefault())
@@ -166,5 +171,5 @@ fun DisplayEvent.Device.buildShareText(timePattern: String = "h:mm a"): String =
     }
 
     appendLine()
-    appendLine("Shared from KashCal")
+    appendLine(footer)
 }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,6 +63,7 @@ fun CalendarDrawer(
     onViewSelect: (ViewMode) -> Unit,
     onToggleCalendar: (Long) -> Unit,
     onToggleDeviceCalendarVisibility: (Long) -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val (regularGroups, contactsGroups) = remember(calendarGroups) {
@@ -278,9 +280,34 @@ fun CalendarDrawer(
                 }
             }
 
-            // ===== Feedback =====
-            item(key = "feedback_divider") {
+            // ===== App meta (Settings + Feedback) =====
+            item(key = "settings_divider") {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            item(key = "settings") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(50))
+                        .clickable { onSettingsClick() }
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             item(key = "feedback") {

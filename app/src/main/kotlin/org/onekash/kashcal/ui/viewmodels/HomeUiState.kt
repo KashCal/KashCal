@@ -175,6 +175,8 @@ data class HomeUiState(
     val showOnboardingSheet: Boolean = false,
     /** Show app info sheet */
     val showAppInfoSheet: Boolean = false,
+    /** Show share-availability bottom sheet */
+    val showShareAvailabilitySheet: Boolean = false,
     /** Show invitation inbox bottom sheet */
     val isInvitationInboxOpen: Boolean = false,
     /** Show sync changes bottom sheet */

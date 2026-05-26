@@ -570,10 +570,14 @@ class IcsRealWorldFeedsTest {
      * Issue #227: Google's private ICS export emits two adversarial patterns
      * in a single feed — an orphaned RECURRENCE-ID (master sliced out of the
      * export window) and two non-exception VEVENTs sharing a UID. Pre-fix,
-     * KashCal imported only 1 of 3 events. This pins the post-fix behavior.
+     * KashCal imported only 1 of 3 events.
+     *
+     * Post-fix: 4 rows inserted (synthetic master + 1 linked exception for
+     * abc@google.com, plus 2 disambiguated xxx@google.com#dup=* masters);
+     * 3 rows visible to user (synthetic has no occurrences).
      */
     @Test
-    fun `regression - Issue 227 Google ICS feed yields all 3 events`() = runTest {
+    fun `regression - Issue 227 Google ICS feed inserts 4 rows and renders 3`() = runTest {
         val content = loadResource("ics/issue_227_google_orphan_and_duplicate_uid.ics")
 
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -585,16 +589,27 @@ class IcsRealWorldFeedsTest {
         val result = repository.refreshSubscription(1L)
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         assertEquals(
-            "All 3 events from issue #227's feed must be imported",
-            3,
+            "Synthetic master + linked exception + 2 disambiguated masters",
+            4,
             (result as IcsSubscriptionRepository.SyncResult.Success).count.added
         )
 
-        // Bug A: orphaned RECURRENCE-ID promoted to standalone.
-        val orphan = insertedEvents.singleOrNull { it.uid == "abc@google.com" }
-        assertNotNull("Orphaned exception promoted to standalone", orphan)
-        assertNull(orphan!!.originalEventId)
-        assertNull(orphan.originalInstanceTime)
+        // Bug A: orphaned RECURRENCE-ID linked to synthetic master.
+        val abcRows = insertedEvents.filter { it.uid == "abc@google.com" }
+        assertEquals("abc@google.com: 1 synthetic + 1 linked exception", 2, abcRows.size)
+        val abcSynthetic = abcRows.single { it.originalInstanceTime == null }
+        val abcException = abcRows.single { it.originalInstanceTime != null }
+        assertEquals(
+            "Synthetic carries the X-KASHCAL-SYNTHETIC-MASTER sentinel",
+            "true",
+            abcSynthetic.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY)
+        )
+        assertEquals("Synthetic status CANCELLED", "CANCELLED", abcSynthetic.status)
+        assertEquals(
+            "Exception linked to synthetic master",
+            abcSynthetic.id,
+            abcException.originalEventId
+        )
 
         // Bug B: duplicate-UID masters disambiguated by startTs.
         val mutated = insertedEvents.filter { it.uid.startsWith("xxx@google.com#dup=") }
@@ -692,6 +707,92 @@ class IcsRealWorldFeedsTest {
 
         // 2 exceptions -> linkException
         coVerify(exactly = 2) {
+            occurrenceGenerator.linkException(any(), any(), any<Event>())
+        }
+    }
+
+    /**
+     * Issue #227 reporter's full sanitized feed: 120 VEVENTs spanning
+     * 20 distinct UIDs. Three of the UIDs ship a master VEVENT
+     * (uid-000012, uid-000016, uid-000018); the other 17 UIDs ship
+     * exception VEVENTs only — Google's truncated-private-export pattern
+     * where the master is sliced out of the export window.
+     *
+     * Pre-fix: ~10 of 120 events rendered (one per UID, dropped via
+     * the master-uniqueness trigger silently catching second-and-
+     * subsequent same-UID orphan-promotion INSERTs).
+     *
+     * Post-fix: 137 rows inserted — 17 synthetic masters + 117 linked
+     * exceptions + 3 real masters. 120 events visible (synthetic
+     * masters produce no occurrences). Each orphan exception keeps
+     * its originalInstanceTime intact and links to the synthetic for
+     * its UID.
+     */
+    @Test
+    fun `regression - Issue 227 reporter's 120-event sanitized feed materializes all events`() = runTest {
+        val content = loadResource("ics/issue_227_reporter_full.ics")
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = content, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+        assertTrue(
+            "Sync must succeed on the reporter's full feed",
+            result is IcsSubscriptionRepository.SyncResult.Success
+        )
+        val count = (result as IcsSubscriptionRepository.SyncResult.Success).count
+        assertEquals(
+            "17 synthetic + 117 exceptions + 3 real masters = 137 rows",
+            137,
+            count.added
+        )
+        assertEquals(137, insertedEvents.size)
+
+        val synthetics = insertedEvents.filter {
+            it.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true"
+        }
+        assertEquals(
+            "One synthetic per orphan UID (17 UIDs lack a master in the feed)",
+            17,
+            synthetics.size
+        )
+        synthetics.forEach { s ->
+            assertEquals("Synthetic status CANCELLED", "CANCELLED", s.status)
+            assertEquals(
+                "Synthetic is zero-duration",
+                s.startTs,
+                s.endTs
+            )
+            assertNull("Synthetic has no rrule", s.rrule)
+        }
+
+        val exceptions = insertedEvents.filter { it.originalInstanceTime != null }
+        assertEquals("All 117 RECURRENCE-ID events are linked exceptions", 117, exceptions.size)
+        exceptions.forEach { exception ->
+            assertNotNull(
+                "Each exception has an originalEventId pointing to its master",
+                exception.originalEventId
+            )
+            assertNotNull(
+                "Each exception preserves its originalInstanceTime",
+                exception.originalInstanceTime
+            )
+        }
+
+        val realMasters = insertedEvents.filter {
+            it.originalInstanceTime == null &&
+                it.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) != "true"
+        }
+        assertEquals("3 real masters in the feed", 3, realMasters.size)
+
+        // No occurrence regeneration for synthetics — only the 3 real
+        // masters get regenerateOccurrences called.
+        coVerify(exactly = 3) { occurrenceGenerator.regenerateOccurrences(any()) }
+        // 117 linked exceptions all hit linkException.
+        coVerify(exactly = 117) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }
     }

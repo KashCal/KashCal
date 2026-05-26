@@ -1006,11 +1006,31 @@
     <string name="inbox_organizer_suffix">(penganjur)</string>
     <string name="menu_invites">Jemputan</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Tarikh</string>
+    <string name="jump_to_date">Pergi ke tarikh</string>
     <string name="menu_about">Perihal</string>
     <string name="menu_more">Menu lain</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Menu lain, %d jemputan menunggu</item>
         <item quantity="other">Menu lain, %d jemputan menunggu</item>
+    </plurals>
+    <string name="share_availability_rail_label">Kongsi ketersediaan</string>
+    <string name="share_availability_sheet_title">Kongsi ketersediaan</string>
+    <string name="share_availability_hours_label">Waktu kerja: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Anggap acara sepanjang hari sebagai sibuk</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Acara sepanjang hari diabaikan</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Hari dengan acara sepanjang hari sepenuhnya sibuk</string>
+    <string name="share_availability_share_button">Kongsi</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Tiada blok lapang sekurang-kurangnya satu jam dalam julat yang dipilih.</string>
+    <string name="share_availability_chooser_title">Kongsi ketersediaan</string>
+    <string name="share_availability_share_failed">Tiada apl untuk dikongsi</string>
+    <string name="share_from_kashcal_footer">Dikongsi dari KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">%1$d hari akan datang</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="other">Lapang dalam %1$d hari akan datang (%2$s – %3$s):</item>
     </plurals>
 </resources>

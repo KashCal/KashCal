@@ -1014,11 +1014,35 @@
     <string name="inbox_organizer_suffix">(järjestäjä)</string>
     <string name="menu_invites">Kutsut</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Päivämäärä</string>
+    <string name="jump_to_date">Siirry päivämäärään</string>
     <string name="menu_about">Tietoja</string>
     <string name="menu_more">Lisää-valikko</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Lisää-valikko, %d kutsu odottaa</item>
         <item quantity="other">Lisää-valikko, %d kutsua odottaa</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Jaa saatavuus</string>
+    <string name="share_availability_sheet_title">Jaa saatavuus</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Seuraava %1$d päivä</item>
+        <item quantity="other">Seuraavat %1$d päivää</item>
+    </plurals>
+    <string name="share_availability_hours_label">Työaika: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Käsittele koko päivän tapahtumia varattuna</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Koko päivän tapahtumat jätetään huomiotta</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Päivä, jossa on koko päivän tapahtuma, on kokonaan varattu</string>
+    <string name="share_availability_share_button">Jaa</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Vapaa seuraavan %1$d päivän aikana (%2$s – %3$s):</item>
+        <item quantity="other">Vapaa seuraavien %1$d päivän aikana (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Valitulla aikavälillä ei ole vähintään tunnin pituisia vapaita lohkoja.</string>
+    <string name="share_availability_chooser_title">Jaa saatavuus</string>
+    <string name="share_availability_share_failed">Ei jakamiseen sopivaa sovellusta</string>
+    <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
 </resources>

@@ -1042,11 +1042,33 @@
     <string name="inbox_organizer_suffix">(ਪ੍ਰਬੰਧਕ)</string>
     <string name="menu_invites">ਸੱਦੇ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ਮਿਤੀ</string>
+    <string name="jump_to_date">ਮਿਤੀ ਤੇ ਜਾਓ</string>
     <string name="menu_about">ਬਾਰੇ</string>
     <string name="menu_more">ਹੋਰ ਮੀਨੂ</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">ਹੋਰ ਮੀਨੂ, %d ਸੱਦਾ ਬਕਾਇਆ</item>
         <item quantity="other">ਹੋਰ ਮੀਨੂ, %d ਸੱਦੇ ਬਕਾਇਆ</item>
+    </plurals>
+    <string name="share_availability_rail_label">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <string name="share_availability_sheet_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <string name="share_availability_hours_label">ਕੰਮ ਦੇ ਘੰਟੇ: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟਾਂ ਨੂੰ ਰੁੱਝੇ ਵਜੋਂ ਮੰਨੋ</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟਾਂ ਨੂੰ ਅਣਡਿੱਠ ਕੀਤਾ ਜਾਂਦਾ ਹੈ</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟ ਵਾਲਾ ਦਿਨ ਪੂਰੀ ਤਰ੍ਹਾਂ ਰੁੱਝਿਆ ਹੈ</string>
+    <string name="share_availability_share_button">ਸਾਂਝਾ ਕਰੋ</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ਚੁਣੀ ਗਈ ਰੇਂਜ ਵਿੱਚ ਘੱਟੋ ਘੱਟ ਇੱਕ ਘੰਟੇ ਦੇ ਕੋਈ ਖਾਲੀ ਬਲਾਕ ਨਹੀਂ ਹਨ।</string>
+    <string name="share_availability_chooser_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <string name="share_availability_share_failed">ਸਾਂਝਾ ਕਰਨ ਲਈ ਕੋਈ ਐਪ ਉਪਲਬਧ ਨਹੀਂ</string>
+    <string name="share_from_kashcal_footer">KashCal ਤੋਂ ਸਾਂਝਾ ਕੀਤਾ</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ਅਗਲਾ %1$d ਦਿਨ</item>
+        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨ</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">ਅਗਲੇ %1$d ਦਿਨ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
+        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨਾਂ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
     </plurals>
 </resources>

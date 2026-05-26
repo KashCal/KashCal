@@ -702,6 +702,7 @@
     <string name="cd_open_rail">Menü megnyitása</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Menü bezárása</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Naptár nézet</string>
     <string name="cd_active_view">Aktív nézet</string>
 
@@ -1072,11 +1073,33 @@
     <string name="inbox_organizer_suffix">(szervező)</string>
     <string name="menu_invites">Meghívók</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dátum</string>
+    <string name="jump_to_date">Ugrás dátumhoz</string>
     <string name="menu_about">Névjegy</string>
     <string name="menu_more">Egyéb menü</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Egyéb menü, %d meghívó vár</item>
         <item quantity="other">Egyéb menü, %d meghívó vár</item>
+    </plurals>
+    <string name="share_availability_rail_label">Elérhetőség megosztása</string>
+    <string name="share_availability_sheet_title">Elérhetőség megosztása</string>
+    <string name="share_availability_hours_label">Munkaidő: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Egész napos események elfoglaltként kezelése</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Az egész napos eseményeket figyelmen kívül hagyjuk</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Az egész napos eseményt tartalmazó nap teljesen elfoglalt</string>
+    <string name="share_availability_share_button">Megosztás</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">A kiválasztott tartományban nincsenek legalább egy órás szabad blokkok.</string>
+    <string name="share_availability_chooser_title">Elérhetőség megosztása</string>
+    <string name="share_availability_share_failed">Nincs alkalmazás a megosztáshoz</string>
+    <string name="share_from_kashcal_footer">Megosztva a KashCal alkalmazásból</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Következő %1$d nap</item>
+        <item quantity="other">Következő %1$d nap</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Szabad a következő %1$d napban (%2$s – %3$s):</item>
+        <item quantity="other">Szabad a következő %1$d napban (%2$s – %3$s):</item>
     </plurals>
 </resources>

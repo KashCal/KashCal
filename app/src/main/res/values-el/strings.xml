@@ -702,6 +702,7 @@
     <string name="cd_open_rail">Άνοιγμα μενού</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Κλείσιμο μενού</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Προβολή ημερολογίου</string>
     <string name="cd_active_view">Ενεργή προβολή</string>
 
@@ -1072,11 +1073,33 @@
     <string name="inbox_organizer_suffix">(διοργανωτής)</string>
     <string name="menu_invites">Προσκλήσεις</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Ημερομηνία</string>
+    <string name="jump_to_date">Μετάβαση σε ημερομηνία</string>
     <string name="menu_about">Σχετικά</string>
     <string name="menu_more">Μενού «Περισσότερα»</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Μενού «Περισσότερα», %d πρόσκληση σε εκκρεμότητα</item>
         <item quantity="other">Μενού «Περισσότερα», %d προσκλήσεις σε εκκρεμότητα</item>
+    </plurals>
+    <string name="share_availability_rail_label">Κοινή χρήση διαθεσιμότητας</string>
+    <string name="share_availability_sheet_title">Κοινή χρήση διαθεσιμότητας</string>
+    <string name="share_availability_hours_label">Ώρες εργασίας: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Αντιμετώπιση ολοήμερων συμβάντων ως απασχολημένος</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Τα ολοήμερα συμβάντα αγνοούνται</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Μια ημέρα με ολοήμερο συμβάν είναι πλήρως απασχολημένη</string>
+    <string name="share_availability_share_button">Κοινή χρήση</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Δεν υπάρχουν ελεύθερα μπλοκ τουλάχιστον μίας ώρας στο επιλεγμένο εύρος.</string>
+    <string name="share_availability_chooser_title">Κοινή χρήση διαθεσιμότητας</string>
+    <string name="share_availability_share_failed">Δεν υπάρχει διαθέσιμη εφαρμογή για κοινή χρήση</string>
+    <string name="share_from_kashcal_footer">Κοινοποιήθηκε από το KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Επόμενη %1$d ημέρα</item>
+        <item quantity="other">Επόμενες %1$d ημέρες</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Ελεύθερο την επόμενη %1$d ημέρα (%2$s – %3$s):</item>
+        <item quantity="other">Ελεύθερο τις επόμενες %1$d ημέρες (%2$s – %3$s):</item>
     </plurals>
 </resources>

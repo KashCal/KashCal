@@ -134,13 +134,37 @@ class SettingsBackupImporter @Inject constructor(
             ExportablePreferences.fromBackupValue(name, value)
         }
         if (decoded.isEmpty()) return 0
+
+        // Sanitize share-availability values across the whole bundle before writing,
+        // so a malformed backup can't persist values that would crash the sheet on
+        // first open. Cross-field constraints (window >= 60 min) require knowing
+        // both endpoints, so we resolve them together.
+        val byName = decoded.associate { it.first.name to it.second }
+        val rawStart = (byName[PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN.name] as? Int)
+            ?: KashCalDataStore.SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN
+        val rawEnd = (byName[PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN.name] as? Int)
+            ?: KashCalDataStore.SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN
+        val safeStart = KashCalDataStore.sanitizeWorkStartMin(rawStart, rawEnd)
+        val safeEnd = KashCalDataStore.sanitizeWorkEndMin(rawEnd, safeStart)
+
+        val sanitized = decoded.map { (key, value) ->
+            val coerced: Any = when (key.name) {
+                PreferencesKeys.SHARE_AVAILABILITY_DAYS.name ->
+                    KashCalDataStore.sanitizeShareAvailabilityDays(value as Int)
+                PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN.name -> safeStart
+                PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN.name -> safeEnd
+                else -> value
+            }
+            key to coerced
+        }
+
         dataStore.edit { prefs ->
-            for ((key, value) in decoded) {
+            for ((key, value) in sanitized) {
                 @Suppress("UNCHECKED_CAST")
                 prefs[key as androidx.datastore.preferences.core.Preferences.Key<Any>] = value
             }
         }
-        return decoded.size
+        return sanitized.size
     }
 
     private class Counts {

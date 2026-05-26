@@ -209,4 +209,18 @@ object PreferencesKeys {
      * and pending operations.
      */
     val ICLOUD_URL_MIGRATION_COMPLETED = booleanPreferencesKey("icloud_url_migration_completed")
+
+    // ========== Share Availability ==========
+
+    /** Number of days to include in shared availability summary (1..14, default 7). */
+    val SHARE_AVAILABILITY_DAYS = intPreferencesKey("share_availability_days")
+
+    /** Working-hours window start as minutes from midnight (0..1440, default 540 = 09:00). */
+    val SHARE_AVAILABILITY_WORK_START_MIN = intPreferencesKey("share_availability_work_start_min")
+
+    /** Working-hours window end as minutes from midnight (0..1440, default 1020 = 17:00). */
+    val SHARE_AVAILABILITY_WORK_END_MIN = intPreferencesKey("share_availability_work_end_min")
+
+    /** Treat all-day events as busy when computing free blocks (default false). */
+    val SHARE_AVAILABILITY_INCLUDE_ALL_DAY = booleanPreferencesKey("share_availability_include_all_day")
 }

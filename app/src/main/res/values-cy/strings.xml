@@ -1234,7 +1234,7 @@
     <string name="inbox_organizer_suffix">(trefnydd)</string>
     <string name="menu_invites">Gwahoddiadau</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dyddiad</string>
+    <string name="jump_to_date">Mynd at ddyddiad</string>
     <string name="menu_about">Ynghylch</string>
     <string name="menu_more">Dewislen Rhagor</string>
     <plurals name="menu_more_with_invites">
@@ -1245,4 +1245,37 @@
         <item quantity="many">Dewislen Rhagor, %d gwahoddiad yn aros</item>
         <item quantity="other">Dewislen Rhagor, %d gwahoddiad yn aros</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Rhannu argaeledd</string>
+    <string name="share_availability_sheet_title">Rhannu argaeledd</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="zero">%1$d diwrnod nesaf</item>
+        <item quantity="one">%1$d diwrnod nesaf</item>
+        <item quantity="two">%1$d ddiwrnod nesaf</item>
+        <item quantity="few">%1$d ddiwrnod nesaf</item>
+        <item quantity="many">%1$d diwrnod nesaf</item>
+        <item quantity="other">%1$d diwrnod nesaf</item>
+    </plurals>
+    <string name="share_availability_hours_label">Oriau gwaith: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Trin digwyddiadau diwrnod cyfan fel prysur</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Anwybyddir digwyddiadau diwrnod cyfan</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Mae diwrnod gyda digwyddiad diwrnod cyfan yn brysur yn llwyr</string>
+    <string name="share_availability_share_button">Rhannu</string>
+    <plurals name="share_availability_header">
+        <item quantity="zero">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
+        <item quantity="one">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
+        <item quantity="two">Rhydd dros y %1$d ddiwrnod nesaf (%2$s – %3$s):</item>
+        <item quantity="few">Rhydd dros y %1$d ddiwrnod nesaf (%2$s – %3$s):</item>
+        <item quantity="many">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
+        <item quantity="other">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Dim blociau rhydd o awr o leiaf yn yr ystod a ddewiswyd.</string>
+    <string name="share_availability_chooser_title">Rhannu argaeledd</string>
+    <string name="share_availability_share_failed">Dim ap ar gael i\'w rannu</string>
+    <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
+
 </resources>

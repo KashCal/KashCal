@@ -12,6 +12,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
+import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -31,6 +32,19 @@ private const val TAG = "IcsSubscriptionRepo"
  * original UID from this key on outbound ICS.
  */
 internal const val ORIGINAL_UID_EXTRA_KEY = "X-KASHCAL-ORIGINAL-UID"
+
+/**
+ * extraProperties sentinel marking a master row as a synthetic placeholder
+ * synthesized by ICS sync because the feed contained orphan exception events
+ * (UID + RECURRENCE-ID) but no master VEVENT for that UID. Synthetic masters
+ * exist solely as FK targets so orphan exceptions can link to a master and
+ * survive the master-uniqueness trigger; they have status=CANCELLED, no
+ * RRULE, zero duration, and produce no occurrences. When a real master
+ * later arrives in the feed, the upsert path matches by importId=uid and
+ * the synthetic row is mutated in place into a real master (rrule populated,
+ * status flipped, sentinel cleared).
+ */
+internal const val SYNTHETIC_MASTER_EXTRA_KEY = "X-KASHCAL-SYNTHETIC-MASTER"
 
 /**
  * Repository for managing ICS calendar subscriptions.
@@ -388,23 +402,38 @@ class IcsSubscriptionRepository @Inject constructor(
     /**
      * Sync parsed events to database with atomic transaction.
      *
-     * Three-pass processing:
-     * - Pre-pass: disambiguate duplicate-UID master groups (issue #227 —
-     *   Google's private ICS export sometimes emits two non-exception
+     * Pipeline:
+     * - Pre-pass: disambiguate duplicate-UID master groups (issue #227 Bug
+     *   B — Google's private ICS export sometimes emits two non-exception
      *   VEVENTs sharing a UID, which would trip the master-uniqueness
      *   trigger). Mutates uid/importId/caldavUrl for affected rows and
      *   stashes the original UID in extraProperties.
-     * - Pass 1: Process master events. Sweeps previously-promoted
-     *   standalone orphan rows for any incoming master's UID before insert.
-     * - Pass 2: Process exception events, linking to masters. Falls through
-     *   to a standalone insert when no master is found in the feed (issue
-     *   #227 — Google emits exceptions whose master is sliced out of the
-     *   export window). The :RECID: marker in the standalone's importId
-     *   is what the next sync's sweep keys on.
+     * - Inside the transaction:
+     *   - Synthesize one placeholder master per orphan UID (issue #227 Bug
+     *     A — feed contains exceptions whose master VEVENT is sliced out
+     *     of the export window). Synthetic masters have rrule=null,
+     *     status=CANCELLED, importId=uid, zero duration, and are tagged
+     *     with [SYNTHETIC_MASTER_EXTRA_KEY] in extraProperties. They exist
+     *     solely as FK targets so orphan exceptions can link to a master
+     *     row and the master-uniqueness trigger sees only one master per
+     *     (uid, calendar) combination. Synthetic masters never call
+     *     `regenerateOccurrences` or `scheduleRemindersForEvent`.
+     *   - Orphan-cleanup sweep deletes existing rows whose importIds are
+     *     not in the union of (real importIds, synthetic importIds).
+     *   - PASS 1: process master events. Sweeps legacy `:RECID:`-marked
+     *     standalone rows from prior versions (pre-synthesis builds) when
+     *     a real master arrives.
+     *   - PASS 2: process exception events, linking each to its master via
+     *     `masterIdByUid` (now populated for every UID in the feed).
      *
      * Per RFC 5545, exception events share the same UID as their master
-     * but differ by RECURRENCE-ID. We use importId (which includes RECURRENCE-ID)
-     * for unique identification.
+     * but differ by RECURRENCE-ID. We use importId (which includes
+     * RECURRENCE-ID) for unique identification.
+     *
+     * Self-heal: when a real master later arrives in the feed for a UID
+     * that previously had only orphan exceptions, the upsert path matches
+     * the existing synthetic by `existingByImportId[uid]` and mutates the
+     * row in place into a real master — exception FK references survive.
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,
@@ -435,7 +464,23 @@ class IcsSubscriptionRepository @Inject constructor(
             val existingByImportId = existingEvents
                 .associateBy { extractImportIdFromSource(it.caldavUrl) }
                 .toMutableMap()
-            val newImportIds = disambiguatedEvents.map { it.importId }.toSet()
+
+            // Synthesize one placeholder master per orphan UID (no master in
+            // the feed, no master in DB). Must run inside the transaction:
+            // we depend on `existingByImportId` (built here) and the inserts
+            // must roll back atomically on failure. Must run BEFORE
+            // `newImportIds` is computed so synthetic importIds are folded
+            // in and the orphan-cleanup sweep doesn't immediately delete them.
+            val syntheticMasters = synthesizeMastersForOrphanUids(
+                feedEvents = disambiguatedEvents,
+                existingByImportId = existingByImportId,
+                subscriptionId = subscriptionId
+            )
+
+            val newImportIds = (
+                disambiguatedEvents.map { it.importId } +
+                    syntheticMasters.map { it.importId }
+                ).toSet()
 
             // Delete orphaned events (cancel reminders first!)
             val orphanedImportIds = existingByImportId.keys - newImportIds
@@ -447,40 +492,35 @@ class IcsSubscriptionRepository @Inject constructor(
                 deleted++
             }
 
-            // Separate masters and exceptions
-            val masters = disambiguatedEvents.filter { it.originalInstanceTime == null }
-            val exceptions = disambiguatedEvents.filter { it.originalInstanceTime != null }
-
-            // Track master IDs for exception linking
+            // Track master IDs for exception linking. Pre-populated from
+            // synthesis so PASS 2 finds a master for every orphan UID.
             val masterIdByUid = mutableMapOf<String, Long>()
 
-            // PASS 1: Process masters
-            for (event in masters) {
+            // Insert synthetic masters first so their row ids are recorded
+            // in masterIdByUid before PASS 2 looks them up.
+            for (synthetic in syntheticMasters) {
+                deleted += sweepLegacyOrphanStandalones(synthetic.uid, existingByImportId)
+                val existingEvent = existingByImportId[synthetic.importId]
+                val (eventId, isNew) = upsertEvent(synthetic, existingEvent)
+                masterIdByUid[synthetic.uid] = eventId
+                if (isNew) added++ else updated++
+                // Synthetic masters intentionally skip both
+                // `regenerateOccurrences` and `scheduleRemindersForEvent`:
+                // they have no occurrences (no rrule, status=CANCELLED) and
+                // no reminders to schedule.
+            }
+
+            val realMasters = disambiguatedEvents.filter { it.originalInstanceTime == null }
+            val exceptions = disambiguatedEvents.filter { it.originalInstanceTime != null }
+
+            // PASS 1: Process real masters
+            for (event in realMasters) {
                 try {
                     // Sweep previously-promoted standalone orphans with this
                     // UID before inserting the master — otherwise the master's
                     // INSERT trips trigger_master_event_unique_insert on the
                     // (uid, calendar_id, original_event_id IS NULL) collision.
-                    // Sync N's standalone is the row with the same uid AND a
-                    // :RECID: marker in importId. The inbound exception in the
-                    // same feed will be re-inserted as a fresh exception row
-                    // in Pass 2.
-                    val staleOrphanKeys = existingByImportId
-                        .filter { (key, value) ->
-                            key != null &&
-                                key.contains(":RECID:") &&
-                                value.uid == event.uid &&
-                                value.originalEventId == null
-                        }
-                        .keys
-                        .toList()
-                    for (staleKey in staleOrphanKeys) {
-                        val staleRow = existingByImportId[staleKey] ?: continue
-                        reminderScheduler.cancelRemindersForEvent(staleRow.id)
-                        eventsDao.deleteById(staleRow.id)
-                        existingByImportId.remove(staleKey)
-                        deleted++
-                    }
+                    deleted += sweepLegacyOrphanStandalones(event.uid, existingByImportId)
 
                     val existingEvent = existingByImportId[event.importId]
                     val (eventId, isNew) = upsertEvent(event, existingEvent)
@@ -502,43 +542,45 @@ class IcsSubscriptionRepository @Inject constructor(
                 }
             }
 
-            // Also include existing masters for exceptions referencing pre-existing masters
+            // Also include existing masters for exceptions referencing
+            // pre-existing masters. Two shapes qualify: real recurring
+            // masters (rrule != null) and synthetic placeholders inserted
+            // by a prior sync (rrule == null, sentinel set). Including the
+            // synthetic shape is what makes idempotent re-syncs of an
+            // orphan-only feed work: synthesis short-circuits when the
+            // synthetic already exists, so PASS 2 must find its id here
+            // or it would skip every exception.
             for (existingEvent in existingEvents) {
-                if (existingEvent.rrule != null && existingEvent.originalEventId == null) {
+                if (existingEvent.originalEventId == null &&
+                    (existingEvent.rrule != null ||
+                        existingEvent.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true")
+                ) {
                     masterIdByUid.putIfAbsent(existingEvent.uid, existingEvent.id)
                 }
             }
 
-            // PASS 2: Process exceptions with master linkage
+            // PASS 2: Process exceptions with master linkage. Every UID has
+            // a master after synthesis, so the standalone-fallback path is
+            // gone — `masterIdByUid[event.uid]` is always non-null here
+            // unless something pathological happened (e.g. synthesis aborted
+            // at the trigger), in which case we log + skip.
             for (event in exceptions) {
                 try {
                     val masterId = masterIdByUid[event.uid]
                     if (masterId == null) {
-                        // Issue #227: orphaned RECURRENCE-ID — no master in
-                        // this feed. Promote to standalone so the user sees
-                        // the event. Keep :RECID: in importId so a future
-                        // sync can sweep this row when the master arrives.
-                        val standalone = event.copy(
-                            originalEventId = null,
-                            originalInstanceTime = null
+                        Log.w(
+                            TAG,
+                            "Exception with no master after synthesis: uid=${event.uid.maskUid()} — skipping"
                         )
-                        val existingEvent = existingByImportId[event.importId]
-                        val (eventId, isNew) = upsertEvent(standalone, existingEvent)
-                        val savedEvent = standalone.copy(id = eventId)
-                        occurrenceGenerator.regenerateOccurrences(savedEvent)
-                        scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
-                        if (isNew) added++ else updated++
                         continue
                     }
 
-                    // Link exception to master
                     val linkedEvent = event.copy(originalEventId = masterId)
                     val existingEvent = existingByImportId[event.importId]
                     val (eventId, isNew) = upsertEvent(linkedEvent, existingEvent)
 
                     val savedEvent = linkedEvent.copy(id = eventId)
 
-                    // Use linkException for Model B occurrence handling
                     val originalTime = savedEvent.originalInstanceTime
                     if (originalTime != null) {
                         occurrenceGenerator.linkException(masterId, originalTime, savedEvent)
@@ -553,6 +595,133 @@ class IcsSubscriptionRepository @Inject constructor(
         }
 
         return SyncCount(added, updated, deleted)
+    }
+
+    /**
+     * Sweep legacy `:RECID:`-marked standalone rows for [uid] from
+     * [existingByImportId]. These are rows from older builds (v23.7.45 and
+     * earlier) that promoted orphan exceptions to standalone events with
+     * importId `{uid}:RECID:{datetime}`. When a master arrives — real or
+     * synthetic — those legacy rows must be deleted before the master
+     * inserts, otherwise the master's INSERT trips the master-uniqueness
+     * trigger on the (uid, calendar_id, original_event_id IS NULL) collision.
+     *
+     * Returns the count of rows swept (for the deletion total).
+     */
+    private suspend fun sweepLegacyOrphanStandalones(
+        uid: String,
+        existingByImportId: MutableMap<String?, Event>
+    ): Int {
+        val staleOrphanKeys = existingByImportId
+            .filter { (key, value) ->
+                key != null &&
+                    key.contains(":RECID:") &&
+                    value.uid == uid &&
+                    value.originalEventId == null
+            }
+            .keys
+            .toList()
+        var swept = 0
+        for (staleKey in staleOrphanKeys) {
+            val staleRow = existingByImportId[staleKey] ?: continue
+            reminderScheduler.cancelRemindersForEvent(staleRow.id)
+            eventsDao.deleteById(staleRow.id)
+            existingByImportId.remove(staleKey)
+            swept++
+        }
+        return swept
+    }
+
+    /**
+     * Build synthetic placeholder masters for orphan-exception UIDs.
+     *
+     * Issue #227 Bug A: Google's private ICS export emits exception VEVENTs
+     * (UID + RECURRENCE-ID) whose master VEVENT is sliced out of the
+     * export window. Pre-fix, only the first orphan per UID survived (the
+     * second-and-subsequent orphan-promote-to-standalone INSERTs tripped
+     * `trigger_master_event_unique_insert`). Now we synthesize one master
+     * per orphan UID up front, exceptions link to it via the existing
+     * PASS 2 path, and the trigger sees exactly one master per (uid,
+     * calendar) combination — the trigger has nothing to fire on.
+     *
+     * Synthesis is purely additive: only kicks in for UIDs that have
+     * exception events but no master in either the new feed or the
+     * existing DB rows. The master row itself is "inert":
+     * - status = "CANCELLED" (semantically inactive per RFC 5545 §3.8.1.11)
+     * - rrule = null (not recurring)
+     * - dtstart == dtend == earliestRecurrenceId (zero duration; produces
+     *   no occurrences)
+     * - extraProperties[SYNTHETIC_MASTER_EXTRA_KEY] = "true" (sentinel for
+     *   future code to identify these rows)
+     *
+     * Self-heal: when a real master later arrives in the feed for a UID
+     * that previously had only orphan exceptions, the upsert path matches
+     * the existing synthetic at `existingByImportId[uid]` and mutates the
+     * row in place — rrule populates, status flips to CONFIRMED, sentinel
+     * clears, exception FK references survive.
+     */
+    private fun synthesizeMastersForOrphanUids(
+        feedEvents: List<Event>,
+        existingByImportId: Map<String?, Event>,
+        subscriptionId: Long
+    ): List<Event> {
+        val mastersInFeedByUid = feedEvents
+            .filter { it.originalInstanceTime == null }
+            .map { it.uid }
+            .toSet()
+        val orphansByUid = feedEvents
+            .filter { it.originalInstanceTime != null }
+            .groupBy { it.uid }
+
+        if (orphansByUid.isEmpty()) return emptyList()
+
+        val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
+        val now = System.currentTimeMillis()
+
+        return orphansByUid.mapNotNull { (uid, orphans) ->
+            // Skip UIDs that already have a master in this feed.
+            if (uid in mastersInFeedByUid) return@mapNotNull null
+            // If a master already exists in the DB for this UID, branch:
+            // - real master (rrule != null OR not our sentinel): synthesis
+            //   isn't needed — exceptions will link to it via the master
+            //   backfill below.
+            // - synthetic from a prior sync (sentinel set): return the
+            //   existing row unchanged so its importId flows into
+            //   `newImportIds` and the orphan-cleanup sweep doesn't delete
+            //   it (which would CASCADE-delete every linked exception).
+            //   The synthesis loop then no-op-updates the row in place.
+            val existingForUid = existingByImportId[uid]
+            if (existingForUid != null && existingForUid.originalEventId == null) {
+                return@mapNotNull if (
+                    existingForUid.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true"
+                ) existingForUid else null
+            }
+
+            // Deterministic seed: the orphan with the earliest
+            // RECURRENCE-ID. `orphans.first()` would be deterministic too
+            // (parser preserves feed order) but a feed reorder would shift
+            // the seed; minBy here pins it to a feed-intrinsic value.
+            val seedOrphan = orphans.minBy { it.originalInstanceTime!! }
+            val earliestRecurrenceId = seedOrphan.originalInstanceTime!!
+
+            Event(
+                uid = uid,
+                importId = uid,
+                calendarId = seedOrphan.calendarId,
+                title = seedOrphan.title,
+                startTs = earliestRecurrenceId,
+                endTs = earliestRecurrenceId,
+                dtstamp = now,
+                status = "CANCELLED",
+                rrule = null,
+                caldavUrl = "$sourcePrefix$uid",
+                // Synthetic placeholder is local-only; no upstream server
+                // exists for it (ICS subscriptions are read-only). SYNCED
+                // is the correct steady-state value.
+                syncStatus = SyncStatus.SYNCED,
+                extraProperties = mapOf(SYNTHETIC_MASTER_EXTRA_KEY to "true")
+            )
+        }
     }
 
     /**

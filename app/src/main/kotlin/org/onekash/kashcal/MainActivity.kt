@@ -3,6 +3,7 @@ package org.onekash.kashcal
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +48,7 @@ import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
 import org.onekash.kashcal.ui.components.OnboardingBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
+import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
@@ -57,12 +59,14 @@ import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
+import org.onekash.kashcal.ui.viewmodels.ShareAvailabilityViewModel
 import org.onekash.kashcal.util.CalendarContractAction
 import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.buildShareAvailabilityChooserIntent
 import org.onekash.kashcal.util.location.LocationSuggestionService
 import java.time.LocalTime
 import javax.inject.Inject
@@ -422,6 +426,8 @@ class MainActivity : ComponentActivity() {
                     drawerState = drawerState,
                     onDrawerToggleCalendar = { calendarId -> homeViewModel.toggleCalendarVisibility(calendarId) },
                     onDrawerToggleDeviceCalendarVisibility = { calendarId -> homeViewModel.toggleDeviceCalendarVisibility(calendarId) },
+                    // Share availability
+                    onShareAvailabilityClick = { homeViewModel.openShareAvailabilitySheet() },
                     // Info callbacks
                     onInfoClick = { homeViewModel.toggleAppInfoSheet() },
                     // View picker callback
@@ -599,7 +605,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 appendLine()
-                                appendLine("Shared from KashCal")
+                                appendLine(getString(R.string.share_from_kashcal_footer))
                             }
 
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -752,7 +758,10 @@ class MainActivity : ComponentActivity() {
                             val event = deviceQuickViewEvent!!
                             val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
                             val timePattern = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
-                            val shareText = event.buildShareText(timePattern)
+                            val shareText = event.buildShareText(
+                                timePattern = timePattern,
+                                footer = getString(R.string.share_from_kashcal_footer)
+                            )
 
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
@@ -969,6 +978,37 @@ class MainActivity : ComponentActivity() {
                 if (uiState.showAppInfoSheet) {
                     AppInfoSheet(
                         onDismiss = { homeViewModel.toggleAppInfoSheet() }
+                    )
+                }
+
+                // Share Availability Sheet
+                if (uiState.showShareAvailabilitySheet) {
+                    val shareAvailabilityViewModel: ShareAvailabilityViewModel = hiltViewModel()
+                    val shareUiState by shareAvailabilityViewModel.uiState.collectAsStateWithLifecycle()
+                    // hiltViewModel() returns the activity-scoped instance, so init
+                    // only runs the first time the sheet opens. Re-fetch live system
+                    // inputs (now, locale, 24h preference) on every open so a stale
+                    // preview from a previous session doesn't leak through.
+                    LaunchedEffect(Unit) {
+                        shareAvailabilityViewModel.refresh()
+                    }
+                    ShareAvailabilitySheet(
+                        uiState = shareUiState,
+                        is24Hour = shareAvailabilityViewModel.resolveIs24Hour(),
+                        onDaysPreview = { shareAvailabilityViewModel.previewDaysChange(it) },
+                        onDaysCommit = { shareAvailabilityViewModel.commitPersistence() },
+                        onHoursPreview = { start, end -> shareAvailabilityViewModel.previewWorkHoursChange(start, end) },
+                        onHoursCommit = { shareAvailabilityViewModel.commitPersistence() },
+                        onAllDayToggle = { shareAvailabilityViewModel.onAllDayToggle(it) },
+                        onShare = { text ->
+                            try {
+                                startActivity(buildShareAvailabilityChooserIntent(this@MainActivity, text))
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                homeViewModel.showSnackbar(getString(R.string.share_availability_share_failed))
+                            }
+                            homeViewModel.dismissShareAvailabilitySheet()
+                        },
+                        onDismiss = { homeViewModel.dismissShareAvailabilitySheet() }
                     )
                 }
 

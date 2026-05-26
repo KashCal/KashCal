@@ -1,10 +1,10 @@
 package org.onekash.kashcal.ui.components
 
 /**
- * Single source of truth for badge text shown on count overlays
- * (the AppBar rail toggle and the right-rail Invites icon). Keeping
- * formatting here lets sibling badge sites stay aligned without each
- * re-implementing the cap-at-99 rule.
+ * Single source of truth for badge text shown on count overlays (the
+ * top-bar overflow IconButton and the overflow sheet's Invites row).
+ * Keeping formatting here lets sibling badge sites stay aligned without
+ * each re-implementing the cap-at-99 rule.
  *
  * Returns the rendered string when the badge should be visible, or
  * `null` when the caller should suppress the [androidx.compose.material3.Badge]

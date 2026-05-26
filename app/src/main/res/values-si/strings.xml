@@ -1042,11 +1042,33 @@
     <string name="inbox_organizer_suffix">(සංවිධායක)</string>
     <string name="menu_invites">ආරාධනා</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">දිනය</string>
+    <string name="jump_to_date">දිනයට යන්න</string>
     <string name="menu_about">පිළිබඳ</string>
     <string name="menu_more">තවත් මෙනුව</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
         <item quantity="other">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
+    </plurals>
+    <string name="share_availability_rail_label">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <string name="share_availability_sheet_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <string name="share_availability_hours_label">වැඩ කරන වේලාවන්: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">මුළු දිනයේ සිදුවීම් කාර්යබහුල ලෙස සලකන්න</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">මුළු දිනයේ සිදුවීම් නොසලකා හරිනු ලැබේ</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">මුළු දිනයේ සිදුවීමක් ඇති දිනක් සම්පූර්ණයෙන්ම කාර්යබහුලයි</string>
+    <string name="share_availability_share_button">බෙදාගන්න</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">තේරූ පරාසයේ අවම වශයෙන් පැයක නිදහස් කොටස් නැත.</string>
+    <string name="share_availability_chooser_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <string name="share_availability_share_failed">බෙදා ගැනීමට යෙදුමක් නැත</string>
+    <string name="share_from_kashcal_footer">KashCal වෙතින් බෙදාගත්</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ඊළඟ %1$d දිනය</item>
+        <item quantity="other">ඊළඟ %1$d දින</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">ඊළඟ %1$d දිනයේ නිදහස් (%2$s – %3$s):</item>
+        <item quantity="other">ඊළඟ %1$d දින තුළ නිදහස් (%2$s – %3$s):</item>
     </plurals>
 </resources>

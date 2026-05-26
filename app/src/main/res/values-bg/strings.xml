@@ -702,6 +702,7 @@
     <string name="cd_open_rail">Отвори менюто</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Затвори менюто</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Изглед на календара</string>
     <string name="cd_active_view">Активен изглед</string>
 
@@ -1070,11 +1071,33 @@
     <string name="inbox_organizer_suffix">(организатор)</string>
     <string name="menu_invites">Покани</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Дата</string>
+    <string name="jump_to_date">Към датата</string>
     <string name="menu_about">Относно</string>
     <string name="menu_more">Меню „Още“</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Меню „Още“, %d чакаща покана</item>
         <item quantity="other">Меню „Още“, %d чакащи покани</item>
+    </plurals>
+    <string name="share_availability_rail_label">Споделяне на наличност</string>
+    <string name="share_availability_sheet_title">Споделяне на наличност</string>
+    <string name="share_availability_hours_label">Работно време: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Третирай целодневните събития като заети</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Целодневните събития се игнорират</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Ден с целодневно събитие е изцяло зает</string>
+    <string name="share_availability_share_button">Споделяне</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Няма свободни блокове от поне един час в избрания диапазон.</string>
+    <string name="share_availability_chooser_title">Споделяне на наличност</string>
+    <string name="share_availability_share_failed">Няма приложение за споделяне</string>
+    <string name="share_from_kashcal_footer">Споделено от KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Следващ %1$d ден</item>
+        <item quantity="other">Следващи %1$d дни</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Свободно през следващия %1$d ден (%2$s – %3$s):</item>
+        <item quantity="other">Свободно през следващите %1$d дни (%2$s – %3$s):</item>
     </plurals>
 </resources>

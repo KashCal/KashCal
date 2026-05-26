@@ -1059,11 +1059,33 @@
     <string name="inbox_organizer_suffix">(Organisator)</string>
     <string name="menu_invites">Einladungen</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Datum</string>
+    <string name="jump_to_date">Zum Datum gehen</string>
     <string name="menu_about">Info</string>
     <string name="menu_more">Weiteres Menü</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Weiteres Menü, %d Einladung ausstehend</item>
         <item quantity="other">Weiteres Menü, %d Einladungen ausstehend</item>
+    </plurals>
+    <string name="share_availability_rail_label">Verfügbarkeit teilen</string>
+    <string name="share_availability_sheet_title">Verfügbarkeit teilen</string>
+    <string name="share_availability_hours_label">Arbeitszeit: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Ganztägige Termine als beschäftigt behandeln</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Ganztägige Termine werden ignoriert</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Tag mit ganztägigem Termin ist vollständig belegt</string>
+    <string name="share_availability_share_button">Teilen</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Keine freien Blöcke von mindestens einer Stunde im gewählten Zeitraum.</string>
+    <string name="share_availability_chooser_title">Verfügbarkeit teilen</string>
+    <string name="share_availability_share_failed">Keine App zum Teilen verfügbar</string>
+    <string name="share_from_kashcal_footer">Geteilt aus KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Nächster %1$d Tag</item>
+        <item quantity="other">Nächste %1$d Tage</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Frei am nächsten %1$d Tag (%2$s – %3$s):</item>
+        <item quantity="other">Frei in den nächsten %1$d Tagen (%2$s – %3$s):</item>
     </plurals>
 </resources>

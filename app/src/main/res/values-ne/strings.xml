@@ -1042,11 +1042,33 @@
     <string name="inbox_organizer_suffix">(आयोजक)</string>
     <string name="menu_invites">निमन्त्रणाहरू</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">मिति</string>
+    <string name="jump_to_date">मितिमा जानुहोस्</string>
     <string name="menu_about">बारेमा</string>
     <string name="menu_more">थप मेनु</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">थप मेनु, %d निमन्त्रणा बाँकी</item>
         <item quantity="other">थप मेनु, %d निमन्त्रणाहरू बाँकी</item>
+    </plurals>
+    <string name="share_availability_rail_label">उपलब्धता साझेदारी गर्नुहोस्</string>
+    <string name="share_availability_sheet_title">उपलब्धता साझेदारी गर्नुहोस्</string>
+    <string name="share_availability_hours_label">काम गर्ने समय: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">पूरै दिनका कार्यक्रमलाई व्यस्त मान्नुहोस्</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">पूरै दिनका कार्यक्रम बेवास्ता गरिन्छन्</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">पूरै दिनको कार्यक्रम भएको दिन पूर्णतया व्यस्त</string>
+    <string name="share_availability_share_button">साझेदारी गर्नुहोस्</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">चयन गरिएको दायरामा कम्तीमा एक घण्टाका खाली ब्लकहरू छैनन्।</string>
+    <string name="share_availability_chooser_title">उपलब्धता साझेदारी गर्नुहोस्</string>
+    <string name="share_availability_share_failed">साझेदारी गर्न कुनै एप उपलब्ध छैन</string>
+    <string name="share_from_kashcal_footer">KashCal बाट साझा गरिएको</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">अर्को %1$d दिन</item>
+        <item quantity="other">अर्को %1$d दिन</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">अर्को %1$d दिनमा खाली (%2$s – %3$s):</item>
+        <item quantity="other">अर्को %1$d दिनमा खाली (%2$s – %3$s):</item>
     </plurals>
 </resources>

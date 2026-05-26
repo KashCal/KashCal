@@ -734,6 +734,7 @@
     <string name="cd_open_rail">Deschide meniul</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Închide meniul</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Vizualizare calendar</string>
     <string name="cd_active_view">Vizualizare activă</string>
 
@@ -1113,12 +1114,36 @@
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Invitații</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Dată</string>
+    <string name="jump_to_date">Mergi la dată</string>
     <string name="menu_about">Despre</string>
     <string name="menu_more">Meniu suplimentar</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meniu suplimentar, %d invitație în așteptare</item>
         <item quantity="few">Meniu suplimentar, %d invitații în așteptare</item>
         <item quantity="other">Meniu suplimentar, %d de invitații în așteptare</item>
+    </plurals>
+    <string name="share_availability_rail_label">Partajează disponibilitatea</string>
+    <string name="share_availability_sheet_title">Partajează disponibilitatea</string>
+    <string name="share_availability_hours_label">Program de lucru: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Tratează evenimentele de toată ziua ca ocupate</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Evenimentele de toată ziua sunt ignorate</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">O zi cu eveniment de toată ziua este complet ocupată</string>
+    <string name="share_availability_share_button">Partajează</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Nu există blocuri libere de cel puțin o oră în intervalul selectat.</string>
+    <string name="share_availability_chooser_title">Partajează disponibilitatea</string>
+    <string name="share_availability_share_failed">Nicio aplicație disponibilă pentru partajare</string>
+    <string name="share_from_kashcal_footer">Distribuit din KashCal</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Următoarea %1$d zi</item>
+        <item quantity="few">Următoarele %1$d zile</item>
+        <item quantity="other">Următoarele %1$d de zile</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">Liber în următoarea %1$d zi (%2$s – %3$s):</item>
+        <item quantity="few">Liber în următoarele %1$d zile (%2$s – %3$s):</item>
+        <item quantity="other">Liber în următoarele %1$d de zile (%2$s – %3$s):</item>
     </plurals>
 </resources>

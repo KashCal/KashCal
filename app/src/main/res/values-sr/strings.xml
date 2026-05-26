@@ -1069,7 +1069,7 @@
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Pozivnice</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Датум</string>
+    <string name="jump_to_date">Иди на датум</string>
     <string name="menu_about">O aplikaciji</string>
     <string name="menu_more">Meni Više</string>
     <plurals name="menu_more_with_invites">
@@ -1077,4 +1077,30 @@
         <item quantity="few">Meni Više, %d pozivnice na čekanju</item>
         <item quantity="other">Meni Više, %d pozivnica na čekanju</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Podeli dostupnost</string>
+    <string name="share_availability_sheet_title">Podeli dostupnost</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Sledeći %1$d dan</item>
+        <item quantity="few">Sledeća %1$d dana</item>
+        <item quantity="other">Sledećih %1$d dana</item>
+    </plurals>
+    <string name="share_availability_hours_label">Radno vreme: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Tretiraj celodnevne događaje kao zauzete</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Celodnevni događaji se zanemaruju</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Dan s celodnevnim događajem je potpuno zauzet</string>
+    <string name="share_availability_share_button">Podeli</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Slobodno sledeći %1$d dan (%2$s – %3$s):</item>
+        <item quantity="few">Slobodno sledeća %1$d dana (%2$s – %3$s):</item>
+        <item quantity="other">Slobodno sledećih %1$d dana (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Nema slobodnih blokova od najmanje sat vremena u odabranom opsegu.</string>
+    <string name="share_availability_chooser_title">Podeli dostupnost</string>
+    <string name="share_availability_share_failed">Нема апликације за дељење</string>
+    <string name="share_from_kashcal_footer">Подељено из KashCal</string>
 </resources>

@@ -1057,11 +1057,33 @@
     <string name="inbox_organizer_suffix">(నిర్వాహకుడు)</string>
     <string name="menu_invites">ఆహ్వానాలు</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">తేదీ</string>
+    <string name="jump_to_date">తేదీకి వెళ్లండి</string>
     <string name="menu_about">గురించి</string>
     <string name="menu_more">మరిన్ని మెను</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">మరిన్ని మెను, %d ఆహ్వానం పెండింగ్‌లో ఉంది</item>
         <item quantity="other">మరిన్ని మెను, %d ఆహ్వానాలు పెండింగ్‌లో ఉన్నాయి</item>
+    </plurals>
+    <string name="share_availability_rail_label">అందుబాటును షేర్ చేయండి</string>
+    <string name="share_availability_sheet_title">అందుబాటును షేర్ చేయండి</string>
+    <string name="share_availability_hours_label">పని గంటలు: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">రోజంతా ఈవెంట్లను బిజీగా పరిగణించండి</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">రోజంతా ఈవెంట్లు విస్మరించబడతాయి</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">రోజంతా ఈవెంట్ ఉన్న రోజు పూర్తిగా బిజీగా ఉంటుంది</string>
+    <string name="share_availability_share_button">షేర్ చేయండి</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ఎంచుకున్న పరిధిలో కనీసం ఒక గంట ఖాళీ బ్లాక్‌లు లేవు.</string>
+    <string name="share_availability_chooser_title">అందుబాటును షేర్ చేయండి</string>
+    <string name="share_availability_share_failed">షేర్ చేయడానికి యాప్ లేదు</string>
+    <string name="share_from_kashcal_footer">KashCal నుండి షేర్ చేయబడింది</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">తదుపరి %1$d రోజు</item>
+        <item quantity="other">తదుపరి %1$d రోజులు</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">తదుపరి %1$d రోజు ఖాళీ (%2$s – %3$s):</item>
+        <item quantity="other">తదుపరి %1$d రోజులలో ఖాళీ (%2$s – %3$s):</item>
     </plurals>
 </resources>

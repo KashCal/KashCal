@@ -1,5 +1,0 @@
-• Accept, Tentative, or Decline calendar invitations directly from an event, with notifications when new invitations arrive
-• New invitation inbox in the top bar shows pending invites with a badge
-• Right-side navigation rail replaces the overflow menu, with quick access to invitations, jump-to-date, and insights
-• New Day view with a single-day time grid
-• Refined top bar, tighter month header, and Device Calendars screen for managing visibility

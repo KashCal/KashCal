@@ -716,6 +716,7 @@
     <string name="cd_open_rail">Apri menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_close_rail">Chiudi menu</string>
+    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Vista calendario</string>
     <string name="cd_active_view">Vista attiva</string>
 
@@ -1114,11 +1115,35 @@
     <string name="inbox_organizer_suffix">(organizzatore)</string>
     <string name="menu_invites">Inviti</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">Data</string>
+    <string name="jump_to_date">Vai alla data</string>
     <string name="menu_about">Informazioni</string>
     <string name="menu_more">Menu Altro</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Menu Altro, %d invito in attesa</item>
         <item quantity="other">Menu Altro, %d inviti in attesa</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">Condividi disponibilità</string>
+    <string name="share_availability_sheet_title">Condividi disponibilità</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Prossimo %1$d giorno</item>
+        <item quantity="other">Prossimi %1$d giorni</item>
+    </plurals>
+    <string name="share_availability_hours_label">Orario lavorativo: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Considera eventi di tutto il giorno come occupati</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">Gli eventi di tutto il giorno sono ignorati</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">Un giorno con un evento di tutto il giorno è interamente occupato</string>
+    <string name="share_availability_share_button">Condividi</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Libero nel prossimo %1$d giorno (%2$s – %3$s):</item>
+        <item quantity="other">Libero nei prossimi %1$d giorni (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Nessun blocco libero di almeno un\'ora nell\'intervallo selezionato.</string>
+    <string name="share_availability_chooser_title">Condividi disponibilità</string>
+    <string name="share_availability_share_failed">Nessuna app per condividere</string>
+    <string name="share_from_kashcal_footer">Condiviso da KashCal</string>
 </resources>

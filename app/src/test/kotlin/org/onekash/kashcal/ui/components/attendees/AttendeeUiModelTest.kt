@@ -64,7 +64,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = listOf(attendee),
             currentAccount = null,
-            organizerAddress = null
+            organizerAddress = null,
+            organizerName = null
         )
         assertEquals(1, models.size)
         assertEquals("Alice Smith", models[0].displayName)
@@ -77,28 +78,28 @@ class AttendeeUiModelTest {
     @Test
     fun `displayName fallback uses local-part of address when CN is null`() {
         val attendee = att(displayName = null, address = "mailto:bob.smith@example.com")
-        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null)
+        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null, null)
         assertEquals("bob.smith", models[0].displayName)
     }
 
     @Test
     fun `displayName fallback uses local-part of address when CN is blank`() {
         val attendee = att(displayName = "   ", address = "mailto:carol@example.com")
-        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null)
+        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null, null)
         assertEquals("carol", models[0].displayName)
     }
 
     @Test
     fun `displayName fallback uses raw address when no at sign and no CN`() {
         val attendee = att(displayName = null, address = "urn:uuid:1234-abcd")
-        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null)
+        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null, null)
         assertEquals("urn:uuid:1234-abcd", models[0].displayName)
     }
 
     @Test
     fun `bareAddress strips mailto prefix`() {
         val attendee = att(address = "MAILTO:Alice@Example.COM")
-        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null)
+        val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null, null)
         // Lowercased per AddressNormalizer canonical
         assertEquals("alice@example.com", models[0].bareAddress)
     }
@@ -114,7 +115,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = null,
-            organizerAddress = "MAILTO:Alice@Example.com"
+            organizerAddress = "MAILTO:Alice@Example.com",
+            organizerName = null
         )
         assertTrue(models[0].isOrganizer)
         assertFalse(models[1].isOrganizer)
@@ -123,7 +125,7 @@ class AttendeeUiModelTest {
     @Test
     fun `isOrganizer false when organizerAddress is null`() {
         val attendees = listOf(att(address = "mailto:alice@example.com"))
-        val models = AttendeeUiModel.fromRoom(attendees, null, null)
+        val models = AttendeeUiModel.fromRoom(attendees, null, null, null)
         assertFalse(models[0].isOrganizer)
     }
 
@@ -139,7 +141,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:alice@example.com"),
             att(address = "mailto:bob@example.com")
         )
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         assertTrue(models[0].isYou)
         assertFalse(models[1].isYou)
     }
@@ -186,7 +188,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:alice@example.com", sortOrder = 1),
             att(address = "mailto:carol@example.com", sortOrder = 2)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals("alice@example.com", sorted[0].bareAddress)
         // Bob and Carol retain sortOrder
@@ -200,7 +202,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:bob@example.com", sortOrder = 0),
             att(address = "mailto:carol@example.com", sortOrder = 1)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null)
+        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null, organizerName = null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals("bob@example.com", sorted[0].bareAddress)
         assertEquals("carol@example.com", sorted[1].bareAddress)
@@ -223,7 +225,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:eve@example.com", sortOrder = 3),
             att(address = "mailto:alice@example.com", sortOrder = 4)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         // F6 contract: collapsed view returns at most 4 entries when You was
         // hidden in the wire-order top-3, of which index 0 is You.
@@ -243,7 +245,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:eve@example.com", sortOrder = 3),
             att(address = "mailto:frank@example.com", sortOrder = 4)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null)
+        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null, organizerName = null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals(3, sorted.size)
         assertEquals("bob@example.com", sorted[0].bareAddress)
@@ -263,7 +265,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:dave@example.com", sortOrder = 2),
             att(address = "mailto:alice@example.com", sortOrder = 3)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = true)
         assertEquals(4, sorted.size)
         // Even when expanded, You stays at index 0
@@ -278,7 +280,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:alice@example.com"),
             att(address = "mailto:bob@example.com")
         )
-        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null)
+        val models = AttendeeUiModel.fromRoom(attendees, currentAccount = null, organizerAddress = null, organizerName = null)
         assertTrue(models.all { !it.isYou })
     }
 
@@ -293,7 +295,7 @@ class AttendeeUiModelTest {
         // F5 edge case 2 — Nextcloud "alice" username, server returned no addresses
         val account = acc(email = "alice", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@nextcloud.example"))
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         assertFalse(models[0].isYou)
         assertFalse(AttendeeUiModel.isCurrentUserOnList(attendees, account))
     }
@@ -304,7 +306,7 @@ class AttendeeUiModelTest {
         // back to email when email shape parses.
         val account = acc(email = "alice@example.com", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@example.com"))
-        val models = AttendeeUiModel.fromRoom(attendees, account, null)
+        val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         assertTrue(models[0].isYou)
     }
 
@@ -323,7 +325,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
         )
         assertEquals(3, models.size)
         // Synthesized organizer chip is in the result
@@ -334,26 +337,7 @@ class AttendeeUiModelTest {
     }
 
     @Test
-    fun `synthesized organizer chip uses account displayName when present`() {
-        val account = Account(
-            id = 1,
-            provider = AccountProvider.LOCAL,
-            email = "alice@example.com",
-            displayName = "Alice Anderson",
-            calendarUserAddresses = listOf("mailto:alice@example.com")
-        )
-        val attendees = listOf(att(address = "mailto:bob@example.com", sortOrder = 0))
-        val models = AttendeeUiModel.fromRoom(
-            attendees = attendees,
-            currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
-        )
-        val you = models.firstOrNull { it.isYou }!!
-        assertEquals("Alice Anderson", you.displayName)
-    }
-
-    @Test
-    fun `synthesized organizer chip falls back to local-part when account displayName is null or blank`() {
+    fun `synthesized organizer chip uses ORGANIZER CN when present`() {
         val account = acc(
             email = "alice@example.com",
             calendarUserAddresses = listOf("mailto:alice@example.com")
@@ -362,7 +346,25 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = "Alice Anderson"
+        )
+        val you = models.firstOrNull { it.isYou }!!
+        assertEquals("Alice Anderson", you.displayName)
+    }
+
+    @Test
+    fun `synthesized organizer chip falls back to local-part when ORGANIZER CN is null or blank`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:bob@example.com", sortOrder = 0))
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
         )
         val you = models.firstOrNull { it.isYou }!!
         assertEquals("alice", you.displayName)
@@ -381,7 +383,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
         )
         assertEquals(2, models.size)
         val alice = models.first { it.bareAddress == "alice@example.com" }
@@ -389,8 +392,136 @@ class AttendeeUiModelTest {
         assertTrue(alice.isOrganizer)
     }
 
+    // Issue #235 scenario B: when ORGANIZER is off the ATTENDEE list AND not the
+    // current user (mailbox.org-style invite), synthesize a non-You host chip
+    // with the crown pill so the host is visible. Pre-fix this returned a
+    // single user-only chip and the host was invisible.
     @Test
-    fun `fromRoom does NOT synthesize when account does not match organizer`() {
+    fun `fromRoom synthesizes off-list host chip when organizer is not the current user`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:alice@example.com", sortOrder = 0))
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:carol@example.com",
+            organizerName = "Carol Host"
+        )
+        assertEquals(2, models.size)
+        val host = models.first { it.bareAddress == "carol@example.com" }
+        assertTrue(host.isOrganizer)
+        assertFalse(host.isYou)
+        assertTrue(host.isSynthesized)
+        assertEquals(AttendeeStatus.Accepted, host.status)
+        assertEquals("Carol Host", host.displayName)
+        // The user's real attendee row is unchanged.
+        val you = models.first { it.isYou }
+        assertFalse(you.isOrganizer)
+        assertFalse(you.isSynthesized)
+    }
+
+    @Test
+    fun `synthesized off-list host chip falls back to local-part when ORGANIZER CN is null`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:alice@example.com", sortOrder = 0))
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:carol@example.com",
+            organizerName = null
+        )
+        val host = models.first { it.bareAddress == "carol@example.com" }
+        assertEquals("carol", host.displayName)
+    }
+
+    @Test
+    fun `fromRoom synthesizes single host chip when attendee list is empty and organizer is non-self`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val models = AttendeeUiModel.fromRoom(
+            attendees = emptyList(),
+            currentAccount = account,
+            organizerAddress = "mailto:carol@example.com",
+            organizerName = "Carol Host"
+        )
+        assertEquals(1, models.size)
+        val host = models[0]
+        assertEquals("carol@example.com", host.bareAddress)
+        assertTrue(host.isOrganizer)
+        assertFalse(host.isYou)
+        assertTrue(host.isSynthesized)
+        assertEquals(AttendeeStatus.Accepted, host.status)
+        // isCurrentUserOnList stays false — organizer doesn't match the user — so
+        // AttendeeChipRowState.compute will fall to LavenderCount(1).
+        assertFalse(
+            AttendeeUiModel.isCurrentUserOnList(
+                attendees = emptyList(),
+                currentAccount = account,
+                organizerAddress = "mailto:carol@example.com"
+            )
+        )
+    }
+
+    @Test
+    fun `sortForCollapsedView puts You at index 0 and synthesized off-list host at index 1`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(
+            att(address = "mailto:alice@example.com", sortOrder = 0),
+            att(address = "mailto:bob@example.com", sortOrder = 1),
+            att(address = "mailto:dave@example.com", sortOrder = 2)
+        )
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:carol@example.com",
+            organizerName = "Carol Host"
+        )
+        // 3 real + 1 synthesized = 4 total
+        assertEquals(4, models.size)
+        val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
+        assertEquals(4, sorted.size)
+        assertEquals("alice@example.com", sorted[0].bareAddress)
+        assertTrue(sorted[0].isYou)
+        assertEquals("carol@example.com", sorted[1].bareAddress)
+        assertTrue(sorted[1].isOrganizer && !sorted[1].isYou)
+        assertEquals("bob@example.com", sorted[2].bareAddress)
+        assertEquals("dave@example.com", sorted[3].bareAddress)
+    }
+
+    @Test
+    fun `isCurrentUserOnList still true when user is real attendee even with synthesized non-self host`() {
+        // Regression guard: synthesizing a non-You host chip must NOT cause
+        // AttendeeChipRowState.compute to fall through to LavenderCount when the
+        // user is a real attendee row.
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:alice@example.com", sortOrder = 0))
+        assertTrue(
+            AttendeeUiModel.isCurrentUserOnList(
+                attendees = attendees,
+                currentAccount = account,
+                organizerAddress = "mailto:carol@example.com"
+            )
+        )
+    }
+
+    // Malformed `mailto:` (or whitespace-only) organizer canonicalizes to
+    // empty string. Without a blank-guard the synthesis branch fires and
+    // produces a ghost chip with empty bareAddress.
+    @Test
+    fun `fromRoom does NOT synthesize when organizerAddress canonicalizes to blank`() {
         val account = acc(
             email = "alice@example.com",
             calendarUserAddresses = listOf("mailto:alice@example.com")
@@ -399,10 +530,81 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:carol@example.com" // different organizer
+            organizerAddress = "mailto:",
+            organizerName = null
         )
         assertEquals(1, models.size)
-        assertFalse(models[0].isYou)
+        assertEquals("bob@example.com", models[0].bareAddress)
+    }
+
+    // Server-roundtripped self-organized event with no CN. The synthesized
+    // "You" chip should fall back to account.displayName before the local-part.
+    @Test
+    fun `synthesized You chip falls back to account displayName when organizerName is null`() {
+        val account = acc(
+            email = "alice@example.com",
+            displayName = "Alice Anderson",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:bob@example.com", sortOrder = 0))
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
+        )
+        val you = models.first { it.isYou }
+        assertEquals("Alice Anderson", you.displayName)
+    }
+
+    // Non-self host (isYou=false) must NOT use account.displayName as a
+    // fallback — the account belongs to the user, not the host.
+    @Test
+    fun `synthesized non-self host chip ignores account displayName when organizerName is null`() {
+        val account = acc(
+            email = "alice@example.com",
+            displayName = "Alice Anderson",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(att(address = "mailto:alice@example.com", sortOrder = 0))
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:carol@example.com",
+            organizerName = null
+        )
+        val host = models.first { it.bareAddress == "carol@example.com" }
+        assertEquals("carol", host.displayName)
+    }
+
+    // Organizer is a real non-self attendee already on the list AND user is
+    // also on the list. No synthesis; both rows pass through with the
+    // organizer pill on the host's row.
+    @Test
+    fun `fromRoom does NOT synthesize when organizer is a real non-self attendee on the list`() {
+        val account = acc(
+            email = "alice@example.com",
+            calendarUserAddresses = listOf("mailto:alice@example.com")
+        )
+        val attendees = listOf(
+            att(address = "mailto:bob@example.com", sortOrder = 0),
+            att(address = "mailto:alice@example.com", sortOrder = 1)
+        )
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = account,
+            organizerAddress = "mailto:bob@example.com",
+            organizerName = "Bob Host"
+        )
+        assertEquals(2, models.size)
+        val bob = models.first { it.bareAddress == "bob@example.com" }
+        assertTrue(bob.isOrganizer)
+        assertFalse(bob.isYou)
+        assertFalse(bob.isSynthesized)
+        val alice = models.first { it.bareAddress == "alice@example.com" }
+        assertTrue(alice.isYou)
+        assertFalse(alice.isOrganizer)
+        assertFalse(alice.isSynthesized)
     }
 
     @Test
@@ -415,7 +617,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = null
+            organizerAddress = null,
+            organizerName = null
         )
         assertEquals(1, models.size)
         assertFalse(models[0].isYou)
@@ -434,7 +637,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
         )
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals("alice@example.com", sorted[0].bareAddress)
@@ -489,7 +693,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@example.com"
+            organizerAddress = "mailto:alice@example.com",
+            organizerName = null
         )
         // 4 real + 1 synthesized = 5 total
         assertEquals(5, models.size)
@@ -520,7 +725,7 @@ class AttendeeUiModelTest {
             att(address = "mailto:dave@example.com", sortOrder = 2),
             att(address = "mailto:eve@example.com", sortOrder = 3)
         )
-        val models = AttendeeUiModel.fromRoom(attendees, account, "mailto:alice@example.com")
+        val models = AttendeeUiModel.fromRoom(attendees, account, "mailto:alice@example.com", null)
         val isOnList = AttendeeUiModel.isCurrentUserOnList(
             attendees, account, "mailto:alice@example.com"
         )
@@ -551,7 +756,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "mailto:alice@me.com"
+            organizerAddress = "mailto:alice@me.com",
+            organizerName = null
         )
         // No synthesized chip — only the 2 real attendees.
         assertEquals(2, models.size)
@@ -572,7 +778,8 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(
             attendees = attendees,
             currentAccount = account,
-            organizerAddress = "MAILTO:Alice@Example.COM"
+            organizerAddress = "MAILTO:Alice@Example.COM",
+            organizerName = null
         )
         val you = models.first { it.isYou }
         // canonical lowercase form, mailto prefix stripped (matches AddressNormalizer)
@@ -616,11 +823,13 @@ class AttendeeUiModelTest {
     private fun acc(
         id: Long = 1,
         email: String,
-        calendarUserAddresses: List<String>
+        calendarUserAddresses: List<String>,
+        displayName: String? = null
     ) = Account(
         id = id,
         provider = AccountProvider.LOCAL,
         email = email,
+        displayName = displayName,
         calendarUserAddresses = calendarUserAddresses
     )
 }

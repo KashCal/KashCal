@@ -772,6 +772,8 @@ interface EventsDao {
           AND LENGTH(TRIM(outer_e.title)) > 0
           AND outer_e.original_event_id IS NULL
           AND outer_e.sync_status != 'PENDING_DELETE'
+          AND (outer_e.extra_properties IS NULL
+               OR outer_e.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
           AND (
             (outer_e.rrule IS NOT NULL AND outer_e.rrule != '')
             OR (outer_e.start_ts >= :sinceMs AND outer_e.start_ts <= :untilMs)
@@ -809,6 +811,8 @@ interface EventsDao {
         JOIN events_fts ON events.id = events_fts.rowid
         WHERE events_fts MATCH :query
         AND events.sync_status != 'PENDING_DELETE'
+        AND (events.extra_properties IS NULL
+             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
         ORDER BY events.start_ts ASC
         LIMIT 1000
     """)
@@ -893,6 +897,8 @@ interface EventsDao {
         WHERE events_fts MATCH :query
         AND events.sync_status != 'PENDING_DELETE'
         AND events.original_event_id IS NULL
+        AND (events.extra_properties IS NULL
+             OR events.extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
         ORDER BY ABS(events.start_ts - :now) ASC
         LIMIT 1000
     """)

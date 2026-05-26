@@ -27,9 +27,11 @@ data class AttendeeUiModel(
     val sortOrder: Int,
     /**
      * True when this chip was synthesized from `event.organizer_email`
-     * because the user is the organizer but isn't listed as an ATTENDEE.
-     * Used as part of the Compose slot key so synthesized chips can never
-     * collide with real attendee rows.
+     * because the ORGANIZER isn't represented on the ATTENDEE list. Two
+     * flavors: the user organized the event without listing themselves
+     * (isYou=true), or the user was invited and the host was stripped from
+     * the ATTENDEE list (isYou=false). Used as part of the Compose slot key
+     * so synthesized chips can never collide with real attendee rows.
      */
     val isSynthesized: Boolean = false
 ) {
@@ -43,11 +45,18 @@ data class AttendeeUiModel(
          *   every model has [isYou] = false.
          * @param organizerAddress the event's ORGANIZER property (raw form);
          *   each attendee's [isOrganizer] is computed by canonical match.
+         * @param organizerName the event's ORGANIZER CN (raw form). Used as
+         *   the synthesized chip's display name when ORGANIZER isn't already
+         *   represented as an ATTENDEE row; falls back to [Account.displayName]
+         *   when the user IS the organizer, then to local-part of the canonical
+         *   address. Pre-A2 events without this field still render correctly
+         *   via the displayName / local-part fallback chain.
          */
         fun fromRoom(
             attendees: List<Attendee>,
             currentAccount: Account?,
-            organizerAddress: String?
+            organizerAddress: String?,
+            organizerName: String?
         ): List<AttendeeUiModel> {
             val canonicalOrganizer = organizerAddress?.let { AddressNormalizer.canonical(it) }
             val mapped = attendees.map { attendee ->
@@ -62,30 +71,50 @@ data class AttendeeUiModel(
                 )
             }
 
-            // RFC 5545: ORGANIZER and ATTENDEE are separate properties. When the
-            // user organizes an event without listing themselves as an ATTENDEE
-            // (the common case for invites the user sent), we synthesize a chip
-            // so "You" + 👑 still surface on the user's own events.
-            if (currentAccount != null &&
-                canonicalOrganizer != null &&
-                currentAccount.matchesAttendee(organizerAddress!!) &&
-                mapped.none { it.isYou }
-            ) {
-                return listOf(
-                    synthesizedOrganizerChip(currentAccount, canonicalOrganizer)
-                ) + mapped
+            // RFC 5545: ORGANIZER and ATTENDEE are separate properties. When
+            // ORGANIZER isn't represented on the ATTENDEE list, synthesize a
+            // chip so the host is visible. Two flavors fall out of one rule:
+            //  - User organized the event, no self ATTENDEE row → "You" + 👑.
+            //  - User was invited, host stripped from ATTENDEE list by an
+            //    iTIP-style server → host chip with 👑, isYou = false.
+            //
+            // "Already represented" includes the multi-alias case: if the user
+            // is the organizer and the user already appears on the attendee
+            // list via a different alias, the organizer is represented through
+            // the existing "You" chip. Without this guard a multi-alias
+            // organizer would render twice.
+            if (!canonicalOrganizer.isNullOrBlank()) {
+                val userIsOrganizer = currentAccount?.matchesAttendee(organizerAddress!!) == true
+                val organizerOnList = mapped.any { it.bareAddress == canonicalOrganizer } ||
+                    (userIsOrganizer && mapped.any { it.isYou })
+                if (!organizerOnList) {
+                    val selfDisplayName = if (userIsOrganizer) currentAccount?.displayName else null
+                    return listOf(
+                        synthesizedOrganizerChip(
+                            canonicalOrganizer,
+                            userIsOrganizer,
+                            organizerName,
+                            selfDisplayName
+                        )
+                    ) + mapped
+                }
             }
             return mapped
         }
 
         private fun synthesizedOrganizerChip(
-            account: Account,
-            canonicalOrganizer: String
+            canonicalOrganizer: String,
+            isYou: Boolean,
+            organizerName: String?,
+            selfDisplayName: String?
         ): AttendeeUiModel = AttendeeUiModel(
-            displayName = displayNameFor(account.displayName, canonicalOrganizer),
+            displayName = displayNameFor(
+                organizerName.takeUnless { it.isNullOrBlank() } ?: selfDisplayName,
+                canonicalOrganizer
+            ),
             bareAddress = canonicalOrganizer,
             status = AttendeeStatus.Accepted,
-            isYou = true,
+            isYou = isYou,
             isOrganizer = true,
             sortOrder = -1,
             isSynthesized = true

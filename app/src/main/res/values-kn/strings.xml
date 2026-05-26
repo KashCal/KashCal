@@ -1057,11 +1057,33 @@
     <string name="inbox_organizer_suffix">(ಆಯೋಜಕ)</string>
     <string name="menu_invites">ಆಮಂತ್ರಣಗಳು</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ದಿನಾಂಕ</string>
+    <string name="jump_to_date">ದಿನಾಂಕಕ್ಕೆ ಹೋಗಿ</string>
     <string name="menu_about">ಕುರಿತು</string>
     <string name="menu_more">ಇನ್ನಷ್ಟು ಮೆನು</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣ ಬಾಕಿ ಇದೆ</item>
         <item quantity="other">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣಗಳು ಬಾಕಿ ಇವೆ</item>
+    </plurals>
+    <string name="share_availability_rail_label">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="share_availability_sheet_title">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="share_availability_hours_label">ಕೆಲಸದ ಸಮಯ: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್‌ಗಳನ್ನು ಬ್ಯುಸಿ ಎಂದು ಪರಿಗಣಿಸಿ</string>
+    <string name="share_availability_all_day_toggle_subtitle_off">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್‌ಗಳನ್ನು ನಿರ್ಲಕ್ಷಿಸಲಾಗುತ್ತದೆ</string>
+    <string name="share_availability_all_day_toggle_subtitle_on">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್ ಇರುವ ದಿನವು ಸಂಪೂರ್ಣವಾಗಿ ಬ್ಯುಸಿ</string>
+    <string name="share_availability_share_button">ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ಆಯ್ಕೆಮಾಡಿದ ಶ್ರೇಣಿಯಲ್ಲಿ ಕನಿಷ್ಠ ಒಂದು ಗಂಟೆಯ ಯಾವುದೇ ಮುಕ್ತ ಬ್ಲಾಕ್‌ಗಳಿಲ್ಲ.</string>
+    <string name="share_availability_chooser_title">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="share_availability_share_failed">ಹಂಚಿಕೊಳ್ಳಲು ಯಾವುದೇ ಆ್ಯಪ್ ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="share_from_kashcal_footer">KashCal ನಿಂದ ಹಂಚಲಾಗಿದೆ</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ಮುಂದಿನ %1$d ದಿನ</item>
+        <item quantity="other">ಮುಂದಿನ %1$d ದಿನಗಳು</item>
+    </plurals>
+    <plurals name="share_availability_header">
+        <item quantity="one">ಮುಂದಿನ %1$d ದಿನ ಮುಕ್ತ (%2$s – %3$s):</item>
+        <item quantity="other">ಮುಂದಿನ %1$d ದಿನಗಳಲ್ಲಿ ಮುಕ್ತ (%2$s – %3$s):</item>
     </plurals>
 </resources>
