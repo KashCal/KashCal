@@ -73,6 +73,12 @@ No analytics, no tracking, no KashCal account required. Data is stored locally u
 - **Minimal permissions**: only what's necessary
 - **Fully auditable**: open source codebase
 
+## Community
+
+Join the [KashCal Signal group](https://signal.group/#CjQKIF2jZGgR164Zbe7xJ_auez3LCoza7he6hqtjNP0QtFHtEhBK1z09jMpsCSa8hbFhxdq9) for discussion and chat with other users. Or scan the QR code:
+
+<img src="images/KashCalSignalGroupQr.png" width="180" alt="KashCal Signal group QR code">
+
 ## Community-Made Add-ons
 
 Community-made add-ons that enhance KashCal features.
