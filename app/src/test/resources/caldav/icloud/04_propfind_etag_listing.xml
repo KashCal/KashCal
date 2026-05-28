@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  iCloud PROPFIND Depth:1 etag-listing response (REDACTED).
+
+  Structurally derived from a 2026-05-28 capture against
+  https://caldav.icloud.com/<id>/calendars/<calendar-id>/. The current
+  wire body requests only <d:getetag/>; this fixture preserves the
+  historic shape (with the per-member propstat-404-on-empty-resourcetype
+  rows iCloud emitted when resourcetype was queried) so the parser stays
+  tolerant of servers that volunteer those rows unprompted.
+
+  The original capture contained a real account ID, real calendar ID,
+  and real event UIDs — none of those are reproduced here. Identifiers
+  in this fixture are synthetic; only the XML SHAPE is preserved.
+
+  iCloud's response shape differs from SabreDAV-based servers in three
+  ways the parser must handle:
+
+  - **Default DAV namespace + redundant xmlns="DAV:"**: iCloud does not
+    use a `d:` prefix; it sets default xmlns="DAV:" on the root and
+    repeats xmlns="DAV:" on every element.
+
+  - **Collection self-row carries a real etag in a single 200 propstat**:
+    iCloud reports getetag (a ctag-like opaque token) and
+    resourcetype/collection together in one successful propstat. A
+    parser that skips collection self-rows by "missing etag" would
+    incorrectly enqueue this URL as a member.
+
+  - **Member rows split resourcetype across propstats**: members are
+    reported with getetag in a 200 propstat AND resourcetype in a
+    separate 404 propstat (RFC 4918 §13: "this property doesn't apply
+    to me"). A parser that conflates propstat-404 with response-404
+    would mistakenly treat every member as deleted.
+
+  iCloud uses sync-collection in production, so this PROPFIND path is
+  not the hot one — but the parser is shared, and this fixture verifies
+  the discriminator behaves correctly against iCloud's distinctive XML
+  serialization.
+-->
+<multistatus xmlns="DAV:">
+  <response xmlns="DAV:">
+    <href>/redacted-account-id/calendars/redacted-calendar-id/</href>
+    <propstat>
+      <prop>
+        <getetag xmlns="DAV:">"redacted-ctag-token"</getetag>
+        <resourcetype xmlns="DAV:">
+          <collection/>
+          <calendar xmlns="urn:ietf:params:xml:ns:caldav"/>
+          <shared-owner xmlns="http://calendarserver.org/ns/"/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response xmlns="DAV:">
+    <href>/redacted-account-id/calendars/redacted-calendar-id/AAAAAAAA-1111-2222-3333-444444444444.ics</href>
+    <propstat>
+      <prop>
+        <getetag xmlns="DAV:">"redacted-etag-001"</getetag>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <resourcetype xmlns="DAV:"/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+  <response xmlns="DAV:">
+    <href>/redacted-account-id/calendars/redacted-calendar-id/BBBBBBBB-5555-6666-7777-888888888888.ics</href>
+    <propstat>
+      <prop>
+        <getetag xmlns="DAV:">"redacted-etag-002"</getetag>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+    <propstat>
+      <prop>
+        <resourcetype xmlns="DAV:"/>
+      </prop>
+      <status>HTTP/1.1 404 Not Found</status>
+    </propstat>
+  </response>
+</multistatus>

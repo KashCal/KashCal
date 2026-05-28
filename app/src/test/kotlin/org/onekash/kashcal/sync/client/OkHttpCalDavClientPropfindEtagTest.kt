@@ -9,6 +9,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -109,7 +110,12 @@ class OkHttpCalDavClientPropfindEtagTest {
     }
 
     @Test
-    fun `fetchAllEtags filters out non-ics hrefs`() = runTest {
+    fun `fetchAllEtags skips collection self-row identified by trailing slash`() = runTest {
+        // The collection self-row is identified by href.endsWith("/") (RFC 4918 §5.2 SHOULD).
+        // Wire body requests only <d:getetag/>, so server may not include resourcetype at
+        // all — this fixture mirrors that wire reality. Member rows are identified by the
+        // presence of an etag and a slashless href. Filename-based filtering would miss
+        // servers that store events at extensionless UID hrefs.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -117,7 +123,7 @@ class OkHttpCalDavClientPropfindEtagTest {
                 <d:href>/calendars/user/default/</d:href>
                 <d:propstat>
                   <d:prop>
-                    <d:getetag>"col-etag"</d:getetag>
+                    <d:getetag>"collection-ctag-token"</d:getetag>
                   </d:prop>
                   <d:status>HTTP/1.1 200 OK</d:status>
                 </d:propstat>
@@ -132,10 +138,10 @@ class OkHttpCalDavClientPropfindEtagTest {
                 </d:propstat>
               </d:response>
               <d:response>
-                <d:href>/calendars/user/default/readme.txt</d:href>
+                <d:href>/calendars/user/default/bare-uid-no-extension</d:href>
                 <d:propstat>
                   <d:prop>
-                    <d:getetag>"txt-etag"</d:getetag>
+                    <d:getetag>"etag-bbb"</d:getetag>
                   </d:prop>
                   <d:status>HTTP/1.1 200 OK</d:status>
                 </d:propstat>
@@ -150,8 +156,13 @@ class OkHttpCalDavClientPropfindEtagTest {
 
         assertTrue(result.isSuccess())
         val pairs = result.getOrNull()!!
-        assertEquals("Should return only .ics hrefs", 1, pairs.size)
-        assertEquals("/calendars/user/default/event1.ics", pairs[0].first)
+        assertEquals("Should return both members; collection self-row skipped", 2, pairs.size)
+        val hrefs = pairs.map { it.first }
+        assertTrue(hrefs.contains("/calendars/user/default/event1.ics"))
+        assertTrue(
+            "Bare-UID member must be kept",
+            hrefs.contains("/calendars/user/default/bare-uid-no-extension")
+        )
     }
 
     @Test
@@ -173,6 +184,13 @@ class OkHttpCalDavClientPropfindEtagTest {
         val body = request.body.readUtf8()
         assertTrue("Body should request getetag", body.contains("getetag"))
         assertTrue("Body should be a propfind request", body.contains("propfind"))
+        assertFalse(
+            "Body must NOT request resourcetype — iCloud emits per-member propstat-404 " +
+                "for an empty resourcetype query and the response bloats well past the " +
+                "read timeout. Collection self-row is discriminated by trailing slash on " +
+                "href (RFC 4918 §5.2) instead.",
+            Regex("""<[a-zA-Z]+:resourcetype\b""").containsMatchIn(body)
+        )
     }
 
     @Test
@@ -223,7 +241,10 @@ class OkHttpCalDavClientPropfindEtagTest {
     }
 
     @Test
-    fun `fetchAllEtags handles null etags`() = runTest {
+    fun `fetchAllEtags skips slashless member rows with no etag`() = runTest {
+        // A slashless response with no etag can't be proven to be a member resource so
+        // it's skipped (diagnostic). Without this rule, we'd emit Pair(href, null) and
+        // downstream pulls would force-fetch every such response and waste bandwidth.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -253,9 +274,9 @@ class OkHttpCalDavClientPropfindEtagTest {
 
         assertTrue(result.isSuccess())
         val pairs = result.getOrNull()!!
-        assertEquals(2, pairs.size)
+        assertEquals(1, pairs.size)
+        assertEquals("/calendars/user/default/event1.ics", pairs[0].first)
         assertEquals("etag-aaa", pairs[0].second)
-        assertNull("Event without getetag should have null etag", pairs[1].second)
     }
 
     @Test

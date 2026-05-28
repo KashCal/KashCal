@@ -318,9 +318,11 @@ class OkHttpCalDavClientRfc6578SyncTest {
     }
 
     @Test
-    fun `syncCollection filters non-ics hrefs from changed items`() = runTest {
-        // KashCal filters changed items to .ics resources only.
-        // Collection hrefs (directories) should not appear in changed list.
+    fun `syncCollection skips collection self-row identified by trailing slash`() = runTest {
+        // Primary discriminator is href.endsWith("/") (RFC 4918 §5.2 SHOULD). The wire
+        // body no longer requests resourcetype because iCloud emits a separate
+        // propstat-404 per member resource for empty-resourcetype queries, bloating
+        // responses past the read timeout.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -331,10 +333,37 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
         assertTrue("Result should be success", result.isSuccess())
         val report = result.getOrNull()!!
-        assertEquals("Collection href should be filtered out", 1, report.changed.size)
-        assertTrue(
-            "Only .ics hrefs should remain",
-            report.changed[0].href.endsWith(".ics")
+        assertEquals("Collection self-row should be filtered out", 1, report.changed.size)
+        assertEquals(
+            "Only the member resource should remain",
+            "/calendars/testuser/personal/event1.ics",
+            report.changed[0].href
+        )
+    }
+
+    @Test
+    fun `syncCollection uses resourcetype fallback for slashless self-row`() = runTest {
+        // Defensive fallback for non-conforming servers that drop the trailing slash on
+        // the collection self-row but still volunteer <resourcetype><collection/></...>
+        // unprompted. Pins the fallback branch standalone so deleting the resourcetype
+        // bookkeeping in ResponseState would fail this test.
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(syncResponseSlashlessSelfRowWithResourcetype())
+        )
+
+        val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
+
+        assertTrue("Result should be success", result.isSuccess())
+        val report = result.getOrNull()!!
+        assertEquals(
+            "Slashless self-row identified via resourcetype fallback must be filtered",
+            1, report.changed.size
+        )
+        assertEquals(
+            "/calendars/testuser/personal/event1.ics",
+            report.changed[0].href
         )
     }
 
@@ -707,7 +736,31 @@ class OkHttpCalDavClientRfc6578SyncTest {
         <d:href>/calendars/testuser/personal/</d:href>
         <d:propstat>
             <d:prop>
-                <d:getetag>"collection-etag"</d:getetag>
+                <d:resourcetype><d:collection/></d:resourcetype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+    <d:response>
+        <d:href>/calendars/testuser/personal/event1.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"event-etag"</d:getetag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+</d:multistatus>"""
+
+    private fun syncResponseSlashlessSelfRowWithResourcetype(): String =
+        """<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:d="DAV:">
+    <d:sync-token>$SYNC_TOKEN_2</d:sync-token>
+    <d:response>
+        <d:href>/calendars/testuser/personal</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:resourcetype><d:collection/></d:resourcetype>
             </d:prop>
             <d:status>HTTP/1.1 200 OK</d:status>
         </d:propstat>

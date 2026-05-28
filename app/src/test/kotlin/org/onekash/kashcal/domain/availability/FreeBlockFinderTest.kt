@@ -29,16 +29,19 @@ class FreeBlockFinderTest {
     private fun dayCode(date: LocalDate): Int =
         date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
 
-    private fun timed(date: LocalDate, startH: Int, startM: Int, endH: Int, endM: Int): SimpleOccurrence {
+    private fun timed(
+        date: LocalDate, startH: Int, startM: Int, endH: Int, endM: Int,
+        transparency: String = "OPAQUE"
+    ): SimpleOccurrence {
         val s = ZonedDateTime.of(date, LocalTime.of(startH, startM), zone).toInstant().toEpochMilli()
         val e = ZonedDateTime.of(date, LocalTime.of(endH, endM), zone).toInstant().toEpochMilli()
-        return SimpleOccurrence(s, e, false, dayCode(date), dayCode(date), 1L)
+        return SimpleOccurrence(s, e, false, dayCode(date), dayCode(date), 1L, transparency)
     }
 
-    private fun allDay(date: LocalDate): SimpleOccurrence {
+    private fun allDay(date: LocalDate, transparency: String = "OPAQUE"): SimpleOccurrence {
         val s = date.atStartOfDay(zone).toInstant().toEpochMilli()
         val e = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        return SimpleOccurrence(s, e, true, dayCode(date), dayCode(date), 1L)
+        return SimpleOccurrence(s, e, true, dayCode(date), dayCode(date), 1L, transparency)
     }
 
     private fun nowAt(date: LocalDate, h: Int, m: Int): Long =
@@ -506,6 +509,76 @@ class FreeBlockFinderTest {
     }
 
     // ========== Custom min block ==========
+
+    // ========== Free-busy (RFC 5545 TRANSP) filtering ==========
+
+    @Test
+    fun `transparent timed event does not split the work window`() {
+        // Event 12:00-14:00 marked TRANSPARENT (free) — must not contribute to
+        // the busy mask. The full 09:00-17:00 window should remain a single
+        // free block.
+        val blocks = finder.find(
+            occurrences = listOf(timed(mon, 12, 0, 14, 0, transparency = "TRANSPARENT")),
+            startDay = mon,
+            days = 1,
+            workStartMin = 540,
+            workEndMin = 1020,
+            minBlockMinutes = 60,
+            includeAllDayAsBusy = false,
+            now = nowAt(mon.minusDays(1), 12, 0),
+            zone = zone
+        )
+        assertEquals(1, blocks.size)
+        assertEquals(LocalTime.of(9, 0), blocks[0].start)
+        assertEquals(LocalTime.of(17, 0), blocks[0].end)
+        assertEquals(8 * 60L, blocks[0].durationMinutes)
+    }
+
+    @Test
+    fun `transparent all-day event does not blank the day even when toggle is on`() {
+        // All-day TRANSPARENT covers Monday — it's a "free" marker (e.g.
+        // remote-work flag), not a busy day. Even with includeAllDayAsBusy=true
+        // the day must not be blanked, and the timed window must remain free.
+        val blocks = finder.find(
+            occurrences = listOf(allDay(mon, transparency = "TRANSPARENT")),
+            startDay = mon,
+            days = 1,
+            workStartMin = 540,
+            workEndMin = 1020,
+            minBlockMinutes = 60,
+            includeAllDayAsBusy = true,
+            now = nowAt(mon.minusDays(1), 12, 0),
+            zone = zone
+        )
+        assertEquals(1, blocks.size)
+        assertEquals(LocalTime.of(9, 0), blocks[0].start)
+        assertEquals(LocalTime.of(17, 0), blocks[0].end)
+    }
+
+    @Test
+    fun `mixed busy and free events filter only the busy ones`() {
+        // 10-11 TRANSPARENT (free, ignored), 13-14 OPAQUE (busy, splits window).
+        // Expected output: 09-13 and 14-17.
+        val blocks = finder.find(
+            occurrences = listOf(
+                timed(mon, 10, 0, 11, 0, transparency = "TRANSPARENT"),
+                timed(mon, 13, 0, 14, 0, transparency = "OPAQUE")
+            ),
+            startDay = mon,
+            days = 1,
+            workStartMin = 540,
+            workEndMin = 1020,
+            minBlockMinutes = 60,
+            includeAllDayAsBusy = false,
+            now = nowAt(mon.minusDays(1), 12, 0),
+            zone = zone
+        )
+        assertEquals(2, blocks.size)
+        assertEquals(LocalTime.of(9, 0), blocks[0].start)
+        assertEquals(LocalTime.of(13, 0), blocks[0].end)
+        assertEquals(LocalTime.of(14, 0), blocks[1].start)
+        assertEquals(LocalTime.of(17, 0), blocks[1].end)
+    }
 
     @Test
     fun `30-minute min threshold accepts 30-minute gap`() {

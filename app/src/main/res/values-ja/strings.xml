@@ -454,7 +454,6 @@
     <string name="cd_day_events">%1$d日、%2$d件のイベント</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">頻度</string>
     <string name="label_on_days">曜日</string>
     <string name="label_pattern">パターン</string>
     <string name="label_ends">終了</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">繰り返さない</string>
     <string name="rrule_freq_daily">毎日</string>
     <string name="rrule_freq_weekly">毎週</string>
-    <string name="rrule_freq_biweekly">隔週</string>
     <string name="rrule_freq_monthly">毎月</string>
-    <string name="rrule_freq_quarterly">四半期ごと</string>
     <string name="rrule_freq_yearly">毎年</string>
     <string name="rrule_repeats">繰り返し</string>
     <string name="rrule_every_n_days">%1$d日ごと</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">最後</string>
     <string name="rrule_until_suffix">、%1$sまで</string>
     <string name="rrule_freq_never">なし</string>
+    <string name="rrule_freq_custom">カスタム</string>
+    <string name="label_repeat_every">繰り返し間隔</string>
+    <string name="rrule_unit_day">日</string>
+    <string name="rrule_unit_week">週</string>
+    <string name="rrule_unit_month">月</string>
+    <string name="rrule_unit_year">年</string>
+    <string name="cd_decrease_interval">間隔を減らす</string>
+    <string name="cd_increase_interval">間隔を増やす</string>
     <string name="rrule_starting">%1$s %2$s開始%3$s</string>
     <string name="rrule_since">%1$s · %2$s以降</string>
 
@@ -1015,9 +1020,7 @@
     <string name="share_availability_rail_label">空き状況を共有</string>
     <string name="share_availability_sheet_title">空き状況を共有</string>
     <string name="share_availability_hours_label">勤務時間: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">終日イベントを多忙として扱う</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">終日イベントは無視されます</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">終日イベントがある日は完全に多忙となります</string>
+    <string name="share_availability_all_day_toggle_title">終日イベントを予定ありとして扱う</string>
     <string name="share_availability_share_button">共有</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1025,6 +1028,13 @@
     <string name="share_availability_empty">選択した範囲に1時間以上の空きブロックがありません。</string>
     <string name="share_availability_chooser_title">空き状況を共有</string>
     <string name="share_availability_share_failed">共有できるアプリがありません</string>
+    <string name="share_availability_window_section">期間</string>
+    <string name="share_availability_hours_section">勤務時間</string>
+    <string name="share_availability_days_through">%1$s まで</string>
+    <string name="share_availability_window_duration">%1$s 時間の枠</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d 日間</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCalから共有</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">次の %1$d 日間</item>

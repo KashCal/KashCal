@@ -484,7 +484,6 @@
     <string name="cd_day_events">ရက် %1$d, ပွဲ %2$d ခု</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">အကြိမ်နှုန်း</string>
     <string name="label_on_days">ရက်များတွင်</string>
     <string name="label_pattern">ပုံစံ</string>
     <string name="label_ends">ပြီးဆုံး</string>
@@ -891,9 +890,7 @@
     <string name="rrule_does_not_repeat">ထပ်မလုပ်ပါ</string>
     <string name="rrule_freq_daily">နေ့စဉ်</string>
     <string name="rrule_freq_weekly">အပတ်စဉ်</string>
-    <string name="rrule_freq_biweekly">နှစ်ပတ်တစ်ကြိမ်</string>
     <string name="rrule_freq_monthly">လစဉ်</string>
-    <string name="rrule_freq_quarterly">သုံးလတစ်ကြိမ်</string>
     <string name="rrule_freq_yearly">နှစ်စဉ်</string>
     <string name="rrule_repeats">ထပ်လုပ်သည်</string>
     <string name="rrule_every_n_days">%1$d ရက်တစ်ကြိမ်</string>
@@ -907,6 +904,14 @@
     <string name="rrule_ordinal_last">နောက်ဆုံး</string>
     <string name="rrule_until_suffix">၊ %1$s အထိ</string>
     <string name="rrule_freq_never">ဘယ်တော့မှ</string>
+    <string name="rrule_freq_custom">စိတ်ကြိုက်</string>
+    <string name="label_repeat_every">ထပ်ခါတလဲလဲ လုပ်မည်</string>
+    <string name="rrule_unit_day">ရက်</string>
+    <string name="rrule_unit_week">အပတ်</string>
+    <string name="rrule_unit_month">လ</string>
+    <string name="rrule_unit_year">နှစ်</string>
+    <string name="cd_decrease_interval">အကြားအချိန် လျှော့ရန်</string>
+    <string name="cd_increase_interval">အကြားအချိန် တိုးရန်</string>
     <string name="rrule_starting">%1$s %2$s စတင်သည်%3$s</string>
     <string name="rrule_since">%1$s · %2$s ကတည်းက</string>
 
@@ -1034,9 +1039,7 @@
     <string name="share_availability_rail_label">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
     <string name="share_availability_sheet_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
     <string name="share_availability_hours_label">အလုပ်ချိန်: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">တစ်ရက်လုံး ပွဲများကို အလုပ်များသည်ဟု သတ်မှတ်ပါ</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">တစ်ရက်လုံး ပွဲများကို လျစ်လျူရှုသည်</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">တစ်ရက်လုံး ပွဲရှိသော နေ့သည် အပြည့်အဝ အလုပ်များသည်</string>
+    <string name="share_availability_all_day_toggle_title">တစ်နေကုန်ပွဲများကို အလုပ်ရှုပ်နေသည်ဟု သတ်မှတ်</string>
     <string name="share_availability_share_button">မျှဝေရန်</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1051,4 +1054,11 @@
     <plurals name="share_availability_header">
         <item quantity="other">နောက် %1$d ရက်အတွင်း အားလပ် (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">ကာလ</string>
+    <string name="share_availability_hours_section">အလုပ်ချိန်</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d ရက်</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s အထိ</string>
+    <string name="share_availability_window_duration">%1$s နာရီ ကာလ</string>
 </resources>

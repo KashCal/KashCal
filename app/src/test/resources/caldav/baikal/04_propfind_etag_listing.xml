@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!--
+  Baikal PROPFIND Depth:1 etag-listing response.
+
+  Captured from live container `baikal-digest-mx`
+  (image `ckulka/baikal:0.9.5-nginx-php8.2`, SabreDAV 4.6.0)
+  on 2026-05-28 against /dav.php/calendars/testuser1/default/ with
+  the request body:
+
+    <d:propfind xmlns:d="DAV:">
+      <d:prop>
+        <d:getetag/>
+        <d:resourcetype/>
+      </d:prop>
+    </d:propfind>
+
+  Calendar contents at capture time:
+    1. mxroute-repro-1.ics                                      (.ics member)
+    2. c8f1a2d3-4e5b-6789-abcd-ef0123456789                     (bare-UID member)
+    3. event-with-extension.ics                                 (.ics member)
+
+  Baikal exposes the collection self-row with two propstats:
+    - propstat 200: resourcetype = collection + calendar + shared-owner
+    - propstat 404: getetag (collection has no entity tag)
+
+  This is the WebDAV-conformant pattern for "this property doesn't apply
+  to this resource" (RFC 4918 §13). The parser must recognize the 200
+  resourcetype propstat and skip the row, NOT treat the 404 propstat as
+  a deletion.
+
+  The last response (`deleted-member.ics` with response-level 404) is
+  appended synthetically to also cover the RFC 4918 §13 deletion case
+  in this fixture; Baikal uses the same pattern for tombstones.
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav">
+  <d:response>
+    <d:href>/dav.php/calendars/testuser1/default/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype>
+          <d:collection/>
+          <cal:calendar/>
+          <cs:shared-owner/>
+        </d:resourcetype>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+    <d:propstat>
+      <d:prop>
+        <d:getetag/>
+      </d:prop>
+      <d:status>HTTP/1.1 404 Not Found</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav.php/calendars/testuser1/default/mxroute-repro-1.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"a3ce18cad8771a6d0a105af4c88551a7"</d:getetag>
+        <d:resourcetype/>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav.php/calendars/testuser1/default/c8f1a2d3-4e5b-6789-abcd-ef0123456789</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"e00d3e028e57fdc75f8cafc2610083a7"</d:getetag>
+        <d:resourcetype/>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav.php/calendars/testuser1/default/event-with-extension.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"18276f19db581f79f123d393121b74dc"</d:getetag>
+        <d:resourcetype/>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav.php/calendars/testuser1/default/deleted-member.ics</d:href>
+    <d:status>HTTP/1.1 404 Not Found</d:status>
+  </d:response>
+</d:multistatus>

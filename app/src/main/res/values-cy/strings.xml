@@ -474,7 +474,6 @@
     <string name="cd_day_events">Diwrnod %1$d, %2$d digwyddiad</string>
 
     <!-- i18n: Pickers / Forms -->
-    <string name="label_frequency">Amlder</string>
     <string name="label_on_days">Ar ddyddiau</string>
     <string name="label_pattern">Patrwm</string>
     <string name="label_ends">Yn Gorffen</string>
@@ -850,9 +849,7 @@
     <string name="rrule_does_not_repeat">Ddim yn ailadrodd</string>
     <string name="rrule_freq_daily">Dyddiol</string>
     <string name="rrule_freq_weekly">Wythnosol</string>
-    <string name="rrule_freq_biweekly">Bob pythefnos</string>
     <string name="rrule_freq_monthly">Misol</string>
-    <string name="rrule_freq_quarterly">Chwarterol</string>
     <string name="rrule_freq_yearly">Blynyddol</string>
     <string name="rrule_repeats">Yn ailadrodd</string>
     <string name="rrule_every_n_days">Bob %1$d diwrnod</string>
@@ -874,6 +871,14 @@
     </plurals>
     <string name="rrule_until_suffix">, tan %1$s</string>
     <string name="rrule_freq_never">Byth</string>
+    <string name="rrule_freq_custom">Cyfaddas</string>
+    <string name="label_repeat_every">Ailadrodd bob</string>
+    <string name="rrule_unit_day">Dydd</string>
+    <string name="rrule_unit_week">Wythnos</string>
+    <string name="rrule_unit_month">Mis</string>
+    <string name="rrule_unit_year">Blwyddyn</string>
+    <string name="cd_decrease_interval">Lleihau\'r cyfwng</string>
+    <string name="cd_increase_interval">Cynyddu\'r cyfwng</string>
     <string name="rrule_starting">%1$s yn dechrau %2$s%3$s</string>
     <string name="rrule_since">%1$s · ers %2$s</string>
     <!-- Sync Summary -->
@@ -1258,9 +1263,7 @@
         <item quantity="other">%1$d diwrnod nesaf</item>
     </plurals>
     <string name="share_availability_hours_label">Oriau gwaith: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Trin digwyddiadau diwrnod cyfan fel prysur</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Anwybyddir digwyddiadau diwrnod cyfan</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Mae diwrnod gyda digwyddiad diwrnod cyfan yn brysur yn llwyr</string>
+    <string name="share_availability_all_day_toggle_title">Digwyddiadau drwy\'r dydd fel prysur</string>
     <string name="share_availability_share_button">Rhannu</string>
     <plurals name="share_availability_header">
         <item quantity="zero">Rhydd dros y %1$d diwrnod nesaf (%2$s – %3$s):</item>
@@ -1276,6 +1279,18 @@
     <string name="share_availability_empty">Dim blociau rhydd o awr o leiaf yn yr ystod a ddewiswyd.</string>
     <string name="share_availability_chooser_title">Rhannu argaeledd</string>
     <string name="share_availability_share_failed">Dim ap ar gael i\'w rannu</string>
+    <string name="share_availability_window_section">Ffenestr</string>
+    <string name="share_availability_hours_section">Oriau gwaith</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="zero">%1$d diwrnod</item>
+        <item quantity="one">%1$d diwrnod</item>
+        <item quantity="two">%1$d ddiwrnod</item>
+        <item quantity="few">%1$d diwrnod</item>
+        <item quantity="many">%1$d diwrnod</item>
+        <item quantity="other">%1$d diwrnod</item>
+    </plurals>
+    <string name="share_availability_days_through">Hyd at %1$s</string>
+    <string name="share_availability_window_duration">Ffenestr %1$s awr</string>
     <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
 
 </resources>

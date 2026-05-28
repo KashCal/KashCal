@@ -454,7 +454,6 @@
     <string name="cd_day_events">Hari %1$d, %2$d acara</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Kekerapan</string>
     <string name="label_on_days">Pada hari</string>
     <string name="label_pattern">Corak</string>
     <string name="label_ends">Tamat</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">Tidak berulang</string>
     <string name="rrule_freq_daily">Harian</string>
     <string name="rrule_freq_weekly">Mingguan</string>
-    <string name="rrule_freq_biweekly">Dua minggu sekali</string>
     <string name="rrule_freq_monthly">Bulanan</string>
-    <string name="rrule_freq_quarterly">Suku tahunan</string>
     <string name="rrule_freq_yearly">Tahunan</string>
     <string name="rrule_repeats">Berulang</string>
     <string name="rrule_every_n_days">Setiap %1$d hari</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">terakhir</string>
     <string name="rrule_until_suffix">, sehingga %1$s</string>
     <string name="rrule_freq_never">Tidak pernah</string>
+    <string name="rrule_freq_custom">Tersuai</string>
+    <string name="label_repeat_every">Ulang setiap</string>
+    <string name="rrule_unit_day">Hari</string>
+    <string name="rrule_unit_week">Minggu</string>
+    <string name="rrule_unit_month">Bulan</string>
+    <string name="rrule_unit_year">Tahun</string>
+    <string name="cd_decrease_interval">Kurangkan selang</string>
+    <string name="cd_increase_interval">Tambah selang</string>
     <string name="rrule_starting">%1$s bermula %2$s%3$s</string>
     <string name="rrule_since">%1$s · sejak %2$s</string>
 
@@ -1016,9 +1021,7 @@
     <string name="share_availability_rail_label">Kongsi ketersediaan</string>
     <string name="share_availability_sheet_title">Kongsi ketersediaan</string>
     <string name="share_availability_hours_label">Waktu kerja: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Anggap acara sepanjang hari sebagai sibuk</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Acara sepanjang hari diabaikan</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Hari dengan acara sepanjang hari sepenuhnya sibuk</string>
+    <string name="share_availability_all_day_toggle_title">Acara sepanjang hari sebagai sibuk</string>
     <string name="share_availability_share_button">Kongsi</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1026,6 +1029,13 @@
     <string name="share_availability_empty">Tiada blok lapang sekurang-kurangnya satu jam dalam julat yang dipilih.</string>
     <string name="share_availability_chooser_title">Kongsi ketersediaan</string>
     <string name="share_availability_share_failed">Tiada apl untuk dikongsi</string>
+    <string name="share_availability_window_section">Tempoh</string>
+    <string name="share_availability_hours_section">Waktu kerja</string>
+    <string name="share_availability_days_through">Hingga %1$s</string>
+    <string name="share_availability_window_duration">Tempoh %1$s jam</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
     <string name="share_from_kashcal_footer">Dikongsi dari KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">%1$d hari akan datang</item>

@@ -683,7 +683,6 @@
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <!-- Recurrence picker: how often event repeats (Daily, Weekly, etc.) -->
-    <string name="label_frequency">Frequency</string>
     <!-- Recurrence picker: which days of the week -->
     <string name="label_on_days">On days</string>
     <!-- Recurrence picker: monthly pattern (e.g., "On day 15" or "On 2nd Tuesday") -->
@@ -988,9 +987,7 @@
     <string name="rrule_does_not_repeat">Does not repeat</string>
     <string name="rrule_freq_daily">Daily</string>
     <string name="rrule_freq_weekly">Weekly</string>
-    <string name="rrule_freq_biweekly">Biweekly</string>
     <string name="rrule_freq_monthly">Monthly</string>
-    <string name="rrule_freq_quarterly">Quarterly</string>
     <string name="rrule_freq_yearly">Yearly</string>
     <string name="rrule_repeats">Repeats</string>
     <!-- Interval patterns — %1$d = interval number -->
@@ -1017,6 +1014,18 @@
     <string name="rrule_until_suffix">, until %1$s</string>
     <!-- FrequencyOption chip label for "Never" (no recurrence) -->
     <string name="rrule_freq_never">Never</string>
+    <!-- FrequencyOption chip label for "Custom" — opens the interval stepper + Day/Week/Month/Year segmented control -->
+    <string name="rrule_freq_custom">Custom</string>
+    <!-- Label above the interval stepper in the Custom recurrence builder -->
+    <string name="label_repeat_every">Repeat every</string>
+    <!-- Day/Week/Month/Year segmented unit labels for the Custom recurrence builder -->
+    <string name="rrule_unit_day">Day</string>
+    <string name="rrule_unit_week">Week</string>
+    <string name="rrule_unit_month">Month</string>
+    <string name="rrule_unit_year">Year</string>
+    <!-- Content descriptions for the Custom recurrence stepper buttons -->
+    <string name="cd_decrease_interval">Decrease interval</string>
+    <string name="cd_increase_interval">Increase interval</string>
     <!-- Series start date composites for quick view — %1$s = freq, %2$s = date, %3$s = end suffix -->
     <string name="rrule_starting">%1$s starting %2$s%3$s</string>
     <!-- "since" variant (no end suffix) — %1$s = freq, %2$s = date -->
@@ -1379,12 +1388,8 @@
     </plurals>
     <!-- Range slider label for working hours window. %1$s = start time, %2$s = end time (locale-formatted). -->
     <string name="share_availability_hours_label">Working hours: %1$s – %2$s</string>
-    <!-- Toggle title for treating all-day events as busy -->
-    <string name="share_availability_all_day_toggle_title">Treat all-day events as busy</string>
-    <!-- Toggle subtitle when off (default): all-day events ignored -->
-    <string name="share_availability_all_day_toggle_subtitle_off">All-day events are ignored</string>
-    <!-- Toggle subtitle when on: a day with an all-day event is omitted -->
-    <string name="share_availability_all_day_toggle_subtitle_on">A day with an all-day event is fully busy</string>
+    <!-- Toggle title for treating all-day events as busy in the share-availability sheet -->
+    <string name="share_availability_all_day_toggle_title">All-day events as busy</string>
     <!-- Filled tonal share button label inside the sheet -->
     <string name="share_availability_share_button">Share</string>
     <!-- Header line above the per-day list. %1$d = day count, %2$s = work-start, %3$s = work-end. -->
@@ -1406,5 +1411,18 @@
     <string name="share_availability_chooser_title">Share availability</string>
     <!-- Snackbar shown if no app is available to receive the shared text -->
     <string name="share_availability_share_failed">No app available to share</string>
+    <!-- Section heading above the days slider in the share-availability sheet -->
+    <string name="share_availability_window_section">Window</string>
+    <!-- Section heading above the working-hours range slider in the share-availability sheet -->
+    <string name="share_availability_hours_section">Working hours</string>
+    <!-- Plural form for the hero number above the days slider. %1$d = day count. -->
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <!-- Caption below the days slider showing the resolved end date. %1$s = formatted date (e.g. "Wed, Jun 4"). -->
+    <string name="share_availability_days_through">Through %1$s</string>
+    <!-- Caption below the working-hours strip showing the window length (e.g. "8 hour window", "1.5 hour window"). %1$s = formatted hours. -->
+    <string name="share_availability_window_duration">%1$s hour window</string>
 
 </resources>

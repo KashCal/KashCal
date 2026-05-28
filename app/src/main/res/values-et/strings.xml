@@ -464,7 +464,6 @@
     <string name="cd_day_events">Päev %1$d, %2$d sündmust</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Sagedus</string>
     <string name="label_on_days">Päevadel</string>
     <string name="label_pattern">Muster</string>
     <string name="label_ends">Lõpeb</string>
@@ -874,9 +873,7 @@
     <string name="rrule_does_not_repeat">Ei korda</string>
     <string name="rrule_freq_daily">Iga päev</string>
     <string name="rrule_freq_weekly">Iga nädal</string>
-    <string name="rrule_freq_biweekly">Iga kahe nädala järel</string>
     <string name="rrule_freq_monthly">Iga kuu</string>
-    <string name="rrule_freq_quarterly">Iga kvartal</string>
     <string name="rrule_freq_yearly">Igal aastal</string>
     <string name="rrule_repeats">Kordub</string>
     <string name="rrule_every_n_days">Iga %1$d päeva järel</string>
@@ -890,6 +887,14 @@
     <string name="rrule_ordinal_last">viimane</string>
     <string name="rrule_until_suffix">, kuni %1$s</string>
     <string name="rrule_freq_never">Mitte kunagi</string>
+    <string name="rrule_freq_custom">Kohandatud</string>
+    <string name="label_repeat_every">Korda iga</string>
+    <string name="rrule_unit_day">Päev</string>
+    <string name="rrule_unit_week">Nädal</string>
+    <string name="rrule_unit_month">Kuu</string>
+    <string name="rrule_unit_year">Aasta</string>
+    <string name="cd_decrease_interval">Vähenda intervalli</string>
+    <string name="cd_increase_interval">Suurenda intervalli</string>
     <string name="rrule_starting">%1$s alates %2$s%3$s</string>
     <string name="rrule_since">%1$s · alates %2$s</string>
 
@@ -1030,9 +1035,7 @@
         <item quantity="other">Järgmised %1$d päeva</item>
     </plurals>
     <string name="share_availability_hours_label">Tööaeg: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Käsitle täispäevaseid sündmusi hõivatuna</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Täispäevased sündmused jäetakse arvestamata</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Päev täispäevase sündmusega on täielikult hõivatud</string>
+    <string name="share_availability_all_day_toggle_title">Täispäevased sündmused hõivatuna</string>
     <string name="share_availability_share_button">Jaga</string>
     <plurals name="share_availability_header">
         <item quantity="one">Vaba järgmise %1$d päeva jooksul (%2$s – %3$s):</item>
@@ -1044,5 +1047,13 @@
     <string name="share_availability_empty">Valitud vahemikus pole vähemalt tunniseid vabu plokke.</string>
     <string name="share_availability_chooser_title">Jaga saadavust</string>
     <string name="share_availability_share_failed">Pole rakendust jagamiseks</string>
+    <string name="share_availability_window_section">Aken</string>
+    <string name="share_availability_hours_section">Tööaeg</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d päev</item>
+        <item quantity="other">%1$d päeva</item>
+    </plurals>
+    <string name="share_availability_days_through">Kuni %1$s</string>
+    <string name="share_availability_window_duration">%1$s tunni aken</string>
     <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
 </resources>

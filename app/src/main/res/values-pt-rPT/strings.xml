@@ -466,7 +466,6 @@
     <string name="cd_day_events">Dia %1$d, %2$d eventos</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Frequência</string>
     <string name="label_on_days">Nos dias</string>
     <string name="label_pattern">Padrão</string>
     <string name="label_ends">Termina</string>
@@ -948,9 +947,7 @@
     <string name="rrule_does_not_repeat">Não se repete</string>
     <string name="rrule_freq_daily">Diariamente</string>
     <string name="rrule_freq_weekly">Semanalmente</string>
-    <string name="rrule_freq_biweekly">Quinzenalmente</string>
     <string name="rrule_freq_monthly">Mensalmente</string>
-    <string name="rrule_freq_quarterly">Trimestralmente</string>
     <string name="rrule_freq_yearly">Anualmente</string>
     <string name="rrule_repeats">Repete-se</string>
     <string name="rrule_every_n_days">A cada %1$d dias</string>
@@ -964,6 +961,14 @@
     <string name="rrule_ordinal_last">último</string>
     <string name="rrule_until_suffix">, até %1$s</string>
     <string name="rrule_freq_never">Nunca</string>
+    <string name="rrule_freq_custom">Personalizado</string>
+    <string name="label_repeat_every">Repetir a cada</string>
+    <string name="rrule_unit_day">Dia</string>
+    <string name="rrule_unit_week">Semana</string>
+    <string name="rrule_unit_month">Mês</string>
+    <string name="rrule_unit_year">Ano</string>
+    <string name="cd_decrease_interval">Diminuir intervalo</string>
+    <string name="cd_increase_interval">Aumentar intervalo</string>
     <string name="rrule_starting">%1$s a partir de %2$s%3$s</string>
     <string name="rrule_since">%1$s · desde %2$s</string>
 
@@ -1131,9 +1136,7 @@
         <item quantity="other">Próximos %1$d dias</item>
     </plurals>
     <string name="share_availability_hours_label">Horário de trabalho: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tratar eventos de dia inteiro como ocupados</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Eventos de dia inteiro são ignorados</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Um dia com evento de dia inteiro fica totalmente ocupado</string>
+    <string name="share_availability_all_day_toggle_title">Eventos de dia inteiro como ocupados</string>
     <string name="share_availability_share_button">Partilhar</string>
     <plurals name="share_availability_header">
         <item quantity="one">Livre no próximo %1$d dia (%2$s – %3$s):</item>
@@ -1145,5 +1148,13 @@
     <string name="share_availability_empty">Não há blocos livres de pelo menos uma hora no intervalo selecionado.</string>
     <string name="share_availability_chooser_title">Partilhar disponibilidade</string>
     <string name="share_availability_share_failed">Nenhuma app para partilhar</string>
+    <string name="share_availability_window_section">Período</string>
+    <string name="share_availability_hours_section">Horário de trabalho</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="other">%1$d dias</item>
+    </plurals>
+    <string name="share_availability_days_through">Até %1$s</string>
+    <string name="share_availability_window_duration">Janela de %1$s horas</string>
     <string name="share_from_kashcal_footer">Partilhado a partir do KashCal</string>
 </resources>

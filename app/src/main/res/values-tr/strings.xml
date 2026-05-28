@@ -483,7 +483,6 @@
     <string name="cd_day_events">%1$d. gün, %2$d etkinlik</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Sıklık</string>
     <string name="label_on_days">Günlerde</string>
     <string name="label_pattern">Desen</string>
     <string name="label_ends">Bitiş</string>
@@ -928,9 +927,7 @@
     <string name="rrule_does_not_repeat">Tekrarlanmaz</string>
     <string name="rrule_freq_daily">Günlük</string>
     <string name="rrule_freq_weekly">Haftalık</string>
-    <string name="rrule_freq_biweekly">İki haftada bir</string>
     <string name="rrule_freq_monthly">Aylık</string>
-    <string name="rrule_freq_quarterly">Üç ayda bir</string>
     <string name="rrule_freq_yearly">Yıllık</string>
     <string name="rrule_repeats">Tekrarlanır</string>
     <string name="rrule_every_n_days">Her %1$d günde bir</string>
@@ -944,6 +941,14 @@
     <string name="rrule_ordinal_last">son</string>
     <string name="rrule_until_suffix">, %1$s tarihine kadar</string>
     <string name="rrule_freq_never">Asla</string>
+    <string name="rrule_freq_custom">Özel</string>
+    <string name="label_repeat_every">Her tekrar</string>
+    <string name="rrule_unit_day">Gün</string>
+    <string name="rrule_unit_week">Hafta</string>
+    <string name="rrule_unit_month">Ay</string>
+    <string name="rrule_unit_year">Yıl</string>
+    <string name="cd_decrease_interval">Aralığı azalt</string>
+    <string name="cd_increase_interval">Aralığı artır</string>
     <string name="rrule_starting">%2$s%3$s tarihinden başlayarak %1$s</string>
     <string name="rrule_since">%1$s · %2$s tarihinden itibaren</string>
 
@@ -1083,9 +1088,7 @@
     <string name="share_availability_rail_label">Müsaitliği paylaş</string>
     <string name="share_availability_sheet_title">Müsaitliği paylaş</string>
     <string name="share_availability_hours_label">Çalışma saatleri: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tüm gün etkinliklerini meşgul olarak değerlendir</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Tüm gün etkinlikleri yok sayılır</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Tüm gün etkinliği olan gün tamamen meşguldür</string>
+    <string name="share_availability_all_day_toggle_title">Tüm gün etkinlikleri meşgul olarak</string>
     <string name="share_availability_share_button">Paylaş</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1102,4 +1105,12 @@
         <item quantity="one">Sonraki %1$d günde boş (%2$s – %3$s):</item>
         <item quantity="other">Sonraki %1$d günde boş (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Aralık</string>
+    <string name="share_availability_hours_section">Çalışma saatleri</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s tarihine kadar</string>
+    <string name="share_availability_window_duration">%1$s saatlik aralık</string>
 </resources>

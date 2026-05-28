@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SOGo PROPFIND Depth:1 etag-listing response.
+
+  Captured from live container `kashcal-sogo` on 2026-05-28 against
+  /SOGo/dav/testuser1/Calendar/personal/ with the request body:
+
+    <d:propfind xmlns:d="DAV:">
+      <d:prop>
+        <d:getetag/>
+        <d:resourcetype/>
+      </d:prop>
+    </d:propfind>
+
+  Calendar contents at capture time:
+    1. c8f1a2d3-4e5b-6789-abcd-ef0123456789       (bare-UID member)
+    2. event-with-extension.ics                   (.ics member)
+    3. kashcal-sogo-smoke-...ics                  (existing smoke-test event)
+
+  Three characteristics that exercise the parser more sharply than Baikal:
+
+  - **Uppercase D: prefix**: SOGo emits <D:multistatus>/<D:response> rather
+    than the more common lowercase <d:..> form. Namespace-aware parsing
+    is essential.
+
+  - **Status BEFORE prop inside propstat**: SOGo orders <D:status> ahead
+    of <D:prop>, the reverse of Baikal/Radicale. RFC 4918 §14.22 allows
+    either order. Streaming parsers that assume a fixed order would mis-
+    associate the status with the next propstat.
+
+  - **Collection self-row carries a literal "None" etag AND resourcetype**:
+    SOGo synthesizes an etag `"None"` on the collection itself (it has
+    no real entity tag). A parser keying on "etag present" would
+    incorrectly enqueue the collection URL as a member; the
+    discriminator must privilege the collection marker over the etag.
+
+  SOGo lacks DAV:sync-token, so PROPFIND Depth:1 is the primary etag-
+  listing path (fetchAllEtags), making this fixture matter.
+
+  The trailing response with response-level 404 is appended synthetically
+  to also cover the deletion case.
+-->
+<D:multistatus xmlns:D="DAV:">
+  <D:response>
+    <D:href>/SOGo/dav/testuser1/Calendar/personal/</D:href>
+    <D:propstat>
+      <D:status>HTTP/1.1 200 OK</D:status>
+      <D:prop>
+        <D:getetag>"None"</D:getetag>
+        <D:resourcetype>
+          <D:collection/>
+          <calendar xmlns="urn:ietf:params:xml:ns:caldav"/>
+          <vevent-collection xmlns="http://groupdav.org/"/>
+          <vtodo-collection xmlns="http://groupdav.org/"/>
+          <schedule-outbox xmlns="urn:ietf:params:xml:ns:caldav"/>
+        </D:resourcetype>
+      </D:prop>
+    </D:propstat>
+  </D:response>
+  <D:response>
+    <D:href>/SOGo/dav/testuser1/Calendar/personal/c8f1a2d3-4e5b-6789-abcd-ef0123456789</D:href>
+    <D:propstat>
+      <D:status>HTTP/1.1 200 OK</D:status>
+      <D:prop>
+        <D:getetag>"gcs00000000"</D:getetag>
+        <D:resourcetype/>
+      </D:prop>
+    </D:propstat>
+  </D:response>
+  <D:response>
+    <D:href>/SOGo/dav/testuser1/Calendar/personal/event-with-extension.ics</D:href>
+    <D:propstat>
+      <D:status>HTTP/1.1 200 OK</D:status>
+      <D:prop>
+        <D:getetag>"gcs00000000"</D:getetag>
+        <D:resourcetype/>
+      </D:prop>
+    </D:propstat>
+  </D:response>
+  <D:response>
+    <D:href>/SOGo/dav/testuser1/Calendar/personal/deleted-member.ics</D:href>
+    <D:status>HTTP/1.1 404 Not Found</D:status>
+  </D:response>
+</D:multistatus>

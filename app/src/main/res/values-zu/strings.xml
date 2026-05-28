@@ -478,7 +478,6 @@
     <string name="cd_day_events">Usuku %1$d, imicimbi engu-%2$d</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Ukuvamisa</string>
     <string name="label_on_days">Ngezinsuku</string>
     <string name="label_pattern">Iphethini</string>
     <string name="label_ends">Kuphela</string>
@@ -924,9 +923,7 @@
     <string name="rrule_does_not_repeat">Ayiphindi</string>
     <string name="rrule_freq_daily">Nsuku zonke</string>
     <string name="rrule_freq_weekly">Masonto onke</string>
-    <string name="rrule_freq_biweekly">Amasonto amabili ngamasonto</string>
     <string name="rrule_freq_monthly">Nyanga zonke</string>
-    <string name="rrule_freq_quarterly">Ikota ngekota</string>
     <string name="rrule_freq_yearly">Minyaka yonke</string>
     <string name="rrule_repeats">Iyaphinda</string>
     <string name="rrule_every_n_days">Zonke izinsuku ezingu-%1$d</string>
@@ -940,6 +937,14 @@
     <string name="rrule_ordinal_last">okokugcina</string>
     <string name="rrule_until_suffix">, kuze kube ngu-%1$s</string>
     <string name="rrule_freq_never">Akusoze</string>
+    <string name="rrule_freq_custom">Ngokwezifiso</string>
+    <string name="label_repeat_every">Phinda njalo nge-</string>
+    <string name="rrule_unit_day">Usuku</string>
+    <string name="rrule_unit_week">Isonto</string>
+    <string name="rrule_unit_month">Inyanga</string>
+    <string name="rrule_unit_year">Unyaka</string>
+    <string name="cd_decrease_interval">Nciphisa isikhala</string>
+    <string name="cd_increase_interval">Khulisa isikhala</string>
     <string name="rrule_starting">%1$s kuqala ngo-%2$s%3$s</string>
     <string name="rrule_since">%1$s · kusukela ngo-%2$s</string>
 
@@ -1083,9 +1088,7 @@
         <item quantity="other">Izinsuku ezilandelayo ezingu-%1$d</item>
     </plurals>
     <string name="share_availability_hours_label">Amahora omsebenzi: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Phatha imicimbi yosuku lonke njengematasa</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Imicimbi yosuku lonke iyeqwa</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Usuku olunomcimbi wosuku lonke lumatasa ngokuphelele</string>
+    <string name="share_availability_all_day_toggle_title">Imicimbi yosuku lonke njengematasa</string>
     <string name="share_availability_share_button">Yabelana</string>
     <plurals name="share_availability_header">
         <item quantity="one">Kukhululekile usuku olulandelayo lwe-%1$d (%2$s – %3$s):</item>
@@ -1097,5 +1100,13 @@
     <string name="share_availability_empty">Azikho izikhala ezikhululekile zehora elilodwa okungenani enanini elikhethiwe.</string>
     <string name="share_availability_chooser_title">Yabelana ngokutholakala</string>
     <string name="share_availability_share_failed">Akukho uhlelo lokusebenza lokwabelana</string>
+    <string name="share_availability_window_section">Iwindi</string>
+    <string name="share_availability_hours_section">Amahora omsebenzi</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d usuku</item>
+        <item quantity="other">%1$d izinsuku</item>
+    </plurals>
+    <string name="share_availability_days_through">Kuze kube ngu-%1$s</string>
+    <string name="share_availability_window_duration">Iwindi lamahora angu-%1$s</string>
     <string name="share_from_kashcal_footer">Kwabelwane kusuka ku-KashCal</string>
 </resources>

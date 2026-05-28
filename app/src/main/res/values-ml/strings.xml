@@ -481,7 +481,6 @@
     <string name="cd_day_events">ദിവസം %1$d, %2$d ഇവന്റുകൾ</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">ആവൃത്തി</string>
     <string name="label_on_days">ദിവസങ്ങളിൽ</string>
     <string name="label_pattern">പാറ്റേൺ</string>
     <string name="label_ends">അവസാനിക്കുന്നു</string>
@@ -937,9 +936,7 @@
     <string name="rrule_does_not_repeat">ആവർത്തിക്കുന്നില്ല</string>
     <string name="rrule_freq_daily">ദിവസേന</string>
     <string name="rrule_freq_weekly">ആഴ്ചതോറും</string>
-    <string name="rrule_freq_biweekly">രണ്ടാഴ്ചതോറും</string>
     <string name="rrule_freq_monthly">പ്രതിമാസം</string>
-    <string name="rrule_freq_quarterly">ത്രൈമാസം</string>
     <string name="rrule_freq_yearly">വാർഷികം</string>
     <string name="rrule_repeats">ആവർത്തിക്കുന്നു</string>
     <string name="rrule_every_n_days">ഓരോ %1$d ദിവസവും</string>
@@ -1067,9 +1064,7 @@
     <string name="share_availability_rail_label">ലഭ്യത പങ്കിടുക</string>
     <string name="share_availability_sheet_title">ലഭ്യത പങ്കിടുക</string>
     <string name="share_availability_hours_label">ജോലി സമയം: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">മുഴുവൻ ദിവസത്തെ ഇവന്റുകൾ തിരക്കായി കണക്കാക്കുക</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">മുഴുവൻ ദിവസത്തെ ഇവന്റുകൾ അവഗണിക്കപ്പെടും</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">മുഴുവൻ ദിവസത്തെ ഇവന്റുള്ള ദിവസം പൂർണ്ണമായും തിരക്കാണ്</string>
+    <string name="share_availability_all_day_toggle_title">മുഴുവൻ ദിവസത്തെ ഇവന്റുകൾ തിരക്കിലായി</string>
     <string name="share_availability_share_button">പങ്കിടുക</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1077,6 +1072,14 @@
     <string name="share_availability_empty">തിരഞ്ഞെടുത്ത ശ്രേണിയിൽ ഒരു മണിക്കൂറെങ്കിലുമുള്ള ഒഴിവുകൾ ഇല്ല.</string>
     <string name="share_availability_chooser_title">ലഭ്യത പങ്കിടുക</string>
     <string name="share_availability_share_failed">പങ്കിടാൻ ആപ്പ് ലഭ്യമല്ല</string>
+    <string name="share_availability_window_section">വിൻഡോ</string>
+    <string name="share_availability_hours_section">ജോലി സമയം</string>
+    <string name="share_availability_days_through">%1$s വരെ</string>
+    <string name="share_availability_window_duration">%1$s മണിക്കൂർ വിൻഡോ</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ദിവസം</item>
+        <item quantity="other">%1$d ദിവസങ്ങൾ</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCal-ൽ നിന്ന് പങ്കിട്ടു</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">അടുത്ത %1$d ദിവസം</item>
@@ -1086,4 +1089,12 @@
         <item quantity="one">അടുത്ത %1$d ദിവസം സ്വതന്ത്രം (%2$s – %3$s):</item>
         <item quantity="other">അടുത്ത %1$d ദിവസങ്ങളിൽ സ്വതന്ത്രം (%2$s – %3$s):</item>
     </plurals>
+    <string name="rrule_freq_custom">ഇഷ്ടാനുസൃതം</string>
+    <string name="label_repeat_every">ഓരോ</string>
+    <string name="rrule_unit_day">ദിവസം</string>
+    <string name="rrule_unit_week">ആഴ്‌ച</string>
+    <string name="rrule_unit_month">മാസം</string>
+    <string name="rrule_unit_year">വർഷം</string>
+    <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
+    <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
 </resources>

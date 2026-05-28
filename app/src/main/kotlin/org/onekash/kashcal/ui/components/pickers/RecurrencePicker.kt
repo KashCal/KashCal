@@ -28,8 +28,10 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,9 +71,7 @@ fun rememberRruleDisplayStrings(): RruleDisplayStrings {
     val doesNotRepeat = stringResource(R.string.rrule_does_not_repeat)
     val freqDaily = stringResource(R.string.rrule_freq_daily)
     val freqWeekly = stringResource(R.string.rrule_freq_weekly)
-    val freqBiweekly = stringResource(R.string.rrule_freq_biweekly)
     val freqMonthly = stringResource(R.string.rrule_freq_monthly)
-    val freqQuarterly = stringResource(R.string.rrule_freq_quarterly)
     val freqYearly = stringResource(R.string.rrule_freq_yearly)
     val repeats = stringResource(R.string.rrule_repeats)
     val everyNDays = stringResource(R.string.rrule_every_n_days)
@@ -95,9 +95,7 @@ fun rememberRruleDisplayStrings(): RruleDisplayStrings {
             doesNotRepeat = doesNotRepeat,
             freqDaily = freqDaily,
             freqWeekly = freqWeekly,
-            freqBiweekly = freqBiweekly,
             freqMonthly = freqMonthly,
-            freqQuarterly = freqQuarterly,
             freqYearly = freqYearly,
             repeats = repeats,
             everyNDays = everyNDays,
@@ -125,257 +123,20 @@ private fun frequencyLabel(option: FrequencyOption): String {
         FrequencyOption.NEVER -> stringResource(R.string.rrule_freq_never)
         FrequencyOption.DAILY -> stringResource(R.string.rrule_freq_daily)
         FrequencyOption.WEEKLY -> stringResource(R.string.rrule_freq_weekly)
-        FrequencyOption.BIWEEKLY -> stringResource(R.string.rrule_freq_biweekly)
         FrequencyOption.MONTHLY -> stringResource(R.string.rrule_freq_monthly)
-        FrequencyOption.QUARTERLY -> stringResource(R.string.rrule_freq_quarterly)
         FrequencyOption.YEARLY -> stringResource(R.string.rrule_freq_yearly)
+        FrequencyOption.CUSTOM -> stringResource(R.string.rrule_freq_custom)
     }
 }
 
-/**
- * Recurrence picker card with frequency chips, weekday selector,
- * monthly pattern options, and end conditions.
- *
- * @param selectedRrule Current RRULE string (null = does not repeat)
- * @param startDateMillis Start date timestamp for pattern calculation
- * @param isExpanded Whether the picker is expanded
- * @param onToggle Toggle expansion state
- * @param onSelect Called with new RRULE string (null = no repeat)
- */
-@Deprecated("Use RecurrencePickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
-fun RecurrencePickerCard(
-    selectedRrule: String?,
-    startDateMillis: Long,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    onSelect: (String?) -> Unit,
-    modifier: Modifier = Modifier,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
-) {
-    val focusManager = LocalFocusManager.current
-    val rruleStrings = rememberRruleDisplayStrings()
-    val displayText = RruleBuilder.formatForDisplay(selectedRrule, rruleStrings)
-
-    // Parse start date info
-    val startZoned = remember(startDateMillis) {
-        Instant.ofEpochMilli(startDateMillis)
-            .atZone(ZoneId.systemDefault())
-    }
-    val startDayOfWeek = startZoned.dayOfWeek
-    val startDayOfMonth = startZoned.dayOfMonth
-
-    // Calculate ordinal (1st, 2nd, 3rd, 4th, or -1 for last) of weekday in month
-    val startOrdinalInMonth = remember(startDateMillis) {
-        val day = startZoned.dayOfMonth
-        (day - 1) / 7 + 1  // 1-based ordinal
-    }
-
-    // Parse existing rrule to state
-    val parsed = remember(selectedRrule, startDayOfWeek, startDayOfMonth) {
-        RruleBuilder.parseRrule(selectedRrule, startDayOfWeek, startDayOfMonth, startOrdinalInMonth)
-    }
-
-    // Local state for interactive editing
-    var selectedFreqOption by remember(parsed) {
-        mutableStateOf(
-            when {
-                parsed.frequency == RecurrenceFrequency.NONE -> FrequencyOption.NEVER
-                parsed.frequency == RecurrenceFrequency.DAILY -> FrequencyOption.DAILY
-                parsed.frequency == RecurrenceFrequency.WEEKLY && parsed.interval == 2 -> FrequencyOption.BIWEEKLY
-                parsed.frequency == RecurrenceFrequency.WEEKLY -> FrequencyOption.WEEKLY
-                parsed.frequency == RecurrenceFrequency.MONTHLY && parsed.interval == 3 -> FrequencyOption.QUARTERLY
-                parsed.frequency == RecurrenceFrequency.MONTHLY -> FrequencyOption.MONTHLY
-                parsed.frequency == RecurrenceFrequency.YEARLY -> FrequencyOption.YEARLY
-                else -> FrequencyOption.NEVER
-            }
-        )
-    }
-
-    var selectedWeekdays by remember(parsed) {
-        mutableStateOf(parsed.weekdays.ifEmpty { setOf(startDayOfWeek) })
-    }
-
-    var monthlyPattern by remember(parsed) {
-        mutableStateOf(parsed.monthlyPattern ?: MonthlyPattern.SameDay(startDayOfMonth))
-    }
-
-    var endCondition by remember(parsed) {
-        mutableStateOf(parsed.endCondition)
-    }
-
-    val wkstDow = remember(firstDayOfWeek) {
-        DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)
-    }
-
-    // Build RRULE from current state
-    fun buildRrule(): String? {
-        if (selectedFreqOption == FrequencyOption.NEVER) return null
-
-        val base = when (selectedFreqOption) {
-            FrequencyOption.NEVER -> return null
-            FrequencyOption.DAILY -> RruleBuilder.daily()
-            FrequencyOption.WEEKLY -> RruleBuilder.weekly(days = selectedWeekdays)
-            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays, wkst = wkstDow)
-            FrequencyOption.MONTHLY -> when (val pattern = monthlyPattern) {
-                is MonthlyPattern.SameDay -> RruleBuilder.monthly(dayOfMonth = pattern.dayOfMonth)
-                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay()
-                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday)
-            }
-            FrequencyOption.QUARTERLY -> when (val pattern = monthlyPattern) {
-                is MonthlyPattern.SameDay -> RruleBuilder.monthly(interval = 3, dayOfMonth = pattern.dayOfMonth)
-                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay(interval = 3)
-                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday, interval = 3)
-            }
-            FrequencyOption.YEARLY -> RruleBuilder.yearly()
-        }
-
-        return when (val end = endCondition) {
-            is EndCondition.Never -> base
-            is EndCondition.Count -> RruleBuilder.withCount(base, end.count)
-            is EndCondition.Until -> RruleBuilder.withUntil(base, end.dateMillis)
-        }
-    }
-
-    // Update parent when state changes
-    fun notifyChange() {
-        onSelect(buildRrule())
-    }
-
-    OutlinedCard(modifier = modifier.fillMaxWidth()) {
-        Column {
-            // Header row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        focusManager.clearFocus()
-                        onToggle()
-                    }
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(stringResource(R.string.label_repeat), style = MaterialTheme.typography.bodyMedium)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        displayText,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Icon(
-                        if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            // Expanded content
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
-                exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 12.dp)
-                ) {
-                    // Frequency chips - 2 rows
-                    Text(
-                        stringResource(R.string.label_frequency),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    FrequencyChipRow(
-                        options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY, FrequencyOption.BIWEEKLY),
-                        selected = selectedFreqOption,
-                        onSelect = { option ->
-                            selectedFreqOption = option
-                            notifyChange()
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    FrequencyChipRow(
-                        options = listOf(FrequencyOption.MONTHLY, FrequencyOption.QUARTERLY, FrequencyOption.YEARLY),
-                        selected = selectedFreqOption,
-                        onSelect = { option ->
-                            selectedFreqOption = option
-                            notifyChange()
-                        }
-                    )
-
-                    // Weekday selector (for Weekly/Biweekly)
-                    if (selectedFreqOption == FrequencyOption.WEEKLY || selectedFreqOption == FrequencyOption.BIWEEKLY) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            stringResource(R.string.label_on_days),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        WeekdaySelector(
-                            selectedDays = selectedWeekdays,
-                            onDaysChange = { days ->
-                                selectedWeekdays = days
-                                notifyChange()
-                            },
-                            firstDayOfWeek = firstDayOfWeek
-                        )
-                    }
-
-                    // Monthly pattern selector
-                    if (selectedFreqOption == FrequencyOption.MONTHLY || selectedFreqOption == FrequencyOption.QUARTERLY) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            stringResource(R.string.label_pattern),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        MonthlyPatternSelector(
-                            pattern = monthlyPattern,
-                            dayOfMonth = startDayOfMonth,
-                            ordinalInMonth = startOrdinalInMonth,
-                            weekday = startDayOfWeek,
-                            onPatternChange = { pattern ->
-                                monthlyPattern = pattern
-                                notifyChange()
-                            }
-                        )
-                    }
-
-                    // End condition selector (for all frequencies except Never)
-                    if (selectedFreqOption != FrequencyOption.NEVER) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            stringResource(R.string.label_ends),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        EndConditionSelector(
-                            endCondition = endCondition,
-                            startDateMillis = startDateMillis,
-                            onEndConditionChange = { condition ->
-                                endCondition = condition
-                                notifyChange()
-                            },
-                            firstDayOfWeek = firstDayOfWeek
-                        )
-                    }
-                }
-            }
-        }
-    }
+private fun customUnitLabel(unit: CustomRecurrenceUnit): String = when (unit) {
+    CustomRecurrenceUnit.DAY -> stringResource(R.string.rrule_unit_day)
+    CustomRecurrenceUnit.WEEK -> stringResource(R.string.rrule_unit_week)
+    CustomRecurrenceUnit.MONTH -> stringResource(R.string.rrule_unit_month)
+    CustomRecurrenceUnit.YEAR -> stringResource(R.string.rrule_unit_year)
 }
+
 
 @Composable
 fun RecurrencePickerRow(
@@ -406,66 +167,62 @@ fun RecurrencePickerRow(
         RruleBuilder.parseRrule(selectedRrule, startDayOfWeek, startDayOfMonth, startOrdinalInMonth)
     }
 
-    var selectedFreqOption by remember(parsed) {
-        mutableStateOf(
-            when {
-                parsed.frequency == RecurrenceFrequency.NONE -> FrequencyOption.NEVER
-                parsed.frequency == RecurrenceFrequency.DAILY -> FrequencyOption.DAILY
-                parsed.frequency == RecurrenceFrequency.WEEKLY && parsed.interval == 2 -> FrequencyOption.BIWEEKLY
-                parsed.frequency == RecurrenceFrequency.WEEKLY -> FrequencyOption.WEEKLY
-                parsed.frequency == RecurrenceFrequency.MONTHLY && parsed.interval == 3 -> FrequencyOption.QUARTERLY
-                parsed.frequency == RecurrenceFrequency.MONTHLY -> FrequencyOption.MONTHLY
-                parsed.frequency == RecurrenceFrequency.YEARLY -> FrequencyOption.YEARLY
-                else -> FrequencyOption.NEVER
-            }
-        )
-    }
-
-    var selectedWeekdays by remember(parsed) {
-        mutableStateOf(parsed.weekdays.ifEmpty { setOf(startDayOfWeek) })
-    }
-
-    var monthlyPattern by remember(parsed) {
-        mutableStateOf(parsed.monthlyPattern ?: MonthlyPattern.SameDay(startDayOfMonth))
-    }
-
-    var endCondition by remember(parsed) {
-        mutableStateOf(parsed.endCondition)
-    }
-
     val wkstDow = remember(firstDayOfWeek) {
         DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)
     }
 
-    fun buildRrule(): String? {
-        if (selectedFreqOption == FrequencyOption.NEVER) return null
-        val base = when (selectedFreqOption) {
-            FrequencyOption.NEVER -> return null
-            FrequencyOption.DAILY -> RruleBuilder.daily()
-            FrequencyOption.WEEKLY -> RruleBuilder.weekly(days = selectedWeekdays)
-            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays, wkst = wkstDow)
-            FrequencyOption.MONTHLY -> when (val pattern = monthlyPattern) {
-                is MonthlyPattern.SameDay -> RruleBuilder.monthly(dayOfMonth = pattern.dayOfMonth)
-                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay()
-                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday)
-            }
-            FrequencyOption.QUARTERLY -> when (val pattern = monthlyPattern) {
-                is MonthlyPattern.SameDay -> RruleBuilder.monthly(interval = 3, dayOfMonth = pattern.dayOfMonth)
-                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay(interval = 3)
-                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday, interval = 3)
-            }
-            FrequencyOption.YEARLY -> RruleBuilder.yearly()
-        }
-        return when (val end = endCondition) {
-            is EndCondition.Never -> base
-            is EndCondition.Count -> RruleBuilder.withCount(base, end.count)
-            is EndCondition.Until -> RruleBuilder.withUntil(base, end.dateMillis)
+    // Holder is keyed off the start-date inputs only, NOT off `parsed`.
+    // Re-keying on `parsed` would reset the holder every time the parent
+    // echoes our emission back — turning a Custom→Weekly chip detour into
+    // an interval-losing round-trip (e.g. INTERVAL=200 → INTERVAL=1).
+    var selections by remember(startDayOfWeek, startDayOfMonth) {
+        mutableStateOf(RecurrencePickerSelections.from(parsed, startDayOfWeek, startDayOfMonth))
+    }
+
+    // Tracks the last RRULE we emitted so the LaunchedEffect below can tell a
+    // self-echo (parent storing our emission) apart from an external reset
+    // (e.g. user picked a different event). Only the latter rebuilds the holder.
+    //
+    // Contract: the parent must store the emitted string verbatim. Any
+    // normalization on the way in (trimming, BYDAY reordering, dropping
+    // redundant tokens) would break byte-equality, fire a false reset, and
+    // silently regress the chip-detour fix — INTERVAL=200 would be lost again
+    // on Custom→Weekly→Custom. EventFormSheet currently stores it verbatim.
+    var lastEmitted by remember(startDayOfWeek, startDayOfMonth) { mutableStateOf(selectedRrule) }
+
+    // Sticky across the chip-detour oscillation (self-echo guard skips
+    // the reset branch below) but recomputed on a real parent-driven
+    // reset. Loaded rules emit no device-wkst injection; only brand-new
+    // rules let the device wkst flow into the builder gate.
+    var isNewRule by remember(startDayOfWeek, startDayOfMonth) {
+        mutableStateOf(selectedRrule == null)
+    }
+
+    androidx.compose.runtime.LaunchedEffect(selectedRrule) {
+        if (selectedRrule != lastEmitted) {
+            selections = RecurrencePickerSelections.from(parsed, startDayOfWeek, startDayOfMonth)
+            lastEmitted = selectedRrule
+            isNewRule = selectedRrule == null
         }
     }
 
     fun notifyChange() {
-        onSelect(buildRrule())
+        val emitted = selections.toRrule(if (isNewRule) wkstDow else null)
+        lastEmitted = emitted
+        // Clearing the rule mid-session (Never chip) means the user is starting
+        // over. The next rule they author should be treated as new — including
+        // device-wkst seeding through the builder gate. The flip is one-way
+        // (false → true); only the LaunchedEffect's external-reset branch can
+        // restore false, so the sticky-loaded-rule contract is preserved when
+        // the parent reroutes the sheet to a different loaded rule.
+        if (emitted == null) isNewRule = true
+        onSelect(emitted)
     }
+
+    val showWeekdaySelector = selections.frequencyOption == FrequencyOption.WEEKLY ||
+        (selections.frequencyOption == FrequencyOption.CUSTOM && selections.customUnit == CustomRecurrenceUnit.WEEK)
+    val showMonthlySelector = selections.frequencyOption == FrequencyOption.MONTHLY ||
+        (selections.frequencyOption == FrequencyOption.CUSTOM && selections.customUnit == CustomRecurrenceUnit.MONTH)
 
     EventFormRow(
         icon = Icons.Default.Repeat,
@@ -483,18 +240,45 @@ fun RecurrencePickerRow(
                     .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
                 FrequencyChipRow(
-                    options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY, FrequencyOption.BIWEEKLY),
-                    selected = selectedFreqOption,
-                    onSelect = { option -> selectedFreqOption = option; notifyChange() }
+                    options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY),
+                    selected = selections.frequencyOption,
+                    onSelect = { option -> selections = selections.copy(frequencyOption = option); notifyChange() }
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 FrequencyChipRow(
-                    options = listOf(FrequencyOption.MONTHLY, FrequencyOption.QUARTERLY, FrequencyOption.YEARLY),
-                    selected = selectedFreqOption,
-                    onSelect = { option -> selectedFreqOption = option; notifyChange() }
+                    options = listOf(FrequencyOption.MONTHLY, FrequencyOption.YEARLY, FrequencyOption.CUSTOM),
+                    selected = selections.frequencyOption,
+                    onSelect = { option -> selections = selections.copy(frequencyOption = option); notifyChange() }
                 )
 
-                if (selectedFreqOption == FrequencyOption.WEEKLY || selectedFreqOption == FrequencyOption.BIWEEKLY) {
+                if (selections.frequencyOption == FrequencyOption.CUSTOM) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CustomRecurrenceBuilder(
+                        interval = selections.interval,
+                        unit = selections.customUnit,
+                        onIntervalChange = { newInterval ->
+                            selections = selections.copy(interval = newInterval)
+                            notifyChange()
+                        },
+                        onUnitChange = { newUnit ->
+                            val (nextWeekdays, nextMonthly) = applyUnitTransition(
+                                previous = selections.customUnit,
+                                new = newUnit,
+                                weekdays = selections.weekdays,
+                                monthlyPattern = selections.monthlyPattern,
+                                startDayOfWeek = startDayOfWeek,
+                            )
+                            selections = selections.copy(
+                                customUnit = newUnit,
+                                weekdays = nextWeekdays,
+                                monthlyPattern = nextMonthly,
+                            )
+                            notifyChange()
+                        },
+                    )
+                }
+
+                if (showWeekdaySelector) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         stringResource(R.string.label_on_days),
@@ -503,13 +287,13 @@ fun RecurrencePickerRow(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     WeekdaySelector(
-                        selectedDays = selectedWeekdays,
-                        onDaysChange = { days -> selectedWeekdays = days; notifyChange() },
+                        selectedDays = selections.weekdays,
+                        onDaysChange = { days -> selections = selections.copy(weekdays = days); notifyChange() },
                         firstDayOfWeek = firstDayOfWeek
                     )
                 }
 
-                if (selectedFreqOption == FrequencyOption.MONTHLY || selectedFreqOption == FrequencyOption.QUARTERLY) {
+                if (showMonthlySelector) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         stringResource(R.string.label_pattern),
@@ -518,15 +302,15 @@ fun RecurrencePickerRow(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     MonthlyPatternSelector(
-                        pattern = monthlyPattern,
+                        pattern = selections.monthlyPattern ?: MonthlyPattern.SameDay(startDayOfMonth),
                         dayOfMonth = startDayOfMonth,
                         ordinalInMonth = startOrdinalInMonth,
                         weekday = startDayOfWeek,
-                        onPatternChange = { pattern -> monthlyPattern = pattern; notifyChange() }
+                        onPatternChange = { pattern -> selections = selections.copy(monthlyPattern = pattern); notifyChange() }
                     )
                 }
 
-                if (selectedFreqOption != FrequencyOption.NEVER) {
+                if (selections.frequencyOption != FrequencyOption.NEVER) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         stringResource(R.string.label_ends),
@@ -535,9 +319,9 @@ fun RecurrencePickerRow(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     EndConditionSelector(
-                        endCondition = endCondition,
+                        endCondition = selections.endCondition,
                         startDateMillis = startDateMillis,
-                        onEndConditionChange = { condition -> endCondition = condition; notifyChange() },
+                        onEndConditionChange = { condition -> selections = selections.copy(endCondition = condition); notifyChange() },
                         firstDayOfWeek = firstDayOfWeek
                     )
                 }
@@ -555,6 +339,13 @@ fun RecurrencePickerRow(
 
 /**
  * Row of frequency option chips.
+ *
+ * Hand-built rather than Material3 [SingleChoiceSegmentedButtonRow] / FilterChip
+ * so the row matches the inverse-surface filled chip style used elsewhere in the
+ * app (ColorChipRow, calendar visibility chips, account chips). Material's
+ * built-ins paint the selected state with primary/secondary container colors,
+ * which would clash with the rest of the picker. Visual consistency across the
+ * codebase is the reason we keep this custom — not a missed migration.
  */
 @Composable
 fun FrequencyChipRow(
@@ -593,6 +384,131 @@ fun FrequencyChipRow(
                     color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+}
+
+/**
+ * One stepper button: 40dp circle with icon. Background and border dim to 50% alpha
+ * when disabled so the button reads as inert at a glance, not just slightly faded.
+ */
+@Composable
+private fun StepperButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val backgroundAlpha = if (enabled) 1f else 0.5f
+    val iconAlpha = if (enabled) 1f else 0.38f
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = backgroundAlpha))
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = backgroundAlpha),
+                CircleShape,
+            )
+            .clickable(enabled = enabled) { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = iconAlpha),
+        )
+    }
+}
+
+/**
+ * Custom recurrence builder: interval stepper + Day/Week/Month/Year segmented control.
+ *
+ * The visible stepper value equals the actual interval state (no display clamp). '+' is
+ * disabled at or above 99 — that's how new in-app authoring is bounded — but '-' stays
+ * enabled above 99 so an inbound `INTERVAL=200` (synced from a CalDAV server) can be
+ * walked down toward range without losing the saved value.
+ *
+ * The Day/Week/Month/Year selector is a hand-built chip row, not Material3
+ * [SingleChoiceSegmentedButtonRow]. It mirrors the [FrequencyChipRow] above so the
+ * two control rows read as one visual group; switching to Material's segmented
+ * button would split them stylistically.
+ */
+@Composable
+fun CustomRecurrenceBuilder(
+    interval: Int,
+    unit: CustomRecurrenceUnit,
+    onIntervalChange: (Int) -> Unit,
+    onUnitChange: (CustomRecurrenceUnit) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            stringResource(R.string.label_repeat_every),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            val canDecrement = interval > 1
+            val canIncrement = interval < 99
+            StepperButton(
+                icon = Icons.Default.Remove,
+                contentDescription = stringResource(R.string.cd_decrease_interval),
+                enabled = canDecrement,
+                onClick = { onIntervalChange(interval - 1) },
+            )
+            Text(
+                text = interval.toString(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.width(40.dp),
+                textAlign = TextAlign.Center,
+            )
+            StepperButton(
+                icon = Icons.Default.Add,
+                contentDescription = stringResource(R.string.cd_increase_interval),
+                enabled = canIncrement,
+                onClick = { onIntervalChange(interval + 1) },
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            CustomRecurrenceUnit.entries.forEach { entry ->
+                val isSelected = entry == unit
+                val label = customUnitLabel(entry)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.inverseSurface
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        )
+                        .then(
+                            if (!isSelected)
+                                Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                            else Modifier
+                        )
+                        .clickable { onUnitChange(entry) }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

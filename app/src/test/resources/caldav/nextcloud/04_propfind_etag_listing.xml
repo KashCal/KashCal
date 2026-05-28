@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<!--
+  Nextcloud PROPFIND Depth:1 etag-listing response.
+
+  Captured from live container `kashcal-nextcloud`
+  (image `nextcloud:32.0.5-apache`) on 2026-05-28 against
+  /remote.php/dav/calendars/admin/personal/ with the request body:
+
+    <d:propfind xmlns:d="DAV:">
+      <d:prop>
+        <d:getetag/>
+        <d:resourcetype/>
+      </d:prop>
+    </d:propfind>
+
+  Calendar contents at capture time:
+    1. event-with-extension.ics                 (.ics member)
+    2. a0yaWGzBExXXE9wM455Zfqt7SWb91rqD.ics     (existing test fixture)
+    3. c8f1a2d3-4e5b-6789-abcd-ef0123456789     (bare-UID member)
+    4. t2fix-...ics                             (existing test fixture)
+
+  Note: Nextcloud's CalDAV implementation IS SabreDAV under the hood, so
+  it ALSO accepts bare-UID PUTs and faithfully returns them in PROPFIND.
+  Confirms the bug class isn't unique to mxRoute — any SabreDAV-based
+  server can host bare-UID member resources.
+
+  Nextcloud uses sync-collection (RFC 6578) in production, so this
+  PROPFIND path isn't its hot one — but the parser is shared, and this
+  fixture verifies the discriminator behaves correctly against
+  Nextcloud's namespace-rich response.
+
+  Nextcloud advertises six namespaces on the multistatus envelope
+  (DAV, sabredav, caldav, calendarserver, owncloud, nextcloud) and
+  follows the standard Sabre pattern of two-propstat collection self-row
+  (200 resourcetype, 404 getetag).
+
+  The trailing response with response-level 404 is appended synthetically
+  to also cover the deletion case.
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+  <d:response>
+    <d:href>/remote.php/dav/calendars/admin/personal/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:resourcetype>
+          <d:collection/>
+          <cal:calendar/>
+        </d:resourcetype>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+    <d:propstat>
+      <d:prop>
+        <d:getetag/>
+      </d:prop>
+      <d:status>HTTP/1.1 404 Not Found</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/calendars/admin/personal/event-with-extension.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"18276f19db581f79f123d393121b74dc"</d:getetag>
+        <d:resourcetype/>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/calendars/admin/personal/c8f1a2d3-4e5b-6789-abcd-ef0123456789</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"e00d3e028e57fdc75f8cafc2610083a7"</d:getetag>
+        <d:resourcetype/>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/remote.php/dav/calendars/admin/personal/deleted-member.ics</d:href>
+    <d:status>HTTP/1.1 404 Not Found</d:status>
+  </d:response>
+</d:multistatus>

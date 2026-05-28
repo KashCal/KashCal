@@ -478,7 +478,6 @@
     <string name="cd_day_events">Day %1$d, %2$d events</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Frequency</string>
     <string name="label_on_days">On days</string>
     <string name="label_pattern">Pattern</string>
     <string name="label_ends">Ends</string>
@@ -921,9 +920,7 @@
     <string name="rrule_does_not_repeat">Does not repeat</string>
     <string name="rrule_freq_daily">Daily</string>
     <string name="rrule_freq_weekly">Weekly</string>
-    <string name="rrule_freq_biweekly">Fortnightly</string>
     <string name="rrule_freq_monthly">Monthly</string>
-    <string name="rrule_freq_quarterly">Quarterly</string>
     <string name="rrule_freq_yearly">Yearly</string>
     <string name="rrule_repeats">Repeats</string>
     <string name="rrule_every_n_days">Every %1$d days</string>
@@ -937,6 +934,14 @@
     <string name="rrule_ordinal_last">last</string>
     <string name="rrule_until_suffix">, until %1$s</string>
     <string name="rrule_freq_never">Never</string>
+    <string name="rrule_freq_custom">Custom</string>
+    <string name="label_repeat_every">Repeat every</string>
+    <string name="rrule_unit_day">Day</string>
+    <string name="rrule_unit_week">Week</string>
+    <string name="rrule_unit_month">Month</string>
+    <string name="rrule_unit_year">Year</string>
+    <string name="cd_decrease_interval">Decrease interval</string>
+    <string name="cd_increase_interval">Increase interval</string>
     <string name="rrule_starting">%1$s starting %2$s%3$s</string>
     <string name="rrule_since">%1$s · since %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1079,9 +1084,7 @@
         <item quantity="other">Next %1$d days</item>
     </plurals>
     <string name="share_availability_hours_label">Working hours: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Treat all-day events as busy</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">All-day events are ignored</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">A day with an all-day event is fully busy</string>
+    <string name="share_availability_all_day_toggle_title">All-day events as busy</string>
     <string name="share_availability_share_button">Share</string>
     <plurals name="share_availability_header">
         <item quantity="one">Free over the next %1$d day (%2$s – %3$s):</item>
@@ -1093,5 +1096,13 @@
     <string name="share_availability_empty">No free blocks of at least an hour in the selected range.</string>
     <string name="share_availability_chooser_title">Share availability</string>
     <string name="share_availability_share_failed">No app available to share</string>
+    <string name="share_availability_window_section">Window</string>
+    <string name="share_availability_hours_section">Working hours</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="share_availability_days_through">Through %1$s</string>
+    <string name="share_availability_window_duration">%1$s hour window</string>
     <string name="share_from_kashcal_footer">Shared from KashCal</string>
 </resources>

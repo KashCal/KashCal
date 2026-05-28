@@ -521,4 +521,133 @@ class ICloudAccountDiscoveryServiceTest {
 
         coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
+
+    // ==================== refreshCalendars ctag/syncToken Preservation (issue #249) ====================
+
+    @Test
+    fun `refreshCalendars preserves local ctag when server returns new ctag`() = runTest {
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.icloud.com/123/calendars/personal",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountById(1L) } returns testDbAccount
+        coEvery { credentialProvider.getCredentials(1L) } returns
+            Credentials(testAppleId, testPassword, "https://caldav.icloud.com")
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns
+            CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl(existingCalendar.caldavUrl) } returns existingCalendar
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal",
+                    url = "https://caldav.icloud.com/123/calendars/personal",
+                    displayName = "Personal",
+                    color = null,
+                    ctag = "new-server-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val service = createService()
+        service.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.ctag == "old-ctag" }) }
+    }
+
+    @Test
+    fun `refreshCalendars preserves local syncToken when server returns new ctag`() = runTest {
+        // Defense-in-depth invariant: CalDavCalendar has no syncToken field, so .copy()
+        // already preserves it. Pins the contract so a refactor that adds syncToken to
+        // the discovery model can't silently overwrite it.
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.icloud.com/123/calendars/personal",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountById(1L) } returns testDbAccount
+        coEvery { credentialProvider.getCredentials(1L) } returns
+            Credentials(testAppleId, testPassword, "https://caldav.icloud.com")
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns
+            CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl(existingCalendar.caldavUrl) } returns existingCalendar
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal",
+                    url = "https://caldav.icloud.com/123/calendars/personal",
+                    displayName = "Personal",
+                    color = null,
+                    ctag = "new-server-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val service = createService()
+        service.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.syncToken == "old-token" }) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount preserves local ctag for existing calendar URLs`() = runTest {
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.icloud.com/123/calendars/personal",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns testDbAccount
+        coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal",
+                    url = "https://caldav.icloud.com/123/calendars/personal",
+                    displayName = "Personal",
+                    color = "#FF2196F3",
+                    ctag = "new-server-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+        coEvery { calendarRepository.getCalendarByUrl(existingCalendar.caldavUrl) } returns existingCalendar
+
+        val service = createService()
+        service.discoverAndCreateAccount(testAppleId, testPassword)
+
+        coVerify {
+            calendarRepository.updateCalendar(
+                match { it.ctag == "old-ctag" && it.syncToken == "old-token" }
+            )
+        }
+    }
 }

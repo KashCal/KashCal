@@ -478,7 +478,6 @@
     <string name="cd_day_events">%1$d-күн, %2$d оқиға</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Жиілік</string>
     <string name="label_on_days">Күндері</string>
     <string name="label_pattern">Үлгі</string>
     <string name="label_ends">Аяқталуы</string>
@@ -924,9 +923,7 @@
     <string name="rrule_does_not_repeat">Қайталанбайды</string>
     <string name="rrule_freq_daily">Күн сайын</string>
     <string name="rrule_freq_weekly">Апта сайын</string>
-    <string name="rrule_freq_biweekly">Екі аптада бір</string>
     <string name="rrule_freq_monthly">Ай сайын</string>
-    <string name="rrule_freq_quarterly">Тоқсан сайын</string>
     <string name="rrule_freq_yearly">Жыл сайын</string>
     <string name="rrule_repeats">Қайталанады</string>
     <string name="rrule_every_n_days">Әр %1$d күн сайын</string>
@@ -940,6 +937,14 @@
     <string name="rrule_ordinal_last">соңғы</string>
     <string name="rrule_until_suffix">, %1$s дейін</string>
     <string name="rrule_freq_never">Ешқашан</string>
+    <string name="rrule_freq_custom">Таңдамалы</string>
+    <string name="label_repeat_every">Әрбір</string>
+    <string name="rrule_unit_day">Күн</string>
+    <string name="rrule_unit_week">Апта</string>
+    <string name="rrule_unit_month">Ай</string>
+    <string name="rrule_unit_year">Жыл</string>
+    <string name="cd_decrease_interval">Аралықты азайту</string>
+    <string name="cd_increase_interval">Аралықты арттыру</string>
     <string name="rrule_starting">%1$s %2$s%3$s бастап</string>
     <string name="rrule_since">%1$s · %2$s бастап</string>
 
@@ -1084,9 +1089,7 @@
         <item quantity="other">Келесі %1$d күн</item>
     </plurals>
     <string name="share_availability_hours_label">Жұмыс уақыты: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Бүкіл күнгі іс-шараларды бос емес деп санау</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Бүкіл күнгі іс-шаралар еленбейді</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Бүкіл күнгі іс-шарасы бар күн толығымен бос емес</string>
+    <string name="share_availability_all_day_toggle_title">Күні бойғы оқиғалар бос емес</string>
     <string name="share_availability_share_button">Бөлісу</string>
     <plurals name="share_availability_header">
         <item quantity="one">Келесі %1$d күн бос (%2$s – %3$s):</item>
@@ -1098,5 +1101,13 @@
     <string name="share_availability_empty">Таңдалған аралықта кемінде бір сағаттық бос блоктар жоқ.</string>
     <string name="share_availability_chooser_title">Қолжетімділікті бөлісу</string>
     <string name="share_availability_share_failed">Бөлісу үшін қолданба жоқ</string>
+    <string name="share_availability_window_section">Терезе</string>
+    <string name="share_availability_hours_section">Жұмыс уақыты</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d күн</item>
+        <item quantity="other">%1$d күн</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s дейін</string>
+    <string name="share_availability_window_duration">%1$s сағаттық терезе</string>
     <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
 </resources>

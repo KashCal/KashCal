@@ -464,7 +464,6 @@
     <string name="cd_day_events">День %1$d, подій: %2$d</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Частота</string>
     <string name="label_on_days">По днях</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Закінчується</string>
@@ -949,9 +948,7 @@
     <string name="rrule_does_not_repeat">Не повторюється</string>
     <string name="rrule_freq_daily">Щодня</string>
     <string name="rrule_freq_weekly">Щотижня</string>
-    <string name="rrule_freq_biweekly">Раз на два тижні</string>
     <string name="rrule_freq_monthly">Щомісяця</string>
-    <string name="rrule_freq_quarterly">Щокварталу</string>
     <string name="rrule_freq_yearly">Щороку</string>
     <string name="rrule_repeats">Повторюється</string>
     <string name="rrule_every_n_days">Кожні %1$d дн.</string>
@@ -965,6 +962,14 @@
     <string name="rrule_ordinal_last">останній</string>
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Ніколи</string>
+    <string name="rrule_freq_custom">Свій</string>
+    <string name="label_repeat_every">Повторювати кожні</string>
+    <string name="rrule_unit_day">День</string>
+    <string name="rrule_unit_week">Тиждень</string>
+    <string name="rrule_unit_month">Місяць</string>
+    <string name="rrule_unit_year">Рік</string>
+    <string name="cd_decrease_interval">Зменшити інтервал</string>
+    <string name="cd_increase_interval">Збільшити інтервал</string>
     <string name="rrule_starting">%1$s починаючи з %2$s%3$s</string>
     <string name="rrule_since">%1$s · з %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1114,9 +1119,7 @@
         <item quantity="other">Наступні %1$d днів</item>
     </plurals>
     <string name="share_availability_hours_label">Робочі години: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Вважати події на весь день зайнятістю</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Події на весь день ігноруються</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">День з подією на весь день повністю зайнятий</string>
+    <string name="share_availability_all_day_toggle_title">Події на весь день як зайняті</string>
     <string name="share_availability_share_button">Поділитися</string>
     <plurals name="share_availability_header">
         <item quantity="one">Вільно наступний %1$d день (%2$s – %3$s):</item>
@@ -1130,5 +1133,15 @@
     <string name="share_availability_empty">У вибраному діапазоні немає вільних блоків від години.</string>
     <string name="share_availability_chooser_title">Поділитися доступністю</string>
     <string name="share_availability_share_failed">Немає програми для надсилання</string>
+    <string name="share_availability_window_section">Вікно</string>
+    <string name="share_availability_hours_section">Робочі години</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дні</item>
+        <item quantity="many">%1$d днів</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <string name="share_availability_days_through">До %1$s</string>
+    <string name="share_availability_window_duration">Вікно %1$s год</string>
     <string name="share_from_kashcal_footer">Надіслано з KashCal</string>
 </resources>

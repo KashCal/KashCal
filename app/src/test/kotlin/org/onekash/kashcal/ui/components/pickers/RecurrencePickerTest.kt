@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.pickers
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -9,6 +10,7 @@ import org.onekash.kashcal.domain.rrule.FrequencyOption
 import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.rrule.toFrequency
 import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
@@ -19,43 +21,36 @@ import java.time.DayOfWeek
 @RunWith(RobolectricTestRunner::class)
 class RecurrencePickerTest {
 
-    // ==================== FrequencyOption Tests ====================
+    // ==================== FrequencyOption.toFrequency() Tests ====================
 
     @Test
-    fun `FrequencyOption NEVER maps to RecurrenceFrequency NONE`() {
-        assertEquals(RecurrenceFrequency.NONE, FrequencyOption.NEVER.freq)
+    fun `FrequencyOption NEVER toFrequency returns null`() {
+        assertNull(FrequencyOption.NEVER.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption DAILY maps to RecurrenceFrequency DAILY`() {
-        assertEquals(RecurrenceFrequency.DAILY, FrequencyOption.DAILY.freq)
+    fun `FrequencyOption DAILY toFrequency returns DAILY`() {
+        assertEquals(RecurrenceFrequency.DAILY, FrequencyOption.DAILY.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption WEEKLY maps to RecurrenceFrequency WEEKLY`() {
-        assertEquals(RecurrenceFrequency.WEEKLY, FrequencyOption.WEEKLY.freq)
+    fun `FrequencyOption WEEKLY toFrequency returns WEEKLY`() {
+        assertEquals(RecurrenceFrequency.WEEKLY, FrequencyOption.WEEKLY.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption BIWEEKLY maps to WEEKLY with interval 2`() {
-        assertEquals(RecurrenceFrequency.WEEKLY, FrequencyOption.BIWEEKLY.freq)
-        assertEquals(2, FrequencyOption.BIWEEKLY.interval)
+    fun `FrequencyOption MONTHLY toFrequency returns MONTHLY`() {
+        assertEquals(RecurrenceFrequency.MONTHLY, FrequencyOption.MONTHLY.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption MONTHLY maps to RecurrenceFrequency MONTHLY`() {
-        assertEquals(RecurrenceFrequency.MONTHLY, FrequencyOption.MONTHLY.freq)
+    fun `FrequencyOption YEARLY toFrequency returns YEARLY`() {
+        assertEquals(RecurrenceFrequency.YEARLY, FrequencyOption.YEARLY.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption QUARTERLY maps to MONTHLY with interval 3`() {
-        assertEquals(RecurrenceFrequency.MONTHLY, FrequencyOption.QUARTERLY.freq)
-        assertEquals(3, FrequencyOption.QUARTERLY.interval)
-    }
-
-    @Test
-    fun `FrequencyOption YEARLY maps to RecurrenceFrequency YEARLY`() {
-        assertEquals(RecurrenceFrequency.YEARLY, FrequencyOption.YEARLY.freq)
+    fun `FrequencyOption CUSTOM toFrequency returns null`() {
+        assertNull(FrequencyOption.CUSTOM.toFrequency())
     }
 
     // ==================== RRULE Building Tests ====================
@@ -299,8 +294,13 @@ class RecurrencePickerTest {
     }
 
     @Test
-    fun `formatForDisplay biweekly returns Biweekly`() {
-        assertEquals("Biweekly", RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2"))
+    fun `formatForDisplay weekly INTERVAL 2 returns Every 2 weeks`() {
+        assertEquals("Every 2 weeks", RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2"))
+    }
+
+    @Test
+    fun `formatForDisplay FREQ WEEKLY INTERVAL 1 returns Weekly`() {
+        assertEquals("Weekly", RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=1"))
     }
 
     @Test
@@ -309,8 +309,24 @@ class RecurrencePickerTest {
     }
 
     @Test
-    fun `formatForDisplay quarterly returns Quarterly`() {
-        assertEquals("Quarterly", RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3"))
+    fun `formatForDisplay monthly INTERVAL 3 returns Every 3 months`() {
+        assertEquals("Every 3 months", RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3"))
+    }
+
+    @Test
+    fun `formatForDisplay weekly INTERVAL 2 with BYDAY returns Every 2 weeks on days`() {
+        assertEquals(
+            "Every 2 weeks on Mon, Wed",
+            RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE")
+        )
+    }
+
+    @Test
+    fun `formatForDisplay monthly INTERVAL 3 with BYMONTHDAY returns Every 3 months on day`() {
+        assertEquals(
+            "Every 3 months on day 15",
+            RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=15")
+        )
     }
 
     @Test

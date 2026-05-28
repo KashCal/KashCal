@@ -650,6 +650,14 @@ class OkHttpCalDavClient : CalDavClient {
         // PROPFIND Depth:1 — lists all resources in the collection with their etags.
         // No time-range filter (unlike calendar-query). Used on servers without sync-token
         // (e.g., Purelymail) where calendar-query index may be stale.
+        // Body requests only <d:getetag/>. The parser distinguishes the collection
+        // self-row from member resources via the trailing-slash convention (RFC 4918
+        // §5.2): collection hrefs SHOULD end with `/`, member hrefs do not. This
+        // works for servers that store events at extensionless UID hrefs.
+        // Do not add <d:resourcetype/> here — iCloud answers an empty-resourcetype
+        // query with a separate propstat-404 per member resource (~360 bytes × N
+        // members on RK iCal-class calendars), bloating responses past the read
+        // timeout.
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:propfind xmlns:d="DAV:">
@@ -666,7 +674,8 @@ class OkHttpCalDavClient : CalDavClient {
             .build()
 
         executeRequest(request) { responseBody ->
-            // Reuse extractChangedItems which parses href+etag pairs and filters by .ics
+            // Reuse extractChangedItems: parses href+etag pairs and skips the
+            // collection self-row by trailing-slash on the href.
             val items = quirks.extractChangedItems(responseBody)
             CalDavResult.success(items)
         }
@@ -681,7 +690,12 @@ class OkHttpCalDavClient : CalDavClient {
         val endDate = quirks.formatDateForQuery(endMillis)
 
         // Same calendar-query as fetchEventsInRange but WITHOUT <c:calendar-data/>
-        // This returns only href+etag pairs, saving ~96% bandwidth (33KB vs 834KB for 231 events)
+        // This returns only href+etag pairs, saving ~96% bandwidth (33KB vs 834KB for 231 events).
+        // Body requests only <d:getetag/>. Collection self-row is skipped by the parser
+        // via the trailing-slash convention (RFC 4918 §5.2). Do not add
+        // <d:resourcetype/> here — iCloud answers an empty-resourcetype query with a
+        // separate propstat-404 per member resource, bloating responses past the read
+        // timeout on calendars with hundreds of events.
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
             <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -705,7 +719,8 @@ class OkHttpCalDavClient : CalDavClient {
             .build()
 
         executeRequest(request) { responseBody ->
-            // Reuse extractChangedItems which parses href+etag pairs
+            // Reuse extractChangedItems: parses href+etag pairs and skips the
+            // collection self-row by trailing-slash on the href.
             val items = quirks.extractChangedItems(responseBody)
             CalDavResult.success(items)
         }

@@ -18,9 +18,7 @@ data class RruleDisplayStrings(
     val doesNotRepeat: String,
     val freqDaily: String,
     val freqWeekly: String,
-    val freqBiweekly: String,
     val freqMonthly: String,
-    val freqQuarterly: String,
     val freqYearly: String,
     val repeats: String,
     val everyNDays: String,
@@ -42,9 +40,7 @@ data class RruleDisplayStrings(
             doesNotRepeat = "Does not repeat",
             freqDaily = "Daily",
             freqWeekly = "Weekly",
-            freqBiweekly = "Biweekly",
             freqMonthly = "Monthly",
-            freqQuarterly = "Quarterly",
             freqYearly = "Yearly",
             repeats = "Repeats",
             everyNDays = "Every %1\$d days",
@@ -99,6 +95,27 @@ object RruleBuilder {
         DayOfWeek.FRIDAY,
         DayOfWeek.SATURDAY,
         DayOfWeek.SUNDAY
+    )
+
+    private val INTERVAL_REGEX = Regex("INTERVAL=(\\d+)")
+    private val BYDAY_LIST_REGEX = Regex("BYDAY=([A-Z,]+)")
+    private val BYDAY_NTH_REGEX = Regex("BYDAY=(-?\\d+)([A-Z]{2})")
+    private val BYMONTHDAY_REGEX = Regex("BYMONTHDAY=(-?\\d+)")
+    private val COUNT_REGEX = Regex("COUNT=(\\d+)")
+    private val UNTIL_FULL_REGEX = Regex("UNTIL=(\\d{8}T\\d{6}Z?)")
+    private val UNTIL_DATE_REGEX = Regex("UNTIL=(\\d{8})")
+    private val WKST_REGEX = Regex("WKST=([A-Z]{2})")
+
+    /**
+     * BY* token names the picker UI consumes for a given frequency. Anything
+     * else (BYMONTH/BYWEEKNO/BYYEARDAY/BYSETPOS, plus BYMONTHDAY/BYDAY on
+     * frequencies where the picker doesn't render them) gets captured as an
+     * extra and re-appended on emission so CalDAV-pulled rules like "every
+     * Jan 15" (FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15) round-trip a no-op save.
+     */
+    private val CONSUMED_BY_TOKENS_BY_FREQ = mapOf(
+        RecurrenceFrequency.WEEKLY to setOf("BYDAY"),
+        RecurrenceFrequency.MONTHLY to setOf("BYDAY", "BYMONTHDAY"),
     )
 
     // ==================== Building RRULE Strings ====================
@@ -269,6 +286,8 @@ object RruleBuilder {
     ): ParsedRecurrence {
         if (rrule.isNullOrBlank()) return ParsedRecurrence()
 
+        val tokens = rrule.split(";").map { it.trim() }.filter { it.isNotEmpty() }
+
         // Parse frequency
         val frequency = when {
             rrule.contains("FREQ=DAILY") -> RecurrenceFrequency.DAILY
@@ -278,12 +297,22 @@ object RruleBuilder {
             else -> RecurrenceFrequency.NONE
         }
 
+        // Capture any BY* token the picker doesn't model for this frequency.
+        // selectInitialFrequencyOption routes any rule with extras to
+        // FrequencyOption.CUSTOM so emission goes through the unit-keyed
+        // builder + extras append, not a preset coercion.
+        val consumed = CONSUMED_BY_TOKENS_BY_FREQ[frequency].orEmpty()
+        val extraTokens = tokens.filter { token ->
+            val name = token.substringBefore('=')
+            name.startsWith("BY") && name !in consumed
+        }
+
         // Parse interval
-        val intervalMatch = Regex("INTERVAL=(\\d+)").find(rrule)
+        val intervalMatch = INTERVAL_REGEX.find(rrule)
         val interval = intervalMatch?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
         // Parse weekdays (for weekly)
-        val bydayMatch = Regex("BYDAY=([A-Z,]+)").find(rrule)
+        val bydayMatch = BYDAY_LIST_REGEX.find(rrule)
         val weekdays = if (bydayMatch != null) {
             bydayMatch.groupValues[1].split(",")
                 .mapNotNull { ABBREV_TO_DAY[it] }
@@ -294,8 +323,8 @@ object RruleBuilder {
 
         // Parse monthly pattern
         val monthlyPattern: MonthlyPattern? = if (frequency == RecurrenceFrequency.MONTHLY) {
-            val nthWeekdayMatch = Regex("BYDAY=(-?\\d+)([A-Z]{2})").find(rrule)
-            val byMonthdayMatch = Regex("BYMONTHDAY=(-?\\d+)").find(rrule)
+            val nthWeekdayMatch = BYDAY_NTH_REGEX.find(rrule)
+            val byMonthdayMatch = BYMONTHDAY_REGEX.find(rrule)
             when {
                 nthWeekdayMatch != null -> {
                     val ordinal = nthWeekdayMatch.groupValues[1].toIntOrNull() ?: defaultOrdinal
@@ -313,16 +342,17 @@ object RruleBuilder {
         } else null
 
         // Parse end condition
-        val countMatch = Regex("COUNT=(\\d+)").find(rrule)
-        val untilMatch = Regex("UNTIL=(\\d{8}T\\d{6}Z?)").find(rrule)
+        val countMatch = COUNT_REGEX.find(rrule)
+        val untilFullMatch = UNTIL_FULL_REGEX.find(rrule)
+        val untilDateMatch = if (untilFullMatch == null) UNTIL_DATE_REGEX.find(rrule) else null
         val endCondition: EndCondition = when {
             countMatch != null -> {
                 val count = countMatch.groupValues[1].toIntOrNull() ?: 10
                 EndCondition.Count(count)
             }
-            untilMatch != null -> {
+            untilFullMatch != null -> {
                 try {
-                    val dateTimeStr = untilMatch.groupValues[1]
+                    val dateTimeStr = untilFullMatch.groupValues[1]
                     val formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
                     val dateTime = LocalDateTime.parse(dateTimeStr, formatter)
                     val millis = dateTime.atZone(ZoneOffset.UTC)
@@ -333,15 +363,38 @@ object RruleBuilder {
                     EndCondition.Never
                 }
             }
+            untilDateMatch != null -> {
+                // RFC 5545 §3.3.10 date-value UNTIL (valid when DTSTART is VALUE=DATE).
+                // Anchor to end-of-day UTC so the bound includes the named day.
+                try {
+                    val dateStr = untilDateMatch.groupValues[1]
+                    val date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
+                    val millis = date.atTime(23, 59, 59).atZone(ZoneOffset.UTC)
+                        .toInstant()
+                        .toEpochMilli()
+                    EndCondition.Until(millis)
+                } catch (_: Exception) {
+                    EndCondition.Never
+                }
+            }
             else -> EndCondition.Never
         }
+
+        // Parse WKST. RFC 5545 §3.3.10 default is MO; we represent absence as
+        // null so callers can tell "rule omitted WKST" from "rule said WKST=MO".
+        // Picker uses null-means-fallback-to-device on emit.
+        val wkst = WKST_REGEX.find(rrule)
+            ?.groupValues?.get(1)
+            ?.let { ABBREV_TO_DAY[it] }
 
         return ParsedRecurrence(
             frequency = frequency,
             interval = interval,
             weekdays = weekdays,
             monthlyPattern = monthlyPattern,
-            endCondition = endCondition
+            endCondition = endCondition,
+            wkst = wkst,
+            extraTokens = extraTokens,
         )
     }
 
@@ -366,7 +419,7 @@ object RruleBuilder {
      *
      * Examples:
      * - "FREQ=DAILY" -> "Daily"
-     * - "FREQ=WEEKLY;INTERVAL=2" -> "Biweekly"
+     * - "FREQ=WEEKLY;INTERVAL=2" -> "Every 2 weeks"
      * - "FREQ=WEEKLY;BYDAY=MO,WE,FR" -> "Weekly on Mon, Wed, Fri"
      * - "FREQ=MONTHLY;BYDAY=2TU" -> "Monthly on 2nd Tue"
      * - "FREQ=MONTHLY;BYMONTHDAY=-1" -> "Monthly on last day"
@@ -378,7 +431,7 @@ object RruleBuilder {
     fun formatForDisplay(rrule: String?, strings: RruleDisplayStrings): String {
         if (rrule.isNullOrBlank()) return strings.doesNotRepeat
 
-        val intervalMatch = Regex("INTERVAL=(\\d+)").find(rrule)
+        val intervalMatch = INTERVAL_REGEX.find(rrule)
         val interval = intervalMatch?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
         val freq = when {
@@ -387,9 +440,8 @@ object RruleBuilder {
                 else strings.freqDaily
             }
             rrule.contains("FREQ=WEEKLY") -> {
-                val bydayMatch = Regex("BYDAY=([A-Z,]+)").find(rrule)
+                val bydayMatch = BYDAY_LIST_REGEX.find(rrule)
                 val base = when {
-                    interval == 2 -> strings.freqBiweekly
                     interval > 1 -> String.format(Locale.getDefault(), strings.everyNWeeks, interval)
                     else -> strings.freqWeekly
                 }
@@ -403,12 +455,11 @@ object RruleBuilder {
             }
             rrule.contains("FREQ=MONTHLY") -> {
                 val base = when {
-                    interval == 3 -> strings.freqQuarterly
                     interval > 1 -> String.format(Locale.getDefault(), strings.everyNMonths, interval)
                     else -> strings.freqMonthly
                 }
-                val bydayMatch = Regex("BYDAY=(-?\\d*)([A-Z]{2})").find(rrule)
-                val byMonthdayMatch = Regex("BYMONTHDAY=(-?\\d+)").find(rrule)
+                val bydayMatch = BYDAY_NTH_REGEX.find(rrule)
+                val byMonthdayMatch = BYMONTHDAY_REGEX.find(rrule)
                 when {
                     bydayMatch != null -> {
                         val ordinal = bydayMatch.groupValues[1]
@@ -439,8 +490,8 @@ object RruleBuilder {
             else -> strings.repeats
         }
 
-        val countMatch = Regex("COUNT=(\\d+)").find(rrule)
-        val untilMatch = Regex("UNTIL=(\\d{8})").find(rrule)
+        val countMatch = COUNT_REGEX.find(rrule)
+        val untilMatch = UNTIL_DATE_REGEX.find(rrule)
         val endSuffix = when {
             countMatch != null -> {
                 val count = countMatch.groupValues[1].toIntOrNull() ?: 0
@@ -483,8 +534,8 @@ object RruleBuilder {
     fun formatForDisplayParts(rrule: String?, strings: RruleDisplayStrings): Pair<String, String?> {
         if (rrule.isNullOrBlank()) return strings.doesNotRepeat to null
 
-        val countMatch = Regex("COUNT=(\\d+)").find(rrule)
-        val untilMatch = Regex("UNTIL=(\\d{8})").find(rrule)
+        val countMatch = COUNT_REGEX.find(rrule)
+        val untilMatch = UNTIL_DATE_REGEX.find(rrule)
         val full = formatForDisplay(rrule, strings)
 
         return when {

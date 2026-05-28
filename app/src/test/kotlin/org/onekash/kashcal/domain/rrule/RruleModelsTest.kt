@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.rrule
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.DayOfWeek
@@ -162,37 +163,32 @@ class RruleModelsTest {
         assertTrue(options.any { it == FrequencyOption.NEVER })
         assertTrue(options.any { it == FrequencyOption.DAILY })
         assertTrue(options.any { it == FrequencyOption.WEEKLY })
-        assertTrue(options.any { it == FrequencyOption.BIWEEKLY })
         assertTrue(options.any { it == FrequencyOption.MONTHLY })
-        assertTrue(options.any { it == FrequencyOption.QUARTERLY })
         assertTrue(options.any { it == FrequencyOption.YEARLY })
+        assertTrue(options.any { it == FrequencyOption.CUSTOM })
     }
 
     @Test
-    fun `FrequencyOption BIWEEKLY has interval 2`() {
-        assertEquals(2, FrequencyOption.BIWEEKLY.interval)
-        assertEquals(RecurrenceFrequency.WEEKLY, FrequencyOption.BIWEEKLY.freq)
+    fun `FrequencyOption toFrequency returns null for NEVER and CUSTOM`() {
+        assertNull(FrequencyOption.NEVER.toFrequency())
+        assertNull(FrequencyOption.CUSTOM.toFrequency())
     }
 
     @Test
-    fun `FrequencyOption QUARTERLY has interval 3`() {
-        assertEquals(3, FrequencyOption.QUARTERLY.interval)
-        assertEquals(RecurrenceFrequency.MONTHLY, FrequencyOption.QUARTERLY.freq)
-    }
-
-    @Test
-    fun `FrequencyOption default interval is 1`() {
-        assertEquals(1, FrequencyOption.DAILY.interval)
-        assertEquals(1, FrequencyOption.WEEKLY.interval)
-        assertEquals(1, FrequencyOption.MONTHLY.interval)
-        assertEquals(1, FrequencyOption.YEARLY.interval)
+    fun `FrequencyOption toFrequency returns matching enum for DAILY WEEKLY MONTHLY YEARLY`() {
+        assertEquals(RecurrenceFrequency.DAILY, FrequencyOption.DAILY.toFrequency())
+        assertEquals(RecurrenceFrequency.WEEKLY, FrequencyOption.WEEKLY.toFrequency())
+        assertEquals(RecurrenceFrequency.MONTHLY, FrequencyOption.MONTHLY.toFrequency())
+        assertEquals(RecurrenceFrequency.YEARLY, FrequencyOption.YEARLY.toFrequency())
     }
 
     @Test
     fun `FrequencyOption labels are user-friendly`() {
         assertEquals("Never", FrequencyOption.NEVER.label)
         assertEquals("Daily", FrequencyOption.DAILY.label)
-        assertEquals("Biweekly", FrequencyOption.BIWEEKLY.label)
-        assertEquals("Quarterly", FrequencyOption.QUARTERLY.label)
+        assertEquals("Weekly", FrequencyOption.WEEKLY.label)
+        assertEquals("Monthly", FrequencyOption.MONTHLY.label)
+        assertEquals("Yearly", FrequencyOption.YEARLY.label)
+        assertEquals("Custom", FrequencyOption.CUSTOM.label)
     }
 }

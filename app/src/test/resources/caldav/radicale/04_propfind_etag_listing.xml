@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Radicale PROPFIND Depth:1 etag-listing response.
+
+  Captured from live container `radicale-test`
+  (image `tomsquest/docker-radicale`) on 2026-05-28 against
+  /testuser1/test-calendar/ with the request body:
+
+    <d:propfind xmlns:d="DAV:">
+      <d:prop>
+        <d:getetag/>
+        <d:resourcetype/>
+      </d:prop>
+    </d:propfind>
+
+  Calendar contents at capture time:
+    1. 8a7b6c5d-4e3f-2a1b-9c8d-7e6f5a4b3c2d   (bare-UID member)
+    2. event-with-extension.ics               (.ics member)
+
+  Two characteristics that exercise the parser more sharply than Baikal:
+
+  - **Default DAV namespace**: Radicale serializes elements WITHOUT a
+    prefix (default xmlns="DAV:") instead of the more common <d:..>
+    prefix form. Namespace-aware parsing is essential.
+
+  - **Collection self-row carries a valid etag AND resourcetype**:
+    Radicale advertises a synthetic ctag-style etag on the collection
+    itself, returning <getetag> + <resourcetype><collection/></resourcetype>
+    in the same successful propstat. A parser that keys on "etag present"
+    would incorrectly enqueue the collection URL as a member; the
+    discriminator must privilege the collection marker over the etag.
+
+  Lacking sync-token in Radicale 3.x means PROPFIND Depth:1 is the
+  primary etag-listing path (fetchAllEtags), so this fixture matters.
+
+  The trailing response with response-level 404 is appended synthetically
+  to also cover the deletion case.
+-->
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+  <response>
+    <href>/testuser1/test-calendar/</href>
+    <propstat>
+      <prop>
+        <getetag>"fa5d28e9eb4a840535d55a86049f69768e0a0b9595f6a0ff13f9c54479a35120"</getetag>
+        <resourcetype>
+          <C:calendar/>
+          <collection/>
+        </resourcetype>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/testuser1/test-calendar/8a7b6c5d-4e3f-2a1b-9c8d-7e6f5a4b3c2d</href>
+    <propstat>
+      <prop>
+        <getetag>"aadb7123738659c3faa79479c1e592a05dde7a7a9b4a113f094928a1f99ed279"</getetag>
+        <resourcetype/>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/testuser1/test-calendar/event-with-extension.ics</href>
+    <propstat>
+      <prop>
+        <getetag>"55f5992cd76c0783f9bcf6bb03f7640b1887e7aa43efd1f754d7b55b0c8432ff"</getetag>
+        <resourcetype/>
+      </prop>
+      <status>HTTP/1.1 200 OK</status>
+    </propstat>
+  </response>
+  <response>
+    <href>/testuser1/test-calendar/deleted-member.ics</href>
+    <status>HTTP/1.1 404 Not Found</status>
+  </response>
+</multistatus>

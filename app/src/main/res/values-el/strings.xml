@@ -483,7 +483,6 @@
     <string name="cd_day_events">Ημέρα %1$d, %2$d συμβάντα</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Συχνότητα</string>
     <string name="label_on_days">Τις ημέρες</string>
     <string name="label_pattern">Μοτίβο</string>
     <string name="label_ends">Τέλος</string>
@@ -928,9 +927,7 @@
     <string name="rrule_does_not_repeat">Δεν επαναλαμβάνεται</string>
     <string name="rrule_freq_daily">Καθημερινά</string>
     <string name="rrule_freq_weekly">Εβδομαδιαία</string>
-    <string name="rrule_freq_biweekly">Κάθε δύο εβδομάδες</string>
     <string name="rrule_freq_monthly">Μηνιαία</string>
-    <string name="rrule_freq_quarterly">Τριμηνιαία</string>
     <string name="rrule_freq_yearly">Ετησίως</string>
     <string name="rrule_repeats">Επαναλαμβάνεται</string>
     <string name="rrule_every_n_days">Κάθε %1$d ημέρες</string>
@@ -944,6 +941,14 @@
     <string name="rrule_ordinal_last">τελευταία</string>
     <string name="rrule_until_suffix">, μέχρι %1$s</string>
     <string name="rrule_freq_never">Ποτέ</string>
+    <string name="rrule_freq_custom">Προσαρμοσμένο</string>
+    <string name="label_repeat_every">Επανάληψη κάθε</string>
+    <string name="rrule_unit_day">Ημέρα</string>
+    <string name="rrule_unit_week">Εβδομάδα</string>
+    <string name="rrule_unit_month">Μήνας</string>
+    <string name="rrule_unit_year">Έτος</string>
+    <string name="cd_decrease_interval">Μείωση διαστήματος</string>
+    <string name="cd_increase_interval">Αύξηση διαστήματος</string>
     <string name="rrule_starting">%1$s ξεκινώντας από %2$s%3$s</string>
     <string name="rrule_since">%1$s · από %2$s</string>
 
@@ -1083,9 +1088,7 @@
     <string name="share_availability_rail_label">Κοινή χρήση διαθεσιμότητας</string>
     <string name="share_availability_sheet_title">Κοινή χρήση διαθεσιμότητας</string>
     <string name="share_availability_hours_label">Ώρες εργασίας: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Αντιμετώπιση ολοήμερων συμβάντων ως απασχολημένος</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Τα ολοήμερα συμβάντα αγνοούνται</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Μια ημέρα με ολοήμερο συμβάν είναι πλήρως απασχολημένη</string>
+    <string name="share_availability_all_day_toggle_title">Ολοήμερα συμβάντα ως απασχολημένα</string>
     <string name="share_availability_share_button">Κοινή χρήση</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1102,4 +1105,12 @@
         <item quantity="one">Ελεύθερο την επόμενη %1$d ημέρα (%2$s – %3$s):</item>
         <item quantity="other">Ελεύθερο τις επόμενες %1$d ημέρες (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Εύρος</string>
+    <string name="share_availability_hours_section">Ώρες εργασίας</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ημέρα</item>
+        <item quantity="other">%1$d ημέρες</item>
+    </plurals>
+    <string name="share_availability_days_through">Έως %1$s</string>
+    <string name="share_availability_window_duration">Εύρος %1$s ωρών</string>
 </resources>

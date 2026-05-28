@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SabreDAV PROPFIND Depth:1 response.
+
+  The current wire body requests only <d:getetag/>; this fixture preserves
+  the historic shape (with resourcetype echoed on the collection self-row)
+  so the parser stays tolerant of servers that volunteer that element
+  unprompted.
+
+  Mirrors a SabreDAV-backed deployment (e.g., Roundcube/Thunderbird-created
+  events): events are stored at extensionless UID hrefs.
+
+  This fixture covers four cases the parser must distinguish:
+    1. Collection self-row: resourcetype contains <collection/>; getetag
+       absent and reported via propstat 404. Must be skipped (not deleted).
+    2. Bare-UID member: href has no .ics extension. Must be kept.
+    3. .ics-named member: regular member. Must be kept.
+    4. Response-level 404: status directly inside <response>. Must be
+       treated as a deletion.
+-->
+<d:multistatus xmlns:d="DAV:">
+    <!-- 1. Collection self-row -->
+    <d:response>
+        <d:href>/index.php/calendars/test-account/test-cal/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:resourcetype>
+                    <d:collection/>
+                </d:resourcetype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <d:getetag/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- 2. Bare-UID member (no .ics extension) -->
+    <d:response>
+        <d:href>/index.php/calendars/test-account/test-cal/345cf39b-27fd-413f-a8c3-98fb85fd5240</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"sabre-bare-uid-etag-abc"</d:getetag>
+                <d:resourcetype/>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- 3. Another bare-UID member -->
+    <d:response>
+        <d:href>/index.php/calendars/test-account/test-cal/9f2e1b00-7a5d-4f3e-8c3a-b8b9d1c2e3f4</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"sabre-bare-uid-etag-def"</d:getetag>
+                <d:resourcetype/>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- 4. .ics-named member -->
+    <d:response>
+        <d:href>/index.php/calendars/test-account/test-cal/event-with-extension.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"sabre-ics-etag-ghi"</d:getetag>
+                <d:resourcetype/>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- 5. Response-level 404 (deletion) -->
+    <d:response>
+        <d:href>/index.php/calendars/test-account/test-cal/deleted-bare-uid-jkl</d:href>
+        <d:status>HTTP/1.1 404 Not Found</d:status>
+    </d:response>
+</d:multistatus>

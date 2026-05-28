@@ -477,7 +477,6 @@
     <string name="cd_day_events">Dagur %1$d, %2$d viðburðir</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Tíðni</string>
     <string name="label_on_days">Á dögum</string>
     <string name="label_pattern">Mynstur</string>
     <string name="label_ends">Endar</string>
@@ -932,9 +931,7 @@
     <string name="rrule_does_not_repeat">Endurtekur sig ekki</string>
     <string name="rrule_freq_daily">Daglega</string>
     <string name="rrule_freq_weekly">Vikulega</string>
-    <string name="rrule_freq_biweekly">Annað hvora viku</string>
     <string name="rrule_freq_monthly">Mánaðarlega</string>
-    <string name="rrule_freq_quarterly">Ársfjórðungslega</string>
     <string name="rrule_freq_yearly">Árlega</string>
     <string name="rrule_repeats">Endurtekur sig</string>
     <string name="rrule_every_n_days">Á %1$d daga fresti</string>
@@ -948,6 +945,14 @@
     <string name="rrule_ordinal_last">síðasti</string>
     <string name="rrule_until_suffix">, til %1$s</string>
     <string name="rrule_freq_never">Aldrei</string>
+    <string name="rrule_freq_custom">Sérsniðið</string>
+    <string name="label_repeat_every">Endurtaka á</string>
+    <string name="rrule_unit_day">Dagur</string>
+    <string name="rrule_unit_week">Vika</string>
+    <string name="rrule_unit_month">Mánuður</string>
+    <string name="rrule_unit_year">Ár</string>
+    <string name="cd_decrease_interval">Minnka millibil</string>
+    <string name="cd_increase_interval">Auka millibil</string>
     <string name="rrule_starting">%1$s frá %2$s%3$s</string>
     <string name="rrule_since">%1$s · síðan %2$s</string>
 
@@ -1071,9 +1076,7 @@
     <string name="share_availability_rail_label">Deila stöðu</string>
     <string name="share_availability_sheet_title">Deila stöðu</string>
     <string name="share_availability_hours_label">Vinnutími: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Meðhöndla heilsdagsviðburði sem upptekna</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Heilsdagsviðburðir eru hunsaðir</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Dagur með heilsdagsviðburði er fullbókaður</string>
+    <string name="share_availability_all_day_toggle_title">Heilsdagsviðburðir sem uppteknir</string>
     <string name="share_availability_share_button">Deila</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1081,6 +1084,14 @@
     <string name="share_availability_empty">Engar lausar lotur sem eru að minnsta kosti klukkustund á völdu tímabili.</string>
     <string name="share_availability_chooser_title">Deila stöðu</string>
     <string name="share_availability_share_failed">Ekkert forrit til staðar fyrir deilingu</string>
+    <string name="share_availability_window_section">Tímabil</string>
+    <string name="share_availability_hours_section">Vinnutími</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dagur</item>
+        <item quantity="other">%1$d dagar</item>
+    </plurals>
+    <string name="share_availability_days_through">Til og með %1$s</string>
+    <string name="share_availability_window_duration">%1$s klst. tímabil</string>
     <string name="share_from_kashcal_footer">Deilt frá KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Næsti %1$d dagur</item>

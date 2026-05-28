@@ -454,7 +454,6 @@
     <string name="cd_day_events">%1$d 日，%2$d 個事件</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">頻率</string>
     <string name="label_on_days">選擇日期</string>
     <string name="label_pattern">模式</string>
     <string name="label_ends">結束</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">不重複</string>
     <string name="rrule_freq_daily">每天</string>
     <string name="rrule_freq_weekly">每週</string>
-    <string name="rrule_freq_biweekly">每兩週</string>
     <string name="rrule_freq_monthly">每月</string>
-    <string name="rrule_freq_quarterly">每季</string>
     <string name="rrule_freq_yearly">每年</string>
     <string name="rrule_repeats">重複</string>
     <string name="rrule_every_n_days">每%1$d天</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">最後</string>
     <string name="rrule_until_suffix">，直到%1$s</string>
     <string name="rrule_freq_never">從不</string>
+    <string name="rrule_freq_custom">自訂</string>
+    <string name="label_repeat_every">重複間隔</string>
+    <string name="rrule_unit_day">天</string>
+    <string name="rrule_unit_week">週</string>
+    <string name="rrule_unit_month">月</string>
+    <string name="rrule_unit_year">年</string>
+    <string name="cd_decrease_interval">減少間隔</string>
+    <string name="cd_increase_interval">增加間隔</string>
     <string name="rrule_starting">%1$s從%2$s開始%3$s</string>
     <string name="rrule_since">%1$s · 自%2$s起</string>
 
@@ -1015,9 +1020,7 @@
     <string name="share_availability_rail_label">分享可用時段</string>
     <string name="share_availability_sheet_title">分享可用時段</string>
     <string name="share_availability_hours_label">工作時間：%1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">將整天事件視為忙碌</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">整天事件會被忽略</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">有整天事件的日期整天忙碌</string>
+    <string name="share_availability_all_day_toggle_title">全天事件視為忙碌</string>
     <string name="share_availability_share_button">分享</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1025,6 +1028,13 @@
     <string name="share_availability_empty">所選範圍內沒有至少一小時的空閒時段。</string>
     <string name="share_availability_chooser_title">分享可用時段</string>
     <string name="share_availability_share_failed">沒有可用於分享的應用程式</string>
+    <string name="share_availability_window_section">時段</string>
+    <string name="share_availability_hours_section">工作時間</string>
+    <string name="share_availability_days_through">截至 %1$s</string>
+    <string name="share_availability_window_duration">%1$s 小時時段</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
     <string name="share_from_kashcal_footer">由 KashCal 分享</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">未來 %1$d 天</item>

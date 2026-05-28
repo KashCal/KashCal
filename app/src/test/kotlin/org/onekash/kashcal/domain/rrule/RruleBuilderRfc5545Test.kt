@@ -283,15 +283,15 @@ class RruleBuilderRfc5545Test {
     }
 
     @Test
-    fun `formatForDisplay for biweekly`() {
+    fun `formatForDisplay for weekly INTERVAL 2`() {
         val display = RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2")
-        assertEquals("Biweekly", display)
+        assertEquals("Every 2 weeks", display)
     }
 
     @Test
-    fun `formatForDisplay for quarterly`() {
+    fun `formatForDisplay for monthly INTERVAL 3`() {
         val display = RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3")
-        assertEquals("Quarterly", display)
+        assertEquals("Every 3 months", display)
     }
 
     @Test

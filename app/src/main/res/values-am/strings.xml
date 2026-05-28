@@ -478,7 +478,6 @@
     <string name="cd_day_events">ቀን %1$d፣ %2$d ክስተቶች</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">ድግግሞሽ</string>
     <string name="label_on_days">በቀናት</string>
     <string name="label_pattern">ጥለት</string>
     <string name="label_ends">ያበቃል</string>
@@ -924,9 +923,7 @@
     <string name="rrule_does_not_repeat">አይደገምም</string>
     <string name="rrule_freq_daily">በየቀኑ</string>
     <string name="rrule_freq_weekly">በየሳምንቱ</string>
-    <string name="rrule_freq_biweekly">በየሁለት ሳምንት</string>
     <string name="rrule_freq_monthly">በየወሩ</string>
-    <string name="rrule_freq_quarterly">በየሩብ ዓመቱ</string>
     <string name="rrule_freq_yearly">በየዓመቱ</string>
     <string name="rrule_repeats">ይደገማል</string>
     <string name="rrule_every_n_days">በየ %1$d ቀናት</string>
@@ -940,6 +937,14 @@
     <string name="rrule_ordinal_last">መጨረሻ</string>
     <string name="rrule_until_suffix">, እስከ %1$s ድረስ</string>
     <string name="rrule_freq_never">በፍጹም</string>
+    <string name="rrule_freq_custom">ብጁ</string>
+    <string name="label_repeat_every">በየ</string>
+    <string name="rrule_unit_day">ቀን</string>
+    <string name="rrule_unit_week">ሳምንት</string>
+    <string name="rrule_unit_month">ወር</string>
+    <string name="rrule_unit_year">ዓመት</string>
+    <string name="cd_decrease_interval">ክፍተቱን ቀንስ</string>
+    <string name="cd_increase_interval">ክፍተቱን ጨምር</string>
     <string name="rrule_starting">%1$s %2$s%3$s ጀምሮ</string>
     <string name="rrule_since">%1$s · ከ%2$s ጀምሮ</string>
 
@@ -1083,9 +1088,7 @@
         <item quantity="other">ቀጣዩ %1$d ቀናት</item>
     </plurals>
     <string name="share_availability_hours_label">የስራ ሰዓቶች: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">የቀኑን ሙሉ ክስተቶች እንደተጠመደ ቁጠራቸው</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">የቀኑ ሙሉ ክስተቶች ችላ ይባላሉ</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">የቀኑ ሙሉ ክስተት ያለበት ቀን ሙሉ በሙሉ ተጠምዷል</string>
+    <string name="share_availability_all_day_toggle_title">ሙሉ ቀን ክስተቶች እንደ ተጠምደ</string>
     <string name="share_availability_share_button">አጋራ</string>
     <plurals name="share_availability_header">
         <item quantity="one">በቀጣዩ %1$d ቀን ነፃ (%2$s – %3$s):</item>
@@ -1097,5 +1100,13 @@
     <string name="share_availability_empty">በተመረጠው ክልል ውስጥ ቢያንስ የአንድ ሰዓት ነፃ ብሎኮች የሉም።</string>
     <string name="share_availability_chooser_title">ተገኝነትን አጋራ</string>
     <string name="share_availability_share_failed">ለማጋራት መተግበሪያ የለም</string>
+    <string name="share_availability_window_section">መስኮት</string>
+    <string name="share_availability_hours_section">የስራ ሰዓቶች</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ቀን</item>
+        <item quantity="other">%1$d ቀናት</item>
+    </plurals>
+    <string name="share_availability_days_through">እስከ %1$s</string>
+    <string name="share_availability_window_duration">%1$s ሰዓት መስኮት</string>
     <string name="share_from_kashcal_footer">ከKashCal ተጋርቷል</string>
 </resources>

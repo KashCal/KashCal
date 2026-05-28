@@ -481,7 +481,6 @@
     <string name="cd_day_events">দিন %1$d, %2$d ইভেন্ট</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">পুনরাবৃত্তি</string>
     <string name="label_on_days">দিনগুলিতে</string>
     <string name="label_pattern">প্যাটার্ন</string>
     <string name="label_ends">শেষ</string>
@@ -937,9 +936,7 @@
     <string name="rrule_does_not_repeat">পুনরাবৃত্তি হয় না</string>
     <string name="rrule_freq_daily">দৈনিক</string>
     <string name="rrule_freq_weekly">সাপ্তাহিক</string>
-    <string name="rrule_freq_biweekly">পাক্ষিক</string>
     <string name="rrule_freq_monthly">মাসিক</string>
-    <string name="rrule_freq_quarterly">ত্রৈমাসিক</string>
     <string name="rrule_freq_yearly">বার্ষিক</string>
     <string name="rrule_repeats">পুনরাবৃত্তি হয়</string>
     <string name="rrule_every_n_days">প্রতি %1$d দিন</string>
@@ -1067,9 +1064,7 @@
     <string name="share_availability_rail_label">প্রাপ্যতা শেয়ার করুন</string>
     <string name="share_availability_sheet_title">প্রাপ্যতা শেয়ার করুন</string>
     <string name="share_availability_hours_label">কাজের সময়: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">সারাদিনের ইভেন্টগুলিকে ব্যস্ত হিসেবে গণ্য করুন</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">সারাদিনের ইভেন্ট উপেক্ষা করা হয়</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">সারাদিনের ইভেন্টযুক্ত দিন সম্পূর্ণ ব্যস্ত</string>
+    <string name="share_availability_all_day_toggle_title">সারাদিনের ইভেন্ট ব্যস্ত হিসেবে</string>
     <string name="share_availability_share_button">শেয়ার করুন</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1077,6 +1072,14 @@
     <string name="share_availability_empty">নির্বাচিত পরিসরে কমপক্ষে এক ঘণ্টার কোনো খালি ব্লক নেই।</string>
     <string name="share_availability_chooser_title">প্রাপ্যতা শেয়ার করুন</string>
     <string name="share_availability_share_failed">শেয়ার করার জন্য কোনো অ্যাপ নেই</string>
+    <string name="share_availability_window_section">উইন্ডো</string>
+    <string name="share_availability_hours_section">কাজের সময়</string>
+    <string name="share_availability_days_through">%1$s পর্যন্ত</string>
+    <string name="share_availability_window_duration">%1$s ঘণ্টার উইন্ডো</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d দিন</item>
+        <item quantity="other">%1$d দিন</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCal থেকে শেয়ার করা হয়েছে</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">পরের %1$d দিন</item>
@@ -1086,4 +1089,12 @@
         <item quantity="one">পরের %1$d দিনে খালি (%2$s – %3$s):</item>
         <item quantity="other">পরের %1$d দিনে খালি (%2$s – %3$s):</item>
     </plurals>
+    <string name="rrule_freq_custom">কাস্টম</string>
+    <string name="label_repeat_every">প্রতি</string>
+    <string name="rrule_unit_day">দিন</string>
+    <string name="rrule_unit_week">সপ্তাহ</string>
+    <string name="rrule_unit_month">মাস</string>
+    <string name="rrule_unit_year">বছর</string>
+    <string name="cd_decrease_interval">ব্যবধান কমান</string>
+    <string name="cd_increase_interval">ব্যবধান বাড়ান</string>
 </resources>

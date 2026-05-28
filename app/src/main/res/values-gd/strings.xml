@@ -474,7 +474,6 @@
     <string name="cd_day_events">Là %1$d, %2$d tachartas</string>
 
     <!-- i18n: Pickers / Forms -->
-    <string name="label_frequency">Tricead</string>
     <string name="label_on_days">Air làithean</string>
     <string name="label_pattern">Pàtran</string>
     <string name="label_ends">A\' Crìochnachadh</string>
@@ -788,9 +787,7 @@
     <string name="rrule_does_not_repeat">Chan eil ag ath-thachairt</string>
     <string name="rrule_freq_daily">Gach là</string>
     <string name="rrule_freq_weekly">Gach seachdain</string>
-    <string name="rrule_freq_biweekly">Gach dà sheachdain</string>
     <string name="rrule_freq_monthly">Gach mìos</string>
-    <string name="rrule_freq_quarterly">Gach ràith</string>
     <string name="rrule_freq_yearly">Gach bliadhna</string>
     <string name="rrule_repeats">Ag ath-thachairt</string>
     <string name="rrule_every_n_days">Gach %1$d là</string>
@@ -810,6 +807,14 @@
     </plurals>
     <string name="rrule_until_suffix">, gu %1$s</string>
     <string name="rrule_freq_never">Gu bràth</string>
+    <string name="rrule_freq_custom">Gnàthaichte</string>
+    <string name="label_repeat_every">Ath-dhèan gach</string>
+    <string name="rrule_unit_day">Latha</string>
+    <string name="rrule_unit_week">Seachdain</string>
+    <string name="rrule_unit_month">Mìos</string>
+    <string name="rrule_unit_year">Bliadhna</string>
+    <string name="cd_decrease_interval">Lùghdaich an eadaramh</string>
+    <string name="cd_increase_interval">Meudaich an eadaramh</string>
     <string name="rrule_starting">%1$s a\' tòiseachadh %2$s%3$s</string>
     <string name="rrule_since">%1$s · bho %2$s</string>
     <!-- Sync Summary -->
@@ -1170,9 +1175,7 @@
         <item quantity="other">An ath %1$d làithean</item>
     </plurals>
     <string name="share_availability_hours_label">Uairean obrach: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Dèilig ri tachartasan an latha gu lèir mar trang</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Tha tachartasan an latha gu lèir air an leigeil seachad</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Tha latha le tachartas an latha gu lèir gu tur trang</string>
+    <string name="share_availability_all_day_toggle_title">Tachartasan fad-latha mar thrang</string>
     <string name="share_availability_share_button">Co-roinn</string>
     <plurals name="share_availability_header">
         <item quantity="one">Saor an ath %1$d latha (%2$s – %3$s):</item>
@@ -1186,6 +1189,16 @@
     <string name="share_availability_empty">Chan eil blocaichean saora de uair a thìde air a\' char as lugha san raon a thaghadh.</string>
     <string name="share_availability_chooser_title">Co-roinn ri-fhaotainneachd</string>
     <string name="share_availability_share_failed">Chan eil aplacaid ann airson co-roinneadh</string>
+    <string name="share_availability_window_section">Uinneag</string>
+    <string name="share_availability_hours_section">Uairean obrach</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d latha</item>
+        <item quantity="two">%1$d latha</item>
+        <item quantity="few">%1$d làithean</item>
+        <item quantity="other">%1$d latha</item>
+    </plurals>
+    <string name="share_availability_days_through">Gu ruige %1$s</string>
+    <string name="share_availability_window_duration">Uinneag de %1$s uair</string>
     <string name="share_from_kashcal_footer">Air co-roinneadh o KashCal</string>
 
 </resources>

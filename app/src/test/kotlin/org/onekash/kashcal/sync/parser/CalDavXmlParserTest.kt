@@ -195,7 +195,7 @@ class CalDavXmlParserTest {
 
         val personal = calendars.find { it.displayName == "Personal Calendar" }
         assertNotNull("Should find Personal Calendar", personal)
-        assertEquals("/123456789/calendars/4D24D1CF-D573-4130-BFB7-F9E0B616E6FE/", personal!!.href)
+        assertEquals("/123456789/calendars/11111111-2222-3333-4444-555555555555/", personal!!.href)
         assertEquals("#1E4C63FF", personal.color)
         assertNotNull(personal.ctag)
         assertTrue("Personal should have VEVENT", personal.supportedComponents.contains("VEVENT"))
@@ -525,6 +525,459 @@ class CalDavXmlParserTest {
     @Test
     fun `extractChangedItems returns empty for empty xml`() {
         assertEquals(emptyList<Any>(), parser.extractChangedItems(""))
+    }
+
+    // ========== Bare-UID hrefs (issue #249, SabreDAV stacks) ==========
+
+    @Test
+    fun `extractChangedItems keeps bare-UID hrefs and skips collection self-row`() {
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val items = parser.extractChangedItems(xml)
+
+        // Expect 3 changed items: 2 bare-UID + 1 .ics-named.
+        // Collection self-row is skipped (resourcetype/collection, no etag).
+        // Response-level 404 row is excluded (deletion, not change).
+        assertEquals(3, items.size)
+
+        val hrefs = items.map { it.first }
+        assertTrue(
+            "Bare-UID member must be kept",
+            hrefs.contains("/index.php/calendars/test-account/test-cal/345cf39b-27fd-413f-a8c3-98fb85fd5240")
+        )
+        assertTrue(
+            "Second bare-UID member must be kept",
+            hrefs.contains("/index.php/calendars/test-account/test-cal/9f2e1b00-7a5d-4f3e-8c3a-b8b9d1c2e3f4")
+        )
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/index.php/calendars/test-account/test-cal/event-with-extension.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept as a changed item",
+            hrefs.none { it == "/index.php/calendars/test-account/test-cal/" }
+        )
+
+        // Etags should be normalized (quotes stripped).
+        val firstBare = items.first { it.first.endsWith("345cf39b-27fd-413f-a8c3-98fb85fd5240") }
+        assertEquals("sabre-bare-uid-etag-abc", firstBare.second)
+    }
+
+    @Test
+    fun `extractChangedItems treats response-level 404 as deletion not change`() {
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val items = parser.extractChangedItems(xml)
+
+        // The response-level 404 row must not appear as a changed item.
+        assertTrue(
+            "Response-level 404 must not appear as a changed item",
+            items.none { it.first.endsWith("/deleted-bare-uid-jkl") }
+        )
+    }
+
+    @Test
+    fun `extractChangedItems does not treat propstat-404 on collection self-row as deletion`() {
+        // The collection self-row has propstat 404 on getetag (a perfectly RFC-conformant
+        // way to report "this property doesn't apply to me"). That must NOT cause it to
+        // be treated as a deletion or to leak into changed items.
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val items = parser.extractChangedItems(xml)
+
+        assertTrue(
+            "Collection self-row (propstat 404 on getetag) must not appear as changed",
+            items.none { it.first == "/index.php/calendars/test-account/test-cal/" }
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs reports response-level 404 from SabreDAV PROPFIND`() {
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertEquals(1, deleted.size)
+        assertEquals(
+            "/index.php/calendars/test-account/test-cal/deleted-bare-uid-jkl",
+            deleted[0]
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs does not report collection self-row with propstat 404`() {
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        // Propstat-level 404 (e.g., getetag absent on a collection) must NOT mark the
+        // entire response as deleted. RFC 4918 §13: propstat status applies only to
+        // those properties; response-level status applies to the whole resource.
+        assertTrue(
+            "Collection self-row must not be reported as deleted (propstat 404 != response 404)",
+            deleted.none { it == "/index.php/calendars/test-account/test-cal/" }
+        )
+    }
+
+    @Test
+    fun `extractSyncCollectionData keeps bare-UID hrefs and skips collection self-row`() {
+        // While SabreDAV sync-collection responses typically use .ics extensions, this
+        // verifies the discriminator behaves consistently across all sync-related
+        // extraction paths if a server happens to return resourcetype-bearing rows.
+        val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
+        val data = parser.extractSyncCollectionData(xml)
+
+        assertEquals(3, data.changedItems.size)
+        assertEquals(1, data.deletedHrefs.size)
+        assertEquals(
+            "/index.php/calendars/test-account/test-cal/deleted-bare-uid-jkl",
+            data.deletedHrefs[0]
+        )
+        assertTrue(
+            "Collection self-row must not appear in changed items",
+            data.changedItems.none { it.first == "/index.php/calendars/test-account/test-cal/" }
+        )
+    }
+
+    // ========== Real-server PROPFIND captures ==========
+    // These fixtures are captured (or structurally derived) from live servers,
+    // so the parser is tested against real-world XML quirks (default xmlns,
+    // uppercase prefix, status-before-prop, real etags on collection self-rows,
+    // member rows with propstat-404 on resourcetype, etc.).
+
+    @Test
+    fun `extractChangedItems parses real Baikal PROPFIND with bare-UID member`() {
+        val xml = loadResource("caldav/baikal/04_propfind_etag_listing.xml")
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertTrue(
+            "Bare-UID member from real Baikal must be kept",
+            hrefs.contains("/dav.php/calendars/testuser1/default/c8f1a2d3-4e5b-6789-abcd-ef0123456789")
+        )
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/dav.php/calendars/testuser1/default/event-with-extension.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept (resourcetype/collection in 200, getetag in 404)",
+            hrefs.none { it == "/dav.php/calendars/testuser1/default/" }
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs parses real Baikal PROPFIND deletion`() {
+        val xml = loadResource("caldav/baikal/04_propfind_etag_listing.xml")
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertEquals(1, deleted.size)
+        assertEquals(
+            "/dav.php/calendars/testuser1/default/deleted-member.ics",
+            deleted[0]
+        )
+    }
+
+    @Test
+    fun `extractChangedItems parses real Radicale PROPFIND with collection-row etag`() {
+        // Radicale serializes elements with default xmlns="DAV:" (no prefix) AND advertises
+        // a real synthetic etag on the collection self-row alongside resourcetype/collection.
+        // The discriminator must privilege the collection marker over the etag.
+        val xml = loadResource("caldav/radicale/04_propfind_etag_listing.xml")
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertTrue(
+            "Bare-UID member must be kept",
+            hrefs.contains("/testuser1/test-calendar/8a7b6c5d-4e3f-2a1b-9c8d-7e6f5a4b3c2d")
+        )
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/testuser1/test-calendar/event-with-extension.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept (has real etag but resourcetype/collection wins)",
+            hrefs.none { it == "/testuser1/test-calendar/" }
+        )
+    }
+
+    @Test
+    fun `extractChangedItems parses real SOGo PROPFIND with status-before-prop`() {
+        // SOGo emits <D:..> uppercase prefix, status BEFORE prop inside propstat,
+        // and synthesizes a literal "None" etag on the collection self-row alongside
+        // resourcetype/collection.
+        val xml = loadResource("caldav/sogo/04_propfind_etag_listing.xml")
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertTrue(
+            "Bare-UID member must be kept",
+            hrefs.contains("/SOGo/dav/testuser1/Calendar/personal/c8f1a2d3-4e5b-6789-abcd-ef0123456789")
+        )
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/SOGo/dav/testuser1/Calendar/personal/event-with-extension.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept (literal \"None\" etag but resourcetype/collection wins)",
+            hrefs.none { it == "/SOGo/dav/testuser1/Calendar/personal/" }
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs parses real SOGo PROPFIND deletion`() {
+        val xml = loadResource("caldav/sogo/04_propfind_etag_listing.xml")
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertEquals(1, deleted.size)
+        assertEquals(
+            "/SOGo/dav/testuser1/Calendar/personal/deleted-member.ics",
+            deleted[0]
+        )
+    }
+
+    @Test
+    fun `extractChangedItems parses real Nextcloud PROPFIND with bare-UID member`() {
+        val xml = loadResource("caldav/nextcloud/04_propfind_etag_listing.xml")
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertTrue(
+            "Bare-UID member confirms Nextcloud-on-SabreDAV accepts extensionless hrefs",
+            hrefs.contains("/remote.php/dav/calendars/admin/personal/c8f1a2d3-4e5b-6789-abcd-ef0123456789")
+        )
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/remote.php/dav/calendars/admin/personal/event-with-extension.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept",
+            hrefs.none { it == "/remote.php/dav/calendars/admin/personal/" }
+        )
+    }
+
+    @Test
+    fun `extractChangedItems parses iCloud PROPFIND with member resourcetype propstat-404`() {
+        // iCloud serializes with default xmlns="DAV:" (redundant per-element). The
+        // collection self-row carries a real ctag-style etag in a single 200 propstat.
+        // Member rows split resourcetype into a separate 404 propstat ("doesn't apply
+        // to me") which must NOT be conflated with response-level deletion.
+        val xml = loadResource("caldav/icloud/04_propfind_etag_listing.xml")
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertEquals("Both members must be kept; collection self-row skipped", 2, items.size)
+        assertTrue(
+            "Member with propstat-404 on resourcetype must be kept (not deleted)",
+            hrefs.contains("/redacted-account-id/calendars/redacted-calendar-id/AAAAAAAA-1111-2222-3333-444444444444.ics")
+        )
+        assertTrue(
+            "Second member must be kept",
+            hrefs.contains("/redacted-account-id/calendars/redacted-calendar-id/BBBBBBBB-5555-6666-7777-888888888888.ics")
+        )
+        assertTrue(
+            "Collection self-row must NOT be kept (real etag but resourcetype/collection wins)",
+            hrefs.none { it == "/redacted-account-id/calendars/redacted-calendar-id/" }
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs does not flag iCloud member propstat-404 as deletion`() {
+        // The two member rows have a propstat-404 on resourcetype, but no response-level
+        // 404 and they DO have a successful sibling propstat with the etag. The parser
+        // must NOT treat them as deletions (RFC 4918 §13).
+        val xml = loadResource("caldav/icloud/04_propfind_etag_listing.xml")
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertTrue(
+            "iCloud members with propstat-404 + sibling 200 must not be reported as deleted",
+            deleted.isEmpty()
+        )
+    }
+
+    // ========== Trailing-slash discriminator (post-v23.7.53) ==========
+    // Wire bodies for fetchAllEtags / fetchEtagsInRange request only <d:getetag/>;
+    // resourcetype is no longer asked for. Servers that follow RFC 4918 §5.2 emit
+    // a trailing slash on the collection self-row and no trailing slash on members.
+    // The parser uses href.endsWith("/") as the primary collection discriminator,
+    // with the legacy resourcetype/collection marker kept as a defensive fallback
+    // for any server that volunteers the element unprompted.
+
+    @Test
+    fun `extractChangedItems classifies by trailing slash when no resourcetype is returned`() {
+        // Mirrors the wire reality after v23.7.53: server omits resourcetype entirely.
+        // Self-row identified ONLY by trailing slash. Bare-UID + .ics members kept.
+        // Response-level 404 row is a deletion (excluded from changed).
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:">
+              <d:response>
+                <d:href>/calendars/user/default/</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"collection-ctag-token"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/event-with-extension.ics</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"etag-ics-001"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/345cf39b-27fd-413f-a8c3-98fb85fd5240</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"etag-bare-002"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/deleted-bare-uid</d:href>
+                <d:status>HTTP/1.1 404 Not Found</d:status>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertEquals("Both members kept; collection self-row + deletion excluded", 2, items.size)
+        assertTrue(
+            ".ics-named member must be kept",
+            hrefs.contains("/calendars/user/default/event-with-extension.ics")
+        )
+        assertTrue(
+            "Bare-UID member must be kept",
+            hrefs.contains("/calendars/user/default/345cf39b-27fd-413f-a8c3-98fb85fd5240")
+        )
+        assertTrue(
+            "Collection self-row (trailing slash) must NOT be kept even though it has an etag",
+            hrefs.none { it == "/calendars/user/default/" }
+        )
+        assertTrue(
+            "Response-level 404 row must NOT appear as changed",
+            hrefs.none { it.endsWith("/deleted-bare-uid") }
+        )
+    }
+
+    @Test
+    fun `extractDeletedHrefs reports response-level 404 when no resourcetype returned`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:">
+              <d:response>
+                <d:href>/calendars/user/default/</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"collection-ctag-token"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/deleted-bare-uid</d:href>
+                <d:status>HTTP/1.1 404 Not Found</d:status>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertEquals(1, deleted.size)
+        assertEquals("/calendars/user/default/deleted-bare-uid", deleted[0])
+    }
+
+    @Test
+    fun `extractChangedItems uses resourcetype fallback for slashless self-row volunteered by server`() {
+        // RFC 4918 §5.2 is a SHOULD, not MUST. A non-conforming server might omit the
+        // trailing slash on a collection self-row but still volunteer
+        // <resourcetype><collection/></resourcetype>. The parser keeps the resourcetype
+        // path as a defensive fallback so this row is still skipped.
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:">
+              <d:response>
+                <d:href>/calendars/user/default</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:resourcetype><d:collection/></d:resourcetype>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/event1.ics</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"etag-aaa"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val items = parser.extractChangedItems(xml)
+        val hrefs = items.map { it.first }
+
+        assertEquals("Member kept; slashless self-row identified via resourcetype fallback", 1, items.size)
+        assertTrue(hrefs.contains("/calendars/user/default/event1.ics"))
+        assertTrue(
+            "Slashless self-row must be skipped via resourcetype/collection fallback",
+            hrefs.none { it == "/calendars/user/default" }
+        )
+    }
+
+    @Test
+    fun `extractChangedItems treats slashless member with mixed propstat as changed not deleted`() {
+        // Slashless member href (no .ics extension) carries TWO propstats: 200 OK with
+        // getetag, plus 404 Not Found on some other prop. RFC 4918 §13: propstat status
+        // applies only to those properties; the response itself is alive. The parser
+        // must keep the row as changed (etag intact), not flag it as deleted.
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:">
+              <d:response>
+                <d:href>/calendars/user/default/</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"collection-ctag"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+              <d:response>
+                <d:href>/calendars/user/default/bare-uid-mixed-propstat</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <d:getetag>"etag-mixed-001"</d:getetag>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+                <d:propstat>
+                  <d:prop>
+                    <d:displayname/>
+                  </d:prop>
+                  <d:status>HTTP/1.1 404 Not Found</d:status>
+                </d:propstat>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val items = parser.extractChangedItems(xml)
+        val deleted = parser.extractDeletedHrefs(xml)
+
+        assertEquals(1, items.size)
+        assertEquals(
+            "/calendars/user/default/bare-uid-mixed-propstat",
+            items[0].first
+        )
+        assertEquals("etag-mixed-001", items[0].second)
+        assertTrue(
+            "Slashless member with propstat-404 + sibling 200 must NOT be deleted",
+            deleted.isEmpty()
+        )
     }
 
     // ========== extractDeletedHrefs ==========

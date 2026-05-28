@@ -477,7 +477,6 @@
     <string name="cd_day_events">Dag %1$d, %2$d afspraken</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Frequentie</string>
     <string name="label_on_days">Op dagen</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindigt</string>
@@ -932,9 +931,7 @@
     <string name="rrule_does_not_repeat">Herhaalt niet</string>
     <string name="rrule_freq_daily">Dagelijks</string>
     <string name="rrule_freq_weekly">Wekelijks</string>
-    <string name="rrule_freq_biweekly">Tweewekelijks</string>
     <string name="rrule_freq_monthly">Maandelijks</string>
-    <string name="rrule_freq_quarterly">Driemaandelijks</string>
     <string name="rrule_freq_yearly">Jaarlijks</string>
     <string name="rrule_repeats">Herhaalt</string>
     <string name="rrule_every_n_days">Elke %1$d dagen</string>
@@ -948,6 +945,14 @@
     <string name="rrule_ordinal_last">laatste</string>
     <string name="rrule_until_suffix">, tot %1$s</string>
     <string name="rrule_freq_never">Nooit</string>
+    <string name="rrule_freq_custom">Aangepast</string>
+    <string name="label_repeat_every">Herhaal elke</string>
+    <string name="rrule_unit_day">Dag</string>
+    <string name="rrule_unit_week">Week</string>
+    <string name="rrule_unit_month">Maand</string>
+    <string name="rrule_unit_year">Jaar</string>
+    <string name="cd_decrease_interval">Interval verlagen</string>
+    <string name="cd_increase_interval">Interval verhogen</string>
     <string name="rrule_starting">%1$s vanaf %2$s%3$s</string>
     <string name="rrule_since">%1$s · sinds %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1069,9 +1074,7 @@
     <string name="share_availability_rail_label">Beschikbaarheid delen</string>
     <string name="share_availability_sheet_title">Beschikbaarheid delen</string>
     <string name="share_availability_hours_label">Werkuren: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Hele dag-evenementen als bezet behandelen</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Hele dag-evenementen worden genegeerd</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Een dag met een hele dag-evenement is volledig bezet</string>
+    <string name="share_availability_all_day_toggle_title">Hele-dag-evenementen als bezet</string>
     <string name="share_availability_share_button">Delen</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1079,6 +1082,14 @@
     <string name="share_availability_empty">Geen vrije blokken van ten minste een uur in het geselecteerde bereik.</string>
     <string name="share_availability_chooser_title">Beschikbaarheid delen</string>
     <string name="share_availability_share_failed">Geen app beschikbaar om te delen</string>
+    <string name="share_availability_window_section">Periode</string>
+    <string name="share_availability_hours_section">Werkuren</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <string name="share_availability_days_through">Tot en met %1$s</string>
+    <string name="share_availability_window_duration">Venster van %1$s uur</string>
     <string name="share_from_kashcal_footer">Gedeeld vanuit KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Volgende %1$d dag</item>

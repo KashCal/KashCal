@@ -222,8 +222,57 @@ class ShareAvailabilitySheetComposeTest {
                 )
             }
         }
-        // "Next 3 days" plural form.
-        val expected = context.resources.getQuantityString(R.plurals.share_availability_days_label, 3, 3)
+        val expected = context.resources.getQuantityString(R.plurals.share_availability_days_hero, 3, 3)
         rule.onNodeWithText(expected).assertIsDisplayed()
+    }
+
+    @Test
+    fun workingHours_24hMode_rendersAxisAndPillsIn24h() {
+        rule.setContent {
+            MaterialTheme {
+                ShareAvailabilitySheetContent(
+                    uiState = nonEmptyState(),
+                    is24Hour = true,
+                    onDaysPreview = {},
+                    onDaysCommit = {},
+                    onHoursPreview = { _, _ -> },
+                    onHoursCommit = {},
+                    onAllDayToggle = {},
+                    onShare = {},
+                    onDismiss = {}
+                )
+            }
+        }
+        // 24h axis labels (00 / 06 / 12 / 18) and pills (09:00 / 17:00).
+        rule.onNodeWithText("00").assertIsDisplayed()
+        rule.onNodeWithText("06").assertIsDisplayed()
+        rule.onNodeWithText("18").assertIsDisplayed()
+        rule.onNodeWithText("09:00").assertIsDisplayed()
+        rule.onNodeWithText("17:00").assertIsDisplayed()
+    }
+
+    @Test
+    fun workingHours_12hMode_rendersAxisAndPillsIn12h() {
+        rule.setContent {
+            MaterialTheme {
+                ShareAvailabilitySheetContent(
+                    uiState = nonEmptyState(),
+                    is24Hour = false,
+                    onDaysPreview = {},
+                    onDaysCommit = {},
+                    onHoursPreview = { _, _ -> },
+                    onHoursCommit = {},
+                    onAllDayToggle = {},
+                    onShare = {},
+                    onDismiss = {}
+                )
+            }
+        }
+        // 12h axis labels and pills ("12 AM" / "6 AM" / "6 PM" / "9:00 AM" / "5:00 PM").
+        rule.onNodeWithText("12 AM").assertIsDisplayed()
+        rule.onNodeWithText("6 AM").assertIsDisplayed()
+        rule.onNodeWithText("6 PM").assertIsDisplayed()
+        rule.onNodeWithText("9:00 AM").assertIsDisplayed()
+        rule.onNodeWithText("5:00 PM").assertIsDisplayed()
     }
 }

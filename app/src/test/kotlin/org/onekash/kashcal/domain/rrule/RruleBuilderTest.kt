@@ -268,6 +268,64 @@ class RruleBuilderTest {
         assertEquals(1767657600000L, until.dateMillis)
     }
 
+    @Test
+    fun `parseRrule extracts date-value UNTIL end condition`() {
+        // RFC 5545 §3.3.10 allows UNTIL to be a DATE value (no T...Z).
+        // Servers paired with VALUE=DATE DTSTART emit this form.
+        val result = RruleBuilder.parseRrule("FREQ=WEEKLY;UNTIL=20260106", DayOfWeek.MONDAY, 1, 1)
+        assertTrue("expected Until, got ${result.endCondition}", result.endCondition is EndCondition.Until)
+    }
+
+    // ==================== Extra-token preservation (BYMONTH / BYWEEKNO / BYYEARDAY / BYSETPOS) ====================
+
+    @Test
+    fun `parseRrule captures BYMONTH and BYMONTHDAY as extras for yearly rule`() {
+        // FREQ=YEARLY: the picker doesn't render BYMONTHDAY for yearly rules
+        // (only for monthly), so BYMONTHDAY is an extra alongside BYMONTH.
+        // Both must round-trip verbatim to preserve "every Jan 15" semantics.
+        val result = RruleBuilder.parseRrule(
+            "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15", DayOfWeek.MONDAY, 1, 1
+        )
+        assertEquals(listOf("BYMONTH=1", "BYMONTHDAY=15"), result.extraTokens)
+    }
+
+    @Test
+    fun `parseRrule captures BYSETPOS as extra token`() {
+        val result = RruleBuilder.parseRrule(
+            "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1", DayOfWeek.MONDAY, 1, 1
+        )
+        assertEquals(listOf("BYSETPOS=-1"), result.extraTokens)
+    }
+
+    @Test
+    fun `parseRrule captures BYWEEKNO and BYYEARDAY as extra tokens`() {
+        val result = RruleBuilder.parseRrule(
+            "FREQ=YEARLY;BYWEEKNO=1,2;BYYEARDAY=100", DayOfWeek.MONDAY, 1, 1
+        )
+        assertTrue("expected BYWEEKNO, got ${result.extraTokens}", "BYWEEKNO=1,2" in result.extraTokens)
+        assertTrue("expected BYYEARDAY, got ${result.extraTokens}", "BYYEARDAY=100" in result.extraTokens)
+    }
+
+    @Test
+    fun `parseRrule with no extra tokens returns empty list`() {
+        val result = RruleBuilder.parseRrule(
+            "FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE", DayOfWeek.MONDAY, 1, 1
+        )
+        assertEquals(emptyList<String>(), result.extraTokens)
+    }
+
+    @Test
+    fun `parseRrule preserves frequency for BYMONTH-bearing rule (routing to CUSTOM happens at option layer)`() {
+        // parseRrule keeps the source FREQ verbatim so mapFrequencyToCustomUnit
+        // can pick the right unit (YEAR for FREQ=YEARLY). The picker forces
+        // FrequencyOption.CUSTOM when extras are present — that's the layer
+        // where we want the chip routing decision to live.
+        val result = RruleBuilder.parseRrule(
+            "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15", DayOfWeek.MONDAY, 1, 1
+        )
+        assertEquals(RecurrenceFrequency.YEARLY, result.frequency)
+    }
+
     // ==================== Round-Trip Tests ====================
 
     @Test
@@ -323,8 +381,8 @@ class RruleBuilderTest {
     }
 
     @Test
-    fun `formatForDisplay biweekly`() {
-        assertEquals("Biweekly", RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2"))
+    fun `formatForDisplay weekly with INTERVAL 2`() {
+        assertEquals("Every 2 weeks", RruleBuilder.formatForDisplay("FREQ=WEEKLY;INTERVAL=2"))
     }
 
     @Test
@@ -339,8 +397,8 @@ class RruleBuilderTest {
     }
 
     @Test
-    fun `formatForDisplay quarterly`() {
-        assertEquals("Quarterly", RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3"))
+    fun `formatForDisplay monthly with INTERVAL 3`() {
+        assertEquals("Every 3 months", RruleBuilder.formatForDisplay("FREQ=MONTHLY;INTERVAL=3"))
     }
 
     @Test
@@ -361,6 +419,15 @@ class RruleBuilderTest {
     @Test
     fun `formatForDisplay monthly on last Friday`() {
         assertEquals("Monthly on last Fri", RruleBuilder.formatForDisplay("FREQ=MONTHLY;BYDAY=-1FR"))
+    }
+
+    @Test
+    fun `formatForDisplay monthly with ordinal-less BYDAY does not render 0th`() {
+        // FREQ=MONTHLY;BYDAY=MO is RFC-valid ('every Monday of every month').
+        // The ordinal-greedy display regex used to match an empty ordinal and
+        // render 'Monthly on 0th Mon'.
+        val result = RruleBuilder.formatForDisplay("FREQ=MONTHLY;BYDAY=MO")
+        assertTrue("must not render 0th: $result", !result.contains("0th") && !result.contains("0 "))
     }
 
     @Test

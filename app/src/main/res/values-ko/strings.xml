@@ -454,7 +454,6 @@
     <string name="cd_day_events">%1$d일, 일정 %2$d개</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">빈도</string>
     <string name="label_on_days">요일</string>
     <string name="label_pattern">패턴</string>
     <string name="label_ends">종료</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">반복 안 함</string>
     <string name="rrule_freq_daily">매일</string>
     <string name="rrule_freq_weekly">매주</string>
-    <string name="rrule_freq_biweekly">격주</string>
     <string name="rrule_freq_monthly">매월</string>
-    <string name="rrule_freq_quarterly">분기별</string>
     <string name="rrule_freq_yearly">매년</string>
     <string name="rrule_repeats">반복</string>
     <string name="rrule_every_n_days">%1$d일마다</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">마지막</string>
     <string name="rrule_until_suffix">, %1$s까지</string>
     <string name="rrule_freq_never">안 함</string>
+    <string name="rrule_freq_custom">사용자 지정</string>
+    <string name="label_repeat_every">반복 간격</string>
+    <string name="rrule_unit_day">일</string>
+    <string name="rrule_unit_week">주</string>
+    <string name="rrule_unit_month">개월</string>
+    <string name="rrule_unit_year">년</string>
+    <string name="cd_decrease_interval">간격 줄이기</string>
+    <string name="cd_increase_interval">간격 늘리기</string>
     <string name="rrule_starting">%1$s %2$s부터 시작%3$s</string>
     <string name="rrule_since">%1$s · %2$s부터</string>
 
@@ -1015,9 +1020,7 @@
     <string name="share_availability_rail_label">가용성 공유</string>
     <string name="share_availability_sheet_title">가용성 공유</string>
     <string name="share_availability_hours_label">근무 시간: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">종일 일정을 바쁨으로 처리</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">종일 일정은 무시됩니다</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">종일 일정이 있는 날은 완전히 바쁨</string>
+    <string name="share_availability_all_day_toggle_title">종일 일정을 바쁨으로</string>
     <string name="share_availability_share_button">공유</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1025,6 +1028,13 @@
     <string name="share_availability_empty">선택한 범위에서 한 시간 이상의 여유 블록이 없습니다.</string>
     <string name="share_availability_chooser_title">가용성 공유</string>
     <string name="share_availability_share_failed">공유할 수 있는 앱이 없습니다</string>
+    <string name="share_availability_window_section">기간</string>
+    <string name="share_availability_hours_section">근무 시간</string>
+    <string name="share_availability_days_through">%1$s까지</string>
+    <string name="share_availability_window_duration">%1$s시간 창</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d일</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCal에서 공유됨</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">다음 %1$d일</item>

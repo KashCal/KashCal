@@ -93,6 +93,16 @@ sealed class EndCondition {
  * @property weekdays Selected days for weekly recurrence (BYDAY)
  * @property monthlyPattern Pattern for monthly recurrence
  * @property endCondition How the recurrence ends
+ * @property wkst Week-start day (WKST=XX) when present in the rule, else null.
+ *   Preserved across no-op edits so a CalDAV-pulled rule with `WKST=SU` doesn't
+ *   silently rewrite to the device's wkst on Save. The builder's emission gate
+ *   ([RruleBuilder.weekly]) drops it when it has no semantic effect.
+ * @property extraTokens RRULE parts the picker doesn't model directly
+ *   (BYMONTH, BYWEEKNO, BYYEARDAY, BYSETPOS) captured verbatim from the inbound
+ *   rule. Re-appended on emission so a CalDAV-pulled rule like
+ *   `FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15` round-trips intact instead of
+ *   degrading to `FREQ=YEARLY` on a no-op save. Routes through `frequency =
+ *   RecurrenceFrequency.CUSTOM` so the picker stays in verbatim-emit mode.
  */
 @Immutable
 data class ParsedRecurrence(
@@ -100,19 +110,41 @@ data class ParsedRecurrence(
     val interval: Int = 1,
     val weekdays: Set<DayOfWeek> = emptySet(),
     val monthlyPattern: MonthlyPattern? = null,
-    val endCondition: EndCondition = EndCondition.Never
+    val endCondition: EndCondition = EndCondition.Never,
+    val wkst: DayOfWeek? = null,
+    val extraTokens: List<String> = emptyList(),
 )
 
 /**
  * Frequency option for the chip selector in UI.
- * Maps user-friendly labels to frequency + interval combinations.
+ *
+ * Layout pairs with a 3+3 chip grid:
+ * row 1 = NEVER / DAILY / WEEKLY, row 2 = MONTHLY / YEARLY / CUSTOM.
+ *
+ * CUSTOM is a UI-only marker; consumers map the option to a concrete
+ * [RecurrenceFrequency] via [toFrequency], which returns null for
+ * NEVER and CUSTOM. NEVER builds no RRULE; CUSTOM dispatches on the
+ * picker's separate unit/interval/weekday/monthly state.
  */
-enum class FrequencyOption(val label: String, val freq: RecurrenceFrequency, val interval: Int = 1) {
-    NEVER("Never", RecurrenceFrequency.NONE),
-    DAILY("Daily", RecurrenceFrequency.DAILY),
-    WEEKLY("Weekly", RecurrenceFrequency.WEEKLY),
-    BIWEEKLY("Biweekly", RecurrenceFrequency.WEEKLY, 2),
-    MONTHLY("Monthly", RecurrenceFrequency.MONTHLY),
-    QUARTERLY("Quarterly", RecurrenceFrequency.MONTHLY, 3),
-    YEARLY("Yearly", RecurrenceFrequency.YEARLY)
+enum class FrequencyOption(val label: String) {
+    NEVER("Never"),
+    DAILY("Daily"),
+    WEEKLY("Weekly"),
+    MONTHLY("Monthly"),
+    YEARLY("Yearly"),
+    CUSTOM("Custom")
+}
+
+/**
+ * Concrete frequency for the option, or null when no direct mapping
+ * applies (NEVER builds no RRULE; CUSTOM defers to the picker's
+ * unit/interval state).
+ */
+fun FrequencyOption.toFrequency(): RecurrenceFrequency? = when (this) {
+    FrequencyOption.NEVER -> null
+    FrequencyOption.DAILY -> RecurrenceFrequency.DAILY
+    FrequencyOption.WEEKLY -> RecurrenceFrequency.WEEKLY
+    FrequencyOption.MONTHLY -> RecurrenceFrequency.MONTHLY
+    FrequencyOption.YEARLY -> RecurrenceFrequency.YEARLY
+    FrequencyOption.CUSTOM -> null
 }

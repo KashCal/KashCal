@@ -465,7 +465,6 @@
     <string name="cd_timezone_tap_to_change">Vremenska zona: %1$s, dodirni za promjenu</string>
     <string name="cd_day_events">Dan %1$d, %2$d događaja</string>
 
-    <string name="label_frequency">Učestalost</string>
     <string name="label_on_days">U dane</string>
     <string name="label_pattern">Obrazac</string>
     <string name="label_ends">Završava</string>
@@ -950,9 +949,7 @@
     <string name="rrule_does_not_repeat">Ne ponavlja se</string>
     <string name="rrule_freq_daily">Dnevno</string>
     <string name="rrule_freq_weekly">Sedmično</string>
-    <string name="rrule_freq_biweekly">Svake dvije sedmice</string>
     <string name="rrule_freq_monthly">Mjesečno</string>
-    <string name="rrule_freq_quarterly">Kvartalno</string>
     <string name="rrule_freq_yearly">Godišnje</string>
     <string name="rrule_repeats">Ponavlja se</string>
     <string name="rrule_every_n_days">Svakih %1$d dana</string>
@@ -966,6 +963,14 @@
     <string name="rrule_ordinal_last">posljednji</string>
     <string name="rrule_until_suffix">, do %1$s</string>
     <string name="rrule_freq_never">Nikad</string>
+    <string name="rrule_freq_custom">Prilagođeno</string>
+    <string name="label_repeat_every">Ponavljaj svakih</string>
+    <string name="rrule_unit_day">Dan</string>
+    <string name="rrule_unit_week">Sedmica</string>
+    <string name="rrule_unit_month">Mjesec</string>
+    <string name="rrule_unit_year">Godina</string>
+    <string name="cd_decrease_interval">Smanji interval</string>
+    <string name="cd_increase_interval">Povećaj interval</string>
     <string name="rrule_starting">%1$s počevši od %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1087,9 +1092,7 @@
         <item quantity="other">Sljedećih %1$d dana</item>
     </plurals>
     <string name="share_availability_hours_label">Radno vrijeme: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tretiraj cjelodnevne događaje kao zauzete</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Cjelodnevni događaji se zanemaruju</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Dan s cjelodnevnim događajem je u potpunosti zauzet</string>
+    <string name="share_availability_all_day_toggle_title">Cjelodnevni događaji kao zauzeti</string>
     <string name="share_availability_share_button">Podijeli</string>
     <plurals name="share_availability_header">
         <item quantity="one">Slobodno sljedeći %1$d dan (%2$s – %3$s):</item>
@@ -1102,5 +1105,14 @@
     <string name="share_availability_empty">Nema slobodnih blokova od najmanje sat vremena u odabranom rasponu.</string>
     <string name="share_availability_chooser_title">Podijeli dostupnost</string>
     <string name="share_availability_share_failed">Nema aplikacije za dijeljenje</string>
+    <string name="share_availability_window_section">Okvir</string>
+    <string name="share_availability_hours_section">Radno vrijeme</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dan</item>
+        <item quantity="few">%1$d dana</item>
+        <item quantity="other">%1$d dana</item>
+    </plurals>
+    <string name="share_availability_days_through">Do %1$s</string>
+    <string name="share_availability_window_duration">Okvir od %1$s h</string>
     <string name="share_from_kashcal_footer">Podijeljeno iz KashCal</string>
 </resources>

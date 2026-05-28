@@ -483,7 +483,6 @@
     <string name="cd_day_events">Ден %1$d, %2$d събития</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Честота</string>
     <string name="label_on_days">В дни</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Край</string>
@@ -928,9 +927,7 @@
     <string name="rrule_does_not_repeat">Не се повтаря</string>
     <string name="rrule_freq_daily">Дневно</string>
     <string name="rrule_freq_weekly">Седмично</string>
-    <string name="rrule_freq_biweekly">На всеки две седмици</string>
     <string name="rrule_freq_monthly">Месечно</string>
-    <string name="rrule_freq_quarterly">Тримесечно</string>
     <string name="rrule_freq_yearly">Годишно</string>
     <string name="rrule_repeats">Повтаря се</string>
     <string name="rrule_every_n_days">На всеки %1$d дни</string>
@@ -944,6 +941,14 @@
     <string name="rrule_ordinal_last">последен</string>
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Никога</string>
+    <string name="rrule_freq_custom">По избор</string>
+    <string name="label_repeat_every">Повтаряй всеки</string>
+    <string name="rrule_unit_day">Ден</string>
+    <string name="rrule_unit_week">Седмица</string>
+    <string name="rrule_unit_month">Месец</string>
+    <string name="rrule_unit_year">Година</string>
+    <string name="cd_decrease_interval">Намали интервала</string>
+    <string name="cd_increase_interval">Увеличи интервала</string>
     <string name="rrule_starting">%1$s започвайки от %2$s%3$s</string>
     <string name="rrule_since">%1$s · от %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1081,9 +1086,7 @@
     <string name="share_availability_rail_label">Споделяне на наличност</string>
     <string name="share_availability_sheet_title">Споделяне на наличност</string>
     <string name="share_availability_hours_label">Работно време: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Третирай целодневните събития като заети</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Целодневните събития се игнорират</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Ден с целодневно събитие е изцяло зает</string>
+    <string name="share_availability_all_day_toggle_title">Целодневни събития като заети</string>
     <string name="share_availability_share_button">Споделяне</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1100,4 +1103,12 @@
         <item quantity="one">Свободно през следващия %1$d ден (%2$s – %3$s):</item>
         <item quantity="other">Свободно през следващите %1$d дни (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Интервал</string>
+    <string name="share_availability_hours_section">Работно време</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ден</item>
+        <item quantity="other">%1$d дни</item>
+    </plurals>
+    <string name="share_availability_days_through">До %1$s</string>
+    <string name="share_availability_window_duration">Интервал от %1$s часа</string>
 </resources>

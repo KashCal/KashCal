@@ -464,7 +464,6 @@
     <string name="cd_day_events">Diena %1$d, %2$d notikumi</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Biežums</string>
     <string name="label_on_days">Dienās</string>
     <string name="label_pattern">Modelis</string>
     <string name="label_ends">Beidzas</string>
@@ -912,9 +911,7 @@
     <string name="rrule_does_not_repeat">Neatkārtojas</string>
     <string name="rrule_freq_daily">Katru dienu</string>
     <string name="rrule_freq_weekly">Katru nedēļu</string>
-    <string name="rrule_freq_biweekly">Ik pēc divām nedēļām</string>
     <string name="rrule_freq_monthly">Katru mēnesi</string>
-    <string name="rrule_freq_quarterly">Katru ceturksni</string>
     <string name="rrule_freq_yearly">Katru gadu</string>
     <string name="rrule_repeats">Atkārtojas</string>
     <string name="rrule_every_n_days">Ik pēc %1$d dienām</string>
@@ -928,6 +925,14 @@
     <string name="rrule_ordinal_last">pēdējais</string>
     <string name="rrule_until_suffix">, līdz %1$s</string>
     <string name="rrule_freq_never">Nekad</string>
+    <string name="rrule_freq_custom">Pielāgots</string>
+    <string name="label_repeat_every">Atkārtot ik</string>
+    <string name="rrule_unit_day">Diena</string>
+    <string name="rrule_unit_week">Nedēļa</string>
+    <string name="rrule_unit_month">Mēnesis</string>
+    <string name="rrule_unit_year">Gads</string>
+    <string name="cd_decrease_interval">Samazināt intervālu</string>
+    <string name="cd_increase_interval">Palielināt intervālu</string>
     <string name="rrule_starting">%1$s sākot ar %2$s%3$s</string>
     <string name="rrule_since">%1$s · kopš %2$s</string>
 
@@ -1074,9 +1079,7 @@
         <item quantity="other">Nākamās %1$d dienas</item>
     </plurals>
     <string name="share_availability_hours_label">Darba stundas: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Uzskatīt visas dienas notikumus par aizņemtiem</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Visas dienas notikumi tiek ignorēti</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Diena ar visas dienas notikumu ir pilnībā aizņemta</string>
+    <string name="share_availability_all_day_toggle_title">Visas dienas notikumi kā aizņemti</string>
     <string name="share_availability_share_button">Kopīgot</string>
     <plurals name="share_availability_header">
         <item quantity="zero">Brīvs nākamās %1$d dienas (%2$s – %3$s):</item>
@@ -1089,5 +1092,14 @@
     <string name="share_availability_empty">Izvēlētajā diapazonā nav brīvu vismaz stundas garu bloku.</string>
     <string name="share_availability_chooser_title">Kopīgot pieejamību</string>
     <string name="share_availability_share_failed">Nav lietotnes kopīgošanai</string>
+    <string name="share_availability_window_section">Logs</string>
+    <string name="share_availability_hours_section">Darba stundas</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="zero">%1$d dienu</item>
+        <item quantity="one">%1$d diena</item>
+        <item quantity="other">%1$d dienas</item>
+    </plurals>
+    <string name="share_availability_days_through">Līdz %1$s</string>
+    <string name="share_availability_window_duration">%1$s stundu logs</string>
     <string name="share_from_kashcal_footer">Kopīgots no KashCal</string>
 </resources>

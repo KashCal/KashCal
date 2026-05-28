@@ -464,7 +464,6 @@
     <string name="cd_timezone_tap_to_change">समय क्षेत्र: %1$s, बदल्न ट्याप गर्नुहोस्</string>
     <string name="cd_day_events">दिन %1$d, %2$d कार्यक्रम</string>
 
-    <string name="label_frequency">आवृत्ति</string>
     <string name="label_on_days">दिनहरूमा</string>
     <string name="label_pattern">ढाँचा</string>
     <string name="label_ends">अन्त्य हुन्छ</string>
@@ -904,9 +903,7 @@
     <string name="rrule_does_not_repeat">दोहोरिँदैन</string>
     <string name="rrule_freq_daily">दैनिक</string>
     <string name="rrule_freq_weekly">साप्ताहिक</string>
-    <string name="rrule_freq_biweekly">पाक्षिक</string>
     <string name="rrule_freq_monthly">मासिक</string>
-    <string name="rrule_freq_quarterly">त्रैमासिक</string>
     <string name="rrule_freq_yearly">वार्षिक</string>
     <string name="rrule_repeats">दोहोरिन्छ</string>
     <string name="rrule_every_n_days">प्रत्येक %1$d दिन</string>
@@ -920,6 +917,14 @@
     <string name="rrule_ordinal_last">अन्तिम</string>
     <string name="rrule_until_suffix">, %1$s सम्म</string>
     <string name="rrule_freq_never">कहिल्यै होइन</string>
+    <string name="rrule_freq_custom">अनुकूलन</string>
+    <string name="label_repeat_every">हरेक पटक दोहोर्\'याउनुहोस्</string>
+    <string name="rrule_unit_day">दिन</string>
+    <string name="rrule_unit_week">हप्ता</string>
+    <string name="rrule_unit_month">महिना</string>
+    <string name="rrule_unit_year">वर्ष</string>
+    <string name="cd_decrease_interval">अन्तराल घटाउनुहोस्</string>
+    <string name="cd_increase_interval">अन्तराल बढाउनुहोस्</string>
     <string name="rrule_starting">%1$s %2$s देखि सुरु%3$s</string>
     <string name="rrule_since">%1$s · %2$s देखि</string>
 
@@ -1052,9 +1057,7 @@
     <string name="share_availability_rail_label">उपलब्धता साझेदारी गर्नुहोस्</string>
     <string name="share_availability_sheet_title">उपलब्धता साझेदारी गर्नुहोस्</string>
     <string name="share_availability_hours_label">काम गर्ने समय: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">पूरै दिनका कार्यक्रमलाई व्यस्त मान्नुहोस्</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">पूरै दिनका कार्यक्रम बेवास्ता गरिन्छन्</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">पूरै दिनको कार्यक्रम भएको दिन पूर्णतया व्यस्त</string>
+    <string name="share_availability_all_day_toggle_title">दिनभरका घटनाहरू व्यस्तको रूपमा</string>
     <string name="share_availability_share_button">साझेदारी गर्नुहोस्</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1071,4 +1074,12 @@
         <item quantity="one">अर्को %1$d दिनमा खाली (%2$s – %3$s):</item>
         <item quantity="other">अर्को %1$d दिनमा खाली (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">अवधि</string>
+    <string name="share_availability_hours_section">काम गर्ने समय</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s सम्म</string>
+    <string name="share_availability_window_duration">%1$s घण्टाको अवधि</string>
 </resources>

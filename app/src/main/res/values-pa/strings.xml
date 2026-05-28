@@ -464,7 +464,6 @@
     <string name="cd_timezone_tap_to_change">ਟਾਈਮਜ਼ੋਨ: %1$s, ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="cd_day_events">ਦਿਨ %1$d, %2$d ਘਟਨਾਵਾਂ</string>
 
-    <string name="label_frequency">ਵਾਰਵਾਰਤਾ</string>
     <string name="label_on_days">ਦਿਨਾਂ \'ਤੇ</string>
     <string name="label_pattern">ਪੈਟਰਨ</string>
     <string name="label_ends">ਖ਼ਤਮ ਹੁੰਦਾ ਹੈ</string>
@@ -904,9 +903,7 @@
     <string name="rrule_does_not_repeat">ਦੁਹਰਾਉਂਦਾ ਨਹੀਂ</string>
     <string name="rrule_freq_daily">ਰੋਜ਼ਾਨਾ</string>
     <string name="rrule_freq_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
-    <string name="rrule_freq_biweekly">ਦੋ-ਹਫ਼ਤਾਵਾਰੀ</string>
     <string name="rrule_freq_monthly">ਮਹੀਨਾਵਾਰ</string>
-    <string name="rrule_freq_quarterly">ਤਿਮਾਹੀ</string>
     <string name="rrule_freq_yearly">ਸਾਲਾਨਾ</string>
     <string name="rrule_repeats">ਦੁਹਰਾਉਂਦਾ ਹੈ</string>
     <string name="rrule_every_n_days">ਹਰ %1$d ਦਿਨ</string>
@@ -920,6 +917,14 @@
     <string name="rrule_ordinal_last">ਆਖਰੀ</string>
     <string name="rrule_until_suffix">, %1$s ਤੱਕ</string>
     <string name="rrule_freq_never">ਕਦੇ ਨਹੀਂ</string>
+    <string name="rrule_freq_custom">ਕਸਟਮ</string>
+    <string name="label_repeat_every">ਹਰ ਵਾਰ ਦੁਹਰਾਓ</string>
+    <string name="rrule_unit_day">ਦਿਨ</string>
+    <string name="rrule_unit_week">ਹਫ਼ਤਾ</string>
+    <string name="rrule_unit_month">ਮਹੀਨਾ</string>
+    <string name="rrule_unit_year">ਸਾਲ</string>
+    <string name="cd_decrease_interval">ਅੰਤਰਾਲ ਘਟਾਓ</string>
+    <string name="cd_increase_interval">ਅੰਤਰਾਲ ਵਧਾਓ</string>
     <string name="rrule_starting">%1$s %2$s ਤੋਂ ਸ਼ੁਰੂ%3$s</string>
     <string name="rrule_since">%1$s · %2$s ਤੋਂ</string>
 
@@ -1052,9 +1057,7 @@
     <string name="share_availability_rail_label">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
     <string name="share_availability_sheet_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
     <string name="share_availability_hours_label">ਕੰਮ ਦੇ ਘੰਟੇ: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟਾਂ ਨੂੰ ਰੁੱਝੇ ਵਜੋਂ ਮੰਨੋ</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟਾਂ ਨੂੰ ਅਣਡਿੱਠ ਕੀਤਾ ਜਾਂਦਾ ਹੈ</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟ ਵਾਲਾ ਦਿਨ ਪੂਰੀ ਤਰ੍ਹਾਂ ਰੁੱਝਿਆ ਹੈ</string>
+    <string name="share_availability_all_day_toggle_title">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟ ਰੁੱਝੇ ਵਜੋਂ</string>
     <string name="share_availability_share_button">ਸਾਂਝਾ ਕਰੋ</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1071,4 +1074,12 @@
         <item quantity="one">ਅਗਲੇ %1$d ਦਿਨ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
         <item quantity="other">ਅਗਲੇ %1$d ਦਿਨਾਂ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">ਵਿੰਡੋ</string>
+    <string name="share_availability_hours_section">ਕੰਮ ਦੇ ਘੰਟੇ</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ਦਿਨ</item>
+        <item quantity="other">%1$d ਦਿਨ</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s ਤੱਕ</string>
+    <string name="share_availability_window_duration">%1$s ਘੰਟੇ ਦੀ ਵਿੰਡੋ</string>
 </resources>

@@ -213,7 +213,6 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     val updated = existingCalendar.copy(
                         displayName = calDavCalendar.displayName,
                         color = parseColor(calDavCalendar.color, index),
-                        ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
                     calendarRepository.updateCalendar(updated)
@@ -399,7 +398,6 @@ class ICloudAccountDiscoveryService @Inject constructor(
                         displayName = calDavCalendar.displayName,
                         color = ServerColorParser.parseCaldavColorToArgb(calDavCalendar.color)
                             ?: existingCalendar.color,
-                        ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
                     calendarRepository.updateCalendar(updated)

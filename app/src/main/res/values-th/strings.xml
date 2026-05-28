@@ -454,7 +454,6 @@
     <string name="cd_day_events">วันที่ %1$d, %2$d กิจกรรม</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">ความถี่</string>
     <string name="label_on_days">วัน</string>
     <string name="label_pattern">รูปแบบ</string>
     <string name="label_ends">สิ้นสุด</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">ไม่ซ้ำ</string>
     <string name="rrule_freq_daily">ทุกวัน</string>
     <string name="rrule_freq_weekly">ทุกสัปดาห์</string>
-    <string name="rrule_freq_biweekly">ทุกสองสัปดาห์</string>
     <string name="rrule_freq_monthly">ทุกเดือน</string>
-    <string name="rrule_freq_quarterly">ทุกไตรมาส</string>
     <string name="rrule_freq_yearly">ทุกปี</string>
     <string name="rrule_repeats">ทำซ้ำ</string>
     <string name="rrule_every_n_days">ทุก %1$d วัน</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">สุดท้าย</string>
     <string name="rrule_until_suffix">, จนถึง%1$s</string>
     <string name="rrule_freq_never">ไม่เคย</string>
+    <string name="rrule_freq_custom">กำหนดเอง</string>
+    <string name="label_repeat_every">ทำซ้ำทุก</string>
+    <string name="rrule_unit_day">วัน</string>
+    <string name="rrule_unit_week">สัปดาห์</string>
+    <string name="rrule_unit_month">เดือน</string>
+    <string name="rrule_unit_year">ปี</string>
+    <string name="cd_decrease_interval">ลดช่วงเวลา</string>
+    <string name="cd_increase_interval">เพิ่มช่วงเวลา</string>
     <string name="rrule_starting">%1$s เริ่ม%2$s%3$s</string>
     <string name="rrule_since">%1$s · ตั้งแต่%2$s</string>
 
@@ -1015,9 +1020,7 @@
     <string name="share_availability_rail_label">แชร์เวลาว่าง</string>
     <string name="share_availability_sheet_title">แชร์เวลาว่าง</string>
     <string name="share_availability_hours_label">เวลาทำงาน: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">ถือว่ากิจกรรมตลอดวันเป็นไม่ว่าง</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">กิจกรรมตลอดวันจะถูกละเว้น</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">วันที่มีกิจกรรมตลอดวันจะไม่ว่างทั้งวัน</string>
+    <string name="share_availability_all_day_toggle_title">กิจกรรมตลอดวันถือว่าไม่ว่าง</string>
     <string name="share_availability_share_button">แชร์</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1025,6 +1028,13 @@
     <string name="share_availability_empty">ไม่มีช่วงเวลาว่างอย่างน้อยหนึ่งชั่วโมงในช่วงที่เลือก</string>
     <string name="share_availability_chooser_title">แชร์เวลาว่าง</string>
     <string name="share_availability_share_failed">ไม่มีแอปสำหรับแชร์</string>
+    <string name="share_availability_window_section">ช่วงเวลา</string>
+    <string name="share_availability_hours_section">เวลาทำงาน</string>
+    <string name="share_availability_days_through">ถึง %1$s</string>
+    <string name="share_availability_window_duration">ช่วง %1$s ชั่วโมง</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d วัน</item>
+    </plurals>
     <string name="share_from_kashcal_footer">แชร์จาก KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">%1$d วันถัดไป</item>

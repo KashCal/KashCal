@@ -483,7 +483,6 @@
     <string name="cd_day_events">%1$d. nap, %2$d esemény</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Gyakoriság</string>
     <string name="label_on_days">Napokon</string>
     <string name="label_pattern">Minta</string>
     <string name="label_ends">Befejezés</string>
@@ -928,9 +927,7 @@
     <string name="rrule_does_not_repeat">Nem ismétlődik</string>
     <string name="rrule_freq_daily">Naponta</string>
     <string name="rrule_freq_weekly">Hetente</string>
-    <string name="rrule_freq_biweekly">Kéthetente</string>
     <string name="rrule_freq_monthly">Havonta</string>
-    <string name="rrule_freq_quarterly">Negyedévente</string>
     <string name="rrule_freq_yearly">Évente</string>
     <string name="rrule_repeats">Ismétlődik</string>
     <string name="rrule_every_n_days">%1$d naponta</string>
@@ -944,6 +941,14 @@
     <string name="rrule_ordinal_last">utolsó</string>
     <string name="rrule_until_suffix">, eddig: %1$s</string>
     <string name="rrule_freq_never">Soha</string>
+    <string name="rrule_freq_custom">Egyéni</string>
+    <string name="label_repeat_every">Ismétlés minden</string>
+    <string name="rrule_unit_day">Nap</string>
+    <string name="rrule_unit_week">Hét</string>
+    <string name="rrule_unit_month">Hónap</string>
+    <string name="rrule_unit_year">Év</string>
+    <string name="cd_decrease_interval">Időköz csökkentése</string>
+    <string name="cd_increase_interval">Időköz növelése</string>
     <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
     <string name="rrule_since">%1$s · óta: %2$s</string>
 
@@ -1083,9 +1088,7 @@
     <string name="share_availability_rail_label">Elérhetőség megosztása</string>
     <string name="share_availability_sheet_title">Elérhetőség megosztása</string>
     <string name="share_availability_hours_label">Munkaidő: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Egész napos események elfoglaltként kezelése</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Az egész napos eseményeket figyelmen kívül hagyjuk</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Az egész napos eseményt tartalmazó nap teljesen elfoglalt</string>
+    <string name="share_availability_all_day_toggle_title">Egész napos események foglaltként</string>
     <string name="share_availability_share_button">Megosztás</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1102,4 +1105,12 @@
         <item quantity="one">Szabad a következő %1$d napban (%2$s – %3$s):</item>
         <item quantity="other">Szabad a következő %1$d napban (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Időszak</string>
+    <string name="share_availability_hours_section">Munkaidő</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d nap</item>
+        <item quantity="other">%1$d nap</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s-ig</string>
+    <string name="share_availability_window_duration">%1$s órás időszak</string>
 </resources>

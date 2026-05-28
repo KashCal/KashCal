@@ -477,7 +477,6 @@
     <string name="cd_day_events">Dag %1$d, %2$d hendelser</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Frekvens</string>
     <string name="label_on_days">På dager</string>
     <string name="label_pattern">Mønster</string>
     <string name="label_ends">Slutter</string>
@@ -932,9 +931,7 @@
     <string name="rrule_does_not_repeat">Gjentas ikke</string>
     <string name="rrule_freq_daily">Daglig</string>
     <string name="rrule_freq_weekly">Ukentlig</string>
-    <string name="rrule_freq_biweekly">Annenhver uke</string>
     <string name="rrule_freq_monthly">Månedlig</string>
-    <string name="rrule_freq_quarterly">Kvartalsvis</string>
     <string name="rrule_freq_yearly">Årlig</string>
     <string name="rrule_repeats">Gjentas</string>
     <string name="rrule_every_n_days">Hver %1$d. dag</string>
@@ -948,6 +945,14 @@
     <string name="rrule_ordinal_last">siste</string>
     <string name="rrule_until_suffix">, til %1$s</string>
     <string name="rrule_freq_never">Aldri</string>
+    <string name="rrule_freq_custom">Tilpasset</string>
+    <string name="label_repeat_every">Gjenta hver</string>
+    <string name="rrule_unit_day">Dag</string>
+    <string name="rrule_unit_week">Uke</string>
+    <string name="rrule_unit_month">Måned</string>
+    <string name="rrule_unit_year">År</string>
+    <string name="cd_decrease_interval">Reduser intervall</string>
+    <string name="cd_increase_interval">Øk intervall</string>
     <string name="rrule_starting">%1$s fra %2$s%3$s</string>
     <string name="rrule_since">%1$s · siden %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1069,9 +1074,7 @@
     <string name="share_availability_rail_label">Del tilgjengelighet</string>
     <string name="share_availability_sheet_title">Del tilgjengelighet</string>
     <string name="share_availability_hours_label">Arbeidstid: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Behandle heldagshendelser som opptatt</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Heldagshendelser ignoreres</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">En dag med en heldagshendelse er helt opptatt</string>
+    <string name="share_availability_all_day_toggle_title">Heldagshendelser som opptatt</string>
     <string name="share_availability_share_button">Del</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1079,6 +1082,14 @@
     <string name="share_availability_empty">Ingen ledige blokker på minst én time i det valgte intervallet.</string>
     <string name="share_availability_chooser_title">Del tilgjengelighet</string>
     <string name="share_availability_share_failed">Ingen app tilgjengelig for deling</string>
+    <string name="share_availability_window_section">Periode</string>
+    <string name="share_availability_hours_section">Arbeidstid</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dager</item>
+    </plurals>
+    <string name="share_availability_days_through">Til og med %1$s</string>
+    <string name="share_availability_window_duration">Vindu på %1$s timer</string>
     <string name="share_from_kashcal_footer">Delt fra KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Neste %1$d dag</item>

@@ -255,6 +255,13 @@ class OkHttpCalDavClientRfc4791QueryTest {
             "Must NOT request calendar-data (bandwidth optimization)",
             body.contains("calendar-data")
         )
+        assertFalse(
+            "Must NOT request resourcetype — iCloud emits per-member propstat-404 for " +
+                "an empty resourcetype query and the response bloats well past the read " +
+                "timeout. Collection self-row is discriminated by trailing slash on href " +
+                "(RFC 4918 §5.2) instead.",
+            Regex("""<[a-zA-Z]+:resourcetype\b""").containsMatchIn(body)
+        )
     }
 
     @Test

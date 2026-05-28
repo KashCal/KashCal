@@ -461,7 +461,6 @@
     <string name="cd_day_events">Dia %1$d, %2$d esdeveniments</string>
 
     <!-- Pickers / Forms -->
-    <string name="label_frequency">Freqüència</string>
     <string name="label_on_days">Els dies</string>
     <string name="label_pattern">Patró</string>
     <string name="label_ends">Finalitza</string>
@@ -713,9 +712,7 @@
     <string name="rrule_does_not_repeat">No es repeteix</string>
     <string name="rrule_freq_daily">Diari</string>
     <string name="rrule_freq_weekly">Setmanal</string>
-    <string name="rrule_freq_biweekly">Bisetmanal</string>
     <string name="rrule_freq_monthly">Mensual</string>
-    <string name="rrule_freq_quarterly">Trimestral</string>
     <string name="rrule_freq_yearly">Anual</string>
     <string name="rrule_repeats">Es repeteix</string>
     <string name="rrule_every_n_days">Cada %1$d dies</string>
@@ -733,6 +730,14 @@
     </plurals>
     <string name="rrule_until_suffix">, fins %1$s</string>
     <string name="rrule_freq_never">Mai</string>
+    <string name="rrule_freq_custom">Personalitzat</string>
+    <string name="label_repeat_every">Repeteix cada</string>
+    <string name="rrule_unit_day">Dia</string>
+    <string name="rrule_unit_week">Setmana</string>
+    <string name="rrule_unit_month">Mes</string>
+    <string name="rrule_unit_year">Any</string>
+    <string name="cd_decrease_interval">Disminueix l\'interval</string>
+    <string name="cd_increase_interval">Augmenta l\'interval</string>
     <string name="rrule_starting">%1$s des de %2$s%3$s</string>
     <string name="rrule_since">%1$s · des de %2$s</string>
     <!-- Sync Summary -->
@@ -1069,9 +1074,7 @@
         <item quantity="other">Pròxims %1$d dies</item>
     </plurals>
     <string name="share_availability_hours_label">Horari laboral: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tracta els esdeveniments de tot el dia com ocupats</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Els esdeveniments de tot el dia s\'ignoren</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Un dia amb esdeveniment de tot el dia està totalment ocupat</string>
+    <string name="share_availability_all_day_toggle_title">Esdeveniments de tot el dia com a ocupats</string>
     <string name="share_availability_share_button">Comparteix</string>
     <plurals name="share_availability_header">
         <item quantity="one">Lliure el pròxim %1$d dia (%2$s – %3$s):</item>
@@ -1083,6 +1086,14 @@
     <string name="share_availability_empty">No hi ha blocs lliures d\'almenys una hora en l\'interval seleccionat.</string>
     <string name="share_availability_chooser_title">Comparteix la disponibilitat</string>
     <string name="share_availability_share_failed">No hi ha cap aplicació per compartir</string>
+    <string name="share_availability_window_section">Finestra</string>
+    <string name="share_availability_hours_section">Horari laboral</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="other">%1$d dies</item>
+    </plurals>
+    <string name="share_availability_days_through">Fins %1$s</string>
+    <string name="share_availability_window_duration">Finestra de %1$s hores</string>
     <string name="share_from_kashcal_footer">Compartit des de KashCal</string>
 
 </resources>

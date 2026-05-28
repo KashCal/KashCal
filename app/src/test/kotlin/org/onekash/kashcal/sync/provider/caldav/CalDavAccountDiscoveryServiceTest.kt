@@ -807,6 +807,136 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
 
+    // ==================== refreshCalendars ctag/syncToken Preservation (issue #249) ====================
+
+    @Test
+    fun `refreshCalendars preserves local ctag when server returns new ctag`() = runTest {
+        val account = createAccount(1L)
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://server/cal1/",
+            displayName = "Cal 1",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl("https://server/cal1/") } returns existingCalendar
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal1/",
+                    url = "https://server/cal1/",
+                    displayName = "Cal 1",
+                    color = null,
+                    ctag = "new-server-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.ctag == "old-ctag" }) }
+    }
+
+    @Test
+    fun `refreshCalendars preserves local syncToken when server returns new ctag`() = runTest {
+        // Defense-in-depth invariant: CalDavCalendar has no syncToken field, so .copy()
+        // already preserves it. Pins the contract so a refactor that adds syncToken to
+        // the discovery model can't silently overwrite it.
+        val account = createAccount(1L)
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://server/cal1/",
+            displayName = "Cal 1",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl("https://server/cal1/") } returns existingCalendar
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal1/",
+                    url = "https://server/cal1/",
+                    displayName = "Cal 1",
+                    color = null,
+                    ctag = "new-server-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.syncToken == "old-token" }) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount preserves local ctag for existing calendar URLs`() = runTest {
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://nextcloud.example.com/dav/calendars/user/personal/",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            syncToken = "old-token",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        setupSuccessfulDiscovery()
+
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        // Existing calendar at the personal URL; the work URL is new.
+        coEvery {
+            calendarRepository.getCalendarByUrl("https://nextcloud.example.com/dav/calendars/user/personal/")
+        } returns existingCalendar
+        coEvery {
+            calendarRepository.getCalendarByUrl("https://nextcloud.example.com/dav/calendars/user/work/")
+        } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 2L
+
+        discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        coVerify {
+            calendarRepository.updateCalendar(
+                match { it.ctag == "old-ctag" && it.syncToken == "old-token" }
+            )
+        }
+    }
+
     @Test
     fun `refreshCalendars removes deleted calendars`() = runTest {
         val account = createAccount(1L)

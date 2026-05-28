@@ -516,7 +516,11 @@ class CalDavXmlParser {
                                     )
                                 )
                             } else if (currentHref != null && currentIcalData == null &&
-                                currentHref.endsWith(".ics")) {
+                                currentEtag != null) {
+                                // Response carried an etag but no calendar-data — this is a
+                                // member resource the server failed to materialize. The etag
+                                // proves it isn't the collection self-row, so warn regardless
+                                // of href filename (servers may use extensionless UIDs).
                                 Log.w(TAG, "Response for ${currentHref} has no calendar-data " +
                                     "— server may not support calendar-data in calendar-query")
                             }
@@ -535,8 +539,28 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract changed items (href + etag pairs) from sync-collection response.
-     * Filters out deleted items (404 status) and non-.ics files.
+     * Extract changed items (href + etag pairs) from sync-collection or PROPFIND
+     * Depth:1 response.
+     *
+     * Discriminator (RFC 4918 §5.2 + §13, RFC 6578 §3.2):
+     *   - Response-level 404 (status directly inside `<response>`, no `<propstat>`) →
+     *     deletion. RFC 6578 §3.2 mandates this shape for removed members.
+     *   - propstat-404 in a response with NO successful propstat → deletion (pragmatic
+     *     convention used by some servers: `<propstat><prop/><status>404</status></propstat>`).
+     *   - propstat-404 in a response that also has a successful propstat → just a missing
+     *     property (e.g., `<getetag/>` 404 on a collection self-row). RFC 4918 §13:
+     *     propstat-level status applies only to those properties.
+     *   - href ends with `/` → collection self-row (RFC 4918 §5.2 SHOULD), skipped.
+     *   - resourcetype contains `<collection/>` → collection self-row, skipped (defensive
+     *     fallback for non-conforming servers that omit the trailing slash; the
+     *     fetchAllEtags / fetchEtagsInRange / syncCollection wire bodies do not request
+     *     resourcetype, so this fires only when a server volunteers the element
+     *     unprompted).
+     *   - Otherwise, etag present → changed item.
+     *   - No etag, not a collection, not deleted → diagnostic skip.
+     *
+     * Filename extension is NOT used: some servers store events at extensionless
+     * UID hrefs.
      */
     fun extractChangedItems(xml: String): List<Pair<String, String?>> {
         if (xml.isBlank()) return emptyList()
@@ -544,46 +568,19 @@ class CalDavXmlParser {
             val parser = createParser(xml)
             val items = mutableListOf<Pair<String, String?>>()
 
-            var inResponse = false
-            var currentHref: String? = null
-            var currentEtag: String? = null
-            var isDeleted = false
-
-            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
-                when (parser.eventType) {
-                    XmlPullParser.START_TAG -> {
-                        when (parser.name) {
-                            "response" -> {
-                                inResponse = true
-                                currentHref = null
-                                currentEtag = null
-                                isDeleted = false
-                            }
-                            "href" -> if (inResponse && currentHref == null) {
-                                currentHref = readText(parser)
-                            }
-                            "getetag" -> {
-                                val rawEtag = readText(parser)
-                                currentEtag = EtagUtils.normalizeEtag(rawEtag)
-                            }
-                            "status" -> {
-                                val statusText = readText(parser)
-                                if (statusText?.contains("404") == true) {
-                                    isDeleted = true
-                                }
-                            }
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        if (parser.name == "response") {
-                            if (!isDeleted && currentHref != null && currentHref.endsWith(".ics")) {
-                                items.add(Pair(currentHref, currentEtag))
-                            }
-                            inResponse = false
-                        }
-                    }
+            forEachResponse(parser) { state ->
+                when {
+                    state.isCollection() -> Unit
+                    state.isDeleted() -> Unit
+                    state.currentEtag != null ->
+                        items.add(Pair(state.currentHref!!, state.currentEtag))
+                    else -> Log.w(
+                        TAG,
+                        "Dropping ${state.currentHref}: no etag, not a collection, " +
+                            "not deleted (server may have returned a propstat error " +
+                            "such as 403 Forbidden, or omitted getetag)"
+                    )
                 }
-                parser.next()
             }
 
             items
@@ -594,8 +591,17 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract deleted hrefs from sync-collection response.
-     * Returns hrefs that have 404 status.
+     * Extract deleted hrefs from sync-collection or PROPFIND Depth:1 response.
+     *
+     * Returns hrefs that the server reports as deleted. Two reporting styles supported:
+     *   - Response-level 404 with no `<propstat>` (RFC 6578 §3.2 sync-collection
+     *     mandate): status directly inside `<response>`.
+     *   - propstat-404 with no successful sibling propstat (pragmatic convention used
+     *     by some servers): `<propstat><prop/><status>404</status></propstat>` with no
+     *     sibling 2xx propstat indicates the resource itself is gone.
+     *
+     * propstat-404 alongside a successful propstat (e.g., `<displayname/>` 404 next
+     * to `<getetag>` 200) is a missing-property report, NOT deletion.
      */
     fun extractDeletedHrefs(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -603,40 +609,10 @@ class CalDavXmlParser {
             val parser = createParser(xml)
             val deleted = mutableListOf<String>()
 
-            var inResponse = false
-            var currentHref: String? = null
-            var isDeleted = false
-
-            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
-                when (parser.eventType) {
-                    XmlPullParser.START_TAG -> {
-                        when (parser.name) {
-                            "response" -> {
-                                inResponse = true
-                                currentHref = null
-                                isDeleted = false
-                            }
-                            "href" -> if (inResponse && currentHref == null) {
-                                currentHref = readText(parser)
-                            }
-                            "status" -> {
-                                val statusText = readText(parser)
-                                if (statusText?.contains("404") == true) {
-                                    isDeleted = true
-                                }
-                            }
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        if (parser.name == "response") {
-                            if (isDeleted && currentHref != null) {
-                                deleted.add(currentHref)
-                            }
-                            inResponse = false
-                        }
-                    }
+            forEachResponse(parser) { state ->
+                if (!state.isCollection() && state.isDeleted()) {
+                    deleted.add(state.currentHref!!)
                 }
-                parser.next()
             }
 
             deleted
@@ -649,6 +625,8 @@ class CalDavXmlParser {
     /**
      * Single-pass extraction of all sync-collection data.
      * More efficient than 3 separate calls for changed items, deleted hrefs, and sync token.
+     *
+     * Uses the same discriminator as [extractChangedItems] / [extractDeletedHrefs].
      */
     fun extractSyncCollectionData(xml: String): CalDavQuirks.SyncCollectionData {
         if (xml.isBlank()) return CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
@@ -659,9 +637,7 @@ class CalDavXmlParser {
             var syncToken: String? = null
 
             var inResponse = false
-            var currentHref: String? = null
-            var currentEtag: String? = null
-            var isDeleted = false
+            val state = ResponseState()
 
             while (parser.eventType != XmlPullParser.END_DOCUMENT) {
                 when (parser.eventType) {
@@ -669,22 +645,23 @@ class CalDavXmlParser {
                         when (parser.name) {
                             "response" -> {
                                 inResponse = true
-                                currentHref = null
-                                currentEtag = null
-                                isDeleted = false
+                                state.reset()
                             }
-                            "href" -> if (inResponse && currentHref == null) {
-                                currentHref = readText(parser)
+                            "propstat" -> state.enterPropstat()
+                            "resourcetype" -> state.insideResourcetype = true
+                            "collection" -> if (state.insideResourcetype) {
+                                state.resourcetypeContainsCollection = true
+                            }
+                            "href" -> if (inResponse && state.currentHref == null) {
+                                state.currentHref = readText(parser)
                             }
                             "getetag" -> {
                                 val rawEtag = readText(parser)
-                                currentEtag = EtagUtils.normalizeEtag(rawEtag)
+                                state.currentEtag = EtagUtils.normalizeEtag(rawEtag)
                             }
                             "status" -> {
                                 val statusText = readText(parser)
-                                if (statusText?.contains("404") == true) {
-                                    isDeleted = true
-                                }
+                                state.observeStatus(statusText)
                             }
                             "sync-token" -> {
                                 syncToken = readText(parser)
@@ -692,15 +669,27 @@ class CalDavXmlParser {
                         }
                     }
                     XmlPullParser.END_TAG -> {
-                        if (parser.name == "response") {
-                            if (currentHref != null) {
-                                if (isDeleted) {
-                                    deletedHrefs.add(currentHref)
-                                } else if (currentHref.endsWith(".ics")) {
-                                    changedItems.add(Pair(currentHref, currentEtag))
+                        when (parser.name) {
+                            "propstat" -> state.exitPropstat()
+                            "resourcetype" -> state.insideResourcetype = false
+                            "response" -> {
+                                if (state.currentHref != null) {
+                                    when {
+                                        state.isCollection() -> { /* skip collection self-row */ }
+                                        state.isDeleted() -> deletedHrefs.add(state.currentHref!!)
+                                        state.currentEtag != null ->
+                                            changedItems.add(Pair(state.currentHref!!, state.currentEtag))
+                                        else -> Log.w(
+                                            TAG,
+                                            "Dropping ${state.currentHref}: no etag, not a " +
+                                                "collection, not deleted (server may have " +
+                                                "returned a propstat error such as 403 " +
+                                                "Forbidden, or omitted getetag)"
+                                        )
+                                    }
                                 }
+                                inResponse = false
                             }
-                            inResponse = false
                         }
                     }
                 }
@@ -711,6 +700,161 @@ class CalDavXmlParser {
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse sync collection data: ${e.message}")
             CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
+        }
+    }
+
+    /**
+     * Per-response state shared by [extractChangedItems], [extractDeletedHrefs],
+     * and [extractSyncCollectionData].
+     *
+     * Tracks the four pieces of information needed to classify a `<response>`:
+     *   - href and etag (for changed-item output);
+     *   - propstat depth + status observations (for deletion semantics — RFC 6578 §3.2
+     *     for response-level 404, plus the propstat-404 convention used by some servers);
+     *   - resourcetype-collection marker (defensive fallback for collection self-row
+     *     when href omits the trailing slash; the primary signal is href.endsWith("/"),
+     *     RFC 4918 §5.2).
+     */
+    private class ResponseState {
+        var currentHref: String? = null
+        var currentEtag: String? = null
+        var insideResourcetype: Boolean = false
+        var resourcetypeContainsCollection: Boolean = false
+
+        private var propstatDepth: Int = 0
+        private var responseLevel404: Boolean = false
+        private var sawSuccessfulPropstat: Boolean = false
+        private var sawPropstat404: Boolean = false
+
+        fun reset() {
+            currentHref = null
+            currentEtag = null
+            insideResourcetype = false
+            resourcetypeContainsCollection = false
+            propstatDepth = 0
+            responseLevel404 = false
+            sawSuccessfulPropstat = false
+            sawPropstat404 = false
+        }
+
+        fun enterPropstat() { propstatDepth++ }
+        fun exitPropstat() { propstatDepth-- }
+
+        fun observeStatus(statusText: String?) {
+            if (statusText == null) return
+            val code = parseHttpStatusCode(statusText) ?: return
+            val is404 = code == 404
+            val is2xx = code in 200..299
+            if (propstatDepth == 0) {
+                if (is404) responseLevel404 = true
+            } else {
+                if (is404) sawPropstat404 = true
+                if (is2xx) sawSuccessfulPropstat = true
+            }
+        }
+
+        /**
+         * Parse the 3-digit code from an HTTP status line (`HTTP/<ver> <code> <reason>`),
+         * tolerating extra whitespace. Returns null if no 3-digit code is found.
+         */
+        private fun parseHttpStatusCode(statusText: String): Int? {
+            val tokens = statusText.trim().split(Regex("""\s+"""))
+            if (tokens.size < 2) return null
+            return tokens[1].toIntOrNull()?.takeIf { it in 100..599 }
+        }
+
+        /**
+         * True when this `<response>` describes the collection itself rather than a
+         * member resource.
+         *
+         * Primary signal: href ends with `/` (RFC 4918 §5.2 SHOULD — *"Wherever a
+         * server produces a URL referring to a collection, the server SHOULD include
+         * the trailing slash."*). Verified across 7 server families; every probed
+         * collection self-row honors this.
+         *
+         * Defensive fallback: resourcetype contains `<collection/>`. The wire bodies
+         * for fetchAllEtags / fetchEtagsInRange / syncCollection do NOT request
+         * resourcetype, so this fallback only fires when a server volunteers the
+         * element unprompted (RFC 4918 §9.1 permits servers to return more properties
+         * than requested). It is kept for resilience against non-conforming servers
+         * that drop the trailing slash; do not re-add wire-level resourcetype "for
+         * safety" — iCloud emits a separate propstat-404 per member resource for an
+         * empty resourcetype query and the response bloats well past the read timeout.
+         */
+        fun isCollection(): Boolean {
+            val href = currentHref ?: return false
+            return href.endsWith("/") || resourcetypeContainsCollection
+        }
+
+        /**
+         * True when the server is reporting the resource as deleted.
+         *
+         * Either:
+         *   - response-level 404 with no `<propstat>` (RFC 6578 §3.2 mandates this
+         *     shape for removed members), or
+         *   - propstat-404 with no successful sibling propstat (pragmatic convention
+         *     used by some servers; not RFC-mandated).
+         *
+         * propstat-404 alongside a 2xx propstat is a missing-property report — e.g.,
+         * `<displayname/>` 404 alongside `<getetag>` 200. That is NOT a deletion.
+         */
+        fun isDeleted(): Boolean =
+            currentHref != null &&
+                (responseLevel404 || (sawPropstat404 && !sawSuccessfulPropstat))
+    }
+
+    /**
+     * Streaming iterator over `<response>` elements. Invokes [onResponse] at each
+     * `</response>` with the populated [ResponseState], allowing callers to project
+     * different views (changed items, deleted hrefs, etc.) from the same parse.
+     */
+    private inline fun forEachResponse(
+        parser: XmlPullParser,
+        onResponse: (ResponseState) -> Unit
+    ) {
+        var inResponse = false
+        val state = ResponseState()
+
+        while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+            when (parser.eventType) {
+                XmlPullParser.START_TAG -> {
+                    when (parser.name) {
+                        "response" -> {
+                            inResponse = true
+                            state.reset()
+                        }
+                        "propstat" -> state.enterPropstat()
+                        "resourcetype" -> state.insideResourcetype = true
+                        "collection" -> if (state.insideResourcetype) {
+                            state.resourcetypeContainsCollection = true
+                        }
+                        "href" -> if (inResponse && state.currentHref == null) {
+                            state.currentHref = readText(parser)
+                        }
+                        "getetag" -> {
+                            val rawEtag = readText(parser)
+                            state.currentEtag = EtagUtils.normalizeEtag(rawEtag)
+                        }
+                        "status" -> {
+                            val statusText = readText(parser)
+                            state.observeStatus(statusText)
+                        }
+                    }
+                }
+                XmlPullParser.END_TAG -> {
+                    when (parser.name) {
+                        "propstat" -> state.exitPropstat()
+                        "resourcetype" -> state.insideResourcetype = false
+                        "response" -> {
+                            if (state.currentHref != null) {
+                                onResponse(state)
+                            }
+                            inResponse = false
+                        }
+                    }
+                }
+            }
+            parser.next()
         }
     }
 

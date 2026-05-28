@@ -464,7 +464,6 @@
     <string name="cd_timezone_tap_to_change">වේලා කලාපය: %1$s, වෙනස් කිරීමට තට්ටු කරන්න</string>
     <string name="cd_day_events">දිනය %1$d, සිදුවීම් %2$d</string>
 
-    <string name="label_frequency">වාරිකතාව</string>
     <string name="label_on_days">දිනවල</string>
     <string name="label_pattern">රටාව</string>
     <string name="label_ends">අවසානය</string>
@@ -904,9 +903,7 @@
     <string name="rrule_does_not_repeat">නැවත නොකරයි</string>
     <string name="rrule_freq_daily">දිනපතා</string>
     <string name="rrule_freq_weekly">සතිපතා</string>
-    <string name="rrule_freq_biweekly">සති දෙකකට වරක්</string>
     <string name="rrule_freq_monthly">මාසිකව</string>
-    <string name="rrule_freq_quarterly">කාර්තුවකට වරක්</string>
     <string name="rrule_freq_yearly">වාර්ෂිකව</string>
     <string name="rrule_repeats">නැවත කරයි</string>
     <string name="rrule_every_n_days">සෑම දින %1$d කටම</string>
@@ -920,6 +917,14 @@
     <string name="rrule_ordinal_last">අවසාන</string>
     <string name="rrule_until_suffix">, %1$s දක්වා</string>
     <string name="rrule_freq_never">කිසි විටෙකත් නැත</string>
+    <string name="rrule_freq_custom">අභිරුචි</string>
+    <string name="label_repeat_every">සෑම වරක්ම නැවත කරන්න</string>
+    <string name="rrule_unit_day">දිනය</string>
+    <string name="rrule_unit_week">සතිය</string>
+    <string name="rrule_unit_month">මාසය</string>
+    <string name="rrule_unit_year">වසර</string>
+    <string name="cd_decrease_interval">පරතරය අඩු කරන්න</string>
+    <string name="cd_increase_interval">පරතරය වැඩි කරන්න</string>
     <string name="rrule_starting">%1$s %2$s සිට ආරම්භ වෙමින්%3$s</string>
     <string name="rrule_since">%1$s · %2$s සිට</string>
 
@@ -1052,9 +1057,7 @@
     <string name="share_availability_rail_label">ලබා ගත හැකි කාලය බෙදාගන්න</string>
     <string name="share_availability_sheet_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
     <string name="share_availability_hours_label">වැඩ කරන වේලාවන්: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">මුළු දිනයේ සිදුවීම් කාර්යබහුල ලෙස සලකන්න</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">මුළු දිනයේ සිදුවීම් නොසලකා හරිනු ලැබේ</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">මුළු දිනයේ සිදුවීමක් ඇති දිනක් සම්පූර්ණයෙන්ම කාර්යබහුලයි</string>
+    <string name="share_availability_all_day_toggle_title">මුළු දින සිදුවීම් කාර්යබහුල ලෙස</string>
     <string name="share_availability_share_button">බෙදාගන්න</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1071,4 +1074,12 @@
         <item quantity="one">ඊළඟ %1$d දිනයේ නිදහස් (%2$s – %3$s):</item>
         <item quantity="other">ඊළඟ %1$d දින තුළ නිදහස් (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">කාල පරාසය</string>
+    <string name="share_availability_hours_section">වැඩ කරන වේලාවන්</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">දින %1$d</item>
+        <item quantity="other">දින %1$d</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s දක්වා</string>
+    <string name="share_availability_window_duration">පැය %1$sක කාල පරාසය</string>
 </resources>

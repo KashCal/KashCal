@@ -22,7 +22,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqWpb9lNQABAAAYAhgAIhYIt46JvtzZupTJARDc2cSJq73/k6wBKABIAA==</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-root</getctag>
                             
                         
                             
@@ -63,7 +63,7 @@
     
         
         <response xmlns="DAV:">
-            <href>/123456789/calendars/4D24D1CF-D573-4130-BFB7-F9E0B616E6FE/</href>
+            <href>/123456789/calendars/11111111-2222-3333-4444-555555555555/</href>
             
                 <propstat>
                     <prop>
@@ -81,7 +81,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqWpb2npgAAAAAYAhgAIhYIjpChtN2F0ZLeARDhoILd36yp4bYBKABIAA==</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-personal</getctag>
                             
                         
                             
@@ -117,7 +117,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAABRXSnH4wAAAAAAYARgAIhYIlJWJuJ/wxPK+ARDw/7qy0qHOx4MBKABIAA==</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-inbox</getctag>
                             
                         
                             
@@ -174,7 +174,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqNw1w2WgAAAAAYAhgAIhUIt5GR7uTxvKpVEKS8i8Kl0o6dmQEoAEgA</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-notification</getctag>
                             
                         
                             
@@ -235,7 +235,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAAAAAAAAAAAAAAAAYARgAIhUI/ZvV18PdzLUkEI2hhsOx+eSrlgEoAEgA</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-tasks</getctag>
                             
                         
                             
@@ -272,7 +272,7 @@
                             
                         
                             
-                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqPgF7KFwACAAEYAhgAIhYIt4O1qdSq7tvJARDlm7Souo26948BKABIAA==</getctag>
+                                <getctag xmlns="http://calendarserver.org/ns/">redacted-ctag-work</getctag>
                             
                         
                             

@@ -454,7 +454,6 @@
     <string name="cd_day_events">Ngày %1$d, %2$d sự kiện</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Tần suất</string>
     <string name="label_on_days">Vào ngày</string>
     <string name="label_pattern">Mẫu</string>
     <string name="label_ends">Kết thúc</string>
@@ -862,9 +861,7 @@
     <string name="rrule_does_not_repeat">Không lặp lại</string>
     <string name="rrule_freq_daily">Hàng ngày</string>
     <string name="rrule_freq_weekly">Hàng tuần</string>
-    <string name="rrule_freq_biweekly">Hai tuần một lần</string>
     <string name="rrule_freq_monthly">Hàng tháng</string>
-    <string name="rrule_freq_quarterly">Hàng quý</string>
     <string name="rrule_freq_yearly">Hàng năm</string>
     <string name="rrule_repeats">Lặp lại</string>
     <string name="rrule_every_n_days">Mỗi %1$d ngày</string>
@@ -878,6 +875,14 @@
     <string name="rrule_ordinal_last">cuối</string>
     <string name="rrule_until_suffix">, cho đến %1$s</string>
     <string name="rrule_freq_never">Không bao giờ</string>
+    <string name="rrule_freq_custom">Tùy chỉnh</string>
+    <string name="label_repeat_every">Lặp lại mỗi</string>
+    <string name="rrule_unit_day">Ngày</string>
+    <string name="rrule_unit_week">Tuần</string>
+    <string name="rrule_unit_month">Tháng</string>
+    <string name="rrule_unit_year">Năm</string>
+    <string name="cd_decrease_interval">Giảm khoảng</string>
+    <string name="cd_increase_interval">Tăng khoảng</string>
     <string name="rrule_starting">%1$s bắt đầu %2$s%3$s</string>
     <string name="rrule_since">%1$s · kể từ %2$s</string>
 
@@ -1015,9 +1020,7 @@
     <string name="share_availability_rail_label">Chia sẻ thời gian rảnh</string>
     <string name="share_availability_sheet_title">Chia sẻ thời gian rảnh</string>
     <string name="share_availability_hours_label">Giờ làm việc: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Coi sự kiện cả ngày là bận</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Sự kiện cả ngày được bỏ qua</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Ngày có sự kiện cả ngày bị coi là hoàn toàn bận</string>
+    <string name="share_availability_all_day_toggle_title">Sự kiện cả ngày là bận</string>
     <string name="share_availability_share_button">Chia sẻ</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1025,6 +1028,13 @@
     <string name="share_availability_empty">Không có khoảng trống ít nhất một giờ trong phạm vi đã chọn.</string>
     <string name="share_availability_chooser_title">Chia sẻ thời gian rảnh</string>
     <string name="share_availability_share_failed">Không có ứng dụng để chia sẻ</string>
+    <string name="share_availability_window_section">Khoảng thời gian</string>
+    <string name="share_availability_hours_section">Giờ làm việc</string>
+    <string name="share_availability_days_through">Đến %1$s</string>
+    <string name="share_availability_window_duration">Khung %1$s giờ</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d ngày</item>
+    </plurals>
     <string name="share_from_kashcal_footer">Chia sẻ từ KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="other">%1$d ngày tới</item>

@@ -484,7 +484,6 @@
     <string name="cd_day_events">Araw %1$d, %2$d event</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Dalas</string>
     <string name="label_on_days">Sa mga araw na</string>
     <string name="label_pattern">Pattern</string>
     <string name="label_ends">Natatapos</string>
@@ -930,9 +929,7 @@
     <string name="rrule_does_not_repeat">Hindi umuulit</string>
     <string name="rrule_freq_daily">Araw-araw</string>
     <string name="rrule_freq_weekly">Lingguhan</string>
-    <string name="rrule_freq_biweekly">Tuwing dalawang linggo</string>
     <string name="rrule_freq_monthly">Buwanan</string>
-    <string name="rrule_freq_quarterly">Quarterly</string>
     <string name="rrule_freq_yearly">Taun-taon</string>
     <string name="rrule_repeats">Umuulit</string>
     <string name="rrule_every_n_days">Bawat %1$d araw</string>
@@ -946,6 +943,14 @@
     <string name="rrule_ordinal_last">huling</string>
     <string name="rrule_until_suffix">, hanggang %1$s</string>
     <string name="rrule_freq_never">Hindi kailanman</string>
+    <string name="rrule_freq_custom">Custom</string>
+    <string name="label_repeat_every">Ulitin tuwing</string>
+    <string name="rrule_unit_day">Araw</string>
+    <string name="rrule_unit_week">Linggo</string>
+    <string name="rrule_unit_month">Buwan</string>
+    <string name="rrule_unit_year">Taon</string>
+    <string name="cd_decrease_interval">Bawasan ang interval</string>
+    <string name="cd_increase_interval">Dagdagan ang interval</string>
     <string name="rrule_starting">%1$s nagsisimula %2$s%3$s</string>
     <string name="rrule_since">%1$s · mula %2$s</string>
 
@@ -1077,9 +1082,7 @@
     <string name="share_availability_rail_label">Ibahagi ang availability</string>
     <string name="share_availability_sheet_title">Ibahagi ang availability</string>
     <string name="share_availability_hours_label">Oras ng trabaho: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Ituring ang mga buong araw na event bilang abala</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Ang mga buong araw na event ay binabalewala</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Ang araw na may buong araw na event ay ganap na abala</string>
+    <string name="share_availability_all_day_toggle_title">Buong-araw na kaganapan bilang abala</string>
     <string name="share_availability_share_button">Ibahagi</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1096,4 +1099,12 @@
         <item quantity="one">Libre sa susunod na %1$d araw (%2$s – %3$s):</item>
         <item quantity="other">Libre sa susunod na %1$d araw (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Saklaw</string>
+    <string name="share_availability_hours_section">Oras ng trabaho</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d araw</item>
+        <item quantity="other">%1$d araw</item>
+    </plurals>
+    <string name="share_availability_days_through">Hanggang %1$s</string>
+    <string name="share_availability_window_duration">%1$s oras na window</string>
 </resources>

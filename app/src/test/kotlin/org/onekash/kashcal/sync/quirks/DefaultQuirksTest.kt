@@ -559,13 +559,22 @@ END:VCALENDAR</cal:calendar-data>
     }
 
     @Test
-    fun `extractChangedItems excludes non-ics files`() {
+    fun `extractChangedItems excludes collection self-row identified by trailing slash`() {
+        // The collection self-row is identified by href.endsWith("/") (RFC 4918 §5.2
+        // SHOULD: "Wherever a server produces a URL referring to a collection, the
+        // server SHOULD include the trailing slash."). Filename extension is unreliable
+        // — some servers store events at extensionless UID hrefs. Resourcetype-collection
+        // is retained as a defensive fallback in the parser, but the wire body no longer
+        // requests resourcetype (iCloud bloats responses with per-member propstat-404 on
+        // empty resourcetype queries past the read timeout).
         val xml = """
             <d:multistatus xmlns:d="DAV:">
                 <d:response>
                     <d:href>/calendars/user/personal/</d:href>
                     <d:propstat>
-                        <d:prop><d:getetag>"collection"</d:getetag></d:prop>
+                        <d:prop>
+                            <d:resourcetype><d:collection/></d:resourcetype>
+                        </d:prop>
                         <d:status>HTTP/1.1 200 OK</d:status>
                     </d:propstat>
                 </d:response>
@@ -581,7 +590,7 @@ END:VCALENDAR</cal:calendar-data>
         val items = quirks.extractChangedItems(xml)
 
         assertEquals(1, items.size)
-        assertTrue(items[0].first.endsWith(".ics"))
+        assertEquals("/calendars/user/personal/event.ics", items[0].first)
     }
 
     // ========== buildCalendarUrl tests ==========

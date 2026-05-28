@@ -444,7 +444,6 @@
     <string name="cd_timezone_tap_to_change">Laiko juosta: %1$s, bakstelėkite keisti</string>
     <string name="cd_day_events">%1$d diena, įvykių: %2$d</string>
 
-    <string name="label_frequency">Dažnumas</string>
     <string name="label_on_days">Dienomis</string>
     <string name="label_pattern">Šablonas</string>
     <string name="label_ends">Baigiasi</string>
@@ -918,9 +917,7 @@
     <string name="rrule_does_not_repeat">Nesikartoja</string>
     <string name="rrule_freq_daily">Kasdien</string>
     <string name="rrule_freq_weekly">Kas savaitę</string>
-    <string name="rrule_freq_biweekly">Kas dvi savaites</string>
     <string name="rrule_freq_monthly">Kas mėnesį</string>
-    <string name="rrule_freq_quarterly">Kas ketvirtį</string>
     <string name="rrule_freq_yearly">Kasmet</string>
     <string name="rrule_repeats">Kartojasi</string>
     <string name="rrule_every_n_days">Kas %1$d d.</string>
@@ -934,6 +931,14 @@
     <string name="rrule_ordinal_last">paskutinis</string>
     <string name="rrule_until_suffix">, iki %1$s</string>
     <string name="rrule_freq_never">Niekada</string>
+    <string name="rrule_freq_custom">Pasirinktinis</string>
+    <string name="label_repeat_every">Kartoti kas</string>
+    <string name="rrule_unit_day">Diena</string>
+    <string name="rrule_unit_week">Savaitė</string>
+    <string name="rrule_unit_month">Mėnuo</string>
+    <string name="rrule_unit_year">Metai</string>
+    <string name="cd_decrease_interval">Sumažinti intervalą</string>
+    <string name="cd_increase_interval">Padidinti intervalą</string>
     <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
     <string name="rrule_since">%1$s · nuo %2$s</string>
 
@@ -1086,9 +1091,7 @@
         <item quantity="other">Kitos %1$d dienų</item>
     </plurals>
     <string name="share_availability_hours_label">Darbo valandos: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Laikyti visos dienos įvykius užimtais</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Visos dienos įvykiai ignoruojami</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Diena su visos dienos įvykiu yra visiškai užimta</string>
+    <string name="share_availability_all_day_toggle_title">Visos dienos įvykiai kaip užimti</string>
     <string name="share_availability_share_button">Bendrinti</string>
     <plurals name="share_availability_header">
         <item quantity="one">Laisva kitą %1$d dieną (%2$s – %3$s):</item>
@@ -1102,5 +1105,15 @@
     <string name="share_availability_empty">Pasirinktame intervale nėra laisvų bent valandos blokų.</string>
     <string name="share_availability_chooser_title">Bendrinti pasiekiamumą</string>
     <string name="share_availability_share_failed">Nėra programėlės, kuria galima dalintis</string>
+    <string name="share_availability_window_section">Langas</string>
+    <string name="share_availability_hours_section">Darbo valandos</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d diena</item>
+        <item quantity="few">%1$d dienos</item>
+        <item quantity="many">%1$d dienos</item>
+        <item quantity="other">%1$d dienų</item>
+    </plurals>
+    <string name="share_availability_days_through">Iki %1$s</string>
+    <string name="share_availability_window_duration">%1$s val. langas</string>
     <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
 </resources>

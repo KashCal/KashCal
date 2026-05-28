@@ -71,13 +71,15 @@ class FreeBlockFinder @Inject constructor() {
             // DateTimeUtils.eventTsToEndDayCode); endDay is the last covered
             // day, NOT the RFC-exclusive DTEND.
             val dateCode = localDateToDayCode(date)
-            if (includeAllDayAsBusy && occurrences.any { it.isAllDay && dateCode in it.startDay..it.endDay }) {
+            if (includeAllDayAsBusy && occurrences.any {
+                    it.isAllDay && it.isBusy() && dateCode in it.startDay..it.endDay
+                }) {
                 continue
             }
 
             val timed = occurrences
                 .asSequence()
-                .filter { !it.isAllDay && it.startTs != it.endTs }
+                .filter { !it.isAllDay && it.isBusy() && it.startTs != it.endTs }
                 .filter { it.endTs > effectiveStartMs && it.startTs < dayWindowEndMs }
                 .sortedBy { it.startTs }
                 .toList()
@@ -138,6 +140,8 @@ class FreeBlockFinder @Inject constructor() {
             )
         )
     }
+
+    private fun InsightOccurrence.isBusy(): Boolean = transparency != "TRANSPARENT"
 
     companion object {
         const val END_OF_DAY_MIN: Int = 24 * 60

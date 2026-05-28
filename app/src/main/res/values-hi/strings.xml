@@ -481,7 +481,6 @@
     <string name="cd_day_events">दिन %1$d, %2$d इवेंट</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">आवृत्ति</string>
     <string name="label_on_days">दिनों पर</string>
     <string name="label_pattern">पैटर्न</string>
     <string name="label_ends">समाप्ति</string>
@@ -937,9 +936,7 @@
     <string name="rrule_does_not_repeat">दोहराता नहीं</string>
     <string name="rrule_freq_daily">दैनिक</string>
     <string name="rrule_freq_weekly">साप्ताहिक</string>
-    <string name="rrule_freq_biweekly">पाक्षिक</string>
     <string name="rrule_freq_monthly">मासिक</string>
-    <string name="rrule_freq_quarterly">त्रैमासिक</string>
     <string name="rrule_freq_yearly">वार्षिक</string>
     <string name="rrule_repeats">दोहराता है</string>
     <string name="rrule_every_n_days">हर %1$d दिन</string>
@@ -1067,9 +1064,7 @@
     <string name="share_availability_rail_label">उपलब्धता साझा करें</string>
     <string name="share_availability_sheet_title">उपलब्धता साझा करें</string>
     <string name="share_availability_hours_label">कार्य समय: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">पूरे दिन की घटनाओं को व्यस्त मानें</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">पूरे दिन की घटनाओं को अनदेखा किया जाता है</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">पूरे दिन की घटना वाला दिन पूरी तरह व्यस्त</string>
+    <string name="share_availability_all_day_toggle_title">पूरे दिन के इवेंट व्यस्त के रूप में</string>
     <string name="share_availability_share_button">साझा करें</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1077,6 +1072,14 @@
     <string name="share_availability_empty">चयनित श्रेणी में कम से कम एक घंटे का कोई खाली ब्लॉक नहीं है।</string>
     <string name="share_availability_chooser_title">उपलब्धता साझा करें</string>
     <string name="share_availability_share_failed">साझा करने के लिए कोई ऐप उपलब्ध नहीं</string>
+    <string name="share_availability_window_section">विंडो</string>
+    <string name="share_availability_hours_section">कार्य घंटे</string>
+    <string name="share_availability_days_through">%1$s तक</string>
+    <string name="share_availability_window_duration">%1$s घंटे की विंडो</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCal से साझा किया गया</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">अगला %1$d दिन</item>
@@ -1086,4 +1089,12 @@
         <item quantity="one">अगले %1$d दिन में खाली (%2$s – %3$s):</item>
         <item quantity="other">अगले %1$d दिनों में खाली (%2$s – %3$s):</item>
     </plurals>
+    <string name="rrule_freq_custom">कस्टम</string>
+    <string name="label_repeat_every">हर बार दोहराएँ</string>
+    <string name="rrule_unit_day">दिन</string>
+    <string name="rrule_unit_week">सप्ताह</string>
+    <string name="rrule_unit_month">महीना</string>
+    <string name="rrule_unit_year">वर्ष</string>
+    <string name="cd_decrease_interval">अंतराल घटाएँ</string>
+    <string name="cd_increase_interval">अंतराल बढ़ाएँ</string>
 </resources>

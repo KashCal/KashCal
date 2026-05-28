@@ -483,7 +483,6 @@
     <string name="cd_day_events">Ziua %1$d, %2$d evenimente</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">Frecvență</string>
     <string name="label_on_days">În zilele</string>
     <string name="label_pattern">Model</string>
     <string name="label_ends">Sfârșit</string>
@@ -966,9 +965,7 @@
     <string name="rrule_does_not_repeat">Nu se repetă</string>
     <string name="rrule_freq_daily">Zilnic</string>
     <string name="rrule_freq_weekly">Săptămânal</string>
-    <string name="rrule_freq_biweekly">Bisăptămânal</string>
     <string name="rrule_freq_monthly">Lunar</string>
-    <string name="rrule_freq_quarterly">Trimestrial</string>
     <string name="rrule_freq_yearly">Anual</string>
     <string name="rrule_repeats">Se repetă</string>
     <string name="rrule_every_n_days">La fiecare %1$d zile</string>
@@ -982,6 +979,14 @@
     <string name="rrule_ordinal_last">ultima</string>
     <string name="rrule_until_suffix">, până la %1$s</string>
     <string name="rrule_freq_never">Niciodată</string>
+    <string name="rrule_freq_custom">Personalizat</string>
+    <string name="label_repeat_every">Repetă la fiecare</string>
+    <string name="rrule_unit_day">Zi</string>
+    <string name="rrule_unit_week">Săptămână</string>
+    <string name="rrule_unit_month">Lună</string>
+    <string name="rrule_unit_year">An</string>
+    <string name="cd_decrease_interval">Reduce intervalul</string>
+    <string name="cd_increase_interval">Mărește intervalul</string>
     <string name="rrule_starting">%1$s începând din %2$s%3$s</string>
     <string name="rrule_since">%1$s · din %2$s</string>
 
@@ -1125,9 +1130,7 @@
     <string name="share_availability_rail_label">Partajează disponibilitatea</string>
     <string name="share_availability_sheet_title">Partajează disponibilitatea</string>
     <string name="share_availability_hours_label">Program de lucru: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tratează evenimentele de toată ziua ca ocupate</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Evenimentele de toată ziua sunt ignorate</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">O zi cu eveniment de toată ziua este complet ocupată</string>
+    <string name="share_availability_all_day_toggle_title">Evenimente de toată ziua ca ocupate</string>
     <string name="share_availability_share_button">Partajează</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1146,4 +1149,13 @@
         <item quantity="few">Liber în următoarele %1$d zile (%2$s – %3$s):</item>
         <item quantity="other">Liber în următoarele %1$d de zile (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Interval</string>
+    <string name="share_availability_hours_section">Program de lucru</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d zi</item>
+        <item quantity="few">%1$d zile</item>
+        <item quantity="other">%1$d de zile</item>
+    </plurals>
+    <string name="share_availability_days_through">Până la %1$s</string>
+    <string name="share_availability_window_duration">Interval de %1$s ore</string>
 </resources>

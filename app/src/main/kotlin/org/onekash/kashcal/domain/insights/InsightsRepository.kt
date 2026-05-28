@@ -9,6 +9,7 @@ import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.insights.generators.localDateToDayCode
+import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
@@ -84,7 +85,10 @@ class InsightsRepository @Inject constructor(
     ): Triple<List<InsightOccurrence>, Map<Long, Pair<String, Int>>, List<Long>> {
         val roomOccurrences = occurrencesDao.getOccurrencesWithEventsForInsights(startTs, endTs)
         val roomOccs: List<InsightOccurrence> = roomOccurrences.map {
-            SimpleOccurrence(it.startTs, it.endTs, it.event.isAllDay, it.startDay, it.endDay, it.calendarId)
+            SimpleOccurrence(
+                it.startTs, it.endTs, it.event.isAllDay, it.startDay, it.endDay, it.calendarId,
+                it.event.transp
+            )
         }
         val startDayCode = localDateToDayCode(rangeStart)
         val endDayCode = localDateToDayCode(rangeEnd)
@@ -196,7 +200,8 @@ class InsightsRepository @Inject constructor(
                     isAllDay = inst.isAllDay,
                     startDay = inst.startDay,
                     endDay = inst.endDay,
-                    calendarId = deviceCalId
+                    calendarId = deviceCalId,
+                    transparency = availabilityIntToTransp(inst.availability)
                 )
             }
             occs to calMeta

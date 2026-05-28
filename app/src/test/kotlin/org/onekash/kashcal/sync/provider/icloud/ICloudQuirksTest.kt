@@ -823,13 +823,20 @@ END:VCALENDAR</calendar-data>
     }
 
     @Test
-    fun `extractChangedItems skips non-ics files`() {
+    fun `extractChangedItems skips collection self-row identified by trailing slash`() {
+        // The collection self-row is identified by href.endsWith("/") (RFC 4918 §5.2
+        // SHOULD), not by filename extension. Filename extension is unreliable — some
+        // servers store events at extensionless UID hrefs. Resourcetype-collection is
+        // a defensive fallback inside the parser; the wire body no longer requests
+        // resourcetype (iCloud bloats responses past the read timeout otherwise).
         val response = """
             <multistatus xmlns="DAV:">
                 <response>
                     <href>/calendars/home/</href>
                     <propstat>
-                        <prop><getetag>"collection-etag"</getetag></prop>
+                        <prop>
+                            <resourcetype><collection/></resourcetype>
+                        </prop>
                         <status>HTTP/1.1 200 OK</status>
                     </propstat>
                 </response>
@@ -878,7 +885,11 @@ END:VCALENDAR</calendar-data>
     }
 
     @Test
-    fun `extractChangedItems handles missing etag`() {
+    fun `extractChangedItems skips response with no etag and no collection marker`() {
+        // A response with neither an etag nor a resourcetype/collection marker is a
+        // diagnostic skip — the parser cannot prove it's a member resource. This is
+        // safer than emitting an item with a null etag, which downstream pulls would
+        // treat as "no etag returned, force fetch" and waste bandwidth.
         val response = """
             <multistatus xmlns="DAV:">
                 <response>
@@ -893,8 +904,6 @@ END:VCALENDAR</calendar-data>
 
         val items = quirks.extractChangedItems(response)
 
-        assertEquals(1, items.size)
-        assertEquals("/event-no-etag.ics", items[0].first)
-        assertNull(items[0].second)
+        assertTrue("Response with no etag and no resourcetype must be skipped", items.isEmpty())
     }
 }

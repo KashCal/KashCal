@@ -444,7 +444,6 @@
     <string name="cd_timezone_tap_to_change">Часавы пояс: %1$s, націсніце для змены</string>
     <string name="cd_day_events">Дзень %1$d, падзей: %2$d</string>
 
-    <string name="label_frequency">Частата</string>
     <string name="label_on_days">Па днях</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчваецца</string>
@@ -917,9 +916,7 @@
     <string name="rrule_does_not_repeat">Не паўтараецца</string>
     <string name="rrule_freq_daily">Штодня</string>
     <string name="rrule_freq_weekly">Штотыдзень</string>
-    <string name="rrule_freq_biweekly">Раз у два тыдні</string>
     <string name="rrule_freq_monthly">Штомесяц</string>
-    <string name="rrule_freq_quarterly">Штоквартал</string>
     <string name="rrule_freq_yearly">Штогод</string>
     <string name="rrule_repeats">Паўтараецца</string>
     <string name="rrule_every_n_days">Кожныя %1$d дз.</string>
@@ -933,6 +930,14 @@
     <string name="rrule_ordinal_last">апошні</string>
     <string name="rrule_until_suffix">, да %1$s</string>
     <string name="rrule_freq_never">Ніколі</string>
+    <string name="rrule_freq_custom">Свой</string>
+    <string name="label_repeat_every">Паўтараць кожныя</string>
+    <string name="rrule_unit_day">Дзень</string>
+    <string name="rrule_unit_week">Тыдзень</string>
+    <string name="rrule_unit_month">Месяц</string>
+    <string name="rrule_unit_year">Год</string>
+    <string name="cd_decrease_interval">Паменшыць інтэрвал</string>
+    <string name="cd_increase_interval">Павялічыць інтэрвал</string>
     <string name="rrule_starting">%1$s пачынаючы з %2$s%3$s</string>
     <string name="rrule_since">%1$s · з %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1082,9 +1087,7 @@
         <item quantity="other">Наступныя %1$d дзён</item>
     </plurals>
     <string name="share_availability_hours_label">Працоўныя гадзіны: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Лічыць падзеі на ўвесь дзень занятасцю</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Падзеі на ўвесь дзень ігнаруюцца</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Дзень з падзеяй на ўвесь дзень цалкам заняты</string>
+    <string name="share_availability_all_day_toggle_title">Падзеі на ўвесь дзень як занятыя</string>
     <string name="share_availability_share_button">Падзяліцца</string>
     <plurals name="share_availability_header">
         <item quantity="one">Свабодны наступны %1$d дзень (%2$s – %3$s):</item>
@@ -1098,5 +1101,15 @@
     <string name="share_availability_empty">У выбраным дыяпазоне няма свабодных блокаў ад гадзіны.</string>
     <string name="share_availability_chooser_title">Падзяліцца даступнасцю</string>
     <string name="share_availability_share_failed">Няма праграмы для абмену</string>
+    <string name="share_availability_window_section">Акно</string>
+    <string name="share_availability_hours_section">Працоўныя гадзіны</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d дзень</item>
+        <item quantity="few">%1$d дні</item>
+        <item quantity="many">%1$d дзён</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
+    <string name="share_availability_days_through">Да %1$s</string>
+    <string name="share_availability_window_duration">Акно %1$s гадз</string>
     <string name="share_from_kashcal_footer">Адпраўлена з KashCal</string>
 </resources>

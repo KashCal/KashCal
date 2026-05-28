@@ -464,7 +464,6 @@
     <string name="cd_timezone_tap_to_change">Eneo la saa: %1$s, gusa kubadilisha</string>
     <string name="cd_day_events">Siku %1$d, matukio %2$d</string>
 
-    <string name="label_frequency">Mzunguko</string>
     <string name="label_on_days">Siku</string>
     <string name="label_pattern">Muundo</string>
     <string name="label_ends">Inaisha</string>
@@ -902,9 +901,7 @@
     <string name="rrule_does_not_repeat">Hairudii</string>
     <string name="rrule_freq_daily">Kila siku</string>
     <string name="rrule_freq_weekly">Kila wiki</string>
-    <string name="rrule_freq_biweekly">Kila wiki mbili</string>
     <string name="rrule_freq_monthly">Kila mwezi</string>
-    <string name="rrule_freq_quarterly">Kila robo mwaka</string>
     <string name="rrule_freq_yearly">Kila mwaka</string>
     <string name="rrule_repeats">Inarudia</string>
     <string name="rrule_every_n_days">Kila siku %1$d</string>
@@ -918,6 +915,14 @@
     <string name="rrule_ordinal_last">ya mwisho</string>
     <string name="rrule_until_suffix">, hadi %1$s</string>
     <string name="rrule_freq_never">Kamwe</string>
+    <string name="rrule_freq_custom">Maalum</string>
+    <string name="label_repeat_every">Rudia kila</string>
+    <string name="rrule_unit_day">Siku</string>
+    <string name="rrule_unit_week">Wiki</string>
+    <string name="rrule_unit_month">Mwezi</string>
+    <string name="rrule_unit_year">Mwaka</string>
+    <string name="cd_decrease_interval">Punguza muda</string>
+    <string name="cd_increase_interval">Ongeza muda</string>
     <string name="rrule_starting">%1$s kuanzia %2$s%3$s</string>
     <string name="rrule_since">%1$s · tangu %2$s</string>
 
@@ -1049,9 +1054,7 @@
     <string name="share_availability_rail_label">Shiriki upatikanaji</string>
     <string name="share_availability_sheet_title">Shiriki upatikanaji</string>
     <string name="share_availability_hours_label">Saa za kazi: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Hesabu matukio ya siku nzima kama yenye shughuli</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Matukio ya siku nzima yanapuuzwa</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Siku yenye tukio la siku nzima ina shughuli kabisa</string>
+    <string name="share_availability_all_day_toggle_title">Matukio ya siku nzima kama yenye shughuli</string>
     <string name="share_availability_share_button">Shiriki</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1068,4 +1071,12 @@
         <item quantity="one">Bure katika siku %1$d ijayo (%2$s – %3$s):</item>
         <item quantity="other">Bure katika siku %1$d zijazo (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_window_section">Kipindi</string>
+    <string name="share_availability_hours_section">Saa za kazi</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">Siku %1$d</item>
+        <item quantity="other">Siku %1$d</item>
+    </plurals>
+    <string name="share_availability_days_through">Hadi %1$s</string>
+    <string name="share_availability_window_duration">Kipindi cha saa %1$s</string>
 </resources>

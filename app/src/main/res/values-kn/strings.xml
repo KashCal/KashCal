@@ -481,7 +481,6 @@
     <string name="cd_day_events">ದಿನ %1$d, %2$d ಈವೆಂಟ್‌ಗಳು</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
-    <string name="label_frequency">ಆವರ್ತನ</string>
     <string name="label_on_days">ದಿನಗಳಲ್ಲಿ</string>
     <string name="label_pattern">ಮಾದರಿ</string>
     <string name="label_ends">ಮುಕ್ತಾಯ</string>
@@ -937,9 +936,7 @@
     <string name="rrule_does_not_repeat">ಪುನರಾವರ್ತನೆಯಾಗುವುದಿಲ್ಲ</string>
     <string name="rrule_freq_daily">ದೈನಂದಿನ</string>
     <string name="rrule_freq_weekly">ಸಾಪ್ತಾಹಿಕ</string>
-    <string name="rrule_freq_biweekly">ಪಾಕ್ಷಿಕ</string>
     <string name="rrule_freq_monthly">ಮಾಸಿಕ</string>
-    <string name="rrule_freq_quarterly">ತ್ರೈಮಾಸಿಕ</string>
     <string name="rrule_freq_yearly">ವಾರ್ಷಿಕ</string>
     <string name="rrule_repeats">ಪುನರಾವರ್ತನೆಯಾಗುತ್ತದೆ</string>
     <string name="rrule_every_n_days">ಪ್ರತಿ %1$d ದಿನಗಳು</string>
@@ -1067,9 +1064,7 @@
     <string name="share_availability_rail_label">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="share_availability_sheet_title">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="share_availability_hours_label">ಕೆಲಸದ ಸಮಯ: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್‌ಗಳನ್ನು ಬ್ಯುಸಿ ಎಂದು ಪರಿಗಣಿಸಿ</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್‌ಗಳನ್ನು ನಿರ್ಲಕ್ಷಿಸಲಾಗುತ್ತದೆ</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">ದಿನಪೂರ್ತಿ ಈವೆಂಟ್ ಇರುವ ದಿನವು ಸಂಪೂರ್ಣವಾಗಿ ಬ್ಯುಸಿ</string>
+    <string name="share_availability_all_day_toggle_title">ಪೂರ್ಣ ದಿನದ ಈವೆಂಟ್‌ಗಳು ಬಿಜಿಯಾಗಿ</string>
     <string name="share_availability_share_button">ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
@@ -1077,6 +1072,14 @@
     <string name="share_availability_empty">ಆಯ್ಕೆಮಾಡಿದ ಶ್ರೇಣಿಯಲ್ಲಿ ಕನಿಷ್ಠ ಒಂದು ಗಂಟೆಯ ಯಾವುದೇ ಮುಕ್ತ ಬ್ಲಾಕ್‌ಗಳಿಲ್ಲ.</string>
     <string name="share_availability_chooser_title">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="share_availability_share_failed">ಹಂಚಿಕೊಳ್ಳಲು ಯಾವುದೇ ಆ್ಯಪ್ ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="share_availability_window_section">ವಿಂಡೋ</string>
+    <string name="share_availability_hours_section">ಕೆಲಸದ ಸಮಯ</string>
+    <string name="share_availability_days_through">%1$s ವರೆಗೆ</string>
+    <string name="share_availability_window_duration">%1$s ಗಂಟೆಯ ವಿಂಡೋ</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ದಿನ</item>
+        <item quantity="other">%1$d ದಿನಗಳು</item>
+    </plurals>
     <string name="share_from_kashcal_footer">KashCal ನಿಂದ ಹಂಚಲಾಗಿದೆ</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">ಮುಂದಿನ %1$d ದಿನ</item>
@@ -1086,4 +1089,12 @@
         <item quantity="one">ಮುಂದಿನ %1$d ದಿನ ಮುಕ್ತ (%2$s – %3$s):</item>
         <item quantity="other">ಮುಂದಿನ %1$d ದಿನಗಳಲ್ಲಿ ಮುಕ್ತ (%2$s – %3$s):</item>
     </plurals>
+    <string name="rrule_freq_custom">ಕಸ್ಟಮ್</string>
+    <string name="label_repeat_every">ಪ್ರತಿ</string>
+    <string name="rrule_unit_day">ದಿನ</string>
+    <string name="rrule_unit_week">ವಾರ</string>
+    <string name="rrule_unit_month">ತಿಂಗಳು</string>
+    <string name="rrule_unit_year">ವರ್ಷ</string>
+    <string name="cd_decrease_interval">ಮಧ್ಯಂತರ ಕಡಿಮೆ ಮಾಡಿ</string>
+    <string name="cd_increase_interval">ಮಧ್ಯಂತರ ಹೆಚ್ಚಿಸಿ</string>
 </resources>

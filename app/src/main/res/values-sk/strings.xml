@@ -465,7 +465,6 @@
     <string name="cd_timezone_tap_to_change">Časové pásmo: %1$s, ťuknite na zmenu</string>
     <string name="cd_day_events">Deň %1$d, %2$d udalostí</string>
 
-    <string name="label_frequency">Četnosť</string>
     <string name="label_on_days">V dňoch</string>
     <string name="label_pattern">Vzor</string>
     <string name="label_ends">Končí</string>
@@ -988,9 +987,7 @@
     <string name="rrule_does_not_repeat">Neopakuje sa</string>
     <string name="rrule_freq_daily">Denne</string>
     <string name="rrule_freq_weekly">Týždenne</string>
-    <string name="rrule_freq_biweekly">Každé dva týždne</string>
     <string name="rrule_freq_monthly">Mesačne</string>
-    <string name="rrule_freq_quarterly">Štvrťročne</string>
     <string name="rrule_freq_yearly">Ročne</string>
     <string name="rrule_repeats">Opakuje sa</string>
     <string name="rrule_every_n_days">Každých %1$d dní</string>
@@ -1004,6 +1001,14 @@
     <string name="rrule_ordinal_last">posledný</string>
     <string name="rrule_until_suffix">, do %1$s</string>
     <string name="rrule_freq_never">Nikdy</string>
+    <string name="rrule_freq_custom">Vlastné</string>
+    <string name="label_repeat_every">Opakovať každý</string>
+    <string name="rrule_unit_day">Deň</string>
+    <string name="rrule_unit_week">Týždeň</string>
+    <string name="rrule_unit_month">Mesiac</string>
+    <string name="rrule_unit_year">Rok</string>
+    <string name="cd_decrease_interval">Znížiť interval</string>
+    <string name="cd_increase_interval">Zvýšiť interval</string>
     <string name="rrule_starting">%1$s počnúc %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
     <plurals name="rrule_count_suffix">
@@ -1131,9 +1136,7 @@
         <item quantity="other">Ďalších %1$d dní</item>
     </plurals>
     <string name="share_availability_hours_label">Pracovný čas: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Považovať celodenné udalosti za obsadené</string>
-    <string name="share_availability_all_day_toggle_subtitle_off">Celodenné udalosti sa ignorujú</string>
-    <string name="share_availability_all_day_toggle_subtitle_on">Deň s celodennou udalosťou je úplne obsadený</string>
+    <string name="share_availability_all_day_toggle_title">Celodenné udalosti ako zaneprázdnené</string>
     <string name="share_availability_share_button">Zdieľať</string>
     <plurals name="share_availability_header">
         <item quantity="one">Voľno v ďalšom %1$d dni (%2$s – %3$s):</item>
@@ -1147,5 +1150,15 @@
     <string name="share_availability_empty">Vo vybranom rozsahu nie sú žiadne voľné bloky aspoň hodinové.</string>
     <string name="share_availability_chooser_title">Zdieľať dostupnosť</string>
     <string name="share_availability_share_failed">Žiadna aplikácia na zdieľanie</string>
+    <string name="share_availability_window_section">Okno</string>
+    <string name="share_availability_hours_section">Pracovný čas</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d deň</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="many">%1$d dňa</item>
+        <item quantity="other">%1$d dní</item>
+    </plurals>
+    <string name="share_availability_days_through">Do %1$s</string>
+    <string name="share_availability_window_duration">Okno %1$s hod.</string>
     <string name="share_from_kashcal_footer">Zdieľané z KashCal</string>
 </resources>
