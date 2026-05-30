@@ -394,13 +394,13 @@
     <string name="accounts_cd_sync_warning">Avís de sincronització</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Subscripcions</string>
-    <string name="subscriptions_section_ics_calendars">Calendaris ICS</string>
+    <string name="subscriptions_title">Fluxos de calendari</string>
     <string name="subscriptions_section_add">Afegir</string>
     <string name="subscriptions_empty_ics">Cap subscripció ICS</string>
     <string name="subscriptions_empty_ics_hint">Afegeix un flux de calendari per veure esdeveniments</string>
     <string name="subscriptions_add_ics">Afegir calendari ICS</string>
-    <string name="subscriptions_row_label">Festius, escola i més</string>
+    <string name="subscriptions_row_label">Fluxos de calendari (ICS)</string>
+    <string name="subscriptions_row_hint">p. ex. festius, esports, escola</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Aniversaris i efemèrides</string>

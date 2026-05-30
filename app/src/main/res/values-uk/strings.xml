@@ -407,13 +407,13 @@
     <string name="accounts_cd_sync_warning">Попередження синхронізації</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Підписки</string>
-    <string name="subscriptions_section_ics_calendars">Календарі ICS</string>
+    <string name="subscriptions_title">Стрічки календаря</string>
     <string name="subscriptions_section_add">Додати</string>
     <string name="subscriptions_empty_ics">Немає підписок ICS</string>
     <string name="subscriptions_empty_ics_hint">Додайте стрічку календаря для перегляду подій</string>
     <string name="subscriptions_add_ics">Додати календар ICS</string>
-    <string name="subscriptions_row_label">Свята, школа та інше</string>
+    <string name="subscriptions_row_label">Стрічки календаря (ICS)</string>
+    <string name="subscriptions_row_hint">напр. свята, спорт, школа</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Дні народження та річниці</string>

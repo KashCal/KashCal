@@ -376,13 +376,13 @@
     <string name="accounts_cd_sync_warning">Synchronisatiewaarschuwing</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abonnementen</string>
-    <string name="subscriptions_section_ics_calendars">ICS-agenda\'s</string>
+    <string name="subscriptions_row_label">Agendafeeds (ICS)</string>
+    <string name="subscriptions_row_hint">bijv. feestdagen, sport, school</string>
+    <string name="subscriptions_title">Agendafeeds</string>
     <string name="subscriptions_section_add">Toevoegen</string>
     <string name="subscriptions_empty_ics">Geen ICS-abonnementen</string>
     <string name="subscriptions_empty_ics_hint">Voeg een agendafeed toe om afspraken te zien</string>
     <string name="subscriptions_add_ics">ICS-agenda toevoegen</string>
-    <string name="subscriptions_row_label">Feestdagen, school &amp; meer</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Verjaardagen &amp; jubilea</string>

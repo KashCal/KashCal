@@ -544,18 +544,18 @@
     <string name="accounts_cd_sync_warning">Sync warning</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <!-- "Subscription" = read-only ICS calendar feed (like holidays), NOT a paid subscription -->
-    <string name="subscriptions_title">Subscriptions</string>
-    <!-- Keep "ICS" untranslated (file format) -->
-    <string name="subscriptions_section_ics_calendars">ICS Calendars</string>
+    <!-- "Calendar feeds" = read-only ICS calendar feeds (like holidays), NOT paid subscriptions -->
+    <string name="subscriptions_title">Calendar Feeds</string>
     <string name="subscriptions_section_add">Add</string>
     <!-- Keep "ICS" untranslated -->
     <string name="subscriptions_empty_ics">No ICS subscriptions</string>
     <string name="subscriptions_empty_ics_hint">Add a calendar feed to see events</string>
     <string name="subscriptions_add_ics">Add ICS Calendar</string>
     <!-- subscriptions_count_one/other removed — use R.plurals.subscriptions_count -->
-    <!-- Summary row for Settings screen -->
-    <string name="subscriptions_row_label">Holidays, School &amp; More</string>
+    <!-- Summary row for Settings screen. Keep "ICS" untranslated (file format). -->
+    <string name="subscriptions_row_label">Calendar Feeds (ICS)</string>
+    <!-- Subtitle shown on the Settings row when no subscriptions exist; descriptive hint for what users can subscribe to. -->
+    <string name="subscriptions_row_hint">e.g. holidays, sports, school</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Birthdays &amp; Anniversaries</string>

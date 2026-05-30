@@ -394,13 +394,13 @@
     <string name="accounts_cd_sync_warning">Sinkronizazio-abisua</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Harpidetzak</string>
-    <string name="subscriptions_section_ics_calendars">ICS egutegiak</string>
+    <string name="subscriptions_title">Egutegi-jarioak</string>
     <string name="subscriptions_section_add">Gehitu</string>
     <string name="subscriptions_empty_ics">ICS harpidetzarik ez</string>
     <string name="subscriptions_empty_ics_hint">Gehitu egutegi-jario bat gertaerak ikusteko</string>
     <string name="subscriptions_add_ics">ICS egutegia gehitu</string>
-    <string name="subscriptions_row_label">Oporrak, eskola eta gehiago</string>
+    <string name="subscriptions_row_label">Egutegi-jarioak (ICS)</string>
+    <string name="subscriptions_row_hint">adib. jaiegunak, kirolak, eskola</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Urtebetetzeak eta urteurrenak</string>

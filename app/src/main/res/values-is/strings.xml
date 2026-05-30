@@ -376,13 +376,13 @@
     <string name="accounts_cd_sync_warning">Samstillingarviðvörun</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Áskriftir</string>
-    <string name="subscriptions_section_ics_calendars">ICS-dagatöl</string>
+    <string name="subscriptions_row_label">Dagatalsstraumar (ICS)</string>
+    <string name="subscriptions_row_hint">t.d. frídagar, íþróttir, skóli</string>
+    <string name="subscriptions_title">Dagatalsstraumar</string>
     <string name="subscriptions_section_add">Bæta við</string>
     <string name="subscriptions_empty_ics">Engar ICS-áskriftir</string>
     <string name="subscriptions_empty_ics_hint">Bættu við dagatalsstraumi til að sjá viðburði</string>
     <string name="subscriptions_add_ics">Bæta við ICS-dagatali</string>
-    <string name="subscriptions_row_label">Frídagar, skóli &amp; fleira</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Afmæli &amp; árdagar</string>

@@ -352,13 +352,13 @@
     <string name="accounts_cd_sync_warning">동기화 경고</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">구독</string>
-    <string name="subscriptions_section_ics_calendars">ICS 캘린더</string>
+    <string name="subscriptions_title">캘린더 피드</string>
+    <string name="subscriptions_row_label">캘린더 피드 (ICS)</string>
+    <string name="subscriptions_row_hint">예: 공휴일, 스포츠, 학교</string>
     <string name="subscriptions_section_add">추가</string>
     <string name="subscriptions_empty_ics">ICS 구독이 없어요</string>
     <string name="subscriptions_empty_ics_hint">캘린더 피드를 추가하여 일정을 확인하세요</string>
     <string name="subscriptions_add_ics">ICS 캘린더 추가</string>
-    <string name="subscriptions_row_label">공휴일, 학사 일정 등</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">생일 및 기념일</string>

@@ -415,13 +415,13 @@
     <string name="accounts_cd_sync_warning">ஒத்திசைவு எச்சரிக்கை</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">சந்தாக்கள்</string>
-    <string name="subscriptions_section_ics_calendars">ICS நாட்காட்டிகள்</string>
+    <string name="subscriptions_title">நாட்காட்டி ஊட்டங்கள்</string>
     <string name="subscriptions_section_add">சேர்</string>
+    <string name="subscriptions_row_hint">எ.கா. விடுமுறை, விளையாட்டு, பள்ளி</string>
     <string name="subscriptions_empty_ics">ICS சந்தாக்கள் இல்லை</string>
     <string name="subscriptions_empty_ics_hint">நிகழ்வுகளைக் காண நாட்காட்டி ஊட்டம் சேர்க்கவும்</string>
     <string name="subscriptions_add_ics">ICS நாட்காட்டி சேர்</string>
-    <string name="subscriptions_row_label">விடுமுறைகள், பள்ளி மற்றும் மேலும்</string>
+    <string name="subscriptions_row_label">நாட்காட்டி ஊட்டங்கள் (ICS)</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">பிறந்தநாட்கள் மற்றும் ஆண்டு நினைவுகள்</string>

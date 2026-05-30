@@ -376,13 +376,13 @@
     <string name="accounts_cd_sync_warning">Synkroniseringsadvarsel</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abonnementer</string>
-    <string name="subscriptions_section_ics_calendars">ICS-kalendere</string>
+    <string name="subscriptions_row_label">Kalenderstrømmer (ICS)</string>
+    <string name="subscriptions_row_hint">f.eks. helligdager, sport, skole</string>
+    <string name="subscriptions_title">Kalenderstrømmer</string>
     <string name="subscriptions_section_add">Legg til</string>
     <string name="subscriptions_empty_ics">Ingen ICS-abonnementer</string>
     <string name="subscriptions_empty_ics_hint">Legg til en kalenderstrøm for å se hendelser</string>
     <string name="subscriptions_add_ics">Legg til ICS-kalender</string>
-    <string name="subscriptions_row_label">Helligdager, skole &amp; mer</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Bursdager &amp; jubileer</string>

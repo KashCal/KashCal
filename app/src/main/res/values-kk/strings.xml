@@ -414,13 +414,13 @@
     <string name="accounts_cd_sync_warning">Синхрондау ескертуі</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Жазылымдар</string>
-    <string name="subscriptions_section_ics_calendars">ICS күнтізбелер</string>
+    <string name="subscriptions_title">Күнтізбе арналары</string>
     <string name="subscriptions_section_add">Қосу</string>
     <string name="subscriptions_empty_ics">ICS жазылымдар жоқ</string>
     <string name="subscriptions_empty_ics_hint">Оқиғаларды көру үшін күнтізбе арнасын қосыңыз</string>
     <string name="subscriptions_add_ics">ICS күнтізбе қосу</string>
-    <string name="subscriptions_row_label">Мерекелер, Мектеп және т.б.</string>
+    <string name="subscriptions_row_label">Күнтізбе арналары (ICS)</string>
+    <string name="subscriptions_row_hint">мысалы, мерекелер, спорт, мектеп</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Туған күндер және мерейтойлар</string>

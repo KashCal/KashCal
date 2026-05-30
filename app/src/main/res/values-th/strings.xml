@@ -352,13 +352,13 @@
     <string name="accounts_cd_sync_warning">คำเตือนการซิงค์</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">การสมัครรับ</string>
-    <string name="subscriptions_section_ics_calendars">ปฏิทิน ICS</string>
+    <string name="subscriptions_title">ฟีดปฏิทิน</string>
+    <string name="subscriptions_row_label">ฟีดปฏิทิน (ICS)</string>
+    <string name="subscriptions_row_hint">เช่น วันหยุด กีฬา โรงเรียน</string>
     <string name="subscriptions_section_add">เพิ่ม</string>
     <string name="subscriptions_empty_ics">ไม่มีการสมัครรับ ICS</string>
     <string name="subscriptions_empty_ics_hint">เพิ่มฟีดปฏิทินเพื่อดูกิจกรรม</string>
     <string name="subscriptions_add_ics">เพิ่มปฏิทิน ICS</string>
-    <string name="subscriptions_row_label">วันหยุด โรงเรียน และอื่น ๆ</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">วันเกิดและวันครบรอบ</string>

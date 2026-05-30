@@ -381,13 +381,13 @@
     <string name="accounts_sync_issue">Težava s sinhronizacijo</string>
     <string name="accounts_cd_sync_warning">Opozorilo sinhronizacije</string>
 
-    <string name="subscriptions_title">Naročnine</string>
-    <string name="subscriptions_section_ics_calendars">ICS koledarji</string>
+    <string name="subscriptions_row_label">Koledarski viri (ICS)</string>
+    <string name="subscriptions_row_hint">npr. prazniki, šport, šola</string>
+    <string name="subscriptions_title">Koledarski viri</string>
     <string name="subscriptions_section_add">Dodaj</string>
     <string name="subscriptions_empty_ics">Ni ICS naročnin</string>
     <string name="subscriptions_empty_ics_hint">Dodajte koledarski vir za prikaz dogodkov</string>
     <string name="subscriptions_add_ics">Dodaj ICS koledar</string>
-    <string name="subscriptions_row_label">Prazniki, šola in več</string>
 
     <string name="birthdays_anniversaries_row_label">Rojstni dnevi in obletnice</string>
     <string name="birthdays_section_title">Rojstni dnevi</string>

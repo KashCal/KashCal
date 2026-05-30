@@ -418,13 +418,13 @@
     <string name="accounts_cd_sync_warning">Avertisment sincronizare</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abonamente</string>
-    <string name="subscriptions_section_ics_calendars">Calendare ICS</string>
+    <string name="subscriptions_title">Fluxuri de calendar</string>
     <string name="subscriptions_section_add">Adaugă</string>
+    <string name="subscriptions_row_hint">ex. sărbători, sport, școală</string>
+    <string name="subscriptions_row_label">Fluxuri de calendar (ICS)</string>
     <string name="subscriptions_empty_ics">Niciun abonament ICS</string>
     <string name="subscriptions_empty_ics_hint">Adaugă un flux de calendar pentru a vedea evenimente</string>
     <string name="subscriptions_add_ics">Adaugă calendar ICS</string>
-    <string name="subscriptions_row_label">Sărbători, Școală și altele</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Zile de naștere și aniversări</string>

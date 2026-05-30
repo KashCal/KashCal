@@ -376,13 +376,13 @@
     <string name="accounts_cd_sync_warning">Sync-Warnung</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abonnements</string>
-    <string name="subscriptions_section_ics_calendars">ICS-Kalender</string>
+    <string name="subscriptions_row_label">Kalender-Feeds (ICS)</string>
+    <string name="subscriptions_row_hint">z. B. Feiertage, Sport, Schule</string>
+    <string name="subscriptions_title">Kalender-Feeds</string>
     <string name="subscriptions_section_add">Hinzufügen</string>
     <string name="subscriptions_empty_ics">Keine ICS-Abonnements</string>
     <string name="subscriptions_empty_ics_hint">Füge einen Kalender-Feed hinzu, um Termine zu sehen</string>
     <string name="subscriptions_add_ics">ICS-Kalender hinzufügen</string>
-    <string name="subscriptions_row_label">Feiertage, Schule &amp; mehr</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Geburtstage &amp; Jahrestage</string>

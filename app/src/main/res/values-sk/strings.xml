@@ -381,13 +381,13 @@
     <string name="accounts_sync_issue">Problém so synchronizáciou</string>
     <string name="accounts_cd_sync_warning">Varovanie synchronizácie</string>
 
-    <string name="subscriptions_title">Odbery</string>
-    <string name="subscriptions_section_ics_calendars">Kalendáre ICS</string>
+    <string name="subscriptions_row_label">Kanály kalendára (ICS)</string>
+    <string name="subscriptions_row_hint">napr. sviatky, šport, škola</string>
+    <string name="subscriptions_title">Kanály kalendára</string>
     <string name="subscriptions_section_add">Pridať</string>
     <string name="subscriptions_empty_ics">Žiadne odbery ICS</string>
     <string name="subscriptions_empty_ics_hint">Pridajte kanál kalendára na zobrazenie udalostí</string>
     <string name="subscriptions_add_ics">Pridať kalendár ICS</string>
-    <string name="subscriptions_row_label">Sviatky, škola a ďalšie</string>
 
     <string name="birthdays_anniversaries_row_label">Narodeniny a výročia</string>
     <string name="birthdays_section_title">Narodeniny</string>

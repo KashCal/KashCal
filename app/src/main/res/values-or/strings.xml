@@ -415,13 +415,13 @@
     <string name="accounts_cd_sync_warning">ସିଙ୍କ ସତର୍କତା</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">ସବସ୍କ୍ରିପସନ</string>
-    <string name="subscriptions_section_ics_calendars">ICS କ୍ୟାଲେଣ୍ଡର</string>
+    <string name="subscriptions_title">କ୍ୟାଲେଣ୍ଡର ଫିଡ</string>
     <string name="subscriptions_section_add">ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="subscriptions_row_hint">ଉଦା. ଛୁଟି, କ୍ରୀଡ଼ା, ବିଦ୍ୟାଳୟ</string>
     <string name="subscriptions_empty_ics">ICS ସବସ୍କ୍ରିପସନ ନାହିଁ</string>
     <string name="subscriptions_empty_ics_hint">ଇଭେଣ୍ଟ ଦେଖିବା ପାଇଁ କ୍ୟାଲେଣ୍ଡର ଫିଡ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="subscriptions_add_ics">ICS କ୍ୟାଲେଣ୍ଡର ଯୋଡ଼ନ୍ତୁ</string>
-    <string name="subscriptions_row_label">ଛୁଟି, ସ୍କୁଲ &amp; ଅଧିକ</string>
+    <string name="subscriptions_row_label">କ୍ୟାଲେଣ୍ଡର ଫିଡ (ICS)</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ଜନ୍ମଦିନ &amp; ବାର୍ଷିକୀ</string>

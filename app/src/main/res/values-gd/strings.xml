@@ -416,13 +416,13 @@
     <string name="accounts_cd_sync_warning">Rabhadh sioncronachaidh</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Fo-sgrìobhaidhean</string>
-    <string name="subscriptions_section_ics_calendars">Mìosachain ICS</string>
+    <string name="subscriptions_title">Inbhirean Mìosachain</string>
     <string name="subscriptions_section_add">Cuir Ris</string>
     <string name="subscriptions_empty_ics">Gun fho-sgrìobhaidhean ICS</string>
     <string name="subscriptions_empty_ics_hint">Cuir fotha mìosachain ris gus tachartasan fhaicinn</string>
     <string name="subscriptions_add_ics">Cuir Mìosachan ICS Ris</string>
-    <string name="subscriptions_row_label">Làithean-fèille, Sgoil &amp; Barrachd</string>
+    <string name="subscriptions_row_label">Inbhirean Mìosachain (ICS)</string>
+    <string name="subscriptions_row_hint">m.e. saor-làithean, spòrs, sgoil</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Co-làithean Breith &amp; Cuimhneachanan</string>

@@ -414,13 +414,13 @@
     <string name="accounts_cd_sync_warning">Sinkroniseringswaarskuwing</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Intekeninge</string>
-    <string name="subscriptions_section_ics_calendars">ICS-kalenders</string>
+    <string name="subscriptions_title">Kalendervoere</string>
     <string name="subscriptions_section_add">Voeg By</string>
     <string name="subscriptions_empty_ics">Geen ICS-intekeninge nie</string>
     <string name="subscriptions_empty_ics_hint">Voeg \'n kalendervoer by om gebeurtenisse te sien</string>
     <string name="subscriptions_add_ics">Voeg ICS-kalender By</string>
-    <string name="subscriptions_row_label">Vakansies, Skool &amp; Meer</string>
+    <string name="subscriptions_row_label">Kalendervoere (ICS)</string>
+    <string name="subscriptions_row_hint">bv. vakansies, sport, skool</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Verjaarsdae &amp; Herdenkings</string>

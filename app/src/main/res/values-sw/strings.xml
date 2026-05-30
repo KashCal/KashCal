@@ -384,13 +384,13 @@
     <string name="accounts_sync_issue">Tatizo la kusawazisha</string>
     <string name="accounts_cd_sync_warning">Onyo la kusawazisha</string>
 
-    <string name="subscriptions_title">Usajili</string>
-    <string name="subscriptions_section_ics_calendars">Kalenda za ICS</string>
+    <string name="subscriptions_title">Milisho ya Kalenda</string>
     <string name="subscriptions_section_add">Ongeza</string>
     <string name="subscriptions_empty_ics">Hakuna usajili wa ICS</string>
     <string name="subscriptions_empty_ics_hint">Ongeza mlisho wa kalenda ili kuona matukio</string>
     <string name="subscriptions_add_ics">Ongeza Kalenda ya ICS</string>
-    <string name="subscriptions_row_label">Likizo, Shule &amp; Zaidi</string>
+    <string name="subscriptions_row_label">Milisho ya Kalenda (ICS)</string>
+    <string name="subscriptions_row_hint">mfano sikukuu, michezo, shule</string>
 
     <string name="birthdays_anniversaries_row_label">Siku za Kuzaliwa &amp; Kumbukumbu</string>
     <string name="birthdays_section_title">Siku za Kuzaliwa</string>

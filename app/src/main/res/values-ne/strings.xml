@@ -384,13 +384,13 @@
     <string name="accounts_sync_issue">सिंक समस्या</string>
     <string name="accounts_cd_sync_warning">सिंक चेतावनी</string>
 
-    <string name="subscriptions_title">सदस्यताहरू</string>
-    <string name="subscriptions_section_ics_calendars">ICS क्यालेन्डरहरू</string>
+    <string name="subscriptions_title">क्यालेन्डर फिडहरू</string>
     <string name="subscriptions_section_add">थप्नुहोस्</string>
     <string name="subscriptions_empty_ics">ICS सदस्यता छैन</string>
     <string name="subscriptions_empty_ics_hint">कार्यक्रमहरू हेर्न क्यालेन्डर फिड थप्नुहोस्</string>
     <string name="subscriptions_add_ics">ICS क्यालेन्डर थप्नुहोस्</string>
-    <string name="subscriptions_row_label">बिदा, विद्यालय &amp; थप</string>
+    <string name="subscriptions_row_label">क्यालेन्डर फिडहरू (ICS)</string>
+    <string name="subscriptions_row_hint">जस्तै बिदाहरू, खेलकुद, विद्यालय</string>
 
     <string name="birthdays_anniversaries_row_label">जन्मदिन &amp; वार्षिकोत्सवहरू</string>
     <string name="birthdays_section_title">जन्मदिनहरू</string>

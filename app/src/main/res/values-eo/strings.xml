@@ -394,13 +394,13 @@
     <string name="accounts_cd_sync_warning">Sinkroniga averto</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Abonoj</string>
-    <string name="subscriptions_section_ics_calendars">ICS kalendaroj</string>
+    <string name="subscriptions_title">Kalendaraj fluoj</string>
     <string name="subscriptions_section_add">Aldoni</string>
     <string name="subscriptions_empty_ics">Neniuj ICS abonoj</string>
     <string name="subscriptions_empty_ics_hint">Aldonu kalendaran fluon por vidi eventojn</string>
     <string name="subscriptions_add_ics">Aldoni ICS kalendaron</string>
-    <string name="subscriptions_row_label">Ferioj, lernejo kaj pli</string>
+    <string name="subscriptions_row_label">Kalendaraj fluoj (ICS)</string>
+    <string name="subscriptions_row_hint">ekz. festoj, sportoj, lernejo</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Naskig̉tagoj kaj datrevenoj</string>

@@ -402,13 +402,13 @@
     <string name="accounts_cd_sync_warning">Sinhronizācijas brīdinājums</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abonementi</string>
-    <string name="subscriptions_section_ics_calendars">ICS kalendāri</string>
+    <string name="subscriptions_title">Kalendāra plūsmas</string>
     <string name="subscriptions_section_add">Pievienot</string>
     <string name="subscriptions_empty_ics">Nav ICS abonementu</string>
     <string name="subscriptions_empty_ics_hint">Pievienojiet kalendāra plūsmu, lai redzētu notikumus</string>
     <string name="subscriptions_add_ics">Pievienot ICS kalendāru</string>
-    <string name="subscriptions_row_label">Svētki, skola un citi</string>
+    <string name="subscriptions_row_label">Kalendāra plūsmas (ICS)</string>
+    <string name="subscriptions_row_hint">piem. svētki, sports, skola</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Dzimšanas dienas un jubilejas</string>

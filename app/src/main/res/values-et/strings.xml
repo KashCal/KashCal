@@ -397,13 +397,13 @@
     <string name="accounts_cd_sync_warning">Sünkroonimise hoiatus</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Tellimused</string>
-    <string name="subscriptions_section_ics_calendars">ICS-kalendrid</string>
+    <string name="subscriptions_title">Kalendrivood</string>
     <string name="subscriptions_section_add">Lisa</string>
     <string name="subscriptions_empty_ics">ICS-tellimusi pole</string>
     <string name="subscriptions_empty_ics_hint">Lisage kalendrivoog, et näha sündmusi</string>
     <string name="subscriptions_add_ics">Lisa ICS-kalender</string>
-    <string name="subscriptions_row_label">Pühad, kool ja muud</string>
+    <string name="subscriptions_row_label">Kalendrivood (ICS)</string>
+    <string name="subscriptions_row_hint">nt pühad, sport, kool</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Sünnipäevad ja aastapäevad</string>

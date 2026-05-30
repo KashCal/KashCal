@@ -397,13 +397,13 @@
     <string name="accounts_cd_sync_warning">Synkronointivaroitus</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Tilaukset</string>
-    <string name="subscriptions_section_ics_calendars">ICS-kalenterit</string>
+    <string name="subscriptions_title">Kalenterisyötteet</string>
     <string name="subscriptions_section_add">Lisää</string>
     <string name="subscriptions_empty_ics">Ei ICS-tilauksia</string>
     <string name="subscriptions_empty_ics_hint">Lisää kalenterisyöte nähdäksesi tapahtumia</string>
     <string name="subscriptions_add_ics">Lisää ICS-kalenteri</string>
-    <string name="subscriptions_row_label">Lomat, koulu ja muut</string>
+    <string name="subscriptions_row_label">Kalenterisyötteet (ICS)</string>
+    <string name="subscriptions_row_hint">esim. juhlapyhät, urheilu, koulu</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Syntymäpäivät ja vuosipäivät</string>

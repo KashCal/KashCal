@@ -414,13 +414,13 @@
     <string name="accounts_cd_sync_warning">Isexwayiso sokuvumelanisa</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Okubhaliselwe</string>
-    <string name="subscriptions_section_ics_calendars">Amakhalenda e-ICS</string>
+    <string name="subscriptions_title">Amafidi Wekhalenda</string>
     <string name="subscriptions_section_add">Engeza</string>
     <string name="subscriptions_empty_ics">Akukho okubhaliselwe kwe-ICS</string>
     <string name="subscriptions_empty_ics_hint">Engeza ifidi yekhalenda ukuze ubone imicimbi</string>
     <string name="subscriptions_add_ics">Engeza Ikhalenda ye-ICS</string>
-    <string name="subscriptions_row_label">Amaholide, Isikole &amp; Okunye</string>
+    <string name="subscriptions_row_label">Amafidi Wekhalenda (ICS)</string>
+    <string name="subscriptions_row_hint">isib. amaholide, ezemidlalo, isikole</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Izinsuku Zokuzalwa &amp; Izinkumbulo</string>

@@ -413,13 +413,13 @@
     <string name="accounts_cd_sync_warning">Προειδοποίηση συγχρονισμού</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Συνδρομές</string>
-    <string name="subscriptions_section_ics_calendars">Ημερολόγια ICS</string>
+    <string name="subscriptions_title">Ροές ημερολογίου</string>
     <string name="subscriptions_section_add">Προσθήκη</string>
+    <string name="subscriptions_row_hint">π.χ. αργίες, αθλητικά, σχολείο</string>
+    <string name="subscriptions_row_label">Ροές ημερολογίου (ICS)</string>
     <string name="subscriptions_empty_ics">Δεν υπάρχουν συνδρομές ICS</string>
     <string name="subscriptions_empty_ics_hint">Προσθέστε μια ροή ημερολογίου για να δείτε συμβάντα</string>
     <string name="subscriptions_add_ics">Προσθήκη ημερολογίου ICS</string>
-    <string name="subscriptions_row_label">Αργίες, Σχολείο &amp; Άλλα</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Γενέθλια &amp; Επέτειοι</string>

@@ -539,6 +539,7 @@ object WeekViewUtils {
         hourHeight: Dp = HOUR_HEIGHT,
         startHour: Int = START_HOUR,
         endHour: Int = END_HOUR,
+        maxVisibleOverlap: Int = MAX_VISIBLE_OVERLAP,
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
@@ -595,8 +596,11 @@ object WeekViewUtils {
             val cluster = clusters.first { i in it }
             val slotsInCluster = cluster.map { slotAssignments[it] }.toSet().size
 
-            // Calculate layout fractions based on slots used in this cluster
-            val widthFraction = 1f / slotsInCluster
+            // Visible events split the column evenly. Slots beyond the cap collapse
+            // into the overflow badge in groupForDisplay; reserving width for them
+            // would leave empty space on the right (issue #256).
+            val effectiveSlots = minOf(slotsInCluster, maxVisibleOverlap)
+            val widthFraction = 1f / effectiveSlots
             val leftFraction = slotIndex * widthFraction
 
             val gridStartMinutes = startHour * MINUTES_PER_HOUR

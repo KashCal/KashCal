@@ -426,13 +426,13 @@
     <string name="accounts_cd_sync_warning">Rhybudd cysoni</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Tanysgrifiadau</string>
-    <string name="subscriptions_section_ics_calendars">Calendrau ICS</string>
+    <string name="subscriptions_title">Ffrydiau Calendr</string>
     <string name="subscriptions_section_add">Ychwanegu</string>
     <string name="subscriptions_empty_ics">Dim tanysgrifiadau ICS</string>
     <string name="subscriptions_empty_ics_hint">Ychwanegwch ffrwd calendr i weld digwyddiadau</string>
     <string name="subscriptions_add_ics">Ychwanegu Calendr ICS</string>
-    <string name="subscriptions_row_label">Gwyliau, Ysgol &amp; Mwy</string>
+    <string name="subscriptions_row_label">Ffrydiau Calendr (ICS)</string>
+    <string name="subscriptions_row_hint">e.e. gwyliau, chwaraeon, ysgol</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Pen-blwyddi &amp; Pen-blwyddi Priodas</string>

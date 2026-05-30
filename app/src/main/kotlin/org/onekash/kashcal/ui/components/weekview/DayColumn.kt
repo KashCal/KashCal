@@ -62,9 +62,11 @@ fun DayColumn(
 ) {
     // Calculate positioned events
     val endHour = WeekViewUtils.END_HOUR
-    val positionedEvents = remember(events, date, startHour, hourHeight) {
+    val positionedEvents = remember(events, date, startHour, hourHeight, maxVisibleOverlap) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
-        WeekViewUtils.positionEventsForDay(events, date, dayIndex, hourHeight, startHour, endHour)
+        WeekViewUtils.positionEventsForDay(
+            events, date, dayIndex, hourHeight, startHour, endHour, maxVisibleOverlap
+        )
     }
 
     // Group by overlap to show only 2 + badge

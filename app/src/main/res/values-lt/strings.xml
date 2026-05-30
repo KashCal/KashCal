@@ -394,13 +394,13 @@
     <string name="accounts_sync_issue">Sinchronizavimo problema</string>
     <string name="accounts_cd_sync_warning">Sinchronizavimo įspėjimas</string>
 
-    <string name="subscriptions_title">Prenumeratos</string>
-    <string name="subscriptions_section_ics_calendars">ICS kalendoriai</string>
+    <string name="subscriptions_title">Kalendoriaus srautai</string>
     <string name="subscriptions_section_add">Pridėti</string>
     <string name="subscriptions_empty_ics">Nėra ICS prenumeratų</string>
     <string name="subscriptions_empty_ics_hint">Pridėkite kalendoriaus srautą, kad matytumėte įvykius</string>
     <string name="subscriptions_add_ics">Pridėti ICS kalendorių</string>
-    <string name="subscriptions_row_label">Šventės, mokykla ir kita</string>
+    <string name="subscriptions_row_label">Kalendoriaus srautai (ICS)</string>
+    <string name="subscriptions_row_hint">pvz. šventės, sportas, mokykla</string>
 
     <string name="birthdays_anniversaries_row_label">Gimtadieniai ir sukaktys</string>
     <string name="birthdays_section_title">Gimtadieniai</string>

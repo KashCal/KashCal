@@ -352,13 +352,13 @@
     <string name="accounts_cd_sync_warning">同期の警告</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">購読</string>
-    <string name="subscriptions_section_ics_calendars">ICSカレンダー</string>
+    <string name="subscriptions_title">カレンダーフィード</string>
+    <string name="subscriptions_row_label">カレンダーフィード (ICS)</string>
+    <string name="subscriptions_row_hint">例: 祝日、スポーツ、学校</string>
     <string name="subscriptions_section_add">追加</string>
     <string name="subscriptions_empty_ics">ICS購読はありません</string>
     <string name="subscriptions_empty_ics_hint">カレンダーフィードを追加してイベントを表示</string>
     <string name="subscriptions_add_ics">ICSカレンダーを追加</string>
-    <string name="subscriptions_row_label">祝日、学校など</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">誕生日と記念日</string>

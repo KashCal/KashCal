@@ -413,13 +413,13 @@
     <string name="accounts_cd_sync_warning">Предупреждение за синхронизиране</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Абонаменти</string>
-    <string name="subscriptions_section_ics_calendars">ICS календари</string>
+    <string name="subscriptions_title">Календарни канали</string>
     <string name="subscriptions_section_add">Добави</string>
+    <string name="subscriptions_row_hint">напр. празници, спорт, училище</string>
+    <string name="subscriptions_row_label">Календарни канали (ICS)</string>
     <string name="subscriptions_empty_ics">Няма ICS абонаменти</string>
     <string name="subscriptions_empty_ics_hint">Добавете канал с календар, за да виждате събития</string>
     <string name="subscriptions_add_ics">Добави ICS календар</string>
-    <string name="subscriptions_row_label">Празници, Училище и още</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Рождени дни и годишнини</string>

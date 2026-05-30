@@ -421,13 +421,13 @@
     <string name="accounts_cd_sync_warning">Rabhadh sioncronúithe</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Síntiúis</string>
-    <string name="subscriptions_section_ics_calendars">Féilirí ICS</string>
+    <string name="subscriptions_title">Fothaí Féilire</string>
     <string name="subscriptions_section_add">Cuir Leis</string>
     <string name="subscriptions_empty_ics">Gan síntiúis ICS</string>
     <string name="subscriptions_empty_ics_hint">Cuir fotha féilire leis chun imeachtaí a fheiceáil</string>
     <string name="subscriptions_add_ics">Cuir Féilire ICS Leis</string>
-    <string name="subscriptions_row_label">Laethanta Saoire, Scoil &amp; Níos Mó</string>
+    <string name="subscriptions_row_label">Fothaí Féilire (ICS)</string>
+    <string name="subscriptions_row_hint">m.s. laethanta saoire, spóirt, scoil</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Láethanta Breithe &amp; Comóradh</string>

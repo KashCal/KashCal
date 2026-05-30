@@ -381,13 +381,13 @@
     <string name="accounts_sync_issue">Problem sa sinkronizacijom</string>
     <string name="accounts_cd_sync_warning">Upozorenje sinkronizacije</string>
 
-    <string name="subscriptions_title">Pretplate</string>
-    <string name="subscriptions_section_ics_calendars">ICS kalendari</string>
+    <string name="subscriptions_row_label">Feedovi kalendara (ICS)</string>
+    <string name="subscriptions_row_hint">npr. praznici, sport, škola</string>
+    <string name="subscriptions_title">Feedovi kalendara</string>
     <string name="subscriptions_section_add">Dodaj</string>
     <string name="subscriptions_empty_ics">Nema ICS pretplata</string>
     <string name="subscriptions_empty_ics_hint">Dodaj feed kalendara da vidiš događaje</string>
     <string name="subscriptions_add_ics">Dodaj ICS kalendar</string>
-    <string name="subscriptions_row_label">Praznici, škola i više</string>
 
     <string name="birthdays_anniversaries_row_label">Rođendani i godišnjice</string>
     <string name="birthdays_section_title">Rođendani</string>

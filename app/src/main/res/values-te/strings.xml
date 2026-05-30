@@ -415,13 +415,13 @@
     <string name="accounts_cd_sync_warning">సింక్ హెచ్చరిక</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">సబ్‌స్క్రిప్షన్‌లు</string>
-    <string name="subscriptions_section_ics_calendars">ICS క్యాలెండర్లు</string>
+    <string name="subscriptions_title">క్యాలెండర్ ఫీడ్‌లు</string>
     <string name="subscriptions_section_add">జోడించు</string>
+    <string name="subscriptions_row_hint">ఉదా. సెలవులు, క్రీడలు, పాఠశాల</string>
     <string name="subscriptions_empty_ics">ICS సబ్‌స్క్రిప్షన్‌లు లేవు</string>
     <string name="subscriptions_empty_ics_hint">ఈవెంట్‌లు చూడటానికి క్యాలెండర్ ఫీడ్ జోడించండి</string>
     <string name="subscriptions_add_ics">ICS క్యాలెండర్ జోడించు</string>
-    <string name="subscriptions_row_label">సెలవులు, స్కూల్ &amp; మరిన్ని</string>
+    <string name="subscriptions_row_label">క్యాలెండర్ ఫీడ్‌లు (ICS)</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">పుట్టినరోజులు &amp; వార్షికోత్సవాలు</string>

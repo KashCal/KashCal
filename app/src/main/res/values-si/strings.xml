@@ -384,13 +384,13 @@
     <string name="accounts_sync_issue">සමමුහුර්ත ගැටලුව</string>
     <string name="accounts_cd_sync_warning">සමමුහුර්ත අනතුරු ඇඟවීම</string>
 
-    <string name="subscriptions_title">දායකත්ව</string>
-    <string name="subscriptions_section_ics_calendars">ICS දින දර්ශන</string>
+    <string name="subscriptions_title">දින දර්ශන පෝෂණ</string>
     <string name="subscriptions_section_add">එකතු කරන්න</string>
     <string name="subscriptions_empty_ics">ICS දායකත්ව නැත</string>
     <string name="subscriptions_empty_ics_hint">සිදුවීම් බැලීමට දින දර්ශන පෝෂණයක් එකතු කරන්න</string>
     <string name="subscriptions_add_ics">ICS දින දර්ශනය එකතු කරන්න</string>
-    <string name="subscriptions_row_label">නිවාඩු, පාසල් &amp; තවත්</string>
+    <string name="subscriptions_row_label">දින දර්ශන පෝෂණ (ICS)</string>
+    <string name="subscriptions_row_hint">උදා. නිවාඩු, ක්‍රීඩා, පාසල</string>
 
     <string name="birthdays_anniversaries_row_label">උපන්දින &amp; සංවත්සර</string>
     <string name="birthdays_section_title">උපන්දින</string>

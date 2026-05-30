@@ -397,13 +397,13 @@
     <string name="accounts_cd_sync_warning">ချိန်ကိုက် သတိပေးချက်</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">စာရင်းသွင်းမှုများ</string>
-    <string name="subscriptions_section_ics_calendars">ICS ပြက္ခဒိန်များ</string>
+    <string name="subscriptions_title">ပြက္ခဒိန် ဖိဒ်များ</string>
     <string name="subscriptions_section_add">ထည့်</string>
     <string name="subscriptions_empty_ics">ICS စာရင်းသွင်းမှု မရှိပါ</string>
     <string name="subscriptions_empty_ics_hint">ပွဲများကို ကြည့်ရန် ပြက္ခဒိန် ဖိဒ် ထည့်ပါ</string>
     <string name="subscriptions_add_ics">ICS ပြက္ခဒိန် ထည့်</string>
-    <string name="subscriptions_row_label">အားလပ်ရက်၊ ကျောင်း &amp; အခြား</string>
+    <string name="subscriptions_row_label">ပြက္ခဒိန် ဖိဒ်များ (ICS)</string>
+    <string name="subscriptions_row_hint">ဥပမာ ရုံးပိတ်ရက်၊ အားကစား၊ ကျောင်း</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">မွေးနေ့များ &amp; နှစ်ပတ်လည်များ</string>

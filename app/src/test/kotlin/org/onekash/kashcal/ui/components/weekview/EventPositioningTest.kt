@@ -672,6 +672,7 @@ class EventPositioningTest {
             },
             date = date,
             dayIndex = 0,
+            maxVisibleOverlap = 5,
         )
 
         positioned.forEach { pos ->
@@ -682,6 +683,39 @@ class EventPositioningTest {
         val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned, maxVisibleOverlap = 5)
         assertEquals(0, overflow)
         assertEquals(5, visible.size)
+    }
+
+    @Test
+    fun `visible events fill column width when cluster exceeds cap`() {
+        // Regression for github.com/KashCal/KashCal/issues/256
+        // 8 events fully overlapping at 9-10am with default cap=2: only 2 events render,
+        // and they must split the column 50/50 — not stay narrow at 1/8 each.
+        val date = LocalDate.now()
+        val positioned = WeekViewUtils.positionEventsForDay(
+            (1..8).map { id ->
+                toDisplayEvent(
+                    createTestEvent(id = id.toLong(), title = "Event $id"),
+                    createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10, date = date)
+                )
+            },
+            date = date,
+            dayIndex = 0,
+        )
+
+        val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned)
+
+        assertEquals(2, visible.size)
+        assertEquals(6, overflow)
+
+        // Visible events split the day column evenly: 1/cap each.
+        visible.forEach { pos ->
+            assertEquals(0.5f, pos.widthFraction, 0.01f)
+        }
+
+        // Two visible events sit at fractions 0.0 and 0.5 — no empty space at the right.
+        val leftFractions = visible.map { it.leftFraction }.sorted()
+        assertEquals(0.0f, leftFractions[0], 0.01f)
+        assertEquals(0.5f, leftFractions[1], 0.01f)
     }
 
     @Test

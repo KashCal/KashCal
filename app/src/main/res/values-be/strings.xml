@@ -394,13 +394,13 @@
     <string name="accounts_sync_issue">Праблема сінхранізацыі</string>
     <string name="accounts_cd_sync_warning">Папярэджанне сінхранізацыі</string>
 
-    <string name="subscriptions_title">Падпіскі</string>
-    <string name="subscriptions_section_ics_calendars">Календары ICS</string>
+    <string name="subscriptions_title">Стужкі календара</string>
     <string name="subscriptions_section_add">Дадаць</string>
     <string name="subscriptions_empty_ics">Няма падпісак ICS</string>
     <string name="subscriptions_empty_ics_hint">Дадайце стужку календара для прагляду падзей</string>
     <string name="subscriptions_add_ics">Дадаць каляндар ICS</string>
-    <string name="subscriptions_row_label">Святы, школа і іншае</string>
+    <string name="subscriptions_row_label">Стужкі календара (ICS)</string>
+    <string name="subscriptions_row_hint">напр. святы, спорт, школа</string>
 
     <string name="birthdays_anniversaries_row_label">Дні нараджэння і гадавіны</string>
     <string name="birthdays_section_title">Дні нараджэння</string>

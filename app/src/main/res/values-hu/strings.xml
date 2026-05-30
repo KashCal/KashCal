@@ -413,13 +413,13 @@
     <string name="accounts_cd_sync_warning">Szinkronizálási figyelmeztetés</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Feliratkozások</string>
-    <string name="subscriptions_section_ics_calendars">ICS naptárak</string>
+    <string name="subscriptions_title">Naptárhírcsatornák</string>
     <string name="subscriptions_section_add">Hozzáadás</string>
+    <string name="subscriptions_row_hint">pl. ünnepek, sport, iskola</string>
+    <string name="subscriptions_row_label">Naptárhírcsatornák (ICS)</string>
     <string name="subscriptions_empty_ics">Nincs ICS feliratkozás</string>
     <string name="subscriptions_empty_ics_hint">Adj hozzá naptárhírcsatornát az események megtekintéséhez</string>
     <string name="subscriptions_add_ics">ICS naptár hozzáadása</string>
-    <string name="subscriptions_row_label">Ünnepek, iskola és több</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Születésnapok és évfordulók</string>

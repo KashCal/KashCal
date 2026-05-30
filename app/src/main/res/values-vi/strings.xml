@@ -352,13 +352,13 @@
     <string name="accounts_cd_sync_warning">Cảnh báo đồng bộ</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Đăng ký</string>
-    <string name="subscriptions_section_ics_calendars">Lịch ICS</string>
+    <string name="subscriptions_title">Nguồn cấp lịch</string>
+    <string name="subscriptions_row_label">Nguồn cấp lịch (ICS)</string>
+    <string name="subscriptions_row_hint">vd. ngày lễ, thể thao, trường học</string>
     <string name="subscriptions_section_add">Thêm</string>
     <string name="subscriptions_empty_ics">Chưa có đăng ký ICS nào</string>
     <string name="subscriptions_empty_ics_hint">Thêm nguồn cấp lịch để xem sự kiện</string>
     <string name="subscriptions_add_ics">Thêm lịch ICS</string>
-    <string name="subscriptions_row_label">Ngày lễ, trường học &amp; thêm nữa</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Sinh nhật &amp; Kỷ niệm</string>

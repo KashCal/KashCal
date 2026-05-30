@@ -92,11 +92,6 @@ fun SubscriptionsScreen(
                 NestedSettingsHeading(text = stringResource(R.string.subscriptions_title))
             }
 
-            // ICS Subscriptions Section
-            item(key = "ics_header", contentType = "section_header") {
-                SectionHeader(stringResource(R.string.subscriptions_section_ics_calendars))
-            }
-
             if (subscriptions.isEmpty()) {
                 item(key = "ics_empty", contentType = "empty_state") {
                     Column(

@@ -962,7 +962,7 @@ class OkHttpCalDavClient : CalDavClient {
                 response.code == 401 -> CalDavResult.authError("Authentication failed")
                 response.code == 403 -> {
                     // RFC 4791: UID conflict returns 403 with Location header pointing to existing event.
-                    // Servers may also return a bare 403 when they reject the request body —
+                    // Other servers (iCloud, etc) may return 403 for a body the server dislikes —
                     // the response body usually carries a precondition / error element with details.
                     val existingUrl = response.header("Location")
                     val body = response.body?.string().orEmpty().take(2000)

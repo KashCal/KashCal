@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -621,7 +622,7 @@ private fun FlatSettingsContent(
             }
 
             val subscriptionCount = subscriptions.size
-            val subscriptionsSubtitle = if (subscriptionCount == 0) null
+            val subscriptionsSubtitle = if (subscriptionCount == 0) stringResource(R.string.subscriptions_row_hint)
                 else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount)
             row(label = stringResource(R.string.subscriptions_row_label), subtitle = subscriptionsSubtitle, id = "subscriptions") {
                 SettingsRow(
@@ -810,8 +811,11 @@ private fun FlatSettingsContent(
         }
 
         // ==================== NOTIFICATIONS (standalone, no header) ====================
+        // Top padding mirrors the gap other sections inherit from SectionHeader so
+        // this headerless section doesn't sit flush against the row above.
         SearchableSection(
             query = searchQuery,
+            modifier = Modifier.padding(top = 24.dp),
             header = null,
             onEmitted = emittedTracker::onEmitted,
         ) {
@@ -821,12 +825,7 @@ private fun FlatSettingsContent(
                     icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
                     label = stringResource(R.string.settings_notifications),
                     subtitle = notifSubtitle,
-                    onClick = {
-                        if (!notificationsEnabled) {
-                            onRequestNotificationPermission()
-                        }
-                    },
-                    showChevron = !notificationsEnabled,
+                    onClick = onRequestNotificationPermission,
                     showDivider = false,
                     searchQuery = searchQuery
                 )

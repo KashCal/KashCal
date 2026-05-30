@@ -352,13 +352,13 @@
     <string name="accounts_cd_sync_warning">同步警告</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">訂閱</string>
-    <string name="subscriptions_section_ics_calendars">ICS 行事曆</string>
+    <string name="subscriptions_title">行事曆訂閱源</string>
+    <string name="subscriptions_row_label">行事曆訂閱源 (ICS)</string>
+    <string name="subscriptions_row_hint">例如：假日、體育、學校</string>
     <string name="subscriptions_section_add">新增</string>
     <string name="subscriptions_empty_ics">沒有 ICS 訂閱</string>
     <string name="subscriptions_empty_ics_hint">新增行事曆訂閱源以查看事件</string>
     <string name="subscriptions_add_ics">新增 ICS 行事曆</string>
-    <string name="subscriptions_row_label">節日、學校等</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">生日與紀念日</string>

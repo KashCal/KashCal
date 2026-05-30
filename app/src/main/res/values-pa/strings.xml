@@ -384,13 +384,13 @@
     <string name="accounts_sync_issue">ਸਿੰਕ ਸਮੱਸਿਆ</string>
     <string name="accounts_cd_sync_warning">ਸਿੰਕ ਚੇਤਾਵਨੀ</string>
 
-    <string name="subscriptions_title">ਸਬਸਕ੍ਰਿਪਸ਼ਨਾਂ</string>
-    <string name="subscriptions_section_ics_calendars">ICS ਕੈਲੰਡਰ</string>
+    <string name="subscriptions_title">ਕੈਲੰਡਰ ਫ਼ੀਡ</string>
     <string name="subscriptions_section_add">ਜੋੜੋ</string>
     <string name="subscriptions_empty_ics">ਕੋਈ ICS ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਨਹੀਂ</string>
     <string name="subscriptions_empty_ics_hint">ਘਟਨਾਵਾਂ ਦੇਖਣ ਲਈ ਕੈਲੰਡਰ ਫ਼ੀਡ ਜੋੜੋ</string>
     <string name="subscriptions_add_ics">ICS ਕੈਲੰਡਰ ਜੋੜੋ</string>
-    <string name="subscriptions_row_label">ਛੁੱਟੀਆਂ, ਸਕੂਲ &amp; ਹੋਰ</string>
+    <string name="subscriptions_row_label">ਕੈਲੰਡਰ ਫ਼ੀਡ (ICS)</string>
+    <string name="subscriptions_row_hint">ਜਿਵੇਂ ਛੁੱਟੀਆਂ, ਖੇਡਾਂ, ਸਕੂਲ</string>
 
     <string name="birthdays_anniversaries_row_label">ਜਨਮਦਿਨ &amp; ਵਰ੍ਹੇਗੰਢਾਂ</string>
     <string name="birthdays_section_title">ਜਨਮਦਿਨ</string>

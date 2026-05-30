@@ -415,13 +415,13 @@
     <string name="accounts_cd_sync_warning">সিংক সতর্কতা</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">সাবস্ক্রিপশন</string>
-    <string name="subscriptions_section_ics_calendars">ICS ক্যালেন্ডার</string>
+    <string name="subscriptions_title">ক্যালেন্ডার ফিড</string>
     <string name="subscriptions_section_add">যোগ করুন</string>
+    <string name="subscriptions_row_hint">যেমন ছুটি, খেলাধুলা, স্কুল</string>
     <string name="subscriptions_empty_ics">কোনো ICS সাবস্ক্রিপশন নেই</string>
     <string name="subscriptions_empty_ics_hint">ইভেন্ট দেখতে একটি ক্যালেন্ডার ফিড যোগ করুন</string>
     <string name="subscriptions_add_ics">ICS ক্যালেন্ডার যোগ করুন</string>
-    <string name="subscriptions_row_label">ছুটি, স্কুল এবং আরও</string>
+    <string name="subscriptions_row_label">ক্যালেন্ডার ফিড (ICS)</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">জন্মদিন এবং বার্ষিকী</string>

@@ -399,13 +399,13 @@
     <string name="accounts_cd_sync_warning">Avviso di sincronizzazione</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">Abbonamenti</string>
-    <string name="subscriptions_section_ics_calendars">Calendari ICS</string>
+    <string name="subscriptions_title">Feed calendario</string>
     <string name="subscriptions_section_add">Aggiungi</string>
     <string name="subscriptions_empty_ics">Nessun abbonamento ICS</string>
     <string name="subscriptions_empty_ics_hint">Aggiungi un feed di calendario per vedere gli eventi</string>
     <string name="subscriptions_add_ics">Aggiungi calendario ICS</string>
-    <string name="subscriptions_row_label">Festività, scuola e altro</string>
+    <string name="subscriptions_row_label">Feed calendario (ICS)</string>
+    <string name="subscriptions_row_hint">es. festività, sport, scuola</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Compleanni e anniversari</string>

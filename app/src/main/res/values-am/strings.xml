@@ -414,13 +414,13 @@
     <string name="accounts_cd_sync_warning">የማመሳሰል ማስጠንቀቂያ</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">ምዝገባዎች</string>
-    <string name="subscriptions_section_ics_calendars">ICS ቀን መቁጠሪያዎች</string>
+    <string name="subscriptions_title">የቀን መቁጠሪያ ምግቦች</string>
     <string name="subscriptions_section_add">አክል</string>
     <string name="subscriptions_empty_ics">ምንም ICS ምዝገባዎች የሉም</string>
     <string name="subscriptions_empty_ics_hint">ክስተቶችን ለማየት የቀን መቁጠሪያ ምግብ ያክሉ</string>
     <string name="subscriptions_add_ics">ICS ቀን መቁጠሪያ አክል</string>
-    <string name="subscriptions_row_label">በዓላት፣ ትምህርት ቤት &amp; ሌሎችም</string>
+    <string name="subscriptions_row_label">የቀን መቁጠሪያ ምግቦች (ICS)</string>
+    <string name="subscriptions_row_hint">ለምሳሌ በዓላት፣ ስፖርት፣ ትምህርት ቤት</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ልደቶች &amp; ዓመታዊ በዓሎች</string>

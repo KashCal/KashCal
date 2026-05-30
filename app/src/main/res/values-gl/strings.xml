@@ -394,13 +394,13 @@
     <string name="accounts_cd_sync_warning">Aviso de sincronización</string>
 
     <!-- Subscriptions Screen -->
-    <string name="subscriptions_title">Subscriçóns</string>
-    <string name="subscriptions_section_ics_calendars">Calendarios ICS</string>
+    <string name="subscriptions_title">Fluxos de calendario</string>
     <string name="subscriptions_section_add">Engadir</string>
     <string name="subscriptions_empty_ics">Ningunha subscriçón ICS</string>
     <string name="subscriptions_empty_ics_hint">Engade un fluxo de calendario para ver eventos</string>
     <string name="subscriptions_add_ics">Engadir calendario ICS</string>
-    <string name="subscriptions_row_label">Festivos, escola e máis</string>
+    <string name="subscriptions_row_label">Fluxos de calendario (ICS)</string>
+    <string name="subscriptions_row_hint">p. ex. festivos, deportes, escola</string>
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Aniversarios e efemérides</string>

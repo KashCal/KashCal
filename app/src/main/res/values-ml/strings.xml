@@ -415,13 +415,13 @@
     <string name="accounts_cd_sync_warning">സിങ്ക് മുന്നറിയിപ്പ്</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_title">സബ്സ്ക്രിപ്ഷനുകൾ</string>
-    <string name="subscriptions_section_ics_calendars">ICS കലണ്ടറുകൾ</string>
+    <string name="subscriptions_title">കലണ്ടർ ഫീഡുകൾ</string>
     <string name="subscriptions_section_add">ചേർക്കുക</string>
+    <string name="subscriptions_row_hint">ഉദാ. അവധികൾ, കായികം, സ്കൂൾ</string>
     <string name="subscriptions_empty_ics">ICS സബ്സ്ക്രിപ്ഷനുകൾ ഇല്ല</string>
     <string name="subscriptions_empty_ics_hint">ഇവന്റുകൾ കാണാൻ ഒരു കലണ്ടർ ഫീഡ് ചേർക്കുക</string>
     <string name="subscriptions_add_ics">ICS കലണ്ടർ ചേർക്കുക</string>
-    <string name="subscriptions_row_label">അവധികൾ, സ്കൂൾ &amp; കൂടുതൽ</string>
+    <string name="subscriptions_row_label">കലണ്ടർ ഫീഡുകൾ (ICS)</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ജന്മദിനങ്ങൾ &amp; വാർഷികങ്ങൾ</string>
