@@ -495,6 +495,9 @@
     <string name="settings_preview">XEM TRƯỚC</string>
     <string name="settings_n_events">%1$d sự kiện</string>
     <string name="settings_n_events_default">%1$d sự kiện (mặc định)</string>
+    <string name="settings_search_placeholder">Tìm kiếm cài đặt…</string>
+    <string name="settings_search_no_results">Không tìm thấy cài đặt nào cho \"%1$s\"</string>
+    <string name="cd_search_settings">Tìm kiếm cài đặt</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Lịch</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Sửa sự kiện lặp lại</string>
-    <string name="dialog_delete_recurring_title">Xóa sự kiện lặp lại</string>
-    <string name="dialog_edit_recurring_message">Đây là sự kiện lặp lại. Muốn áp dụng thay đổi như thế nào?</string>
     <string name="recurring_this_event">Chỉ sự kiện này</string>
     <string name="recurring_all_events">Tất cả sự kiện</string>
+    <string name="dialog_edit_recurring_title">Lưu thay đổi vào</string>
+    <string name="dialog_delete_recurring_title">Xóa</string>
+    <string name="dialog_move_recurring_title">Di chuyển</string>
     <string name="empty_pick_a_day">Chọn một ngày. Tận hưởng nào.</string>
     <string name="empty_no_events_day">Không có gì ở đây; ra ngoài đi dạo đi?</string>
     <string name="filter_date">Ngày</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">Từ chối</string>
     <string name="rsvp_series_disclosure">Phản hồi của bạn áp dụng cho toàn bộ chuỗi sự kiện.</string>
     <string name="rsvp_modified_snackbar">Phản hồi cho %1$s không thành công, sự kiện đã bị thay đổi. Vui lòng phản hồi lại.</string>
+    <string name="attendee_sheet_title">Người tham dự</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">Đã mời %d người</item>
+    </plurals>
+    <string name="attendee_search_hint">Tìm kiếm</string>
+    <string name="attendee_search_no_matches">Không có kết quả</string>
+    <string name="attendee_section_going">Tham gia</string>
+    <string name="attendee_section_maybe">Có thể</string>
+    <string name="attendee_section_pending">Chờ phản hồi</string>
+    <string name="attendee_section_declined">Từ chối</string>
+    <string name="attendee_section_delegated">Ủy quyền</string>
+    <string name="invitees_host_tag">Chủ trì</string>
+    <string name="invitees_summary_you_alone">Bạn</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">Bạn · Đã mời %d người</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">Đã mời %d người</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s tổ chức</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Bạn</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · Bạn + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">Bạn + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · còn %2$d người nữa</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Thay đổi phản hồi</string>
+    <string name="rsvp_question_going">Bạn đi không?</string>
+    <string name="rsvp_action_yes">Có</string>
+    <string name="rsvp_action_maybe">Có thể</string>
+    <string name="rsvp_action_no">Không</string>
+    <string name="rsvp_state_going">Bạn sẽ đi</string>
+    <string name="rsvp_state_maybe">Có thể</string>
+    <string name="rsvp_state_not_going">Bạn không đi</string>
+    <string name="rsvp_action_change">Thay đổi</string>
+
+
     <string name="inbox_empty_caught_up">Đã xử lý xong tất cả</string>
     <string name="inbox_organizer_suffix">(người tổ chức)</string>
     <string name="menu_invites">Lời mời</string>

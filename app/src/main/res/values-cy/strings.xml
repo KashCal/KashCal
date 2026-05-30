@@ -75,6 +75,60 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Mae\'r ymateb yn berthnasol i\'r gyfres gyfan.</string>
     <string name="rsvp_modified_snackbar">Methodd yr ymateb ar gyfer %1$s: cafodd y digwyddiad ei addasu. Ymateba eto.</string>
+    <string name="invitees_host_tag">Gwesteiwr</string>
+    <string name="invitees_summary_you_alone">Ti</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="zero">Ti · neb wedi\'i wahodd</item>
+        <item quantity="one">Ti · %d wedi\'i wahodd</item>
+        <item quantity="two">Ti · %d wedi\'u gwahodd</item>
+        <item quantity="few">Ti · %d wedi\'u gwahodd</item>
+        <item quantity="many">Ti · %d wedi\'u gwahodd</item>
+        <item quantity="other">Ti · %d wedi\'u gwahodd</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="zero">neb wedi\'i wahodd</item>
+        <item quantity="one">%d wedi\'i wahodd</item>
+        <item quantity="two">%d wedi\'u gwahodd</item>
+        <item quantity="few">%d wedi\'u gwahodd</item>
+        <item quantity="many">%d wedi\'u gwahodd</item>
+        <item quantity="other">%d wedi\'u gwahodd</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s yn cynnal</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ti</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="zero">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="one">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="two">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ti + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="zero">Ti + %d</item>
+        <item quantity="one">Ti + %d</item>
+        <item quantity="two">Ti + %d</item>
+        <item quantity="few">Ti + %d</item>
+        <item quantity="many">Ti + %d</item>
+        <item quantity="other">Ti + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="zero">%1$s · %2$d arall</item>
+        <item quantity="one">%1$s · %2$d arall</item>
+        <item quantity="two">%1$s · %2$d arall</item>
+        <item quantity="few">%1$s · %2$d arall</item>
+        <item quantity="many">%1$s · %2$d arall</item>
+        <item quantity="other">%1$s · %2$d arall</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Newid yr ymateb</string>
+    <string name="rsvp_question_going">Yn mynd?</string>
+    <string name="rsvp_action_yes">Ie</string>
+    <string name="rsvp_action_maybe">Efallai</string>
+    <string name="rsvp_action_no">Na</string>
+    <string name="rsvp_state_going">Rwyt yn mynd</string>
+    <string name="rsvp_state_maybe">Efallai</string>
+    <string name="rsvp_state_not_going">Dwyt ti ddim yn mynd</string>
+    <string name="rsvp_action_change">Newid</string>
+
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Dim ond hwn</string>
@@ -491,6 +545,9 @@
     <string name="label_found_events">Wedi canfod: %1$d digwyddiad</string>
     <string name="label_open_debug_menu">Agor dewislen dadfygio</string>
     <string name="placeholder_search">Chwilio…</string>
+    <string name="settings_search_placeholder">Chwilio gosodiadau…</string>
+    <string name="settings_search_no_results">Heb ganfod gosodiadau ar gyfer \"%1$s\"</string>
+    <string name="cd_search_settings">Chwilio gosodiadau</string>
     <string name="status_sync_paused">Cysoni wedi\'i oedi</string>
     <string name="status_not_synced">Heb ei gysoni</string>
     <string name="status_sync_error">Gwall cysoni</string>
@@ -797,11 +854,11 @@
     </plurals>
 
     <!-- HomeScreen -->
-    <string name="dialog_edit_recurring_title">Golygu digwyddiad ailadroddol</string>
-    <string name="dialog_delete_recurring_title">Dileu digwyddiad ailadroddol</string>
-    <string name="dialog_edit_recurring_message">Mae hwn yn ddigwyddiad ailadroddol. Sut hoffech chi gymhwyso\'r newid hwn?</string>
     <string name="recurring_this_event">Y digwyddiad hwn</string>
     <string name="recurring_all_events">Pob digwyddiad</string>
+    <string name="dialog_edit_recurring_title">Cadw newidiadau</string>
+    <string name="dialog_delete_recurring_title">Dileu</string>
+    <string name="dialog_move_recurring_title">Symud</string>
     <string name="empty_pick_a_day">Dewiswch ddiwrnod. Gwnewch y gorau ohono.</string>
     <string name="empty_no_events_day">Dim byd i\'w weld yma; ewch am dro?</string>
     <string name="filter_date">Dyddiad</string>
@@ -1292,5 +1349,21 @@
     <string name="share_availability_days_through">Hyd at %1$s</string>
     <string name="share_availability_window_duration">Ffenestr %1$s awr</string>
     <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
+    <string name="attendee_sheet_title">Mynychwyr</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="zero">neb wedi\'i wahodd</item>
+        <item quantity="one">%d wedi\'i wahodd</item>
+        <item quantity="two">%d wedi\'u gwahodd</item>
+        <item quantity="few">%d wedi\'u gwahodd</item>
+        <item quantity="many">%d wedi\'u gwahodd</item>
+        <item quantity="other">%d wedi\'u gwahodd</item>
+    </plurals>
+    <string name="attendee_search_hint">Chwilio</string>
+    <string name="attendee_search_no_matches">Dim canlyniadau</string>
+    <string name="attendee_section_going">Mynd</string>
+    <string name="attendee_section_maybe">Efallai</string>
+    <string name="attendee_section_pending">Yn aros</string>
+    <string name="attendee_section_declined">Wedi gwrthod</string>
+    <string name="attendee_section_delegated">Wedi dirprwyo</string>
 
 </resources>

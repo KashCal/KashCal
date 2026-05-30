@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.reader.PendingInvitation
 import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
-import org.onekash.kashcal.ui.components.attendees.RespondSection
+import org.onekash.kashcal.ui.components.attendees.RsvpCards
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.widget.formatUpcomingDayHeader
@@ -116,10 +116,10 @@ fun InvitationCard(
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            RespondSection(
+            RsvpCards(
                 currentUserPartstat = AttendeeStatus.NeedsAction,
                 onRsvp = { status -> onRsvp(invitation.event.id, status) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

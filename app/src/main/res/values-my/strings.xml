@@ -72,6 +72,17 @@
     <string name="rsvp_action_accept">လက်ခံ</string>
     <string name="rsvp_action_tentative">မသေချာသေး</string>
     <string name="rsvp_action_decline">ငြင်းပယ်</string>
+    <string name="invitees_host_tag">ဧည့်ခံသူ</string>
+    <string name="rsvp_question_going">သွားမှာလား?</string>
+    <string name="rsvp_action_yes">ဟုတ်</string>
+    <string name="rsvp_action_maybe">ဖြစ်နိုင်</string>
+    <string name="rsvp_action_no">မဟုတ်</string>
+    <string name="rsvp_state_going">သွားမှာ</string>
+    <string name="rsvp_state_maybe">ဖြစ်နိုင်</string>
+    <string name="rsvp_state_not_going">မသွားဘူး</string>
+    <string name="rsvp_action_change">ပြောင်းရန်</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -112,6 +123,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ဆက်တင်များ</string>
+    <string name="settings_search_placeholder">ဆက်တင်များ ရှာရန်…</string>
+    <string name="settings_search_no_results">\"%1$s\" အတွက် ဆက်တင် မတွေ့ပါ</string>
+    <string name="cd_search_settings">ဆက်တင်များ ရှာရန်</string>
     <string name="settings_time_format">အချိန်ပုံစံ</string>
     <string name="settings_start_week_on">အပတ်စ ရက်</string>
     <string name="settings_event_emojis">ပွဲ အီမိုဂျီ</string>
@@ -653,11 +667,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ထပ်ခါတလဲလဲ ပွဲ ပြင်ဆင်</string>
-    <string name="dialog_delete_recurring_title">ထပ်ခါတလဲလဲ ပွဲ ဖျက်</string>
-    <string name="dialog_edit_recurring_message">ဒါက ထပ်ခါတလဲလဲ ပွဲ ဖြစ်ပါတယ်။ ဤပြောင်းလဲမှုကို ဘယ်လို အသုံးချလိုပါသလဲ?</string>
     <string name="recurring_this_event">ဤပွဲ</string>
     <string name="recurring_all_events">ပွဲအားလုံး</string>
+    <string name="dialog_edit_recurring_title">ပြောင်းလဲမှုများကို သိမ်းရန်</string>
+    <string name="dialog_delete_recurring_title">ဖျက်ရန်</string>
+    <string name="dialog_move_recurring_title">ရွှေ့ရန်</string>
     <string name="empty_pick_a_day">ရက်တစ်ရက် ရွေးပါ။ အခွင့်ယူပါ။</string>
     <string name="empty_no_events_day">ဤနေရာတွင် ဘာမှ မရှိပါ; အပြင်ထွက်လှောက်မလား?</string>
     <string name="filter_date">ရက်စွဲ</string>
@@ -1061,4 +1075,34 @@
     </plurals>
     <string name="share_availability_days_through">%1$s အထိ</string>
     <string name="share_availability_window_duration">%1$s နာရီ ကာလ</string>
+    <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">ဖိတ်ထား %d ယောက်</item>
+    </plurals>
+    <string name="attendee_search_hint">ရှာဖွေ</string>
+    <string name="attendee_search_no_matches">ရလဒ်မရှိ</string>
+    <string name="attendee_section_going">လာမည်</string>
+    <string name="attendee_section_maybe">ဖြစ်နိုင်</string>
+    <string name="attendee_section_pending">စောင့်ဆိုင်း</string>
+    <string name="attendee_section_declined">ငြင်းပယ်</string>
+    <string name="attendee_section_delegated">လွှဲအပ်</string>
+    <string name="invitees_summary_you_alone">သင်</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">သင် · ဖိတ်ထား %d ယောက်</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">ဖိတ်ထား %d ယောက်</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ဧည့်ခံ</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · သင်</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · သင် + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">သင် + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · နောက်ထပ် %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">တုံ့ပြန်မှု ပြောင်းရန်</string>
 </resources>

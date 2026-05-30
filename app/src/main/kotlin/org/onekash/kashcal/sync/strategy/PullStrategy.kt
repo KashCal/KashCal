@@ -59,6 +59,62 @@ import javax.inject.Inject
  *
  * @see org.onekash.kashcal.sync.provider.CalendarProvider
  */
+
+/**
+ * Sentinel placed in [Event.extraProperties] on a synthetic master row.
+ *
+ * A synthetic master is a placeholder created when an exception VEVENT
+ * arrives without its master VEVENT in the same pull (master outside the
+ * sync lookback window, server returned them in different multiget batches,
+ * or the master was deleted server-side but exception lingers). The
+ * exception's `originalEventId` FK points at the synthetic so the row
+ * survives ingest. When the real master arrives in a later sync, the
+ * UID-keyed `@Upsert` mutates the synthetic in place — same row id, real
+ * RRULE populated, sentinel cleared — so existing exception FKs survive
+ * without churn.
+ *
+ * The string value matches the constant in IcsSubscriptionRepository so
+ * the existing FTS-search and title-suggest exclusions cover both paths.
+ * The two declarations are intentionally independent: ICS sync and CalDAV
+ * pull are separate code paths with different surrounding logic.
+ */
+internal const val PULL_SYNTHETIC_MASTER_EXTRA_KEY = "X-KASHCAL-SYNTHETIC-MASTER"
+
+/**
+ * Build a placeholder master Event for an orphan exception. The synthetic
+ * carries `rrule = null`, `status = "CANCELLED"`, and the sentinel above
+ * in [Event.extraProperties]. Inserting it via `eventsDao.upsert` returns
+ * a real row id that the orphan exception can reference via
+ * `originalEventId`. When the real master arrives later, pass 2's upsert
+ * matches by (uid, calendarId, original_event_id IS NULL) and mutates
+ * this row in place.
+ *
+ * Caller is responsible for skipping `regenerateOccurrences` on synthetics
+ * — the row has no rrule so the non-recurring path would emit a phantom
+ * occurrence at `recurrenceIdMs`.
+ */
+internal fun synthesizeMasterForOrphanException(
+    uid: String,
+    calendarId: Long,
+    recurrenceIdMs: Long,
+    placeholderTitle: String,
+): Event {
+    val now = System.currentTimeMillis()
+    return Event(
+        uid = uid,
+        importId = uid,
+        calendarId = calendarId,
+        title = placeholderTitle,
+        startTs = recurrenceIdMs,
+        endTs = recurrenceIdMs,
+        dtstamp = now,
+        status = "CANCELLED",
+        rrule = null,
+        syncStatus = SyncStatus.SYNCED,
+        extraProperties = mapOf(PULL_SYNTHETIC_MASTER_EXTRA_KEY to "true"),
+    )
+}
+
 class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
     private val calendarRepository: CalendarRepository,
@@ -946,6 +1002,18 @@ class PullStrategy @Inject constructor(
 
         // Second pass: upsert master events (respecting pending local changes)
         val uidToMasterEvent = mutableMapOf<String, Event>()
+        // Tracks UIDs whose master was actually re-processed (occurrences
+        // regenerated). Pass 3 must NOT skip bundled exceptions for these
+        // UIDs even if the exception's own etag matches — the master regen
+        // wiped and re-inserted occurrences at master-time, and the
+        // exception link must be re-applied so the day-card doesn't show
+        // both the master's RRULE-expanded instance AND the exception.
+        val uidsWithRegeneratedMaster = mutableSetOf<String>()
+        // The parsed master DTSTART, indexed by UID, so pass 3 can
+        // normalize value-type-mismatched RECURRENCE-IDs against the
+        // master before storing originalInstanceTime.
+        val uidToMasterDtStart = masterEvents
+            .associate { it.parsed.uid to it.parsed.dtStart }
         for (meta in masterEvents) {
             // PRIMARY: UID lookup (stable across server hostname changes like p180 vs p181)
             // SECONDARY: caldavUrl lookup (fallback for edge cases)
@@ -1084,6 +1152,7 @@ class PullStrategy @Inject constructor(
             val priorAttendees = savedPair.second
 
             uidToMasterEvent[meta.parsed.uid] = savedEvent
+            uidsWithRegeneratedMaster.add(meta.parsed.uid)
 
             // Fire the per-invite system notification after the
             // transaction commits. The notifier filters for self-on-list +
@@ -1143,24 +1212,52 @@ class PullStrategy @Inject constructor(
 
         // Third pass: link and upsert exception events (respecting pending local changes)
         for (meta in exceptionEvents) {
-            val masterEvent = uidToMasterEvent[meta.parsed.uid]
-                ?: eventsDao.getByUid(meta.parsed.uid).firstOrNull { it.rrule != null }
+            // First lookup: in-memory map populated by pass 2 (covers the
+            // common case where master and exception are bundled). Fallback
+            // to a UID query in case the master was upserted in a prior sync
+            // and isn't in this batch's map. Accept synthetic placeholders
+            // (rrule=null but `original_event_id IS NULL`) so a real master
+            // arriving in a later batch finds and mutates it in place.
+            var masterEvent = uidToMasterEvent[meta.parsed.uid]
+                ?: eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
 
             if (masterEvent == null) {
-                // Enhanced logging for orphaned exception events
-                // This can happen when: master is outside sync window, master was deleted,
-                // or sync order issue (exception synced before master)
-                Log.w(TAG, """
-                    |Orphaned exception event dropped:
-                    |  UID: ${meta.parsed.uid}
-                    |  RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp}
-                    |  caldavUrl: ${meta.caldavUrl}
-                    |  Title: ${meta.parsed.summary}
-                    |  Possible causes: Master outside sync window, master deleted, or sync order issue.
-                """.trimMargin())
-                sessionBuilder?.incrementSkipOrphanedException()
-                sessionBuilder?.addWarning("Orphaned exception at ${filenameOf(meta.caldavUrl)} (master not found)")
-                continue
+                // Orphan exception: no master in this batch, no master in
+                // Room, no synthetic from a prior pull. Synthesize a
+                // placeholder so the exception's FK has a target. When the
+                // real master eventually arrives (window expanded, scroll-
+                // back fetch, server-side fix), pass 2's getMasterBy...
+                // lookup finds this synthetic and the upsert path mutates
+                // it in place — same row id, sentinel cleared, real RRULE
+                // populated, exception FKs survive untouched.
+                val recurrenceIdMs = meta.parsed.recurrenceId?.timestamp
+                if (recurrenceIdMs == null) {
+                    // No RECURRENCE-ID — can't synthesize without an anchor
+                    // timestamp. Drop with the legacy warning.
+                    Log.w(TAG, "Orphaned exception with no RECURRENCE-ID dropped: ${meta.caldavUrl}")
+                    sessionBuilder?.incrementSkipOrphanedException()
+                    sessionBuilder?.addWarning(
+                        "Orphaned exception at ${filenameOf(meta.caldavUrl)} (no RECURRENCE-ID)"
+                    )
+                    continue
+                }
+                val synthetic = synthesizeMasterForOrphanException(
+                    uid = meta.parsed.uid,
+                    calendarId = calendar.id,
+                    recurrenceIdMs = recurrenceIdMs,
+                    placeholderTitle = meta.parsed.summary?.ifBlank { null } ?: "Untitled",
+                )
+                val syntheticId = eventsDao.insert(synthetic)
+                masterEvent = synthetic.copy(id = syntheticId)
+                uidToMasterEvent[meta.parsed.uid] = masterEvent
+                Log.i(
+                    TAG,
+                    "Orphan exception promoted via synthetic master: " +
+                        "uid=${meta.parsed.uid}, id=$syntheticId, recurrenceId=$recurrenceIdMs"
+                )
+                sessionBuilder?.addWarning(
+                    "Orphan exception at ${filenameOf(meta.caldavUrl)} promoted via synthetic master"
+                )
             }
 
             // Get original instance time from RECURRENCE-ID
@@ -1183,20 +1280,71 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Skip if etag unchanged (prevents overwrite with stale data after push)
-            if (existingException != null && existingException.etag != null && existingException.etag == meta.etag) {
+            // Skip if etag unchanged (prevents overwrite with stale data after push).
+            // BUT: when the master in this same .ics resource was just
+            // regenerated, re-link first. Master regen wipes occurrences
+            // and re-expands from RRULE; without re-running linkException
+            // here, the master-time instance (e.g. Jun 01 19:00) and the
+            // exception's modified-time instance (e.g. Jun 01 10:00) both
+            // render on the day card.
+            val etagsKnownUnchanged = existingException != null &&
+                existingException.etag != null &&
+                existingException.etag == meta.etag
+            val masterRegenerated = meta.parsed.uid in uidsWithRegeneratedMaster
+            if (etagsKnownUnchanged && !masterRegenerated) {
+                // Self-heal: a previous pull may have crashed mid-link,
+                // leaving the master's RRULE-expanded occurrence at this
+                // exception's instance time WITHOUT exception_event_id set
+                // while the exception row itself was committed. Both etags
+                // match this round so neither pass would otherwise touch
+                // the row. Detect the unlinked state and re-run linkException.
+                val recurrenceIdTime = existingException?.originalInstanceTime
+                if (recurrenceIdTime != null) {
+                    val occ = database.occurrencesDao()
+                        .getByEventIdAndStartTs(masterEvent.id, recurrenceIdTime)
+                    if (occ != null && occ.exceptionEventId == null) {
+                        occurrenceGenerator.linkException(
+                            masterEvent.id,
+                            recurrenceIdTime,
+                            existingException
+                        )
+                        Log.i(TAG, "Self-healed unlinked exception ${meta.caldavUrl} on etag-skip path")
+                    }
+                }
                 Log.d(TAG, "Skipping exception ${meta.caldavUrl} - etag unchanged (${meta.etag})")
                 sessionBuilder?.incrementSkipEtagUnchanged()
                 continue
             }
+            if (etagsKnownUnchanged && masterRegenerated) {
+                // The exception's own row data is unchanged, but its master
+                // was regenerated and needs the link re-applied. Re-run
+                // linkException — Step 3 matches the freshly-inserted
+                // master row by `ABS(start_ts - recurrenceIdTime) < 60s`
+                // and updates it to the exception's modified time with
+                // exception_event_id set.
+                val recurrenceIdTime = existingException!!.originalInstanceTime
+                if (recurrenceIdTime != null) {
+                    occurrenceGenerator.linkException(
+                        masterEvent.id,
+                        recurrenceIdTime,
+                        existingException
+                    )
+                    Log.d(TAG, "Re-linked exception ${meta.caldavUrl} after master regen")
+                }
+                continue
+            }
 
-            // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper
+            // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper.
+            // Pass the master's DTSTART so the mapper can normalize a
+            // value-type-mismatched RECURRENCE-ID before writing
+            // originalInstanceTime — see ICalEventMapper.normalizeRecurrenceId.
             val mappedException = ICalEventMapper.toEntity(
                 icalEvent = meta.parsed,
                 rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
-                etag = meta.etag
+                etag = meta.etag,
+                masterDtStart = uidToMasterDtStart[meta.parsed.uid],
             )
             var event = mappedException.event
 

@@ -221,6 +221,15 @@ class AccountSettingsViewModel @Inject constructor(
     private val _defaultEventDuration = MutableStateFlow(KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
     val defaultEventDuration: StateFlow<Int> = _defaultEventDuration.asStateFlow()
 
+    // Settings search state. Owned exclusively by this ViewModel; sub-screens
+    // never receive a non-empty query (constraint C2). Cleared on navigation
+    // away (US4 — see onCleared override).
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _isSearchActive = MutableStateFlow(false)
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
+
     // Sync logs
     private val _syncLogs = MutableStateFlow<List<SyncLog>>(emptyList())
     val syncLogs: StateFlow<List<SyncLog>> = _syncLogs.asStateFlow()
@@ -649,6 +658,25 @@ class AccountSettingsViewModel @Inject constructor(
                 _titleSuggestionsEnabled.value = enabled
             }
         }
+    }
+
+    // ==================== Settings search ====================
+
+    /** Open the inline search bar; query starts empty. */
+    fun onSearchOpen() {
+        _isSearchActive.value = true
+        _searchQuery.value = ""
+    }
+
+    /** Update the active query as the user types. */
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
+
+    /** Close the search bar and clear the query. */
+    fun onSearchClose() {
+        _isSearchActive.value = false
+        _searchQuery.value = ""
     }
 
     /**
@@ -1551,6 +1579,8 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Committing pending deletion on ViewModel destruction: $pending")
             commitSubscriptionDeletion(pending)
         }
+        // US4: clear search so next ViewModel instance starts with a fresh list.
+        onSearchClose()
         super.onCleared()
     }
 

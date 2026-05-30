@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">अस्वीकार करें</string>
     <string name="rsvp_series_disclosure">आपका जवाब पूरी श्रृंखला पर लागू होता है।</string>
     <string name="rsvp_modified_snackbar">%1$s के लिए RSVP विफल — इवेंट संशोधित किया गया था। कृपया फिर से जवाब दें।</string>
+    <string name="invitees_host_tag">होस्ट</string>
+    <string name="rsvp_question_going">जा रहे हैं?</string>
+    <string name="rsvp_action_yes">हाँ</string>
+    <string name="rsvp_action_maybe">शायद</string>
+    <string name="rsvp_action_no">नहीं</string>
+    <string name="rsvp_state_going">आप जा रहे हैं</string>
+    <string name="rsvp_state_maybe">शायद</string>
+    <string name="rsvp_state_not_going">नहीं जा रहे</string>
+    <string name="rsvp_action_change">बदलें</string>
+
+
+    <string name="invitees_summary_you_alone">आप</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">आप · %d आमंत्रित</item>
+        <item quantity="other">आप · %d आमंत्रित</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d आमंत्रित</item>
+        <item quantity="other">%d आमंत्रित</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s मेज़बानी कर रहे</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · आप</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · आप + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · आप + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">आप + %d</item>
+        <item quantity="other">आप + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d और</item>
+        <item quantity="other">%1$s · %2$d और</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">उत्तर बदलें</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">केवल यह एक</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">मिले: %1$d इवेंट</string>
     <string name="label_open_debug_menu">डीबग मेन्यू खोलें</string>
     <string name="placeholder_search">खोजें…</string>
+    <string name="settings_search_placeholder">सेटिंग्स खोजें…</string>
+    <string name="settings_search_no_results">\"%1$s\" के लिए कोई सेटिंग नहीं मिली</string>
+    <string name="cd_search_settings">सेटिंग्स खोजें</string>
     <string name="status_sync_paused">सिंक रुका हुआ है</string>
     <string name="status_not_synced">सिंक नहीं हुआ</string>
     <string name="status_sync_error">सिंक त्रुटि</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">आवर्ती इवेंट संपादित करें</string>
-    <string name="dialog_delete_recurring_title">आवर्ती इवेंट हटाएँ</string>
-    <string name="dialog_edit_recurring_message">यह एक आवर्ती इवेंट है। आप यह बदलाव कैसे लागू करना चाहेंगे?</string>
     <string name="recurring_this_event">यह इवेंट</string>
     <string name="recurring_all_events">सभी इवेंट</string>
+    <string name="dialog_edit_recurring_title">बदलाव सहेजें</string>
+    <string name="dialog_delete_recurring_title">हटाएं</string>
+    <string name="dialog_move_recurring_title">स्थानांतरित करें</string>
     <string name="empty_pick_a_day">कोई दिन चुनें। उसे जी लें।</string>
     <string name="empty_no_events_day">यहाँ कुछ नहीं है; बाहर घूमकर आएँ?</string>
     <string name="filter_date">तारीख</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">वर्ष</string>
     <string name="cd_decrease_interval">अंतराल घटाएँ</string>
     <string name="cd_increase_interval">अंतराल बढ़ाएँ</string>
+    <string name="attendee_sheet_title">उपस्थित</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d आमंत्रित</item>
+        <item quantity="other">%d आमंत्रित</item>
+    </plurals>
+    <string name="attendee_search_hint">खोजें</string>
+    <string name="attendee_search_no_matches">कोई परिणाम नहीं</string>
+    <string name="attendee_section_going">जा रहे</string>
+    <string name="attendee_section_maybe">शायद</string>
+    <string name="attendee_section_pending">लंबित</string>
+    <string name="attendee_section_declined">अस्वीकृत</string>
+    <string name="attendee_section_delegated">सौंपा गया</string>
 </resources>

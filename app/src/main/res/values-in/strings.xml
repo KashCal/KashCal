@@ -72,6 +72,17 @@
     <string name="rsvp_action_accept">Terima</string>
     <string name="rsvp_action_tentative">Tentatif</string>
     <string name="rsvp_action_decline">Tolak</string>
+    <string name="invitees_host_tag">Tuan rumah</string>
+    <string name="rsvp_question_going">Ikut?</string>
+    <string name="rsvp_action_yes">Ya</string>
+    <string name="rsvp_action_maybe">Mungkin</string>
+    <string name="rsvp_action_no">Tidak</string>
+    <string name="rsvp_state_going">Anda ikut</string>
+    <string name="rsvp_state_maybe">Mungkin</string>
+    <string name="rsvp_state_not_going">Anda tidak ikut</string>
+    <string name="rsvp_action_change">Ubah</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -112,6 +123,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Pengaturan</string>
+    <string name="settings_search_placeholder">Cari pengaturan…</string>
+    <string name="settings_search_no_results">Tidak ada pengaturan ditemukan untuk \"%1$s\"</string>
+    <string name="cd_search_settings">Cari pengaturan</string>
     <string name="settings_time_format">Format Waktu</string>
     <string name="settings_start_week_on">Mulai Minggu Pada</string>
     <string name="settings_event_emojis">Emoji Acara</string>
@@ -653,11 +667,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Edit acara berulang</string>
-    <string name="dialog_delete_recurring_title">Hapus acara berulang</string>
-    <string name="dialog_edit_recurring_message">Ini adalah acara berulang. Bagaimana Anda ingin menerapkan perubahan ini?</string>
     <string name="recurring_this_event">Acara ini</string>
     <string name="recurring_all_events">Semua acara</string>
+    <string name="dialog_edit_recurring_title">Simpan perubahan ke</string>
+    <string name="dialog_delete_recurring_title">Hapus</string>
+    <string name="dialog_move_recurring_title">Pindahkan</string>
     <string name="empty_pick_a_day">Pilih hari. Manfaatkan.</string>
     <string name="empty_no_events_day">Tidak ada apa-apa di sini; keluar jalan-jalan?</string>
     <string name="filter_date">Tanggal</string>
@@ -1061,4 +1075,34 @@
     </plurals>
     <string name="share_availability_days_through">Hingga %1$s</string>
     <string name="share_availability_window_duration">Jendela %1$s jam</string>
+    <string name="attendee_sheet_title">Peserta</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">%d diundang</item>
+    </plurals>
+    <string name="attendee_search_hint">Cari</string>
+    <string name="attendee_search_no_matches">Tidak ada hasil</string>
+    <string name="attendee_section_going">Hadir</string>
+    <string name="attendee_section_maybe">Mungkin</string>
+    <string name="attendee_section_pending">Menunggu</string>
+    <string name="attendee_section_declined">Menolak</string>
+    <string name="attendee_section_delegated">Mendelegasikan</string>
+    <string name="invitees_summary_you_alone">Anda</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">Anda · %d diundang</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">%d diundang</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s menyelenggarakan</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Anda</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · Anda + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">Anda + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · %2$d lainnya</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Ubah respons</string>
 </resources>

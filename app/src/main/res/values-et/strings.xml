@@ -77,6 +77,40 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Vastus kehtib kogu seeriale.</string>
     <string name="rsvp_modified_snackbar">Vastus sündmusele „%1$s“ ebaõnnestus — sündmust muudeti. Palun vasta uuesti.</string>
+    <string name="invitees_host_tag">Võõrustaja</string>
+    <string name="invitees_summary_you_alone">Sina</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sina · %d kutsutud</item>
+        <item quantity="other">Sina · %d kutsutud</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d kutsutud</item>
+        <item quantity="other">%d kutsutud</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s korraldab</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sina</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sina + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sina + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sina + %d</item>
+        <item quantity="other">Sina + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · veel %2$d</item>
+        <item quantity="other">%1$s · veel %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Muuda vastust</string>
+    <string name="rsvp_question_going">Tuled?</string>
+    <string name="rsvp_action_yes">Jah</string>
+    <string name="rsvp_action_maybe">Võib-olla</string>
+    <string name="rsvp_action_no">Ei</string>
+    <string name="rsvp_state_going">Sa tuled</string>
+    <string name="rsvp_state_maybe">Võib-olla</string>
+    <string name="rsvp_state_not_going">Sa ei tule</string>
+    <string name="rsvp_action_change">Muuda</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Ainult see</string>
@@ -482,6 +516,9 @@
     <string name="label_found_events">Leitud: %1$d sündmust</string>
     <string name="label_open_debug_menu">Ava silumismenüü</string>
     <string name="placeholder_search">Otsi…</string>
+    <string name="settings_search_placeholder">Otsi seadetest…</string>
+    <string name="settings_search_no_results">Päringule \"%1$s\" seadeid ei leitud</string>
+    <string name="cd_search_settings">Otsi seadetest</string>
     <string name="status_sync_paused">Sünkroonimine peatatud</string>
     <string name="status_not_synced">Pole sünkroonitud</string>
     <string name="status_sync_error">Sünkroonimise viga</string>
@@ -665,11 +702,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Muuda korduvat sündmust</string>
-    <string name="dialog_delete_recurring_title">Kustuta korduv sündmus</string>
-    <string name="dialog_edit_recurring_message">See on korduv sündmus. Kuidas soovite muudatust rakendada?</string>
     <string name="recurring_this_event">See sündmus</string>
     <string name="recurring_all_events">Kõik sündmused</string>
+    <string name="dialog_edit_recurring_title">Salvesta muudatused</string>
+    <string name="dialog_delete_recurring_title">Kustuta</string>
+    <string name="dialog_move_recurring_title">Liiguta</string>
     <string name="empty_pick_a_day">Vali päev. Haara sellest kinni.</string>
     <string name="empty_no_events_day">Siin pole midagi; mine jaluta?</string>
     <string name="filter_date">Kuupäev</string>
@@ -1056,4 +1093,16 @@
     <string name="share_availability_days_through">Kuni %1$s</string>
     <string name="share_availability_window_duration">%1$s tunni aken</string>
     <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
+    <string name="attendee_sheet_title">Osalejad</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d kutsutud</item>
+        <item quantity="other">%d kutsutud</item>
+    </plurals>
+    <string name="attendee_search_hint">Otsi</string>
+    <string name="attendee_search_no_matches">Tulemusi pole</string>
+    <string name="attendee_section_going">Tulevad</string>
+    <string name="attendee_section_maybe">Võib-olla</string>
+    <string name="attendee_section_pending">Ootel</string>
+    <string name="attendee_section_declined">Keeldusid</string>
+    <string name="attendee_section_delegated">Delegeerisid</string>
 </resources>

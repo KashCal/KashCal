@@ -79,6 +79,40 @@
          Friday is gone from my calendar." -->
     <string name="rsvp_series_disclosure">Tu respuesta se aplica a toda la serie.</string>
     <string name="rsvp_modified_snackbar">La respuesta a %1$s falló: el evento fue modificado. Por favor, responde de nuevo.</string>
+    <string name="invitees_host_tag">Anfitrión</string>
+    <string name="invitees_summary_you_alone">Tú</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tú · %d invitado</item>
+        <item quantity="other">Tú · %d invitados</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invitado</item>
+        <item quantity="other">%d invitados</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organiza</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tú</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tú + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tú + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tú + %d</item>
+        <item quantity="other">Tú + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d más</item>
+        <item quantity="other">%1$s · %2$d más</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Cambiar respuesta</string>
+    <string name="rsvp_question_going">¿Vas?</string>
+    <string name="rsvp_action_yes">Sí</string>
+    <string name="rsvp_action_maybe">Tal vez</string>
+    <string name="rsvp_action_no">No</string>
+    <string name="rsvp_state_going">Vas a ir</string>
+    <string name="rsvp_state_maybe">Tal vez</string>
+    <string name="rsvp_state_not_going">No vas</string>
+    <string name="rsvp_action_change">Cambiar</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Solo este</string>
@@ -484,6 +518,9 @@
     <string name="label_found_events">Encontrados: %1$d eventos</string>
     <string name="label_open_debug_menu">Abrir menú de depuración</string>
     <string name="placeholder_search">Buscar…</string>
+    <string name="settings_search_placeholder">Buscar ajustes…</string>
+    <string name="settings_search_no_results">No se encontraron ajustes para \"%1$s\"</string>
+    <string name="cd_search_settings">Buscar ajustes</string>
     <string name="status_sync_paused">Sincronización pausada</string>
     <string name="status_not_synced">No sincronizado</string>
     <string name="status_sync_error">Error de sincronización</string>
@@ -696,11 +733,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Editar evento recurrente</string>
-    <string name="dialog_delete_recurring_title">Eliminar evento recurrente</string>
-    <string name="dialog_edit_recurring_message">Este es un evento recurrente. ¿Cómo quieres aplicar este cambio?</string>
     <string name="recurring_this_event">Este evento</string>
     <string name="recurring_all_events">Todos los eventos</string>
+    <string name="dialog_edit_recurring_title">Guardar cambios en</string>
+    <string name="dialog_delete_recurring_title">Eliminar</string>
+    <string name="dialog_move_recurring_title">Mover</string>
     <string name="empty_pick_a_day">Elige un día. Aprovéchalo.</string>
     <string name="empty_no_events_day">Nada que ver aquí, ¿sales a tomar aire?</string>
     <string name="filter_date">Fecha</string>
@@ -1115,6 +1152,18 @@
     <string name="attendee_status_tentative">Provisional</string>
     <string name="attendee_status_delegated">Delegado</string>
     <string name="attendee_status_pending">Pendiente</string>
+    <string name="attendee_sheet_title">Asistentes</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invitado</item>
+        <item quantity="other">%d invitados</item>
+    </plurals>
+    <string name="attendee_search_hint">Buscar</string>
+    <string name="attendee_search_no_matches">Sin coincidencias</string>
+    <string name="attendee_section_going">Asisten</string>
+    <string name="attendee_section_maybe">Tal vez</string>
+    <string name="attendee_section_pending">Pendiente</string>
+    <string name="attendee_section_declined">Rechazaron</string>
+    <string name="attendee_section_delegated">Delegaron</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Todo al día</string>
     <string name="inbox_organizer_suffix">(organizador)</string>

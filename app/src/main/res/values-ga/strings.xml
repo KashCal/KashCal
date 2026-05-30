@@ -75,6 +75,55 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Baineann an freagra leis an tsraith ar fad.</string>
     <string name="rsvp_modified_snackbar">Theip ar fhreagra do %1$s: athraíodh an t-imeacht. Freagair arís.</string>
+    <string name="invitees_host_tag">Óstach</string>
+    <string name="invitees_summary_you_alone">Tú</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tú · %d cuireadh tugtha</item>
+        <item quantity="two">Tú · %d chuireadh tugtha</item>
+        <item quantity="few">Tú · %d cuireadh tugtha</item>
+        <item quantity="many">Tú · %d gcuireadh tugtha</item>
+        <item quantity="other">Tú · %d cuireadh tugtha</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d cuireadh tugtha</item>
+        <item quantity="two">%d chuireadh tugtha</item>
+        <item quantity="few">%d cuireadh tugtha</item>
+        <item quantity="many">%d gcuireadh tugtha</item>
+        <item quantity="other">%d cuireadh tugtha</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ag óstáil</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tú</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tú + %3$d</item>
+        <item quantity="two">%1$s (%2$s) · Tú + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Tú + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Tú + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tú + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tú + %d</item>
+        <item quantity="two">Tú + %d</item>
+        <item quantity="few">Tú + %d</item>
+        <item quantity="many">Tú + %d</item>
+        <item quantity="other">Tú + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d eile</item>
+        <item quantity="two">%1$s · %2$d eile</item>
+        <item quantity="few">%1$s · %2$d eile</item>
+        <item quantity="many">%1$s · %2$d eile</item>
+        <item quantity="other">%1$s · %2$d eile</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Athraigh an freagra</string>
+    <string name="rsvp_question_going">Ag dul?</string>
+    <string name="rsvp_action_yes">Tá</string>
+    <string name="rsvp_action_maybe">B\'fhéidir</string>
+    <string name="rsvp_action_no">Níl</string>
+    <string name="rsvp_state_going">Tá tú ag dul</string>
+    <string name="rsvp_state_maybe">B\'fhéidir</string>
+    <string name="rsvp_state_not_going">Níl tú ag dul</string>
+    <string name="rsvp_action_change">Athraigh</string>
+
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">An ceann seo amháin</string>
@@ -491,6 +540,9 @@
     <string name="label_found_events">Aimsíodh: %1$d imeacht</string>
     <string name="label_open_debug_menu">Oscail roghchlár dífhabhtaithe</string>
     <string name="placeholder_search">Cuardaigh…</string>
+    <string name="settings_search_placeholder">Cuardaigh socruithe…</string>
+    <string name="settings_search_no_results">Níor aimsíodh socruithe le haghaidh \"%1$s\"</string>
+    <string name="cd_search_settings">Cuardaigh socruithe</string>
     <string name="status_sync_paused">Sioncronú ar sos</string>
     <string name="status_not_synced">Gan sioncronú</string>
     <string name="status_sync_error">Earráid sioncronúithe</string>
@@ -766,11 +818,11 @@
     </plurals>
 
     <!-- HomeScreen -->
-    <string name="dialog_edit_recurring_title">Cuir imeacht athfhillteach in eagar</string>
-    <string name="dialog_delete_recurring_title">Scrios imeacht athfhillteach</string>
-    <string name="dialog_edit_recurring_message">Is imeacht athfhillteach é seo. Conas ba mhaith leat an t-athrú seo a chur i bhfeidhm?</string>
     <string name="recurring_this_event">An t-imeacht seo</string>
     <string name="recurring_all_events">Gach imeacht</string>
+    <string name="dialog_edit_recurring_title">Sábháil athruithe</string>
+    <string name="dialog_delete_recurring_title">Scrios</string>
+    <string name="dialog_move_recurring_title">Bog</string>
     <string name="empty_pick_a_day">Roghnaigh lá. Bain lán-úsáid as.</string>
     <string name="empty_no_events_day">Faic le feiceáil anseo; téigh amach faoin aer?</string>
     <string name="filter_date">Dáta</string>
@@ -1246,5 +1298,20 @@
     <string name="share_availability_days_through">Go dtí %1$s</string>
     <string name="share_availability_window_duration">Fuinneog %1$s uair</string>
     <string name="share_from_kashcal_footer">Roinnte ó KashCal</string>
+    <string name="attendee_sheet_title">Freastalaithe</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d cuireadh tugtha</item>
+        <item quantity="two">%d chuireadh tugtha</item>
+        <item quantity="few">%d cuireadh tugtha</item>
+        <item quantity="many">%d gcuireadh tugtha</item>
+        <item quantity="other">%d cuireadh tugtha</item>
+    </plurals>
+    <string name="attendee_search_hint">Cuardaigh</string>
+    <string name="attendee_search_no_matches">Gan torthaí</string>
+    <string name="attendee_section_going">Ag dul</string>
+    <string name="attendee_section_maybe">B\'fhéidir</string>
+    <string name="attendee_section_pending">Ar feitheamh</string>
+    <string name="attendee_section_declined">Diúltaithe</string>
+    <string name="attendee_section_delegated">Tarmligthe</string>
 
 </resources>

@@ -495,6 +495,9 @@
     <string name="settings_preview">미리보기</string>
     <string name="settings_n_events">일정 %1$d개</string>
     <string name="settings_n_events_default">일정 %1$d개 (기본값)</string>
+    <string name="settings_search_placeholder">설정 검색…</string>
+    <string name="settings_search_no_results">\"%1$s\"에 대한 설정이 없어요</string>
+    <string name="cd_search_settings">설정 검색</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">캘린더</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">반복 일정 편집</string>
-    <string name="dialog_delete_recurring_title">반복 일정 삭제</string>
-    <string name="dialog_edit_recurring_message">반복 일정이에요. 변경 사항을 어떻게 적용할까요?</string>
     <string name="recurring_this_event">이 일정만</string>
     <string name="recurring_all_events">모든 일정</string>
+    <string name="dialog_edit_recurring_title">변경 사항 적용</string>
+    <string name="dialog_delete_recurring_title">삭제</string>
+    <string name="dialog_move_recurring_title">이동</string>
     <string name="empty_pick_a_day">날짜를 골라보세요. 그 하루를 잡으세요.</string>
     <string name="empty_no_events_day">일정이 없어요. 밖에 나가볼까요?</string>
     <string name="filter_date">날짜</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">거절</string>
     <string name="rsvp_series_disclosure">응답이 반복 일정 전체에 적용돼요.</string>
     <string name="rsvp_modified_snackbar">%1$s에 대한 응답이 실패했어요. 일정이 변경되었으니 다시 응답해 주세요.</string>
+    <string name="attendee_sheet_title">참석자</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">%d명 초대됨</item>
+    </plurals>
+    <string name="attendee_search_hint">검색</string>
+    <string name="attendee_search_no_matches">결과 없음</string>
+    <string name="attendee_section_going">참석</string>
+    <string name="attendee_section_maybe">아마도</string>
+    <string name="attendee_section_pending">대기 중</string>
+    <string name="attendee_section_declined">거절</string>
+    <string name="attendee_section_delegated">위임</string>
+    <string name="invitees_host_tag">주최자</string>
+    <string name="invitees_summary_you_alone">나</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">나 · %d명 초대</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">%d명 초대</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s 주최</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · 나</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · 나 + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">나 + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · 외 %2$d명</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">응답 변경</string>
+    <string name="rsvp_question_going">참석하시나요?</string>
+    <string name="rsvp_action_yes">예</string>
+    <string name="rsvp_action_maybe">아마도</string>
+    <string name="rsvp_action_no">아니요</string>
+    <string name="rsvp_state_going">참석합니다</string>
+    <string name="rsvp_state_maybe">아마도</string>
+    <string name="rsvp_state_not_going">참석하지 않음</string>
+    <string name="rsvp_action_change">변경</string>
+
+
     <string name="inbox_empty_caught_up">모두 확인했어요</string>
     <string name="inbox_organizer_suffix">(주최자)</string>
     <string name="menu_invites">초대</string>

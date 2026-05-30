@@ -293,7 +293,8 @@ class CalendarProviderEdgeCaseTest {
             isWritable = true,
             originalId = 99L,
             originalInstanceTime = 500000L,
-            timezone = "America/Los_Angeles"
+            timezone = "America/Los_Angeles",
+            eventStartTs = 1000000L,
         )
 
         assertEquals(42L, instance.instanceId)
@@ -350,7 +351,8 @@ class CalendarProviderEdgeCaseTest {
             isWritable = false,
             originalId = null,
             originalInstanceTime = null,
-            timezone = null
+            timezone = null,
+            eventStartTs = 1000L,
         )
 
         val modified = original.copy(title = "Modified", isWritable = true)

@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -1987,6 +1988,312 @@ class HomeViewModelTest {
         coVerify { eventCoordinator.updateEvent(match { it.title == "Updated Meeting" }) }
     }
 
+    // ==================== Save-Time Scope Sheet Integration ====================
+    // These tests are the integration coverage that was missing in
+    // the previous /implement run. They drive the save-time deferral
+    // round-trip (requestFormSave → saveEvent(scope)) and the delete
+    // round-trip (requestDeleteRoom → confirmDelete(scope)) end-to-end
+    // through the ViewModel, asserting the right coordinator method
+    // is invoked for each scope.
+
+    private val recurringEvent_ = testEvents[0].copy(rrule = "FREQ=WEEKLY;COUNT=10")
+
+    private fun recurringFormState() = EventFormState(
+        title = "Edited",
+        dateMillis = recurringEvent_.startTs + 7L * 86_400_000L,
+        endDateMillis = recurringEvent_.startTs + 7L * 86_400_000L,
+        startHour = 10,
+        startMinute = 0,
+        endHour = 11,
+        endMinute = 0,
+        selectedCalendarId = 1L,
+        isEditMode = true,
+        editingEventId = recurringEvent_.id,
+        editingOccurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L,
+        rrule = "FREQ=WEEKLY;COUNT=10",
+    )
+
+    @Test
+    fun `requestFormSave + saveEvent THIS_EVENT routes to editSingleOccurrence`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L
+        viewModel.requestFormSave(
+            formState = recurringFormState(),
+            occurrenceTs = occurrenceTs,
+            originalRrule = recurringEvent_.rrule,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isRecurringDevice = false,
+            loadedIsAllDay = false,
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.uiState.value.pendingFormSave
+        assertNotNull(pending)
+        assertEquals(recurringEvent_.startTs, pending!!.masterStartTs)
+
+        // Simulate MainActivity's onConfirmFormSave for THIS_EVENT.
+        viewModel.cancelPendingFormSave()
+        viewModel.saveEvent(pending.formState, EditScope.THIS_EVENT)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.editSingleOccurrence(recurringEvent_.id, occurrenceTs, any()) }
+    }
+
+    @Test
+    fun `requestFormSave + saveEvent THIS_AND_FUTURE routes to editThisAndFuture`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.editThisAndFuture(any(), any(), any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L
+        viewModel.requestFormSave(
+            formState = recurringFormState(),
+            occurrenceTs = occurrenceTs,
+            originalRrule = recurringEvent_.rrule,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isRecurringDevice = false,
+            loadedIsAllDay = false,
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.uiState.value.pendingFormSave!!
+        viewModel.cancelPendingFormSave()
+        viewModel.saveEvent(pending.formState, EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.editThisAndFuture(recurringEvent_.id, occurrenceTs, any()) }
+    }
+
+    @Test
+    fun `requestFormSave + saveEvent ALL_EVENTS routes to updateEvent`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.updateEvent(any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.requestFormSave(
+            formState = recurringFormState(),
+            occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L,
+            originalRrule = recurringEvent_.rrule,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isRecurringDevice = false,
+            loadedIsAllDay = false,
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.uiState.value.pendingFormSave!!
+        viewModel.cancelPendingFormSave()
+        viewModel.saveEvent(pending.formState, EditScope.ALL_EVENTS)
+        advanceUntilIdle()
+
+        // ALL_EVENTS scope: occurrenceTs is dropped, master is updated directly.
+        coVerify { eventCoordinator.updateEvent(any()) }
+    }
+
+    @Test
+    fun `requestDeleteRoom + confirmDelete THIS_AND_FUTURE routes to deleteThisAndFuture`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.requestDeleteRoom(
+            event = recurringEvent_,
+            occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isAllDay = false,
+        )
+        advanceUntilIdle()
+
+        viewModel.confirmDelete(EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.deleteThisAndFuture(recurringEvent_.id, any()) }
+    }
+
+    @Test
+    fun `handleRoomEventFormDelete on exception routes to deleteSingleOccurrence`() = runTest {
+        // The form's in-line Delete button on a Room exception must
+        // route the same way QuickView Delete does — calling
+        // eventCoordinator.deleteSingleOccurrence(masterId,
+        // originalInstanceTime). The naive deleteEvent path fails
+        // EventCoordinator's exception guard.
+        val masterId = recurringEvent_.id
+        val originalInstance = recurringEvent_.startTs + 7L * 86_400_000L
+        val exception = recurringEvent_.copy(
+            id = 9_999L,
+            originalEventId = masterId,
+            originalInstanceTime = originalInstance,
+            rrule = null,
+            startTs = originalInstance + 3_600_000L, // moved
+        )
+        coEvery { eventCoordinator.getEventById(exception.id) } returns exception
+        coEvery { eventCoordinator.deleteSingleOccurrence(masterId, originalInstance) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val result = viewModel.handleRoomEventFormDelete(exception.id, occurrenceTs = null)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { eventCoordinator.deleteSingleOccurrence(masterId, originalInstance) }
+        coVerify(exactly = 0) { eventCoordinator.deleteEvent(any()) }
+    }
+
+    @Test
+    fun `handleRoomEventFormDelete on recurring master stages PendingDelete and returns success`() = runTest {
+        // Recurring master deletion needs the scope sheet. The handler
+        // stages PendingDelete.Room and returns success-no-op so the
+        // form dismisses. The scope sheet renders on top via the
+        // pending-delete state in uiState.
+        val master = recurringEvent_
+        coEvery { eventCoordinator.getEventById(master.id) } returns master
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val result = viewModel.handleRoomEventFormDelete(master.id, occurrenceTs = null)
+        advanceUntilIdle()
+
+        assertTrue("returns success so form dismisses", result.isSuccess)
+        val pending = viewModel.uiState.value.pendingDelete
+        assertNotNull("pendingDelete must be non-null after master delete request", pending)
+        assertTrue("pending must be a Room variant", pending is PendingDelete.Room)
+        // The handler does NOT call eventCoordinator.deleteEvent — the
+        // scope-sheet confirm path is responsible for the actual delete.
+        coVerify(exactly = 0) { eventCoordinator.deleteEvent(any()) }
+    }
+
+    @Test
+    fun `handleRoomEventFormDelete on recurring master preserves form's occurrenceTs anchor`() = runTest {
+        // User taps occurrence #5, opens Edit, hits in-form Delete.
+        // The scope sheet's first-occurrence rule depends on the
+        // pendingDelete carrying the actual tapped occurrence ts —
+        // not the master's first-occurrence start.
+        val master = recurringEvent_
+        coEvery { eventCoordinator.getEventById(master.id) } returns master
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val tappedOccurrence = master.startTs + 5L * 7 * 86_400_000L // occurrence #5
+        viewModel.handleRoomEventFormDelete(master.id, occurrenceTs = tappedOccurrence)
+        advanceUntilIdle()
+
+        val pending = viewModel.uiState.value.pendingDelete as PendingDelete.Room
+        assertEquals(tappedOccurrence, pending.occurrenceTs)
+        assertEquals(master.startTs, pending.masterStartTs)
+    }
+
+    @Test
+    fun `handleRoomEventFormDelete on non-recurring event calls deleteEvent`() = runTest {
+        // Non-recurring deletes go straight through eventCoordinator
+        // — no scope sheet, no special routing.
+        val nonRecurring = testEvents[0].copy(rrule = null, originalEventId = null)
+        coEvery { eventCoordinator.getEventById(nonRecurring.id) } returns nonRecurring
+        coEvery { eventCoordinator.deleteEvent(nonRecurring.id) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val result = viewModel.handleRoomEventFormDelete(nonRecurring.id, occurrenceTs = null)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        coVerify(exactly = 1) { eventCoordinator.deleteEvent(nonRecurring.id) }
+        coVerify(exactly = 0) { eventCoordinator.deleteSingleOccurrence(any(), any()) }
+    }
+
+    @Test
+    fun `requestFormSave preserves loadedIsAllDay independent of formState`() = runTest {
+        // Form-load isAllDay must survive into PendingFormSave so the
+        // scope-sheet sub-copy renders the correct date even when the
+        // user toggled all-day in the form before saving (which would
+        // flip formState.isAllDay but must not flip the load-time
+        // anchor).
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // formState says isAllDay=true (user toggled), but the master
+        // event was timed at load — loadedIsAllDay=false.
+        val toggledFormState = recurringFormState().copy(isAllDay = true)
+        viewModel.requestFormSave(
+            formState = toggledFormState,
+            occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L,
+            originalRrule = recurringEvent_.rrule,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isRecurringDevice = false,
+            loadedIsAllDay = false,
+        )
+        advanceUntilIdle()
+
+        val pending = viewModel.uiState.value.pendingFormSave!!
+        assertEquals(false, pending.loadedIsAllDay)
+        assertEquals(true, pending.formState.isAllDay)
+    }
+
+    @Test
+    fun `signalFormSaveFailed increments tick`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val before = viewModel.uiState.value.formSaveFailedTick
+        viewModel.signalFormSaveFailed()
+        advanceUntilIdle()
+
+        assertEquals(before + 1, viewModel.uiState.value.formSaveFailedTick)
+    }
+
+    @Test
+    fun `saveEvent on non-recurring event with null occurrenceTs routes to updateEvent not editSingleOccurrence`() = runTest {
+        // Regression for the QuickView Edit-on-non-recurring crash:
+        // saveEvent must NOT call editSingleOccurrence when the form
+        // was opened on a non-recurring event (editingOccurrenceTs is
+        // null after the MainActivity collapse). editSingleOccurrence
+        // would throw via EventWriter's isRecurring require.
+        val nonRecurring = testEvents[0].copy(rrule = null, originalEventId = null)
+        coEvery { eventCoordinator.getEventById(nonRecurring.id) } returns nonRecurring
+        coEvery { eventCoordinator.updateEvent(any()) } returns nonRecurring
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            title = "Edited",
+            dateMillis = getTimestamp(2024, 11, 17, 0, 0),
+            endDateMillis = getTimestamp(2024, 11, 17, 0, 0),
+            startHour = 10,
+            startMinute = 0,
+            endHour = 11,
+            endMinute = 0,
+            selectedCalendarId = 1L,
+            isEditMode = true,
+            editingEventId = nonRecurring.id,
+            editingOccurrenceTs = null,  // critical: null for non-recurring
+        )
+
+        val result = viewModel.saveEvent(formState)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        coVerify { eventCoordinator.updateEvent(any()) }
+        coVerify(exactly = 0) { eventCoordinator.editSingleOccurrence(any(), any(), any()) }
+    }
+
     @Test
     fun `saveEvent returns failure when event not found in edit mode`() = runTest {
         coEvery { eventCoordinator.getEventById(999L) } returns null
@@ -2489,6 +2796,54 @@ class HomeViewModelTest {
         assertTrue(state.hasEventsOnDay(2024, 11, 3))
         assertTrue(state.hasEventsOnDay(2024, 11, 10))
         assertTrue(state.hasEventsOnDay(2024, 11, 17))
+    }
+
+    @Test
+    fun `loadDotsForMonth ignores dayCodes outside the loaded month (issue 255)`() = runTest {
+        // Regression: a multi-day event spanning a month boundary — or any event
+        // whose start/end fall outside the queried month — must not paint a phantom
+        // dot on the loaded month. Repro per issue #255: navigating to Dec 2026
+        // showed a green dot on Dec 1 even though no real event was on Dec 1; the
+        // phantom came from the day-1 piece of an adjacent month's event leaking
+        // into December's monthKey.
+        val cal1Color = testCalendars[0].color
+        // Mock returns three dayCodes — Nov 30, Dec 15, Jan 1 — as if a multi-day
+        // event spanning Nov 30 → Jan 2 had been expanded into per-day buckets.
+        val groupedEvents = mapOf(
+            20261130 to listOf(
+                createDotDisplayEvent(1L, "Cross-month", getTimestamp(2026, 10, 30, 9, 0), getTimestamp(2027, 0, 2, 17, 0), 20261130, calendarColor = cal1Color)
+            ),
+            20261215 to listOf(
+                createDotDisplayEvent(2L, "Mid-Dec", getTimestamp(2026, 11, 15, 10, 0), getTimestamp(2026, 11, 15, 11, 0), 20261215, calendarColor = cal1Color)
+            ),
+            20270101 to listOf(
+                createDotDisplayEvent(3L, "Jan 1 spillover", getTimestamp(2027, 0, 1, 9, 0), getTimestamp(2027, 0, 1, 10, 0), 20270101, calendarColor = cal1Color)
+            )
+        )
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns groupedEvents
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Dec 2026 is far outside the initial ±6 month cache, so this hits the
+        // on-demand loadDotsForMonth path (not buildEventDots).
+        viewModel.setViewingMonth(2026, 11)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+
+        // Mid-month event should produce its dot.
+        assertTrue("Dec 15 should have a dot", state.hasEventsOnDay(2026, 11, 15))
+        // Adjacent-month dayCodes must NOT bleed into the December bucket as
+        // day=1 / day=30 phantoms.
+        assertFalse(
+            "Dec 1 must not show a phantom dot from the Jan 1 dayCode (issue #255)",
+            state.hasEventsOnDay(2026, 11, 1)
+        )
+        assertFalse(
+            "Dec 30 must not show a phantom dot from the Nov 30 dayCode",
+            state.hasEventsOnDay(2026, 11, 30)
+        )
     }
 
     // ==================== Reminder Tests ====================

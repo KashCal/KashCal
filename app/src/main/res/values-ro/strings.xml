@@ -73,6 +73,45 @@
     <string name="rsvp_action_decline">Refuză</string>
     <string name="rsvp_series_disclosure">Răspunsul se aplică întregii serii.</string>
     <string name="rsvp_modified_snackbar">Răspunsul pentru %1$s a eșuat — evenimentul a fost modificat. Te rugăm să răspunzi din nou.</string>
+    <string name="invitees_host_tag">Gazdă</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tu · %d invitat</item>
+        <item quantity="few">Tu · %d invitați</item>
+        <item quantity="other">Tu · %d de invitați</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invitat</item>
+        <item quantity="few">%d invitați</item>
+        <item quantity="other">%d de invitați</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizează</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tu + %d</item>
+        <item quantity="few">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · încă %2$d</item>
+        <item quantity="few">%1$s · încă %2$d</item>
+        <item quantity="other">%1$s · încă %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Modifică răspunsul</string>
+    <string name="rsvp_question_going">Mergi?</string>
+    <string name="rsvp_action_yes">Da</string>
+    <string name="rsvp_action_maybe">Poate</string>
+    <string name="rsvp_action_no">Nu</string>
+    <string name="rsvp_state_going">Mergi</string>
+    <string name="rsvp_state_maybe">Poate</string>
+    <string name="rsvp_state_not_going">Nu mergi</string>
+    <string name="rsvp_action_change">Modifică</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Doar acesta</string>
@@ -500,6 +539,9 @@
     <string name="label_found_events">Găsite: %1$d evenimente</string>
     <string name="label_open_debug_menu">Deschide meniul de depanare</string>
     <string name="placeholder_search">Caută…</string>
+    <string name="settings_search_placeholder">Caută în setări…</string>
+    <string name="settings_search_no_results">Nu s-au găsit setări pentru \"%1$s\"</string>
+    <string name="cd_search_settings">Caută în setări</string>
     <string name="status_sync_paused">Sincronizare suspendată</string>
     <string name="status_not_synced">Nesincronizat</string>
     <string name="status_sync_error">Eroare sincronizare</string>
@@ -714,11 +756,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Editează eveniment recurent</string>
-    <string name="dialog_delete_recurring_title">Șterge eveniment recurent</string>
-    <string name="dialog_edit_recurring_message">Acesta este un eveniment recurent. Cum dorești să aplici modificarea?</string>
     <string name="recurring_this_event">Acest eveniment</string>
     <string name="recurring_all_events">Toate evenimentele</string>
+    <string name="dialog_edit_recurring_title">Salvează modificările în</string>
+    <string name="dialog_delete_recurring_title">Șterge</string>
+    <string name="dialog_move_recurring_title">Mută</string>
     <string name="empty_pick_a_day">Alege o zi. Profită de ea.</string>
     <string name="empty_no_events_day">Nimic de văzut; ieși la plimbare?</string>
     <string name="filter_date">Dată</string>
@@ -1158,4 +1200,17 @@
     </plurals>
     <string name="share_availability_days_through">Până la %1$s</string>
     <string name="share_availability_window_duration">Interval de %1$s ore</string>
+    <string name="attendee_sheet_title">Participanți</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invitat</item>
+        <item quantity="few">%d invitați</item>
+        <item quantity="other">%d de invitați</item>
+    </plurals>
+    <string name="attendee_search_hint">Caută</string>
+    <string name="attendee_search_no_matches">Niciun rezultat</string>
+    <string name="attendee_section_going">Merg</string>
+    <string name="attendee_section_maybe">Poate</string>
+    <string name="attendee_section_pending">În așteptare</string>
+    <string name="attendee_section_declined">Refuzat</string>
+    <string name="attendee_section_delegated">Delegat</string>
 </resources>

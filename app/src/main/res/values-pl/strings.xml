@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">Akceptuj</string>
     <string name="rsvp_action_tentative">Niepewne</string>
     <string name="rsvp_action_decline">Odrzuć</string>
+    <string name="invitees_host_tag">Organizator</string>
+    <string name="rsvp_question_going">Idziesz?</string>
+    <string name="rsvp_action_yes">Tak</string>
+    <string name="rsvp_action_maybe">Może</string>
+    <string name="rsvp_action_no">Nie</string>
+    <string name="rsvp_state_going">Idziesz</string>
+    <string name="rsvp_state_maybe">Może</string>
+    <string name="rsvp_state_not_going">Nie idziesz</string>
+    <string name="rsvp_action_change">Zmień</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -504,6 +515,9 @@
     <string name="label_found_events">Znaleziono: %1$d wydarzeń</string>
     <string name="label_open_debug_menu">Otwórz menu debugowania</string>
     <string name="placeholder_search">Szukaj…</string>
+    <string name="settings_search_placeholder">Szukaj w ustawieniach…</string>
+    <string name="settings_search_no_results">Nie znaleziono ustawień dla \"%1$s\"</string>
+    <string name="cd_search_settings">Szukaj w ustawieniach</string>
     <string name="status_sync_paused">Synchronizacja wstrzymana</string>
     <string name="status_not_synced">Nie zsynchronizowano</string>
     <string name="status_sync_error">Błąd synchronizacji</string>
@@ -750,11 +764,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Edytuj powtarzające się wydarzenie</string>
-    <string name="dialog_delete_recurring_title">Usuń powtarzające się wydarzenie</string>
-    <string name="dialog_edit_recurring_message">To jest powtarzające się wydarzenie. Jak chcesz zastosować tę zmianę?</string>
     <string name="recurring_this_event">To wydarzenie</string>
     <string name="recurring_all_events">Wszystkie wydarzenia</string>
+    <string name="dialog_edit_recurring_title">Zapisz zmiany w</string>
+    <string name="dialog_delete_recurring_title">Usuń</string>
+    <string name="dialog_move_recurring_title">Przenieś</string>
     <string name="empty_pick_a_day">Wybierz dzień. Wykorzystaj go.</string>
     <string name="empty_no_events_day">Nic tu nie ma; czas na spacer?</string>
     <string name="filter_date">Data</string>
@@ -1143,6 +1157,54 @@
     <string name="attendee_status_tentative">Niepewny</string>
     <string name="attendee_status_delegated">Delegowane</string>
     <string name="attendee_status_pending">Oczekuje</string>
+    <string name="attendee_sheet_title">Uczestnicy</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d zaproszony</item>
+        <item quantity="few">%d zaproszonych</item>
+        <item quantity="many">%d zaproszonych</item>
+        <item quantity="other">%d zaproszonych</item>
+    </plurals>
+    <string name="attendee_search_hint">Szukaj</string>
+    <string name="attendee_search_no_matches">Brak wyników</string>
+    <string name="attendee_section_going">Idą</string>
+    <string name="attendee_section_maybe">Może</string>
+    <string name="attendee_section_pending">Oczekujący</string>
+    <string name="attendee_section_declined">Odrzucili</string>
+    <string name="attendee_section_delegated">Delegowani</string>
+    <string name="invitees_summary_you_alone">Ty</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ty · %d zaproszony</item>
+        <item quantity="few">Ty · %d zaproszonych</item>
+        <item quantity="many">Ty · %d zaproszonych</item>
+        <item quantity="other">Ty · %d zaproszonych</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d zaproszony</item>
+        <item quantity="few">%d zaproszonych</item>
+        <item quantity="many">%d zaproszonych</item>
+        <item quantity="other">%d zaproszonych</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizuje</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ty</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ty + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ty + %d</item>
+        <item quantity="few">Ty + %d</item>
+        <item quantity="many">Ty + %d</item>
+        <item quantity="other">Ty + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d więcej</item>
+        <item quantity="few">%1$s · %2$d więcej</item>
+        <item quantity="many">%1$s · %2$d więcej</item>
+        <item quantity="other">%1$s · %2$d więcej</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Zmień odpowiedź</string>
     <string name="inbox_empty_caught_up">Wszystko na bieżąco</string>
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Zaproszenia</string>

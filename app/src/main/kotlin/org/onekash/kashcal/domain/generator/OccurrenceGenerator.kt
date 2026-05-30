@@ -59,6 +59,14 @@ class OccurrenceGenerator @Inject constructor(
         rangeStartMs: Long,
         rangeEndMs: Long
     ): Int {
+        // Synthetic placeholder masters (orphan-exception support) carry no
+        // RRULE and exist purely as FK targets for linked exceptions. Emitting
+        // a single occurrence for them would put a phantom CANCELLED row on
+        // the day card. Both ICS sync and CalDAV pull tag these rows with
+        // X-KASHCAL-SYNTHETIC-MASTER in extraProperties.
+        if (event.extraProperties?.get("X-KASHCAL-SYNTHETIC-MASTER") == "true") {
+            return 0
+        }
         return database.withTransaction {
             // PRESERVE EXCEPTION LINKS: Query existing links before modification
             // These are occurrences modified via RECURRENCE-ID (edited single occurrences)
@@ -272,6 +280,16 @@ class OccurrenceGenerator @Inject constructor(
      */
     suspend fun cancelOccurrence(eventId: Long, occurrenceTimeMs: Long) {
         occurrencesDao.markCancelled(eventId, occurrenceTimeMs)
+    }
+
+    /**
+     * Cancel the occurrence linked to a specific exception event.
+     * Used when deleting an occurrence that has been edited into an
+     * exception — the linked row's start_ts no longer matches the
+     * original instance time, so we must identify it by FK instead.
+     */
+    suspend fun cancelOccurrenceByException(exceptionEventId: Long) {
+        occurrencesDao.markCancelledByException(exceptionEventId)
     }
 
     /**

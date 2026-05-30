@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">প্রত্যাখ্যান করুন</string>
     <string name="rsvp_series_disclosure">আপনার প্রতিক্রিয়া সম্পূর্ণ সিরিজে প্রযোজ্য।</string>
     <string name="rsvp_modified_snackbar">%1$s এর জন্য RSVP ব্যর্থ — ইভেন্ট পরিবর্তন করা হয়েছে। অনুগ্রহ করে আবার প্রতিক্রিয়া জানান।</string>
+    <string name="invitees_host_tag">আয়োজক</string>
+    <string name="rsvp_question_going">যাচ্ছেন?</string>
+    <string name="rsvp_action_yes">হ্যাঁ</string>
+    <string name="rsvp_action_maybe">সম্ভবত</string>
+    <string name="rsvp_action_no">না</string>
+    <string name="rsvp_state_going">আপনি যাচ্ছেন</string>
+    <string name="rsvp_state_maybe">সম্ভবত</string>
+    <string name="rsvp_state_not_going">যাচ্ছেন না</string>
+    <string name="rsvp_action_change">পরিবর্তন</string>
+
+
+    <string name="invitees_summary_you_alone">আপনি</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">আপনি · %d আমন্ত্রিত</item>
+        <item quantity="other">আপনি · %d আমন্ত্রিত</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d আমন্ত্রিত</item>
+        <item quantity="other">%d আমন্ত্রিত</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s আয়োজন করছেন</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · আপনি</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · আপনি + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · আপনি + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">আপনি + %d</item>
+        <item quantity="other">আপনি + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · আরও %2$d জন</item>
+        <item quantity="other">%1$s · আরও %2$d জন</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">উত্তর পরিবর্তন</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">শুধু এটি</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">পাওয়া গেছে: %1$d ইভেন্ট</string>
     <string name="label_open_debug_menu">ডিবাগ মেনু খুলুন</string>
     <string name="placeholder_search">অনুসন্ধান…</string>
+    <string name="settings_search_placeholder">সেটিংস অনুসন্ধান করুন…</string>
+    <string name="settings_search_no_results">\"%1$s\" এর জন্য কোনও সেটিং পাওয়া যায়নি</string>
+    <string name="cd_search_settings">সেটিংস অনুসন্ধান করুন</string>
     <string name="status_sync_paused">সিংক থামানো হয়েছে</string>
     <string name="status_not_synced">সিংক হয়নি</string>
     <string name="status_sync_error">সিংক ত্রুটি</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">পুনরাবৃত্ত ইভেন্ট সম্পাদনা</string>
-    <string name="dialog_delete_recurring_title">পুনরাবৃত্ত ইভেন্ট মুছুন</string>
-    <string name="dialog_edit_recurring_message">এটি একটি পুনরাবৃত্ত ইভেন্ট। আপনি এই পরিবর্তন কীভাবে প্রয়োগ করতে চান?</string>
     <string name="recurring_this_event">এই ইভেন্ট</string>
     <string name="recurring_all_events">সব ইভেন্ট</string>
+    <string name="dialog_edit_recurring_title">পরিবর্তন সংরক্ষণ করুন</string>
+    <string name="dialog_delete_recurring_title">মুছুন</string>
+    <string name="dialog_move_recurring_title">সরান</string>
     <string name="empty_pick_a_day">একটি দিন বেছে নিন। দখল করুন।</string>
     <string name="empty_no_events_day">এখানে কিছু নেই; বাইরে ঘুরে আসুন?</string>
     <string name="filter_date">তারিখ</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">বছর</string>
     <string name="cd_decrease_interval">ব্যবধান কমান</string>
     <string name="cd_increase_interval">ব্যবধান বাড়ান</string>
+    <string name="attendee_sheet_title">অংশগ্রহণকারী</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d আমন্ত্রিত</item>
+        <item quantity="other">%d আমন্ত্রিত</item>
+    </plurals>
+    <string name="attendee_search_hint">অনুসন্ধান</string>
+    <string name="attendee_search_no_matches">কোনো ফলাফল নেই</string>
+    <string name="attendee_section_going">যাচ্ছেন</string>
+    <string name="attendee_section_maybe">সম্ভবত</string>
+    <string name="attendee_section_pending">অপেক্ষমান</string>
+    <string name="attendee_section_declined">প্রত্যাখ্যাত</string>
+    <string name="attendee_section_delegated">অর্পিত</string>
 </resources>

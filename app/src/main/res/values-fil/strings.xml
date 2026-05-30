@@ -72,6 +72,17 @@
     <string name="rsvp_action_accept">Tanggapin</string>
     <string name="rsvp_action_tentative">Posible</string>
     <string name="rsvp_action_decline">Tanggihan</string>
+    <string name="invitees_host_tag">Host</string>
+    <string name="rsvp_question_going">Pupunta?</string>
+    <string name="rsvp_action_yes">Oo</string>
+    <string name="rsvp_action_maybe">Marahil</string>
+    <string name="rsvp_action_no">Hindi</string>
+    <string name="rsvp_state_going">Pupunta ka</string>
+    <string name="rsvp_state_maybe">Marahil</string>
+    <string name="rsvp_state_not_going">Hindi pupunta</string>
+    <string name="rsvp_action_change">Baguhin</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -112,6 +123,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>
+    <string name="settings_search_placeholder">Maghanap ng mga setting…</string>
+    <string name="settings_search_no_results">Walang nahanap na setting para sa \"%1$s\"</string>
+    <string name="cd_search_settings">Maghanap ng mga setting</string>
     <string name="settings_time_format">Format ng Oras</string>
     <string name="settings_start_week_on">Simula ng Linggo</string>
     <string name="settings_event_emojis">Mga Emoji ng Event</string>
@@ -684,11 +698,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">I-edit ang paulit-ulit na event</string>
-    <string name="dialog_delete_recurring_title">Burahin ang paulit-ulit na event</string>
-    <string name="dialog_edit_recurring_message">Isa itong paulit-ulit na event. Paano mo gustong ilapat ang pagbabagong ito?</string>
     <string name="recurring_this_event">Event na ito</string>
     <string name="recurring_all_events">Lahat ng event</string>
+    <string name="dialog_edit_recurring_title">I-save ang mga pagbabago sa</string>
+    <string name="dialog_delete_recurring_title">Tanggalin</string>
+    <string name="dialog_move_recurring_title">Ilipat</string>
     <string name="empty_pick_a_day">Pumili ng araw. Samantalahin.</string>
     <string name="empty_no_events_day">Walang makikita dito; lumabas muna?</string>
     <string name="filter_date">Petsa</string>
@@ -1107,4 +1121,40 @@
     </plurals>
     <string name="share_availability_days_through">Hanggang %1$s</string>
     <string name="share_availability_window_duration">%1$s oras na window</string>
+    <string name="attendee_sheet_title">Mga dadalo</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d inanyayahan</item>
+        <item quantity="other">%d inanyayahan</item>
+    </plurals>
+    <string name="attendee_search_hint">Maghanap</string>
+    <string name="attendee_search_no_matches">Walang resulta</string>
+    <string name="attendee_section_going">Pupunta</string>
+    <string name="attendee_section_maybe">Marahil</string>
+    <string name="attendee_section_pending">Naghihintay</string>
+    <string name="attendee_section_declined">Tumanggi</string>
+    <string name="attendee_section_delegated">Ipinasa</string>
+    <string name="invitees_summary_you_alone">Ikaw</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ikaw · %d inanyayahan</item>
+        <item quantity="other">Ikaw · %d inanyayahan</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d inanyayahan</item>
+        <item quantity="other">%d inanyayahan</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s nagho-host</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ikaw</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ikaw + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ikaw + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ikaw + %d</item>
+        <item quantity="other">Ikaw + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d pa</item>
+        <item quantity="other">%1$s · %2$d pa</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Baguhin ang sagot</string>
 </resources>

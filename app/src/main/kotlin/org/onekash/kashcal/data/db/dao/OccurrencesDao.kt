@@ -469,6 +469,23 @@ interface OccurrencesDao {
     suspend fun markCancelled(eventId: Long, occurrenceTime: Long)
 
     /**
+     * Mark the occurrence linked to an exception event as cancelled.
+     *
+     * Required for the edit-then-delete flow: when an occurrence has been
+     * edited into an exception, the master's occurrence row carries the
+     * exception's modified start_ts (set by linkException) — not the
+     * original RRULE time. Using markCancelled with the original instance
+     * time misses the row because the 60s tolerance can't bridge the
+     * user's edit shift. Match by exception_event_id instead.
+     */
+    @Query("""
+        UPDATE occurrences
+        SET is_cancelled = 1
+        WHERE exception_event_id = :exceptionEventId
+    """)
+    suspend fun markCancelledByException(exceptionEventId: Long)
+
+    /**
      * Unmark occurrence as cancelled (EXDATE removed).
      *
      * Uses 60-second (60000ms) tolerance for consistency with markCancelled.

@@ -75,6 +75,50 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Tha am freagairt a\' buntainn ris an t-sreath gu lèir.</string>
     <string name="rsvp_modified_snackbar">Dh\'fhàillig am freagairt airson %1$s: chaidh an tachartas atharrachadh. Freagair a-rithist.</string>
+    <string name="invitees_host_tag">Aoigh</string>
+    <string name="invitees_summary_you_alone">Thu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Thu · %d air a chuireadh</item>
+        <item quantity="two">Thu · %d air an cuireadh</item>
+        <item quantity="few">Thu · %d air an cuireadh</item>
+        <item quantity="other">Thu · %d air an cuireadh</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d air a chuireadh</item>
+        <item quantity="two">%d air an cuireadh</item>
+        <item quantity="few">%d air an cuireadh</item>
+        <item quantity="other">%d air an cuireadh</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s na aoigh</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Thu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Thu + %3$d</item>
+        <item quantity="two">%1$s (%2$s) · Thu + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Thu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Thu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Thu + %d</item>
+        <item quantity="two">Thu + %d</item>
+        <item quantity="few">Thu + %d</item>
+        <item quantity="other">Thu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d a bharrachd</item>
+        <item quantity="two">%1$s · %2$d a bharrachd</item>
+        <item quantity="few">%1$s · %2$d a bharrachd</item>
+        <item quantity="other">%1$s · %2$d a bharrachd</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Atharraich am freagairt</string>
+    <string name="rsvp_question_going">A\' dol?</string>
+    <string name="rsvp_action_yes">Tha</string>
+    <string name="rsvp_action_maybe">\'S dòcha</string>
+    <string name="rsvp_action_no">Chan eil</string>
+    <string name="rsvp_state_going">Tha thu a\' dol</string>
+    <string name="rsvp_state_maybe">\'S dòcha</string>
+    <string name="rsvp_state_not_going">Chan eil thu a\' dol</string>
+    <string name="rsvp_action_change">Atharraich</string>
+
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Dìreach am fear seo</string>
@@ -491,6 +535,9 @@
     <string name="label_found_events">Air lorg: %1$d tachartas</string>
     <string name="label_open_debug_menu">Fosgail clàr-taice dì-bhugachaidh</string>
     <string name="placeholder_search">Lorg…</string>
+    <string name="settings_search_placeholder">Lorg sna roghainnean…</string>
+    <string name="settings_search_no_results">Cha deach roghainn a lorg airson \"%1$s\"</string>
+    <string name="cd_search_settings">Lorg sna roghainnean</string>
     <string name="status_sync_paused">Sioncronachadh air stad</string>
     <string name="status_not_synced">Gun sioncronachadh</string>
     <string name="status_sync_error">Mearachd sioncronachaidh</string>
@@ -735,11 +782,11 @@
     </plurals>
 
     <!-- HomeScreen -->
-    <string name="dialog_edit_recurring_title">Deasaich tachartas ath-thachairteil</string>
-    <string name="dialog_delete_recurring_title">Sguab tachartas ath-thachairteil às</string>
-    <string name="dialog_edit_recurring_message">\'S e tachartas ath-thachairteil a tha seo. Ciamar a bu mhath leat an t-atharrachadh seo a chur an sàs?</string>
     <string name="recurring_this_event">An tachartas seo</string>
     <string name="recurring_all_events">Gach tachartas</string>
+    <string name="dialog_edit_recurring_title">Sàbhail atharraichean</string>
+    <string name="dialog_delete_recurring_title">Sguab às</string>
+    <string name="dialog_move_recurring_title">Gluais</string>
     <string name="empty_pick_a_day">Tagh là. Dèan feum dheth.</string>
     <string name="empty_no_events_day">Chan eil dad ri fhaicinn an seo; rach a-mach?</string>
     <string name="filter_date">Ceann-là</string>
@@ -1200,5 +1247,19 @@
     <string name="share_availability_days_through">Gu ruige %1$s</string>
     <string name="share_availability_window_duration">Uinneag de %1$s uair</string>
     <string name="share_from_kashcal_footer">Air co-roinneadh o KashCal</string>
+    <string name="attendee_sheet_title">Luchd-frithealaidh</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d air a chuireadh</item>
+        <item quantity="two">%d air an cuireadh</item>
+        <item quantity="few">%d air an cuireadh</item>
+        <item quantity="other">%d air an cuireadh</item>
+    </plurals>
+    <string name="attendee_search_hint">Lorg</string>
+    <string name="attendee_search_no_matches">Gun toraidhean</string>
+    <string name="attendee_section_going">A\' dol</string>
+    <string name="attendee_section_maybe">\'S dòcha</string>
+    <string name="attendee_section_pending">A\' feitheamh</string>
+    <string name="attendee_section_declined">Air dhiùltadh</string>
+    <string name="attendee_section_delegated">Air sgaoileadh</string>
 
 </resources>

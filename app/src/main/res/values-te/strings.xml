@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">తిరస్కరించు</string>
     <string name="rsvp_series_disclosure">మీ స్పందన మొత్తం సిరీస్‌కు వర్తిస్తుంది.</string>
     <string name="rsvp_modified_snackbar">%1$s కోసం RSVP విఫలమైంది — ఈవెంట్ సవరించబడింది. దయచేసి మళ్లీ స్పందించండి.</string>
+    <string name="invitees_host_tag">ఆతిథేయి</string>
+    <string name="rsvp_question_going">వస్తున్నారా?</string>
+    <string name="rsvp_action_yes">అవును</string>
+    <string name="rsvp_action_maybe">బహుశా</string>
+    <string name="rsvp_action_no">కాదు</string>
+    <string name="rsvp_state_going">మీరు వస్తున్నారు</string>
+    <string name="rsvp_state_maybe">బహుశా</string>
+    <string name="rsvp_state_not_going">మీరు రావడం లేదు</string>
+    <string name="rsvp_action_change">మార్చండి</string>
+
+
+    <string name="invitees_summary_you_alone">మీరు</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">మీరు · %d మంది ఆహ్వానితులు</item>
+        <item quantity="other">మీరు · %d మంది ఆహ్వానితులు</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d మంది ఆహ్వానితులు</item>
+        <item quantity="other">%d మంది ఆహ్వానితులు</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s నిర్వహిస్తున్నారు</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · మీరు</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · మీరు + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · మీరు + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">మీరు + %d</item>
+        <item quantity="other">మీరు + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · మరో %2$d మంది</item>
+        <item quantity="other">%1$s · మరో %2$d మంది</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">ప్రతిస్పందన మార్చండి</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ఇది మాత్రమే</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">కనుగొన్నవి: %1$d ఈవెంట్‌లు</string>
     <string name="label_open_debug_menu">డీబగ్ మెనూ తెరువు</string>
     <string name="placeholder_search">శోధించు…</string>
+    <string name="settings_search_placeholder">సెట్టింగ్‌లను శోధించు…</string>
+    <string name="settings_search_no_results">\"%1$s\" కోసం సెట్టింగ్‌లు ఏవీ కనుగొనబడలేదు</string>
+    <string name="cd_search_settings">సెట్టింగ్‌లను శోధించు</string>
     <string name="status_sync_paused">సింక్ ఆపివేయబడింది</string>
     <string name="status_not_synced">సింక్ చేయబడలేదు</string>
     <string name="status_sync_error">సింక్ లోపం</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">పునరావృత ఈవెంట్ మార్చు</string>
-    <string name="dialog_delete_recurring_title">పునరావృత ఈవెంట్ తొలగించు</string>
-    <string name="dialog_edit_recurring_message">ఇది పునరావృత ఈవెంట్. ఈ మార్పును ఎలా వర్తింపజేయాలనుకుంటున్నారు?</string>
     <string name="recurring_this_event">ఈ ఈవెంట్</string>
     <string name="recurring_all_events">అన్ని ఈవెంట్‌లు</string>
+    <string name="dialog_edit_recurring_title">మార్పులను సేవ్ చేయండి</string>
+    <string name="dialog_delete_recurring_title">తొలగించు</string>
+    <string name="dialog_move_recurring_title">తరలించు</string>
     <string name="empty_pick_a_day">ఒక రోజు ఎంచుకో. దాన్ని సద్వినియోగం చేసుకో.</string>
     <string name="empty_no_events_day">ఇక్కడ ఏమీ లేదు; బయటకు వెళ్ళి చల్లగాలి పీల్చు?</string>
     <string name="filter_date">తేదీ</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">సంవత్సరం</string>
     <string name="cd_decrease_interval">విరామాన్ని తగ్గించండి</string>
     <string name="cd_increase_interval">విరామాన్ని పెంచండి</string>
+    <string name="attendee_sheet_title">హాజరయ్యేవారు</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d మంది ఆహ్వానించబడ్డారు</item>
+        <item quantity="other">%d మంది ఆహ్వానించబడ్డారు</item>
+    </plurals>
+    <string name="attendee_search_hint">శోధించండి</string>
+    <string name="attendee_search_no_matches">ఫలితాలు లేవు</string>
+    <string name="attendee_section_going">వస్తున్నారు</string>
+    <string name="attendee_section_maybe">బహుశా</string>
+    <string name="attendee_section_pending">పెండింగ్</string>
+    <string name="attendee_section_declined">తిరస్కరించారు</string>
+    <string name="attendee_section_delegated">అప్పగించారు</string>
 </resources>

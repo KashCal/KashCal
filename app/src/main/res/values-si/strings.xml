@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">පිළිගන්න</string>
     <string name="rsvp_action_tentative">කල්පනා කරමින්</string>
     <string name="rsvp_action_decline">ප්‍රතික්ෂේප කරන්න</string>
+    <string name="invitees_host_tag">සත්කාරක</string>
+    <string name="rsvp_question_going">යනවාද?</string>
+    <string name="rsvp_action_yes">ඔව්</string>
+    <string name="rsvp_action_maybe">සමහර විට</string>
+    <string name="rsvp_action_no">නැහැ</string>
+    <string name="rsvp_state_going">ඔබ යනවා</string>
+    <string name="rsvp_state_maybe">සමහර විට</string>
+    <string name="rsvp_state_not_going">ඔබ යන්නේ නැහැ</string>
+    <string name="rsvp_action_change">වෙනස් කරන්න</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -111,6 +122,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">සැකසීම්</string>
+    <string name="settings_search_placeholder">සැකසීම් සොයන්න…</string>
+    <string name="settings_search_no_results">\"%1$s\" සඳහා සැකසීම් හමු නොවීය</string>
+    <string name="cd_search_settings">සැකසීම් සොයන්න</string>
     <string name="settings_time_format">කාල ආකෘතිය</string>
     <string name="settings_start_week_on">සතිය ආරම්භ කරන්න</string>
     <string name="settings_event_emojis">සිදුවීම් ඉමෝජි</string>
@@ -657,11 +671,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">පුනරාවර්තන සිදුවීම සංස්කරණය</string>
-    <string name="dialog_delete_recurring_title">පුනරාවර්තන සිදුවීම මකන්න</string>
-    <string name="dialog_edit_recurring_message">මෙය පුනරාවර්තන සිදුවීමකි. ඔබට මෙම වෙනස්කම කෙසේ යෙදිය යුතුද?</string>
     <string name="recurring_this_event">මෙම සිදුවීම</string>
     <string name="recurring_all_events">සියලු සිදුවීම්</string>
+    <string name="dialog_edit_recurring_title">වෙනස්කම් සුරකින්න</string>
+    <string name="dialog_delete_recurring_title">මකන්න</string>
+    <string name="dialog_move_recurring_title">ගෙනයන්න</string>
     <string name="empty_pick_a_day">දිනයක් තෝරන්න. එය හැමරගන්න.</string>
     <string name="empty_no_events_day">මෙහි බලන්නට කිසිවක් නැත; පිටතට ගිහින් එන්නද?</string>
     <string name="filter_date">දිනය</string>
@@ -1082,4 +1096,40 @@
     </plurals>
     <string name="share_availability_days_through">%1$s දක්වා</string>
     <string name="share_availability_window_duration">පැය %1$sක කාල පරාසය</string>
+    <string name="attendee_sheet_title">සහභාගිවන්නන්</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d ක් ආරාධිතයි</item>
+        <item quantity="other">%d ක් ආරාධිතයි</item>
+    </plurals>
+    <string name="attendee_search_hint">සොයන්න</string>
+    <string name="attendee_search_no_matches">ප්‍රතිඵල නැත</string>
+    <string name="attendee_section_going">යනවා</string>
+    <string name="attendee_section_maybe">සමහර විට</string>
+    <string name="attendee_section_pending">පොරොත්තු</string>
+    <string name="attendee_section_declined">ප්‍රතික්ෂේප</string>
+    <string name="attendee_section_delegated">පවරා දී</string>
+    <string name="invitees_summary_you_alone">ඔබ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">ඔබ · %d ක් ආරාධිතයි</item>
+        <item quantity="other">ඔබ · %d ක් ආරාධිතයි</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d ක් ආරාධිතයි</item>
+        <item quantity="other">%d ක් ආරාධිතයි</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s සත්කාරක</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · ඔබ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · ඔබ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · ඔබ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">ඔබ + %d</item>
+        <item quantity="other">ඔබ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · තවත් %2$d</item>
+        <item quantity="other">%1$s · තවත් %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">ප්‍රතිචාරය වෙනස් කරන්න</string>
 </resources>

@@ -245,6 +245,21 @@ data class HomeUiState(
     /** Pending drag reschedule for recurring event (shows edit scope dialog) */
     val pendingDragReschedule: PendingDragReschedule? = null,
 
+    /** Pending form save awaiting scope selection (shows edit scope sheet over the form) */
+    val pendingFormSave: PendingFormSave? = null,
+
+    /** Pending delete awaiting scope selection (shows delete scope sheet) */
+    val pendingDelete: PendingDelete? = null,
+
+    /**
+     * Tick counter incremented when a form-save deferral path needs
+     * to release the form's `isSaving = true` flag back to false —
+     * after a save failure or a scope-sheet cancel. The form
+     * observes this via LaunchedEffect; the value isn't read, only
+     * the change.
+     */
+    val formSaveFailedTick: Int = 0,
+
     // === DISPLAY PREFERENCES ===
     /** Show auto-detected emojis in event titles */
     val showEventEmojis: Boolean = true,
@@ -442,7 +457,7 @@ enum class ViewMode(val key: String) {
     }
 }
 
-enum class EditScope { THIS_EVENT, ALL_EVENTS }
+enum class EditScope { THIS_EVENT, THIS_AND_FUTURE, ALL_EVENTS }
 
 @Immutable
 data class PendingDragReschedule(
@@ -450,3 +465,71 @@ data class PendingDragReschedule(
     val targetDate: LocalDate,
     val targetStartMinutes: Int
 )
+
+/**
+ * A form save that was deferred so the user can pick a scope. The
+ * sheet is rendered over the form; the form state is held verbatim
+ * so a Cancel from the sheet leaves the user's edits intact.
+ *
+ * `originalRrule` is the rrule the form was opened with — needed by
+ * [computeEditScopeOptions][org.onekash.kashcal.ui.viewmodels.computeEditScopeOptions]
+ * to detect whether the user changed it.
+ *
+ * `masterStartTs` and `isDetachedException` are captured at request
+ * time from the live event so the option-set rules don't have to
+ * derive them from the (possibly user-edited) form state.
+ */
+@Immutable
+data class PendingFormSave(
+    val formState: org.onekash.kashcal.ui.components.EventFormState,
+    val occurrenceTs: Long,
+    val originalRrule: String?,
+    val masterStartTs: Long,
+    val isDetachedException: Boolean,
+    val isRecurringDevice: Boolean = false,
+    /**
+     * The loaded event's `isAllDay` at form-load time. ScopeContext
+     * uses this rather than `formState.isAllDay` so toggling all-day
+     * in the form before save can't change the date format the
+     * scope-sheet sub-copy applies to the occurrence timestamp.
+     */
+    val loadedIsAllDay: Boolean = false,
+)
+
+/**
+ * A delete awaiting scope selection (recurring events only).
+ * Non-recurring deletes never set this state; the ViewModel routes
+ * them directly via the existing `deleteEventOptimistic` /
+ * `deleteDeviceEvent` paths.
+ *
+ * Sealed by Room vs Device so the consumer (HomeScreen + confirm
+ * dispatch in the ViewModel) can branch exhaustively at the type
+ * level rather than via nullable-field probes. `masterStartTs` and
+ * `isDetachedException` are captured at request time, same as
+ * [PendingFormSave].
+ */
+sealed interface PendingDelete {
+    val occurrenceTs: Long
+    val masterStartTs: Long
+    val isDetachedException: Boolean
+    val isAllDay: Boolean
+
+    @Immutable
+    data class Room(
+        val event: org.onekash.kashcal.data.db.entity.Event,
+        override val occurrenceTs: Long,
+        override val masterStartTs: Long,
+        override val isDetachedException: Boolean,
+        override val isAllDay: Boolean,
+    ) : PendingDelete
+
+    @Immutable
+    data class Device(
+        val masterEventId: Long,
+        val calendarId: Long,
+        override val occurrenceTs: Long,
+        override val masterStartTs: Long,
+        override val isDetachedException: Boolean,
+        override val isAllDay: Boolean,
+    ) : PendingDelete
+}

@@ -495,6 +495,9 @@
     <string name="label_found_events">Gefunden: %1$d Termine</string>
     <string name="label_open_debug_menu">Debug-Menü öffnen</string>
     <string name="placeholder_search">Suche…</string>
+    <string name="settings_search_placeholder">Einstellungen durchsuchen…</string>
+    <string name="settings_search_no_results">Keine Einstellungen gefunden für \"%1$s\"</string>
+    <string name="cd_search_settings">Einstellungen durchsuchen</string>
     <string name="status_sync_paused">Sync pausiert</string>
     <string name="status_not_synced">Nicht synchronisiert</string>
     <string name="status_sync_error">Sync-Fehler</string>
@@ -679,11 +682,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Wiederkehrenden Termin bearbeiten</string>
-    <string name="dialog_delete_recurring_title">Wiederkehrenden Termin löschen</string>
-    <string name="dialog_edit_recurring_message">Dies ist ein wiederkehrender Termin. Wie möchtest du diese Änderung anwenden?</string>
     <string name="recurring_this_event">Diesen Termin</string>
     <string name="recurring_all_events">Alle Termine</string>
+    <string name="dialog_edit_recurring_title">Änderungen speichern für</string>
+    <string name="dialog_delete_recurring_title">Löschen</string>
+    <string name="dialog_move_recurring_title">Verschieben</string>
     <string name="empty_pick_a_day">Wähle einen Tag. Nutze ihn.</string>
     <string name="empty_no_events_day">Nichts los; raus an die frische Luft?</string>
     <string name="filter_date">Datum</string>
@@ -926,6 +929,16 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Die Antwort gilt für die gesamte Serie.</string>
     <string name="rsvp_modified_snackbar">Antwort für %1$s fehlgeschlagen – der Termin wurde geändert. Bitte erneut antworten.</string>
+    <string name="invitees_host_tag">Gastgeber</string>
+    <string name="rsvp_question_going">Zusagen?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Vielleicht</string>
+    <string name="rsvp_action_no">Nein</string>
+    <string name="rsvp_state_going">Du bist dabei</string>
+    <string name="rsvp_state_maybe">Vielleicht</string>
+    <string name="rsvp_state_not_going">Du bist nicht dabei</string>
+    <string name="rsvp_action_change">Ändern</string>
+
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Wiederholt sich nicht</string>
@@ -1059,6 +1072,18 @@
     <string name="attendee_status_tentative">Vorläufig</string>
     <string name="attendee_status_delegated">Delegiert</string>
     <string name="attendee_status_pending">Ausstehend</string>
+    <string name="attendee_sheet_title">Teilnehmer</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d eingeladen</item>
+        <item quantity="other">%d eingeladen</item>
+    </plurals>
+    <string name="attendee_search_hint">Suchen</string>
+    <string name="attendee_search_no_matches">Keine Treffer</string>
+    <string name="attendee_section_going">Zugesagt</string>
+    <string name="attendee_section_maybe">Vielleicht</string>
+    <string name="attendee_section_pending">Ausstehend</string>
+    <string name="attendee_section_declined">Abgesagt</string>
+    <string name="attendee_section_delegated">Delegiert</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alles erledigt</string>
     <string name="inbox_organizer_suffix">(Organisator)</string>
@@ -1099,4 +1124,28 @@
         <item quantity="one">Frei am nächsten %1$d Tag (%2$s – %3$s):</item>
         <item quantity="other">Frei in den nächsten %1$d Tagen (%2$s – %3$s):</item>
     </plurals>
+    <string name="invitees_summary_you_alone">Du</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Du · %d eingeladen</item>
+        <item quantity="other">Du · %d eingeladen</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d eingeladen</item>
+        <item quantity="other">%d eingeladen</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organisiert</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Du</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Du + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Du + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Du + %d</item>
+        <item quantity="other">Du + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d weitere</item>
+        <item quantity="other">%1$s · %2$d weitere</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Antwort ändern</string>
 </resources>

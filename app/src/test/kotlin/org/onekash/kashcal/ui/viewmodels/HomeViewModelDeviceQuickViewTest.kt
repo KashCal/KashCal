@@ -151,7 +151,8 @@ class HomeViewModelDeviceQuickViewTest {
             isWritable = true,
             originalId = null,
             originalInstanceTime = null,
-            timezone = "UTC"
+            timezone = "UTC",
+            eventStartTs = startTs,
         )
     }
 

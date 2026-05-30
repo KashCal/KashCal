@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Yenqaba</string>
     <string name="rsvp_series_disclosure">Impendulo yakho isebenza kochungechunge lonke.</string>
     <string name="rsvp_modified_snackbar">I-RSVP ye-%1$s yehlulekile — umcimbi uguquliwe. Sicela uphendule futhi.</string>
+    <string name="invitees_host_tag">Umsingathi</string>
+    <string name="invitees_summary_you_alone">Wena</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Wena · %d omenyiwe</item>
+        <item quantity="other">Wena · %d abamenyiwe</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d omenyiwe</item>
+        <item quantity="other">%d abamenyiwe</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ungumsingathi</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Wena</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Wena + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Wena + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Wena + %d</item>
+        <item quantity="other">Wena + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d okwengeziwe</item>
+        <item quantity="other">%1$s · %2$d okwengeziwe</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Shintsha impendulo</string>
+    <string name="rsvp_question_going">Uyaya?</string>
+    <string name="rsvp_action_yes">Yebo</string>
+    <string name="rsvp_action_maybe">Mhlawumbe</string>
+    <string name="rsvp_action_no">Cha</string>
+    <string name="rsvp_state_going">Uyaya</string>
+    <string name="rsvp_state_maybe">Mhlawumbe</string>
+    <string name="rsvp_state_not_going">Awuyi</string>
+    <string name="rsvp_action_change">Shintsha</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Lona kuphela</string>
@@ -108,6 +142,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Izilungiselelo</string>
+    <string name="settings_search_placeholder">Sesha izilungiselelo…</string>
+    <string name="settings_search_no_results">Azikho izilungiselelo ezitholakele ze-\"%1$s\"</string>
+    <string name="cd_search_settings">Sesha izilungiselelo</string>
     <string name="settings_time_format">Ifomethi Yesikhathi</string>
     <string name="settings_start_week_on">Qala Isonto Ngo</string>
     <string name="settings_event_emojis">Ama-Emoji Omcimbi</string>
@@ -678,11 +715,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Hlela umcimbi ophindaphindayo</string>
-    <string name="dialog_delete_recurring_title">Susa umcimbi ophindaphindayo</string>
-    <string name="dialog_edit_recurring_message">Lo umcimbi ophindaphindayo. Ungathanda ukusebenzisa kanjani lolu shintsho?</string>
     <string name="recurring_this_event">Lo mcimbi</string>
     <string name="recurring_all_events">Yonke imicimbi</string>
+    <string name="dialog_edit_recurring_title">Londoloza izinguquko</string>
+    <string name="dialog_delete_recurring_title">Susa</string>
+    <string name="dialog_move_recurring_title">Hambisa</string>
     <string name="empty_pick_a_day">Khetha usuku. Lubambe.</string>
     <string name="empty_no_events_day">Akukho lutho lapha; hamba uphumule?</string>
     <string name="filter_date">Usuku</string>
@@ -1109,4 +1146,16 @@
     <string name="share_availability_days_through">Kuze kube ngu-%1$s</string>
     <string name="share_availability_window_duration">Iwindi lamahora angu-%1$s</string>
     <string name="share_from_kashcal_footer">Kwabelwane kusuka ku-KashCal</string>
+    <string name="attendee_sheet_title">Abazohambela</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d omenyiwe</item>
+        <item quantity="other">%d abamenyiwe</item>
+    </plurals>
+    <string name="attendee_search_hint">Sesha</string>
+    <string name="attendee_search_no_matches">Awekho amabhalwa</string>
+    <string name="attendee_section_going">Bayaya</string>
+    <string name="attendee_section_maybe">Mhlawumbe</string>
+    <string name="attendee_section_pending">Kulindiwe</string>
+    <string name="attendee_section_declined">Banqabile</string>
+    <string name="attendee_section_delegated">Bedluliselwe</string>
 </resources>

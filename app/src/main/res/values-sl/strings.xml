@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">Sprejmi</string>
     <string name="rsvp_action_tentative">Pogojno</string>
     <string name="rsvp_action_decline">Zavrni</string>
+    <string name="invitees_host_tag">Gostitelj</string>
+    <string name="rsvp_question_going">Greš?</string>
+    <string name="rsvp_action_yes">Da</string>
+    <string name="rsvp_action_maybe">Mogoče</string>
+    <string name="rsvp_action_no">Ne</string>
+    <string name="rsvp_state_going">Greš</string>
+    <string name="rsvp_state_maybe">Mogoče</string>
+    <string name="rsvp_state_not_going">Ne greš</string>
+    <string name="rsvp_action_change">Spremeni</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -483,6 +494,9 @@
     <string name="label_found_events">Najdeno: %1$d dogodkov</string>
     <string name="label_open_debug_menu">Odpri meni za odpravljanje napak</string>
     <string name="placeholder_search">Iskanje…</string>
+    <string name="settings_search_placeholder">Iskanje po nastavitvah…</string>
+    <string name="settings_search_no_results">Za \"%1$s\" ni najdenih nastavitev</string>
+    <string name="cd_search_settings">Iskanje po nastavitvah</string>
     <string name="status_sync_paused">Sinhronizacija zaustavljena</string>
     <string name="status_not_synced">Ni sinhronizirano</string>
     <string name="status_sync_error">Napaka sinhronizacije</string>
@@ -722,11 +736,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Uredi ponavljajoči dogodek</string>
-    <string name="dialog_delete_recurring_title">Izbriši ponavljajoči dogodek</string>
-    <string name="dialog_edit_recurring_message">To je ponavljajoči dogodek. Kako želite uporabiti to spremembo?</string>
     <string name="recurring_this_event">Ta dogodek</string>
     <string name="recurring_all_events">Vse dogodke</string>
+    <string name="dialog_edit_recurring_title">Shrani spremembe v</string>
+    <string name="dialog_delete_recurring_title">Izbriši</string>
+    <string name="dialog_move_recurring_title">Premakni</string>
     <string name="empty_pick_a_day">Izberite dan. Izkoristite ga.</string>
     <string name="empty_no_events_day">Nič za videti; pojdite na svež zrak?</string>
     <string name="filter_date">Datum</string>
@@ -1112,6 +1126,54 @@
     <string name="attendee_status_tentative">Mogoče</string>
     <string name="attendee_status_delegated">Pooblaščeno</string>
     <string name="attendee_status_pending">Čaka</string>
+    <string name="attendee_sheet_title">Udeleženci</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d povabljen</item>
+        <item quantity="two">%d povabljena</item>
+        <item quantity="few">%d povabljeni</item>
+        <item quantity="other">%d povabljenih</item>
+    </plurals>
+    <string name="attendee_search_hint">Iskanje</string>
+    <string name="attendee_search_no_matches">Brez zadetkov</string>
+    <string name="attendee_section_going">Gredo</string>
+    <string name="attendee_section_maybe">Mogoče</string>
+    <string name="attendee_section_pending">Čakajoči</string>
+    <string name="attendee_section_declined">Zavrnili</string>
+    <string name="attendee_section_delegated">Pooblaščeni</string>
+    <string name="invitees_summary_you_alone">Ti</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ti · %d povabljen</item>
+        <item quantity="two">Ti · %d povabljena</item>
+        <item quantity="few">Ti · %d povabljeni</item>
+        <item quantity="other">Ti · %d povabljenih</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d povabljen</item>
+        <item quantity="two">%d povabljena</item>
+        <item quantity="few">%d povabljeni</item>
+        <item quantity="other">%d povabljenih</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizira</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ti</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="two">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ti + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ti + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ti + %d</item>
+        <item quantity="two">Ti + %d</item>
+        <item quantity="few">Ti + %d</item>
+        <item quantity="other">Ti + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · še %2$d</item>
+        <item quantity="two">%1$s · še %2$d</item>
+        <item quantity="few">%1$s · še %2$d</item>
+        <item quantity="other">%1$s · še %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Spremeni odgovor</string>
     <string name="inbox_empty_caught_up">Vse opravljeno</string>
     <string name="inbox_organizer_suffix">(organizator)</string>
     <string name="menu_invites">Povabila</string>

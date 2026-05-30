@@ -713,6 +713,9 @@
     <string name="label_found_events">Found: %1$d events</string>
     <string name="label_open_debug_menu">Open debug menu</string>
     <string name="placeholder_search">Search…</string>
+    <string name="settings_search_placeholder">Search settings…</string>
+    <string name="settings_search_no_results">No settings found for \"%1$s\"</string>
+    <string name="cd_search_settings">Search settings</string>
     <string name="status_sync_paused">Sync paused</string>
     <string name="status_not_synced">Not synced</string>
     <string name="status_sync_error">Sync error</string>
@@ -921,11 +924,86 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Edit recurring event</string>
-    <string name="dialog_delete_recurring_title">Delete recurring event</string>
-    <string name="dialog_edit_recurring_message">This is a recurring event. How would you like to apply this change?</string>
+    <!-- Title shown above the recurring-scope sheet's three cards (form save flow). Kept short — acts as the question. -->
+    <string name="dialog_edit_recurring_title">Save changes to</string>
+    <!-- Title shown above the recurring-scope sheet's three cards (delete flow). One verb. -->
+    <string name="dialog_delete_recurring_title">Delete</string>
+    <!-- Title shown above the recurring-scope sheet's two cards (drag-reschedule flow). One verb. -->
+    <string name="dialog_move_recurring_title">Move</string>
     <string name="recurring_this_event">This event</string>
     <string name="recurring_all_events">All events</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <!-- Title of the full attendee list sheet, opened by tapping the caret on the InviteesBlock. -->
+    <string name="attendee_sheet_title">Attendees</string>
+    <!-- Plural in the sheet's header counter, e.g. "12 invited" — the "invited" half. -->
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invited</item>
+        <item quantity="other">%d invited</item>
+    </plurals>
+    <!-- Placeholder shown inside the search field above the attendee list. -->
+    <string name="attendee_search_hint">Search</string>
+    <!-- Empty state when the search query matches no attendee in the sheet. -->
+    <string name="attendee_search_no_matches">No matches</string>
+    <!-- Section header above the group of attendees who accepted. -->
+    <string name="attendee_section_going">Going</string>
+    <!-- Section header above the group of attendees who marked tentative. -->
+    <string name="attendee_section_maybe">Maybe</string>
+    <!-- Section header above the group of attendees who haven't responded yet. -->
+    <string name="attendee_section_pending">Pending</string>
+    <!-- Section header above the group of attendees who declined. -->
+    <string name="attendee_section_declined">Declined</string>
+    <!-- Section header above the group of attendees who delegated to someone else. -->
+    <string name="attendee_section_delegated">Delegated</string>
+    <!-- Tag shown next to the organizer's name in the invitees summary. Short, all-caps small. -->
+    <string name="invitees_host_tag">Host</string>
+    <!-- Summary line variants for the InviteesBlock — single-line "who's here" descriptor above the RSVP cards or collapsed band. -->
+    <!-- Standalone: "You" — when the user is the only attendee. -->
+    <string name="invitees_summary_you_alone">You</string>
+    <!-- User is organizing with N other invitees: "You · 11 invited". %d is the invitee count excluding you. -->
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">You · %d invited</item>
+        <item quantity="other">You · %d invited</item>
+    </plurals>
+    <!-- Off-list with no organizer surfaced: "12 invited". -->
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invited</item>
+        <item quantity="other">%d invited</item>
+    </plurals>
+    <!-- Off-list with organizer: "12 invited · Maria Chen hosting". %1$s is the count phrase, %2$s is the organizer name. -->
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s hosting</string>
+    <!-- On-list event organized by someone else, only You + organizer: "Maria Chen (Host) · You". %1$s = host name, %2$s = host tag (e.g. "Host"). -->
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · You</string>
+    <!-- On-list event organized by someone else with You + N other invitees: "Maria Chen (Host) · You + 4". %1$s = host name, %2$s = host tag, %3$d = other count (excluding host and You). -->
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · You + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · You + %3$d</item>
+    </plurals>
+    <!-- On-list event with no surfaced organizer, You + N: "You + 4". -->
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">You + %d</item>
+        <item quantity="other">You + %d</item>
+    </plurals>
+    <!-- Off-list-but-marked-on-list edge case: "Maria Chen · 4 more". %1$s = host name, %2$d = others count. -->
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d more</item>
+        <item quantity="other">%1$s · %2$d more</item>
+    </plurals>
+    <!-- TalkBack action label for the collapsed RSVP band — what tapping it does. Phrase as a verb action. -->
+    <string name="rsvp_action_change_a11y">Change RSVP</string>
+    <!-- Question above the RSVP cards in pre-response state. One word + question mark; treat as the question being asked. -->
+    <string name="rsvp_question_going">Going?</string>
+    <!-- RSVP card labels — one word each. -->
+    <string name="rsvp_action_yes">Yes</string>
+    <string name="rsvp_action_maybe">Maybe</string>
+    <string name="rsvp_action_no">No</string>
+    <!-- Collapsed-state band labels after the user has responded (QuickView only — form keeps cards always visible). -->
+    <string name="rsvp_state_going">You\'re going</string>
+    <string name="rsvp_state_maybe">Maybe</string>
+    <string name="rsvp_state_not_going">Not going</string>
+    <!-- Affordance on the right of the collapsed band — re-expands the cards inline. -->
+    <string name="rsvp_action_change">Change</string>
+
     <!-- Empty state: playful/casual — shown when no day is selected. Keep the playful tone. -->
     <string name="empty_pick_a_day">Pick a day. Seize it.</string>
     <!-- Empty state: playful/casual — shown when selected day has no events. Keep informal. -->

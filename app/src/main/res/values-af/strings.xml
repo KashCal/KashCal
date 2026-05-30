@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Weier</string>
     <string name="rsvp_series_disclosure">Jou antwoord geld vir die hele reeks.</string>
     <string name="rsvp_modified_snackbar">RSVP vir %1$s het misluk — gebeurtenis is verander. Reageer asseblief weer.</string>
+    <string name="invitees_host_tag">Gasheer</string>
+    <string name="invitees_summary_you_alone">Jy</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Jy · %d genooi</item>
+        <item quantity="other">Jy · %d genooi</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d genooi</item>
+        <item quantity="other">%d genooi</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s reël</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Jy</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Jy + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Jy + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Jy + %d</item>
+        <item quantity="other">Jy + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d meer</item>
+        <item quantity="other">%1$s · %2$d meer</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Verander antwoord</string>
+    <string name="rsvp_question_going">Gaan jy?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Miskien</string>
+    <string name="rsvp_action_no">Nee</string>
+    <string name="rsvp_state_going">Jy gaan</string>
+    <string name="rsvp_state_maybe">Miskien</string>
+    <string name="rsvp_state_not_going">Jy gaan nie</string>
+    <string name="rsvp_action_change">Verander</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Net hierdie een</string>
@@ -108,6 +142,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Instellings</string>
+    <string name="settings_search_placeholder">Soek instellings…</string>
+    <string name="settings_search_no_results">Geen instellings gevind vir \"%1$s\" nie</string>
+    <string name="cd_search_settings">Soek instellings</string>
     <string name="settings_time_format">Tydformaat</string>
     <string name="settings_start_week_on">Begin Week Op</string>
     <string name="settings_event_emojis">Gebeurtenis-emojis</string>
@@ -678,11 +715,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Wysig herhalende gebeurtenis</string>
-    <string name="dialog_delete_recurring_title">Verwyder herhalende gebeurtenis</string>
-    <string name="dialog_edit_recurring_message">Dit is \'n herhalende gebeurtenis. Hoe wil jy hierdie verandering toepas?</string>
     <string name="recurring_this_event">Hierdie gebeurtenis</string>
     <string name="recurring_all_events">Alle gebeurtenisse</string>
+    <string name="dialog_edit_recurring_title">Stoor veranderinge na</string>
+    <string name="dialog_delete_recurring_title">Vee uit</string>
+    <string name="dialog_move_recurring_title">Skuif</string>
     <string name="empty_pick_a_day">Kies \'n dag. Gryp dit.</string>
     <string name="empty_no_events_day">Niks om hier te sien nie; gaan bietjie buite?</string>
     <string name="filter_date">Datum</string>
@@ -1107,4 +1144,16 @@
     <string name="share_availability_days_through">Tot %1$s</string>
     <string name="share_availability_window_duration">%1$s-uur venster</string>
     <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
+    <string name="attendee_sheet_title">Bywoners</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d genooi</item>
+        <item quantity="other">%d genooi</item>
+    </plurals>
+    <string name="attendee_search_hint">Soek</string>
+    <string name="attendee_search_no_matches">Geen resultate</string>
+    <string name="attendee_section_going">Gaan</string>
+    <string name="attendee_section_maybe">Miskien</string>
+    <string name="attendee_section_pending">Hangend</string>
+    <string name="attendee_section_declined">Geweier</string>
+    <string name="attendee_section_delegated">Gedelegeer</string>
 </resources>

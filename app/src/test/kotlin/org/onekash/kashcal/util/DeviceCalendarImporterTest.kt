@@ -73,6 +73,23 @@ class DeviceCalendarImporterTest {
         override suspend fun createException(calendarId: Long, masterEventId: Long, originalInstanceTime: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long, isAllDay: Boolean, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Long> = Result.success(0L)
         override suspend fun deleteSingleOccurrence(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
         override suspend fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
+        override suspend fun editThisAndFuture(
+            masterEventId: Long,
+            fromTimeMs: Long,
+            isAllDay: Boolean,
+            calendarId: Long,
+            title: String,
+            description: String?,
+            location: String?,
+            startTs: Long,
+            endTs: Long?,
+            rrule: String?,
+            duration: String?,
+            timezone: String,
+            reminders: List<Int>,
+            availability: Int,
+            eventColor: Int?,
+        ): Result<Long> = Result.success(0L)
         override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = Result.success(Unit)
         override suspend fun getDeviceEvent(eventId: Long) = null
         override suspend fun getDeviceEventWithExceptions(masterEventId: Long) = null

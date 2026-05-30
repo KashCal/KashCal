@@ -274,6 +274,50 @@ interface CalendarProviderRepository {
     ): Result<Unit>
 
     /**
+     * Split a recurring event into two halves: keep the past
+     * occurrences on the master, and create a new event row carrying
+     * the modified fields for the future half.
+     *
+     * Mirrors [deleteThisAndFuture] for the truncate-master half and
+     * the orphaned-exception cleanup, but instead of bailing on the
+     * first-occurrence path it updates the master in place with the
+     * new fields.
+     *
+     * The split steps are wrapped in a single
+     * `ContentResolver.applyBatch` so a failure during the new-row
+     * INSERT leaves the master's RRULE untouched (no half-split
+     * state).
+     *
+     * @param masterEventId Master recurring event ID
+     * @param fromTimeMs Occurrence timestamp from which the split
+     *   applies (inclusive). When `<= masterEvent.startTs` the master
+     *   is updated in place — equivalent to "edit all events."
+     * @param isAllDay Whether the event is all-day (drives UNTIL form
+     *   on the truncated master)
+     * @param calendarId Target calendar ID for the new row
+     * @return Result containing the new event id (or master id when
+     *   the first-occurrence shortcut fired) or
+     *   [org.onekash.kashcal.error.CalendarError.DeviceCalendar].
+     */
+    suspend fun editThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isAllDay: Boolean,
+        calendarId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long?,
+        rrule: String?,
+        duration: String?,
+        timezone: String,
+        reminders: List<Int>,
+        availability: Int = 0,
+        eventColor: Int? = null,
+    ): Result<Long>
+
+    /**
      * Move an event to a different calendar.
      *
      * @param eventId Event ID to move

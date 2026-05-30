@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Reddet</string>
     <string name="rsvp_series_disclosure">Yanıt, tüm seriye uygulanır.</string>
     <string name="rsvp_modified_snackbar">%1$s için yanıt başarısız oldu — etkinlik değiştirildi. Lütfen yeniden yanıtlayın.</string>
+    <string name="invitees_host_tag">Ev sahibi</string>
+    <string name="invitees_summary_you_alone">Sen</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sen · %d davetli</item>
+        <item quantity="other">Sen · %d davetli</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d davetli</item>
+        <item quantity="other">%d davetli</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s düzenliyor</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sen</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sen + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sen + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sen + %d</item>
+        <item quantity="other">Sen + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d kişi daha</item>
+        <item quantity="other">%1$s · %2$d kişi daha</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Yanıtı değiştir</string>
+    <string name="rsvp_question_going">Geliyor musun?</string>
+    <string name="rsvp_action_yes">Evet</string>
+    <string name="rsvp_action_maybe">Belki</string>
+    <string name="rsvp_action_no">Hayır</string>
+    <string name="rsvp_state_going">Geliyorsun</string>
+    <string name="rsvp_state_maybe">Belki</string>
+    <string name="rsvp_state_not_going">Gelmiyorsun</string>
+    <string name="rsvp_action_change">Değiştir</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Sadece bunu</string>
@@ -500,6 +534,9 @@
     <string name="label_found_events">Bulunan: %1$d etkinlik</string>
     <string name="label_open_debug_menu">Hata ayıklama menüsünü aç</string>
     <string name="placeholder_search">Ara…</string>
+    <string name="settings_search_placeholder">Ayarlarda ara…</string>
+    <string name="settings_search_no_results">\"%1$s\" için ayar bulunamadı</string>
+    <string name="cd_search_settings">Ayarlarda ara</string>
     <string name="status_sync_paused">Eşitleme duraklatıldı</string>
     <string name="status_not_synced">Eşitlenmedi</string>
     <string name="status_sync_error">Eşitleme hatası</string>
@@ -682,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Tekrarlanan etkinliği düzenle</string>
-    <string name="dialog_delete_recurring_title">Tekrarlanan etkinliği sil</string>
-    <string name="dialog_edit_recurring_message">Bu tekrarlanan bir etkinlik. Bu değişikliği nasıl uygulamak istersin?</string>
     <string name="recurring_this_event">Bu etkinlik</string>
     <string name="recurring_all_events">Tüm etkinlikler</string>
+    <string name="dialog_edit_recurring_title">Değişiklikleri kaydet</string>
+    <string name="dialog_delete_recurring_title">Sil</string>
+    <string name="dialog_move_recurring_title">Taşı</string>
     <string name="empty_pick_a_day">Bir gün seç. Yakala.</string>
     <string name="empty_no_events_day">Burada bir şey yok; biraz dışarı çık?</string>
     <string name="filter_date">Tarih</string>
@@ -1113,4 +1150,16 @@
     </plurals>
     <string name="share_availability_days_through">%1$s tarihine kadar</string>
     <string name="share_availability_window_duration">%1$s saatlik aralık</string>
+    <string name="attendee_sheet_title">Katılımcılar</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d davetli</item>
+        <item quantity="other">%d davetli</item>
+    </plurals>
+    <string name="attendee_search_hint">Ara</string>
+    <string name="attendee_search_no_matches">Sonuç yok</string>
+    <string name="attendee_section_going">Geliyor</string>
+    <string name="attendee_section_maybe">Belki</string>
+    <string name="attendee_section_pending">Bekliyor</string>
+    <string name="attendee_section_declined">Reddetti</string>
+    <string name="attendee_section_delegated">Devretti</string>
 </resources>

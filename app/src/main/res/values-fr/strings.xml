@@ -79,6 +79,40 @@
          Friday is gone from my calendar." -->
     <string name="rsvp_series_disclosure">Votre réponse s\'applique à toute la série.</string>
     <string name="rsvp_modified_snackbar">La réponse à %1$s a échoué : l\'événement a été modifié. Veuillez répondre à nouveau.</string>
+    <string name="invitees_host_tag">Hôte</string>
+    <string name="invitees_summary_you_alone">Toi</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Toi · %d invité</item>
+        <item quantity="other">Toi · %d invités</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invité</item>
+        <item quantity="other">%d invités</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organise</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Toi</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Toi + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Toi + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Toi + %d</item>
+        <item quantity="other">Toi + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d de plus</item>
+        <item quantity="other">%1$s · %2$d de plus</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Modifier la réponse</string>
+    <string name="rsvp_question_going">Tu y vas ?</string>
+    <string name="rsvp_action_yes">Oui</string>
+    <string name="rsvp_action_maybe">Peut-être</string>
+    <string name="rsvp_action_no">Non</string>
+    <string name="rsvp_state_going">Tu y vas</string>
+    <string name="rsvp_state_maybe">Peut-être</string>
+    <string name="rsvp_state_not_going">Tu n\'y vas pas</string>
+    <string name="rsvp_action_change">Modifier</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Celui-ci uniquement</string>
@@ -484,6 +518,9 @@
     <string name="label_found_events">Trouvés : %1$d événements</string>
     <string name="label_open_debug_menu">Ouvrir le menu de débogage</string>
     <string name="placeholder_search">Rechercher…</string>
+    <string name="settings_search_placeholder">Rechercher dans les paramètres…</string>
+    <string name="settings_search_no_results">Aucun paramètre trouvé pour \"%1$s\"</string>
+    <string name="cd_search_settings">Rechercher dans les paramètres</string>
     <string name="status_sync_paused">Synchronisation en pause</string>
     <string name="status_not_synced">Non synchronisé</string>
     <string name="status_sync_error">Erreur de synchronisation</string>
@@ -696,11 +733,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Modifier l\'événement récurrent</string>
-    <string name="dialog_delete_recurring_title">Supprimer l\'événement récurrent</string>
-    <string name="dialog_edit_recurring_message">Ceci est un événement récurrent. Comment souhaites-tu appliquer cette modification ?</string>
     <string name="recurring_this_event">Cet événement</string>
     <string name="recurring_all_events">Tous les événements</string>
+    <string name="dialog_edit_recurring_title">Enregistrer dans</string>
+    <string name="dialog_delete_recurring_title">Supprimer</string>
+    <string name="dialog_move_recurring_title">Déplacer</string>
     <string name="empty_pick_a_day">Choisis un jour. Profites-en.</string>
     <string name="empty_no_events_day">Rien à voir ici, et si tu allais prendre l\'air ?</string>
     <string name="filter_date">Date</string>
@@ -1115,6 +1152,18 @@
     <string name="attendee_status_tentative">Provisoire</string>
     <string name="attendee_status_delegated">Délégué</string>
     <string name="attendee_status_pending">En attente</string>
+    <string name="attendee_sheet_title">Participants</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invité(e)</item>
+        <item quantity="other">%d invité(e)s</item>
+    </plurals>
+    <string name="attendee_search_hint">Rechercher</string>
+    <string name="attendee_search_no_matches">Aucun résultat</string>
+    <string name="attendee_section_going">Présents</string>
+    <string name="attendee_section_maybe">Peut-être</string>
+    <string name="attendee_section_pending">En attente</string>
+    <string name="attendee_section_declined">Refusés</string>
+    <string name="attendee_section_delegated">Délégués</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Tout est à jour</string>
     <string name="inbox_organizer_suffix">(organisateur)</string>

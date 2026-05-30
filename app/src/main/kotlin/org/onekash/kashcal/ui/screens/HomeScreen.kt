@@ -61,7 +61,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
@@ -74,10 +73,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -234,6 +233,10 @@ fun HomeScreen(
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
     onConfirmReschedule: (EditScope) -> Unit = {},
     onCancelPendingReschedule: () -> Unit = {},
+    onConfirmFormSave: (EditScope) -> Unit = {},
+    onCancelPendingFormSave: () -> Unit = {},
+    onConfirmDelete: (EditScope) -> Unit = {},
+    onCancelPendingDelete: () -> Unit = {},
     // Resume callback (reload stale data on app resume)
     onResume: () -> Unit = {},
     // Agenda scroll callback
@@ -736,28 +739,38 @@ fun HomeScreen(
                                         }
                                         monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
                                     }
-                                    VerticalDivider()
-                                    // Day events (right)
-                                    Column(modifier = Modifier.weight(0.55f)) {
-                                        DayEventsPager(
-                                            uiState = uiState,
-                                            dayPagerState = dayPagerState,
-                                            dayPagerTodayMs = dayPagerTodayMs,
-                                            monthPagerState = pagerState,
-                                            monthPagerInitialPage = initialPage,
-                                            todayYear = todayYear,
-                                            todayMonth = todayMonth,
-                                            timePattern = timePattern,
-                                            nowMs = nowMs,
-                                            todayDayCode = todayDayCode,
-                                            onEventClick = onEventClick,
-                                            onDeviceEventClick = onDeviceEventClick,
-                                            onDateSelected = onDateSelected,
-                                            onLoadEventsForRange = onLoadEventsForDayPagerRange,
-                                            shouldRefreshCache = shouldRefreshDayPagerCache,
-                                            attendeesByEventId = dayAttendees,
-                                            onSetVisibleEventIds = onSetVisibleEventIds
-                                        )
+                                    // Day events sheet (right) — rises off the grid via tone + radius
+                                    Surface(
+                                        modifier = Modifier.weight(0.55f).fillMaxHeight(),
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = RoundedCornerShape(
+                                            topStart = 24.dp,
+                                            bottomStart = 24.dp,
+                                            topEnd = 0.dp,
+                                            bottomEnd = 0.dp,
+                                        ),
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            DayEventsPager(
+                                                uiState = uiState,
+                                                dayPagerState = dayPagerState,
+                                                dayPagerTodayMs = dayPagerTodayMs,
+                                                monthPagerState = pagerState,
+                                                monthPagerInitialPage = initialPage,
+                                                todayYear = todayYear,
+                                                todayMonth = todayMonth,
+                                                timePattern = timePattern,
+                                                nowMs = nowMs,
+                                                todayDayCode = todayDayCode,
+                                                onEventClick = onEventClick,
+                                                onDeviceEventClick = onDeviceEventClick,
+                                                onDateSelected = onDateSelected,
+                                                onLoadEventsForRange = onLoadEventsForDayPagerRange,
+                                                shouldRefreshCache = shouldRefreshDayPagerCache,
+                                                attendeesByEventId = dayAttendees,
+                                                onSetVisibleEventIds = onSetVisibleEventIds
+                                            )
+                                        }
                                     }
                                 }
                             } else {
@@ -780,24 +793,37 @@ fun HomeScreen(
                                         }
                                         monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
                                     }
-                                    HorizontalDivider()
-                                    DayEventsPager(
-                                        uiState = uiState,
-                                        dayPagerState = dayPagerState,
-                                        dayPagerTodayMs = dayPagerTodayMs,
-                                        monthPagerState = pagerState,
-                                        monthPagerInitialPage = initialPage,
-                                        todayYear = todayYear,
-                                        todayMonth = todayMonth,
-                                        timePattern = timePattern,
-                                        nowMs = nowMs,
-                                        todayDayCode = todayDayCode,
-                                        onEventClick = onEventClick,
-                                        onDeviceEventClick = onDeviceEventClick,
-                                        onDateSelected = onDateSelected,
-                                        onLoadEventsForRange = onLoadEventsForDayPagerRange,
-                                        shouldRefreshCache = shouldRefreshDayPagerCache
-                                    )
+                                    // Day events sheet — rises off the grid via tone + radius
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth().weight(1f),
+                                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                        shape = RoundedCornerShape(
+                                            topStart = 24.dp,
+                                            topEnd = 24.dp,
+                                            bottomStart = 0.dp,
+                                            bottomEnd = 0.dp,
+                                        ),
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            DayEventsPager(
+                                                uiState = uiState,
+                                                dayPagerState = dayPagerState,
+                                                dayPagerTodayMs = dayPagerTodayMs,
+                                                monthPagerState = pagerState,
+                                                monthPagerInitialPage = initialPage,
+                                                todayYear = todayYear,
+                                                todayMonth = todayMonth,
+                                                timePattern = timePattern,
+                                                nowMs = nowMs,
+                                                todayDayCode = todayDayCode,
+                                                onEventClick = onEventClick,
+                                                onDeviceEventClick = onDeviceEventClick,
+                                                onDateSelected = onDateSelected,
+                                                onLoadEventsForRange = onLoadEventsForDayPagerRange,
+                                                shouldRefreshCache = shouldRefreshDayPagerCache
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -902,29 +928,77 @@ fun HomeScreen(
         )
     }
 
-    // Recurring event edit scope dialog (drag-to-reschedule)
+    // Recurring scope sheets — drag-to-reschedule, form-save, and
+    // delete all share the same component. The option set differs
+    // per flow; computed by helpers in the ViewModel layer.
+    val scopeResources = LocalResources.current
+
     uiState.pendingDragReschedule?.let { pending ->
-        val isDeviceRecurring = pending.displayEvent is DisplayEvent.Device
-        AlertDialog(
-            onDismissRequest = onCancelPendingReschedule,
-            title = { Text(stringResource(R.string.dialog_edit_recurring_title)) },
-            text = { Text(stringResource(R.string.dialog_edit_recurring_message)) },
-            confirmButton = {
-                TextButton(onClick = { onConfirmReschedule(EditScope.THIS_EVENT) }) {
-                    Text(stringResource(R.string.recurring_this_event))
-                }
-            },
-            dismissButton = {
-                if (isDeviceRecurring) {
-                    TextButton(onClick = onCancelPendingReschedule) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                } else {
-                    TextButton(onClick = { onConfirmReschedule(EditScope.ALL_EVENTS) }) {
-                        Text(stringResource(R.string.recurring_all_events))
-                    }
-                }
-            }
+        val isDevice = pending.displayEvent is DisplayEvent.Device
+        val (masterStartTs, occurrenceTs, isAllDay) = when (val ev = pending.displayEvent) {
+            is DisplayEvent.Room -> Triple(ev.event.startTs, ev.occurrence.startTs, ev.event.isAllDay)
+            is DisplayEvent.Device -> Triple(ev.instance.eventStartTs, ev.startTs, ev.instance.isAllDay)
+        }
+        val options = org.onekash.kashcal.ui.viewmodels.computeDragScopeOptions(
+            masterStartTs = masterStartTs,
+            targetOccurrenceTs = occurrenceTs,
+            isAllDay = isAllDay,
+            isDevice = isDevice,
+            resources = scopeResources,
+        )
+        org.onekash.kashcal.ui.components.RecurringScopeSheet(
+            title = stringResource(R.string.dialog_move_recurring_title),
+            options = options,
+            onSelect = onConfirmReschedule,
+            onCancel = onCancelPendingReschedule,
+        )
+    }
+
+    uiState.pendingFormSave?.let { pending ->
+        val context = remember(pending) {
+            org.onekash.kashcal.ui.viewmodels.ScopeContext(
+                masterStartTs = pending.masterStartTs,
+                occurrenceTs = pending.occurrenceTs,
+                isDetachedException = pending.isDetachedException,
+                isAllDay = pending.loadedIsAllDay,
+            )
+        }
+        val options = remember(context, pending.originalRrule, pending.formState.rrule) {
+            org.onekash.kashcal.ui.viewmodels.computeEditScopeOptions(
+                context = context,
+                originalRrule = pending.originalRrule,
+                currentRrule = pending.formState.rrule,
+                resources = scopeResources,
+            )
+        }
+        org.onekash.kashcal.ui.components.RecurringScopeSheet(
+            title = stringResource(R.string.dialog_edit_recurring_title),
+            options = options,
+            onSelect = onConfirmFormSave,
+            onCancel = onCancelPendingFormSave,
+        )
+    }
+
+    uiState.pendingDelete?.let { pending ->
+        val context = remember(pending) {
+            org.onekash.kashcal.ui.viewmodels.ScopeContext(
+                masterStartTs = pending.masterStartTs,
+                occurrenceTs = pending.occurrenceTs,
+                isDetachedException = pending.isDetachedException,
+                isAllDay = pending.isAllDay,
+            )
+        }
+        val options = remember(context) {
+            org.onekash.kashcal.ui.viewmodels.computeDeleteScopeOptions(
+                context = context,
+                resources = scopeResources,
+            )
+        }
+        org.onekash.kashcal.ui.components.RecurringScopeSheet(
+            title = stringResource(R.string.dialog_delete_recurring_title),
+            options = options,
+            onSelect = onConfirmDelete,
+            onCancel = onCancelPendingDelete,
         )
     }
 

@@ -495,6 +495,9 @@
     <string name="settings_preview">預覽</string>
     <string name="settings_n_events">%1$d 個事件</string>
     <string name="settings_n_events_default">%1$d 個事件（預設）</string>
+    <string name="settings_search_placeholder">搜尋設定…</string>
+    <string name="settings_search_no_results">找不到與 \"%1$s\" 相符的設定</string>
+    <string name="cd_search_settings">搜尋設定</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">行事曆</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">編輯重複事件</string>
-    <string name="dialog_delete_recurring_title">刪除重複事件</string>
-    <string name="dialog_edit_recurring_message">這是一個重複事件。你想如何套用此變更？</string>
     <string name="recurring_this_event">僅此事件</string>
     <string name="recurring_all_events">所有事件</string>
+    <string name="dialog_edit_recurring_title">儲存變更至</string>
+    <string name="dialog_delete_recurring_title">刪除</string>
+    <string name="dialog_move_recurring_title">移動</string>
     <string name="empty_pick_a_day">選一天，好好把握。</string>
     <string name="empty_no_events_day">今天沒有行程，出去走走？</string>
     <string name="filter_date">日期</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">拒絕</string>
     <string name="rsvp_series_disclosure">您的回覆將套用至整個系列。</string>
     <string name="rsvp_modified_snackbar">「%1$s」的回覆失敗,活動已被修改,請重新回覆。</string>
+    <string name="attendee_sheet_title">參加者</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">已邀請 %d 人</item>
+    </plurals>
+    <string name="attendee_search_hint">搜尋</string>
+    <string name="attendee_search_no_matches">無結果</string>
+    <string name="attendee_section_going">參加</string>
+    <string name="attendee_section_maybe">可能</string>
+    <string name="attendee_section_pending">待回覆</string>
+    <string name="attendee_section_declined">已拒絕</string>
+    <string name="attendee_section_delegated">已委託</string>
+    <string name="invitees_host_tag">主持人</string>
+    <string name="invitees_summary_you_alone">你</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">你 · 已邀請 %d 人</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">已邀請 %d 人</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s 主持</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · 你</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · 你 + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">你 + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · 還有 %2$d 人</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">修改回覆</string>
+    <string name="rsvp_question_going">參加嗎?</string>
+    <string name="rsvp_action_yes">是</string>
+    <string name="rsvp_action_maybe">可能</string>
+    <string name="rsvp_action_no">否</string>
+    <string name="rsvp_state_going">你參加</string>
+    <string name="rsvp_state_maybe">可能</string>
+    <string name="rsvp_state_not_going">不參加</string>
+    <string name="rsvp_action_change">變更</string>
+
+
     <string name="inbox_empty_caught_up">已全部處理完畢</string>
     <string name="inbox_organizer_suffix">(主辦人)</string>
     <string name="menu_invites">邀請</string>

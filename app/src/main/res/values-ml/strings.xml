@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">നിരസിക്കുക</string>
     <string name="rsvp_series_disclosure">നിങ്ങളുടെ പ്രതികരണം മുഴുവൻ പരമ്പരയ്ക്കും ബാധകമാണ്.</string>
     <string name="rsvp_modified_snackbar">%1$s നായുള്ള RSVP പരാജയപ്പെട്ടു — ഇവന്റ് പരിഷ്കരിച്ചു. ദയവായി വീണ്ടും പ്രതികരിക്കുക.</string>
+    <string name="invitees_host_tag">ഹോസ്റ്റ്</string>
+    <string name="rsvp_question_going">വരുമോ?</string>
+    <string name="rsvp_action_yes">അതെ</string>
+    <string name="rsvp_action_maybe">ഒരുപക്ഷേ</string>
+    <string name="rsvp_action_no">ഇല്ല</string>
+    <string name="rsvp_state_going">നിങ്ങൾ വരുന്നു</string>
+    <string name="rsvp_state_maybe">ഒരുപക്ഷേ</string>
+    <string name="rsvp_state_not_going">നിങ്ങൾ വരുന്നില്ല</string>
+    <string name="rsvp_action_change">മാറ്റുക</string>
+
+
+    <string name="invitees_summary_you_alone">നിങ്ങൾ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
+        <item quantity="other">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d പേർ ക്ഷണിച്ചു</item>
+        <item quantity="other">%d പേർ ക്ഷണിച്ചു</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s നടത്തുന്നു</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · നിങ്ങൾ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">നിങ്ങൾ + %d</item>
+        <item quantity="other">നിങ്ങൾ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d പേർ കൂടി</item>
+        <item quantity="other">%1$s · %2$d പേർ കൂടി</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">പ്രതികരണം മാറ്റുക</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ഇത് മാത്രം</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">കണ്ടെത്തി: %1$d ഇവന്റുകൾ</string>
     <string name="label_open_debug_menu">ഡീബഗ് മെനു തുറക്കുക</string>
     <string name="placeholder_search">തിരയുക…</string>
+    <string name="settings_search_placeholder">ക്രമീകരണങ്ങൾ തിരയുക…</string>
+    <string name="settings_search_no_results">\"%1$s\" എന്നതിനായി ക്രമീകരണങ്ങളൊന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="cd_search_settings">ക്രമീകരണങ്ങൾ തിരയുക</string>
     <string name="status_sync_paused">സിങ്ക് താൽക്കാലികമായി നിർത്തി</string>
     <string name="status_not_synced">സിങ്ക് ചെയ്തിട്ടില്ല</string>
     <string name="status_sync_error">സിങ്ക് പിശക്</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ആവർത്തിക്കുന്ന ഇവന്റ് തിരുത്തുക</string>
-    <string name="dialog_delete_recurring_title">ആവർത്തിക്കുന്ന ഇവന്റ് ഇല്ലാതാക്കുക</string>
-    <string name="dialog_edit_recurring_message">ഇത് ഒരു ആവർത്തിക്കുന്ന ഇവന്റാണ്. ഈ മാറ്റം എങ്ങനെ പ്രയോഗിക്കണം?</string>
     <string name="recurring_this_event">ഈ ഇവന്റ്</string>
     <string name="recurring_all_events">എല്ലാ ഇവന്റുകളും</string>
+    <string name="dialog_edit_recurring_title">മാറ്റങ്ങൾ സംരക്ഷിക്കുക</string>
+    <string name="dialog_delete_recurring_title">ഇല്ലാതാക്കുക</string>
+    <string name="dialog_move_recurring_title">മാറ്റുക</string>
     <string name="empty_pick_a_day">ഒരു ദിവസം തിരഞ്ഞെടുക്കുക. അത് പ്രയോജനപ്പെടുത്തുക.</string>
     <string name="empty_no_events_day">ഇവിടെ ഒന്നുമില്ല; പുറത്ത് പോയി ഒന്ന് നടക്കാം?</string>
     <string name="filter_date">തീയതി</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">വർഷം</string>
     <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
     <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
+    <string name="attendee_sheet_title">പങ്കെടുക്കുന്നവർ</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d പേർ ക്ഷണിച്ചു</item>
+        <item quantity="other">%d പേർ ക്ഷണിച്ചു</item>
+    </plurals>
+    <string name="attendee_search_hint">തിരയുക</string>
+    <string name="attendee_search_no_matches">ഫലങ്ങളില്ല</string>
+    <string name="attendee_section_going">വരുന്നു</string>
+    <string name="attendee_section_maybe">ഒരുപക്ഷേ</string>
+    <string name="attendee_section_pending">കാത്തിരിക്കുന്നു</string>
+    <string name="attendee_section_declined">നിരസിച്ചു</string>
+    <string name="attendee_section_delegated">ഏല്പിച്ചു</string>
 </resources>

@@ -495,6 +495,9 @@
     <string name="settings_preview">PRATONTON</string>
     <string name="settings_n_events">%1$d acara</string>
     <string name="settings_n_events_default">%1$d acara (lalai)</string>
+    <string name="settings_search_placeholder">Cari tetapan…</string>
+    <string name="settings_search_no_results">Tiada tetapan ditemui untuk \"%1$s\"</string>
+    <string name="cd_search_settings">Cari tetapan</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendar</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Edit acara berulang</string>
-    <string name="dialog_delete_recurring_title">Padam acara berulang</string>
-    <string name="dialog_edit_recurring_message">Ini adalah acara berulang. Bagaimana anda mahu menerapkan perubahan ini?</string>
     <string name="recurring_this_event">Acara ini sahaja</string>
     <string name="recurring_all_events">Semua acara</string>
+    <string name="dialog_edit_recurring_title">Simpan perubahan ke</string>
+    <string name="dialog_delete_recurring_title">Padam</string>
+    <string name="dialog_move_recurring_title">Alih</string>
     <string name="empty_pick_a_day">Pilih satu hari. Rebut peluang.</string>
     <string name="empty_no_events_day">Tiada apa di sini; keluar jalan-jalan?</string>
     <string name="filter_date">Tarikh</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">Tolak</string>
     <string name="rsvp_series_disclosure">Balasan anda terpakai untuk seluruh siri.</string>
     <string name="rsvp_modified_snackbar">Balasan untuk %1$s gagal, acara telah diubah suai. Sila balas semula.</string>
+    <string name="attendee_sheet_title">Hadirin</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">%d dijemput</item>
+    </plurals>
+    <string name="attendee_search_hint">Cari</string>
+    <string name="attendee_search_no_matches">Tiada padanan</string>
+    <string name="attendee_section_going">Hadir</string>
+    <string name="attendee_section_maybe">Mungkin</string>
+    <string name="attendee_section_pending">Menunggu</string>
+    <string name="attendee_section_declined">Menolak</string>
+    <string name="attendee_section_delegated">Delegasi</string>
+    <string name="invitees_host_tag">Tuan rumah</string>
+    <string name="invitees_summary_you_alone">Anda</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">Anda · %d dijemput</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">%d dijemput</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s mengacara</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Anda</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · Anda + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">Anda + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · %2$d lagi</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Tukar respons</string>
+    <string name="rsvp_question_going">Pergi?</string>
+    <string name="rsvp_action_yes">Ya</string>
+    <string name="rsvp_action_maybe">Mungkin</string>
+    <string name="rsvp_action_no">Tidak</string>
+    <string name="rsvp_state_going">Anda pergi</string>
+    <string name="rsvp_state_maybe">Mungkin</string>
+    <string name="rsvp_state_not_going">Anda tidak pergi</string>
+    <string name="rsvp_action_change">Tukar</string>
+
+
     <string name="inbox_empty_caught_up">Semua telah diuruskan</string>
     <string name="inbox_organizer_suffix">(penganjur)</string>
     <string name="menu_invites">Jemputan</string>

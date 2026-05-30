@@ -59,7 +59,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Instances.EVENT_TIMEZONE,    // 18 - Event timezone (exception's for modified occurrences)
             // Color channels — read via getColumnIndexOrThrow to decouple from projection order.
             Instances.CALENDAR_COLOR,    // 19 - raw calendar color (identity)
-            Instances.EVENT_COLOR        // 20 - raw event override (0 = no override)
+            Instances.EVENT_COLOR,       // 20 - raw event override (0 = no override)
+            Instances.DTSTART            // 21 - master event row's DTSTART (anchors first-occurrence rule)
         )
 
         // Column indices
@@ -82,6 +83,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         private const val COL_ORIGINAL_ID = 16
         private const val COL_ORIGINAL_INSTANCE_TIME = 17
         private const val COL_EVENT_TIMEZONE = 18
+        private const val COL_DTSTART = 21
 
         private const val SELECTION_VISIBLE = "${Calendars.VISIBLE} = 1"
         private const val SELECTION_HIDE_DECLINED = "$SELECTION_VISIBLE AND " +
@@ -229,7 +231,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     isWritable = accessLevel >= 500, // CAL_ACCESS_CONTRIBUTOR
                     originalId = originalId,
                     originalInstanceTime = originalInstanceTime,
-                    timezone = cursor.getString(COL_EVENT_TIMEZONE)
+                    timezone = cursor.getString(COL_EVENT_TIMEZONE),
+                    eventStartTs = cursor.getLong(COL_DTSTART),
                 )
             )
         }
@@ -794,6 +797,193 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
+    override suspend fun editThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isAllDay: Boolean,
+        calendarId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long?,
+        rrule: String?,
+        duration: String?,
+        timezone: String,
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?,
+    ): Result<Long> = withContext(Dispatchers.IO) {
+        try {
+            val masterEvent = getDeviceEvent(masterEventId)
+                ?: return@withContext Result.failure(
+                    CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
+                )
+
+            // First-occurrence shortcut: a split at-or-before the
+            // master's start collapses to "edit all events."
+            if (fromTimeMs <= masterEvent.startTs) {
+                val updateResult = updateEvent(
+                    eventId = masterEventId,
+                    title = title,
+                    description = description,
+                    location = location,
+                    startTs = startTs,
+                    endTs = endTs,
+                    isAllDay = isAllDay,
+                    rrule = rrule,
+                    duration = duration,
+                    timezone = timezone,
+                    reminders = reminders,
+                    availability = availability,
+                    eventColor = eventColor,
+                )
+                return@withContext updateResult.map { masterEventId }
+            }
+
+            val masterRrule = masterEvent.rrule
+                ?: return@withContext Result.failure(
+                    CalendarErrorException(
+                        CalendarError.DeviceCalendar.WriteFailed("Recurring event has no RRULE")
+                    )
+                )
+
+            // Count the master's expanded instances strictly before
+            // the split point so the COUNT-based RRULE branch can
+            // preserve the total instance count across the split.
+            // Without this, a COUNT=N series produces N more instances
+            // on the new row instead of N-pastCount.
+            val pastCount = countInstancesInRange(
+                masterEventId,
+                masterEvent.startTs,
+                fromTimeMs,
+            )
+
+            // Degenerate COUNT split (pastCount==0 or pastCount>=total)
+            // would yield invalid COUNT=0. Fall back to in-place
+            // ALL_EVENTS update on the master — the user's rrule
+            // wins (including null, which converts the master to
+            // non-recurring).
+            if (org.onekash.kashcal.util.RruleUtils.isDegenerateCountSplit(masterRrule, pastCount)) {
+                val updateResult = updateEvent(
+                    eventId = masterEventId,
+                    title = title,
+                    description = description,
+                    location = location,
+                    startTs = startTs,
+                    endTs = endTs,
+                    isAllDay = isAllDay,
+                    rrule = rrule,
+                    duration = duration,
+                    timezone = timezone,
+                    reminders = reminders,
+                    availability = availability,
+                    eventColor = eventColor,
+                )
+                return@withContext updateResult.map { masterEventId }
+            }
+
+            // rrule == null is the user's "Does not repeat" pick — the
+            // helper returns null new-series for that, and we let the
+            // non-recurring new row pass through to buildEventValues.
+            val (truncatedRrule, splitNewSeriesRrule) =
+                org.onekash.kashcal.util.RruleUtils.splitRruleAtTime(
+                    masterRrule = masterRrule,
+                    userRrule = rrule,
+                    untilMs = fromTimeMs - 1,
+                    pastCount = pastCount,
+                    isAllDay = masterEvent.isAllDay,
+                )
+            val newSeriesRrule = splitNewSeriesRrule
+
+            // Build the new-row values (for the future series). Reuse
+            // the same shape as createEvent so reminder back-references
+            // line up.
+            val newEventValues = buildEventValues(
+                title, description, location, startTs, endTs, isAllDay, newSeriesRrule, duration, timezone
+            ).apply {
+                put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                put(CalendarContract.Events.AVAILABILITY, availability)
+                eventColor?.let { put(CalendarContract.Events.EVENT_COLOR, it) }
+            }
+
+            val masterUri = ContentUris.withAppendedId(
+                CalendarContract.Events.CONTENT_URI, masterEventId
+            )
+            val masterTruncate = android.content.ContentValues().apply {
+                put(CalendarContract.Events.RRULE, truncatedRrule)
+            }
+
+            // Wrap insert + master truncate in a single applyBatch so a
+            // failure during INSERT leaves the master untouched. Order:
+            // INSERT first (so any constraint failure bails before we
+            // mutate the master), then UPDATE the master.
+            val ops = ArrayList<android.content.ContentProviderOperation>()
+            ops.add(
+                android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                    .withValues(newEventValues)
+                    .build()
+            )
+            for (minutes in reminders) {
+                ops.add(
+                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
+                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
+                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
+                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                        .build()
+                )
+            }
+            ops.add(
+                android.content.ContentProviderOperation.newUpdate(masterUri)
+                    .withValues(masterTruncate)
+                    .build()
+            )
+
+            val results = contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
+            val newEventUri = results[0].uri
+                ?: return@withContext Result.failure(
+                    CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed("INSERT did not return a URI"))
+                )
+            val newEventId = ContentUris.parseId(newEventUri)
+
+            // Cleanup orphaned exception children whose
+            // originalInstanceTime falls in the truncated half.
+            // CalendarProvider doesn't auto-cleanup these when RRULE
+            // is shortened. Best-effort: a failure here doesn't
+            // invalidate the split; log and move on.
+            val normalizedFrom = if (isAllDay)
+                DateTimeUtils.normalizeToUtcMidnight(fromTimeMs) else fromTimeMs
+            try {
+                contentResolver.query(
+                    CalendarContract.Events.CONTENT_URI,
+                    arrayOf(CalendarContract.Events._ID),
+                    "${CalendarContract.Events.ORIGINAL_ID} = ? AND ${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} >= ?",
+                    arrayOf(masterEventId.toString(), normalizedFrom.toString()),
+                    null,
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val exceptionId = cursor.getLong(0)
+                        val uri = ContentUris.withAppendedId(
+                            CalendarContract.Events.CONTENT_URI, exceptionId
+                        )
+                        contentResolver.delete(uri, null, null)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to clean up orphaned exceptions for master $masterEventId", e)
+            }
+
+            Log.d(TAG, "Split device event: master=$masterEventId, newId=$newEventId, fromTimeMs=$fromTimeMs")
+            Result.success(newEventId)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied splitting recurring event", e)
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error splitting recurring event", e)
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
     override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val values = android.content.ContentValues().apply {
@@ -1019,6 +1209,39 @@ class AndroidCalendarProviderRepository @Inject constructor(
      * Check whether an event is an exception (has ORIGINAL_ID set).
      * Used by [updateEvent] to determine whether to omit RRULE from ContentValues.
      */
+    /**
+     * Count the number of instances of [eventId] whose Begin falls
+     * in `[rangeStartMs, rangeEndMs)`. Used by [editThisAndFuture]
+     * to compute the master's pre-split instance count for COUNT
+     * preservation. Returns 0 on permission errors or empty results.
+     */
+    private fun countInstancesInRange(
+        eventId: Long,
+        rangeStartMs: Long,
+        rangeEndMs: Long,
+    ): Int {
+        if (rangeEndMs <= rangeStartMs) return 0
+        return try {
+            val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
+                ContentUris.appendId(this, rangeStartMs)
+                ContentUris.appendId(this, rangeEndMs)
+            }.build()
+            contentResolver.query(
+                uri,
+                arrayOf(CalendarContract.Instances._ID),
+                "${CalendarContract.Instances.EVENT_ID} = ?",
+                arrayOf(eventId.toString()),
+                null,
+            )?.use { it.count } ?: 0
+        } catch (e: SecurityException) {
+            Log.w(TAG, "countInstancesInRange permission denied", e)
+            0
+        } catch (e: Exception) {
+            Log.w(TAG, "countInstancesInRange query failed", e)
+            0
+        }
+    }
+
     private fun isExceptionEvent(eventId: Long): Boolean {
         val cursor = contentResolver.query(
             ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),

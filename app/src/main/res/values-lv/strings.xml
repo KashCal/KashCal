@@ -77,6 +77,45 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Atbilde attiecas uz visu sēriju.</string>
     <string name="rsvp_modified_snackbar">Neizdevās atbildēt uz „%1$s“ — notikums tika mainīts. Lūdzu, atbildiet vēlreiz.</string>
+    <string name="invitees_host_tag">Saimnieks</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="zero">Tu · %d uzaicināto</item>
+        <item quantity="one">Tu · %d uzaicināts</item>
+        <item quantity="other">Tu · %d uzaicināti</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="zero">%d uzaicināto</item>
+        <item quantity="one">%d uzaicināts</item>
+        <item quantity="other">%d uzaicināti</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizē</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="zero">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="zero">Tu + %d</item>
+        <item quantity="one">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="zero">%1$s · vēl %2$d</item>
+        <item quantity="one">%1$s · vēl %2$d</item>
+        <item quantity="other">%1$s · vēl %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Mainīt atbildi</string>
+    <string name="rsvp_question_going">Iesi?</string>
+    <string name="rsvp_action_yes">Jā</string>
+    <string name="rsvp_action_maybe">Varbūt</string>
+    <string name="rsvp_action_no">Nē</string>
+    <string name="rsvp_state_going">Tu ej</string>
+    <string name="rsvp_state_maybe">Varbūt</string>
+    <string name="rsvp_state_not_going">Tu neej</string>
+    <string name="rsvp_action_change">Mainīt</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Tikai šo</string>
@@ -482,6 +521,9 @@
     <string name="label_found_events">Atrasti: %1$d notikumi</string>
     <string name="label_open_debug_menu">Atvērt atkļūdošanas izvēlni</string>
     <string name="placeholder_search">Meklēt…</string>
+    <string name="settings_search_placeholder">Meklēt iestatījumos…</string>
+    <string name="settings_search_no_results">Pēc \"%1$s\" iestatījumi nav atrasti</string>
+    <string name="cd_search_settings">Meklēt iestatījumos</string>
     <string name="status_sync_paused">Sinhronizācija pauzēta</string>
     <string name="status_not_synced">Nav sinhronizēts</string>
     <string name="status_sync_error">Sinhronizācijas kļūda</string>
@@ -696,11 +738,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Rediģēt atkārtojošos notikumu</string>
-    <string name="dialog_delete_recurring_title">Dzēst atkārtojošos notikumu</string>
-    <string name="dialog_edit_recurring_message">Šis ir atkārtojošs notikums. Kā vēlaties piemērot šo izmaiņu?</string>
     <string name="recurring_this_event">Šo notikumu</string>
     <string name="recurring_all_events">Visus notikumus</string>
+    <string name="dialog_edit_recurring_title">Saglabāt izmaiņas</string>
+    <string name="dialog_delete_recurring_title">Dzēst</string>
+    <string name="dialog_move_recurring_title">Pārvietot</string>
     <string name="empty_pick_a_day">Izvēlies dienu. Izdzīvo to.</string>
     <string name="empty_no_events_day">Nekas te nav; varbūt iziesi ārā?</string>
     <string name="filter_date">Datums</string>
@@ -1102,4 +1144,17 @@
     <string name="share_availability_days_through">Līdz %1$s</string>
     <string name="share_availability_window_duration">%1$s stundu logs</string>
     <string name="share_from_kashcal_footer">Kopīgots no KashCal</string>
+    <string name="attendee_sheet_title">Dalībnieki</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="zero">%d uzaicināto</item>
+        <item quantity="one">%d uzaicināts</item>
+        <item quantity="other">%d uzaicināti</item>
+    </plurals>
+    <string name="attendee_search_hint">Meklēt</string>
+    <string name="attendee_search_no_matches">Nav rezultātu</string>
+    <string name="attendee_section_going">Ies</string>
+    <string name="attendee_section_maybe">Varbūt</string>
+    <string name="attendee_section_pending">Gaida</string>
+    <string name="attendee_section_declined">Atteicās</string>
+    <string name="attendee_section_delegated">Deleģēja</string>
 </resources>

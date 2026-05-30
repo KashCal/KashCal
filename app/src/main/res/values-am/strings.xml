@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">አይቀበሉ</string>
     <string name="rsvp_series_disclosure">ምላሽዎ ለመላው ተከታታይ ክስተት ይተገበራል።</string>
     <string name="rsvp_modified_snackbar">ለ%1$s የተደረገው RSVP አልተሳካም — ክስተቱ ተሻሽሏል። እባክዎ እንደገና ምላሽ ይስጡ።</string>
+    <string name="invitees_host_tag">አስተናጋጅ</string>
+    <string name="invitees_summary_you_alone">አንተ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">አንተ · %d ተጋብዟል</item>
+        <item quantity="other">አንተ · %d ተጋብዘዋል</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d ተጋብዟል</item>
+        <item quantity="other">%d ተጋብዘዋል</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ያስተናግዳል</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · አንተ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · አንተ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · አንተ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">አንተ + %d</item>
+        <item quantity="other">አንተ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ሌሎች %2$d</item>
+        <item quantity="other">%1$s · ሌሎች %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">መልስ ቀይር</string>
+    <string name="rsvp_question_going">ትሄዳለህ?</string>
+    <string name="rsvp_action_yes">አዎ</string>
+    <string name="rsvp_action_maybe">ምናልባት</string>
+    <string name="rsvp_action_no">አይ</string>
+    <string name="rsvp_state_going">ትሄዳለህ</string>
+    <string name="rsvp_state_maybe">ምናልባት</string>
+    <string name="rsvp_state_not_going">አትሄድም</string>
+    <string name="rsvp_action_change">ቀይር</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ይህን ብቻ</string>
@@ -108,6 +142,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ቅንብሮች</string>
+    <string name="settings_search_placeholder">ቅንብሮችን ይፈልጉ…</string>
+    <string name="settings_search_no_results">ለ\"%1$s\" ምንም ቅንብር አልተገኘም</string>
+    <string name="cd_search_settings">ቅንብሮችን ይፈልጉ</string>
     <string name="settings_time_format">የሰዓት ቅርጸት</string>
     <string name="settings_start_week_on">ሳምንት ይጀምር</string>
     <string name="settings_event_emojis">የክስተት ኢሞጂዎች</string>
@@ -678,11 +715,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ተደጋጋሚ ክስተት አርትዕ</string>
-    <string name="dialog_delete_recurring_title">ተደጋጋሚ ክስተት ሰርዝ</string>
-    <string name="dialog_edit_recurring_message">ይህ ተደጋጋሚ ክስተት ነው። ይህን ለውጥ እንዴት ሊተገበር ይፈልጋሉ?</string>
     <string name="recurring_this_event">ይህ ክስተት</string>
     <string name="recurring_all_events">ሁሉም ክስተቶች</string>
+    <string name="dialog_edit_recurring_title">ለውጦችን አስቀምጥ</string>
+    <string name="dialog_delete_recurring_title">ሰርዝ</string>
+    <string name="dialog_move_recurring_title">አንቀሳቅስ</string>
     <string name="empty_pick_a_day">ቀን ምረጥ። ያዘው።</string>
     <string name="empty_no_events_day">ምንም የሚታይ ነገር የለም፤ ውጣ ተዝናና?</string>
     <string name="filter_date">ቀን</string>
@@ -1109,4 +1146,16 @@
     <string name="share_availability_days_through">እስከ %1$s</string>
     <string name="share_availability_window_duration">%1$s ሰዓት መስኮት</string>
     <string name="share_from_kashcal_footer">ከKashCal ተጋርቷል</string>
+    <string name="attendee_sheet_title">ተሳታፊዎች</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d ተጋብዟል</item>
+        <item quantity="other">%d ተጋብዘዋል</item>
+    </plurals>
+    <string name="attendee_search_hint">ፈልግ</string>
+    <string name="attendee_search_no_matches">ምንም ውጤት የለም</string>
+    <string name="attendee_section_going">ይሄዳሉ</string>
+    <string name="attendee_section_maybe">ምናልባት</string>
+    <string name="attendee_section_pending">በመጠባበቅ</string>
+    <string name="attendee_section_declined">ተቃውመዋል</string>
+    <string name="attendee_section_delegated">ተወክሏል</string>
 </resources>

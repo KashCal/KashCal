@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">ನಿರಾಕರಿಸಿ</string>
     <string name="rsvp_series_disclosure">ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ ಸಂಪೂರ್ಣ ಸರಣಿಗೆ ಅನ್ವಯಿಸುತ್ತದೆ.</string>
     <string name="rsvp_modified_snackbar">%1$s ಗಾಗಿ RSVP ವಿಫಲವಾಗಿದೆ — ಈವೆಂಟ್ ಮಾರ್ಪಡಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರತಿಕ್ರಿಯಿಸಿ.</string>
+    <string name="invitees_host_tag">ಆತಿಥೇಯ</string>
+    <string name="rsvp_question_going">ಬರುತ್ತೀರಾ?</string>
+    <string name="rsvp_action_yes">ಹೌದು</string>
+    <string name="rsvp_action_maybe">ಬಹುಶಃ</string>
+    <string name="rsvp_action_no">ಇಲ್ಲ</string>
+    <string name="rsvp_state_going">ನೀವು ಬರುತ್ತೀರಿ</string>
+    <string name="rsvp_state_maybe">ಬಹುಶಃ</string>
+    <string name="rsvp_state_not_going">ನೀವು ಬರುವುದಿಲ್ಲ</string>
+    <string name="rsvp_action_change">ಬದಲಾಯಿಸಿ</string>
+
+
+    <string name="invitees_summary_you_alone">ನೀವು</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">ನೀವು · %d ಆಹ್ವಾನಿತರು</item>
+        <item quantity="other">ನೀವು · %d ಆಹ್ವಾನಿತರು</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d ಆಹ್ವಾನಿತರು</item>
+        <item quantity="other">%d ಆಹ್ವಾನಿತರು</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ಆತಿಥ್ಯ</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · ನೀವು</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · ನೀವು + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · ನೀವು + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">ನೀವು + %d</item>
+        <item quantity="other">ನೀವು + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ಮತ್ತೆ %2$d</item>
+        <item quantity="other">%1$s · ಮತ್ತೆ %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">ಪ್ರತಿಕ್ರಿಯೆ ಬದಲಾಯಿಸಿ</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ಇದು ಮಾತ್ರ</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">ಕಂಡುಬಂದವು: %1$d ಈವೆಂಟ್‌ಗಳು</string>
     <string name="label_open_debug_menu">ಡೀಬಗ್ ಮೆನು ತೆರೆಯಿರಿ</string>
     <string name="placeholder_search">ಹುಡುಕಿ…</string>
+    <string name="settings_search_placeholder">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹುಡುಕಿ…</string>
+    <string name="settings_search_no_results">\"%1$s\" ಗಾಗಿ ಯಾವುದೇ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಸಿಗಲಿಲ್ಲ</string>
+    <string name="cd_search_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಹುಡುಕಿ</string>
     <string name="status_sync_paused">ಸಿಂಕ್ ವಿರಾಮಗೊಂಡಿದೆ</string>
     <string name="status_not_synced">ಸಿಂಕ್ ಆಗಿಲ್ಲ</string>
     <string name="status_sync_error">ಸಿಂಕ್ ದೋಷ</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ಪುನರಾವರ್ತಿತ ಈವೆಂಟ್ ಬದಲಾಯಿಸಿ</string>
-    <string name="dialog_delete_recurring_title">ಪುನರಾವರ್ತಿತ ಈವೆಂಟ್ ಅಳಿಸಿ</string>
-    <string name="dialog_edit_recurring_message">ಇದು ಪುನರಾವರ್ತಿತ ಈವೆಂಟ್. ಈ ಬದಲಾವಣೆಯನ್ನು ಹೇಗೆ ಅನ್ವಯಿಸಬೇಕು?</string>
     <string name="recurring_this_event">ಈ ಈವೆಂಟ್</string>
     <string name="recurring_all_events">ಎಲ್ಲಾ ಈವೆಂಟ್‌ಗಳು</string>
+    <string name="dialog_edit_recurring_title">ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ</string>
+    <string name="dialog_delete_recurring_title">ಅಳಿಸಿ</string>
+    <string name="dialog_move_recurring_title">ಸರಿಸಿ</string>
     <string name="empty_pick_a_day">ಒಂದು ದಿನ ಆಯ್ಕೆಮಾಡಿ. ಅದನ್ನು ಸದುಪಯೋಗಪಡಿಸಿಕೊಳ್ಳಿ.</string>
     <string name="empty_no_events_day">ಇಲ್ಲಿ ಏನೂ ಇಲ್ಲ; ಹೊರಗೆ ಹೋಗಿ ತಾಜಾ ಗಾಳಿ ಸೇವಿಸಿ?</string>
     <string name="filter_date">ದಿನಾಂಕ</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">ವರ್ಷ</string>
     <string name="cd_decrease_interval">ಮಧ್ಯಂತರ ಕಡಿಮೆ ಮಾಡಿ</string>
     <string name="cd_increase_interval">ಮಧ್ಯಂತರ ಹೆಚ್ಚಿಸಿ</string>
+    <string name="attendee_sheet_title">ಭಾಗವಹಿಸುವವರು</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d ಆಹ್ವಾನಿತರು</item>
+        <item quantity="other">%d ಆಹ್ವಾನಿತರು</item>
+    </plurals>
+    <string name="attendee_search_hint">ಹುಡುಕಿ</string>
+    <string name="attendee_search_no_matches">ಯಾವುದೇ ಫಲಿತಾಂಶಗಳಿಲ್ಲ</string>
+    <string name="attendee_section_going">ಬರುತ್ತಿದ್ದಾರೆ</string>
+    <string name="attendee_section_maybe">ಬಹುಶಃ</string>
+    <string name="attendee_section_pending">ಬಾಕಿ</string>
+    <string name="attendee_section_declined">ನಿರಾಕರಿಸಿದ್ದಾರೆ</string>
+    <string name="attendee_section_delegated">ಪ್ರತಿನಿಧಿಸಿದ್ದಾರೆ</string>
 </resources>

@@ -22,12 +22,15 @@ import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -66,8 +69,9 @@ import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
-import org.onekash.kashcal.ui.screens.settings.SectionHeader
-import org.onekash.kashcal.ui.screens.settings.SettingsCard
+import org.onekash.kashcal.ui.screens.settings.SearchEmissionTracker
+import org.onekash.kashcal.ui.screens.settings.SearchEmptyState
+import org.onekash.kashcal.ui.screens.settings.SearchableSection
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
@@ -240,13 +244,47 @@ fun AccountSettingsScreen(
     widgetMaxEventsPerDay: Int = 5,
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     // Version footer (Checkpoint 9)
-    versionName: String = ""
+    versionName: String = "",
+    // Settings search (US1-US5)
+    isSearchActive: Boolean = false,
+    searchQuery: String = "",
+    onSearchOpen: () -> Unit = {},
+    onSearchClose: () -> Unit = {},
+    onSearchQueryChange: (String) -> Unit = {},
 ) {
+    // Two-stage back: first clears the query, second closes the bar.
+    // Note: while the search field has focus and the IME is open, Android
+    // first hides the IME on system-back without firing the BackHandler.
+    // The IME's "Search" key (ImeAction.Search wired in SettingsTopAppBar)
+    // gives the user an explicit IME-dismiss path so they don't have to
+    // exhaust a "phantom" back press to reach the two-stage flow.
+    androidx.activity.compose.BackHandler(enabled = isSearchActive) {
+        if (searchQuery.isNotEmpty()) {
+            onSearchQueryChange("")
+        } else {
+            onSearchClose()
+        }
+    }
+
     Scaffold(
         topBar = {
             SettingsTopAppBar(
                 title = stringResource(R.string.settings_title),
                 onNavigateBack = onNavigateBack,
+                isSearchActive = isSearchActive,
+                searchQuery = searchQuery,
+                onSearchQueryChange = onSearchQueryChange,
+                onSearchClose = onSearchClose,
+                actions = {
+                    if (!isSearchActive) {
+                        IconButton(onClick = onSearchOpen) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = stringResource(R.string.cd_search_settings),
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -331,7 +369,8 @@ fun AccountSettingsScreen(
                     showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
                     prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
                     onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
-                    versionName = versionName
+                    versionName = versionName,
+                    searchQuery = searchQuery
                 )
             }
         }
@@ -468,7 +507,8 @@ private fun FlatSettingsContent(
     showAddSubscriptionDialogFromIntent: Boolean,
     prefillSubscriptionUrl: String?,
     onHideAddSubscriptionDialog: () -> Unit,
-    versionName: String
+    versionName: String,
+    searchQuery: String = "",
 ) {
     val scrollState = rememberScrollState()
 
@@ -538,225 +578,338 @@ private fun FlatSettingsContent(
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
+        // Track whether any SearchableSection emitted UI; if every section
+        // collapses, render the empty-state composable. Driven by each
+        // section's onEmitted callback so the value is correct regardless
+        // of compose ordering — no imperative-var fragility.
+        val emittedTracker = remember { SearchEmissionTracker() }
+        emittedTracker.reset()
+
         // ==================== CALENDARS Section ====================
-        SectionHeader(stringResource(R.string.settings_section_calendars))
-        SettingsCard {
-            // Accounts row
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_calendars),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
             val accountCount = (if (isConnected) 1 else 0) + calDavAccounts.size
+            val accountsSubtitle = if (accountCount == 0) null
+                else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount)
+            row(label = stringResource(R.string.accounts_row_label), subtitle = accountsSubtitle, id = "accounts") {
+                SettingsRow(
+                    icon = Icons.Default.Person,
+                    label = stringResource(R.string.accounts_row_label),
+                    subtitle = accountsSubtitle,
+                    onClick = onNavigateToAccounts,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
 
-            SettingsRow(
-                icon = Icons.Default.Person,
-                label = stringResource(R.string.accounts_row_label),
-                subtitle = if (accountCount == 0) null
-                    else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount),
-                onClick = onNavigateToAccounts
-            )
-
-            // Birthdays & Anniversaries row
             val baSubtitle = buildList {
                 if (birthdayCount > 0) add(pluralStringResource(R.plurals.birthday_count, birthdayCount, birthdayCount))
                 if (anniversaryCount > 0) add(pluralStringResource(R.plurals.anniversary_count, anniversaryCount, anniversaryCount))
             }.joinToString(", ").ifEmpty { null }
+            row(label = stringResource(R.string.birthdays_anniversaries_row_label), subtitle = baSubtitle, id = "birthdays") {
+                SettingsRow(
+                    icon = Icons.Default.Cake,
+                    label = stringResource(R.string.birthdays_anniversaries_row_label),
+                    subtitle = baSubtitle,
+                    onClick = onNavigateToBirthdaysAnniversaries,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
 
-            SettingsRow(
-                icon = Icons.Default.Cake,
-                label = stringResource(R.string.birthdays_anniversaries_row_label),
-                subtitle = baSubtitle,
-                onClick = onNavigateToBirthdaysAnniversaries
-            )
-
-            // Subscriptions row
             val subscriptionCount = subscriptions.size
+            val subscriptionsSubtitle = if (subscriptionCount == 0) null
+                else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount)
+            row(label = stringResource(R.string.subscriptions_row_label), subtitle = subscriptionsSubtitle, id = "subscriptions") {
+                SettingsRow(
+                    icon = Icons.Default.Link,
+                    label = stringResource(R.string.subscriptions_row_label),
+                    subtitle = subscriptionsSubtitle,
+                    onClick = onNavigateToSubscriptions,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
 
-            SettingsRow(
-                icon = Icons.Default.Link,
-                label = stringResource(R.string.subscriptions_row_label),
-                subtitle = if (subscriptionCount == 0) null
-                    else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount),
-                onClick = onNavigateToSubscriptions
-            )
-
-            // Device Calendars row
-            SettingsRow(
-                icon = Icons.Default.CalendarMonth,
-                label = stringResource(R.string.settings_device_calendars),
-                subtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else null,
-                onClick = onNavigateToDeviceCalendars,
-                showDivider = false
-            )
+            val deviceCalendarsSubtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else null
+            row(label = stringResource(R.string.settings_device_calendars), subtitle = deviceCalendarsSubtitle, id = "device-calendars") {
+                SettingsRow(
+                    icon = Icons.Default.CalendarMonth,
+                    label = stringResource(R.string.settings_device_calendars),
+                    subtitle = deviceCalendarsSubtitle,
+                    onClick = onNavigateToDeviceCalendars,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
         }
 
         // ==================== APPEARANCE Section ====================
-        SectionHeader(stringResource(R.string.settings_section_appearance))
-        SettingsCard {
-            SettingsRow(
-                icon = Icons.Default.SentimentSatisfied,
-                label = stringResource(R.string.settings_event_emojis),
-                subtitle = if (showEventEmojis) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { showEventEmojisSheet = true }
-            )
-            SettingsRow(
-                icon = Icons.Filled.Tune,
-                label = stringResource(R.string.settings_time_format),
-                subtitle = when (timeFormat) {
-                    KashCalDataStore.TIME_FORMAT_12H -> stringResource(R.string.option_12_hour)
-                    KashCalDataStore.TIME_FORMAT_24H -> stringResource(R.string.option_24_hour)
-                    else -> stringResource(R.string.option_system_default)
-                },
-                onClick = { showTimeFormatSheet = true }
-            )
-            SettingsRow(
-                icon = Icons.Default.ViewWeek,
-                label = stringResource(R.string.settings_start_week_on),
-                subtitle = when (firstDayOfWeek) {
-                    java.util.Calendar.SUNDAY -> stringResource(R.string.option_sunday)
-                    java.util.Calendar.MONDAY -> stringResource(R.string.option_monday)
-                    java.util.Calendar.SATURDAY -> stringResource(R.string.option_saturday)
-                    else -> stringResource(R.string.option_system_default)
-                },
-                onClick = { showFirstDayOfWeekSheet = true }
-            )
-            SettingsRow(
-                icon = Icons.Default.DateRange,
-                label = stringResource(R.string.settings_week_numbers),
-                subtitle = if (showWeekNumbers) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { onShowWeekNumbersChange(!showWeekNumbers) }
-            )
-            SettingsRow(
-                icon = Icons.Default.EventBusy,
-                label = stringResource(R.string.settings_show_declined),
-                subtitle = if (showDeclinedEvents) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { onToggleShowDeclinedEvents(!showDeclinedEvents) }
-            )
-            SettingsRow(
-                icon = Icons.Default.CalendarMonth,
-                label = stringResource(R.string.settings_widget_event_limit),
-                subtitle = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay),
-                onClick = { showWidgetEventLimitSheet = true },
-                showDivider = false  // Last item in card
-            )
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_appearance),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
+            val emojisSubtitle = if (showEventEmojis) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
+            row(label = stringResource(R.string.settings_event_emojis), subtitle = emojisSubtitle, id = "emojis") {
+                SettingsRow(
+                    icon = Icons.Default.SentimentSatisfied,
+                    label = stringResource(R.string.settings_event_emojis),
+                    subtitle = emojisSubtitle,
+                    onClick = { showEventEmojisSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val timeFormatSubtitle = when (timeFormat) {
+                KashCalDataStore.TIME_FORMAT_12H -> stringResource(R.string.option_12_hour)
+                KashCalDataStore.TIME_FORMAT_24H -> stringResource(R.string.option_24_hour)
+                else -> stringResource(R.string.option_system_default)
+            }
+            row(label = stringResource(R.string.settings_time_format), subtitle = timeFormatSubtitle, id = "time-format") {
+                SettingsRow(
+                    icon = Icons.Filled.Tune,
+                    label = stringResource(R.string.settings_time_format),
+                    subtitle = timeFormatSubtitle,
+                    onClick = { showTimeFormatSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val firstDaySubtitle = when (firstDayOfWeek) {
+                java.util.Calendar.SUNDAY -> stringResource(R.string.option_sunday)
+                java.util.Calendar.MONDAY -> stringResource(R.string.option_monday)
+                java.util.Calendar.SATURDAY -> stringResource(R.string.option_saturday)
+                else -> stringResource(R.string.option_system_default)
+            }
+            row(label = stringResource(R.string.settings_start_week_on), subtitle = firstDaySubtitle, id = "first-day") {
+                SettingsRow(
+                    icon = Icons.Default.ViewWeek,
+                    label = stringResource(R.string.settings_start_week_on),
+                    subtitle = firstDaySubtitle,
+                    onClick = { showFirstDayOfWeekSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val weekNumbersSubtitle = if (showWeekNumbers) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
+            row(label = stringResource(R.string.settings_week_numbers), subtitle = weekNumbersSubtitle, id = "week-numbers") {
+                SettingsRow(
+                    icon = Icons.Default.DateRange,
+                    label = stringResource(R.string.settings_week_numbers),
+                    subtitle = weekNumbersSubtitle,
+                    onClick = { onShowWeekNumbersChange(!showWeekNumbers) },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val showDeclinedSubtitle = if (showDeclinedEvents) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
+            row(label = stringResource(R.string.settings_show_declined), subtitle = showDeclinedSubtitle, id = "show-declined") {
+                SettingsRow(
+                    icon = Icons.Default.EventBusy,
+                    label = stringResource(R.string.settings_show_declined),
+                    subtitle = showDeclinedSubtitle,
+                    onClick = { onToggleShowDeclinedEvents(!showDeclinedEvents) },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val widgetLimitSubtitle = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay)
+            row(label = stringResource(R.string.settings_widget_event_limit), subtitle = widgetLimitSubtitle, id = "widget-limit") {
+                SettingsRow(
+                    icon = Icons.Default.CalendarMonth,
+                    label = stringResource(R.string.settings_widget_event_limit),
+                    subtitle = widgetLimitSubtitle,
+                    onClick = { showWidgetEventLimitSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
         }
 
         // ==================== CREATING EVENTS Section ====================
-        // Default Calendar and Default Alerts require a calendar to target; Default length doesn't.
-        // The two isNotEmpty guards intentionally sandwich the unguarded Default length row so
-        // users without any accounts still see the length setting.
-        SectionHeader(stringResource(R.string.settings_section_creating_events))
-        SettingsCard {
+        // Default Calendar and Default Alerts require a calendar to target;
+        // Default length doesn't.
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_creating_events),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
             if (calendars.isNotEmpty()) {
-                // Default Calendar Row
+                val defaultCalendarSubtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set)
+                row(label = stringResource(R.string.settings_default_calendar), subtitle = defaultCalendarSubtitle, id = "default-calendar") {
+                    SettingsRow(
+                        icon = Icons.Default.Star,
+                        label = stringResource(R.string.settings_default_calendar),
+                        subtitle = defaultCalendarSubtitle,
+                        onClick = { showDefaultCalendarSheet = true },
+                        showDivider = false,
+                        searchQuery = searchQuery
+                    )
+                }
+            }
+
+            val durationSubtitle = formatDuration(defaultEventDuration, resources)
+            row(label = stringResource(R.string.settings_default_event_length), subtitle = durationSubtitle, id = "default-length") {
                 SettingsRow(
-                    icon = Icons.Default.Star,
-                    label = stringResource(R.string.settings_default_calendar),
-                    subtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set),
-                    onClick = { showDefaultCalendarSheet = true }
+                    icon = Icons.Default.Schedule,
+                    label = stringResource(R.string.settings_default_event_length),
+                    subtitle = durationSubtitle,
+                    onClick = { showEventDurationSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
                 )
             }
-            SettingsRow(
-                icon = Icons.Default.Schedule,
-                label = stringResource(R.string.settings_default_event_length),
-                subtitle = formatDuration(defaultEventDuration, resources),
-                onClick = { showEventDurationSheet = true }
-            )
+
             if (calendars.isNotEmpty()) {
+                val alertsSubtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, resources)}"
+                row(label = stringResource(R.string.settings_default_alerts), subtitle = alertsSubtitle, id = "default-alerts") {
+                    SettingsRow(
+                        icon = Icons.Default.Notifications,
+                        label = stringResource(R.string.settings_default_alerts),
+                        subtitle = alertsSubtitle,
+                        onClick = { showAlertsSheet = true },
+                        showDivider = false,
+                        searchQuery = searchQuery
+                    )
+                }
+            }
+
+            val quickAddSubtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
+            row(label = stringResource(R.string.settings_quick_event_add), subtitle = quickAddSubtitle, id = "quick-add") {
                 SettingsRow(
-                    icon = Icons.Default.Notifications,
-                    label = stringResource(R.string.settings_default_alerts),
-                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, resources)}",
-                    onClick = { showAlertsSheet = true }
+                    icon = Icons.Default.Edit,
+                    label = stringResource(R.string.settings_quick_event_add),
+                    subtitle = quickAddSubtitle,
+                    onClick = { onQuickAddEnabledChange(!quickAddEnabled) },
+                    badge = { BetaBadge() },
+                    showDivider = false,
+                    searchQuery = searchQuery
                 )
             }
-            SettingsRow(
-                icon = Icons.Default.Edit,
-                label = stringResource(R.string.settings_quick_event_add),
-                subtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { onQuickAddEnabledChange(!quickAddEnabled) },
-                badge = { BetaBadge() }
-            )
-            SettingsRow(
-                icon = Icons.Default.History,
-                label = stringResource(R.string.settings_suggest_titles),
-                subtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) },
-                showDivider = false  // Last item in card
-            )
+
+            val suggestTitlesSubtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
+            row(label = stringResource(R.string.settings_suggest_titles), subtitle = suggestTitlesSubtitle, id = "suggest-titles") {
+                SettingsRow(
+                    icon = Icons.Default.History,
+                    label = stringResource(R.string.settings_suggest_titles),
+                    subtitle = suggestTitlesSubtitle,
+                    onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
         }
 
-        // ==================== NOTIFICATIONS Row (standalone, no section header) ====================
-        // Single-row card — a SectionHeader whose label matches the only row would be self-reference noise.
-        SettingsCard {
-            // Notifications Row — icon variation (Notifications / NotificationsOff)
-            // and subtitle variation (Enabled / Tap to enable) carry the state.
-            SettingsRow(
-                icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                label = stringResource(R.string.settings_notifications),
-                subtitle = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable),
-                onClick = {
-                    if (!notificationsEnabled) {
-                        onRequestNotificationPermission()
-                    }
-                },
-                showChevron = !notificationsEnabled,
-                showDivider = false  // Only item in card
-            )
+        // ==================== NOTIFICATIONS (standalone, no header) ====================
+        SearchableSection(
+            query = searchQuery,
+            header = null,
+            onEmitted = emittedTracker::onEmitted,
+        ) {
+            val notifSubtitle = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable)
+            row(label = stringResource(R.string.settings_notifications), subtitle = notifSubtitle, id = "notifications") {
+                SettingsRow(
+                    icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                    label = stringResource(R.string.settings_notifications),
+                    subtitle = notifSubtitle,
+                    onClick = {
+                        if (!notificationsEnabled) {
+                            onRequestNotificationPermission()
+                        }
+                    },
+                    showChevron = !notificationsEnabled,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
         }
 
         // ==================== SYNC Section ====================
-        SectionHeader(stringResource(R.string.settings_section_sync))
-        SettingsCard {
-            SettingsRow(
-                icon = Icons.Default.Refresh,
-                label = stringResource(R.string.settings_sync_lookback),
-                subtitle = formatSyncLookback(syncLookbackDays, resources),
-                onClick = { showSyncLookbackSheet = true },
-                showDivider = false  // Only item in card
-            )
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_sync),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
+            val syncLookbackSubtitle = formatSyncLookback(syncLookbackDays, resources)
+            row(label = stringResource(R.string.settings_sync_lookback), subtitle = syncLookbackSubtitle, id = "sync-lookback") {
+                SettingsRow(
+                    icon = Icons.Default.Refresh,
+                    label = stringResource(R.string.settings_sync_lookback),
+                    subtitle = syncLookbackSubtitle,
+                    onClick = { showSyncLookbackSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
         }
 
         // ==================== Backup & Restore Section ====================
-        SectionHeader(stringResource(R.string.settings_section_data))
-        SettingsCard {
-            // Export Local Calendar Row (conditional — only if a Local calendar exists)
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_data),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
             localCalendar?.let { local ->
+                row(label = stringResource(R.string.action_export_local_calendar), subtitle = stringResource(R.string.settings_export_subtitle), id = "export") {
+                    SettingsRow(
+                        icon = Icons.Default.FileUpload,
+                        label = stringResource(R.string.action_export_local_calendar),
+                        subtitle = stringResource(R.string.settings_export_subtitle),
+                        onClick = { onExportCalendar(local.id) },
+                        showDivider = false,
+                        searchQuery = searchQuery
+                    )
+                }
+            }
+            row(label = stringResource(R.string.backup_settings_label), subtitle = stringResource(R.string.backup_settings_subtitle), id = "backup") {
                 SettingsRow(
                     icon = Icons.Default.FileUpload,
-                    label = stringResource(R.string.action_export_local_calendar),
-                    subtitle = stringResource(R.string.settings_export_subtitle),
-                    onClick = { onExportCalendar(local.id) },
-                    showDivider = true
+                    label = stringResource(R.string.backup_settings_label),
+                    subtitle = stringResource(R.string.backup_settings_subtitle),
+                    onClick = onBackupSettings,
+                    showDivider = false,
+                    searchQuery = searchQuery
                 )
             }
+            row(label = stringResource(R.string.action_import_from_file), subtitle = stringResource(R.string.settings_import_subtitle), id = "import") {
+                SettingsRow(
+                    icon = Icons.Default.FileDownload,
+                    label = stringResource(R.string.action_import_from_file),
+                    subtitle = stringResource(R.string.settings_import_subtitle),
+                    onClick = onImportCalendarFile,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+            row(label = stringResource(R.string.restore_settings_label), subtitle = stringResource(R.string.restore_settings_subtitle), id = "restore") {
+                SettingsRow(
+                    icon = Icons.Default.FileDownload,
+                    label = stringResource(R.string.restore_settings_label),
+                    subtitle = stringResource(R.string.restore_settings_subtitle),
+                    onClick = onRestoreSettings,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+        }
 
-            // Back up settings — divider separates the export/backup pair from the import/restore pair
-            SettingsRow(
-                icon = Icons.Default.FileUpload,
-                label = stringResource(R.string.backup_settings_label),
-                subtitle = stringResource(R.string.backup_settings_subtitle),
-                onClick = onBackupSettings,
-                showDivider = true
-            )
-
-            // Import events from file
-            SettingsRow(
-                icon = Icons.Default.FileDownload,
-                label = stringResource(R.string.action_import_from_file),
-                subtitle = stringResource(R.string.settings_import_subtitle),
-                onClick = onImportCalendarFile,
-                showDivider = true
-            )
-
-            // Restore settings
-            SettingsRow(
-                icon = Icons.Default.FileDownload,
-                label = stringResource(R.string.restore_settings_label),
-                subtitle = stringResource(R.string.restore_settings_subtitle),
-                onClick = onRestoreSettings,
-                showDivider = false
-            )
+        // Empty-state when search is active and no section matched.
+        if (searchQuery.isNotBlank() && !emittedTracker.anyEmitted) {
+            SearchEmptyState(query = searchQuery)
         }
 
         // ==================== Version Footer ====================
-        if (versionName.isNotEmpty()) {
+        // Only render when not actively searching.
+        if (versionName.isNotEmpty() && searchQuery.isBlank()) {
             VersionFooter(
                 versionName = versionName,
                 onClick = { showAppInfoSheet = true },

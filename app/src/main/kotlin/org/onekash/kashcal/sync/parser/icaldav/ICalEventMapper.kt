@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
 import android.graphics.Color
+import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Attendee
@@ -8,6 +9,10 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.Duration
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 /**
  * Maps icaldav ICalEvent to KashCal Event entity.
@@ -48,13 +53,20 @@ object ICalEventMapper {
      * @param calendarId The target calendar ID
      * @param caldavUrl The CalDAV URL for this event resource
      * @param etag The HTTP ETag from server
+     * @param masterDtStart When [icalEvent] is an exception (recurrenceId
+     *   != null), pass the master's DTSTART so the mapper can normalize a
+     *   value-type-mismatched RECURRENCE-ID before storing
+     *   originalInstanceTime. Pass null for masters or when the master
+     *   isn't available — the mapper falls back to the recurrenceId
+     *   timestamp verbatim.
      */
     fun toEntity(
         icalEvent: ICalEvent,
         rawIcal: String?,
         calendarId: Long,
         caldavUrl: String?,
-        etag: String?
+        etag: String?,
+        masterDtStart: ICalDateTime? = null,
     ): MappedEntity {
         val now = System.currentTimeMillis()
 
@@ -102,8 +114,16 @@ object ICalEventMapper {
         // RFC 5545 §3.8.2.2 permits DTEND TZID to differ from DTSTART TZID (e.g., flights).
         val endTimezone = icalEvent.dtEnd?.timezone?.id?.takeIf { it != timezone }
 
-        // Get original instance time for exception events
-        val originalInstanceTime = icalEvent.recurrenceId?.timestamp
+        // Get original instance time for exception events. Normalize
+        // value-type mismatches against the master's DTSTART so a
+        // date-form RECURRENCE-ID against a timed master lands at the
+        // master's local time-of-day instead of midnight UTC. RFC 5545
+        // §3.8.4.4: types MUST match, but real-world clients break this
+        // and most CalDAV servers preserve the mismatch.
+        val originalInstanceTime = normalizeRecurrenceId(
+            recurrenceId = icalEvent.recurrenceId,
+            masterDtStart = masterDtStart,
+        )?.timestamp
 
         // Get importId for unique database lookup
         val importId = icalEvent.importId
@@ -224,6 +244,64 @@ object ICalEventMapper {
      */
     fun isException(icalEvent: ICalEvent): Boolean {
         return icalEvent.recurrenceId != null
+    }
+
+    /**
+     * Normalize an exception's RECURRENCE-ID against the master's DTSTART
+     * value type. RFC 5545 §3.8.4.4 says they MUST match, but some clients
+     * emit a mismatched form (e.g. `RECURRENCE-ID;VALUE=DATE` against a
+     * timed master). Live multi-server tests show 7 of 10 CalDAV servers
+     * preserve the mismatched form on PUT/GET round-trip, so KashCal's
+     * pull path has to defend against it.
+     *
+     * Without normalization: a date-form RECURRENCE-ID lands at midnight
+     * UTC, but the master's RRULE expansion at the same calendar day puts
+     * the instance at the master's local time-of-day. The 60-second
+     * `linkException` tolerance can't bridge the gap, leaving two
+     * occurrence rows on the day card.
+     *
+     * Two cases:
+     * - Master timed, RECURRENCE-ID date-form → promote DATE to master's
+     *   time-of-day in master's timezone.
+     * - Master all-day, RECURRENCE-ID date-time form → demote to DATE,
+     *   keeping the calendar date.
+     *
+     * Pass-through when [recurrenceId] is null, when [masterDtStart] is
+     * null (we can't normalize without it), or when value types already
+     * match.
+     */
+    fun normalizeRecurrenceId(
+        recurrenceId: ICalDateTime?,
+        masterDtStart: ICalDateTime?,
+    ): ICalDateTime? {
+        if (recurrenceId == null) return null
+        if (masterDtStart == null) return recurrenceId
+        if (recurrenceId.isDate == masterDtStart.isDate) return recurrenceId
+
+        return if (masterDtStart.isDate) {
+            // Master is all-day, RECURRENCE-ID is date-time. Demote to DATE.
+            // Keep the calendar date as observed in the RECURRENCE-ID's own zone.
+            val zone = recurrenceId.timezone ?: ZoneId.systemDefault()
+            val date = ZonedDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(recurrenceId.timestamp),
+                zone,
+            ).toLocalDate()
+            ICalDateTime.fromLocalDate(date)
+        } else {
+            // Master is timed, RECURRENCE-ID is date-form. Promote DATE to
+            // master's time-of-day in master's timezone — that's the time
+            // the master's RRULE expansion would have produced for this day.
+            val masterZone = masterDtStart.timezone ?: ZoneOffset.UTC
+            val masterLocalTime = ZonedDateTime
+                .ofInstant(java.time.Instant.ofEpochMilli(masterDtStart.timestamp), masterZone)
+                .toLocalTime()
+            val recurrenceDate = LocalDate.ofInstant(
+                java.time.Instant.ofEpochMilli(recurrenceId.timestamp),
+                ZoneOffset.UTC, // DATE values are stored as UTC midnight per ICalDateTime
+            )
+            val zoned = ZonedDateTime.of(recurrenceDate, masterLocalTime, masterZone)
+            ICalDateTime.fromZonedDateTime(zoned, isDate = false)
+        }
     }
 
     /**

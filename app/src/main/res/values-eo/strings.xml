@@ -75,6 +75,40 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">La respondo validas por la tuta serio.</string>
     <string name="rsvp_modified_snackbar">Respondo por %1$s malsukcesis: la evento estis modifita. Bonvolu respondi denove.</string>
+    <string name="invitees_host_tag">Gastiganto</string>
+    <string name="invitees_summary_you_alone">Vi</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Vi · %d invitita</item>
+        <item quantity="other">Vi · %d invititaj</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invitita</item>
+        <item quantity="other">%d invititaj</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s gastigas</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Vi</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Vi + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Vi + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Vi + %d</item>
+        <item quantity="other">Vi + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d pli</item>
+        <item quantity="other">%1$s · %2$d pli</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Ŝanĝi respondon</string>
+    <string name="rsvp_question_going">Ĉu vi venos?</string>
+    <string name="rsvp_action_yes">Jes</string>
+    <string name="rsvp_action_maybe">Eble</string>
+    <string name="rsvp_action_no">Ne</string>
+    <string name="rsvp_state_going">Vi venos</string>
+    <string name="rsvp_state_maybe">Eble</string>
+    <string name="rsvp_state_not_going">Vi ne venos</string>
+    <string name="rsvp_action_change">Ŝanĝi</string>
+
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Nur ĉi tiu</string>
@@ -478,6 +512,9 @@
     <string name="label_found_events">Trovitaj: %1$d eventoj</string>
     <string name="label_open_debug_menu">Malfermi sencimigan menuon</string>
     <string name="placeholder_search">Serĉi…</string>
+    <string name="settings_search_placeholder">Serĉi en agordoj…</string>
+    <string name="settings_search_no_results">Neniu agordo trovita por \"%1$s\"</string>
+    <string name="cd_search_settings">Serĉi en agordoj</string>
     <string name="status_sync_paused">Sinkronigo paŭzita</string>
     <string name="status_not_synced">Ne sinkronigita</string>
     <string name="status_sync_error">Sinkroniga eraro</string>
@@ -660,11 +697,11 @@
     </plurals>
 
     <!-- HomeScreen -->
-    <string name="dialog_edit_recurring_title">Redakti ripetan eventon</string>
-    <string name="dialog_delete_recurring_title">Forigi ripetan eventon</string>
-    <string name="dialog_edit_recurring_message">Ĉi tio estas ripeta evento. Kiel vi volas apliki ĉi tiun ŝanĝon?</string>
     <string name="recurring_this_event">Ĉi tiu evento</string>
     <string name="recurring_all_events">Ĉiuj eventoj</string>
+    <string name="dialog_edit_recurring_title">Konservi ŝanĝojn en</string>
+    <string name="dialog_delete_recurring_title">Forigi</string>
+    <string name="dialog_move_recurring_title">Movi</string>
     <string name="empty_pick_a_day">Elektu tagon. Kaptu ĝin.</string>
     <string name="empty_no_events_day">Nenio vidinda ĉi tie; iru eksteren?</string>
     <string name="filter_date">Dato</string>
@@ -1095,5 +1132,17 @@
     <string name="share_availability_days_through">Ĝis %1$s</string>
     <string name="share_availability_window_duration">Fenestro de %1$s horoj</string>
     <string name="share_from_kashcal_footer">Kunhavigita el KashCal</string>
+    <string name="attendee_sheet_title">Ĉeestantoj</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invitita</item>
+        <item quantity="other">%d invititaj</item>
+    </plurals>
+    <string name="attendee_search_hint">Serĉi</string>
+    <string name="attendee_search_no_matches">Neniuj rezultoj</string>
+    <string name="attendee_section_going">Iras</string>
+    <string name="attendee_section_maybe">Eble</string>
+    <string name="attendee_section_pending">Atendantaj</string>
+    <string name="attendee_section_declined">Rifuzis</string>
+    <string name="attendee_section_delegated">Delegis</string>
 
 </resources>

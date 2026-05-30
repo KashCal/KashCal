@@ -73,6 +73,41 @@
     <string name="rsvp_action_decline">ପ୍ରତ୍ୟାଖ୍ୟାନ କରନ୍ତୁ</string>
     <string name="rsvp_series_disclosure">ଆପଣଙ୍କ ଉତ୍ତର ସମ୍ପୂର୍ଣ୍ଣ ଶୃଙ୍ଖଳା ଉପରେ ପ୍ରଯୁଜ୍ୟ।</string>
     <string name="rsvp_modified_snackbar">%1$s ପାଇଁ RSVP ବିଫଳ ହୋଇଛି — ଇଭେଣ୍ଟ ସଂଶୋଧିତ ହୋଇଛି। ଦୟାକରି ପୁନଃ ଉତ୍ତର ଦିଅନ୍ତୁ।</string>
+    <string name="invitees_host_tag">ଆୟୋଜକ</string>
+    <string name="rsvp_question_going">ଯିବେ?</string>
+    <string name="rsvp_action_yes">ହଁ</string>
+    <string name="rsvp_action_maybe">ହୁଏତ</string>
+    <string name="rsvp_action_no">ନା</string>
+    <string name="rsvp_state_going">ଆପଣ ଯିବେ</string>
+    <string name="rsvp_state_maybe">ହୁଏତ</string>
+    <string name="rsvp_state_not_going">ଯିବେ ନାହିଁ</string>
+    <string name="rsvp_action_change">ବଦଳାନ୍ତୁ</string>
+
+
+    <string name="invitees_summary_you_alone">ଆପଣ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">ଆପଣ · %d ଆମନ୍ତ୍ରିତ</item>
+        <item quantity="other">ଆପଣ · %d ଆମନ୍ତ୍ରିତ</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d ଆମନ୍ତ୍ରିତ</item>
+        <item quantity="other">%d ଆମନ୍ତ୍ରିତ</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ଆୟୋଜନ କରୁଛନ୍ତି</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · ଆପଣ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · ଆପଣ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · ଆପଣ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">ଆପଣ + %d</item>
+        <item quantity="other">ଆପଣ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ଆଉ %2$d ଜଣ</item>
+        <item quantity="other">%1$s · ଆଉ %2$d ଜଣ</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">ଉତ୍ତର ବଦଳାନ୍ତୁ</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">କେବଳ ଏହା</string>
@@ -499,6 +534,9 @@
     <string name="label_found_events">ମିଳିଲା: %1$d ଇଭେଣ୍ଟ</string>
     <string name="label_open_debug_menu">ଡିବଗ ମେନୁ ଖୋଲନ୍ତୁ</string>
     <string name="placeholder_search">ଖୋଜନ୍ତୁ…</string>
+    <string name="settings_search_placeholder">ସେଟିଂସ ଖୋଜନ୍ତୁ…</string>
+    <string name="settings_search_no_results">\"%1$s\" ପାଇଁ କୌଣସି ସେଟିଂ ମିଳିଲା ନାହିଁ</string>
+    <string name="cd_search_settings">ସେଟିଂସ ଖୋଜନ୍ତୁ</string>
     <string name="status_sync_paused">ସିଙ୍କ ବିରାମିତ</string>
     <string name="status_not_synced">ସିଙ୍କ ହୋଇନାହିଁ</string>
     <string name="status_sync_error">ସିଙ୍କ ତ୍ରୁଟି</string>
@@ -681,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ପୁନରାବୃତ୍ତ ଇଭେଣ୍ଟ ସମ୍ପାଦନା</string>
-    <string name="dialog_delete_recurring_title">ପୁନରାବୃତ୍ତ ଇଭେଣ୍ଟ ଡିଲିଟ</string>
-    <string name="dialog_edit_recurring_message">ଏହା ଏକ ପୁନରାବୃତ୍ତ ଇଭେଣ୍ଟ। ଏହି ପରିବର୍ତ୍ତନ କେମିତି ଲାଗୁ କରିବେ?</string>
     <string name="recurring_this_event">ଏହି ଇଭେଣ୍ଟ</string>
     <string name="recurring_all_events">ସମସ୍ତ ଇଭେଣ୍ଟ</string>
+    <string name="dialog_edit_recurring_title">ପରିବର୍ତ୍ତନ ସେଭ୍ କରନ୍ତୁ</string>
+    <string name="dialog_delete_recurring_title">ଡିଲିଟ୍ କରନ୍ତୁ</string>
+    <string name="dialog_move_recurring_title">ସ୍ଥାନାନ୍ତର</string>
     <string name="empty_pick_a_day">ଏକ ଦିନ ବାଛନ୍ତୁ। ଏହାକୁ କାମରେ ଲଗାନ୍ତୁ।</string>
     <string name="empty_no_events_day">ଏଠାରେ କିଛି ନାହିଁ; ବାହାରକୁ ଯାଇ ତାଜା ପବନ ଖାଆନ୍ତୁ?</string>
     <string name="filter_date">ତାରିଖ</string>
@@ -1097,4 +1135,16 @@
     <string name="rrule_unit_year">ବର୍ଷ</string>
     <string name="cd_decrease_interval">ବ୍ୟବଧାନ କମାନ୍ତୁ</string>
     <string name="cd_increase_interval">ବ୍ୟବଧାନ ବଢ଼ାନ୍ତୁ</string>
+    <string name="attendee_sheet_title">ଅଂଶଗ୍ରହଣକାରୀ</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d ଆମନ୍ତ୍ରିତ</item>
+        <item quantity="other">%d ଆମନ୍ତ୍ରିତ</item>
+    </plurals>
+    <string name="attendee_search_hint">ଖୋଜନ୍ତୁ</string>
+    <string name="attendee_search_no_matches">କୌଣସି ଫଳାଫଳ ନାହିଁ</string>
+    <string name="attendee_section_going">ଯିବେ</string>
+    <string name="attendee_section_maybe">ହୁଏତ</string>
+    <string name="attendee_section_pending">ଅପେକ୍ଷାରତ</string>
+    <string name="attendee_section_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ</string>
+    <string name="attendee_section_delegated">ସମର୍ପଣ</string>
 </resources>

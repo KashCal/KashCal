@@ -75,6 +75,40 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">La resposta s\'aplica a tota la sèrie.</string>
     <string name="rsvp_modified_snackbar">La resposta per a %1$s ha fallat: l\'esdeveniment s\'ha modificat. Torna a respondre.</string>
+    <string name="invitees_host_tag">Amfitrió</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tu · %d convidat</item>
+        <item quantity="other">Tu · %d convidats</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d convidat</item>
+        <item quantity="other">%d convidats</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organitza</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d més</item>
+        <item quantity="other">%1$s · %2$d més</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Canvia la resposta</string>
+    <string name="rsvp_question_going">Hi vas?</string>
+    <string name="rsvp_action_yes">Sí</string>
+    <string name="rsvp_action_maybe">Potser</string>
+    <string name="rsvp_action_no">No</string>
+    <string name="rsvp_state_going">Hi vas</string>
+    <string name="rsvp_state_maybe">Potser</string>
+    <string name="rsvp_state_not_going">No hi vas</string>
+    <string name="rsvp_action_change">Canvia</string>
+
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Només aquest</string>
@@ -478,6 +512,9 @@
     <string name="label_found_events">Trobats: %1$d esdeveniments</string>
     <string name="label_open_debug_menu">Obrir menú de depuració</string>
     <string name="placeholder_search">Cercar…</string>
+    <string name="settings_search_placeholder">Cerca a la configuració…</string>
+    <string name="settings_search_no_results">No s\'ha trobat res a la configuració per a \"%1$s\"</string>
+    <string name="cd_search_settings">Cerca a la configuració</string>
     <string name="status_sync_paused">Sincronització en pausa</string>
     <string name="status_not_synced">No sincronitzat</string>
     <string name="status_sync_error">Error de sincronització</string>
@@ -660,11 +697,11 @@
     </plurals>
 
     <!-- HomeScreen -->
-    <string name="dialog_edit_recurring_title">Editar esdeveniment recurrent</string>
-    <string name="dialog_delete_recurring_title">Eliminar esdeveniment recurrent</string>
-    <string name="dialog_edit_recurring_message">Aquest és un esdeveniment recurrent. Com vols aplicar aquest canvi?</string>
     <string name="recurring_this_event">Aquest esdeveniment</string>
     <string name="recurring_all_events">Tots els esdeveniments</string>
+    <string name="dialog_edit_recurring_title">Desa els canvis a</string>
+    <string name="dialog_delete_recurring_title">Suprimeix</string>
+    <string name="dialog_move_recurring_title">Mou</string>
     <string name="empty_pick_a_day">Tria un dia. Aprofita\'l.</string>
     <string name="empty_no_events_day">Res a veure aquí; surt a passejar?</string>
     <string name="filter_date">Data</string>
@@ -1095,5 +1132,17 @@
     <string name="share_availability_days_through">Fins %1$s</string>
     <string name="share_availability_window_duration">Finestra de %1$s hores</string>
     <string name="share_from_kashcal_footer">Compartit des de KashCal</string>
+    <string name="attendee_sheet_title">Assistents</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d convidat</item>
+        <item quantity="other">%d convidats</item>
+    </plurals>
+    <string name="attendee_search_hint">Cerca</string>
+    <string name="attendee_search_no_matches">Sense resultats</string>
+    <string name="attendee_section_going">Hi van</string>
+    <string name="attendee_section_maybe">Potser</string>
+    <string name="attendee_section_pending">Pendent</string>
+    <string name="attendee_section_declined">Refusat</string>
+    <string name="attendee_section_delegated">Delegat</string>
 
 </resources>

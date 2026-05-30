@@ -712,33 +712,6 @@ class AttendeeUiModelTest {
         assertTrue(sorted.none { it.bareAddress == "eve@example.com" })
     }
 
-    // F2 (cont.) — confirm AttendeeChipRowState.compute reports hiddenCount=1 for the same shape.
-    @Test
-    fun `compute returns Inline with hiddenCount=1 when synthesized organizer plus 4 real attendees collapsed`() {
-        val account = acc(
-            email = "alice@example.com",
-            calendarUserAddresses = listOf("mailto:alice@example.com")
-        )
-        val attendees = listOf(
-            att(address = "mailto:bob@example.com", sortOrder = 0),
-            att(address = "mailto:carol@example.com", sortOrder = 1),
-            att(address = "mailto:dave@example.com", sortOrder = 2),
-            att(address = "mailto:eve@example.com", sortOrder = 3)
-        )
-        val models = AttendeeUiModel.fromRoom(attendees, account, "mailto:alice@example.com", null)
-        val isOnList = AttendeeUiModel.isCurrentUserOnList(
-            attendees, account, "mailto:alice@example.com"
-        )
-        val mode = AttendeeChipRowState.compute(
-            models = models,
-            isCurrentUserOnList = isOnList,
-            expanded = false
-        )
-        val inline = mode as AttendeeChipRowMode.Inline
-        assertEquals(4, inline.visible.size)
-        assertEquals(1, inline.hiddenCount)
-    }
-
     // F5 — multi-alias edge case.
     @Test
     fun `fromRoom does NOT synthesize when account has multiple aliases and one alias is on attendee list`() {

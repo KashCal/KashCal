@@ -30,6 +30,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     val createdExceptions = mutableListOf<CreatedException>()
     val deletedOccurrences = mutableListOf<DeletedOccurrence>()
     val deletedFutureOccurrences = mutableListOf<DeletedFutureOccurrence>()
+    val editedFutureSeries = mutableListOf<EditedFutureSeries>()
     val movedEvents = mutableListOf<MovedEvent>()
 
     // Read operation data
@@ -76,6 +77,16 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val masterEventId: Long,
         val fromTimeMs: Long,
         val isAllDay: Boolean = false
+    )
+
+    data class EditedFutureSeries(
+        val masterEventId: Long,
+        val fromTimeMs: Long,
+        val isAllDay: Boolean,
+        val calendarId: Long,
+        val title: String,
+        val rrule: String?,
+        val newEventId: Long,
     )
 
     data class MovedEvent(
@@ -302,6 +313,51 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
 
         deletedFutureOccurrences.add(DeletedFutureOccurrence(masterEventId, fromTimeMs, isAllDay))
         return Result.success(Unit)
+    }
+
+    override suspend fun editThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isAllDay: Boolean,
+        calendarId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long?,
+        rrule: String?,
+        duration: String?,
+        timezone: String,
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?,
+    ): Result<Long> {
+        writeFailure?.let { return Result.failure(it.toException()) }
+        if (shouldThrowSecurityException) {
+            return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
+        }
+
+        // Match the real impl: at-or-before-start collapses to an
+        // in-place update; otherwise produces a new event id.
+        val targetEvent = deviceEvents[masterEventId]
+        val newEventId = if (targetEvent != null && fromTimeMs <= targetEvent.startTs) {
+            masterEventId
+        } else {
+            // Allocate a synthetic id distinct from the master.
+            (deviceEvents.keys.maxOrNull() ?: masterEventId) + 1L
+        }
+        editedFutureSeries.add(
+            EditedFutureSeries(
+                masterEventId = masterEventId,
+                fromTimeMs = fromTimeMs,
+                isAllDay = isAllDay,
+                calendarId = calendarId,
+                title = title,
+                rrule = rrule,
+                newEventId = newEventId,
+            )
+        )
+        return Result.success(newEventId)
     }
 
     override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> {

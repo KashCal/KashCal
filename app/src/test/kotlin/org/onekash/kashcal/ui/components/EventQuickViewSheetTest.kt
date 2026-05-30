@@ -60,6 +60,20 @@ class EventQuickViewSheetTest {
     }
 
     /**
+     * Mirrors the QuickView Delete-button onClick predicate.
+     * Returns true when the inline two-tap confirmation must be shown
+     * (i.e. we should NOT skip straight to onDeleteSingle()).
+     *
+     * Skip the confirmation only when the host will surface a scope
+     * sheet — that's only for a recurring master. Exception events
+     * route straight to a destructive write with no scope sheet, so
+     * they need the inline guard same as a non-recurring event.
+     */
+    private fun shouldShowQuickViewDeleteConfirm(event: Event): Boolean {
+        return !(event.isRecurring && !event.isException)
+    }
+
+    /**
      * Simulate the repeat text logic from EventQuickViewSheet.
      */
     private fun getRepeatText(event: Event): String {
@@ -142,6 +156,34 @@ class EventQuickViewSheetTest {
         assertTrue("Exception with rrule should be detected as recurring", isRecurringForQuickView(event))
         assertTrue("Event.isRecurring should be true", event.isRecurring)
         assertTrue("Event.isException should be true", event.isException)
+    }
+
+    // ========== Delete-Confirmation Predicate Tests ==========
+    //
+    // Skip the inline confirmation in QuickView ONLY when the host will
+    // surface a scope sheet — that's only for a recurring master.
+
+    @Test
+    fun `Delete on recurring master skips inline confirm — scope sheet is the confirmation`() {
+        val master = createEvent(rrule = "FREQ=DAILY", originalEventId = null)
+        assertFalse(shouldShowQuickViewDeleteConfirm(master))
+    }
+
+    @Test
+    fun `Delete on exception event shows inline confirm — no scope sheet on this path`() {
+        // Regression: prior to fix, the predicate was just `isRecurring` —
+        // which is true for exception events too (event.isException ⇒ true)
+        // so QuickView routed straight to onDeleteSingle. MainActivity's
+        // onDeleteSingle then invoked deleteSingleOccurrence with no
+        // intervening scope sheet → exception deleted on a single tap.
+        val exception = createEvent(rrule = null, originalEventId = 100L)
+        assertTrue(shouldShowQuickViewDeleteConfirm(exception))
+    }
+
+    @Test
+    fun `Delete on non-recurring event shows inline confirm`() {
+        val nonRecurring = createEvent(rrule = null, originalEventId = null)
+        assertTrue(shouldShowQuickViewDeleteConfirm(nonRecurring))
     }
 
     @Test

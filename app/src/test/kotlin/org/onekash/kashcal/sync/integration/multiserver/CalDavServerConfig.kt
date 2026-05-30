@@ -70,6 +70,18 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        val BAIKAL_DIGEST = CalDavServerConfig(
+            name = "BaikalDigest",
+            serverKey = "BAIKAL_DIGEST_SERVER",
+            usernameKey = "BAIKAL_DIGEST_USERNAME",
+            passwordKey = "BAIKAL_DIGEST_PASSWORD",
+            defaultServerUrl = "http://localhost:8083",
+            davEndpointSuffix = "/dav.php/",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true
+        )
+
         val RADICALE = CalDavServerConfig(
             name = "Radicale",
             serverKey = "RADICALE_SERVER",
@@ -122,8 +134,31 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        val MXROUTE = CalDavServerConfig(
+            name = "mxRoute",
+            serverKey = "MXROUTE_CALDAV_SERVER",
+            usernameKey = "MXROUTE_CALDAV_USERNAME",
+            passwordKey = "MXROUTE_CALDAV_PASSWORD",
+            defaultServerUrl = null,
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true
+        )
+
+        val PURELYMAIL = CalDavServerConfig(
+            name = "PurelyMail",
+            serverKey = "PURELYMAIL_SERVER",
+            usernameKey = "PURELYMAIL_USERNAME",
+            passwordKey = "PURELYMAIL_PASSWORD",
+            defaultServerUrl = null,
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true
+        )
+
         fun allServers(): List<CalDavServerConfig> = listOf(
-            ICLOUD, STALWART, BAIKAL, RADICALE, NEXTCLOUD, ZOHO, SOGO
+            ICLOUD, STALWART, BAIKAL, BAIKAL_DIGEST, RADICALE, NEXTCLOUD,
+            ZOHO, SOGO, MXROUTE, PURELYMAIL
         )
     }
 }

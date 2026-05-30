@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">Prijať</string>
     <string name="rsvp_action_tentative">Nezáväzne</string>
     <string name="rsvp_action_decline">Odmietnuť</string>
+    <string name="invitees_host_tag">Hostiteľ</string>
+    <string name="rsvp_question_going">Pôjdeš?</string>
+    <string name="rsvp_action_yes">Áno</string>
+    <string name="rsvp_action_maybe">Možno</string>
+    <string name="rsvp_action_no">Nie</string>
+    <string name="rsvp_state_going">Ideš</string>
+    <string name="rsvp_state_maybe">Možno</string>
+    <string name="rsvp_state_not_going">Nejdeš</string>
+    <string name="rsvp_action_change">Zmeniť</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -483,6 +494,9 @@
     <string name="label_found_events">Nájdených: %1$d udalostí</string>
     <string name="label_open_debug_menu">Otvoriť ladiacu ponuku</string>
     <string name="placeholder_search">Hľadať…</string>
+    <string name="settings_search_placeholder">Hľadať v nastaveniach…</string>
+    <string name="settings_search_no_results">Pre \"%1$s\" sa nenašli žiadne nastavenia</string>
+    <string name="cd_search_settings">Hľadať v nastaveniach</string>
     <string name="status_sync_paused">Synchronizácia pozastavená</string>
     <string name="status_not_synced">Nesynchronizované</string>
     <string name="status_sync_error">Chyba synchronizácie</string>
@@ -722,11 +736,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Upraviť opakujúcu sa udalosť</string>
-    <string name="dialog_delete_recurring_title">Zmazať opakujúcu sa udalosť</string>
-    <string name="dialog_edit_recurring_message">Toto je opakujúca sa udalosť. Ako chcete uplatniť túto zmenu?</string>
     <string name="recurring_this_event">Túto udalosť</string>
     <string name="recurring_all_events">Všetky udalosti</string>
+    <string name="dialog_edit_recurring_title">Uložiť zmeny</string>
+    <string name="dialog_delete_recurring_title">Odstrániť</string>
+    <string name="dialog_move_recurring_title">Presunúť</string>
     <string name="empty_pick_a_day">Vyberte si deň. Využite ho.</string>
     <string name="empty_no_events_day">Nič tu nie je; čo tak ísť von?</string>
     <string name="filter_date">Dátum</string>
@@ -1112,6 +1126,54 @@
     <string name="attendee_status_tentative">Možno</string>
     <string name="attendee_status_delegated">Delegované</string>
     <string name="attendee_status_pending">Čaká</string>
+    <string name="attendee_sheet_title">Účastníci</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d pozvaný</item>
+        <item quantity="few">%d pozvaní</item>
+        <item quantity="many">%d pozvaných</item>
+        <item quantity="other">%d pozvaných</item>
+    </plurals>
+    <string name="attendee_search_hint">Hľadať</string>
+    <string name="attendee_search_no_matches">Žiadne výsledky</string>
+    <string name="attendee_section_going">Prídu</string>
+    <string name="attendee_section_maybe">Možno</string>
+    <string name="attendee_section_pending">Čakajúci</string>
+    <string name="attendee_section_declined">Odmietli</string>
+    <string name="attendee_section_delegated">Delegovaní</string>
+    <string name="invitees_summary_you_alone">Ty</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ty · %d pozvaný</item>
+        <item quantity="few">Ty · %d pozvaní</item>
+        <item quantity="many">Ty · %d pozvaných</item>
+        <item quantity="other">Ty · %d pozvaných</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d pozvaný</item>
+        <item quantity="few">%d pozvaní</item>
+        <item quantity="many">%d pozvaných</item>
+        <item quantity="other">%d pozvaných</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizuje</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ty</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Ty + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ty + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ty + %d</item>
+        <item quantity="few">Ty + %d</item>
+        <item quantity="many">Ty + %d</item>
+        <item quantity="other">Ty + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ďalší %2$d</item>
+        <item quantity="few">%1$s · ďalší %2$d</item>
+        <item quantity="many">%1$s · ďalší %2$d</item>
+        <item quantity="other">%1$s · ďalší %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Zmeniť odpoveď</string>
     <string name="inbox_empty_caught_up">Všetko vybavené</string>
     <string name="inbox_organizer_suffix">(organizátor)</string>
     <string name="menu_invites">Pozvánky</string>

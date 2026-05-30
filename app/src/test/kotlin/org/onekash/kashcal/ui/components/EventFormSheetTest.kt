@@ -14,6 +14,51 @@ import org.onekash.kashcal.ui.components.pickers.DateSelectionMode
  */
 class EventFormSheetTest {
 
+    // ========== Delete Button Confirmation Tests ==========
+
+    /**
+     * Mirrors the delete-button onToggle predicate in EventFormSheet:
+     * the inline two-tap confirmation is skipped ONLY when the host's
+     * scope sheet will appear, which happens only for a recurring master.
+     * Returns true when the inline confirmation must be shown.
+     */
+    private fun shouldShowInlineDeleteConfirm(
+        wasRecurringAtLoad: Boolean,
+        loadedIsDetachedException: Boolean
+    ): Boolean {
+        return !(wasRecurringAtLoad && !loadedIsDetachedException)
+    }
+
+    @Test
+    fun `delete on non-recurring event shows inline confirmation`() {
+        assertTrue(shouldShowInlineDeleteConfirm(
+            wasRecurringAtLoad = false,
+            loadedIsDetachedException = false
+        ))
+    }
+
+    @Test
+    fun `delete on recurring master skips inline confirmation - scope sheet confirms instead`() {
+        assertFalse(shouldShowInlineDeleteConfirm(
+            wasRecurringAtLoad = true,
+            loadedIsDetachedException = false
+        ))
+    }
+
+    @Test
+    fun `delete on exception event shows inline confirmation - scope sheet does NOT appear`() {
+        // Regression: prior to fix, the predicate skipped the inline
+        // confirmation for any event with wasRecurringAtLoad=true. That
+        // included exception events (which set wasRecurringAtLoad via
+        // originalEventId != null) — but exceptions route straight to
+        // single-occurrence delete WITHOUT a scope sheet, so the user
+        // got zero confirmation and one tap was destructive.
+        assertTrue(shouldShowInlineDeleteConfirm(
+            wasRecurringAtLoad = true,
+            loadedIsDetachedException = true
+        ))
+    }
+
     // ========== Occurrence Date Tests ==========
 
     /**

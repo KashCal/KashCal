@@ -50,7 +50,8 @@ class DeviceEventActionsTest {
         isWritable = true,
         originalId = null,
         originalInstanceTime = null,
-        timezone = "America/New_York"
+        timezone = "America/New_York",
+        eventStartTs = startTs,
     )
 
     // ========== toEventForDuplicate ==========

@@ -77,8 +77,9 @@ class DisplayEventRepository @Inject constructor(
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd),
             calendarProviderManager.changeSignal,
-            dataStore.showDeclinedEvents
-        ) { roomOccurrences, _, showDeclined ->
+            dataStore.showDeclinedEvents,
+            attendeesDao.attendeesChangeSignal()
+        ) { roomOccurrences, _, showDeclined, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
             mergeAndGroupByDay(roomEvents, deviceEvents)
@@ -104,8 +105,9 @@ class DisplayEventRepository @Inject constructor(
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
             calendarProviderManager.changeSignal,
-            dataStore.showDeclinedEvents
-        ) { roomOccurrences, _, showDeclined ->
+            dataStore.showDeclinedEvents,
+            attendeesDao.attendeesChangeSignal()
+        ) { roomOccurrences, _, showDeclined, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
             (roomEvents + deviceEvents)
@@ -134,8 +136,9 @@ class DisplayEventRepository @Inject constructor(
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
             calendarProviderManager.changeSignal,
-            dataStore.showDeclinedEvents
-        ) { roomOccurrences, _, showDeclined ->
+            dataStore.showDeclinedEvents,
+            attendeesDao.attendeesChangeSignal()
+        ) { roomOccurrences, _, showDeclined, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
             mergeAndGroupByDay(roomEvents, deviceEvents)

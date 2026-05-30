@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Бас тарту</string>
     <string name="rsvp_series_disclosure">Жауабыңыз бүкіл серияға қолданылады.</string>
     <string name="rsvp_modified_snackbar">%1$s үшін RSVP сәтсіз аяқталды — оқиға өзгертілді. Қайта жауап беріңіз.</string>
+    <string name="invitees_host_tag">Хост</string>
+    <string name="invitees_summary_you_alone">Сен</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Сен · %d шақырылған</item>
+        <item quantity="other">Сен · %d шақырылған</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d шақырылған</item>
+        <item quantity="other">%d шақырылған</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ұйымдастырушы</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Сен</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Сен + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Сен + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Сен + %d</item>
+        <item quantity="other">Сен + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · тағы %2$d</item>
+        <item quantity="other">%1$s · тағы %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Жауапты өзгерту</string>
+    <string name="rsvp_question_going">Барасың ба?</string>
+    <string name="rsvp_action_yes">Иә</string>
+    <string name="rsvp_action_maybe">Мүмкін</string>
+    <string name="rsvp_action_no">Жоқ</string>
+    <string name="rsvp_state_going">Барасың</string>
+    <string name="rsvp_state_maybe">Мүмкін</string>
+    <string name="rsvp_state_not_going">Бармайсың</string>
+    <string name="rsvp_action_change">Өзгерту</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Тек мынау</string>
@@ -108,6 +142,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Параметрлер</string>
+    <string name="settings_search_placeholder">Параметрлерді іздеу…</string>
+    <string name="settings_search_no_results">\"%1$s\" үшін параметрлер табылмады</string>
+    <string name="cd_search_settings">Параметрлерді іздеу</string>
     <string name="settings_time_format">Уақыт пішімі</string>
     <string name="settings_start_week_on">Апта басталады</string>
     <string name="settings_event_emojis">Оқиға эмодзилері</string>
@@ -678,11 +715,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Қайталанатын оқиғаны өңдеу</string>
-    <string name="dialog_delete_recurring_title">Қайталанатын оқиғаны жою</string>
-    <string name="dialog_edit_recurring_message">Бұл қайталанатын оқиға. Өзгерісті қалай қолданғыңыз келеді?</string>
     <string name="recurring_this_event">Бұл оқиға</string>
     <string name="recurring_all_events">Барлық оқиғалар</string>
+    <string name="dialog_edit_recurring_title">Өзгерістерді сақтау</string>
+    <string name="dialog_delete_recurring_title">Жою</string>
+    <string name="dialog_move_recurring_title">Жылжыту</string>
     <string name="empty_pick_a_day">Күн таңда. Пайдалан.</string>
     <string name="empty_no_events_day">Мұнда ештеңе жоқ; далаға шыққыңыз келе ме?</string>
     <string name="filter_date">Күн</string>
@@ -1110,4 +1147,16 @@
     <string name="share_availability_days_through">%1$s дейін</string>
     <string name="share_availability_window_duration">%1$s сағаттық терезе</string>
     <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
+    <string name="attendee_sheet_title">Қатысушылар</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d шақырылған</item>
+        <item quantity="other">%d шақырылған</item>
+    </plurals>
+    <string name="attendee_search_hint">Іздеу</string>
+    <string name="attendee_search_no_matches">Нәтиже жоқ</string>
+    <string name="attendee_section_going">Барады</string>
+    <string name="attendee_section_maybe">Мүмкін</string>
+    <string name="attendee_section_pending">Күтуде</string>
+    <string name="attendee_section_declined">Бас тартты</string>
+    <string name="attendee_section_delegated">Тапсырды</string>
 </resources>

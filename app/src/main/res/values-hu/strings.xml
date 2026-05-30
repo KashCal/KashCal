@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Elutasítás</string>
     <string name="rsvp_series_disclosure">A válasz a teljes sorozatra érvényes.</string>
     <string name="rsvp_modified_snackbar">A válasz a következőre nem sikerült: %1$s — az eseményt módosították. Kérjük, válaszoljon újra.</string>
+    <string name="invitees_host_tag">Házigazda</string>
+    <string name="invitees_summary_you_alone">Te</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Te · %d meghívott</item>
+        <item quantity="other">Te · %d meghívott</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d meghívott</item>
+        <item quantity="other">%d meghívott</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s rendezi</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Te</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Te + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Te + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Te + %d</item>
+        <item quantity="other">Te + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · még %2$d</item>
+        <item quantity="other">%1$s · még %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Válasz módosítása</string>
+    <string name="rsvp_question_going">Mész?</string>
+    <string name="rsvp_action_yes">Igen</string>
+    <string name="rsvp_action_maybe">Talán</string>
+    <string name="rsvp_action_no">Nem</string>
+    <string name="rsvp_state_going">Mész</string>
+    <string name="rsvp_state_maybe">Talán</string>
+    <string name="rsvp_state_not_going">Nem mész</string>
+    <string name="rsvp_action_change">Módosítás</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Csak ezt</string>
@@ -500,6 +534,9 @@
     <string name="label_found_events">Találat: %1$d esemény</string>
     <string name="label_open_debug_menu">Hibakeresési menü megnyitása</string>
     <string name="placeholder_search">Keresés…</string>
+    <string name="settings_search_placeholder">Beállítások keresése…</string>
+    <string name="settings_search_no_results">Nincs találat erre: \"%1$s\"</string>
+    <string name="cd_search_settings">Beállítások keresése</string>
     <string name="status_sync_paused">Szinkronizálás szüneteltetve</string>
     <string name="status_not_synced">Nincs szinkronizálva</string>
     <string name="status_sync_error">Szinkronizálási hiba</string>
@@ -682,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Ismétlődő esemény szerkesztése</string>
-    <string name="dialog_delete_recurring_title">Ismétlődő esemény törlése</string>
-    <string name="dialog_edit_recurring_message">Ez egy ismétlődő esemény. Hogyan szeretnéd alkalmazni a változtatást?</string>
     <string name="recurring_this_event">Ez az esemény</string>
     <string name="recurring_all_events">Összes esemény</string>
+    <string name="dialog_edit_recurring_title">Módosítások mentése</string>
+    <string name="dialog_delete_recurring_title">Törlés</string>
+    <string name="dialog_move_recurring_title">Áthelyezés</string>
     <string name="empty_pick_a_day">Válassz egy napot. Ragadd meg.</string>
     <string name="empty_no_events_day">Semmi látnivaló; menj ki a szabadba?</string>
     <string name="filter_date">Dátum</string>
@@ -1113,4 +1150,16 @@
     </plurals>
     <string name="share_availability_days_through">%1$s-ig</string>
     <string name="share_availability_window_duration">%1$s órás időszak</string>
+    <string name="attendee_sheet_title">Résztvevők</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d meghívott</item>
+        <item quantity="other">%d meghívott</item>
+    </plurals>
+    <string name="attendee_search_hint">Keresés</string>
+    <string name="attendee_search_no_matches">Nincs találat</string>
+    <string name="attendee_section_going">Mennek</string>
+    <string name="attendee_section_maybe">Talán</string>
+    <string name="attendee_section_pending">Függőben</string>
+    <string name="attendee_section_declined">Elutasították</string>
+    <string name="attendee_section_delegated">Átadták</string>
 </resources>

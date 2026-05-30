@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">Kubali</string>
     <string name="rsvp_action_tentative">Huenda</string>
     <string name="rsvp_action_decline">Kataa</string>
+    <string name="invitees_host_tag">Mwenyeji</string>
+    <string name="rsvp_question_going">Unakwenda?</string>
+    <string name="rsvp_action_yes">Ndio</string>
+    <string name="rsvp_action_maybe">Labda</string>
+    <string name="rsvp_action_no">Hapana</string>
+    <string name="rsvp_state_going">Unakwenda</string>
+    <string name="rsvp_state_maybe">Labda</string>
+    <string name="rsvp_state_not_going">Huendi</string>
+    <string name="rsvp_action_change">Badilisha</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -111,6 +122,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Mipangilio</string>
+    <string name="settings_search_placeholder">Tafuta mipangilio…</string>
+    <string name="settings_search_no_results">Hakuna mipangilio iliyopatikana kwa \"%1$s\"</string>
+    <string name="cd_search_settings">Tafuta mipangilio</string>
     <string name="settings_time_format">Muundo wa Saa</string>
     <string name="settings_start_week_on">Anza Wiki Siku ya</string>
     <string name="settings_event_emojis">Emoji za Matukio</string>
@@ -657,11 +671,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Hariri tukio linalorudia</string>
-    <string name="dialog_delete_recurring_title">Futa tukio linalorudia</string>
-    <string name="dialog_edit_recurring_message">Hili ni tukio linalorudia. Ungependa kutumia mabadiliko haya vipi?</string>
     <string name="recurring_this_event">Tukio hili</string>
     <string name="recurring_all_events">Matukio yote</string>
+    <string name="dialog_edit_recurring_title">Hifadhi mabadiliko</string>
+    <string name="dialog_delete_recurring_title">Futa</string>
+    <string name="dialog_move_recurring_title">Sogeza</string>
     <string name="empty_pick_a_day">Chagua siku. Itumie vizuri.</string>
     <string name="empty_no_events_day">Hakuna chochote hapa; nenda ukatembee?</string>
     <string name="filter_date">Tarehe</string>
@@ -1079,4 +1093,40 @@
     </plurals>
     <string name="share_availability_days_through">Hadi %1$s</string>
     <string name="share_availability_window_duration">Kipindi cha saa %1$s</string>
+    <string name="attendee_sheet_title">Washiriki</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d aliyealikwa</item>
+        <item quantity="other">%d walioalikwa</item>
+    </plurals>
+    <string name="attendee_search_hint">Tafuta</string>
+    <string name="attendee_search_no_matches">Hakuna matokeo</string>
+    <string name="attendee_section_going">Wanahudhuria</string>
+    <string name="attendee_section_maybe">Labda</string>
+    <string name="attendee_section_pending">Wanasubiri</string>
+    <string name="attendee_section_declined">Walikataa</string>
+    <string name="attendee_section_delegated">Walikabidhi</string>
+    <string name="invitees_summary_you_alone">Wewe</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Wewe · %d aliyealikwa</item>
+        <item quantity="other">Wewe · %d walioalikwa</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d aliyealikwa</item>
+        <item quantity="other">%d walioalikwa</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s mwenyeji</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Wewe</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Wewe + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Wewe + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Wewe + %d</item>
+        <item quantity="other">Wewe + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d zaidi</item>
+        <item quantity="other">%1$s · %2$d zaidi</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Badilisha jibu</string>
 </resources>

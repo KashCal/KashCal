@@ -134,6 +134,21 @@ interface AttendeesDao {
     @Query("SELECT COUNT(*) FROM attendees WHERE event_id = :eventId")
     suspend fun countForEvent(eventId: Long): Int
 
+    /**
+     * Reactive attendees-table change signal. Emits a fresh value whenever
+     * any attendee row is inserted/updated/deleted. Used by display-event
+     * Flows that depend on attendee state (e.g. "did I decline this?")
+     * but key on the events table for their main payload — without this
+     * signal, an RSVP write that only touches `attendees` wouldn't re-run
+     * the visible-events query and the strikethrough would wait for the
+     * next sync that touches `events`.
+     *
+     * The exact value isn't meaningful — Room re-emits on any write to
+     * the table, which is the only behavior we care about.
+     */
+    @Query("SELECT COUNT(*) FROM attendees")
+    fun attendeesChangeSignal(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(attendees: List<Attendee>)
 }

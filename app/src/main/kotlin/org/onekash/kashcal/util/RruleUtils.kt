@@ -32,6 +32,141 @@ object RruleUtils {
     }
 
     /**
+     * Split a recurring series's RRULE at a chosen instance so the
+     * total instance count is preserved across the split.
+     *
+     * Two branches against the master's RRULE:
+     *
+     * - **COUNT-based** (`COUNT=N` present): master keeps
+     *   `COUNT=pastCount`; new series carries the user's RRULE with
+     *   `COUNT=(N - pastCount)`. Neither side carries UNTIL. RFC 5545
+     *   §3.3.10 forbids COUNT and UNTIL in the same recur value, and
+     *   ical4j's `Recur` enforces this at the API level (`setCount`
+     *   zeros `until` and vice versa).
+     *
+     * - **UNTIL or unbounded**: master gets `UNTIL=untilMs` via
+     *   [addUntilToRrule]. The new series carries the user's RRULE
+     *   with the master's original UNTIL preserved (so the user-visible
+     *   end date doesn't shift), or — for an unbounded master with no
+     *   user edit — `null` to signal the caller should leave the new
+     *   series unbounded.
+     *
+     * **User-edit handling.** When `userRrule` differs from
+     * `masterRrule` the user changed the recurrence pattern as part of
+     * "this and future"; the new series row carries the user's
+     * pattern, with COUNT/UNTIL bounds adjusted appropriately. When
+     * they match, the new series mirrors the master's structure
+     * verbatim (just with adjusted COUNT or carried-forward UNTIL).
+     *
+     * **Degenerate splits.** Returns `null` on the new series when:
+     * (a) unbounded master with no user edit, or
+     * (b) COUNT-based split with `pastCount == 0` or `pastCount >= total`
+     *     — both would yield invalid `COUNT=0`. Callers should fall
+     *     back to an in-place ALL_EVENTS update on the master.
+     *
+     * The caller is responsible for computing [pastCount] (typically
+     * via `OccurrenceGenerator.expandForPreview` for Room or the
+     * CalendarProvider Instances table for device).
+     *
+     * @param masterRrule The current master's RRULE string.
+     * @param userRrule The user-edited RRULE the new series should
+     *   carry. Pass the same string as [masterRrule] when there's no
+     *   user edit. Required — production callers always pass it
+     *   explicitly.
+     * @param untilMs Truncate-to instant for master's UNTIL (typically
+     *   `splitTime - 1`). Ignored on the COUNT branch.
+     * @param pastCount Number of occurrences strictly before the split
+     *   point. Used only on the COUNT branch.
+     * @param isAllDay Forwarded to [formatUntilDate] for UNTIL form.
+     * @return `(masterRrule, newSeriesRrule?)`. `newSeriesRrule == null`
+     *   means the caller should fall back to in-place ALL_EVENTS
+     *   update on the master.
+     */
+    fun splitRruleAtTime(
+        masterRrule: String,
+        userRrule: String?,
+        untilMs: Long,
+        pastCount: Int,
+        isAllDay: Boolean,
+    ): Pair<String, String?> {
+        // Master's bounds shape determines how the master row is
+        // truncated. COUNT-bounded masters keep COUNT=pastCount and
+        // never carry UNTIL; everyone else (UNTIL-bounded or
+        // unbounded) gets UNTIL=untilMs.
+        val masterCountMatch = COUNT_REGEX.find(masterRrule)
+        if (masterCountMatch != null) {
+            val total = masterCountMatch.groupValues[1].toIntOrNull() ?: 0
+            val masterCount = pastCount.coerceAtLeast(0).coerceAtMost(total)
+            val truncatedMaster = COUNT_REGEX.replace(masterRrule, "COUNT=$masterCount")
+            // userRrule == null means user picked "Does not repeat".
+            if (userRrule == null) return truncatedMaster to null
+            val newCount = (total - masterCount).coerceAtLeast(0)
+            val newSeriesRrule = mergeNewSeriesRrule(userRrule, masterRrule, newCount)
+            return truncatedMaster to newSeriesRrule
+        }
+        val truncatedMaster = addUntilToRrule(masterRrule, untilMs, isAllDay)
+        // userRrule == null means user dropped recurrence entirely.
+        if (userRrule == null) return truncatedMaster to null
+        // The user's edited rrule is authoritative on bounds-shape.
+        // No edit (userRrule == masterRrule): new row carries master's
+        // rrule verbatim — unbounded stays unbounded, UNTIL preserved.
+        return truncatedMaster to userRrule
+    }
+
+    /**
+     * Detect a degenerate COUNT split: pastCount falls outside the
+     * range `(0, total)` so producing master `COUNT=pastCount` or
+     * new-series `COUNT=total-pastCount` would yield the invalid
+     * `COUNT=0`. Callers should fall back to an in-place ALL_EVENTS
+     * update on the master rather than calling [splitRruleAtTime].
+     *
+     * Returns false for non-COUNT rules (UNTIL or unbounded never
+     * produce COUNT=0) and for in-range pastCount values.
+     */
+    fun isDegenerateCountSplit(masterRrule: String, pastCount: Int): Boolean {
+        val total = COUNT_REGEX.find(masterRrule)
+            ?.groupValues?.get(1)?.toIntOrNull()
+            ?: return false
+        return pastCount <= 0 || pastCount >= total
+    }
+
+    /**
+     * Build the new-series RRULE for a COUNT-bounded master split.
+     *
+     * The user's rrule is authoritative on bounds-shape: if the user
+     * dropped COUNT (or replaced it with UNTIL), don't re-impose
+     * COUNT on the new row. Total-preservation only applies when the
+     * user kept master's COUNT shape — then we recompute COUNT to
+     * the remaining instance count.
+     */
+    private fun mergeNewSeriesRrule(
+        userRrule: String,
+        masterRrule: String,
+        newCount: Int,
+    ): String {
+        val masterCount = COUNT_REGEX.find(masterRrule)
+            ?.groupValues?.get(1)?.toIntOrNull()
+        val userCount = COUNT_REGEX.find(userRrule)
+            ?.groupValues?.get(1)?.toIntOrNull()
+
+        // User changed bounds shape (added UNTIL, dropped COUNT, or
+        // anything else that changes the COUNT presence). Honor user's
+        // rrule verbatim — don't append COUNT.
+        if (userCount == null) return userRrule
+
+        // User kept COUNT but picked a different value. That's a
+        // deliberate "I want exactly this many from here" — honor it
+        // verbatim.
+        if (userCount != masterCount) return userRrule
+
+        // User kept master's COUNT shape and value. Apply
+        // total-preservation: replace with newCount.
+        return COUNT_REGEX.replace(userRrule, "COUNT=$newCount")
+    }
+
+    private val COUNT_REGEX = Regex("COUNT=(\\d+)")
+
+    /**
      * Format timestamp as RRULE UNTIL value.
      *
      * @param timestampMs Timestamp in epoch millis

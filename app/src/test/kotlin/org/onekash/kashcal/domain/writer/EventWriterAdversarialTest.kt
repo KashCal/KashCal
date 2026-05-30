@@ -302,8 +302,11 @@ class EventWriterAdversarialTest {
     }
 
     @Test
-    fun `splitSeries truncates master RRULE with UNTIL`() = runTest {
-        val recurringEvent = createTestEvent("Daily Meeting").copy(rrule = "FREQ=DAILY;COUNT=10")
+    fun `splitSeries truncates master RRULE for unbounded series`() = runTest {
+        // Unbounded RRULE -> UNTIL branch of splitRruleAtTime: master
+        // gets UNTIL, no COUNT change. (COUNT-based RRULEs go through
+        // the COUNT branch instead, which preserves total count.)
+        val recurringEvent = createTestEvent("Daily Meeting").copy(rrule = "FREQ=DAILY")
         val master = eventWriter.createEvent(recurringEvent, isLocal = false)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
@@ -312,34 +315,35 @@ class EventWriterAdversarialTest {
         val modifiedEvent = master.copy(title = "Modified")
         eventWriter.splitSeries(master.id, splitTime, modifiedEvent, isLocal = false)
 
-        // Master RRULE should now have UNTIL
         val updatedMaster = database.eventsDao().getById(master.id)!!
         assertTrue(
-            "Master RRULE should have UNTIL",
+            "Master RRULE should have UNTIL on unbounded split",
             updatedMaster.rrule?.contains("UNTIL=") == true
         )
     }
 
     @Test
-    fun `splitSeries replaces existing COUNT with UNTIL`() = runTest {
+    fun `splitSeries preserves COUNT total for COUNT-based series`() = runTest {
+        // RFC 5545 §3.3.10 forbids COUNT and UNTIL together. The split
+        // path keeps the original total count intact: master
+        // COUNT=pastCount, new series COUNT=remaining. Master never
+        // gets UNTIL when input had COUNT.
         val recurringEvent = createTestEvent("Counted").copy(rrule = "FREQ=DAILY;COUNT=20")
         val master = eventWriter.createEvent(recurringEvent, isLocal = false)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
         val splitTime = occurrences[5].startTs
 
-        val modifiedEvent = master.copy(title = "Modified")
-        eventWriter.splitSeries(master.id, splitTime, modifiedEvent, isLocal = false)
+        val modifiedEvent = master.copy(title = "Modified", rrule = "FREQ=DAILY;COUNT=20")
+        val newSeries = eventWriter.splitSeries(master.id, splitTime, modifiedEvent, isLocal = false)
 
         val updatedMaster = database.eventsDao().getById(master.id)!!
         assertTrue(
-            "COUNT should be removed",
-            !updatedMaster.rrule!!.contains("COUNT=")
+            "Master RRULE should NOT contain UNTIL on COUNT branch (RFC 5545 §3.3.10)",
+            !updatedMaster.rrule!!.contains("UNTIL=")
         )
-        assertTrue(
-            "UNTIL should be added",
-            updatedMaster.rrule!!.contains("UNTIL=")
-        )
+        assertEquals("FREQ=DAILY;COUNT=5", updatedMaster.rrule)
+        assertEquals("FREQ=DAILY;COUNT=15", newSeries.rrule)
     }
 
     // ==================== Exception Event Edge Cases ====================

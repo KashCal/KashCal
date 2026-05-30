@@ -1,0 +1,3 @@
+• New save-time scope sheet for editing or deleting recurring events
+• Inline search across Settings with highlighted matches
+• Predictive-back gestures for sheets and dialogs

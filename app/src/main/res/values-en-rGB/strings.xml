@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Decline</string>
     <string name="rsvp_series_disclosure">Your reply applies to the whole series.</string>
     <string name="rsvp_modified_snackbar">RSVP for %1$s failed — event was modified. Please re-respond.</string>
+    <string name="invitees_host_tag">Host</string>
+    <string name="invitees_summary_you_alone">You</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">You · %d invited</item>
+        <item quantity="other">You · %d invited</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invited</item>
+        <item quantity="other">%d invited</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s hosting</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · You</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · You + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · You + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">You + %d</item>
+        <item quantity="other">You + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d more</item>
+        <item quantity="other">%1$s · %2$d more</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Change RSVP</string>
+    <string name="rsvp_question_going">Going?</string>
+    <string name="rsvp_action_yes">Yes</string>
+    <string name="rsvp_action_maybe">Maybe</string>
+    <string name="rsvp_action_no">No</string>
+    <string name="rsvp_state_going">You\'re going</string>
+    <string name="rsvp_state_maybe">Maybe</string>
+    <string name="rsvp_state_not_going">Not going</string>
+    <string name="rsvp_action_change">Change</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Just this one</string>
@@ -108,6 +142,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>
+    <string name="settings_search_placeholder">Search settings…</string>
+    <string name="settings_search_no_results">No settings found for \"%1$s\"</string>
+    <string name="cd_search_settings">Search settings</string>
     <string name="settings_time_format">Time Format</string>
     <string name="settings_start_week_on">Start Week On</string>
     <string name="settings_event_emojis">Event Emojis</string>
@@ -678,11 +715,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Edit recurring event</string>
-    <string name="dialog_delete_recurring_title">Delete recurring event</string>
-    <string name="dialog_edit_recurring_message">This is a recurring event. How would you like to apply this change?</string>
     <string name="recurring_this_event">This event</string>
     <string name="recurring_all_events">All events</string>
+    <string name="dialog_edit_recurring_title">Save changes to</string>
+    <string name="dialog_delete_recurring_title">Delete</string>
+    <string name="dialog_move_recurring_title">Move</string>
     <string name="empty_pick_a_day">Pick a day. Seize it.</string>
     <string name="empty_no_events_day">Nothing to see here; go touch grass?</string>
     <string name="filter_date">Date</string>
@@ -1105,4 +1142,16 @@
     <string name="share_availability_days_through">Through %1$s</string>
     <string name="share_availability_window_duration">%1$s hour window</string>
     <string name="share_from_kashcal_footer">Shared from KashCal</string>
+    <string name="attendee_sheet_title">Attendees</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d invited</item>
+        <item quantity="other">%d invited</item>
+    </plurals>
+    <string name="attendee_search_hint">Search</string>
+    <string name="attendee_search_no_matches">No matches</string>
+    <string name="attendee_section_going">Going</string>
+    <string name="attendee_section_maybe">Maybe</string>
+    <string name="attendee_section_pending">Pending</string>
+    <string name="attendee_section_declined">Declined</string>
+    <string name="attendee_section_delegated">Delegated</string>
 </resources>

@@ -87,9 +87,9 @@ import java.time.ZoneId
  * @param onDismiss Called when sheet is dismissed
  * @param onEdit Called to edit the event (for single events or all occurrences)
  * @param onEditOccurrence Called to edit just this occurrence (recurring events)
- * @param onDeleteSingle Called to delete single event
- * @param onDeleteOccurrence Called to delete just this occurrence
- * @param onDeleteFuture Called to delete this and all future occurrences
+ * @param onDeleteSingle Called to delete the event (non-recurring),
+ *   the exception (modified occurrence), or to open the scope sheet
+ *   (recurring master) — branches per the loaded event's shape.
  * @param onDuplicate Called to duplicate the event
  * @param onShare Called to share the event as text
  * @param onExportIcs Called to export the event as .ics file
@@ -109,8 +109,6 @@ fun EventQuickViewSheet(
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit = {},
     onDeleteSingle: () -> Unit,
-    onDeleteOccurrence: () -> Unit = {},
-    onDeleteFuture: () -> Unit = {},
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
     onExportIcs: () -> Unit = {},
@@ -140,11 +138,9 @@ fun EventQuickViewSheet(
         skipPartiallyExpanded = hasExpandableContent
     )
 
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var deleteAllFuture by remember { mutableStateOf(false) }
-    var showEditConfirmation by remember { mutableStateOf(false) }
-    var editAllOccurrences by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showAttendeeSheet by remember { mutableStateOf(false) }
 
     // Compute time pattern from preference
     val context = LocalContext.current
@@ -154,8 +150,13 @@ fun EventQuickViewSheet(
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
     }
 
-    // Detect recurring events: master events have rrule, exception events have originalEventId
+    // Detect recurring events: master events have rrule, exception events have originalEventId.
+    // Both flag as "recurring" for the repeat icon/copy in the header.
     val isRecurring = event.isRecurring || event.isException
+    // RSVP write path only mutates the event passed in — for an exception
+    // it's a per-occurrence write, so the "applies to the whole series"
+    // disclosure only holds for master events with a live RRULE.
+    val rsvpAppliesToSeries = event.isRecurring && !event.isException
 
     // Format title with age for birthday events and optional emoji
     val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
@@ -324,40 +325,24 @@ fun EventQuickViewSheet(
 
             if (attendees.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
-                    models = attendees,
-                    isCurrentUserOnList = isCurrentUserOnList,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-            }
-
-            // Respond section — visible only when user is on the attendee
-            // list and isn't the organizer (organizers respond by editing).
-            if (org.onekash.kashcal.ui.components.attendees.shouldShowRespondSection(
-                    currentUserPartstat = currentUserPartstat,
-                    isOrganizer = isCurrentUserOrganizer
-                )
-            ) {
-                Spacer(modifier = Modifier.height(12.dp))
-                org.onekash.kashcal.ui.components.attendees.RespondSection(
-                    currentUserPartstat = currentUserPartstat,
-                    onRsvp = onRsvp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                if (org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                val seriesDisclosure = if (
+                    org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
                         currentUserPartstat = currentUserPartstat,
                         isOrganizer = isCurrentUserOrganizer,
-                        isRecurring = isRecurring
+                        isRecurring = rsvpAppliesToSeries,
                     )
-                ) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.rsvp_series_disclosure),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
+                ) stringResource(R.string.rsvp_series_disclosure) else null
+
+                org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                    attendees = attendees,
+                    isCurrentUserOnList = isCurrentUserOnList,
+                    isCurrentUserOrganizer = isCurrentUserOrganizer,
+                    onRsvp = onRsvp,
+                    onDrillIntoAttendees = { showAttendeeSheet = true },
+                    seriesDisclosure = seriesDisclosure,
+                    alwaysExpanded = false,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
 
             // Expanded content section - shown immediately when sheet opens expanded
@@ -394,107 +379,73 @@ fun EventQuickViewSheet(
                         Text(stringResource(R.string.action_share))
                     }
                 } else {
-                    // Editable calendar: Edit, Delete, More menu
-                    // Edit button / inline confirmation
+                    // Editable calendar: Edit, Delete, More menu.
+                    // Recurring events route through the scope sheet
+                    // at the host (the scope sheet itself serves as
+                    // confirmation — picking a scope is deliberate);
+                    // non-recurring events go through an inline two-tap
+                    // confirmation, since the host commits the delete
+                    // immediately.
                     if (!showDeleteConfirmation) {
-                        // Hide edit when delete confirmation is active
-                        if (!showEditConfirmation) {
-                            FilledTonalButton(
-                                onClick = {
-                                    if (isRecurring) {
-                                        showEditConfirmation = true
-                                    } else {
-                                        onEdit()
-                                    }
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    stringResource(
-                                        if (canEditAsOrganizer) R.string.action_edit
-                                        else R.string.action_open
-                                    )
+                        FilledTonalButton(
+                            onClick = onEdit,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (canEditAsOrganizer) R.string.action_edit
+                                    else R.string.action_open
                                 )
-                            }
-                        } else {
-                            // Inline edit confirmation for recurring events
-                            FilledTonalButton(
-                                onClick = {
-                                    showEditConfirmation = false
-                                    editAllOccurrences = false
-                                },
-                                modifier = Modifier.weight(0.5f)
-                            ) {
-                                Text(stringResource(R.string.action_cancel))
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            FilledTonalButton(
-                                onClick = {
-                                    showEditConfirmation = false
-                                    if (editAllOccurrences) {
-                                        onEdit()
-                                    } else {
-                                        onEditOccurrence()
-                                    }
-                                },
-                                modifier = Modifier.weight(0.5f)
-                            ) {
-                                Text(stringResource(R.string.action_confirm))
-                            }
+                            )
+                        }
+
+                        FilledTonalButton(
+                            onClick = {
+                                // Skip the inline two-tap step ONLY when
+                                // the host will surface a scope sheet
+                                // (recurring master) — that deliberate
+                                // pick is the confirmation. Non-recurring
+                                // events AND exception events route
+                                // straight through to a destructive write
+                                // with no scope sheet, so they need the
+                                // inline confirmation guard.
+                                if (event.isRecurring && !event.isException) {
+                                    onDeleteSingle()
+                                } else {
+                                    showDeleteConfirmation = true
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        ) {
+                            Text(stringResource(R.string.action_delete))
+                        }
+                    } else {
+                        FilledTonalButton(
+                            onClick = { showDeleteConfirmation = false },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
+                        FilledTonalButton(
+                            onClick = {
+                                showDeleteConfirmation = false
+                                onDeleteSingle()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError
+                            )
+                        ) {
+                            Text(stringResource(R.string.action_confirm))
                         }
                     }
 
-                    // Delete button / inline confirmation (hide when edit confirmation is active)
-                    if (!showEditConfirmation) {
-                        if (!showDeleteConfirmation) {
-                            FilledTonalButton(
-                                onClick = { showDeleteConfirmation = true },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            ) {
-                                Text(stringResource(R.string.action_delete))
-                            }
-                        } else {
-                            // Inline delete confirmation
-                            FilledTonalButton(
-                                onClick = {
-                                    showDeleteConfirmation = false
-                                    deleteAllFuture = false
-                                },
-                                modifier = Modifier.weight(0.5f)
-                            ) {
-                                Text(stringResource(R.string.action_cancel))
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            FilledTonalButton(
-                                onClick = {
-                                    showDeleteConfirmation = false
-                                    if (isRecurring) {
-                                        if (deleteAllFuture) {
-                                            onDeleteFuture()
-                                        } else {
-                                            onDeleteOccurrence()
-                                        }
-                                    } else {
-                                        onDeleteSingle()
-                                    }
-                                },
-                                modifier = Modifier.weight(0.5f),
-                                colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.error,
-                                    contentColor = MaterialTheme.colorScheme.onError
-                                )
-                            ) {
-                                Text(stringResource(R.string.action_confirm))
-                            }
-                        }
-                    }
-
-                    // More button with dropdown (hidden during confirmation)
-                    if (!showEditConfirmation && !showDeleteConfirmation) {
+                    if (!showDeleteConfirmation) {
                         Box {
                             FilledTonalButton(
                                 onClick = { showMoreMenu = true }
@@ -542,125 +493,16 @@ fun EventQuickViewSheet(
                             }
                         }
                     }
-                }
-            }
-
-            // Recurring event delete options (shown inline when delete confirmation is active)
-            if (showDeleteConfirmation && isRecurring) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .selectableGroup()
-                ) {
-                    Text(
-                        text = stringResource(R.string.dialog_delete_title, event.title),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Just this one
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = !deleteAllFuture,
-                                onClick = { deleteAllFuture = false },
-                                role = Role.RadioButton
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = !deleteAllFuture,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.recurring_just_this))
-                    }
-
-                    // This and all future
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = deleteAllFuture,
-                                onClick = { deleteAllFuture = true },
-                                role = Role.RadioButton
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = deleteAllFuture,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.recurring_this_and_future))
-                    }
-                }
-            }
-
-            // Recurring event edit options (shown inline when edit confirmation is active)
-            if (showEditConfirmation && isRecurring) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .selectableGroup()
-                ) {
-                    Text(
-                        text = stringResource(R.string.dialog_edit_title, event.title),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Just this occurrence
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = !editAllOccurrences,
-                                onClick = { editAllOccurrences = false },
-                                role = Role.RadioButton
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = !editAllOccurrences,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.recurring_just_occurrence))
-                    }
-
-                    // All occurrences
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = editAllOccurrences,
-                                onClick = { editAllOccurrences = true },
-                                role = Role.RadioButton
-                            )
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = editAllOccurrences,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(R.string.recurring_all_occurrences))
                     }
                 }
             }
         }
+
+    if (showAttendeeSheet) {
+        org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
+            attendees = attendees,
+            onDismiss = { showAttendeeSheet = false },
+        )
     }
 }
 

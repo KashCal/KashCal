@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.util.RruleUtils
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -400,10 +401,18 @@ class EventWriter @Inject constructor(
             // Delete exception event if one exists for this occurrence
             // (prevents orphaned exception events in database)
             val exception = eventsDao.getExceptionForOccurrence(masterEventId, occurrenceTimeMs)
-            exception?.let { eventsDao.deleteById(it.id) }
 
-            // Mark occurrence as cancelled
-            occurrenceGenerator.cancelOccurrence(masterEventId, occurrenceTimeMs)
+            // Cancel the occurrence row. When an exception exists, the
+            // row's start_ts has already been moved to the exception's
+            // modified time by linkException, so a tolerance-time match
+            // on occurrenceTimeMs (the ORIGINAL instance time) would
+            // miss it. Match by exception_event_id instead.
+            if (exception != null) {
+                occurrenceGenerator.cancelOccurrenceByException(exception.id)
+                eventsDao.deleteById(exception.id)
+            } else {
+                occurrenceGenerator.cancelOccurrence(masterEventId, occurrenceTimeMs)
+            }
 
             // Queue sync for master (EXDATE changed)
             if (!isLocal) {
@@ -445,17 +454,70 @@ class EventWriter @Inject constructor(
 
             require(masterEvent.isRecurring) { "Event is not recurring: $masterEventId" }
 
-            val now = System.currentTimeMillis()
-
-            // Step 1: Truncate master event's RRULE with UNTIL
             val rrule = checkNotNull(masterEvent.rrule) {
                 "Recurring event has no RRULE: ${masterEvent.id}"
             }
-            val truncatedRrule = addUntilToRrule(rrule, splitTimeMs - 1, masterEvent.isAllDay)
+
+            // First-occurrence shortcut: a split at-or-before the master's
+            // own start is just an "edit all events" with no rrule
+            // truncation needed.
+            if (splitTimeMs <= masterEvent.startTs) {
+                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal)
+            }
+
+            // pastCount only matters for the COUNT branch of
+            // splitRruleAtTime. Skip the engine call entirely on
+            // UNTIL/unbounded RRULEs to avoid materializing 365+ Date
+            // objects we'd then discard.
+            //
+            // RFC 5545 §3.3.10: COUNT counts *rule recurrences*, not
+            // post-EXDATE survivors. We pass exdates=emptyList() to
+            // expandForPreview so the count reflects the rule alone;
+            // otherwise an EXDATE in the past range would silently
+            // shrink master's new COUNT and drop a visible past
+            // occurrence on re-expansion (the EXDATE filter is applied
+            // after the COUNT cap).
+            val isCountRule = rrule.contains("COUNT=")
+            val pastCount = if (isCountRule) {
+                occurrenceGenerator.expandForPreview(
+                    rrule = rrule,
+                    dtstartMs = masterEvent.startTs,
+                    rangeStartMs = masterEvent.startTs - 1_000L,
+                    rangeEndMs = splitTimeMs - 1L,
+                    exdates = emptyList(),
+                    timezone = masterEvent.timezone,
+                    isAllDay = masterEvent.isAllDay,
+                ).size
+            } else {
+                0
+            }
+
+            // Degenerate COUNT split (pastCount==0 or pastCount>=total)
+            // would yield invalid COUNT=0 on master or new series.
+            // Fall back to in-place ALL_EVENTS update on the master.
+            if (RruleUtils.isDegenerateCountSplit(rrule, pastCount)) {
+                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal)
+            }
+
+            // Split the RRULE so the total instance count is preserved
+            // across the split. modifiedEvent.rrule == null means the
+            // user picked "Does not repeat" on the form — the new row
+            // becomes non-recurring.
+            val (truncatedRrule, splitNewSeriesRrule) = RruleUtils.splitRruleAtTime(
+                masterRrule = rrule,
+                userRrule = modifiedEvent.rrule,
+                untilMs = splitTimeMs - 1L,
+                pastCount = pastCount,
+                isAllDay = masterEvent.isAllDay,
+            )
+
+            val now = System.currentTimeMillis()
             eventsDao.updateRrule(masterEventId, truncatedRrule, now)
 
             // Delete occurrences at/after split point
             occurrencesDao.deleteForEventAfter(masterEventId, splitTimeMs)
+
+            deleteFutureExceptions(masterEventId, splitTimeMs)
 
             // Update master sync status
             if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
@@ -463,12 +525,23 @@ class EventWriter @Inject constructor(
                 queueOperation(masterEventId, PendingOperation.OPERATION_UPDATE)
             }
 
-            // Step 2: Create new event for "this and all future"
+            // The new event for "this and all future" carries the
+            // helper's emitted rrule. null is intentional — it means
+            // either the user dropped recurrence ("Does not repeat")
+            // or the master was unbounded with no user edit, both of
+            // which leave the new row non-recurring.
+            val newSeriesRrule = splitNewSeriesRrule
             val newEvent = modifiedEvent.copy(
                 id = 0,
                 uid = generateUid(),
                 calendarId = masterEvent.calendarId,
-                startTs = splitTimeMs + (modifiedEvent.startTs - masterEvent.startTs),
+                // The form's lambda emits modifiedEvent.startTs as the user's
+                // intended first-occurrence time on the split day (e.g.,
+                // "Jun 02 08:00" when editing the Jun 02 occurrence). Use it
+                // verbatim — adding splitTimeMs would shift the whole series
+                // by the master-to-split-day delta and land it days later.
+                startTs = modifiedEvent.startTs,
+                rrule = newSeriesRrule,
                 originalEventId = null, // Not an exception - new series
                 originalInstanceTime = null,
                 syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
@@ -481,6 +554,18 @@ class EventWriter @Inject constructor(
             val newEventId = eventsDao.insert(newEvent)
             val createdEvent = newEvent.copy(id = newEventId)
 
+            // Carry attendees forward to the new series. Attendees live
+            // in their own Room table; eventsDao.insert(Event) doesn't
+            // touch them, so without this copy the new series PUTs to
+            // the server with no attendees and the next pull drops them.
+            val masterAttendees = attendeesDao.getForEventOnce(masterEventId)
+            if (masterAttendees.isNotEmpty()) {
+                attendeesDao.replaceForEvent(
+                    newEventId,
+                    masterAttendees.map { it.copy(id = 0, eventId = newEventId) }
+                )
+            }
+
             // Generate occurrences for new event
             occurrenceGenerator.regenerateOccurrences(createdEvent)
 
@@ -491,6 +576,65 @@ class EventWriter @Inject constructor(
 
             createdEvent
         }
+    }
+
+    /**
+     * Apply [modifiedEvent]'s fields onto the master row in place,
+     * preserving id/uid/calendar. Used by [splitSeries] when the split
+     * point lies at-or-before the first occurrence, or when a
+     * COUNT-based RRULE would yield COUNT=0 on either side — both
+     * collapse to "edit all events in this series."
+     *
+     * SEQUENCE bumps on RRULE/timing changes match the public
+     * [updateEvent] path so iTIP recipients see a monotonically
+     * increasing SEQUENCE per RFC 5545 §3.8.7.4.
+     *
+     * Caller must already be inside a `database.withTransaction { … }`.
+     */
+    private suspend fun updateMasterInPlace(
+        masterEvent: Event,
+        modifiedEvent: Event,
+        isLocal: Boolean,
+    ): Event {
+        val now = System.currentTimeMillis()
+        val newSyncStatus = when {
+            isLocal -> SyncStatus.SYNCED
+            masterEvent.syncStatus == SyncStatus.PENDING_CREATE -> SyncStatus.PENDING_CREATE
+            else -> SyncStatus.PENDING_UPDATE
+        }
+        // Match updateEvent's predicate: bump SEQUENCE only when the
+        // change is iTIP-relevant. Title/notes/etc. don't require a
+        // bump per RFC 5545 §3.8.7.4.
+        val rruleChanged = masterEvent.rrule != modifiedEvent.rrule ||
+            masterEvent.exdate != modifiedEvent.exdate ||
+            masterEvent.rdate != modifiedEvent.rdate
+        val timingChanged = masterEvent.startTs != modifiedEvent.startTs ||
+            masterEvent.endTs != modifiedEvent.endTs ||
+            masterEvent.isAllDay != modifiedEvent.isAllDay
+        val newSequence = if (rruleChanged || timingChanged) {
+            masterEvent.sequence + 1
+        } else {
+            masterEvent.sequence
+        }
+        val updated = modifiedEvent.copy(
+            id = masterEvent.id,
+            uid = masterEvent.uid,
+            calendarId = masterEvent.calendarId,
+            originalEventId = null,
+            originalInstanceTime = null,
+            syncStatus = newSyncStatus,
+            sequence = newSequence,
+            dtstamp = now,
+            createdAt = masterEvent.createdAt,
+            updatedAt = now,
+            localModifiedAt = now,
+        )
+        eventsDao.update(updated)
+        occurrenceGenerator.regenerateOccurrences(updated)
+        if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
+            queueOperation(masterEvent.id, PendingOperation.OPERATION_UPDATE)
+        }
+        return updated
     }
 
     /**
@@ -532,13 +676,7 @@ class EventWriter @Inject constructor(
             // Delete occurrences at/after point
             occurrencesDao.deleteForEventAfter(masterEventId, fromTimeMs)
 
-            // Delete any exception events for deleted occurrences
-            val exceptions = eventsDao.getExceptionsForMaster(masterEventId)
-            for (exception in exceptions) {
-                if (exception.originalInstanceTime != null && exception.originalInstanceTime >= fromTimeMs) {
-                    eventsDao.deleteById(exception.id)
-                }
-            }
+            deleteFutureExceptions(masterEventId, fromTimeMs)
 
             // Update sync status
             if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
@@ -816,5 +954,25 @@ class EventWriter @Inject constructor(
      */
     private fun addUntilToRrule(rrule: String, untilMs: Long, isAllDay: Boolean = false): String {
         return org.onekash.kashcal.util.RruleUtils.addUntilToRrule(rrule, untilMs, isAllDay)
+    }
+
+    /**
+     * Delete exception events whose original instance time falls at or
+     * after [fromTimeMs]. Used by both `splitSeries` (truncate-for-edit)
+     * and `deleteThisAndFuture` (truncate-for-delete) — exceptions in
+     * the truncated half belong to a series the master no longer
+     * expands, so they must go.
+     *
+     * Caller must already be inside `database.withTransaction { … }`.
+     */
+    private suspend fun deleteFutureExceptions(masterEventId: Long, fromTimeMs: Long) {
+        val exceptions = eventsDao.getExceptionsForMaster(masterEventId)
+        for (exception in exceptions) {
+            if (exception.originalInstanceTime != null &&
+                exception.originalInstanceTime >= fromTimeMs
+            ) {
+                eventsDao.deleteById(exception.id)
+            }
+        }
     }
 }

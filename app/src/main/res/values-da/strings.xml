@@ -495,6 +495,9 @@
     <string name="label_found_events">Fundet: %1$d begivenheder</string>
     <string name="label_open_debug_menu">Åbn debug-menu</string>
     <string name="placeholder_search">Søg…</string>
+    <string name="settings_search_placeholder">Søg i indstillinger…</string>
+    <string name="settings_search_no_results">Ingen indstillinger fundet for \"%1$s\"</string>
+    <string name="cd_search_settings">Søg i indstillinger</string>
     <string name="status_sync_paused">Synk sat på pause</string>
     <string name="status_not_synced">Ikke synkroniseret</string>
     <string name="status_sync_error">Synkroniseringsfejl</string>
@@ -679,11 +682,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Rediger tilbagevendende begivenhed</string>
-    <string name="dialog_delete_recurring_title">Slet tilbagevendende begivenhed</string>
-    <string name="dialog_edit_recurring_message">Dette er en tilbagevendende begivenhed. Hvordan vil du anvende denne ændring?</string>
     <string name="recurring_this_event">Denne begivenhed</string>
     <string name="recurring_all_events">Alle begivenheder</string>
+    <string name="dialog_edit_recurring_title">Gem ændringer i</string>
+    <string name="dialog_delete_recurring_title">Slet</string>
+    <string name="dialog_move_recurring_title">Flyt</string>
     <string name="empty_pick_a_day">Vælg en dag. Grib den.</string>
     <string name="empty_no_events_day">Intet at se her; gå en tur?</string>
     <string name="filter_date">Dato</string>
@@ -926,6 +929,16 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svaret gælder for hele serien.</string>
     <string name="rsvp_modified_snackbar">Svar på %1$s mislykkedes – begivenheden blev ændret. Svar venligst igen.</string>
+    <string name="invitees_host_tag">Vært</string>
+    <string name="rsvp_question_going">Deltager du?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Måske</string>
+    <string name="rsvp_action_no">Nej</string>
+    <string name="rsvp_state_going">Du deltager</string>
+    <string name="rsvp_state_maybe">Måske</string>
+    <string name="rsvp_state_not_going">Du deltager ikke</string>
+    <string name="rsvp_action_change">Ændr</string>
+
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Gentages ikke</string>
@@ -1059,6 +1072,18 @@
     <string name="attendee_status_tentative">Foreløbig</string>
     <string name="attendee_status_delegated">Delegeret</string>
     <string name="attendee_status_pending">Afventer</string>
+    <string name="attendee_sheet_title">Deltagere</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d inviteret</item>
+        <item quantity="other">%d inviteret</item>
+    </plurals>
+    <string name="attendee_search_hint">Søg</string>
+    <string name="attendee_search_no_matches">Ingen resultater</string>
+    <string name="attendee_section_going">Deltager</string>
+    <string name="attendee_section_maybe">Måske</string>
+    <string name="attendee_section_pending">Afventer</string>
+    <string name="attendee_section_declined">Afslået</string>
+    <string name="attendee_section_delegated">Delegeret</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alt er ajour</string>
     <string name="inbox_organizer_suffix">(arrangør)</string>
@@ -1099,4 +1124,28 @@
         <item quantity="one">Ledig den næste %1$d dag (%2$s – %3$s):</item>
         <item quantity="other">Ledig de næste %1$d dage (%2$s – %3$s):</item>
     </plurals>
+    <string name="invitees_summary_you_alone">Dig</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Dig · %d inviteret</item>
+        <item quantity="other">Dig · %d inviteret</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d inviteret</item>
+        <item quantity="other">%d inviteret</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s arrangerer</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Dig</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Dig + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Dig + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Dig + %d</item>
+        <item quantity="other">Dig + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d mere</item>
+        <item quantity="other">%1$s · %2$d mere</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Skift svar</string>
 </resources>

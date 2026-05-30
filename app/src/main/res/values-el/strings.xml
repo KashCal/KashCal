@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Απόρριψη</string>
     <string name="rsvp_series_disclosure">Η απάντηση ισχύει για ολόκληρη τη σειρά.</string>
     <string name="rsvp_modified_snackbar">Η απάντηση για %1$s απέτυχε — το συμβάν τροποποιήθηκε. Παρακαλώ απαντήστε ξανά.</string>
+    <string name="invitees_host_tag">Οικοδεσπότης</string>
+    <string name="invitees_summary_you_alone">Εσύ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Εσύ · %d καλεσμένος</item>
+        <item quantity="other">Εσύ · %d καλεσμένοι</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d καλεσμένος</item>
+        <item quantity="other">%d καλεσμένοι</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s οικοδεσπότης</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Εσύ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Εσύ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Εσύ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Εσύ + %d</item>
+        <item quantity="other">Εσύ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · άλλοι %2$d</item>
+        <item quantity="other">%1$s · άλλοι %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Αλλαγή απάντησης</string>
+    <string name="rsvp_question_going">Θα πας?</string>
+    <string name="rsvp_action_yes">Ναι</string>
+    <string name="rsvp_action_maybe">Ίσως</string>
+    <string name="rsvp_action_no">Όχι</string>
+    <string name="rsvp_state_going">Θα πας</string>
+    <string name="rsvp_state_maybe">Ίσως</string>
+    <string name="rsvp_state_not_going">Δεν θα πας</string>
+    <string name="rsvp_action_change">Αλλαγή</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Μόνο αυτό</string>
@@ -500,6 +534,9 @@
     <string name="label_found_events">Βρέθηκαν: %1$d συμβάντα</string>
     <string name="label_open_debug_menu">Άνοιγμα μενού εντοπισμού σφαλμάτων</string>
     <string name="placeholder_search">Αναζήτηση…</string>
+    <string name="settings_search_placeholder">Αναζήτηση ρυθμίσεων…</string>
+    <string name="settings_search_no_results">Δεν βρέθηκαν ρυθμίσεις για \"%1$s\"</string>
+    <string name="cd_search_settings">Αναζήτηση ρυθμίσεων</string>
     <string name="status_sync_paused">Ο συγχρονισμός σε παύση</string>
     <string name="status_not_synced">Δεν έχει συγχρονιστεί</string>
     <string name="status_sync_error">Σφάλμα συγχρονισμού</string>
@@ -682,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Επεξεργασία επαναλαμβανόμενου συμβάντος</string>
-    <string name="dialog_delete_recurring_title">Διαγραφή επαναλαμβανόμενου συμβάντος</string>
-    <string name="dialog_edit_recurring_message">Αυτό είναι ένα επαναλαμβανόμενο συμβάν. Πώς θέλετε να εφαρμοστεί η αλλαγή;</string>
     <string name="recurring_this_event">Αυτό το συμβάν</string>
     <string name="recurring_all_events">Όλα τα συμβάντα</string>
+    <string name="dialog_edit_recurring_title">Αποθήκευση αλλαγών σε</string>
+    <string name="dialog_delete_recurring_title">Διαγραφή</string>
+    <string name="dialog_move_recurring_title">Μετακίνηση</string>
     <string name="empty_pick_a_day">Διάλεξε μια μέρα. Εκμεταλλεύσου τη.</string>
     <string name="empty_no_events_day">Τίποτα εδώ. Βγες έξω για λίγο;</string>
     <string name="filter_date">Ημερομηνία</string>
@@ -1113,4 +1150,16 @@
     </plurals>
     <string name="share_availability_days_through">Έως %1$s</string>
     <string name="share_availability_window_duration">Εύρος %1$s ωρών</string>
+    <string name="attendee_sheet_title">Συμμετέχοντες</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d καλεσμένος</item>
+        <item quantity="other">%d καλεσμένοι</item>
+    </plurals>
+    <string name="attendee_search_hint">Αναζήτηση</string>
+    <string name="attendee_search_no_matches">Καμία αντιστοιχία</string>
+    <string name="attendee_section_going">Πάνε</string>
+    <string name="attendee_section_maybe">Ίσως</string>
+    <string name="attendee_section_pending">Σε αναμονή</string>
+    <string name="attendee_section_declined">Αρνήθηκαν</string>
+    <string name="attendee_section_delegated">Ανέθεσαν</string>
 </resources>

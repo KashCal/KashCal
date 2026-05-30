@@ -949,6 +949,65 @@ class EventCoordinatorTest {
     }
 
     @Test
+    fun `editThisAndFuture cancels master reminders for occurrences after split point`() = runTest {
+        val splitTime = 1704672000000L
+        val newSeries = recurringEvent.copy(
+            id = 202L,
+            startTs = splitTime,
+            uid = "split-series-cancel@kashcal.test"
+        )
+        val testOccurrence = Occurrence(
+            eventId = newSeries.id,
+            calendarId = iCloudCalendarId,
+            startTs = splitTime,
+            endTs = splitTime + 3600000L,
+            startDay = 20240108,
+            endDay = 20240108
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } returns newSeries
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
+
+        coordinator.editThisAndFuture(
+            masterEventId = recurringEvent.id,
+            splitTimeMs = splitTime,
+            changes = { it.copy(title = "Renamed") }
+        )
+
+        // Master-side reminders for occurrences at-or-after splitTime
+        // are now stale (those occurrences live on the new series), so
+        // the coordinator cancels them — same shape as the cancellation
+        // step in deleteThisAndFuture.
+        coVerify { reminderScheduler.cancelRemindersForOccurrencesAfter(recurringEvent.id, splitTime) }
+    }
+
+    @Test
+    fun `editThisAndFuture does not cancel reminders if splitSeries throws`() = runTest {
+        // Robustness: cancellation must run only after splitSeries
+        // succeeds. If the split rolls back (transactional), the master
+        // is intact and its scheduled reminders should still fire.
+        val splitTime = 1704672000000L
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } throws
+                IllegalStateException("simulated split failure")
+
+        try {
+            coordinator.editThisAndFuture(
+                masterEventId = recurringEvent.id,
+                splitTimeMs = splitTime,
+                changes = { it.copy(title = "Will fail") }
+            )
+            assert(false) { "splitSeries failure should propagate out of editThisAndFuture" }
+        } catch (_: IllegalStateException) {
+            // expected
+        }
+
+        coVerify(exactly = 0) {
+            reminderScheduler.cancelRemindersForOccurrencesAfter(any(), any())
+        }
+    }
+
+    @Test
     fun `importIcsEvents schedules reminders for each imported event`() = runTest {
         // Events to import - importIcsEvents will generate new UIDs for these
         val eventsToImport = listOf(

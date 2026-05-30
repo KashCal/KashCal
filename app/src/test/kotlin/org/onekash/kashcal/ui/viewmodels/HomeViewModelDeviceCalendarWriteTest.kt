@@ -285,12 +285,26 @@ class HomeViewModelDeviceCalendarWriteTest {
         assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
     }
 
-    // ==================== handleDeviceEventFormDelete Routing (Bug 1 fix) ====================
+    // ==================== handleDeviceEventFormDelete Routing ====================
+    //
+    // Routing branches on the loaded device event's shape, not formState:
+    //   originalId != null    → exception      → deleteDeviceSingleOccurrence
+    //   rrule != null         → recurring master → scope sheet (no leaf delete)
+    //   else                  → non-recurring  → deleteDeviceEvent
 
     @Test
-    fun `handleDeviceEventFormDelete with occurrenceTs routes to deleteSingleOccurrence`() = runTest {
+    fun `handleDeviceEventFormDelete on exception routes to deleteDeviceSingleOccurrence`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
+
+        // Seed an exception event: originalId points at master, originalInstanceTime
+        // is the recurrence id. handleDeviceEventFormDelete reads these off the
+        // loaded event and forwards to deleteDeviceSingleOccurrence.
+        fakeCalendarProviderRepository.deviceEvents[200L] = deviceEvent(
+            id = 200L,
+            originalId = 100L,
+            originalInstanceTime = 1709280000000L,
+        )
 
         val formState = EventFormState(
             editingDeviceEventId = 200L,
@@ -303,21 +317,25 @@ class HomeViewModelDeviceCalendarWriteTest {
         advanceUntilIdle()
 
         assertTrue(result.isSuccess)
-        // Should route to deleteSingleOccurrence, not deleteEvent
         assertEquals(1, fakeCalendarProviderRepository.deletedOccurrences.size)
-        assertEquals(200L, fakeCalendarProviderRepository.deletedOccurrences[0].masterEventId)
+        // masterEventId comes from event.originalId (the master), NOT the
+        // exception event's own id.
+        assertEquals(100L, fakeCalendarProviderRepository.deletedOccurrences[0].masterEventId)
         assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
         assertTrue("Should NOT have called deleteEvent", fakeCalendarProviderRepository.deletedEventIds.isEmpty())
     }
 
     @Test
-    fun `handleDeviceEventFormDelete without occurrenceTs routes to deleteDeviceEvent`() = runTest {
+    fun `handleDeviceEventFormDelete on non-recurring event routes to deleteDeviceEvent`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
+        // Non-recurring: no rrule, no originalId → straight master delete.
+        fakeCalendarProviderRepository.deviceEvents[200L] = deviceEvent(id = 200L)
+
         val formState = EventFormState(
             editingDeviceEventId = 200L,
-            editingOccurrenceTs = null,  // Not editing a single occurrence
+            editingOccurrenceTs = null,
             selectedCalendarId = 42L,
             isAllDay = false
         )
@@ -326,7 +344,6 @@ class HomeViewModelDeviceCalendarWriteTest {
         advanceUntilIdle()
 
         assertTrue(result.isSuccess)
-        // Should route to deleteDeviceEvent, not deleteSingleOccurrence
         assertEquals(1, fakeCalendarProviderRepository.deletedEventIds.size)
         assertEquals(200L, fakeCalendarProviderRepository.deletedEventIds[0])
         assertTrue("Should NOT have called deleteSingleOccurrence", fakeCalendarProviderRepository.deletedOccurrences.isEmpty())
@@ -338,7 +355,7 @@ class HomeViewModelDeviceCalendarWriteTest {
         advanceUntilIdle()
 
         val formState = EventFormState(
-            editingDeviceEventId = null,  // No device event
+            editingDeviceEventId = null,
             editingOccurrenceTs = null,
             selectedCalendarId = null
         )
@@ -352,9 +369,15 @@ class HomeViewModelDeviceCalendarWriteTest {
     }
 
     @Test
-    fun `handleDeviceEventFormDelete passes isAllDay correctly`() = runTest {
+    fun `handleDeviceEventFormDelete passes isAllDay through to occurrence delete`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
+
+        fakeCalendarProviderRepository.deviceEvents[300L] = deviceEvent(
+            id = 300L,
+            originalId = 100L,
+            originalInstanceTime = 1709280000000L,
+        )
 
         val formState = EventFormState(
             editingDeviceEventId = 300L,
@@ -370,4 +393,34 @@ class HomeViewModelDeviceCalendarWriteTest {
         val deleted = fakeCalendarProviderRepository.deletedOccurrences[0]
         assertEquals(true, deleted.isAllDay)
     }
+
+    private fun deviceEvent(
+        id: Long,
+        calendarId: Long = 1L,
+        rrule: String? = null,
+        originalId: Long? = null,
+        originalInstanceTime: Long? = null,
+    ) = org.onekash.kashcal.data.calendar_provider.DeviceEvent(
+        id = id,
+        calendarId = calendarId,
+        title = "Event $id",
+        description = null,
+        location = null,
+        startTs = 0L,
+        endTs = 0L,
+        duration = null,
+        isAllDay = false,
+        rrule = rrule,
+        rdate = null,
+        exdate = null,
+        exrule = null,
+        timezone = "UTC",
+        originalId = originalId,
+        originalInstanceTime = originalInstanceTime,
+        status = 1,
+        availability = 0,
+        accessLevel = 700,
+        calendarColor = null,
+        eventColor = null,
+    )
 }

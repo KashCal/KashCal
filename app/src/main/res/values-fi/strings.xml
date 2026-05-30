@@ -77,6 +77,40 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Vastaus koskee koko sarjaa.</string>
     <string name="rsvp_modified_snackbar">Vastaus tapahtumaan %1$s epäonnistui — tapahtumaa muokattiin. Vastaa uudelleen.</string>
+    <string name="invitees_host_tag">Isäntä</string>
+    <string name="invitees_summary_you_alone">Sinä</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sinä · %d kutsuttu</item>
+        <item quantity="other">Sinä · %d kutsuttua</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d kutsuttu</item>
+        <item quantity="other">%d kutsuttua</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s järjestää</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sinä</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sinä + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sinä + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sinä + %d</item>
+        <item quantity="other">Sinä + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · vielä %2$d</item>
+        <item quantity="other">%1$s · vielä %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Vaihda vastausta</string>
+    <string name="rsvp_question_going">Tuletko?</string>
+    <string name="rsvp_action_yes">Kyllä</string>
+    <string name="rsvp_action_maybe">Ehkä</string>
+    <string name="rsvp_action_no">Ei</string>
+    <string name="rsvp_state_going">Tulet</string>
+    <string name="rsvp_state_maybe">Ehkä</string>
+    <string name="rsvp_state_not_going">Et tule</string>
+    <string name="rsvp_action_change">Muuta</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Vain tämä</string>
@@ -482,6 +516,9 @@
     <string name="label_found_events">Löydetty: %1$d tapahtumaa</string>
     <string name="label_open_debug_menu">Avaa virheenkorjausvalikko</string>
     <string name="placeholder_search">Hae…</string>
+    <string name="settings_search_placeholder">Hae asetuksista…</string>
+    <string name="settings_search_no_results">Haulla \"%1$s\" ei löytynyt asetuksia</string>
+    <string name="cd_search_settings">Hae asetuksista</string>
     <string name="status_sync_paused">Synkronointi keskeytetty</string>
     <string name="status_not_synced">Ei synkronoitu</string>
     <string name="status_sync_error">Synkronointivirhe</string>
@@ -665,11 +702,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Muokkaa toistuvaa tapahtumaa</string>
-    <string name="dialog_delete_recurring_title">Poista toistuva tapahtuma</string>
-    <string name="dialog_edit_recurring_message">Tämä on toistuva tapahtuma. Miten haluat soveltaa muutoksen?</string>
     <string name="recurring_this_event">Tämä tapahtuma</string>
     <string name="recurring_all_events">Kaikki tapahtumat</string>
+    <string name="dialog_edit_recurring_title">Tallenna muutokset</string>
+    <string name="dialog_delete_recurring_title">Poista</string>
+    <string name="dialog_move_recurring_title">Siirrä</string>
     <string name="empty_pick_a_day">Valitse päivä. Tartu siihen.</string>
     <string name="empty_no_events_day">Täällä ei ole mitään; menisit ulos?</string>
     <string name="filter_date">Päivämäärä</string>
@@ -1056,4 +1093,16 @@
     <string name="share_availability_days_through">%1$s asti</string>
     <string name="share_availability_window_duration">%1$s tunnin ikkuna</string>
     <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
+    <string name="attendee_sheet_title">Osallistujat</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d kutsuttu</item>
+        <item quantity="other">%d kutsuttua</item>
+    </plurals>
+    <string name="attendee_search_hint">Hae</string>
+    <string name="attendee_search_no_matches">Ei tuloksia</string>
+    <string name="attendee_section_going">Tulevat</string>
+    <string name="attendee_section_maybe">Ehkä</string>
+    <string name="attendee_section_pending">Odottaa</string>
+    <string name="attendee_section_declined">Kieltäytyivät</string>
+    <string name="attendee_section_delegated">Delegoivat</string>
 </resources>

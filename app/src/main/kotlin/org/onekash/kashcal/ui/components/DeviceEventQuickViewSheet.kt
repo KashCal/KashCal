@@ -81,7 +81,6 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
  * @param onEdit Called to edit all occurrences (or single event if not recurring)
  * @param onEditOccurrence Called to edit just this occurrence (recurring events)
  * @param onDelete Called to delete all occurrences (or single event if not recurring)
- * @param onDeleteOccurrence Called to delete just this occurrence (recurring events)
  * @param onDuplicate Called to duplicate this event into a KashCal calendar
  * @param onShare Called to share event details as text
  * @param timeFormat Time format preference: "system", "12h", or "24h"
@@ -97,8 +96,6 @@ fun DeviceEventQuickViewSheet(
     onEdit: () -> Unit = {},
     onEditOccurrence: () -> Unit = {},
     onDelete: () -> Unit = {},
-    onDeleteOccurrence: () -> Unit = {},
-    onDeleteFuture: () -> Unit = {},
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
     onExportIcs: () -> Unit = {},
@@ -291,8 +288,6 @@ fun DeviceEventQuickViewSheet(
                 onEdit = onEdit,
                 onEditOccurrence = onEditOccurrence,
                 onDelete = onDelete,
-                onDeleteOccurrence = onDeleteOccurrence,
-                onDeleteFuture = onDeleteFuture,
                 onDuplicate = onDuplicate,
                 onShare = onShare,
                 onExportIcs = onExportIcs
@@ -312,17 +307,12 @@ private fun DeviceEventActionButtons(
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit,
     onDelete: () -> Unit,
-    onDeleteOccurrence: () -> Unit,
-    onDeleteFuture: () -> Unit,
     onDuplicate: () -> Unit,
     onShare: () -> Unit,
     onExportIcs: () -> Unit
 ) {
-    var showEditConfirmation by remember { mutableStateOf(false) }
-    var editAllOccurrences by remember { mutableStateOf(true) }
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
-    var deleteAllFuture by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -345,101 +335,57 @@ private fun DeviceEventActionButtons(
                 Text(stringResource(R.string.action_share))
             }
         } else {
-            // Writable: show Edit, Delete, More menu
-            // Edit button / inline confirmation
+            // Writable: Edit / Delete / More. Recurring events route
+            // through the host's scope sheet (which serves as its own
+            // confirmation); non-recurring events use the inline
+            // two-tap pattern since the host commits immediately.
             if (!showDeleteConfirmation) {
-                if (!showEditConfirmation) {
-                    FilledTonalButton(
-                        onClick = {
-                            if (isRecurring) {
-                                showEditConfirmation = true
-                            } else {
-                                onEdit()
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.action_edit))
-                    }
-                } else {
-                    // Inline edit confirmation for recurring events
-                    FilledTonalButton(
-                        onClick = {
-                            showEditConfirmation = false
-                            editAllOccurrences = true
-                        },
-                        modifier = Modifier.weight(0.5f)
-                    ) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilledTonalButton(
-                        onClick = {
-                            showEditConfirmation = false
-                            if (editAllOccurrences) {
-                                onEdit()
-                            } else {
-                                onEditOccurrence()
-                            }
-                        },
-                        modifier = Modifier.weight(0.5f)
-                    ) {
-                        Text(stringResource(R.string.action_edit))
-                    }
+                FilledTonalButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.action_edit))
+                }
+
+                FilledTonalButton(
+                    onClick = {
+                        if (isRecurring) {
+                            onDelete()
+                        } else {
+                            showDeleteConfirmation = true
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            } else {
+                FilledTonalButton(
+                    onClick = { showDeleteConfirmation = false },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+                FilledTonalButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onDelete()
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text(stringResource(R.string.action_confirm))
                 }
             }
 
-            // Delete button / inline confirmation
-            if (!showEditConfirmation) {
-                if (!showDeleteConfirmation) {
-                    FilledTonalButton(
-                        onClick = { showDeleteConfirmation = true },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    ) {
-                        Text(stringResource(R.string.action_delete))
-                    }
-                } else {
-                    // Inline delete confirmation
-                    FilledTonalButton(
-                        onClick = {
-                            showDeleteConfirmation = false
-                            deleteAllFuture = false
-                        },
-                        modifier = Modifier.weight(0.5f)
-                    ) {
-                        Text(stringResource(R.string.action_cancel))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilledTonalButton(
-                        onClick = {
-                            showDeleteConfirmation = false
-                            if (isRecurring) {
-                                if (deleteAllFuture) {
-                                    onDeleteFuture()
-                                } else {
-                                    onDeleteOccurrence()
-                                }
-                            } else {
-                                onDelete()
-                            }
-                        },
-                        modifier = Modifier.weight(0.5f),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        )
-                    ) {
-                        Text(stringResource(R.string.action_delete))
-                    }
-                }
-            }
-
-            // More menu (only visible when not in confirmation mode)
-            if (!showEditConfirmation && !showDeleteConfirmation) {
+            if (!showDeleteConfirmation) {
                 Box {
                     FilledTonalButton(
                         onClick = { showMoreMenu = true }
@@ -479,84 +425,6 @@ private fun DeviceEventActionButtons(
                             }
                         )
                     }
-                }
-            }
-        }
-    }
-
-    // Recurring event edit/delete option selection
-    if (isRecurring && (showEditConfirmation || showDeleteConfirmation)) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(top = 12.dp)
-        ) {
-            if (showEditConfirmation) {
-                Text(
-                    stringResource(R.string.dialog_edit_recurring_title),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { editAllOccurrences = false }
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = !editAllOccurrences,
-                        onClick = { editAllOccurrences = false }
-                    )
-                    Text(stringResource(R.string.recurring_just_occurrence))
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { editAllOccurrences = true }
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = editAllOccurrences,
-                        onClick = { editAllOccurrences = true }
-                    )
-                    Text(stringResource(R.string.recurring_all_occurrences))
-                }
-            }
-
-            if (showDeleteConfirmation) {
-                Text(
-                    stringResource(R.string.dialog_delete_recurring_title),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { deleteAllFuture = false }
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = !deleteAllFuture,
-                        onClick = { deleteAllFuture = false }
-                    )
-                    Text(stringResource(R.string.recurring_just_occurrence))
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { deleteAllFuture = true }
-                        .padding(vertical = 4.dp)
-                ) {
-                    RadioButton(
-                        selected = deleteAllFuture,
-                        onClick = { deleteAllFuture = true }
-                    )
-                    Text(stringResource(R.string.recurring_this_and_future))
                 }
             }
         }

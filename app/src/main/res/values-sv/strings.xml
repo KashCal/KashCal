@@ -495,6 +495,9 @@
     <string name="label_found_events">Hittade: %1$d händelser</string>
     <string name="label_open_debug_menu">Öppna debug-meny</string>
     <string name="placeholder_search">Sök…</string>
+    <string name="settings_search_placeholder">Sök i inställningar…</string>
+    <string name="settings_search_no_results">Inga inställningar hittades för \"%1$s\"</string>
+    <string name="cd_search_settings">Sök i inställningar</string>
     <string name="status_sync_paused">Synk pausad</string>
     <string name="status_not_synced">Ej synkroniserad</string>
     <string name="status_sync_error">Synkroniseringsfel</string>
@@ -679,11 +682,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Redigera återkommande händelse</string>
-    <string name="dialog_delete_recurring_title">Ta bort återkommande händelse</string>
-    <string name="dialog_edit_recurring_message">Det här är en återkommande händelse. Hur vill du tillämpa ändringen?</string>
     <string name="recurring_this_event">Denna händelse</string>
     <string name="recurring_all_events">Alla händelser</string>
+    <string name="dialog_edit_recurring_title">Spara ändringar i</string>
+    <string name="dialog_delete_recurring_title">Ta bort</string>
+    <string name="dialog_move_recurring_title">Flytta</string>
     <string name="empty_pick_a_day">Välj en dag. Ta vara på den.</string>
     <string name="empty_no_events_day">Inget att se här; ta en promenad?</string>
     <string name="filter_date">Datum</string>
@@ -926,6 +929,16 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svaret gäller hela serien.</string>
     <string name="rsvp_modified_snackbar">Svar för %1$s misslyckades – händelsen ändrades. Vänligen svara igen.</string>
+    <string name="invitees_host_tag">Värd</string>
+    <string name="rsvp_question_going">Kommer du?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Kanske</string>
+    <string name="rsvp_action_no">Nej</string>
+    <string name="rsvp_state_going">Du kommer</string>
+    <string name="rsvp_state_maybe">Kanske</string>
+    <string name="rsvp_state_not_going">Du kommer inte</string>
+    <string name="rsvp_action_change">Ändra</string>
+
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Upprepas inte</string>
@@ -1059,6 +1072,18 @@
     <string name="attendee_status_tentative">Preliminärt</string>
     <string name="attendee_status_delegated">Delegerad</string>
     <string name="attendee_status_pending">Väntar</string>
+    <string name="attendee_sheet_title">Deltagare</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d inbjuden</item>
+        <item quantity="other">%d inbjudna</item>
+    </plurals>
+    <string name="attendee_search_hint">Sök</string>
+    <string name="attendee_search_no_matches">Inga träffar</string>
+    <string name="attendee_section_going">Kommer</string>
+    <string name="attendee_section_maybe">Kanske</string>
+    <string name="attendee_section_pending">Väntar</string>
+    <string name="attendee_section_declined">Avböjt</string>
+    <string name="attendee_section_delegated">Delegerat</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt är ikapp</string>
     <string name="inbox_organizer_suffix">(arrangör)</string>
@@ -1099,4 +1124,28 @@
         <item quantity="one">Ledig den närmaste %1$d dagen (%2$s – %3$s):</item>
         <item quantity="other">Ledig de närmaste %1$d dagarna (%2$s – %3$s):</item>
     </plurals>
+    <string name="invitees_summary_you_alone">Du</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Du · %d inbjuden</item>
+        <item quantity="other">Du · %d inbjudna</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d inbjuden</item>
+        <item quantity="other">%d inbjudna</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s arrangerar</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Du</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Du + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Du + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Du + %d</item>
+        <item quantity="other">Du + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d till</item>
+        <item quantity="other">%1$s · %2$d till</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Ändra svar</string>
 </resources>

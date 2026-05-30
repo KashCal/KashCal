@@ -314,6 +314,7 @@ class AndroidCalendarProviderRepositoryTest {
         isWritable = true,
         originalId = null,
         originalInstanceTime = null,
-        timezone = null
+        timezone = null,
+        eventStartTs = 0L,
     )
 }

@@ -81,14 +81,17 @@ class OkHttpCalDavClientRfc6578SyncTest {
     }
 
     @Test
-    fun `syncCollection sends Depth 1 header`() = runTest {
-        // RFC 6578 Section 3: Depth header for sync-collection
+    fun `syncCollection sends Depth 0 header per RFC 6578 section 3 point 2`() = runTest {
+        // RFC 6578 §3.2: "This report is only defined when the Depth header
+        // has value '0'; other values result in a 400 (Bad Request) error
+        // response." The body's <sync-level>1</sync-level> element is what
+        // requests one-level traversal — the Depth header itself must be 0.
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
 
         val request = mockWebServer.takeRequest()
-        assertEquals("RFC 6578 requires Depth: 1", "1", request.getHeader("Depth"))
+        assertEquals("RFC 6578 §3.2 requires Depth: 0", "0", request.getHeader("Depth"))
     }
 
     @Test

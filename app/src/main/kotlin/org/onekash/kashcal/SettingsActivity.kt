@@ -121,6 +121,8 @@ class SettingsActivity : ComponentActivity() {
                 val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
                 val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
                 val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
+                val isSearchActive by viewModel.isSearchActive.collectAsStateWithLifecycle()
+                val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
                 // Contact birthdays state
                 val contactBirthdaysEnabled by viewModel.contactBirthdaysEnabled.collectAsStateWithLifecycle()
@@ -570,9 +572,9 @@ class SettingsActivity : ComponentActivity() {
                                 }
                             },
                             // Navigate to Subscriptions detail screen
-                            onNavigateToSubscriptions = { showSubscriptionsScreen = true },
+                            onNavigateToSubscriptions = { viewModel.onSearchClose(); showSubscriptionsScreen = true },
                             // Navigate to Birthdays & Anniversaries detail screen
-                            onNavigateToBirthdaysAnniversaries = { showBirthdaysAnniversariesScreen = true },
+                            onNavigateToBirthdaysAnniversaries = { viewModel.onSearchClose(); showBirthdaysAnniversariesScreen = true },
                             // Contact event counts (for B&A row subtitle)
                             birthdayCount = birthdayCount,
                             anniversaryCount = anniversaryCount,
@@ -620,9 +622,15 @@ class SettingsActivity : ComponentActivity() {
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen
-                            onNavigateToAccounts = { showAccountsScreen = true },
+                            onNavigateToAccounts = { viewModel.onSearchClose(); showAccountsScreen = true },
                             // Navigate to Device Calendars detail screen
-                            onNavigateToDeviceCalendars = { showDeviceCalendarsScreen = true }
+                            onNavigateToDeviceCalendars = { viewModel.onSearchClose(); showDeviceCalendarsScreen = true },
+                            // Inline search (US1-US5)
+                            isSearchActive = isSearchActive,
+                            searchQuery = searchQuery,
+                            onSearchOpen = viewModel::onSearchOpen,
+                            onSearchClose = viewModel::onSearchClose,
+                            onSearchQueryChange = viewModel::onSearchQueryChange,
                         )
                         }
                     }

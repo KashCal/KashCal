@@ -71,6 +71,17 @@
     <string name="rsvp_action_accept">ਸਵੀਕਾਰ</string>
     <string name="rsvp_action_tentative">ਸੰਭਾਵੀ</string>
     <string name="rsvp_action_decline">ਇਨਕਾਰ</string>
+    <string name="invitees_host_tag">ਮੇਜ਼ਬਾਨ</string>
+    <string name="rsvp_question_going">ਜਾ ਰਹੇ ਹੋ?</string>
+    <string name="rsvp_action_yes">ਹਾਂ</string>
+    <string name="rsvp_action_maybe">ਸ਼ਾਇਦ</string>
+    <string name="rsvp_action_no">ਨਹੀਂ</string>
+    <string name="rsvp_state_going">ਤੁਸੀਂ ਜਾ ਰਹੇ ਹੋ</string>
+    <string name="rsvp_state_maybe">ਸ਼ਾਇਦ</string>
+    <string name="rsvp_state_not_going">ਤੁਸੀਂ ਨਹੀਂ ਜਾ ਰਹੇ</string>
+    <string name="rsvp_action_change">ਬਦਲੋ</string>
+
+
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -111,6 +122,9 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_search_placeholder">ਸੈਟਿੰਗਾਂ ਖੋਜੋ…</string>
+    <string name="settings_search_no_results">\"%1$s\" ਲਈ ਕੋਈ ਸੈਟਿੰਗ ਨਹੀਂ ਮਿਲੀ</string>
+    <string name="cd_search_settings">ਸੈਟਿੰਗਾਂ ਖੋਜੋ</string>
     <string name="settings_time_format">ਸਮਾਂ ਫ਼ਾਰਮੈਟ</string>
     <string name="settings_start_week_on">ਹਫ਼ਤਾ ਸ਼ੁਰੂ ਕਰੋ</string>
     <string name="settings_event_emojis">ਘਟਨਾ ਇਮੋਜੀ</string>
@@ -657,11 +671,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">ਦੁਹਰਾਉਣ ਵਾਲੀ ਘਟਨਾ ਸੰਪਾਦਨ</string>
-    <string name="dialog_delete_recurring_title">ਦੁਹਰਾਉਣ ਵਾਲੀ ਘਟਨਾ ਮਿਟਾਓ</string>
-    <string name="dialog_edit_recurring_message">ਇਹ ਦੁਹਰਾਉਣ ਵਾਲੀ ਘਟਨਾ ਹੈ। ਤੁਸੀਂ ਇਹ ਬਦਲਾਅ ਕਿਵੇਂ ਲਾਗੂ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?</string>
     <string name="recurring_this_event">ਇਹ ਘਟਨਾ</string>
     <string name="recurring_all_events">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
+    <string name="dialog_edit_recurring_title">ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ</string>
+    <string name="dialog_delete_recurring_title">ਮਿਟਾਓ</string>
+    <string name="dialog_move_recurring_title">ਮੂਵ ਕਰੋ</string>
     <string name="empty_pick_a_day">ਇੱਕ ਦਿਨ ਚੁਣੋ। ਮੌਕਾ ਫੜੋ।</string>
     <string name="empty_no_events_day">ਇੱਥੇ ਕੁਝ ਨਹੀਂ; ਬਾਹਰ ਘੁੰਮੋ?</string>
     <string name="filter_date">ਮਿਤੀ</string>
@@ -1082,4 +1096,40 @@
     </plurals>
     <string name="share_availability_days_through">%1$s ਤੱਕ</string>
     <string name="share_availability_window_duration">%1$s ਘੰਟੇ ਦੀ ਵਿੰਡੋ</string>
+    <string name="attendee_sheet_title">ਹਾਜ਼ਰੀਨ</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d ਸੱਦੇ ਗਏ</item>
+        <item quantity="other">%d ਸੱਦੇ ਗਏ</item>
+    </plurals>
+    <string name="attendee_search_hint">ਖੋਜੋ</string>
+    <string name="attendee_search_no_matches">ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ</string>
+    <string name="attendee_section_going">ਜਾ ਰਹੇ</string>
+    <string name="attendee_section_maybe">ਸ਼ਾਇਦ</string>
+    <string name="attendee_section_pending">ਬਕਾਇਆ</string>
+    <string name="attendee_section_declined">ਅਸਵੀਕਾਰ</string>
+    <string name="attendee_section_delegated">ਸੌਂਪਿਆ</string>
+    <string name="invitees_summary_you_alone">ਤੁਸੀਂ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">ਤੁਸੀਂ · %d ਸੱਦੇ ਗਏ</item>
+        <item quantity="other">ਤੁਸੀਂ · %d ਸੱਦੇ ਗਏ</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d ਸੱਦੇ ਗਏ</item>
+        <item quantity="other">%d ਸੱਦੇ ਗਏ</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ਮੇਜ਼ਬਾਨੀ</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · ਤੁਸੀਂ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · ਤੁਸੀਂ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · ਤੁਸੀਂ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">ਤੁਸੀਂ + %d</item>
+        <item quantity="other">ਤੁਸੀਂ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ਹੋਰ %2$d</item>
+        <item quantity="other">%1$s · ਹੋਰ %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">ਜਵਾਬ ਬਦਲੋ</string>
 </resources>

@@ -72,4 +72,21 @@ class FlatSettingsComponentsTest {
         val expectedPaddingDp = 16
         assertEquals(16, expectedPaddingDp)
     }
+
+    // ==================== Search Highlight Fast Path ====================
+
+    @Test
+    fun `empty searchQuery uses fast path - highlighted helper returns plain AnnotatedString`() {
+        // Constraint C1: when searchQuery is empty, the row composable
+        // calls Text(label) directly without going through highlighted().
+        // The highlighted() contract for empty query is verified in
+        // SearchHighlightTest. This test asserts the contract still holds
+        // so a regression in the helper would be caught here too.
+        val style = androidx.compose.ui.text.SpanStyle(
+            background = androidx.compose.ui.graphics.Color.Red
+        )
+        val result = org.onekash.kashcal.ui.util.text.highlighted("Time Format", "", style)
+        assertEquals("Time Format", result.text)
+        assertEquals(0, result.spanStyles.size)
+    }
 }

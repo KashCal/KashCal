@@ -76,6 +76,50 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Atsakymas taikomas visai serijai.</string>
     <string name="rsvp_modified_snackbar">Nepavyko atsakyti į „%1$s“ — įvykis buvo pakeistas. Atsakykite iš naujo.</string>
+    <string name="invitees_host_tag">Šeimininkas</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tu · %d pakviestas</item>
+        <item quantity="few">Tu · %d pakviesti</item>
+        <item quantity="many">Tu · %d pakviesta</item>
+        <item quantity="other">Tu · %d pakviestų</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d pakviestas</item>
+        <item quantity="few">%d pakviesti</item>
+        <item quantity="many">%d pakviesta</item>
+        <item quantity="other">%d pakviestų</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizuoja</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tu + %d</item>
+        <item quantity="few">Tu + %d</item>
+        <item quantity="many">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · dar %2$d</item>
+        <item quantity="few">%1$s · dar %2$d</item>
+        <item quantity="many">%1$s · dar %2$d</item>
+        <item quantity="other">%1$s · dar %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Keisti atsakymą</string>
+    <string name="rsvp_question_going">Eisi?</string>
+    <string name="rsvp_action_yes">Taip</string>
+    <string name="rsvp_action_maybe">Galbūt</string>
+    <string name="rsvp_action_no">Ne</string>
+    <string name="rsvp_state_going">Eini</string>
+    <string name="rsvp_state_maybe">Galbūt</string>
+    <string name="rsvp_state_not_going">Neini</string>
+    <string name="rsvp_action_change">Keisti</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Tik šį</string>
@@ -462,6 +506,9 @@
     <string name="label_found_events">Rasta: %1$d įvykių</string>
     <string name="label_open_debug_menu">Atidaryti derinimo meniu</string>
     <string name="placeholder_search">Paieška…</string>
+    <string name="settings_search_placeholder">Ieškoti nustatymuose…</string>
+    <string name="settings_search_no_results">Pagal užklausą \"%1$s\" nustatymų nerasta</string>
+    <string name="cd_search_settings">Ieškoti nustatymuose</string>
     <string name="status_sync_paused">Sinchronizavimas pristabdytas</string>
     <string name="status_not_synced">Nesinchronizuota</string>
     <string name="status_sync_error">Sinchronizavimo klaida</string>
@@ -699,11 +746,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Redaguoti pasikartojantį įvykį</string>
-    <string name="dialog_delete_recurring_title">Ištrinti pasikartojantį įvykį</string>
-    <string name="dialog_edit_recurring_message">Tai pasikartojantis įvykis. Kaip pritaikyti pakeitimą?</string>
     <string name="recurring_this_event">Šis įvykis</string>
     <string name="recurring_all_events">Visi įvykiai</string>
+    <string name="dialog_edit_recurring_title">Įrašyti pakeitimus į</string>
+    <string name="dialog_delete_recurring_title">Ištrinti</string>
+    <string name="dialog_move_recurring_title">Perkelti</string>
     <string name="empty_pick_a_day">Pasirink dieną. Pagauk akimirką.</string>
     <string name="empty_no_events_day">Nieko čia nėra — gal pasivaikščioti?</string>
     <string name="filter_date">Data</string>
@@ -1116,4 +1163,18 @@
     <string name="share_availability_days_through">Iki %1$s</string>
     <string name="share_availability_window_duration">%1$s val. langas</string>
     <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
+    <string name="attendee_sheet_title">Dalyviai</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d pakviestas</item>
+        <item quantity="few">%d pakviesti</item>
+        <item quantity="many">%d pakviesta</item>
+        <item quantity="other">%d pakviestų</item>
+    </plurals>
+    <string name="attendee_search_hint">Ieškoti</string>
+    <string name="attendee_search_no_matches">Nėra rezultatų</string>
+    <string name="attendee_section_going">Eina</string>
+    <string name="attendee_section_maybe">Galbūt</string>
+    <string name="attendee_section_pending">Laukiantys</string>
+    <string name="attendee_section_declined">Atsisakė</string>
+    <string name="attendee_section_delegated">Delegavo</string>
 </resources>

@@ -48,6 +48,20 @@ data class DeviceCalendarInstance(
     val originalInstanceTime: Long?,
     /** Event timezone (exception's own timezone for modified occurrences, master's for regular). */
     val timezone: String?,
+    /**
+     * The master event row's startTs (Events.DTSTART), distinct from
+     * the per-instance [startTs]. For a regular occurrence, this is
+     * the series's first occurrence. For an exception, this is the
+     * master's first occurrence, NOT the exception's own (modified)
+     * start. Used to anchor the first-occurrence rule on
+     * drag-to-reschedule and related option-set decisions.
+     *
+     * Required — every caller must populate explicitly. The
+     * production read in [AndroidCalendarProviderRepository] sources
+     * it from the CalendarProvider Instances projection
+     * ([android.provider.CalendarContract.Instances.DTSTART]).
+     */
+    val eventStartTs: Long,
 ) {
     /**
      * True if this instance is part of a recurring event series (regular or exception occurrence).

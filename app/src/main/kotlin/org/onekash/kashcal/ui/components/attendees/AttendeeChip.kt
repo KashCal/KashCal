@@ -63,8 +63,9 @@ fun AttendeeChip(
     model: AttendeeUiModel,
     modifier: Modifier = Modifier
 ) {
-    // Slot identity is pinned by AttendeeChipRow's `key(bareAddress, isSynthesized)`,
-    // so a plain remember is sufficient — the slot itself is invariant per chip.
+    // Slot identity is pinned by the caller's `key(bareAddress, isSynthesized)`
+    // for any chip-row surface, so a plain remember is sufficient — the
+    // slot itself is invariant per chip.
     var expanded by remember { mutableStateOf(false) }
     val statusColor = model.status.color()
     val statusIcon = model.status.icon()
@@ -219,6 +220,3 @@ internal fun AttendeeStatus.icon(): ImageVector = when (this) {
 }
 
 internal const val TEST_TAG_CHIP = "AttendeeChip"
-internal const val TEST_TAG_CHIP_ROW = "AttendeeChipRow"
-internal const val TEST_TAG_LAVENDER_COUNT = "AttendeeChipRow_LavenderCount"
-internal const val TEST_TAG_SHOW_MORE = "AttendeeChipRow_ShowMore"

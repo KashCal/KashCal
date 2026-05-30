@@ -495,6 +495,9 @@
     <string name="settings_preview">プレビュー</string>
     <string name="settings_n_events">%1$d件のイベント</string>
     <string name="settings_n_events_default">%1$d件のイベント（デフォルト）</string>
+    <string name="settings_search_placeholder">設定を検索…</string>
+    <string name="settings_search_no_results">\"%1$s\" に一致する設定はありません</string>
+    <string name="cd_search_settings">設定を検索</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">カレンダー</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">繰り返しイベントを編集</string>
-    <string name="dialog_delete_recurring_title">繰り返しイベントを削除</string>
-    <string name="dialog_edit_recurring_message">これは繰り返しイベントです。変更をどのように適用しますか？</string>
     <string name="recurring_this_event">このイベントのみ</string>
     <string name="recurring_all_events">すべてのイベント</string>
+    <string name="dialog_edit_recurring_title">変更の適用先</string>
+    <string name="dialog_delete_recurring_title">削除</string>
+    <string name="dialog_move_recurring_title">移動</string>
     <string name="empty_pick_a_day">日付を選んで、一日をつかもう。</string>
     <string name="empty_no_events_day">予定はありません。外に出てみませんか？</string>
     <string name="filter_date">日付</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">辞退する</string>
     <string name="rsvp_series_disclosure">回答はシリーズ全体に適用されます。</string>
     <string name="rsvp_modified_snackbar">%1$s への返信に失敗しました。予定が変更されたため、もう一度返信してください。</string>
+    <string name="attendee_sheet_title">出席者</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">%d人 招待済み</item>
+    </plurals>
+    <string name="attendee_search_hint">検索</string>
+    <string name="attendee_search_no_matches">該当なし</string>
+    <string name="attendee_section_going">参加</string>
+    <string name="attendee_section_maybe">たぶん</string>
+    <string name="attendee_section_pending">保留中</string>
+    <string name="attendee_section_declined">辞退</string>
+    <string name="attendee_section_delegated">委任</string>
+    <string name="invitees_host_tag">主催者</string>
+    <string name="invitees_summary_you_alone">あなた</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">あなた · %d人 招待</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">%d人 招待</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s が主催</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · あなた</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · あなた + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">あなた + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · 他%2$d人</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">返信を変更</string>
+    <string name="rsvp_question_going">参加しますか?</string>
+    <string name="rsvp_action_yes">はい</string>
+    <string name="rsvp_action_maybe">たぶん</string>
+    <string name="rsvp_action_no">いいえ</string>
+    <string name="rsvp_state_going">参加します</string>
+    <string name="rsvp_state_maybe">たぶん</string>
+    <string name="rsvp_state_not_going">参加しません</string>
+    <string name="rsvp_action_change">変更</string>
+
+
     <string name="inbox_empty_caught_up">すべて確認済みです</string>
     <string name="inbox_organizer_suffix">(主催者)</string>
     <string name="menu_invites">招待</string>

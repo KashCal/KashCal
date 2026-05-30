@@ -73,6 +73,40 @@
     <string name="rsvp_action_decline">Откажи</string>
     <string name="rsvp_series_disclosure">Отговорът важи за цялата серия.</string>
     <string name="rsvp_modified_snackbar">Отговорът за %1$s не успя — събитието беше променено. Моля, отговорете отново.</string>
+    <string name="invitees_host_tag">Домакин</string>
+    <string name="invitees_summary_you_alone">Ти</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ти · %d поканен</item>
+        <item quantity="other">Ти · %d поканен</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d поканен</item>
+        <item quantity="other">%d поканен</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s е домакин</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ти</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ти + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ти + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ти + %d</item>
+        <item quantity="other">Ти + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · още %2$d</item>
+        <item quantity="other">%1$s · още %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Промени отговора</string>
+    <string name="rsvp_question_going">Ще отидеш ли?</string>
+    <string name="rsvp_action_yes">Да</string>
+    <string name="rsvp_action_maybe">Може би</string>
+    <string name="rsvp_action_no">Не</string>
+    <string name="rsvp_state_going">Отиваш</string>
+    <string name="rsvp_state_maybe">Може би</string>
+    <string name="rsvp_state_not_going">Не отиваш</string>
+    <string name="rsvp_action_change">Промени</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Само това</string>
@@ -500,6 +534,9 @@
     <string name="label_found_events">Намерени: %1$d събития</string>
     <string name="label_open_debug_menu">Отвори менюто за отстраняване на грешки</string>
     <string name="placeholder_search">Търсене…</string>
+    <string name="settings_search_placeholder">Търсене в настройките…</string>
+    <string name="settings_search_no_results">Няма намерени настройки за \"%1$s\"</string>
+    <string name="cd_search_settings">Търсене в настройките</string>
     <string name="status_sync_paused">Синхронизирането е на пауза</string>
     <string name="status_not_synced">Не е синхронизиран</string>
     <string name="status_sync_error">Грешка при синхронизиране</string>
@@ -682,11 +719,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Редактирай повтарящо се събитие</string>
-    <string name="dialog_delete_recurring_title">Изтрий повтарящо се събитие</string>
-    <string name="dialog_edit_recurring_message">Това е повтарящо се събитие. Как искате да приложите промяната?</string>
     <string name="recurring_this_event">Това събитие</string>
     <string name="recurring_all_events">Всички събития</string>
+    <string name="dialog_edit_recurring_title">Запази промените в</string>
+    <string name="dialog_delete_recurring_title">Изтрий</string>
+    <string name="dialog_move_recurring_title">Премести</string>
     <string name="empty_pick_a_day">Избери ден. Възползвай се.</string>
     <string name="empty_no_events_day">Нищо за показване; излез навън?</string>
     <string name="filter_date">Дата</string>
@@ -1111,4 +1148,16 @@
     </plurals>
     <string name="share_availability_days_through">До %1$s</string>
     <string name="share_availability_window_duration">Интервал от %1$s часа</string>
+    <string name="attendee_sheet_title">Участници</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d поканен</item>
+        <item quantity="other">%d поканени</item>
+    </plurals>
+    <string name="attendee_search_hint">Търсене</string>
+    <string name="attendee_search_no_matches">Няма резултати</string>
+    <string name="attendee_section_going">Отиват</string>
+    <string name="attendee_section_maybe">Може би</string>
+    <string name="attendee_section_pending">Чакащи</string>
+    <string name="attendee_section_declined">Отказали</string>
+    <string name="attendee_section_delegated">Делегирани</string>
 </resources>

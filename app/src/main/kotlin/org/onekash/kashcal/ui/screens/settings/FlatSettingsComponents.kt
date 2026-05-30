@@ -33,10 +33,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.util.text.highlighted
 
 /**
  * Reusable flat settings row component.
@@ -67,7 +69,8 @@ fun SettingsRow(
     badge: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     showChevron: Boolean = trailing == null,
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
+    searchQuery: String = ""
 ) {
     Column(modifier = modifier) {
         Row(
@@ -108,18 +111,33 @@ fun SettingsRow(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        if (searchQuery.isBlank()) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        } else {
+                            Text(
+                                highlighted(label, searchQuery, settingsSearchHighlightStyle()),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                         badge?.invoke()
                     }
                     if (subtitle != null) {
-                        Text(
-                            subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (searchQuery.isBlank()) {
+                            Text(
+                                subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Text(
+                                highlighted(subtitle, searchQuery, settingsSearchHighlightStyle()),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -185,7 +203,8 @@ fun SettingsToggleRow(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     iconEmoji: String? = null,
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
+    searchQuery: String = ""
 ) {
     Column(modifier = modifier) {
         Row(
@@ -219,15 +238,27 @@ fun SettingsToggleRow(
 
                 // Label and subtitle
                 Column {
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (searchQuery.isBlank()) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            highlighted(label, searchQuery, settingsSearchHighlightStyle()),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            highlighted(subtitle, searchQuery, settingsSearchHighlightStyle()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
@@ -310,7 +341,8 @@ fun SettingsRowWithBadge(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     iconEmoji: String? = null,
-    subtitle: String? = null
+    subtitle: String? = null,
+    searchQuery: String = ""
 ) {
     SettingsRow(
         label = label,
@@ -319,7 +351,8 @@ fun SettingsRowWithBadge(
         iconEmoji = iconEmoji,
         subtitle = subtitle,
         value = "($badgeCount)",
-        showChevron = true
+        showChevron = true,
+        searchQuery = searchQuery
     )
 }
 
@@ -348,7 +381,8 @@ fun <T> SettingsDropdownRow(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     iconEmoji: String? = null,
-    showDivider: Boolean = true
+    showDivider: Boolean = true,
+    searchQuery: String = ""
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -384,10 +418,17 @@ fun <T> SettingsDropdownRow(
                     }
 
                     // Label
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    if (searchQuery.isBlank()) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    } else {
+                        Text(
+                            highlighted(label, searchQuery, settingsSearchHighlightStyle()),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
 
                 // Trailing: selected value + dropdown indicator
@@ -395,11 +436,19 @@ fun <T> SettingsDropdownRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text(
-                        optionLabel(selectedOption),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (searchQuery.isBlank()) {
+                        Text(
+                            optionLabel(selectedOption),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            highlighted(optionLabel(selectedOption), searchQuery, settingsSearchHighlightStyle()),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Icon(
                         Icons.Default.KeyboardArrowDown,
                         contentDescription = stringResource(R.string.cd_select_option),
@@ -446,3 +495,13 @@ fun <T> SettingsDropdownRow(
         }
     }
 }
+
+/**
+ * Highlight style for matched substrings during settings search. Uses
+ * the primary container to read correctly under both light and dark.
+ */
+@Composable
+private fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(
+    background = MaterialTheme.colorScheme.primaryContainer,
+    color = MaterialTheme.colorScheme.onPrimaryContainer
+)

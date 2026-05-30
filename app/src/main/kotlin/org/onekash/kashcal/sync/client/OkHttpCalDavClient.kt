@@ -538,7 +538,10 @@ class OkHttpCalDavClient : CalDavClient {
         val request = Request.Builder()
             .url(calendarUrl)
             .method("REPORT", body.toRequestBody(XML_MEDIA_TYPE))
-            .header("Depth", "1")
+            // RFC 6578 §3.2: sync-collection report is only defined when the
+            // Depth header is "0"; the body's <sync-level> element controls
+            // scope.
+            .header("Depth", "0")
             .build()
 
         try {
@@ -958,11 +961,16 @@ class OkHttpCalDavClient : CalDavClient {
                 response.code == 412 -> CalDavResult.conflictError("Event already exists")
                 response.code == 401 -> CalDavResult.authError("Authentication failed")
                 response.code == 403 -> {
-                    // RFC 4791: UID conflict returns 403 with Location header pointing to existing event
+                    // RFC 4791: UID conflict returns 403 with Location header pointing to existing event.
+                    // Servers may also return a bare 403 when they reject the request body —
+                    // the response body usually carries a precondition / error element with details.
                     val existingUrl = response.header("Location")
+                    val body = response.body?.string().orEmpty().take(2000)
                     if (existingUrl != null) {
+                        Log.w(TAG, "createEvent 403 UID conflict at $existingUrl; body=$body")
                         CalDavResult.error(403, "UID conflict: event already exists at $existingUrl")
                     } else {
+                        Log.w(TAG, "createEvent 403 (no Location); body=$body")
                         CalDavResult.error(403, "Permission denied")
                     }
                 }

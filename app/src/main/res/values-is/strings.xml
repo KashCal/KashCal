@@ -495,6 +495,9 @@
     <string name="label_found_events">Fundust: %1$d viðburðir</string>
     <string name="label_open_debug_menu">Opna villuleitarvalmynd</string>
     <string name="placeholder_search">Leita…</string>
+    <string name="settings_search_placeholder">Leita í stillingum…</string>
+    <string name="settings_search_no_results">Engar stillingar fundust fyrir \"%1$s\"</string>
+    <string name="cd_search_settings">Leita í stillingum</string>
     <string name="status_sync_paused">Samstilling í bið</string>
     <string name="status_not_synced">Ekki samstillt</string>
     <string name="status_sync_error">Samstillingarvilla</string>
@@ -679,11 +682,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Breyta endurteknum viðburði</string>
-    <string name="dialog_delete_recurring_title">Eyða endurteknum viðburði</string>
-    <string name="dialog_edit_recurring_message">Þetta er endurtekinn viðburður. Hvernig viltu beita þessari breytingu?</string>
     <string name="recurring_this_event">Þennan viðburð</string>
     <string name="recurring_all_events">Alla viðburði</string>
+    <string name="dialog_edit_recurring_title">Vista breytingar á</string>
+    <string name="dialog_delete_recurring_title">Eyða</string>
+    <string name="dialog_move_recurring_title">Flytja</string>
     <string name="empty_pick_a_day">Veldu dag. Gríptu hann.</string>
     <string name="empty_no_events_day">Ekkert hér; farðu út í gott veður?</string>
     <string name="filter_date">Dagsetning</string>
@@ -926,6 +929,16 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svarið gildir fyrir alla röðina.</string>
     <string name="rsvp_modified_snackbar">Svar fyrir %1$s mistókst – viðburðinum var breytt. Vinsamlegast svaraðu aftur.</string>
+    <string name="invitees_host_tag">Gestgjafi</string>
+    <string name="rsvp_question_going">Mætir þú?</string>
+    <string name="rsvp_action_yes">Já</string>
+    <string name="rsvp_action_maybe">Kannski</string>
+    <string name="rsvp_action_no">Nei</string>
+    <string name="rsvp_state_going">Þú mætir</string>
+    <string name="rsvp_state_maybe">Kannski</string>
+    <string name="rsvp_state_not_going">Þú mætir ekki</string>
+    <string name="rsvp_action_change">Breyta</string>
+
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Endurtekur sig ekki</string>
@@ -1061,6 +1074,18 @@
     <string name="attendee_status_tentative">Til bráðabirgða</string>
     <string name="attendee_status_delegated">Framsalið</string>
     <string name="attendee_status_pending">Bíður</string>
+    <string name="attendee_sheet_title">Þátttakendur</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d boðið</item>
+        <item quantity="other">%d boðnir</item>
+    </plurals>
+    <string name="attendee_search_hint">Leita</string>
+    <string name="attendee_search_no_matches">Engar niðurstöður</string>
+    <string name="attendee_section_going">Mæta</string>
+    <string name="attendee_section_maybe">Kannski</string>
+    <string name="attendee_section_pending">Bíður</string>
+    <string name="attendee_section_declined">Hafnað</string>
+    <string name="attendee_section_delegated">Áframsent</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt frágengið</string>
     <string name="inbox_organizer_suffix">(skipuleggjandi)</string>
@@ -1101,4 +1126,28 @@
         <item quantity="one">Laus næsta %1$d dag (%2$s – %3$s):</item>
         <item quantity="other">Laus næstu %1$d daga (%2$s – %3$s):</item>
     </plurals>
+    <string name="invitees_summary_you_alone">Þú</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Þú · %d boðið</item>
+        <item quantity="other">Þú · %d boðnir</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d boðið</item>
+        <item quantity="other">%d boðnir</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s skipuleggur</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Þú</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Þú + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Þú + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Þú + %d</item>
+        <item quantity="other">Þú + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d til viðbótar</item>
+        <item quantity="other">%1$s · %2$d til viðbótar</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Breyta svari</string>
 </resources>

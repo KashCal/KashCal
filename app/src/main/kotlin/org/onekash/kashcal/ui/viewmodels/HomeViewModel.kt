@@ -1070,7 +1070,12 @@ class HomeViewModel(
                 val monthDots = mutableMapOf<Int, MutableList<Int>>()
 
                 for ((dayCode, events) in eventsMap) {
-                    val (_, _, day) = parseDayFormat(dayCode)
+                    val (occYear, occMonth, day) = parseDayFormat(dayCode)
+                    // Multi-day events spanning a month boundary expand into dayCodes
+                    // from both months; ignore the ones outside the loaded month so
+                    // a Dec 31→Jan 1 event doesn't paint a phantom dot on day 1 of
+                    // the wrong month.
+                    if (occYear != year || occMonth != month) continue
                     val dayColors = monthDots.getOrPut(day) { mutableListOf() }
                     for (event in events) {
                         val color = (event.eventColor ?: event.calendarColor).takeIf { it != 0 } ?: 0xFF6200EE.toInt()
@@ -2420,7 +2425,10 @@ class HomeViewModel(
      * @param formState The form state with event data
      * @return Result containing the created/updated event or error
      */
-    suspend fun saveEvent(formState: EventFormState): Result<org.onekash.kashcal.data.db.entity.Event> {
+    suspend fun saveEvent(
+        formState: EventFormState,
+        scope: EditScope? = null,
+    ): Result<org.onekash.kashcal.data.db.entity.Event> {
         return withContext(ioDispatcher) {
             try {
                 // Calculate timestamps from form state
@@ -2465,8 +2473,54 @@ class HomeViewModel(
                 val calendarId = formState.selectedCalendarId
                     ?: eventCoordinator.getLocalCalendarId()
 
+                // Scope-aware route: when the form-save flow handed us an
+                // explicit scope, honor it. THIS_AND_FUTURE is the new
+                // path; THIS_EVENT and ALL_EVENTS map onto existing
+                // exception / update branches. Without a scope param
+                // the legacy editingOccurrenceTs heuristic still applies.
+                if (
+                    scope == EditScope.THIS_AND_FUTURE &&
+                    formState.editingOccurrenceTs != null &&
+                    formState.editingEventId != null
+                ) {
+                    val editingEvent = eventCoordinator.getEventById(formState.editingEventId)
+                    val masterEventId = editingEvent?.originalEventId ?: formState.editingEventId
+                    val splitEvent = eventCoordinator.editThisAndFuture(
+                        masterEventId = masterEventId,
+                        splitTimeMs = formState.editingOccurrenceTs,
+                        changes = { master ->
+                            master.copy(
+                                title = formState.title.ifBlank { "Untitled" },
+                                startTs = startTs,
+                                endTs = endTs,
+                                isAllDay = formState.isAllDay,
+                                location = formState.location.ifBlank { null },
+                                description = formState.description.ifBlank { null },
+                                // formState.rrule == null means user picked
+                                // "Does not repeat" — pass it through so the
+                                // new series row becomes non-recurring.
+                                rrule = formState.rrule,
+                                reminders = reminders,
+                                calendarId = calendarId,
+                                transp = formState.transp,
+                                color = formState.eventColor,
+                                timezone = if (formState.isAllDay) null else (formState.timezone ?: master.timezone),
+                                updatedAt = System.currentTimeMillis(),
+                            )
+                        }
+                    )
+                    reloadCurrentView()
+                    Log.d(TAG, "Event split for this-and-future: ${splitEvent.title} (id=${splitEvent.id})")
+                    return@withContext Result.success(splitEvent)
+                }
+
+                // ALL_EVENTS scope on a recurring edit: treat as a master
+                // update even if the form was opened on an occurrence.
+                val effectiveOccurrenceTs =
+                    if (scope == EditScope.ALL_EVENTS) null else formState.editingOccurrenceTs
+
                 // Create or update event
-                val savedEvent = if (formState.editingOccurrenceTs != null && formState.editingEventId != null) {
+                val savedEvent = if (effectiveOccurrenceTs != null && formState.editingEventId != null) {
                     // Editing a single occurrence of a recurring event - create exception
                     // DEFENSIVE CHECK: If caller passed exception ID, resolve to master ID
                     // This handles edge cases where MainActivity fix wasn't applied
@@ -2474,7 +2528,7 @@ class HomeViewModel(
                     val masterEventId = editingEvent?.originalEventId ?: formState.editingEventId
                     eventCoordinator.editSingleOccurrence(
                         masterEventId = masterEventId,
-                        occurrenceTimeMs = formState.editingOccurrenceTs,
+                        occurrenceTimeMs = effectiveOccurrenceTs,
                         changes = { masterEvent ->
                             masterEvent.copy(
                                 title = formState.title.ifBlank { "Untitled" },
@@ -2622,6 +2676,157 @@ class HomeViewModel(
         _uiState.update { it.copy(pendingDragReschedule = null) }
     }
 
+    /**
+     * Stage a form-save awaiting scope selection. Recurring events
+     * surface the scope sheet; non-recurring and read-only paths
+     * commit directly via [saveEvent] / [saveDeviceEvent] (the form
+     * itself decides which path to take based on `formState.isReadOnly`).
+     */
+    /**
+     * Stage a deferred form-save awaiting scope selection.
+     *
+     * Captures `masterStartTs` and `isDetachedException` from the
+     * live event so the option-set rules don't have to derive them
+     * from the (possibly user-edited) form state. Caller passes the
+     * resolved values; for the typical edit-an-occurrence flow the
+     * MainActivity onEdit callback has both in hand.
+     */
+    fun requestFormSave(
+        formState: org.onekash.kashcal.ui.components.EventFormState,
+        occurrenceTs: Long,
+        originalRrule: String?,
+        masterStartTs: Long,
+        isDetachedException: Boolean,
+        isRecurringDevice: Boolean,
+        loadedIsAllDay: Boolean,
+    ) {
+        _uiState.update {
+            it.copy(
+                pendingFormSave = PendingFormSave(
+                    formState = formState,
+                    occurrenceTs = occurrenceTs,
+                    originalRrule = originalRrule,
+                    masterStartTs = masterStartTs,
+                    isDetachedException = isDetachedException,
+                    isRecurringDevice = isRecurringDevice,
+                    loadedIsAllDay = loadedIsAllDay,
+                )
+            )
+        }
+    }
+
+    fun cancelPendingFormSave() {
+        _uiState.update { it.copy(pendingFormSave = null) }
+    }
+
+    /**
+     * Tick the failure counter so the form's LaunchedEffect resets
+     * its `isSaving = true` flag. Called after a deferred save
+     * fails OR after the user cancels from the scope sheet — both
+     * paths leave the form open with the user's edits, and the form
+     * needs the Save button re-enabled for retry.
+     */
+    fun signalFormSaveFailed() {
+        _uiState.update { it.copy(formSaveFailedTick = it.formSaveFailedTick + 1) }
+    }
+
+    /**
+     * Stage a recurring-event delete awaiting scope selection. Use
+     * one of the typed factories below — they capture the per-source
+     * fields (event row for Room, master id + calendar id for
+     * device) and the option-set context (masterStartTs,
+     * isDetachedException).
+     *
+     * Non-recurring deletes never set this state; the caller routes
+     * directly via `deleteEventOptimistic` / `deleteDeviceEvent`.
+     */
+    fun requestDeleteRoom(
+        event: org.onekash.kashcal.data.db.entity.Event,
+        occurrenceTs: Long,
+        masterStartTs: Long,
+        isDetachedException: Boolean,
+        isAllDay: Boolean,
+    ) {
+        _uiState.update {
+            it.copy(
+                pendingDelete = PendingDelete.Room(
+                    event = event,
+                    occurrenceTs = occurrenceTs,
+                    masterStartTs = masterStartTs,
+                    isDetachedException = isDetachedException,
+                    isAllDay = isAllDay,
+                )
+            )
+        }
+    }
+
+    fun requestDeleteDevice(
+        masterEventId: Long,
+        calendarId: Long,
+        occurrenceTs: Long,
+        masterStartTs: Long,
+        isDetachedException: Boolean,
+        isAllDay: Boolean,
+    ) {
+        _uiState.update {
+            it.copy(
+                pendingDelete = PendingDelete.Device(
+                    masterEventId = masterEventId,
+                    calendarId = calendarId,
+                    occurrenceTs = occurrenceTs,
+                    masterStartTs = masterStartTs,
+                    isDetachedException = isDetachedException,
+                    isAllDay = isAllDay,
+                )
+            )
+        }
+    }
+
+    fun cancelPendingDelete() {
+        _uiState.update { it.copy(pendingDelete = null) }
+    }
+
+    /**
+     * Apply a deferred delete with the user's chosen scope. Routes
+     * by sealed-type variant (Room vs Device).
+     */
+    fun confirmDelete(scope: EditScope) {
+        val pending = _uiState.value.pendingDelete ?: return
+        _uiState.update { it.copy(pendingDelete = null) }
+
+        when (pending) {
+            is PendingDelete.Device -> {
+                viewModelScope.launch {
+                    try {
+                        when (scope) {
+                            EditScope.THIS_EVENT -> deleteDeviceSingleOccurrence(
+                                masterEventId = pending.masterEventId,
+                                originalInstanceTime = pending.occurrenceTs,
+                                isAllDay = pending.isAllDay,
+                            )
+                            EditScope.THIS_AND_FUTURE -> deleteDeviceThisAndFuture(
+                                masterEventId = pending.masterEventId,
+                                fromTimeMs = pending.occurrenceTs,
+                                isAllDay = pending.isAllDay,
+                            )
+                            EditScope.ALL_EVENTS -> deleteDeviceEvent(pending.masterEventId)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "confirmDelete (device) failed", e)
+                    }
+                }
+            }
+            is PendingDelete.Room -> {
+                val masterId = pending.event.originalEventId ?: pending.event.id
+                when (scope) {
+                    EditScope.THIS_EVENT -> deleteSingleOccurrence(masterId, pending.occurrenceTs)
+                    EditScope.THIS_AND_FUTURE -> deleteThisAndFuture(masterId, pending.occurrenceTs)
+                    EditScope.ALL_EVENTS -> deleteEventOptimistic(masterId)
+                }
+            }
+        }
+    }
+
     private fun performReschedule(
         displayEvent: DisplayEvent,
         targetDate: LocalDate,
@@ -2665,6 +2870,28 @@ class HomeViewModel(
                                         }
                                     )
                                 }
+                                editScope == EditScope.THIS_AND_FUTURE -> {
+                                    val masterEventId = event.originalEventId ?: event.id
+                                    eventCoordinator.editThisAndFuture(
+                                        masterEventId = masterEventId,
+                                        splitTimeMs = displayEvent.occurrence.startTs,
+                                        changes = { master ->
+                                            // Anchor endTs on the dragged occurrence's
+                                            // own duration. Adding delta to master.endTs
+                                            // would land endTs at master-time + delta,
+                                            // which sits days before the new startTs and
+                                            // violates RFC 5545 §3.6.1 (DTEND MUST be
+                                            // later than DTSTART).
+                                            val draggedDuration =
+                                                displayEvent.endTs - displayEvent.startTs
+                                            master.copy(
+                                                startTs = newStartTs,
+                                                endTs = newStartTs + draggedDuration,
+                                                updatedAt = System.currentTimeMillis(),
+                                            )
+                                        }
+                                    )
+                                }
                                 editScope == EditScope.ALL_EVENTS -> {
                                     val delta = newStartTs - displayEvent.startTs
                                     eventCoordinator.updateEvent(
@@ -2680,34 +2907,54 @@ class HomeViewModel(
                         is DisplayEvent.Device -> {
                             val instance = displayEvent.instance
                             val tz = instance.timezone ?: java.util.TimeZone.getDefault().id
-                            if (instance.hasRrule && editScope == EditScope.THIS_EVENT) {
-                                calendarProviderRepository.createException(
-                                    calendarId = instance.calendarId,
-                                    masterEventId = instance.eventId,
-                                    originalInstanceTime = instance.startTs,
-                                    title = instance.title,
-                                    description = instance.description,
-                                    location = instance.location,
-                                    startTs = newStartTs,
-                                    endTs = newEndTs,
-                                    isAllDay = instance.isAllDay,
-                                    timezone = tz,
-                                    reminders = instance.reminders
-                                )
-                            } else {
-                                calendarProviderRepository.updateEvent(
-                                    eventId = instance.eventId,
-                                    title = instance.title,
-                                    description = instance.description,
-                                    location = instance.location,
-                                    startTs = newStartTs,
-                                    endTs = newEndTs,
-                                    isAllDay = instance.isAllDay,
-                                    rrule = instance.rrule,
-                                    duration = null,
-                                    timezone = tz,
-                                    reminders = instance.reminders
-                                )
+                            when {
+                                instance.hasRrule && editScope == EditScope.THIS_EVENT -> {
+                                    calendarProviderRepository.createException(
+                                        calendarId = instance.calendarId,
+                                        masterEventId = instance.eventId,
+                                        originalInstanceTime = instance.startTs,
+                                        title = instance.title,
+                                        description = instance.description,
+                                        location = instance.location,
+                                        startTs = newStartTs,
+                                        endTs = newEndTs,
+                                        isAllDay = instance.isAllDay,
+                                        timezone = tz,
+                                        reminders = instance.reminders
+                                    )
+                                }
+                                instance.hasRrule && editScope == EditScope.THIS_AND_FUTURE -> {
+                                    calendarProviderRepository.editThisAndFuture(
+                                        masterEventId = instance.eventId,
+                                        fromTimeMs = instance.startTs,
+                                        isAllDay = instance.isAllDay,
+                                        calendarId = instance.calendarId,
+                                        title = instance.title,
+                                        description = instance.description,
+                                        location = instance.location,
+                                        startTs = newStartTs,
+                                        endTs = if (instance.rrule != null) null else newEndTs,
+                                        rrule = instance.rrule,
+                                        duration = if (instance.rrule != null) computeDurationString(newStartTs, newEndTs, instance.isAllDay) else null,
+                                        timezone = tz,
+                                        reminders = instance.reminders,
+                                    )
+                                }
+                                else -> {
+                                    calendarProviderRepository.updateEvent(
+                                        eventId = instance.eventId,
+                                        title = instance.title,
+                                        description = instance.description,
+                                        location = instance.location,
+                                        startTs = newStartTs,
+                                        endTs = newEndTs,
+                                        isAllDay = instance.isAllDay,
+                                        rrule = instance.rrule,
+                                        duration = null,
+                                        timezone = tz,
+                                        reminders = instance.reminders
+                                    )
+                                }
                             }
                         }
                     }
@@ -2744,6 +2991,72 @@ class HomeViewModel(
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e(TAG, "Error deleting event", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Route a Room delete fired from the event form's in-line Delete
+     * button based on the loaded event's shape — mirrors the
+     * QuickView Delete branching:
+     *
+     * - Exception (originalEventId != null) → coordinator's
+     *   deleteSingleOccurrence(masterId, originalInstanceTime). Going
+     *   through the public deleteEvent path would trip the
+     *   coordinator's exception guard.
+     * - Recurring master (rrule != null) → stage PendingDelete.Room
+     *   and return success-no-op. The form dismisses; the scope sheet
+     *   renders on top via uiState.pendingDelete and the user picks
+     *   THIS_EVENT / THIS_AND_FUTURE / ALL_EVENTS.
+     * - Non-recurring → coordinator.deleteEvent verbatim.
+     */
+    suspend fun handleRoomEventFormDelete(eventId: Long, occurrenceTs: Long?): Result<Unit> {
+        return withContext(ioDispatcher) {
+            try {
+                val event = eventCoordinator.getEventById(eventId)
+                    ?: return@withContext Result.failure(IllegalStateException("Event not found: $eventId"))
+                when {
+                    event.originalEventId != null -> {
+                        val masterId = event.originalEventId
+                        val originalInstance = event.originalInstanceTime
+                            ?: return@withContext Result.failure(
+                                IllegalStateException("Exception event missing originalInstanceTime: $eventId")
+                            )
+                        eventCoordinator.deleteSingleOccurrence(masterId, originalInstance)
+                        withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            reloadCurrentView()
+                        }
+                        Result.success(Unit)
+                    }
+                    event.rrule != null -> {
+                        // Use the form's occurrenceTs when present (form was
+                        // opened on a tapped occurrence), otherwise fall back
+                        // to the master's start. Without this, the scope sheet
+                        // disables THIS_AND_FUTURE on every form-Delete and
+                        // THIS_EVENT routes to the master's first occurrence.
+                        val occ = occurrenceTs ?: event.startTs
+                        requestDeleteRoom(
+                            event = event,
+                            occurrenceTs = occ,
+                            masterStartTs = event.startTs,
+                            isDetachedException = false,
+                            isAllDay = event.isAllDay,
+                        )
+                        Result.success(Unit)
+                    }
+                    else -> {
+                        eventCoordinator.deleteEvent(eventId)
+                        withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            reloadCurrentView()
+                        }
+                        Result.success(Unit)
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling form delete: $eventId", e)
                 Result.failure(e)
             }
         }
@@ -3018,15 +3331,53 @@ class HomeViewModel(
     suspend fun handleDeviceEventFormDelete(formState: EventFormState): Result<Unit> {
         val deviceEventId = formState.editingDeviceEventId
             ?: return Result.failure(IllegalStateException("No device event to delete"))
-        val occurrenceTs = formState.editingOccurrenceTs
-        return if (occurrenceTs != null) {
-            deleteDeviceSingleOccurrence(
-                masterEventId = deviceEventId,
-                originalInstanceTime = occurrenceTs,
-                isAllDay = formState.isAllDay
-            )
-        } else {
-            deleteDeviceEvent(deviceEventId)
+        return withContext(ioDispatcher) {
+            try {
+                val event = calendarProviderRepository.getDeviceEvent(deviceEventId)
+                    ?: return@withContext Result.failure(
+                        IllegalStateException("Device event not found: $deviceEventId")
+                    )
+                when {
+                    // Exception event — delete just this occurrence on
+                    // the master via EXDATE / cancel-tombstone. Don't
+                    // route through the master-delete path which would
+                    // wipe the entire series.
+                    event.originalId != null -> {
+                        val masterId = event.originalId
+                        val originalInstance = event.originalInstanceTime
+                            ?: return@withContext Result.failure(
+                                IllegalStateException("Device exception missing originalInstanceTime: $deviceEventId")
+                            )
+                        deleteDeviceSingleOccurrence(
+                            masterEventId = masterId,
+                            originalInstanceTime = originalInstance,
+                            isAllDay = formState.isAllDay,
+                        )
+                    }
+                    // Recurring master — surface the scope sheet with
+                    // the form's tapped-occurrence anchor so the user
+                    // picks THIS_EVENT / THIS_AND_FUTURE / ALL_EVENTS.
+                    event.rrule != null -> {
+                        val occ = formState.editingOccurrenceTs ?: event.startTs
+                        requestDeleteDevice(
+                            masterEventId = deviceEventId,
+                            calendarId = event.calendarId,
+                            occurrenceTs = occ,
+                            masterStartTs = event.startTs,
+                            isDetachedException = false,
+                            isAllDay = formState.isAllDay,
+                        )
+                        Result.success(Unit)
+                    }
+                    // Non-recurring — straight delete.
+                    else -> deleteDeviceEvent(deviceEventId)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling device form delete: $deviceEventId", e)
+                Result.failure(e)
+            }
         }
     }
 
@@ -3146,7 +3497,10 @@ class HomeViewModel(
      * @param formState The form state to save
      * @return Result containing event ID on success
      */
-    suspend fun saveDeviceEvent(formState: org.onekash.kashcal.ui.components.EventFormState): Result<Long> {
+    suspend fun saveDeviceEvent(
+        formState: org.onekash.kashcal.ui.components.EventFormState,
+        scope: EditScope? = null,
+    ): Result<Long> {
         return withContext(ioDispatcher) {
             val calendarId = formState.selectedCalendarId
                 ?: return@withContext Result.failure(IllegalStateException("No calendar selected"))
@@ -3159,12 +3513,47 @@ class HomeViewModel(
 
             val timezone = formState.timezone ?: java.util.TimeZone.getDefault().id
 
+            // THIS_AND_FUTURE on a recurring device event splits the
+            // series via the new repository method. The form was
+            // opened on an occurrence, so editingOccurrenceTs carries
+            // the split point.
+            if (
+                scope == EditScope.THIS_AND_FUTURE &&
+                formState.editingDeviceEventId != null &&
+                formState.editingOccurrenceTs != null
+            ) {
+                return@withContext calendarProviderRepository.editThisAndFuture(
+                    masterEventId = formState.editingDeviceEventId,
+                    fromTimeMs = formState.editingOccurrenceTs,
+                    isAllDay = formState.isAllDay,
+                    calendarId = calendarId,
+                    title = formState.title,
+                    description = formState.description.ifBlank { null },
+                    location = formState.location.ifBlank { null },
+                    startTs = startTs,
+                    endTs = if (formState.rrule != null) null else endTs,
+                    rrule = formState.rrule,
+                    duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
+                    timezone = timezone,
+                    reminders = reminders,
+                    availability = transpToAvailability(formState.transp),
+                    eventColor = formState.eventColor,
+                ).also { result ->
+                    result.onSuccess { reloadCurrentView() }
+                }
+            }
+
+            // ALL_EVENTS scope on a recurring edit: treat as a master
+            // update even if the form was opened on an occurrence.
+            val effectiveOccurrenceTs =
+                if (scope == EditScope.ALL_EVENTS) null else formState.editingOccurrenceTs
+
             // Determine operation based on form state
             when {
                 // Editing single occurrence of recurring event
-                formState.editingDeviceEventId != null && formState.editingOccurrenceTs != null -> {
+                formState.editingDeviceEventId != null && effectiveOccurrenceTs != null -> {
                     val masterEventId = formState.editingDeviceEventId
-                    val originalInstanceTime = formState.editingOccurrenceTs
+                    val originalInstanceTime = effectiveOccurrenceTs
 
                     // Check if exception already exists
                     val existingExceptionId = calendarProviderRepository.findExceptionEventId(

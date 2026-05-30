@@ -3045,4 +3045,61 @@ class AccountSettingsViewModelTest {
             assertEquals(200L, (current as DefaultCalendar.Device).calendarId)
         }
     }
+
+    // ==================== Settings Search State Tests ====================
+
+    @Test
+    fun `isSearchActive defaults to false`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(false, viewModel.isSearchActive.value)
+    }
+
+    @Test
+    fun `searchQuery defaults to empty string`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals("", viewModel.searchQuery.value)
+    }
+
+    @Test
+    fun `onSearchOpen sets isSearchActive true`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onSearchOpen()
+        assertEquals(true, viewModel.isSearchActive.value)
+        assertEquals("", viewModel.searchQuery.value)
+    }
+
+    @Test
+    fun `onSearchQueryChange updates query without changing isSearchActive`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onSearchOpen()
+        viewModel.onSearchQueryChange("time")
+        assertEquals("time", viewModel.searchQuery.value)
+        assertEquals(true, viewModel.isSearchActive.value)
+    }
+
+    @Test
+    fun `onSearchClose resets both isSearchActive and searchQuery`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onSearchOpen()
+        viewModel.onSearchQueryChange("abc")
+        viewModel.onSearchClose()
+        assertEquals(false, viewModel.isSearchActive.value)
+        assertEquals("", viewModel.searchQuery.value)
+    }
+
+    @Test
+    fun `onCleared resets search state for next ViewModel instance lifecycle`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onSearchOpen()
+        viewModel.onSearchQueryChange("abc")
+        viewModel.onClearedForTest()
+        assertEquals(false, viewModel.isSearchActive.value)
+        assertEquals("", viewModel.searchQuery.value)
+    }
 }

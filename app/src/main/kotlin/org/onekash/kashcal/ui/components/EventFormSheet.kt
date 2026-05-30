@@ -280,7 +280,48 @@ fun EventFormSheet(
     defaultCalendar: DefaultCalendar?,
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
-    onDelete: (suspend (Long) -> Result<Unit>)? = null,
+    /**
+     * Defer the save to the host so a save-time scope sheet can ask
+     * the user how the change should apply across a recurring series.
+     * When set and the form is in edit mode for a recurring event,
+     * tapping Save fires this instead of [onSave]; the form sheet
+     * stays visible behind the dimmed scope sheet so Cancel can
+     * return to it. Null disables the deferral (legacy behavior).
+     */
+    /**
+     * Defer save to the host so a save-time scope sheet can ask the
+     * user how the change should apply across the recurring series.
+     *
+     * Carries metadata captured at form-load time:
+     * - `originalRrule` — the master's rrule before per-occurrence
+     *   stripping (used to detect rrule changes).
+     * - `masterStartTs` — the master's true startTs, anchors the
+     *   first-occurrence rule.
+     * - `isDetachedException` — whether the loaded event row is itself
+     *   an exception (originalEventId != null).
+     * - `isRecurringDevice` — whether this is a device-calendar event,
+     *   so the host knows which save path to invoke.
+     *
+     * Null disables the deferral (legacy direct-save behavior).
+     */
+    onRequestRecurringSave: ((
+        formState: EventFormState,
+        occurrenceTs: Long,
+        originalRrule: String?,
+        masterStartTs: Long,
+        isDetachedException: Boolean,
+        isRecurringDevice: Boolean,
+        loadedIsAllDay: Boolean,
+    ) -> Unit)? = null,
+    /**
+     * Tick that increments whenever a deferred save fails or the user
+     * cancels from the scope sheet. The form observes this via
+     * `LaunchedEffect` to clear its `isSaving = true` flag (which is
+     * set when the deferral fires) so the Save button re-enables for
+     * retry.
+     */
+    scopeSaveFailedTick: Int = 0,
+    onDelete: (suspend (eventId: Long, occurrenceTs: Long?) -> Result<Unit>)? = null,
     onLoadEvent: (suspend (Long) -> Event?)? = null,
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 1440,
@@ -352,9 +393,45 @@ fun EventFormSheet(
      */
     var initialReminders by remember { mutableStateOf<List<Int>>(emptyList()) }
 
+    /**
+     * Snapshot of the rrule at form-load time. Used by the
+     * save-time scope sheet to detect "user changed the recurrence
+     * rule" so it can disable the THIS_EVENT option (per RFC 5545
+     * §3.8.5 exceptions cannot carry an rrule).
+     */
+    var initialRrule by remember { mutableStateOf<String?>(null) }
+
+    /**
+     * Recurrence presence at load time. The save-time deferral
+     * predicate keys off this rather than `state.rrule`/`initialRrule`,
+     * because the load path strips rrule on per-occurrence edits
+     * (effectiveRrule = null when occurrenceTs != null), which would
+     * otherwise hide every Room recurring occurrence edit from the
+     * scope sheet.
+     */
+    var wasRecurringAtLoad by remember { mutableStateOf(false) }
+
+    /**
+     * Master event metadata captured at form-load time. Threaded
+     * through `onRequestRecurringSave` so the host's option-set
+     * rules see the master's true startTs and detached-exception
+     * status — not values derived from the (possibly user-edited)
+     * form state.
+     */
+    var loadedMasterStartTs by remember { mutableStateOf(0L) }
+    var loadedIsDetachedException by remember { mutableStateOf(false) }
+
+    /**
+     * The master/loaded event's `isAllDay` at form-load time, frozen
+     * here so the scope-sheet sub-copy date format doesn't flip if
+     * the user toggles all-day in the form before saving.
+     */
+    var loadedIsAllDay by remember { mutableStateOf(false) }
+
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
     var showColorPicker by remember { mutableStateOf(false) }
+    var showAttendeeSheet by remember { mutableStateOf(false) }
 
     val borderlessFieldColors = OutlinedTextFieldDefaults.colors(
         unfocusedBorderColor = Color.Transparent,
@@ -371,8 +448,55 @@ fun EventFormSheet(
         // Check if event has a reminder set
         val hasReminder = state.reminders.isNotEmpty()
 
-        // The actual save operation
-        val doSave: () -> Unit = {
+        // Detect a recurring edit that should defer to the save-time
+        // scope sheet. Conditions:
+        //   - host registered onRequestRecurringSave
+        //   - editing an existing event (not a create)
+        //   - the event was opened on a specific occurrence
+        //   - either the form's current rrule is non-null OR the
+        //     original was (handles the "remove RRULE" case via the
+        //     ALL_EVENTS option)
+        //   - not read-only (attendees route directly to attendee
+        //     reminder save)
+        // Defer to the host's scope sheet when:
+        //   - the host registered onRequestRecurringSave
+        //   - we're in edit mode (not create)
+        //   - the form was opened on a specific occurrence
+        //   - the loaded event was actually recurring (its master had
+        //     an rrule). Keys off the load-time snapshot rather than
+        //     state.rrule/initialRrule because the form's load path
+        //     strips rrule for per-occurrence edits — both would be
+        //     null and this predicate would always evaluate false.
+        //   - not in read-only attendee mode (which routes to
+        //     onSaveAttendeeReminders directly).
+        val deferToScopeSheet = onRequestRecurringSave != null &&
+            !isReadOnly &&
+            state.isEditMode &&
+            state.editingOccurrenceTs != null &&
+            wasRecurringAtLoad
+
+        // The actual save operation. Defers to the host-supplied
+        // recurring-save callback when applicable; otherwise fires
+        // the existing direct-save path.
+        val doSave: () -> Unit = saveImpl@ {
+            if (deferToScopeSheet) {
+                // Stays visible so a Cancel from the scope sheet
+                // returns to the dirty form. isSaving flips to true
+                // immediately so the Save button disables — a
+                // double-tap would otherwise stage two pendingFormSave
+                // snapshots before the sheet renders.
+                state = state.copy(isSaving = true, error = null)
+                onRequestRecurringSave!!(
+                    state,
+                    state.editingOccurrenceTs!!,
+                    initialRrule,
+                    loadedMasterStartTs,
+                    loadedIsDetachedException,
+                    state.isDeviceCalendar,
+                    loadedIsAllDay,
+                )
+                return@saveImpl
+            }
             coroutineScope.launch {
                 state = state.copy(isSaving = true, error = null)
                 try {
@@ -460,6 +584,11 @@ fun EventFormSheet(
                     deviceCalendarGroups = deviceCalendarGroups,
                     editingOccurrenceTs = deviceOccurrenceTs
                 )
+                initialRrule = mappedState.rrule
+                wasRecurringAtLoad = editData.event.rrule != null || editData.event.originalId != null
+                loadedMasterStartTs = editData.event.startTs
+                loadedIsDetachedException = editData.event.originalId != null
+                loadedIsAllDay = editData.event.isAllDay
             } else {
                 // Event not found (deleted externally)
                 newState = newState.copy(
@@ -505,11 +634,13 @@ fun EventFormSheet(
                 // Parse reminders from event
                 val (parsedReminders, truncatedCount) = parseRemindersFromEvent(event.reminders, event.alarmCount)
 
-                // For single occurrence edit (occurrenceTs != null), clear rrule
-                // Exception events have rrule=null (no recurrence of their own)
-                // Matches ical-app pattern: clear recurrence fields for single occurrence edit
-                val effectiveRrule = if (occurrenceTs != null) null else event.rrule
-
+                // Show the loaded event's rrule verbatim. For a recurring
+                // master tapped via an occurrence, that's master.rrule; for
+                // an exception row it's null (exceptions strip rrule per
+                // RFC 5545 §3.8.5). The save side strips rrule for THIS_EVENT
+                // exceptions regardless of state.rrule (EventWriter.editSingleOccurrence)
+                // and the scope sheet's THIS_AND_FUTURE / ALL_EVENTS branches
+                // route the user-edited rrule through the helper.
                 newState = newState.copy(
                     title = event.title,
                     dateMillis = displayStartTs,
@@ -525,7 +656,7 @@ fun EventFormSheet(
                     timezone = event.timezone,
                     location = event.location.orEmpty(),
                     description = event.description.orEmpty(),
-                    rrule = effectiveRrule,
+                    rrule = event.rrule,
                     reminders = parsedReminders,
                     truncatedReminderCount = truncatedCount,
                     editingEventId = eventId,
@@ -537,6 +668,11 @@ fun EventFormSheet(
                 // Capture the loaded reminder set so the read-only path
                 // can detect "user changed reminders" via remindersChanged.
                 initialReminders = parsedReminders
+                initialRrule = event.rrule
+                wasRecurringAtLoad = event.rrule != null || event.originalEventId != null
+                loadedMasterStartTs = event.startTs
+                loadedIsDetachedException = event.originalEventId != null
+                loadedIsAllDay = event.isAllDay
             }
         } else {
             // Create mode - set default end time based on duration setting
@@ -675,6 +811,15 @@ fun EventFormSheet(
 
     // Reactive calendar update: handles async calendar loading on cold start.
     // The init LaunchedEffect above captures calendars at first composition,
+    // Reset isSaving when a deferred save fails or the user cancels
+    // from the scope sheet. Save button gates on `!state.isSaving`,
+    // so without this the form stays locked after a failure.
+    LaunchedEffect(scopeSaveFailedTick) {
+        if (state.isSaving && scopeSaveFailedTick > 0) {
+            state = state.copy(isSaving = false)
+        }
+    }
+
     // which may be empty if HomeViewModel hasn't loaded them yet (race condition).
     // This effect updates calendar state when the list becomes available.
     LaunchedEffect(calendars, calendarGroups, deviceCalendarGroups) {
@@ -1089,18 +1234,16 @@ fun EventFormSheet(
                         truncatedReminderCount = state.truncatedReminderCount
                     )
 
-                    if (state.editingOccurrenceTs == null) {
-                        RecurrencePickerRow(
-                            selectedRrule = state.rrule,
-                            startDateMillis = state.dateMillis,
-                            isExpanded = expandedPicker == "repeat",
-                            onToggle = { if (!isReadOnly) expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
-                            onSelect = { rrule ->
-                                state = state.copy(rrule = rrule)
-                            },
-                            firstDayOfWeek = firstDayOfWeek
-                        )
-                    }
+                    RecurrencePickerRow(
+                        selectedRrule = state.rrule,
+                        startDateMillis = state.dateMillis,
+                        isExpanded = expandedPicker == "repeat",
+                        onToggle = { if (!isReadOnly) expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
+                        onSelect = { rrule ->
+                            state = state.copy(rrule = rrule)
+                        },
+                        firstDayOfWeek = firstDayOfWeek
+                    )
 
                     EventFormRow(
                         icon = Icons.Default.EventAvailable,
@@ -1235,47 +1378,52 @@ fun EventFormSheet(
                             icon = Icons.Default.Group,
                             iconContentDescription = stringResource(R.string.label_attendees)
                         ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
-                                    models = attendees,
-                                    isCurrentUserOnList = isCurrentUserOnList,
-                                    modifier = Modifier.fillMaxWidth()
+                            val you = attendees.firstOrNull { it.isYou }
+                            // RSVP write path mutates only the loaded entity:
+                            // - master (state.rrule != null) → series-wide
+                            // - detached exception (loadedIsDetachedException) →
+                            //   per-occurrence; the disclosure would lie
+                            // - non-recurring → not applicable
+                            val rsvpAppliesToSeries =
+                                state.rrule != null && !loadedIsDetachedException
+                            val seriesDisclosure = if (
+                                isReadOnly &&
+                                org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                                    currentUserPartstat = you?.status,
+                                    isOrganizer = you?.isOrganizer == true,
+                                    isRecurring = rsvpAppliesToSeries,
                                 )
-                                val you = attendees.firstOrNull { it.isYou }
-                                if (isReadOnly &&
-                                    org.onekash.kashcal.ui.components.attendees.shouldShowRespondSection(
-                                        currentUserPartstat = you?.status,
-                                        isOrganizer = you?.isOrganizer == true
-                                    )
-                                ) {
-                                    org.onekash.kashcal.ui.components.attendees.RespondSection(
-                                        currentUserPartstat = you?.status,
-                                        onRsvp = onRsvp
-                                    )
-                                    // editingOccurrenceTs is set only when the form was opened
-                                    // for a single occurrence of a recurring event (which clears
-                                    // state.rrule); checking either covers both master-edit and
-                                    // single-occurrence-edit entry paths.
-                                    val isRecurringInForm =
-                                        state.rrule != null || state.editingOccurrenceTs != null
-                                    if (org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
-                                            currentUserPartstat = you?.status,
-                                            isOrganizer = you?.isOrganizer == true,
-                                            isRecurring = isRecurringInForm
-                                        )
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.rsvp_series_disclosure),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
+                            ) stringResource(R.string.rsvp_series_disclosure) else null
+
+                            // Editable form: the user changes attendance by
+                            // editing the event itself, so the RSVP cards
+                            // are unnecessary noise. Suppress them — but
+                            // do NOT label the user as the organizer (they
+                            // may be editing a delegated calendar where
+                            // they're an attendee), since that flows into
+                            // the summary line phrasing.
+                            val suppressRsvp = !isReadOnly
+                            val actualIsOrganizer = you?.isOrganizer == true
+
+                            org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                                attendees = attendees,
+                                isCurrentUserOnList = isCurrentUserOnList,
+                                isCurrentUserOrganizer = actualIsOrganizer,
+                                onRsvp = onRsvp,
+                                onDrillIntoAttendees = { showAttendeeSheet = true },
+                                suppressRsvp = suppressRsvp,
+                                seriesDisclosure = seriesDisclosure,
+                                alwaysExpanded = isReadOnly,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
+                    }
+
+                    if (showAttendeeSheet) {
+                        org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
+                            attendees = attendees,
+                            onDismiss = { showAttendeeSheet = false },
+                        )
                     }
 
                     if (showColorPicker) {
@@ -1315,12 +1463,65 @@ fun EventFormSheet(
                     val canDeleteRoom = eventId != null && onDelete != null
                     val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
                     if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
+                        // Commits the actual delete via the host's
+                        // callback. Used by both the inline-confirmation
+                        // path (non-recurring) and the direct path
+                        // (recurring — the host's scope sheet IS the
+                        // confirmation, so an extra inline tap would be
+                        // redundant friction).
+                        val commitDelete: () -> Unit = {
+                            coroutineScope.launch {
+                                state = state.copy(isSaving = true)
+                                try {
+                                    val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
+                                        onDeleteDeviceEvent!!(state)
+                                    } else if (canDeleteRoom && eventId != null) {
+                                        onDelete!!(eventId, state.editingOccurrenceTs)
+                                    } else {
+                                        Result.failure(IllegalStateException("No delete handler"))
+                                    }
+                                    result.fold(
+                                        onSuccess = { onDismiss() },
+                                        onFailure = { e ->
+                                            Log.e(TAG, "Error deleting event", e)
+                                            state = state.copy(
+                                                isSaving = false,
+                                                error = "Failed to delete: ${e.message}"
+                                            )
+                                            showDeleteConfirmation = false
+                                        }
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error deleting event", e)
+                                    state = state.copy(
+                                        isSaving = false,
+                                        error = "Failed to delete: ${e.message}"
+                                    )
+                                    showDeleteConfirmation = false
+                                }
+                            }
+                        }
                         if (!showDeleteConfirmation) {
                             EventFormRow(
                                 icon = Icons.Default.DeleteOutline,
                                 iconTint = MaterialTheme.colorScheme.error,
                                 iconContentDescription = stringResource(R.string.action_delete_event),
-                                onToggle = { showDeleteConfirmation = true },
+                                onToggle = {
+                                    if (wasRecurringAtLoad && !loadedIsDetachedException) {
+                                        // Recurring master only: the host's
+                                        // scope sheet picks THIS_EVENT /
+                                        // THIS_AND_FUTURE / ALL_EVENTS and
+                                        // that deliberate pick is the
+                                        // confirmation. Exception events
+                                        // skip the scope sheet and route
+                                        // straight to single-occurrence
+                                        // delete, so they still need the
+                                        // inline two-tap guard.
+                                        commitDelete()
+                                    } else {
+                                        showDeleteConfirmation = true
+                                    }
+                                },
                                 enabled = !state.isSaving
                             ) {
                                 Text(
@@ -1346,38 +1547,7 @@ fun EventFormSheet(
                                     Text(stringResource(R.string.action_cancel))
                                 }
                                 Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            state = state.copy(isSaving = true)
-                                            try {
-                                                val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
-                                                    onDeleteDeviceEvent!!(state)
-                                                } else if (canDeleteRoom && eventId != null) {
-                                                    onDelete!!(eventId)
-                                                } else {
-                                                    Result.failure(IllegalStateException("No delete handler"))
-                                                }
-                                                result.fold(
-                                                    onSuccess = { onDismiss() },
-                                                    onFailure = { e ->
-                                                        Log.e(TAG, "Error deleting event", e)
-                                                        state = state.copy(
-                                                            isSaving = false,
-                                                            error = "Failed to delete: ${e.message}"
-                                                        )
-                                                        showDeleteConfirmation = false
-                                                    }
-                                                )
-                                            } catch (e: Exception) {
-                                                Log.e(TAG, "Error deleting event", e)
-                                                state = state.copy(
-                                                    isSaving = false,
-                                                    error = "Failed to delete: ${e.message}"
-                                                )
-                                                showDeleteConfirmation = false
-                                            }
-                                        }
-                                    },
+                                    onClick = { commitDelete() },
                                     enabled = !state.isSaving,
                                     modifier = Modifier
                                         .weight(1f)

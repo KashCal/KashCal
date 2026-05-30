@@ -105,6 +105,7 @@ class DeviceCalendarInstanceTest {
         isWritable = true,
         originalId = originalId,
         originalInstanceTime = if (originalId != null) 1709280000000L else null,
-        timezone = "America/New_York"
+        timezone = "America/New_York",
+        eventStartTs = 1709280000000L,
     )
 }

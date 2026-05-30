@@ -77,6 +77,50 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Відповідь поширюється на всю серію.</string>
     <string name="rsvp_modified_snackbar">Не вдалося відповісти на «%1$s» — подію змінено. Відповідайте ще раз.</string>
+    <string name="invitees_host_tag">Господар</string>
+    <string name="invitees_summary_you_alone">Ти</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ти · %d запрошений</item>
+        <item quantity="few">Ти · %d запрошених</item>
+        <item quantity="many">Ти · %d запрошених</item>
+        <item quantity="other">Ти · %d запрошених</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d запрошений</item>
+        <item quantity="few">%d запрошених</item>
+        <item quantity="many">%d запрошених</item>
+        <item quantity="other">%d запрошених</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s організовує</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ти</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ти + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ти + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Ти + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ти + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ти + %d</item>
+        <item quantity="few">Ти + %d</item>
+        <item quantity="many">Ти + %d</item>
+        <item quantity="other">Ти + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · ще %2$d</item>
+        <item quantity="few">%1$s · ще %2$d</item>
+        <item quantity="many">%1$s · ще %2$d</item>
+        <item quantity="other">%1$s · ще %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Змінити відповідь</string>
+    <string name="rsvp_question_going">Підеш?</string>
+    <string name="rsvp_action_yes">Так</string>
+    <string name="rsvp_action_maybe">Можливо</string>
+    <string name="rsvp_action_no">Ні</string>
+    <string name="rsvp_state_going">Ти йдеш</string>
+    <string name="rsvp_state_maybe">Можливо</string>
+    <string name="rsvp_state_not_going">Ти не йдеш</string>
+    <string name="rsvp_action_change">Змінити</string>
+
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Лише це</string>
@@ -482,6 +526,9 @@
     <string name="label_found_events">Знайдено: %1$d подій</string>
     <string name="label_open_debug_menu">Відкрити меню налагодження</string>
     <string name="placeholder_search">Пошук…</string>
+    <string name="settings_search_placeholder">Пошук у налаштуваннях…</string>
+    <string name="settings_search_no_results">Нічого не знайдено за запитом \"%1$s\"</string>
+    <string name="cd_search_settings">Пошук у налаштуваннях</string>
     <string name="status_sync_paused">Синхронізацію призупинено</string>
     <string name="status_not_synced">Не синхронізовано</string>
     <string name="status_sync_error">Помилка синхронізації</string>
@@ -726,11 +773,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Змінити повторювану подію</string>
-    <string name="dialog_delete_recurring_title">Видалити повторювану подію</string>
-    <string name="dialog_edit_recurring_message">Це повторювана подія. Як застосувати зміну?</string>
     <string name="recurring_this_event">Ця подія</string>
     <string name="recurring_all_events">Усі події</string>
+    <string name="dialog_edit_recurring_title">Зберегти зміни в</string>
+    <string name="dialog_delete_recurring_title">Видалити</string>
+    <string name="dialog_move_recurring_title">Перемістити</string>
     <string name="empty_pick_a_day">Обери день. Проживи його.</string>
     <string name="empty_no_events_day">Нічого немає — може, на прогулянку?</string>
     <string name="filter_date">Дата</string>
@@ -1144,4 +1191,18 @@
     <string name="share_availability_days_through">До %1$s</string>
     <string name="share_availability_window_duration">Вікно %1$s год</string>
     <string name="share_from_kashcal_footer">Надіслано з KashCal</string>
+    <string name="attendee_sheet_title">Учасники</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d запрошений</item>
+        <item quantity="few">%d запрошених</item>
+        <item quantity="many">%d запрошених</item>
+        <item quantity="other">%d запрошених</item>
+    </plurals>
+    <string name="attendee_search_hint">Пошук</string>
+    <string name="attendee_search_no_matches">Нічого не знайдено</string>
+    <string name="attendee_section_going">Ідуть</string>
+    <string name="attendee_section_maybe">Можливо</string>
+    <string name="attendee_section_pending">Очікують</string>
+    <string name="attendee_section_declined">Відмовились</string>
+    <string name="attendee_section_delegated">Делегували</string>
 </resources>

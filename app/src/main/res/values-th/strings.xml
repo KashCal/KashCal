@@ -495,6 +495,9 @@
     <string name="settings_preview">ตัวอย่าง</string>
     <string name="settings_n_events">%1$d กิจกรรม</string>
     <string name="settings_n_events_default">%1$d กิจกรรม (ค่าเริ่มต้น)</string>
+    <string name="settings_search_placeholder">ค้นหาการตั้งค่า…</string>
+    <string name="settings_search_no_results">ไม่พบการตั้งค่าสำหรับ \"%1$s\"</string>
+    <string name="cd_search_settings">ค้นหาการตั้งค่า</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ปฏิทิน</string>
@@ -622,11 +625,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">แก้ไขกิจกรรมที่เกิดซ้ำ</string>
-    <string name="dialog_delete_recurring_title">ลบกิจกรรมที่เกิดซ้ำ</string>
-    <string name="dialog_edit_recurring_message">นี่คือกิจกรรมที่เกิดซ้ำ ต้องการใช้การเปลี่ยนแปลงอย่างไร?</string>
     <string name="recurring_this_event">กิจกรรมนี้เท่านั้น</string>
     <string name="recurring_all_events">กิจกรรมทั้งหมด</string>
+    <string name="dialog_edit_recurring_title">บันทึกการเปลี่ยนแปลงที่</string>
+    <string name="dialog_delete_recurring_title">ลบ</string>
+    <string name="dialog_move_recurring_title">ย้าย</string>
     <string name="empty_pick_a_day">เลือกวัน แล้วคว้ามันไว้</string>
     <string name="empty_no_events_day">ไม่มีอะไรที่นี่ ออกไปเดินเล่นดีไหม?</string>
     <string name="filter_date">วันที่</string>
@@ -1007,6 +1010,47 @@
     <string name="rsvp_action_decline">ปฏิเสธ</string>
     <string name="rsvp_series_disclosure">การตอบกลับของคุณจะใช้กับกิจกรรมทั้งหมดในชุดนี้</string>
     <string name="rsvp_modified_snackbar">การตอบกลับสำหรับ %1$s ล้มเหลว กิจกรรมถูกแก้ไข โปรดตอบกลับอีกครั้ง</string>
+    <string name="attendee_sheet_title">ผู้เข้าร่วม</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="other">เชิญแล้ว %d คน</item>
+    </plurals>
+    <string name="attendee_search_hint">ค้นหา</string>
+    <string name="attendee_search_no_matches">ไม่พบ</string>
+    <string name="attendee_section_going">ไป</string>
+    <string name="attendee_section_maybe">อาจจะ</string>
+    <string name="attendee_section_pending">รอตอบรับ</string>
+    <string name="attendee_section_declined">ปฏิเสธ</string>
+    <string name="attendee_section_delegated">มอบหมาย</string>
+    <string name="invitees_host_tag">เจ้าภาพ</string>
+    <string name="invitees_summary_you_alone">คุณ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">คุณ · เชิญแล้ว %d คน</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">เชิญแล้ว %d คน</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s เป็นเจ้าภาพ</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · คุณ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · คุณ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">คุณ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · อีก %2$d คน</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">เปลี่ยนคำตอบ</string>
+    <string name="rsvp_question_going">จะไปไหม?</string>
+    <string name="rsvp_action_yes">ไป</string>
+    <string name="rsvp_action_maybe">อาจจะ</string>
+    <string name="rsvp_action_no">ไม่ไป</string>
+    <string name="rsvp_state_going">คุณจะไป</string>
+    <string name="rsvp_state_maybe">อาจจะ</string>
+    <string name="rsvp_state_not_going">คุณไม่ไป</string>
+    <string name="rsvp_action_change">เปลี่ยน</string>
+
+
     <string name="inbox_empty_caught_up">จัดการครบทุกรายการแล้ว</string>
     <string name="inbox_organizer_suffix">(ผู้จัด)</string>
     <string name="menu_invites">คำเชิญ</string>

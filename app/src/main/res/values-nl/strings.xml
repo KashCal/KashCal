@@ -495,6 +495,9 @@
     <string name="label_found_events">Gevonden: %1$d afspraken</string>
     <string name="label_open_debug_menu">Debug-menu openen</string>
     <string name="placeholder_search">Zoeken…</string>
+    <string name="settings_search_placeholder">Instellingen zoeken…</string>
+    <string name="settings_search_no_results">Geen instellingen gevonden voor \"%1$s\"</string>
+    <string name="cd_search_settings">Instellingen zoeken</string>
     <string name="status_sync_paused">Sync gepauzeerd</string>
     <string name="status_not_synced">Niet gesynchroniseerd</string>
     <string name="status_sync_error">Synchronisatiefout</string>
@@ -679,11 +682,11 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="dialog_edit_recurring_title">Terugkerende afspraak bewerken</string>
-    <string name="dialog_delete_recurring_title">Terugkerende afspraak verwijderen</string>
-    <string name="dialog_edit_recurring_message">Dit is een terugkerende afspraak. Hoe wil je deze wijziging toepassen?</string>
     <string name="recurring_this_event">Deze afspraak</string>
     <string name="recurring_all_events">Alle afspraken</string>
+    <string name="dialog_edit_recurring_title">Wijzigingen opslaan in</string>
+    <string name="dialog_delete_recurring_title">Verwijderen</string>
+    <string name="dialog_move_recurring_title">Verplaatsen</string>
     <string name="empty_pick_a_day">Kies een dag. Grijp hem.</string>
     <string name="empty_no_events_day">Niets te zien hier; even naar buiten?</string>
     <string name="filter_date">Datum</string>
@@ -926,6 +929,16 @@
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">De reactie geldt voor de hele reeks.</string>
     <string name="rsvp_modified_snackbar">Reactie op %1$s mislukt – de afspraak is gewijzigd. Reageer opnieuw.</string>
+    <string name="invitees_host_tag">Host</string>
+    <string name="rsvp_question_going">Ga je?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Misschien</string>
+    <string name="rsvp_action_no">Nee</string>
+    <string name="rsvp_state_going">Je gaat</string>
+    <string name="rsvp_state_maybe">Misschien</string>
+    <string name="rsvp_state_not_going">Je gaat niet</string>
+    <string name="rsvp_action_change">Wijzigen</string>
+
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Herhaalt niet</string>
@@ -1059,6 +1072,18 @@
     <string name="attendee_status_tentative">Voorlopig</string>
     <string name="attendee_status_delegated">Gedelegeerd</string>
     <string name="attendee_status_pending">In afwachting</string>
+    <string name="attendee_sheet_title">Deelnemers</string>
+    <plurals name="attendee_count_invited">
+        <item quantity="one">%d uitgenodigd</item>
+        <item quantity="other">%d uitgenodigd</item>
+    </plurals>
+    <string name="attendee_search_hint">Zoeken</string>
+    <string name="attendee_search_no_matches">Geen resultaten</string>
+    <string name="attendee_section_going">Komen</string>
+    <string name="attendee_section_maybe">Misschien</string>
+    <string name="attendee_section_pending">In afwachting</string>
+    <string name="attendee_section_declined">Geweigerd</string>
+    <string name="attendee_section_delegated">Gedelegeerd</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alles bijgewerkt</string>
     <string name="inbox_organizer_suffix">(organisator)</string>
@@ -1099,4 +1124,28 @@
         <item quantity="one">Vrij op de volgende %1$d dag (%2$s – %3$s):</item>
         <item quantity="other">Vrij op de volgende %1$d dagen (%2$s – %3$s):</item>
     </plurals>
+    <string name="invitees_summary_you_alone">Jij</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Jij · %d uitgenodigd</item>
+        <item quantity="other">Jij · %d uitgenodigd</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d uitgenodigd</item>
+        <item quantity="other">%d uitgenodigd</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organiseert</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Jij</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Jij + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Jij + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Jij + %d</item>
+        <item quantity="other">Jij + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d meer</item>
+        <item quantity="other">%1$s · %2$d meer</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Antwoord wijzigen</string>
 </resources>

@@ -371,6 +371,14 @@ class EventCoordinator @Inject constructor(
         )
         triggerImmediatePushIfNeeded(isLocal)
 
+        // Master-side reminders for occurrences at/after splitTimeMs are
+        // now stale (those occurrences live on the new series). Cancel
+        // AFTER splitSeries succeeds — splitSeries is fully transactional,
+        // so a failure rolls back and the master's reminders should
+        // still fire. (deleteThisAndFuture cancels before its writer call,
+        // but that's safe because deletion is the user's intent there.)
+        reminderScheduler.cancelRemindersForOccurrencesAfter(masterEventId, splitTimeMs)
+
         // Schedule reminders for the new series
         scheduleRemindersForEvent(result)
 

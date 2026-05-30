@@ -449,6 +449,55 @@ class MainActivity : ComponentActivity() {
                     },
                     onConfirmReschedule = { editScope -> homeViewModel.confirmReschedule(editScope) },
                     onCancelPendingReschedule = { homeViewModel.cancelPendingReschedule() },
+                    onConfirmFormSave = { scope ->
+                        val pending = uiState.pendingFormSave
+                        homeViewModel.cancelPendingFormSave()
+                        if (pending != null) {
+                            coroutineScope.launch {
+                                val result: Result<*> = if (pending.isRecurringDevice) {
+                                    homeViewModel.saveDeviceEvent(pending.formState, scope)
+                                } else {
+                                    homeViewModel.saveEvent(pending.formState, scope)
+                                }
+                                if (result.isSuccess) {
+                                    // Success: dismiss the form sheet and clear edit
+                                    // state. The user's intent was committed.
+                                    showEventFormSheet = false
+                                    editingEventId = null
+                                    newEventStartTs = null
+                                    eventOccurrenceTs = null
+                                    duplicateFromEvent = null
+                                    editingDeviceEventId = null
+                                    deviceEventOccurrenceTs = null
+                                    deviceEventIsAllDay = false
+                                    calendarIntentData = null
+                                    calendarIntentInvitees = emptyList()
+                                } else {
+                                    // Failure: keep the form open so the user
+                                    // sees their edits and can retry. The
+                                    // ViewModel's existing snackbar surfaces
+                                    // the underlying error message. We also
+                                    // need to reset the form's isSaving flag,
+                                    // which is set true at the moment the
+                                    // scope sheet was opened — propagating
+                                    // happens via the form's view of
+                                    // uiState.pendingFormSave being null
+                                    // again, plus the LaunchedEffect on
+                                    // formSaveFailedAt below.
+                                    homeViewModel.signalFormSaveFailed()
+                                }
+                            }
+                        }
+                    },
+                    onCancelPendingFormSave = {
+                        homeViewModel.cancelPendingFormSave()
+                        // Cancel from the scope sheet returns to the dirty
+                        // form. Reset isSaving so the Save button re-enables
+                        // for retry.
+                        homeViewModel.signalFormSaveFailed()
+                    },
+                    onConfirmDelete = { scope -> homeViewModel.confirmDelete(scope) },
+                    onCancelPendingDelete = { homeViewModel.cancelPendingDelete() },
                     // Agenda scroll callback
                     onResume = { homeViewModel.onAppResume() },
                     onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },
@@ -494,58 +543,80 @@ class MainActivity : ComponentActivity() {
                             quickViewOccurrenceTs = null
                         },
                         onEdit = {
-                            // Edit all occurrences
+                            // Single Edit path: open the form pre-filled
+                            // with the tapped occurrence's data when the
+                            // event is recurring; otherwise open the
+                            // master directly with no occurrenceTs.
+                            // Scope (THIS_EVENT vs THIS_AND_FUTURE vs
+                            // ALL_EVENTS) is decided at save-time.
+                            val isRecurring = event.rrule != null
+                            val isException = event.originalEventId != null
                             showQuickViewSheet = false
-                            // BUG FIX: For exception events, edit the master when "Edit All" is selected
-                            editingEventId = event.originalEventId ?: event.id
-                            eventOccurrenceTs = null
-                            newEventStartTs = null
-                            quickViewEvent = null
-                            quickViewOccurrenceTs = null
-                            showEventFormSheet = true
-                        },
-                        onEditOccurrence = {
-                            // Edit just this occurrence - use the tapped occurrence timestamp
-                            showQuickViewSheet = false
-                            // Load the actual event (exception if exists) to show current data
-                            // Defensive check in saveEvent() resolves to master ID for operations
                             editingEventId = event.id
-                            // BUG FIX #2: For exception events, use originalInstanceTime (not modified startTs)
-                            eventOccurrenceTs = event.originalInstanceTime ?: quickViewOccurrenceTs ?: event.startTs
+                            eventOccurrenceTs = when {
+                                // Non-recurring one-off: NO occurrence ts
+                                // (a non-null value misroutes saveEvent
+                                // through editSingleOccurrence which
+                                // throws on non-recurring masters).
+                                !isRecurring && !isException -> null
+                                // Exception: the original instance time
+                                // anchors the exception lookup.
+                                isException -> event.originalInstanceTime
+                                    ?: quickViewOccurrenceTs
+                                    ?: event.startTs
+                                // Recurring master: the user's tapped
+                                // occurrence drives the form date and
+                                // the scope-sheet's occurrenceTs.
+                                else -> quickViewOccurrenceTs ?: event.startTs
+                            }
                             newEventStartTs = null
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
                             showEventFormSheet = true
                         },
+                        onEditOccurrence = { /* unused after save-time scope */ },
                         onDeleteSingle = {
-                            // Optimistic UI: capture data, dismiss immediately, delete in background
-                            val eventId = event.id
-                            showQuickViewSheet = false
-                            quickViewEvent = null
-                            quickViewOccurrenceTs = null
-                            homeViewModel.deleteEventOptimistic(eventId)
-                        },
-                        onDeleteOccurrence = {
-                            // Optimistic UI: capture data, dismiss immediately, delete in background
-                            // BUG FIX #1: For exception events, use master ID for recurring operations
-                            val masterEventId = event.originalEventId ?: event.id
-                            // BUG FIX #2: For exception events, use originalInstanceTime (not modified startTs)
-                            val occTs = event.originalInstanceTime ?: quickViewOccurrenceTs ?: event.startTs
-                            showQuickViewSheet = false
-                            quickViewEvent = null
-                            quickViewOccurrenceTs = null
-                            homeViewModel.deleteSingleOccurrence(masterEventId, occTs)
-                        },
-                        onDeleteFuture = {
-                            // Optimistic UI: capture data, dismiss immediately, delete in background
-                            // BUG FIX #1: For exception events, use master ID for recurring operations
-                            val masterEventId = event.originalEventId ?: event.id
-                            // BUG FIX #2: For exception events, use originalInstanceTime (not modified startTs)
-                            val occTs = event.originalInstanceTime ?: quickViewOccurrenceTs ?: event.startTs
-                            showQuickViewSheet = false
-                            quickViewEvent = null
-                            quickViewOccurrenceTs = null
-                            homeViewModel.deleteThisAndFuture(masterEventId, occTs)
+                            // Three branches:
+                            // - non-recurring: delete the row directly.
+                            // - exception: route to deleteSingleOccurrence
+                            //   on the master (adds EXDATE; the exception
+                            //   row itself can't be deleted via deleteEvent
+                            //   per the EventCoordinator guard).
+                            // - recurring master: surface the scope sheet.
+                            val isException = event.originalEventId != null
+                            val isRecurringMaster = event.rrule != null && !isException
+                            when {
+                                isException -> {
+                                    val masterId = event.originalEventId!!
+                                    val occTs = event.originalInstanceTime
+                                        ?: quickViewOccurrenceTs
+                                        ?: event.startTs
+                                    showQuickViewSheet = false
+                                    quickViewEvent = null
+                                    quickViewOccurrenceTs = null
+                                    homeViewModel.deleteSingleOccurrence(masterId, occTs)
+                                }
+                                isRecurringMaster -> {
+                                    val occTs = quickViewOccurrenceTs ?: event.startTs
+                                    showQuickViewSheet = false
+                                    quickViewEvent = null
+                                    quickViewOccurrenceTs = null
+                                    homeViewModel.requestDeleteRoom(
+                                        event = event,
+                                        occurrenceTs = occTs,
+                                        masterStartTs = event.startTs,
+                                        isDetachedException = false,
+                                        isAllDay = event.isAllDay,
+                                    )
+                                }
+                                else -> {
+                                    val eventId = event.id
+                                    showQuickViewSheet = false
+                                    quickViewEvent = null
+                                    quickViewOccurrenceTs = null
+                                    homeViewModel.deleteEventOptimistic(eventId)
+                                }
+                            }
                         },
                         onDuplicate = {
                             // Close preview and open new event form with copied data
@@ -671,26 +742,22 @@ class MainActivity : ComponentActivity() {
                             deviceQuickViewEvent = null
                         },
                         onEdit = {
-                            // Edit all occurrences (or single event)
+                            // Single Edit path: open the form pre-filled
+                            // with the tapped occurrence's data when the
+                            // event is recurring; otherwise open the
+                            // master directly with no occurrenceTs.
+                            // Scope is decided at save-time.
                             val event = deviceQuickViewEvent!!
-                            // "Edit All" on exception -> still edits master event (matches Room behavior)
-                            editingDeviceEventId = event.instance.originalId ?: event.instance.eventId
-                            deviceEventOccurrenceTs = null // Edit all
-                            deviceEventIsAllDay = event.instance.isAllDay
-                            showDeviceQuickViewSheet = false
-                            deviceQuickViewEvent = null
-                            editingEventId = null // Clear Room edit state
-                            duplicateFromEvent = null
-                            showEventFormSheet = true
-                        },
-                        onEditOccurrence = {
-                            // Edit this occurrence only
-                            val event = deviceQuickViewEvent!!
+                            val isException = event.instance.originalId != null
+                            val isRecurringMaster = event.instance.hasRrule && !isException
                             val masterEventId = event.instance.originalId ?: event.instance.eventId
-                            // originalInstanceTime: for existing exception use its value, for new exception use occurrence timestamp
-                            val occTs = event.instance.originalInstanceTime ?: event.startTs
                             editingDeviceEventId = masterEventId
-                            deviceEventOccurrenceTs = occTs
+                            deviceEventOccurrenceTs = when {
+                                // Non-recurring instance: NO occurrence ts.
+                                !isRecurringMaster && !isException -> null
+                                isException -> event.instance.originalInstanceTime ?: event.startTs
+                                else -> event.startTs
+                            }
                             deviceEventIsAllDay = event.instance.isAllDay
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
@@ -698,49 +765,56 @@ class MainActivity : ComponentActivity() {
                             duplicateFromEvent = null
                             showEventFormSheet = true
                         },
+                        onEditOccurrence = { /* unused after save-time scope */ },
                         onDelete = {
-                            // Delete all occurrences (or single event)
+                            // Three branches mirror the Room QuickView's
+                            // onDeleteSingle:
+                            // - non-recurring: deleteDeviceEvent (entire row).
+                            // - exception (originalId set): deleteDeviceSingleOccurrence
+                            //   on the master with the original instance time.
+                            // - recurring master: scope sheet via requestDeleteDevice.
                             val event = deviceQuickViewEvent!!
-                            coroutineScope.launch {
-                                val masterEventId = event.instance.originalId ?: event.instance.eventId
-                                val result = homeViewModel.deleteDeviceEvent(masterEventId)
-                                if (result.isSuccess) {
-                                    showDeviceQuickViewSheet = false
-                                    deviceQuickViewEvent = null
+                            val isException = event.instance.originalId != null
+                            val isRecurringMaster = event.instance.hasRrule && !isException
+                            when {
+                                isException -> {
+                                    val masterEventId = event.instance.originalId!!
+                                    val occTs = event.instance.originalInstanceTime ?: event.startTs
+                                    coroutineScope.launch {
+                                        val result = homeViewModel.deleteDeviceSingleOccurrence(
+                                            masterEventId = masterEventId,
+                                            originalInstanceTime = occTs,
+                                            isAllDay = event.instance.isAllDay,
+                                        )
+                                        if (result.isSuccess) {
+                                            showDeviceQuickViewSheet = false
+                                            deviceQuickViewEvent = null
+                                        }
+                                    }
                                 }
-                            }
-                        },
-                        onDeleteOccurrence = {
-                            // Delete this occurrence only
-                            val event = deviceQuickViewEvent!!
-                            coroutineScope.launch {
-                                val masterEventId = event.instance.originalId ?: event.instance.eventId
-                                val originalInstanceTime = event.instance.originalInstanceTime ?: event.startTs
-                                val result = homeViewModel.deleteDeviceSingleOccurrence(
-                                    masterEventId = masterEventId,
-                                    originalInstanceTime = originalInstanceTime,
-                                    isAllDay = event.instance.isAllDay
-                                )
-                                if (result.isSuccess) {
+                                isRecurringMaster -> {
+                                    val masterEventId = event.instance.eventId
+                                    val occTs = event.startTs
+                                    val masterStartTs = event.instance.eventStartTs
                                     showDeviceQuickViewSheet = false
                                     deviceQuickViewEvent = null
+                                    homeViewModel.requestDeleteDevice(
+                                        masterEventId = masterEventId,
+                                        calendarId = event.instance.calendarId,
+                                        occurrenceTs = occTs,
+                                        masterStartTs = masterStartTs,
+                                        isDetachedException = false,
+                                        isAllDay = event.instance.isAllDay,
+                                    )
                                 }
-                            }
-                        },
-                        onDeleteFuture = {
-                            // Delete this and all future occurrences
-                            val event = deviceQuickViewEvent!!
-                            coroutineScope.launch {
-                                val masterEventId = event.instance.originalId ?: event.instance.eventId
-                                val fromTimeMs = event.instance.originalInstanceTime ?: event.startTs
-                                val result = homeViewModel.deleteDeviceThisAndFuture(
-                                    masterEventId = masterEventId,
-                                    fromTimeMs = fromTimeMs,
-                                    isAllDay = event.instance.isAllDay
-                                )
-                                if (result.isSuccess) {
-                                    showDeviceQuickViewSheet = false
-                                    deviceQuickViewEvent = null
+                                else -> {
+                                    coroutineScope.launch {
+                                        val result = homeViewModel.deleteDeviceEvent(event.instance.eventId)
+                                        if (result.isSuccess) {
+                                            showDeviceQuickViewSheet = false
+                                            deviceQuickViewEvent = null
+                                        }
+                                    }
                                 }
                             }
                         },
@@ -907,8 +981,20 @@ class MainActivity : ComponentActivity() {
                         onSave = { formState ->
                             homeViewModel.saveEvent(formState)
                         },
-                        onDelete = { eventId ->
-                            homeViewModel.deleteEvent(eventId)
+                        onRequestRecurringSave = { formState, occurrenceTs, originalRrule, masterStartTs, isDetachedException, isRecurringDevice, loadedIsAllDay ->
+                            homeViewModel.requestFormSave(
+                                formState = formState,
+                                occurrenceTs = occurrenceTs,
+                                originalRrule = originalRrule,
+                                masterStartTs = masterStartTs,
+                                isDetachedException = isDetachedException,
+                                isRecurringDevice = isRecurringDevice,
+                                loadedIsAllDay = loadedIsAllDay,
+                            )
+                        },
+                        scopeSaveFailedTick = uiState.formSaveFailedTick,
+                        onDelete = { eventId, occurrenceTs ->
+                            homeViewModel.handleRoomEventFormDelete(eventId, occurrenceTs)
                         },
                         onLoadEvent = { eventId ->
                             homeViewModel.getEventForEdit(eventId)
