@@ -401,10 +401,11 @@
     <string name="accounts_section_add">Cuir Cunntas Ris</string>
     <string name="accounts_empty_title">Chan eil cunntas sam bith ceangailte</string>
     <string name="accounts_empty_subtitle">Cuir cunntas ris gus na mìosachain agad a shioncronachadh thar uidheaman</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Barrachd</string>
+    <string name="accounts_row_label">Cunntasan Mìosachain</string>
+    <string name="accounts_row_hint">m.e. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Cuir iCloud Ris</string>
     <string name="accounts_add_caldav">Cuir CalDAV Ris</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Barrachd</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Barrachd</string>
     <string name="accounts_caldav_help_title">Dè th\' ann an CalDAV?</string>
     <string name="accounts_caldav_help_description">\'S e inbhe fhosgailte a th\' ann an CalDAV airson mìosachain a shioncronachadh. Air a thaic le:</string>
     <string name="accounts_caldav_help_more">&amp; barrachd</string>
@@ -426,6 +427,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Co-làithean Breith &amp; Cuimhneachanan</string>
+    <string name="birthdays_anniversaries_row_hint">Bho luchd-aithne an fhòn agad</string>
     <string name="birthdays_section_title">Co-làithean Breith</string>
     <string name="anniversaries_section_title">Cuimhneachanan</string>
     <string name="settings_contact_birthdays">Co-làithean Breith Luchd-aithne</string>
@@ -480,6 +482,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Mìosachain an Uidheim</string>
+    <string name="settings_device_calendars_hint">Mìosachain bho aplacaidean eile</string>
     <string name="settings_quick_event_add">Cuir Tachartas Luath Ris</string>
     <string name="settings_week_numbers">Àireamhan Seachdaine</string>
     <string name="settings_show_declined">Seall tachartasan a dhiùltadh</string>
@@ -606,22 +609,22 @@
         <item quantity="other">%1$s · %2$d mìosachan</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d fho-sgrìobhadh</item>
-        <item quantity="two">%1$d fho-sgrìobhadh</item>
-        <item quantity="few">%1$d fo-sgrìobhaidhean</item>
-        <item quantity="other">%1$d fo-sgrìobhadh</item>
+        <item quantity="one">%1$d inbhir</item>
+        <item quantity="two">%1$d inbhir</item>
+        <item quantity="few">%1$d inbhirean</item>
+        <item quantity="other">%1$d inbhir</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">Thèid %1$d cho-aontachadh agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="two">Thèid %1$d cho-aontachadh agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="few">Thèid %1$d co-aontachaidhean agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="other">Thèid %1$d co-aontachadh agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="one">Thèid %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="two">Thèid %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="few">Thèid %1$d inbhirean agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="other">Thèid %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Chaidh %1$d cho-aontachadh agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="two">Chaidh %1$d cho-aontachadh agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="few">Chaidh %1$d co-aontachaidhean agus na roghainnean agad ion-phortadh.</item>
-        <item quantity="other">Chaidh %1$d co-aontachadh agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="one">Chaidh %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="two">Chaidh %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="few">Chaidh %1$d inbhirean agus na roghainnean agad ion-phortadh.</item>
+        <item quantity="other">Chaidh %1$d inbhir agus na roghainnean agad ion-phortadh.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Dh\'fhàillig sioncronachadh (%1$d oidhirp)</item>

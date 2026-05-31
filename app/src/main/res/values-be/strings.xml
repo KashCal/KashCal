@@ -380,10 +380,11 @@
     <string name="accounts_section_add">Дадаць уліковы запіс</string>
     <string name="accounts_empty_title">Няма падключаных уліковых запісаў</string>
     <string name="accounts_empty_subtitle">Дадайце ўліковы запіс для сінхранізацыі календароў паміж прыладамі</string>
-    <string name="accounts_row_label">iCloud, Nextcloud і іншыя</string>
+    <string name="accounts_row_label">Уліковыя запісы календара</string>
+    <string name="accounts_row_hint">напр. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Дадаць iCloud</string>
     <string name="accounts_add_caldav">Дадаць CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail і іншыя</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail і іншыя</string>
     <string name="accounts_caldav_help_title">Што такое CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV — адкрыты стандарт сінхранізацыі календароў. Падтрымліваецца:</string>
     <string name="accounts_caldav_help_more">і іншымі</string>
@@ -403,6 +404,7 @@
     <string name="subscriptions_row_hint">напр. святы, спорт, школа</string>
 
     <string name="birthdays_anniversaries_row_label">Дні нараджэння і гадавіны</string>
+    <string name="birthdays_anniversaries_row_hint">З кантактаў тэлефона</string>
     <string name="birthdays_section_title">Дні нараджэння</string>
     <string name="anniversaries_section_title">Гадавіны</string>
     <string name="settings_contact_birthdays">Дні нараджэння з кантактаў</string>
@@ -451,6 +453,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Календары прылады</string>
+    <string name="settings_device_calendars_hint">Календары з іншых праграм</string>
     <string name="settings_quick_event_add">Хуткае даданне</string>
     <string name="settings_week_numbers">Нумары тыдняў</string>
     <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
@@ -569,22 +572,22 @@
         <item quantity="other">%1$s · %2$d календароў</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d падпіска</item>
-        <item quantity="few">%1$d падпіскі</item>
-        <item quantity="many">%1$d падпісак</item>
-        <item quantity="other">%1$d падпісак</item>
+        <item quantity="one">%1$d стужка</item>
+        <item quantity="few">%1$d стужкі</item>
+        <item quantity="many">%1$d стужак</item>
+        <item quantity="other">%1$d стужкі</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d падпіска і вашы налады будуць імпартаваны.</item>
-        <item quantity="few">%1$d падпіскі і вашы налады будуць імпартаваны.</item>
-        <item quantity="many">%1$d падпісак і вашы налады будуць імпартаваны.</item>
-        <item quantity="other">%1$d падпіскі і вашы налады будуць імпартаваны.</item>
+        <item quantity="one">%1$d стужка і вашы налады будуць імпартаваны.</item>
+        <item quantity="few">%1$d стужкі і вашы налады будуць імпартаваны.</item>
+        <item quantity="many">%1$d стужак і вашы налады будуць імпартаваны.</item>
+        <item quantity="other">%1$d стужкі і вашы налады будуць імпартаваны.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Імпартавана %1$d падпіска і вашы налады.</item>
-        <item quantity="few">Імпартаваны %1$d падпіскі і вашы налады.</item>
-        <item quantity="many">Імпартавана %1$d падпісак і вашы налады.</item>
-        <item quantity="other">Імпартаваны %1$d падпіскі і вашы налады.</item>
+        <item quantity="one">Імпартавана %1$d стужка і вашы налады.</item>
+        <item quantity="few">Імпартаваны %1$d стужкі і вашы налады.</item>
+        <item quantity="many">Імпартавана %1$d стужак і вашы налады.</item>
+        <item quantity="other">Імпартаваны %1$d стужкі і вашы налады.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Памылка сінхранізацыі (%1$d спроба)</item>

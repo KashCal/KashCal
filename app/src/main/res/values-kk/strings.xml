@@ -399,10 +399,11 @@
     <string name="accounts_section_add">Есептік жазба қосу</string>
     <string name="accounts_empty_title">Қосылған есептік жазбалар жоқ</string>
     <string name="accounts_empty_subtitle">Күнтізбелеріңізді құрылғылар арасында синхрондау үшін есептік жазба қосыңыз</string>
-    <string name="accounts_row_label">iCloud, Nextcloud және т.б.</string>
+    <string name="accounts_row_label">Күнтізбе есептік жазбалары</string>
+    <string name="accounts_row_hint">мыс. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud қосу</string>
     <string name="accounts_add_caldav">CalDAV қосу</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail және т.б.</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail және т.б.</string>
     <string name="accounts_caldav_help_title">CalDAV дегеніміз не?</string>
     <string name="accounts_caldav_help_description">CalDAV - күнтізбелерді синхрондауға арналған ашық стандарт. Қолдайтындар:</string>
     <string name="accounts_caldav_help_more">және т.б.</string>
@@ -424,6 +425,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Туған күндер және мерейтойлар</string>
+    <string name="birthdays_anniversaries_row_hint">Телефон контактілерінен</string>
     <string name="birthdays_section_title">Туған күндер</string>
     <string name="anniversaries_section_title">Мерейтойлар</string>
     <string name="settings_contact_birthdays">Контакт туған күндері</string>
@@ -477,6 +479,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Құрылғы күнтізбелері</string>
+    <string name="settings_device_calendars_hint">Басқа қолданбалардан күнтізбелер</string>
     <string name="settings_quick_event_add">Жылдам оқиға қосу</string>
     <string name="settings_week_numbers">Апта нөмірлері</string>
     <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
@@ -597,16 +600,16 @@
         <item quantity="other">%1$s · %2$d күнтізбе</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d жазылым</item>
-        <item quantity="other">%1$d жазылым</item>
+        <item quantity="one">%1$d арна</item>
+        <item quantity="other">%1$d арналар</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d жазылым және теңшеулеріңіз импортталады.</item>
-        <item quantity="other">%1$d жазылым және теңшеулеріңіз импортталады.</item>
+        <item quantity="one">%1$d арна және теңшеулеріңіз импортталады.</item>
+        <item quantity="other">%1$d арналар және теңшеулеріңіз импортталады.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d жазылым және теңшеулеріңіз импортталды.</item>
-        <item quantity="other">%1$d жазылым және теңшеулеріңіз импортталды.</item>
+        <item quantity="one">%1$d арна және теңшеулеріңіз импортталды.</item>
+        <item quantity="other">%1$d арналар және теңшеулеріңіз импортталды.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Синхрондау сәтсіз (%1$d әрекет)</item>

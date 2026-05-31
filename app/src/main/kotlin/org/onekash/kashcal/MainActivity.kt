@@ -65,6 +65,8 @@ import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
+import org.onekash.kashcal.util.ShareChooser
+import org.onekash.kashcal.util.ShareIntentRouter
 import org.onekash.kashcal.util.IcsFileReader
 import org.onekash.kashcal.util.buildShareAvailabilityChooserIntent
 import org.onekash.kashcal.util.location.LocationSuggestionService
@@ -143,6 +145,8 @@ class MainActivity : ComponentActivity() {
 
                 // Quick Add dialog state
                 var showQuickAddDialog by remember { mutableStateOf(false) }
+                // Seed for share-target opens. Null on user-initiated opens.
+                var quickAddShareSeed by remember { mutableStateOf<PendingAction.QuickAddFromText?>(null) }
 
                 // Event form sheet state
                 var showEventFormSheet by remember { mutableStateOf(false) }
@@ -291,6 +295,15 @@ class MainActivity : ComponentActivity() {
                                         Log.w(TAG, "Widget: Device event ${action.eventId} not found")
                                         homeViewModel.showSnackbar("Event not found")
                                     }
+                                }
+                                is PendingAction.QuickAddFromText -> {
+                                    Log.d(TAG, "QuickAddFromText pending: text=${action.text.take(40)}")
+                                    // Close peer surfaces so the seeded dialog is not occluded.
+                                    showEventFormSheet = false
+                                    showQuickViewSheet = false
+                                    showDeviceQuickViewSheet = false
+                                    quickAddShareSeed = action
+                                    showQuickAddDialog = true
                                 }
                             }
                             // IMPORTANT: clearPendingAction() must be called AFTER all suspend work
@@ -683,7 +696,7 @@ class MainActivity : ComponentActivity() {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)
                             }
-                            startActivity(Intent.createChooser(intent, "Share Event"))
+                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Share Event"))
 
                             showQuickViewSheet = false
                             quickViewEvent = null
@@ -709,7 +722,7 @@ class MainActivity : ComponentActivity() {
                                         putExtra(Intent.EXTRA_STREAM, uri)
                                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
-                                    startActivity(Intent.createChooser(intent, "Export Event"))
+                                    startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Export Event"))
                                 }.onFailure { e ->
                                     Log.e(TAG, "Failed to export event", e)
                                     homeViewModel.showSnackbar("Export failed: ${e.message}")
@@ -841,7 +854,7 @@ class MainActivity : ComponentActivity() {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)
                             }
-                            startActivity(Intent.createChooser(intent, "Share Event"))
+                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Share Event"))
 
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
@@ -880,7 +893,7 @@ class MainActivity : ComponentActivity() {
                                         putExtra(Intent.EXTRA_STREAM, uri)
                                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
-                                    startActivity(Intent.createChooser(intent, "Export Event"))
+                                    startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Export Event"))
                                 }.onFailure { e ->
                                     Log.e(TAG, "Failed to export device event", e)
                                     homeViewModel.showSnackbar("Export failed: ${e.message}")
@@ -904,12 +917,28 @@ class MainActivity : ComponentActivity() {
                     val quickAddTextFieldState = remember { TextFieldState() }
                     LaunchedEffect(Unit) {
                         quickAddViewModel.resetState()
-                        // Undated input should default to the day the user is viewing,
-                        // not today, when the form opens.
-                        val anchorMs = uiState.selectedDate.takeIf { it != 0L }
-                            ?: System.currentTimeMillis()
-                        val anchorDate = DateTimeUtils.eventTsToLocalDate(anchorMs, isAllDay = false)
-                        quickAddViewModel.setReferenceTime(anchorDate.atTime(LocalTime.now()))
+                        val seed = quickAddShareSeed
+                        if (seed != null) {
+                            // Share-target open: anchor reference time to share arrival
+                            // (NOT the day the user was browsing) so "tomorrow" in the
+                            // shared text resolves correctly. Seed text + parsed location
+                            // before snapshotFlow so the dialog renders the parse preview
+                            // on first frame.
+                            val anchor = java.time.Instant.ofEpochMilli(seed.referenceMs)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDateTime()
+                            quickAddViewModel.setReferenceTime(anchor)
+                            quickAddTextFieldState.edit { replace(0, length, seed.text) }
+                            quickAddViewModel.seedInput(seed.text, seed.location)
+                            quickAddShareSeed = null
+                        } else {
+                            // Undated input should default to the day the user is viewing,
+                            // not today, when the form opens.
+                            val anchorMs = uiState.selectedDate.takeIf { it != 0L }
+                                ?: System.currentTimeMillis()
+                            val anchorDate = DateTimeUtils.eventTsToLocalDate(anchorMs, isAllDay = false)
+                            quickAddViewModel.setReferenceTime(anchorDate.atTime(LocalTime.now()))
+                        }
                         snapshotFlow { quickAddTextFieldState.text.toString() }
                             .collect { quickAddViewModel.onInputChanged(it) }
                     }
@@ -1350,6 +1379,18 @@ class MainActivity : ComponentActivity() {
                     return
                 }
             }
+        }
+
+        // Handle plain-text shares (ACTION_SEND text/plain) from other apps.
+        // Anchored to System.currentTimeMillis() so "tomorrow" in the shared text
+        // resolves relative to share-arrival, not whatever date the user was browsing.
+        // intent.action is cleared after dispatch so rotation/recreation does not
+        // re-fire the share over user edits.
+        ShareIntentRouter.route(intent, System.currentTimeMillis())?.let { action ->
+            Log.d(TAG, "Share intent: ${action::class.simpleName}")
+            intent?.action = null
+            homeViewModel.setPendingAction(action)
+            return
         }
 
         // Handle calendar provider intents (ACTION_INSERT/EDIT) - for "Add to Calendar" from other apps

@@ -337,10 +337,11 @@
     <string name="accounts_section_add">เพิ่มบัญชี</string>
     <string name="accounts_empty_title">ไม่มีบัญชีที่เชื่อมต่อ</string>
     <string name="accounts_empty_subtitle">เพิ่มบัญชีเพื่อซิงค์ปฏิทินข้ามอุปกรณ์</string>
-    <string name="accounts_row_label">iCloud, Nextcloud และอื่น ๆ</string>
+    <string name="accounts_row_label">บัญชีปฏิทิน</string>
+    <string name="accounts_row_hint">เช่น iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">เพิ่ม iCloud</string>
     <string name="accounts_add_caldav">เพิ่ม CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail และอื่น ๆ</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail และอื่น ๆ</string>
     <string name="accounts_caldav_help_title">CalDAV คืออะไร?</string>
     <string name="accounts_caldav_help_description">CalDAV เป็นมาตรฐานเปิดสำหรับซิงค์ปฏิทิน รองรับโดย:</string>
     <string name="accounts_caldav_help_more">และอื่น ๆ</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">วันเกิดและวันครบรอบ</string>
+    <string name="birthdays_anniversaries_row_hint">จากผู้ติดต่อในโทรศัพท์</string>
     <string name="birthdays_section_title">วันเกิด</string>
     <string name="anniversaries_section_title">วันครบรอบ</string>
     <string name="settings_contact_birthdays">วันเกิดผู้ติดต่อ</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
+    <string name="settings_device_calendars_hint">ปฏิทินจากแอปอื่น</string>
     <string name="settings_quick_event_add">เพิ่มกิจกรรมด่วน</string>
     <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
     <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d ปฏิทิน</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d การสมัครรับ</item>
+        <item quantity="other">%1$d ฟีด</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">การสมัครสมาชิก %1$d รายการและการตั้งค่าของคุณจะถูกนำเข้า</item>
+        <item quantity="other">ฟีด %1$d รายการและการตั้งค่าของคุณจะถูกนำเข้า</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">นำเข้าการสมัครสมาชิก %1$d รายการและการตั้งค่าของคุณแล้ว</item>
+        <item quantity="other">นำเข้าฟีด %1$d รายการและการตั้งค่าของคุณแล้ว</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">ซิงค์ล้มเหลว (%1$d ครั้ง)</item>

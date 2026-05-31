@@ -337,10 +337,11 @@
     <string name="accounts_section_add">新增帳號</string>
     <string name="accounts_empty_title">沒有已連線的帳號</string>
     <string name="accounts_empty_subtitle">新增帳號以跨裝置同步行事曆</string>
-    <string name="accounts_row_label">iCloud、Nextcloud 等</string>
+    <string name="accounts_row_label">行事曆帳號</string>
+    <string name="accounts_row_hint">例如：iCloud、Nextcloud、Fastmail</string>
     <string name="accounts_add_icloud">新增 iCloud</string>
     <string name="accounts_add_caldav">新增 CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud、FastMail 等</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud、Fastmail 等</string>
     <string name="accounts_caldav_help_title">什麼是 CalDAV？</string>
     <string name="accounts_caldav_help_description">CalDAV 是用於同步行事曆的開放標準。支援的服務：</string>
     <string name="accounts_caldav_help_more">等等</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">生日與紀念日</string>
+    <string name="birthdays_anniversaries_row_hint">來自手機聯絡人</string>
     <string name="birthdays_section_title">生日</string>
     <string name="anniversaries_section_title">紀念日</string>
     <string name="settings_contact_birthdays">聯絡人生日</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">裝置行事曆</string>
+    <string name="settings_device_calendars_hint">其他應用程式的行事曆</string>
     <string name="settings_quick_event_add">快速新增事件</string>
     <string name="settings_week_numbers">週數</string>
     <string name="settings_show_declined">顯示已拒絕的活動</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d 個行事曆</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d 個訂閱</item>
+        <item quantity="other">%1$d 個摘要</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">將匯入 %1$d 個訂閱及您的偏好設定。</item>
+        <item quantity="other">將匯入 %1$d 個摘要及您的偏好設定。</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">已匯入 %1$d 個訂閱及您的偏好設定。</item>
+        <item quantity="other">已匯入 %1$d 個摘要及您的偏好設定。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同步失敗（%1$d 次嘗試）</item>

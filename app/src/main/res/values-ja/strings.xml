@@ -337,10 +337,11 @@
     <string name="accounts_section_add">アカウントを追加</string>
     <string name="accounts_empty_title">アカウントが接続されていません</string>
     <string name="accounts_empty_subtitle">アカウントを追加してデバイス間でカレンダーを同期</string>
-    <string name="accounts_row_label">iCloud、Nextcloudなど</string>
+    <string name="accounts_row_label">カレンダーアカウント</string>
+    <string name="accounts_row_hint">例: iCloud、Nextcloud、Fastmail</string>
     <string name="accounts_add_icloud">iCloudを追加</string>
     <string name="accounts_add_caldav">CalDAVを追加</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud、FastMailなど</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud、Fastmailなど</string>
     <string name="accounts_caldav_help_title">CalDAVとは？</string>
     <string name="accounts_caldav_help_description">CalDAVはカレンダーを同期するためのオープンスタンダードです。対応サービス:</string>
     <string name="accounts_caldav_help_more">その他</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">誕生日と記念日</string>
+    <string name="birthdays_anniversaries_row_hint">スマートフォンの連絡先から</string>
     <string name="birthdays_section_title">誕生日</string>
     <string name="anniversaries_section_title">記念日</string>
     <string name="settings_contact_birthdays">連絡先の誕生日</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">デバイスカレンダー</string>
+    <string name="settings_device_calendars_hint">他のアプリのカレンダー</string>
     <string name="settings_quick_event_add">クイックイベント追加</string>
     <string name="settings_week_numbers">週番号</string>
     <string name="settings_show_declined">辞退したイベントを表示</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d件のカレンダー</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d件の購読</item>
+        <item quantity="other">%1$d件のフィード</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">%1$d 件のサブスクリプションと設定がインポートされます。</item>
+        <item quantity="other">%1$d 件のフィードと設定がインポートされます。</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">%1$d 件のサブスクリプションと設定をインポートしました。</item>
+        <item quantity="other">%1$d 件のフィードと設定をインポートしました。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同期失敗（%1$d回目）</item>

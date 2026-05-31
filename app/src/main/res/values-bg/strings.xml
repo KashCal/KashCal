@@ -398,10 +398,11 @@
     <string name="accounts_section_add">Добави акаунт</string>
     <string name="accounts_empty_title">Няма свързани акаунти</string>
     <string name="accounts_empty_subtitle">Добавете акаунт, за да синхронизирате календарите си между устройства</string>
-    <string name="accounts_row_label">iCloud, Nextcloud и още</string>
+    <string name="accounts_row_label">Календарни акаунти</string>
+    <string name="accounts_row_hint">напр. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Добави iCloud</string>
     <string name="accounts_add_caldav">Добави CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail и още</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail и още</string>
     <string name="accounts_caldav_help_title">Какво е CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV е отворен стандарт за синхронизиране на календари. Поддържа се от:</string>
     <string name="accounts_caldav_help_more">и още</string>
@@ -423,6 +424,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Рождени дни и годишнини</string>
+    <string name="birthdays_anniversaries_row_hint">От контактите в телефона</string>
     <string name="birthdays_section_title">Рождени дни</string>
     <string name="anniversaries_section_title">Годишнини</string>
     <string name="settings_contact_birthdays">Рождени дни на контакти</string>
@@ -479,6 +481,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари на устройството</string>
+    <string name="settings_device_calendars_hint">Календари от други приложения</string>
     <string name="settings_quick_event_add">Бързо добавяне на събитие</string>
     <string name="settings_week_numbers">Номера на седмици</string>
     <string name="settings_show_declined">Показване на отказани събития</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d календара</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d абонамент</item>
-        <item quantity="other">%1$d абонамента</item>
+        <item quantity="one">%1$d канал</item>
+        <item quantity="other">%1$d канала</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d абонамент и вашите настройки ще бъдат импортирани.</item>
-        <item quantity="other">%1$d абонамента и вашите настройки ще бъдат импортирани.</item>
+        <item quantity="one">%1$d канал и вашите настройки ще бъдат импортирани.</item>
+        <item quantity="other">%1$d канала и вашите настройки ще бъдат импортирани.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d абонамент и вашите настройки са импортирани.</item>
-        <item quantity="other">%1$d абонамента и вашите настройки са импортирани.</item>
+        <item quantity="one">%1$d канал и вашите настройки са импортирани.</item>
+        <item quantity="other">%1$d канала и вашите настройки са импортирани.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Неуспешно синхронизиране (%1$d опит)</item>

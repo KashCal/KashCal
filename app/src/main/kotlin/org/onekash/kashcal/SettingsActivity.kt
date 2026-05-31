@@ -63,6 +63,7 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.ShareChooser
 import javax.inject.Inject
 
 private const val TAG = "SettingsActivity"
@@ -559,7 +560,7 @@ class SettingsActivity : ComponentActivity() {
                                                 putExtra(Intent.EXTRA_STREAM, uri)
                                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                             }
-                                            startActivity(Intent.createChooser(intent, "Export Calendar"))
+                                            startActivity(ShareChooser.createKashCalChooser(this@SettingsActivity, intent, "Export Calendar"))
                                             viewModel.showSnackbar(resources.getQuantityString(R.plurals.exported_events, events.size, events.size))
                                         }.onFailure { e ->
                                             Log.e(TAG, "Failed to export calendar", e)

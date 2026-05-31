@@ -54,6 +54,12 @@ class QuickAddViewModel @Inject constructor(
 
     private var referenceTime: LocalDateTime = LocalDateTime.now()
 
+    // Share-target fallback location pinned to the seeded text. Used as the
+    // location only while the input matches the seed, so the snapshotFlow
+    // re-emit that follows seedInput() doesn't drop it. Cleared on edit.
+    private var seededFallbackLocation: String? = null
+    private var seededText: String? = null
+
     // Cached for synchronous reads in onInputChanged (parser WKST routing).
     private val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.FIRST_DAY_SYSTEM)
@@ -68,9 +74,48 @@ class QuickAddViewModel @Inject constructor(
         _isSaveEnabled.value = false
         _isSaving.value = false
         referenceTime = LocalDateTime.now()
+        seededFallbackLocation = null
+        seededText = null
     }
 
     fun onInputChanged(text: String) {
+        _inputText.value = text
+        // The user has typed past the seed — drop the share-supplied fallback
+        // so subsequent edits don't silently inherit a URL from the original share.
+        if (seededText != null && text != seededText) {
+            seededFallbackLocation = null
+            seededText = null
+        }
+        val result = QuickAddParser.parse(
+            input = text,
+            reference = referenceTime,
+            locale = Locale.getDefault(),
+            firstDayOfWeek = firstDayOfWeek.value,
+        )
+        val merged = applySeededFallback(result)
+        _parseResult.value = merged
+        _isSaveEnabled.value = merged.title.isNotBlank()
+    }
+
+    /**
+     * Seed the dialog from an external source (Intent.ACTION_SEND share target).
+     *
+     * Parses [text] against the current reference time and merges [location] into
+     * the result only when the parser does not derive its own location — parser
+     * wins on conflict so that "Lunch at Mission Cantina" with a fallback URL
+     * still records the parsed venue.
+     *
+     * The fallback [location] is pinned to [text]: any subsequent
+     * [onInputChanged] with the same string keeps applying the fallback (so the
+     * dialog's snapshotFlow first-emit doesn't drop it), and any edit clears it.
+     *
+     * Callers should call [setReferenceTime] before [seedInput] so "tomorrow" in
+     * the shared text resolves relative to share-arrival, not to whatever date
+     * the calling UI happened to be browsing.
+     */
+    fun seedInput(text: String, location: String?) {
+        seededFallbackLocation = location
+        seededText = text
         _inputText.value = text
         val result = QuickAddParser.parse(
             input = text,
@@ -78,8 +123,18 @@ class QuickAddViewModel @Inject constructor(
             locale = Locale.getDefault(),
             firstDayOfWeek = firstDayOfWeek.value,
         )
-        _parseResult.value = result
-        _isSaveEnabled.value = result.title.isNotBlank()
+        val merged = applySeededFallback(result)
+        _parseResult.value = merged
+        _isSaveEnabled.value = merged.title.isNotBlank()
+    }
+
+    private fun applySeededFallback(result: QuickAddResult): QuickAddResult {
+        val fallback = seededFallbackLocation
+        return if (result.location == null && fallback != null) {
+            result.copy(location = fallback)
+        } else {
+            result
+        }
     }
 
     suspend fun save(): Result<Event> {

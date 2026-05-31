@@ -400,10 +400,11 @@
     <string name="accounts_section_add">கணக்கு சேர்</string>
     <string name="accounts_empty_title">கணக்குகள் இணைக்கப்படவில்லை</string>
     <string name="accounts_empty_subtitle">சாதனங்களில் நாட்காட்டிகளை ஒத்திசைக்க ஒரு கணக்கைச் சேர்க்கவும்</string>
-    <string name="accounts_row_label">iCloud, Nextcloud மற்றும் மேலும்</string>
+    <string name="accounts_row_label">நாட்காட்டி கணக்குகள்</string>
+    <string name="accounts_row_hint">எ.கா. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud சேர்</string>
     <string name="accounts_add_caldav">CalDAV சேர்</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail மற்றும் மேலும்</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail மற்றும் மேலும்</string>
     <string name="accounts_caldav_help_title">CalDAV என்றால் என்ன?</string>
     <string name="accounts_caldav_help_description">CalDAV நாட்காட்டிகளை ஒத்திசைப்பதற்கான திறந்த தரநிலை. இதை ஆதரிப்பவை:</string>
     <string name="accounts_caldav_help_more">மற்றும் மேலும்</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">பிறந்தநாட்கள் மற்றும் ஆண்டு நினைவுகள்</string>
+    <string name="birthdays_anniversaries_row_hint">உங்கள் தொலைபேசி தொடர்புகளிலிருந்து</string>
     <string name="birthdays_section_title">பிறந்தநாட்கள்</string>
     <string name="anniversaries_section_title">ஆண்டு நினைவுகள்</string>
     <string name="settings_contact_birthdays">தொடர்பு பிறந்தநாட்கள்</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">சாதன நாட்காட்டிகள்</string>
+    <string name="settings_device_calendars_hint">பிற ஆப்ப்களின் நாட்காட்டிகள்</string>
     <string name="settings_quick_event_add">விரைவு நிகழ்வு சேர்</string>
     <string name="settings_week_numbers">வார எண்கள்</string>
     <string name="settings_show_declined">மறுக்கப்பட்ட நிகழ்வுகளைக் காட்டு</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d நாட்காட்டிகள்</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d சந்தா</item>
-        <item quantity="other">%1$d சந்தாக்கள்</item>
+        <item quantity="one">%1$d ஊட்டம்</item>
+        <item quantity="other">%1$d ஊட்டங்கள்</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d சந்தா மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்படும்.</item>
-        <item quantity="other">%1$d சந்தாக்கள் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்படும்.</item>
+        <item quantity="one">%1$d ஊட்டம் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்படும்.</item>
+        <item quantity="other">%1$d ஊட்டங்கள் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்படும்.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d சந்தா மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்பட்டன.</item>
-        <item quantity="other">%1$d சந்தாக்கள் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்பட்டன.</item>
+        <item quantity="one">%1$d ஊட்டம் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்பட்டன.</item>
+        <item quantity="other">%1$d ஊட்டங்கள் மற்றும் உங்கள் விருப்பங்கள் இறக்குமதி செய்யப்பட்டன.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ஒத்திசைவு தோல்வி (%1$d முயற்சி)</item>

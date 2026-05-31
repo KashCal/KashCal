@@ -361,10 +361,11 @@
     <string name="accounts_section_add">Tilføj konto</string>
     <string name="accounts_empty_title">Ingen konti forbundet</string>
     <string name="accounts_empty_subtitle">Tilføj en konto for at synkronisere dine kalendere på tværs af enheder</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; mere</string>
+    <string name="accounts_row_label">Kalenderkonti</string>
+    <string name="accounts_row_hint">f.eks. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Tilføj iCloud</string>
     <string name="accounts_add_caldav">Tilføj CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; mere</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; mere</string>
     <string name="accounts_caldav_help_title">Hvad er CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV er en åben standard for kalendersynkronisering. Understøttet af:</string>
     <string name="accounts_caldav_help_more">&amp; mere</string>
@@ -386,6 +387,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Fødselsdage &amp; jubilæer</string>
+    <string name="birthdays_anniversaries_row_hint">Fra dine telefonkontakter</string>
     <string name="birthdays_section_title">Fødselsdage</string>
     <string name="anniversaries_section_title">Jubilæer</string>
     <string name="settings_contact_birthdays">Kontakt-fødselsdage</string>
@@ -439,6 +441,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Enhedskalendere</string>
+    <string name="settings_device_calendars_hint">Kalendere fra andre apps</string>
     <string name="settings_quick_event_add">Hurtig tilføjelse</string>
     <string name="settings_week_numbers">Ugenumre</string>
     <string name="settings_show_declined">Vis afslåede begivenheder</string>
@@ -562,16 +565,16 @@
         <item quantity="other">%1$s · %2$d kalendere</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abonnement</item>
-        <item quantity="other">%1$d abonnementer</item>
+        <item quantity="one">%1$d feed</item>
+        <item quantity="other">%1$d feeds</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abonnement og dine indstillinger importeres.</item>
-        <item quantity="other">%1$d abonnementer og dine indstillinger importeres.</item>
+        <item quantity="one">%1$d feed og dine indstillinger importeres.</item>
+        <item quantity="other">%1$d feeds og dine indstillinger importeres.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d abonnement og dine indstillinger importeret.</item>
-        <item quantity="other">%1$d abonnementer og dine indstillinger importeret.</item>
+        <item quantity="one">%1$d feed og dine indstillinger importeret.</item>
+        <item quantity="other">%1$d feeds og dine indstillinger importeret.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synk mislykkedes (%1$d forsøg)</item>

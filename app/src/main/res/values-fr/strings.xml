@@ -384,10 +384,11 @@
     <string name="accounts_section_add">Ajouter un compte</string>
     <string name="accounts_empty_title">Aucun compte connecté</string>
     <string name="accounts_empty_subtitle">Ajoute un compte pour synchroniser tes calendriers entre appareils</string>
-    <string name="accounts_row_label">iCloud, Nextcloud et plus</string>
+    <string name="accounts_row_label">Comptes de calendrier</string>
+    <string name="accounts_row_hint">par ex. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Ajouter iCloud</string>
     <string name="accounts_add_caldav">Ajouter CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail et plus</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail et plus</string>
     <string name="accounts_caldav_help_title">Qu\'est-ce que CalDAV ?</string>
     <string name="accounts_caldav_help_description">CalDAV est un standard ouvert pour synchroniser les calendriers. Compatible avec :</string>
     <string name="accounts_caldav_help_more">et plus</string>
@@ -409,6 +410,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Anniversaires et célébrations</string>
+    <string name="birthdays_anniversaries_row_hint">Depuis tes contacts du téléphone</string>
     <string name="birthdays_section_title">Anniversaires</string>
     <string name="anniversaries_section_title">Célébrations</string>
     <string name="settings_contact_birthdays">Anniversaires des contacts</string>
@@ -462,6 +464,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendriers de l\'appareil</string>
+    <string name="settings_device_calendars_hint">Calendriers d\'autres apps</string>
     <string name="settings_quick_event_add">Ajout rapide d\'événement</string>
     <string name="settings_week_numbers">Numéros de semaine</string>
     <string name="settings_show_declined">Afficher les événements refusés</string>
@@ -587,19 +590,19 @@
         <item quantity="other">%1$s · %2$d calendriers</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abonnement</item>
-        <item quantity="many">%1$d abonnements</item>
-        <item quantity="other">%1$d abonnements</item>
+        <item quantity="one">%1$d flux</item>
+        <item quantity="many">%1$d flux</item>
+        <item quantity="other">%1$d flux</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abonnement et tes préférences seront importés.</item>
-        <item quantity="many">%1$d abonnements et tes préférences seront importés.</item>
-        <item quantity="other">%1$d abonnements et tes préférences seront importés.</item>
+        <item quantity="one">%1$d flux et tes préférences seront importés.</item>
+        <item quantity="many">%1$d flux et tes préférences seront importés.</item>
+        <item quantity="other">%1$d flux et tes préférences seront importés.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d abonnement et tes préférences ont été importés.</item>
-        <item quantity="many">%1$d abonnements et tes préférences ont été importés.</item>
-        <item quantity="other">%1$d abonnements et tes préférences ont été importés.</item>
+        <item quantity="one">%1$d flux et tes préférences ont été importés.</item>
+        <item quantity="many">%1$d flux et tes préférences ont été importés.</item>
+        <item quantity="other">%1$d flux et tes préférences ont été importés.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronisation échouée (%1$d tentative)</item>

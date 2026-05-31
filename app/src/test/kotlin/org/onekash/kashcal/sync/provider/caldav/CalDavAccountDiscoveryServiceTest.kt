@@ -1173,7 +1173,7 @@ class CalDavAccountDiscoveryServiceTest {
     // ==================== Server Display Name Tests ====================
 
     @Test
-    fun `discoverAndCreateAccount extracts FastMail display name`() = runTest {
+    fun `discoverAndCreateAccount extracts Fastmail display name`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "https://caldav.fastmail.com")
 
         coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
@@ -1188,7 +1188,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         coVerify {
-            accountRepository.createAccount(match<Account> { it.displayName == "FastMail" })
+            accountRepository.createAccount(match<Account> { it.displayName == "Fastmail" })
         }
     }
 

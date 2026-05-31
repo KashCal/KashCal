@@ -379,10 +379,11 @@
     <string name="accounts_section_add">Aldoni konton</string>
     <string name="accounts_empty_title">Neniuj kontoj konektitaj</string>
     <string name="accounts_empty_subtitle">Aldonu konton por sinkronigi viajn kalendarojn inter aparatoj</string>
-    <string name="accounts_row_label">iCloud, Nextcloud kaj pli</string>
+    <string name="accounts_row_label">Kalendaraj kontoj</string>
+    <string name="accounts_row_hint">ekz. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Aldoni iCloud</string>
     <string name="accounts_add_caldav">Aldoni CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail kaj pli</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail kaj pli</string>
     <string name="accounts_caldav_help_title">Kio estas CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV estas malferma normo por sinkronigi kalendarojn. Subtenata de:</string>
     <string name="accounts_caldav_help_more">kaj pli</string>
@@ -404,6 +405,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Naskig̉tagoj kaj datrevenoj</string>
+    <string name="birthdays_anniversaries_row_hint">El viaj telefonaj kontaktoj</string>
     <string name="birthdays_section_title">Naskig̉tagoj</string>
     <string name="anniversaries_section_title">Datrevenoj</string>
     <string name="settings_contact_birthdays">Kontaktaj naskig̉tagoj</string>
@@ -457,6 +459,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Aparataj kalendaroj</string>
+    <string name="settings_device_calendars_hint">Kalendaroj el aliaj aplikaĵoj</string>
     <string name="settings_quick_event_add">Rapida eventaldono</string>
     <string name="settings_week_numbers">Semajnaj numeroj</string>
     <string name="settings_show_declined">Montri malakceptitajn eventojn</string>
@@ -579,16 +582,16 @@
         <item quantity="other">%1$s · %2$d kalendaroj</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abono</item>
-        <item quantity="other">%1$d abonoj</item>
+        <item quantity="one">%1$d fluo</item>
+        <item quantity="other">%1$d fluoj</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abono kaj viaj preferoj estos importitaj.</item>
-        <item quantity="other">%1$d abonoj kaj viaj preferoj estos importitaj.</item>
+        <item quantity="one">%1$d fluo kaj viaj preferoj estos importitaj.</item>
+        <item quantity="other">%1$d fluoj kaj viaj preferoj estos importitaj.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importita %1$d abono kaj viaj preferoj.</item>
-        <item quantity="other">Importitaj %1$d abonoj kaj viaj preferoj.</item>
+        <item quantity="one">Importita %1$d fluo kaj viaj preferoj.</item>
+        <item quantity="other">Importitaj %1$d fluoj kaj viaj preferoj.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinkronigo malsukcesis (%1$d provo)</item>

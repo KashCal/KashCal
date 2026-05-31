@@ -367,10 +367,11 @@
     <string name="accounts_section_add">Pridať účet</string>
     <string name="accounts_empty_title">Žiadne pripojené účty</string>
     <string name="accounts_empty_subtitle">Pridajte účet na synchronizáciu kalendárov medzi zariadeniami</string>
-    <string name="accounts_row_label">iCloud, Nextcloud a ďalšie</string>
+    <string name="accounts_row_label">Účty kalendára</string>
+    <string name="accounts_row_hint">napr. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Pridať iCloud</string>
     <string name="accounts_add_caldav">Pridať CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail a ďalšie</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail a ďalšie</string>
     <string name="accounts_caldav_help_title">Čo je CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV je otvorený štandard na synchronizáciu kalendárov. Podporovaný:</string>
     <string name="accounts_caldav_help_more">a ďalšie</string>
@@ -390,6 +391,7 @@
     <string name="subscriptions_add_ics">Pridať kalendár ICS</string>
 
     <string name="birthdays_anniversaries_row_label">Narodeniny a výročia</string>
+    <string name="birthdays_anniversaries_row_hint">Z kontaktov telefónu</string>
     <string name="birthdays_section_title">Narodeniny</string>
     <string name="anniversaries_section_title">Výročia</string>
     <string name="settings_contact_birthdays">Narodeniny kontaktov</string>
@@ -438,6 +440,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Kalendáre zariadenia</string>
+    <string name="settings_device_calendars_hint">Kalendáre z iných aplikácií</string>
     <string name="settings_quick_event_add">Rýchle pridanie udalosti</string>
     <string name="settings_week_numbers">Čísla týždňov</string>
     <string name="settings_show_declined">Zobraziť odmietnuté udalosti</string>
@@ -560,22 +563,22 @@
         <item quantity="other">%1$s · %2$d kalendárov</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d odber</item>
-        <item quantity="few">%1$d odbery</item>
-        <item quantity="many">%1$d odberov</item>
-        <item quantity="other">%1$d odberov</item>
+        <item quantity="one">%1$d kanál</item>
+        <item quantity="few">%1$d kanály</item>
+        <item quantity="many">%1$d kanálov</item>
+        <item quantity="other">%1$d kanálov</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d odber a vaše predvoľby budú importované.</item>
-        <item quantity="few">%1$d odbery a vaše predvoľby budú importované.</item>
-        <item quantity="many">%1$d odberov a vaše predvoľby budú importované.</item>
-        <item quantity="other">%1$d odberov a vaše predvoľby budú importované.</item>
+        <item quantity="one">%1$d kanál a vaše predvoľby budú importované.</item>
+        <item quantity="few">%1$d kanály a vaše predvoľby budú importované.</item>
+        <item quantity="many">%1$d kanálov a vaše predvoľby budú importované.</item>
+        <item quantity="other">%1$d kanálov a vaše predvoľby budú importované.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importovaný %1$d odber a vaše predvoľby.</item>
-        <item quantity="few">Importované %1$d odbery a vaše predvoľby.</item>
-        <item quantity="many">Importovaných %1$d odberov a vaše predvoľby.</item>
-        <item quantity="other">Importovaných %1$d odberov a vaše predvoľby.</item>
+        <item quantity="one">Importovaný %1$d kanál a vaše predvoľby.</item>
+        <item quantity="few">Importované %1$d kanály a vaše predvoľby.</item>
+        <item quantity="many">Importovaných %1$d kanálov a vaše predvoľby.</item>
+        <item quantity="other">Importovaných %1$d kanálov a vaše predvoľby.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronizácia zlyhala (%1$d pokus)</item>

@@ -367,10 +367,11 @@
     <string name="accounts_section_add">Dodaj račun</string>
     <string name="accounts_empty_title">Nema povezanih računa</string>
     <string name="accounts_empty_subtitle">Dodaj račun za sinkronizaciju kalendara između uređaja</string>
-    <string name="accounts_row_label">iCloud, Nextcloud i više</string>
+    <string name="accounts_row_label">Računi kalendara</string>
+    <string name="accounts_row_hint">npr. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Dodaj iCloud</string>
     <string name="accounts_add_caldav">Dodaj CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail i više</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail i više</string>
     <string name="accounts_caldav_help_title">Što je CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV je otvoreni standard za sinkronizaciju kalendara. Podržavaju ga:</string>
     <string name="accounts_caldav_help_more">i više</string>
@@ -390,6 +391,7 @@
     <string name="subscriptions_add_ics">Dodaj ICS kalendar</string>
 
     <string name="birthdays_anniversaries_row_label">Rođendani i godišnjice</string>
+    <string name="birthdays_anniversaries_row_hint">Iz kontakata telefona</string>
     <string name="birthdays_section_title">Rođendani</string>
     <string name="anniversaries_section_title">Godišnjice</string>
     <string name="settings_contact_birthdays">Rođendani kontakata</string>
@@ -438,6 +440,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Kalendari uređaja</string>
+    <string name="settings_device_calendars_hint">Kalendari iz drugih aplikacija</string>
     <string name="settings_quick_event_add">Brzo dodavanje događaja</string>
     <string name="settings_week_numbers">Brojevi tjedana</string>
     <string name="settings_show_declined">Prikaži odbijene događaje</string>
@@ -558,19 +561,19 @@
         <item quantity="other">%1$s · %2$d kalendara</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d pretplata</item>
-        <item quantity="few">%1$d pretplate</item>
-        <item quantity="other">%1$d pretplata</item>
+        <item quantity="one">%1$d feed</item>
+        <item quantity="few">%1$d feeda</item>
+        <item quantity="other">%1$d feedova</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d pretplata i vaše postavke bit će uvezeni.</item>
-        <item quantity="few">%1$d pretplate i vaše postavke bit će uvezeni.</item>
-        <item quantity="other">%1$d pretplata i vaše postavke bit će uvezeni.</item>
+        <item quantity="one">%1$d feed i vaše postavke bit će uvezeni.</item>
+        <item quantity="few">%1$d feeda i vaše postavke bit će uvezeni.</item>
+        <item quantity="other">%1$d feedova i vaše postavke bit će uvezeni.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Uvezena %1$d pretplata i vaše postavke.</item>
-        <item quantity="few">Uvezene %1$d pretplate i vaše postavke.</item>
-        <item quantity="other">Uvezeno %1$d pretplata i vaše postavke.</item>
+        <item quantity="one">Uvezen %1$d feed i vaše postavke.</item>
+        <item quantity="few">Uvezena %1$d feeda i vaše postavke.</item>
+        <item quantity="other">Uvezeno %1$d feedova i vaše postavke.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinkronizacija neuspješna (%1$d pokušaj)</item>

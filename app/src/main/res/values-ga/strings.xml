@@ -406,10 +406,11 @@
     <string name="accounts_section_add">Cuir Cuntas Leis</string>
     <string name="accounts_empty_title">Níl aon chuntas ceangailte</string>
     <string name="accounts_empty_subtitle">Cuir cuntas leis chun d\'fhéilirí a shioncronú trasna gléasanna</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Níos Mó</string>
+    <string name="accounts_row_label">Cuntais Fhéilire</string>
+    <string name="accounts_row_hint">m.sh. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Cuir iCloud Leis</string>
     <string name="accounts_add_caldav">Cuir CalDAV Leis</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Níos Mó</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Níos Mó</string>
     <string name="accounts_caldav_help_title">Céard é CalDAV?</string>
     <string name="accounts_caldav_help_description">Is caighdeán oscailte é CalDAV chun féilirí a shioncronú. Tacaithe ag:</string>
     <string name="accounts_caldav_help_more">&amp; níos mó</string>
@@ -431,6 +432,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Láethanta Breithe &amp; Comóradh</string>
+    <string name="birthdays_anniversaries_row_hint">Ó theagmhálaithe do ghutháin</string>
     <string name="birthdays_section_title">Láethanta Breithe</string>
     <string name="anniversaries_section_title">Comóradh</string>
     <string name="settings_contact_birthdays">Láethanta Breithe Teagmhálaí</string>
@@ -485,6 +487,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Féilirí na Gléine</string>
+    <string name="settings_device_calendars_hint">Féilirí ó aipeanna eile</string>
     <string name="settings_quick_event_add">Cuir Imeacht Tapa Leis</string>
     <string name="settings_week_numbers">Uimhreacha Seachtaine</string>
     <string name="settings_show_declined">Taispeáin imeachtaí diúltaithe</string>
@@ -613,25 +616,25 @@
         <item quantity="other">%1$s · %2$d féilire</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d shíntiús</item>
-        <item quantity="two">%1$d shíntiús</item>
-        <item quantity="few">%1$d shíntiús</item>
-        <item quantity="many">%1$d síntiús</item>
-        <item quantity="other">%1$d síntiús</item>
+        <item quantity="one">%1$d fhotha</item>
+        <item quantity="two">%1$d fhotha</item>
+        <item quantity="few">%1$d fhotha</item>
+        <item quantity="many">%1$d bhfotha</item>
+        <item quantity="other">%1$d fotha</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">Iompórtálfar %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="two">Iompórtálfar %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="few">Iompórtálfar %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="many">Iompórtálfar %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="other">Iompórtálfar %1$d síntiús agus do shainroghanna.</item>
+        <item quantity="one">Iompórtálfar %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="two">Iompórtálfar %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="few">Iompórtálfar %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="many">Iompórtálfar %1$d bhfotha agus do shainroghanna.</item>
+        <item quantity="other">Iompórtálfar %1$d fotha agus do shainroghanna.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Iompórtáladh %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="two">Iompórtáladh %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="few">Iompórtáladh %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="many">Iompórtáladh %1$d shíntiús agus do shainroghanna.</item>
-        <item quantity="other">Iompórtáladh %1$d síntiús agus do shainroghanna.</item>
+        <item quantity="one">Iompórtáladh %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="two">Iompórtáladh %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="few">Iompórtáladh %1$d fhotha agus do shainroghanna.</item>
+        <item quantity="many">Iompórtáladh %1$d bhfotha agus do shainroghanna.</item>
+        <item quantity="other">Iompórtáladh %1$d fotha agus do shainroghanna.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Theip ar shioncronú (%1$d iarracht)</item>

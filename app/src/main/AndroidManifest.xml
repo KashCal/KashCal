@@ -86,6 +86,14 @@
                 <data android:mimeType="text/calendar" />
             </intent-filter>
 
+            <!-- Plain-text shares from other apps. Routes through SharedTextNormalizer
+                 into Quick Add (short input) or the full event form (long input). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
             <!-- Handle .ics file imports (content:// URI) -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />

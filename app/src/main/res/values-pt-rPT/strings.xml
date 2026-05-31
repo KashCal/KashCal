@@ -384,10 +384,11 @@
     <string name="accounts_section_add">Adicionar conta</string>
     <string name="accounts_empty_title">Sem contas ligadas</string>
     <string name="accounts_empty_subtitle">Adicione uma conta para sincronizar os seus calendários entre dispositivos</string>
-    <string name="accounts_row_label">iCloud, Nextcloud e mais</string>
+    <string name="accounts_row_label">Contas de calendário</string>
+    <string name="accounts_row_hint">por ex. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Adicionar iCloud</string>
     <string name="accounts_add_caldav">Adicionar CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail e mais</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail e mais</string>
     <string name="accounts_caldav_help_title">O que é CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV é um padrão aberto para sincronizar calendários. Suportado por:</string>
     <string name="accounts_caldav_help_more">e mais</string>
@@ -409,6 +410,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Aniversários e celebrações</string>
+    <string name="birthdays_anniversaries_row_hint">Dos seus contactos do telefone</string>
     <string name="birthdays_section_title">Aniversários</string>
     <string name="anniversaries_section_title">Celebrações</string>
     <string name="settings_contact_birthdays">Aniversários de contactos</string>
@@ -462,6 +464,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendários do dispositivo</string>
+    <string name="settings_device_calendars_hint">Calendários de outras apps</string>
     <string name="settings_quick_event_add">Adição rápida de evento</string>
     <string name="settings_week_numbers">Números de semana</string>
     <string name="settings_show_declined">Mostrar eventos recusados</string>
@@ -587,19 +590,19 @@
         <item quantity="other">%1$s · %2$d calendários</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d subscrição</item>
-        <item quantity="many">%1$d subscrições</item>
-        <item quantity="other">%1$d subscrições</item>
+        <item quantity="one">%1$d feed</item>
+        <item quantity="many">%1$d feeds</item>
+        <item quantity="other">%1$d feeds</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">Serão importados %1$d subscrição e as tuas preferências.</item>
-        <item quantity="many">Serão importadas %1$d subscrições e as tuas preferências.</item>
-        <item quantity="other">Serão importadas %1$d subscrições e as tuas preferências.</item>
+        <item quantity="one">Serão importados %1$d feed e as tuas preferências.</item>
+        <item quantity="many">Serão importados %1$d feeds e as tuas preferências.</item>
+        <item quantity="other">Serão importados %1$d feeds e as tuas preferências.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importados %1$d subscrição e as tuas preferências.</item>
-        <item quantity="many">Importadas %1$d subscrições e as tuas preferências.</item>
-        <item quantity="other">Importadas %1$d subscrições e as tuas preferências.</item>
+        <item quantity="one">Importados %1$d feed e as tuas preferências.</item>
+        <item quantity="many">Importados %1$d feeds e as tuas preferências.</item>
+        <item quantity="other">Importados %1$d feeds e as tuas preferências.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sincronização falhada (%1$d tentativa)</item>

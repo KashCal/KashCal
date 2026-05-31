@@ -398,10 +398,11 @@
     <string name="accounts_section_add">Προσθήκη λογαριασμού</string>
     <string name="accounts_empty_title">Δεν υπάρχουν συνδεδεμένοι λογαριασμοί</string>
     <string name="accounts_empty_subtitle">Προσθέστε έναν λογαριασμό για να συγχρονίσετε τα ημερολόγιά σας μεταξύ συσκευών</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Άλλα</string>
+    <string name="accounts_row_label">Λογαριασμοί ημερολογίου</string>
+    <string name="accounts_row_hint">π.χ. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Προσθήκη iCloud</string>
     <string name="accounts_add_caldav">Προσθήκη CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Άλλα</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Άλλα</string>
     <string name="accounts_caldav_help_title">Τι είναι το CalDAV;</string>
     <string name="accounts_caldav_help_description">Το CalDAV είναι ένα ανοιχτό πρότυπο για συγχρονισμό ημερολογίων. Υποστηρίζεται από:</string>
     <string name="accounts_caldav_help_more">&amp; άλλα</string>
@@ -423,6 +424,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Γενέθλια &amp; Επέτειοι</string>
+    <string name="birthdays_anniversaries_row_hint">Από τις επαφές του τηλεφώνου σας</string>
     <string name="birthdays_section_title">Γενέθλια</string>
     <string name="anniversaries_section_title">Επέτειοι</string>
     <string name="settings_contact_birthdays">Γενέθλια επαφών</string>
@@ -479,6 +481,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
+    <string name="settings_device_calendars_hint">Ημερολόγια από άλλες εφαρμογές</string>
     <string name="settings_quick_event_add">Γρήγορη προσθήκη συμβάντος</string>
     <string name="settings_week_numbers">Αριθμοί εβδομάδων</string>
     <string name="settings_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d ημερολόγια</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d συνδρομή</item>
-        <item quantity="other">%1$d συνδρομές</item>
+        <item quantity="one">%1$d ροή</item>
+        <item quantity="other">%1$d ροές</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d συνδρομή και οι προτιμήσεις σας θα εισαχθούν.</item>
-        <item quantity="other">%1$d συνδρομές και οι προτιμήσεις σας θα εισαχθούν.</item>
+        <item quantity="one">%1$d ροή και οι προτιμήσεις σας θα εισαχθούν.</item>
+        <item quantity="other">%1$d ροές και οι προτιμήσεις σας θα εισαχθούν.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d συνδρομή και οι προτιμήσεις σας εισήχθησαν.</item>
-        <item quantity="other">%1$d συνδρομές και οι προτιμήσεις σας εισήχθησαν.</item>
+        <item quantity="one">%1$d ροή και οι προτιμήσεις σας εισήχθησαν.</item>
+        <item quantity="other">%1$d ροές και οι προτιμήσεις σας εισήχθησαν.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Ο συγχρονισμός απέτυχε (%1$d προσπάθεια)</item>

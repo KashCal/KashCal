@@ -400,10 +400,11 @@
     <string name="accounts_section_add">अकाउंट जोड़ें</string>
     <string name="accounts_empty_title">कोई अकाउंट कनेक्ट नहीं</string>
     <string name="accounts_empty_subtitle">डिवाइसों में कैलेंडर सिंक करने के लिए अकाउंट जोड़ें</string>
-    <string name="accounts_row_label">iCloud, Nextcloud और अधिक</string>
+    <string name="accounts_row_label">कैलेंडर खाते</string>
+    <string name="accounts_row_hint">उदा. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud जोड़ें</string>
     <string name="accounts_add_caldav">CalDAV जोड़ें</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail और अधिक</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail और अधिक</string>
     <string name="accounts_caldav_help_title">CalDAV क्या है?</string>
     <string name="accounts_caldav_help_description">CalDAV कैलेंडर सिंक करने का एक ओपन स्टैंडर्ड है। इनके द्वारा समर्थित:</string>
     <string name="accounts_caldav_help_more">और अधिक</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">जन्मदिन और सालगिराह</string>
+    <string name="birthdays_anniversaries_row_hint">आपके फ़ोन संपर्कों से</string>
     <string name="birthdays_section_title">जन्मदिन</string>
     <string name="anniversaries_section_title">सालगिराह</string>
     <string name="settings_contact_birthdays">संपर्क जन्मदिन</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">डिवाइस कैलेंडर</string>
+    <string name="settings_device_calendars_hint">अन्य ऐप्स के कैलेंडर</string>
     <string name="settings_quick_event_add">त्वरित इवेंट जोड़ें</string>
     <string name="settings_week_numbers">सप्ताह संख्या</string>
     <string name="settings_show_declined">अस्वीकृत कार्यक्रम दिखाएँ</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d कैलेंडर</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d सदस्यता</item>
-        <item quantity="other">%1$d सदस्यताएँ</item>
+        <item quantity="one">%1$d फ़ीड</item>
+        <item quantity="other">%1$d फ़ीड</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d सदस्यता और आपकी प्राथमिकताएँ आयात की जाएँगी।</item>
-        <item quantity="other">%1$d सदस्यताएँ और आपकी प्राथमिकताएँ आयात की जाएँगी।</item>
+        <item quantity="one">%1$d फ़ीड और आपकी प्राथमिकताएँ आयात की जाएँगी।</item>
+        <item quantity="other">%1$d फ़ीड और आपकी प्राथमिकताएँ आयात की जाएँगी।</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d सदस्यता और आपकी प्राथमिकताएँ आयात की गईं।</item>
-        <item quantity="other">%1$d सदस्यताएँ और आपकी प्राथमिकताएँ आयात की गईं।</item>
+        <item quantity="one">%1$d फ़ीड और आपकी प्राथमिकताएँ आयात की गईं।</item>
+        <item quantity="other">%1$d फ़ीड और आपकी प्राथमिकताएँ आयात की गईं।</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">सिंक विफल (%1$d प्रयास)</item>

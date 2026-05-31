@@ -28,7 +28,7 @@ import javax.inject.Singleton
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Discovery service for generic CalDAV servers (Nextcloud, Baikal, Radicale, FastMail).
+ * Discovery service for generic CalDAV servers (Nextcloud, Baikal, Radicale, Fastmail).
  *
  * Unlike ICloudAccountDiscoveryService which uses a fixed server URL and singleton client,
  * this service:
@@ -968,7 +968,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
      * Extract a display name from the server URL.
      * Examples:
      * - "https://nextcloud.example.com" -> "nextcloud.example.com"
-     * - "https://caldav.fastmail.com" -> "FastMail"
+     * - "https://caldav.fastmail.com" -> "Fastmail"
      */
     private fun extractServerDisplayName(serverUrl: String): String {
         val uri = URI(serverUrl)
@@ -976,7 +976,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
         // Known server display names
         return when {
-            host.contains("fastmail", ignoreCase = true) -> "FastMail"
+            host.contains("fastmail", ignoreCase = true) -> "Fastmail"
             host.contains("icloud", ignoreCase = true) -> "iCloud"
             host.contains("google", ignoreCase = true) -> "Google"
             host.contains("yahoo", ignoreCase = true) -> "Yahoo"

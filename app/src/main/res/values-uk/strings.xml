@@ -392,10 +392,11 @@
     <string name="accounts_section_add">Додати обліковий запис</string>
     <string name="accounts_empty_title">Немає підключених облікових записів</string>
     <string name="accounts_empty_subtitle">Додайте обліковий запис для синхронізації календарів між пристроями</string>
-    <string name="accounts_row_label">iCloud, Nextcloud та інші</string>
+    <string name="accounts_row_label">Облікові записи календаря</string>
+    <string name="accounts_row_hint">напр. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Додати iCloud</string>
     <string name="accounts_add_caldav">Додати CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail та інші</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail та інші</string>
     <string name="accounts_caldav_help_title">Що таке CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV — відкритий стандарт синхронізації календарів. Підтримується:</string>
     <string name="accounts_caldav_help_more">та іншими</string>
@@ -417,6 +418,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Дні народження та річниці</string>
+    <string name="birthdays_anniversaries_row_hint">З контактів телефону</string>
     <string name="birthdays_section_title">Дні народження</string>
     <string name="anniversaries_section_title">Річниці</string>
     <string name="settings_contact_birthdays">Дні народження з контактів</string>
@@ -470,6 +472,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календарі пристрою</string>
+    <string name="settings_device_calendars_hint">Календарі з інших застосунків</string>
     <string name="settings_quick_event_add">Швидке додавання</string>
     <string name="settings_week_numbers">Номери тижнів</string>
     <string name="settings_show_declined">Показувати відхилені події</string>
@@ -597,22 +600,22 @@
         <item quantity="other">%1$s · %2$d календарів</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d підписка</item>
-        <item quantity="few">%1$d підписки</item>
-        <item quantity="many">%1$d підписок</item>
-        <item quantity="other">%1$d підписок</item>
+        <item quantity="one">%1$d стрічка</item>
+        <item quantity="few">%1$d стрічки</item>
+        <item quantity="many">%1$d стрічок</item>
+        <item quantity="other">%1$d стрічки</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d підписку та ваші налаштування буде імпортовано.</item>
-        <item quantity="few">%1$d підписки та ваші налаштування буде імпортовано.</item>
-        <item quantity="many">%1$d підписок та ваші налаштування буде імпортовано.</item>
-        <item quantity="other">%1$d підписки та ваші налаштування буде імпортовано.</item>
+        <item quantity="one">%1$d стрічку та ваші налаштування буде імпортовано.</item>
+        <item quantity="few">%1$d стрічки та ваші налаштування буде імпортовано.</item>
+        <item quantity="many">%1$d стрічок та ваші налаштування буде імпортовано.</item>
+        <item quantity="other">%1$d стрічки та ваші налаштування буде імпортовано.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Імпортовано %1$d підписку та ваші налаштування.</item>
-        <item quantity="few">Імпортовано %1$d підписки та ваші налаштування.</item>
-        <item quantity="many">Імпортовано %1$d підписок та ваші налаштування.</item>
-        <item quantity="other">Імпортовано %1$d підписки та ваші налаштування.</item>
+        <item quantity="one">Імпортовано %1$d стрічку та ваші налаштування.</item>
+        <item quantity="few">Імпортовано %1$d стрічки та ваші налаштування.</item>
+        <item quantity="many">Імпортовано %1$d стрічок та ваші налаштування.</item>
+        <item quantity="other">Імпортовано %1$d стрічки та ваші налаштування.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Помилка синхронізації (%1$d спроба)</item>

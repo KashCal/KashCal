@@ -361,10 +361,11 @@
     <string name="accounts_section_add">Lägg till konto</string>
     <string name="accounts_empty_title">Inga konton anslutna</string>
     <string name="accounts_empty_subtitle">Lägg till ett konto för att synkronisera dina kalendrar mellan enheter</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; mer</string>
+    <string name="accounts_row_label">Kalenderkonton</string>
+    <string name="accounts_row_hint">t.ex. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Lägg till iCloud</string>
     <string name="accounts_add_caldav">Lägg till CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; mer</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; mer</string>
     <string name="accounts_caldav_help_title">Vad är CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV är en öppen standard för kalendersynkronisering. Stöds av:</string>
     <string name="accounts_caldav_help_more">&amp; mer</string>
@@ -386,6 +387,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Födelsedagar &amp; årsdagar</string>
+    <string name="birthdays_anniversaries_row_hint">Från dina telefonkontakter</string>
     <string name="birthdays_section_title">Födelsedagar</string>
     <string name="anniversaries_section_title">Årsdagar</string>
     <string name="settings_contact_birthdays">Kontakters födelsedagar</string>
@@ -439,6 +441,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Enhetskalendrar</string>
+    <string name="settings_device_calendars_hint">Kalendrar från andra appar</string>
     <string name="settings_quick_event_add">Snabb händelsetillägg</string>
     <string name="settings_week_numbers">Veckonummer</string>
     <string name="settings_show_declined">Visa avböjda händelser</string>
@@ -562,16 +565,16 @@
         <item quantity="other">%1$s · %2$d kalendrar</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d prenumeration</item>
-        <item quantity="other">%1$d prenumerationer</item>
+        <item quantity="one">%1$d feed</item>
+        <item quantity="other">%1$d feeds</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d prenumeration och dina inställningar importeras.</item>
-        <item quantity="other">%1$d prenumerationer och dina inställningar importeras.</item>
+        <item quantity="one">%1$d feed och dina inställningar importeras.</item>
+        <item quantity="other">%1$d feeds och dina inställningar importeras.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d prenumeration och dina inställningar importerade.</item>
-        <item quantity="other">%1$d prenumerationer och dina inställningar importerade.</item>
+        <item quantity="one">%1$d feed och dina inställningar importerade.</item>
+        <item quantity="other">%1$d feeds och dina inställningar importerade.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synk misslyckades (%1$d försök)</item>

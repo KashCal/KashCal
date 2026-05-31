@@ -400,10 +400,11 @@
     <string name="accounts_section_add">ಖಾತೆ ಸೇರಿಸಿ</string>
     <string name="accounts_empty_title">ಖಾತೆಗಳು ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ</string>
     <string name="accounts_empty_subtitle">ಸಾಧನಗಳ ನಡುವೆ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು ಖಾತೆ ಸೇರಿಸಿ</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; ಇನ್ನಷ್ಟು</string>
+    <string name="accounts_row_label">ಕ್ಯಾಲೆಂಡರ್ ಖಾತೆಗಳು</string>
+    <string name="accounts_row_hint">ಉದಾ. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud ಸೇರಿಸಿ</string>
     <string name="accounts_add_caldav">CalDAV ಸೇರಿಸಿ</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; ಇನ್ನಷ್ಟು</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; ಇನ್ನಷ್ಟು</string>
     <string name="accounts_caldav_help_title">CalDAV ಎಂದರೇನು?</string>
     <string name="accounts_caldav_help_description">CalDAV ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು ಒಂದು ಮುಕ್ತ ಮಾನಕ. ಇವುಗಳಿಂದ ಬೆಂಬಲಿತ:</string>
     <string name="accounts_caldav_help_more">&amp; ಇನ್ನಷ್ಟು</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ಹುಟ್ಟುಹಬ್ಬಗಳು &amp; ವಾರ್ಷಿಕೋತ್ಸವಗಳು</string>
+    <string name="birthdays_anniversaries_row_hint">ನಿಮ್ಮ ಫೋನ್ ಸಂಪರ್ಕಗಳಿಂದ</string>
     <string name="birthdays_section_title">ಹುಟ್ಟುಹಬ್ಬಗಳು</string>
     <string name="anniversaries_section_title">ವಾರ್ಷಿಕೋತ್ಸವಗಳು</string>
     <string name="settings_contact_birthdays">ಸಂಪರ್ಕ ಹುಟ್ಟುಹಬ್ಬಗಳು</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
+    <string name="settings_device_calendars_hint">ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="settings_quick_event_add">ತ್ವರಿತ ಈವೆಂಟ್ ಸೇರ್ಪಡೆ</string>
     <string name="settings_week_numbers">ವಾರ ಸಂಖ್ಯೆಗಳು</string>
     <string name="settings_show_declined">ತಿರಸ್ಕರಿಸಿದ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d ಚಂದಾದಾರಿಕೆ</item>
-        <item quantity="other">%1$d ಚಂದಾದಾರಿಕೆಗಳು</item>
+        <item quantity="one">%1$d ಫೀಡ್</item>
+        <item quantity="other">%1$d ಫೀಡ್‌ಗಳು</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d ಚಂದಾದಾರಿಕೆ ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗುತ್ತದೆ.</item>
-        <item quantity="other">%1$d ಚಂದಾದಾರಿಕೆಗಳು ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗುತ್ತದೆ.</item>
+        <item quantity="one">%1$d ಫೀಡ್ ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗುತ್ತದೆ.</item>
+        <item quantity="other">%1$d ಫೀಡ್‌ಗಳು ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗುತ್ತದೆ.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d ಚಂದಾದಾರಿಕೆ ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗಿದೆ.</item>
-        <item quantity="other">%1$d ಚಂದಾದಾರಿಕೆಗಳು ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗಿದೆ.</item>
+        <item quantity="one">%1$d ಫೀಡ್ ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗಿದೆ.</item>
+        <item quantity="other">%1$d ಫೀಡ್‌ಗಳು ಮತ್ತು ನಿಮ್ಮ ಆದ್ಯತೆಗಳನ್ನು ಆಮದು ಮಾಡಲಾಗಿದೆ.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ಸಿಂಕ್ ವಿಫಲವಾಯಿತು (%1$d ಪ್ರಯತ್ನ)</item>

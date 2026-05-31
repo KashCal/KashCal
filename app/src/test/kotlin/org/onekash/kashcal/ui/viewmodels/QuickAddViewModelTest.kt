@@ -60,6 +60,7 @@ class QuickAddViewModelTest {
         every { dataStore.defaultEventDuration } returns flowOf(60)
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(720) // 12 hours
+        every { dataStore.firstDayOfWeek } returns flowOf(KashCalDataStore.FIRST_DAY_SYSTEM)
 
         // Default calendar — use DataStore preference (matches EventFormSheet pattern)
         coEvery { dataStore.getDefaultCalendar() } returns DefaultCalendar.Room(1L)
@@ -137,6 +138,79 @@ class QuickAddViewModelTest {
         val result = viewModel.parseResult.value
         assertEquals("meeting", result.title)
         assertEquals(LocalDate.of(2026, 5, 10), result.startDate)
+    }
+
+    // ==================== seedInput (share-target entry point) ====================
+
+    @Test
+    fun `seedInput parses against current referenceTime`() = runTest {
+        // setup() set referenceTime to 2026-04-13 10:00.
+        viewModel.seedInput("Coffee tomorrow at 3pm", null)
+        advanceUntilIdle()
+
+        val result = viewModel.parseResult.value
+        assertEquals("Coffee", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+        assertEquals("Coffee tomorrow at 3pm", viewModel.inputText.value)
+        assertTrue(viewModel.isSaveEnabled.value)
+    }
+
+    @Test
+    fun `seedInput uses supplied location when parser yields none`() = runTest {
+        viewModel.seedInput("Standup 10am", "https://meet.example.com/abc")
+        advanceUntilIdle()
+
+        val result = viewModel.parseResult.value
+        assertEquals("https://meet.example.com/abc", result.location)
+    }
+
+    @Test
+    fun `seedInput supplied location does not overwrite parser location`() = runTest {
+        // Parser's LocationRule should claim "at Mission Cantina".
+        viewModel.seedInput("Lunch at Mission Cantina", "https://override.example.com")
+        advanceUntilIdle()
+
+        val parsed = viewModel.parseResult.value.location
+        assertNotNull(parsed)
+        assertFalse(
+            "supplied location must not overwrite parser-derived location",
+            parsed == "https://override.example.com"
+        )
+    }
+
+    @Test
+    fun `seedInput with blank text leaves isSaveEnabled false`() = runTest {
+        viewModel.seedInput("", null)
+        advanceUntilIdle()
+        assertFalse(viewModel.isSaveEnabled.value)
+    }
+
+    @Test
+    fun `seeded location survives a re-parse of the same text via onInputChanged`() = runTest {
+        // Reproduces the share-target snapshotFlow first-emit race: after
+        // seedInput merges seed.location, the dialog's snapshotFlow.collect
+        // immediately fires onInputChanged(seed.text) with the same string,
+        // which used to drop the seeded location.
+        viewModel.seedInput("Standup 10am", "https://meet.example.com/abc")
+        advanceUntilIdle()
+        viewModel.onInputChanged("Standup 10am")
+        advanceUntilIdle()
+
+        assertEquals("https://meet.example.com/abc", viewModel.parseResult.value.location)
+    }
+
+    @Test
+    fun `seeded location clears once the user edits the text`() = runTest {
+        // After the user types a different string, the share-supplied fallback
+        // should no longer be injected — otherwise typed input silently inherits
+        // a stale URL from the original share.
+        viewModel.seedInput("Standup 10am", "https://meet.example.com/abc")
+        advanceUntilIdle()
+        viewModel.onInputChanged("Coffee 2pm")
+        advanceUntilIdle()
+
+        assertNull(viewModel.parseResult.value.location)
     }
 
     // ==================== isSaveEnabled ====================

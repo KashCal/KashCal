@@ -9,7 +9,6 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.Duration
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -295,10 +294,12 @@ object ICalEventMapper {
             val masterLocalTime = ZonedDateTime
                 .ofInstant(java.time.Instant.ofEpochMilli(masterDtStart.timestamp), masterZone)
                 .toLocalTime()
-            val recurrenceDate = LocalDate.ofInstant(
+            // LocalDate.ofInstant requires API 34. ZonedDateTime.ofInstant has been
+            // available since API 26 and produces the same result via .toLocalDate().
+            val recurrenceDate = ZonedDateTime.ofInstant(
                 java.time.Instant.ofEpochMilli(recurrenceId.timestamp),
                 ZoneOffset.UTC, // DATE values are stored as UTC midnight per ICalDateTime
-            )
+            ).toLocalDate()
             val zoned = ZonedDateTime.of(recurrenceDate, masterLocalTime, masterZone)
             ICalDateTime.fromZonedDateTime(zoned, isDate = false)
         }

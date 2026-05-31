@@ -337,10 +337,11 @@
     <string name="accounts_section_add">添加账户</string>
     <string name="accounts_empty_title">没有已连接的账户</string>
     <string name="accounts_empty_subtitle">添加账户以跨设备同步日历</string>
-    <string name="accounts_row_label">iCloud、Nextcloud 等</string>
+    <string name="accounts_row_label">日历账户</string>
+    <string name="accounts_row_hint">例如：iCloud、Nextcloud、Fastmail</string>
     <string name="accounts_add_icloud">添加 iCloud</string>
     <string name="accounts_add_caldav">添加 CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud、FastMail 等</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud、Fastmail 等</string>
     <string name="accounts_caldav_help_title">什么是 CalDAV？</string>
     <string name="accounts_caldav_help_description">CalDAV 是用于同步日历的开放标准。支持的服务：</string>
     <string name="accounts_caldav_help_more">等等</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">生日与纪念日</string>
+    <string name="birthdays_anniversaries_row_hint">来自手机联系人</string>
     <string name="birthdays_section_title">生日</string>
     <string name="anniversaries_section_title">纪念日</string>
     <string name="settings_contact_birthdays">联系人生日</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">设备日历</string>
+    <string name="settings_device_calendars_hint">其他应用的日历</string>
     <string name="settings_quick_event_add">快速添加事件</string>
     <string name="settings_week_numbers">周数</string>
     <string name="settings_show_declined">显示已拒绝的事件</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d 个日历</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d 个订阅</item>
+        <item quantity="other">%1$d 个订阅源</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">将导入 %1$d 个订阅及您的偏好设置。</item>
+        <item quantity="other">将导入 %1$d 个订阅源及您的偏好设置。</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">已导入 %1$d 个订阅及您的偏好设置。</item>
+        <item quantity="other">已导入 %1$d 个订阅源及您的偏好设置。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同步失败（%1$d 次尝试）</item>

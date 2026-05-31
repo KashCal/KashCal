@@ -402,6 +402,23 @@ sealed class PendingAction {
         val data: CalendarIntentData,
         val invitees: List<String>
     ) : PendingAction()
+
+    /**
+     * Open Quick Add dialog seeded with text shared from another app
+     * (Intent.ACTION_SEND, text/plain). Reference time is the moment the
+     * intent was received, so "tomorrow" resolves relative to share-arrival,
+     * not whatever date the user was browsing.
+     *
+     * @param text Pre-cleaned single-line text destined for the Quick Add input.
+     * @param location First http(s) URL extracted from the share, or null.
+     *                 Applied only when the parser does not derive its own location.
+     * @param referenceMs Intent-arrival timestamp in epoch ms, used as parse anchor.
+     */
+    data class QuickAddFromText(
+        val text: String,
+        val location: String?,
+        val referenceMs: Long
+    ) : PendingAction()
 }
 
 /**

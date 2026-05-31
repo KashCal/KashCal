@@ -51,4 +51,19 @@ class MainActivityIntentFilterTest {
             match
         )
     }
+
+    @Test
+    fun `resolves ACTION_SEND with text plain`() {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+        }
+        val resolved = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        val match = resolved.any {
+            it.activityInfo.name == "org.onekash.kashcal.MainActivity"
+        }
+        assertTrue(
+            "MainActivity must resolve ACTION_SEND + text/plain so it appears in the system share sheet",
+            match
+        )
+    }
 }

@@ -1109,7 +1109,7 @@ class AccountSettingsViewModel @Inject constructor(
 
         // Known providers get friendly names
         val providerName = when {
-            host.contains("fastmail", ignoreCase = true) -> "FastMail"
+            host.contains("fastmail", ignoreCase = true) -> "Fastmail"
             host.contains("nextcloud", ignoreCase = true) -> "Nextcloud"
             host.contains("icloud", ignoreCase = true) -> "iCloud"
             host.contains("google", ignoreCase = true) -> "Google"

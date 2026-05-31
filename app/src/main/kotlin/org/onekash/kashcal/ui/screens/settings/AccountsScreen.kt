@@ -522,7 +522,7 @@ private fun AddAccountButtons(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("• Nextcloud", style = MaterialTheme.typography.bodySmall)
-                    Text("• FastMail", style = MaterialTheme.typography.bodySmall)
+                    Text("• Fastmail", style = MaterialTheme.typography.bodySmall)
                     Text("• Baïkal", style = MaterialTheme.typography.bodySmall)
                     Text(
                         stringResource(R.string.accounts_caldav_help_more),
@@ -599,7 +599,7 @@ private fun AccountsScreenPreview() {
                 CalDavAccountUiModel(
                     id = 3,
                     email = "me@fastmail.com",
-                    displayName = "FastMail",
+                    displayName = "Fastmail",
                     calendarCount = 2
                 )
             ),
@@ -705,7 +705,7 @@ private fun AccountsScreenSyncWarningPreview() {
                 CalDavAccountUiModel(
                     id = 3,
                     email = "me@fastmail.com",
-                    displayName = "FastMail",
+                    displayName = "Fastmail",
                     calendarCount = 2,
                     consecutiveSyncFailures = 4,
                     lastSuccessfulSyncAt = null

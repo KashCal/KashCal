@@ -525,11 +525,13 @@
     <!-- accounts_count_one/other removed — use R.plurals.accounts_count -->
     <string name="accounts_empty_title">No accounts connected</string>
     <string name="accounts_empty_subtitle">Add an account to sync your calendars across devices</string>
-    <!-- Keep "iCloud", "Nextcloud", "FastMail", "CalDAV" untranslated -->
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; More</string>
+    <!-- Keep "iCloud", "Nextcloud", "Fastmail", "CalDAV" untranslated -->
+    <string name="accounts_row_label">Calendar Accounts</string>
+    <!-- Subtitle shown on the Settings row when no accounts are connected; descriptive hint for what users can connect. Keep brand names untranslated. -->
+    <string name="accounts_row_hint">e.g. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Add iCloud</string>
     <string name="accounts_add_caldav">Add CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; More</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; More</string>
     <!-- Keep "CalDAV" untranslated -->
     <string name="accounts_caldav_help_title">What is CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV is an open standard for syncing calendars. Supported by:</string>
@@ -559,6 +561,8 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Birthdays &amp; Anniversaries</string>
+    <!-- Subtitle shown on the Settings row when no birthdays or anniversaries exist; provenance hint for where the data comes from. -->
+    <string name="birthdays_anniversaries_row_hint">From your phone contacts</string>
     <string name="birthdays_section_title">Birthdays</string>
     <string name="anniversaries_section_title">Anniversaries</string>
     <string name="settings_contact_birthdays">Contact Birthdays</string>
@@ -623,6 +627,8 @@
     <!-- ==================== Settings Screen ==================== -->
     <!-- "Device Calendars" = calendars from other apps on this phone -->
     <string name="settings_device_calendars">Device Calendars</string>
+    <!-- Subtitle shown on the Settings row when device calendars are not enabled; provenance hint for where the data comes from. -->
+    <string name="settings_device_calendars_hint">Calendars from other apps</string>
     <string name="settings_quick_event_add">Quick Event Add</string>
     <!-- Settings row: enables autocomplete dropdown of prior event titles in the event form -->
     <string name="settings_suggest_titles">Suggest event titles</string>
@@ -798,18 +804,18 @@
         <item quantity="other">%1$s · %2$d calendars</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d subscription</item>
-        <item quantity="other">%1$d subscriptions</item>
+        <item quantity="one">%1$d feed</item>
+        <item quantity="other">%1$d feeds</item>
     </plurals>
-    <!-- Restore confirmation dialog body when the backup has at least one subscription. %1$d = subscription count. -->
+    <!-- Restore confirmation dialog body when the backup has at least one ICS feed. %1$d = feed count. -->
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">This will import %1$d subscription and your preferences.</item>
-        <item quantity="other">This will import %1$d subscriptions and your preferences.</item>
+        <item quantity="one">This will import %1$d feed and your preferences.</item>
+        <item quantity="other">This will import %1$d feeds and your preferences.</item>
     </plurals>
-    <!-- Restore success dialog body when at least one subscription was restored. %1$d = subscription count. -->
+    <!-- Restore success dialog body when at least one ICS feed was restored. %1$d = feed count. -->
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Imported %1$d subscription and your preferences.</item>
-        <item quantity="other">Imported %1$d subscriptions and your preferences.</item>
+        <item quantity="one">Imported %1$d feed and your preferences.</item>
+        <item quantity="other">Imported %1$d feeds and your preferences.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sync failed (%1$d attempt)</item>

@@ -1,4 +1,4 @@
-package org.onekash.kashcal.scheduling
+package org.onekash.kashcal.scheduling.integration
 
 import android.content.Context
 import androidx.room.Room

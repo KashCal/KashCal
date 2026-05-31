@@ -403,10 +403,11 @@
     <string name="accounts_section_add">Adaugă cont</string>
     <string name="accounts_empty_title">Niciun cont conectat</string>
     <string name="accounts_empty_subtitle">Adaugă un cont pentru a sincroniza calendarele pe dispozitive</string>
-    <string name="accounts_row_label">iCloud, Nextcloud și altele</string>
+    <string name="accounts_row_label">Conturi de calendar</string>
+    <string name="accounts_row_hint">ex. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Adaugă iCloud</string>
     <string name="accounts_add_caldav">Adaugă CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail și altele</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail și altele</string>
     <string name="accounts_caldav_help_title">Ce este CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV este un standard deschis pentru sincronizarea calendarelor. Suportat de:</string>
     <string name="accounts_caldav_help_more">și altele</string>
@@ -428,6 +429,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Zile de naștere și aniversări</string>
+    <string name="birthdays_anniversaries_row_hint">Din contactele telefonului</string>
     <string name="birthdays_section_title">Zile de naștere</string>
     <string name="anniversaries_section_title">Aniversări</string>
     <string name="settings_contact_birthdays">Zile de naștere contacte</string>
@@ -484,6 +486,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendare dispozitiv</string>
+    <string name="settings_device_calendars_hint">Calendare din alte aplicații</string>
     <string name="settings_quick_event_add">Adăugare rapidă eveniment</string>
     <string name="settings_week_numbers">Numere săptămâni</string>
     <string name="settings_show_declined">Afișează evenimentele refuzate</string>
@@ -609,19 +612,19 @@
         <item quantity="other">%1$s · %2$d de calendare</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abonament</item>
-        <item quantity="few">%1$d abonamente</item>
-        <item quantity="other">%1$d de abonamente</item>
+        <item quantity="one">%1$d flux</item>
+        <item quantity="few">%1$d fluxuri</item>
+        <item quantity="other">%1$d de fluxuri</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abonament și preferințele tale vor fi importate.</item>
-        <item quantity="few">%1$d abonamente și preferințele tale vor fi importate.</item>
-        <item quantity="other">%1$d de abonamente și preferințele tale vor fi importate.</item>
+        <item quantity="one">%1$d flux și preferințele tale vor fi importate.</item>
+        <item quantity="few">%1$d fluxuri și preferințele tale vor fi importate.</item>
+        <item quantity="other">%1$d de fluxuri și preferințele tale vor fi importate.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d abonament și preferințele tale importate.</item>
-        <item quantity="few">%1$d abonamente și preferințele tale importate.</item>
-        <item quantity="other">%1$d de abonamente și preferințele tale importate.</item>
+        <item quantity="one">%1$d flux și preferințele tale importate.</item>
+        <item quantity="few">%1$d fluxuri și preferințele tale importate.</item>
+        <item quantity="other">%1$d de fluxuri și preferințele tale importate.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sincronizare eșuată (%1$d încercare)</item>

@@ -399,10 +399,11 @@
     <string name="accounts_section_add">መለያ አክል</string>
     <string name="accounts_empty_title">ምንም መለያዎች አልተገናኙም</string>
     <string name="accounts_empty_subtitle">ቀን መቁጠሪያዎችዎን በመሳሪያዎች መካከል ለማመሳሰል መለያ ያክሉ</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; ሌሎችም</string>
+    <string name="accounts_row_label">የቀን መቁጠሪያ መለያዎች</string>
+    <string name="accounts_row_hint">ለምሳሌ iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud አክል</string>
     <string name="accounts_add_caldav">CalDAV አክል</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; ሌሎችም</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; ሌሎችም</string>
     <string name="accounts_caldav_help_title">CalDAV ምንድን ነው?</string>
     <string name="accounts_caldav_help_description">CalDAV ቀን መቁጠሪያዎችን ለማመሳሰል ክፍት ደረጃ ነው። የሚደገፈው በ:</string>
     <string name="accounts_caldav_help_more">&amp; ሌሎችም</string>
@@ -424,6 +425,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ልደቶች &amp; ዓመታዊ በዓሎች</string>
+    <string name="birthdays_anniversaries_row_hint">ከስልክ እውቂያዎችዎ</string>
     <string name="birthdays_section_title">ልደቶች</string>
     <string name="anniversaries_section_title">ዓመታዊ በዓሎች</string>
     <string name="settings_contact_birthdays">የእውቂያ ልደቶች</string>
@@ -477,6 +479,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
+    <string name="settings_device_calendars_hint">ከሌሎች መተግበሪያዎች የቀን መቁጠሪያዎች</string>
     <string name="settings_quick_event_add">ፈጣን ክስተት ማከል</string>
     <string name="settings_week_numbers">የሳምንት ቁጥሮች</string>
     <string name="settings_show_declined">ውድቅ የተደረጉ ክስተቶችን አሳይ</string>
@@ -597,16 +600,16 @@
         <item quantity="other">%1$s · %2$d ቀን መቁጠሪያዎች</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d ምዝገባ</item>
-        <item quantity="other">%1$d ምዝገባዎች</item>
+        <item quantity="one">%1$d ምግብ</item>
+        <item quantity="other">%1$d ምግቦች</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d ምዝገባ እና ምርጫዎችዎ ይገባሉ።</item>
-        <item quantity="other">%1$d ምዝገባዎች እና ምርጫዎችዎ ይገባሉ።</item>
+        <item quantity="one">%1$d ምግብ እና ምርጫዎችዎ ይገባሉ።</item>
+        <item quantity="other">%1$d ምግቦች እና ምርጫዎችዎ ይገባሉ።</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d ምዝገባ እና ምርጫዎችዎ ተመጥነዋል።</item>
-        <item quantity="other">%1$d ምዝገባዎች እና ምርጫዎችዎ ተመጥነዋል።</item>
+        <item quantity="one">%1$d ምግብ እና ምርጫዎችዎ ተመጥነዋል።</item>
+        <item quantity="other">%1$d ምግቦች እና ምርጫዎችዎ ተመጥነዋል።</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ማመሳሰል አልተሳካም (%1$d ሙከራ)</item>

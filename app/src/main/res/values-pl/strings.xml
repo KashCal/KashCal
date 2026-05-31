@@ -379,10 +379,11 @@
     <string name="accounts_section_add">Dodaj konto</string>
     <string name="accounts_empty_title">Brak połączonych kont</string>
     <string name="accounts_empty_subtitle">Dodaj konto, aby synchronizować kalendarze między urządzeniami</string>
-    <string name="accounts_row_label">iCloud, Nextcloud i więcej</string>
+    <string name="accounts_row_label">Konta kalendarza</string>
+    <string name="accounts_row_hint">np. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Dodaj iCloud</string>
     <string name="accounts_add_caldav">Dodaj CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail i więcej</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail i więcej</string>
     <string name="accounts_caldav_help_title">Czym jest CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV to otwarty standard synchronizacji kalendarzy. Obsługiwany przez:</string>
     <string name="accounts_caldav_help_more">i więcej</string>
@@ -404,6 +405,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Urodziny i rocznice</string>
+    <string name="birthdays_anniversaries_row_hint">Z kontaktów telefonu</string>
     <string name="birthdays_section_title">Urodziny</string>
     <string name="anniversaries_section_title">Rocznice</string>
     <string name="settings_contact_birthdays">Urodziny kontaktów</string>
@@ -457,6 +459,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendarze urządzenia</string>
+    <string name="settings_device_calendars_hint">Kalendarze z innych aplikacji</string>
     <string name="settings_quick_event_add">Szybkie dodawanie wydarzeń</string>
     <string name="settings_week_numbers">Numery tygodni</string>
     <string name="settings_show_declined">Pokaż odrzucone wydarzenia</string>
@@ -588,22 +591,22 @@
         <item quantity="other">%1$s · %2$d kalendarza</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d subskrypcja</item>
-        <item quantity="few">%1$d subskrypcje</item>
-        <item quantity="many">%1$d subskrypcji</item>
-        <item quantity="other">%1$d subskrypcji</item>
+        <item quantity="one">%1$d kanał</item>
+        <item quantity="few">%1$d kanały</item>
+        <item quantity="many">%1$d kanałów</item>
+        <item quantity="other">%1$d kanałów</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d subskrypcja i twoje preferencje zostaną zaimportowane.</item>
-        <item quantity="few">%1$d subskrypcje i twoje preferencje zostaną zaimportowane.</item>
-        <item quantity="many">%1$d subskrypcji i twoje preferencje zostaną zaimportowane.</item>
-        <item quantity="other">%1$d subskrypcji i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="one">%1$d kanał i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="few">%1$d kanały i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="many">%1$d kanałów i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="other">%1$d kanałów i twoje preferencje zostaną zaimportowane.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Zaimportowano %1$d subskrypcję i twoje preferencje.</item>
-        <item quantity="few">Zaimportowano %1$d subskrypcje i twoje preferencje.</item>
-        <item quantity="many">Zaimportowano %1$d subskrypcji i twoje preferencje.</item>
-        <item quantity="other">Zaimportowano %1$d subskrypcji i twoje preferencje.</item>
+        <item quantity="one">Zaimportowano %1$d kanał i twoje preferencje.</item>
+        <item quantity="few">Zaimportowano %1$d kanały i twoje preferencje.</item>
+        <item quantity="many">Zaimportowano %1$d kanałów i twoje preferencje.</item>
+        <item quantity="other">Zaimportowano %1$d kanałów i twoje preferencje.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronizacja nie powiodła się (%1$d próba)</item>

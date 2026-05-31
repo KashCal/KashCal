@@ -379,10 +379,11 @@
     <string name="accounts_section_add">Kontua gehitu</string>
     <string name="accounts_empty_title">Konturik ez konektatuta</string>
     <string name="accounts_empty_subtitle">Gehitu kontu bat zure egutegiak gailuen artean sinkronizatzeko</string>
-    <string name="accounts_row_label">iCloud, Nextcloud eta gehiago</string>
+    <string name="accounts_row_label">Egutegi-kontuak</string>
+    <string name="accounts_row_hint">adib. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud gehitu</string>
     <string name="accounts_add_caldav">CalDAV gehitu</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail eta gehiago</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail eta gehiago</string>
     <string name="accounts_caldav_help_title">Zer da CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV egutegiak sinkronizatzeko estandar irekia da. Hauek onartzen dute:</string>
     <string name="accounts_caldav_help_more">eta gehiago</string>
@@ -404,6 +405,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Urtebetetzeak eta urteurrenak</string>
+    <string name="birthdays_anniversaries_row_hint">Telefonoko kontaktuetatik</string>
     <string name="birthdays_section_title">Urtebetetzeak</string>
     <string name="anniversaries_section_title">Urteurrenak</string>
     <string name="settings_contact_birthdays">Kontaktuen urtebetetzeak</string>
@@ -457,6 +459,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Gailuko egutegiak</string>
+    <string name="settings_device_calendars_hint">Beste aplikazioetako egutegiak</string>
     <string name="settings_quick_event_add">Gertaera azkar gehitu</string>
     <string name="settings_week_numbers">Aste-zenbakiak</string>
     <string name="settings_show_declined">Erakutsi ezetsitako gertaerak</string>
@@ -579,16 +582,16 @@
         <item quantity="other">%1$s · %2$d egutegi</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">harpidetza %1$d</item>
-        <item quantity="other">%1$d harpidetza</item>
+        <item quantity="one">jario %1$d</item>
+        <item quantity="other">%1$d jario</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d harpidetza eta zure hobespenak inportatuko dira.</item>
-        <item quantity="other">%1$d harpidetza eta zure hobespenak inportatuko dira.</item>
+        <item quantity="one">jario %1$d eta zure hobespenak inportatuko dira.</item>
+        <item quantity="other">%1$d jario eta zure hobespenak inportatuko dira.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d harpidetza eta zure hobespenak inportatuta.</item>
-        <item quantity="other">%1$d harpidetza eta zure hobespenak inportatuta.</item>
+        <item quantity="one">jario %1$d eta zure hobespenak inportatuta.</item>
+        <item quantity="other">%1$d jario eta zure hobespenak inportatuta.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinkronizazioak huts egin du (%1$d saiakera)</item>

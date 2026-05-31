@@ -337,10 +337,11 @@
     <string name="accounts_section_add">계정 추가</string>
     <string name="accounts_empty_title">연결된 계정이 없어요</string>
     <string name="accounts_empty_subtitle">계정을 추가하여 기기 간 캘린더를 동기화하세요</string>
-    <string name="accounts_row_label">iCloud, Nextcloud 등</string>
+    <string name="accounts_row_label">캘린더 계정</string>
+    <string name="accounts_row_hint">예: iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud 추가</string>
     <string name="accounts_add_caldav">CalDAV 추가</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail 등</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail 등</string>
     <string name="accounts_caldav_help_title">CalDAV란?</string>
     <string name="accounts_caldav_help_description">CalDAV는 캘린더를 동기화하기 위한 개방형 표준이에요. 지원 서비스:</string>
     <string name="accounts_caldav_help_more">외 다수</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">생일 및 기념일</string>
+    <string name="birthdays_anniversaries_row_hint">휴대폰 연락처에서 가져와요</string>
     <string name="birthdays_section_title">생일</string>
     <string name="anniversaries_section_title">기념일</string>
     <string name="settings_contact_birthdays">연락처 생일</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">기기 캘린더</string>
+    <string name="settings_device_calendars_hint">다른 앱의 캘린더</string>
     <string name="settings_quick_event_add">빠른 일정 추가</string>
     <string name="settings_week_numbers">주 번호</string>
     <string name="settings_show_declined">거절한 이벤트 표시</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · 캘린더 %2$d개</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">구독 %1$d개</item>
+        <item quantity="other">피드 %1$d개</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">구독 %1$d개와 설정을 가져옵니다.</item>
+        <item quantity="other">피드 %1$d개와 설정을 가져옵니다.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">구독 %1$d개와 설정을 가져왔어요.</item>
+        <item quantity="other">피드 %1$d개와 설정을 가져왔어요.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">동기화 실패 (%1$d회 시도)</item>

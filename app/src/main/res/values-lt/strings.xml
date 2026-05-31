@@ -380,10 +380,11 @@
     <string name="accounts_section_add">Pridėti paskyrą</string>
     <string name="accounts_empty_title">Nėra prijungtų paskyrų</string>
     <string name="accounts_empty_subtitle">Pridėkite paskyrą kalendoriams sinchronizuoti tarp įrenginių</string>
-    <string name="accounts_row_label">iCloud, Nextcloud ir kiti</string>
+    <string name="accounts_row_label">Kalendoriaus paskyros</string>
+    <string name="accounts_row_hint">pvz., iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Pridėti iCloud</string>
     <string name="accounts_add_caldav">Pridėti CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail ir kiti</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail ir kiti</string>
     <string name="accounts_caldav_help_title">Kas yra CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV yra atviras kalendorių sinchronizavimo standartas. Palaikomas:</string>
     <string name="accounts_caldav_help_more">ir kitų</string>
@@ -403,6 +404,7 @@
     <string name="subscriptions_row_hint">pvz. šventės, sportas, mokykla</string>
 
     <string name="birthdays_anniversaries_row_label">Gimtadieniai ir sukaktys</string>
+    <string name="birthdays_anniversaries_row_hint">Iš telefono kontaktų</string>
     <string name="birthdays_section_title">Gimtadieniai</string>
     <string name="anniversaries_section_title">Sukaktys</string>
     <string name="settings_contact_birthdays">Kontaktų gimtadieniai</string>
@@ -451,6 +453,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Įrenginio kalendoriai</string>
+    <string name="settings_device_calendars_hint">Kalendoriai iš kitų programų</string>
     <string name="settings_quick_event_add">Greitas pridėjimas</string>
     <string name="settings_week_numbers">Savaitės numeriai</string>
     <string name="settings_show_declined">Rodyti atmestus įvykius</string>
@@ -570,22 +573,22 @@
         <item quantity="other">%1$s · %2$d kalendorių</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d prenumerata</item>
-        <item quantity="few">%1$d prenumeratos</item>
-        <item quantity="many">%1$d prenumeratos</item>
-        <item quantity="other">%1$d prenumeratų</item>
+        <item quantity="one">%1$d kanalas</item>
+        <item quantity="few">%1$d kanalai</item>
+        <item quantity="many">%1$d kanalo</item>
+        <item quantity="other">%1$d kanalų</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">Bus importuota %1$d prenumerata ir jūsų nuostatos.</item>
-        <item quantity="few">Bus importuotos %1$d prenumeratos ir jūsų nuostatos.</item>
-        <item quantity="many">Bus importuota %1$d prenumeratos ir jūsų nuostatos.</item>
-        <item quantity="other">Bus importuota %1$d prenumeratų ir jūsų nuostatos.</item>
+        <item quantity="one">Bus importuotas %1$d kanalas ir jūsų nuostatos.</item>
+        <item quantity="few">Bus importuoti %1$d kanalai ir jūsų nuostatos.</item>
+        <item quantity="many">Bus importuota %1$d kanalo ir jūsų nuostatos.</item>
+        <item quantity="other">Bus importuota %1$d kanalų ir jūsų nuostatos.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importuota %1$d prenumerata ir jūsų nuostatos.</item>
-        <item quantity="few">Importuotos %1$d prenumeratos ir jūsų nuostatos.</item>
-        <item quantity="many">Importuota %1$d prenumeratos ir jūsų nuostatos.</item>
-        <item quantity="other">Importuota %1$d prenumeratų ir jūsų nuostatos.</item>
+        <item quantity="one">Importuotas %1$d kanalas ir jūsų nuostatos.</item>
+        <item quantity="few">Importuoti %1$d kanalai ir jūsų nuostatos.</item>
+        <item quantity="many">Importuota %1$d kanalo ir jūsų nuostatos.</item>
+        <item quantity="other">Importuota %1$d kanalų ir jūsų nuostatos.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinchronizavimas nepavyko (%1$d bandymas)</item>

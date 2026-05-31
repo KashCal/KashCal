@@ -337,10 +337,11 @@
     <string name="accounts_section_add">Tambah Akaun</string>
     <string name="accounts_empty_title">Tiada akaun disambung</string>
     <string name="accounts_empty_subtitle">Tambah akaun untuk menyegerakkan kalendar merentas peranti</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Lagi</string>
+    <string name="accounts_row_label">Akaun Kalendar</string>
+    <string name="accounts_row_hint">cth. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Tambah iCloud</string>
     <string name="accounts_add_caldav">Tambah CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Lagi</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Lagi</string>
     <string name="accounts_caldav_help_title">Apa itu CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV ialah standard terbuka untuk menyegerakkan kalendar. Disokong oleh:</string>
     <string name="accounts_caldav_help_more">&amp; lagi</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Hari Lahir &amp; Ulang Tahun</string>
+    <string name="birthdays_anniversaries_row_hint">Daripada kenalan telefon anda</string>
     <string name="birthdays_section_title">Hari Lahir</string>
     <string name="anniversaries_section_title">Ulang Tahun</string>
     <string name="settings_contact_birthdays">Hari Lahir Kenalan</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendar Peranti</string>
+    <string name="settings_device_calendars_hint">Kalendar dari aplikasi lain</string>
     <string name="settings_quick_event_add">Tambah Acara Pantas</string>
     <string name="settings_week_numbers">Nombor Minggu</string>
     <string name="settings_show_declined">Tunjukkan acara ditolak</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d kalendar</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d langganan</item>
+        <item quantity="other">%1$d suapan</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">%1$d langganan dan pilihan anda akan diimport.</item>
+        <item quantity="other">%1$d suapan dan pilihan anda akan diimport.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">%1$d langganan dan pilihan anda telah diimport.</item>
+        <item quantity="other">%1$d suapan dan pilihan anda telah diimport.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">Segerak gagal (%1$d percubaan)</item>

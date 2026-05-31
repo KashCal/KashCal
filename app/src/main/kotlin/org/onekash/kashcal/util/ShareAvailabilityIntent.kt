@@ -9,7 +9,8 @@ fun buildShareAvailabilityChooserIntent(context: Context, previewText: String): 
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, previewText)
     }
-    return Intent.createChooser(
+    return ShareChooser.createKashCalChooser(
+        context,
         sendIntent,
         context.getString(R.string.share_availability_chooser_title)
     )

@@ -361,10 +361,11 @@
     <string name="accounts_section_add">Bæta við reikningi</string>
     <string name="accounts_empty_title">Engir reikningar tengdir</string>
     <string name="accounts_empty_subtitle">Bættu við reikningi til að samstilla dagatölin þín milli tækja</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; fleira</string>
+    <string name="accounts_row_label">Dagatalsreikningar</string>
+    <string name="accounts_row_hint">t.d. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Bæta við iCloud</string>
     <string name="accounts_add_caldav">Bæta við CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; fleira</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; fleira</string>
     <string name="accounts_caldav_help_title">Hvað er CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV er opinn staðall fyrir samstillingu dagatala. Stutt af:</string>
     <string name="accounts_caldav_help_more">&amp; fleira</string>
@@ -386,6 +387,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Afmæli &amp; árdagar</string>
+    <string name="birthdays_anniversaries_row_hint">Úr tengiliðum símans</string>
     <string name="birthdays_section_title">Afmæli</string>
     <string name="anniversaries_section_title">Árdagar</string>
     <string name="settings_contact_birthdays">Afmæli tengiliða</string>
@@ -439,6 +441,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Dagatöl tækis</string>
+    <string name="settings_device_calendars_hint">Dagatöl úr öðrum forritum</string>
     <string name="settings_quick_event_add">Flýtiskráning viðburðar</string>
     <string name="settings_week_numbers">Vikunúmer</string>
     <string name="settings_show_declined">Sýna höfnuð atvik</string>
@@ -562,16 +565,16 @@
         <item quantity="other">%1$s · %2$d dagatöl</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d áskrift</item>
-        <item quantity="other">%1$d áskriftir</item>
+        <item quantity="one">%1$d straumur</item>
+        <item quantity="other">%1$d straumar</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d áskrift og stillingarnar þínar verða fluttar inn.</item>
-        <item quantity="other">%1$d áskriftir og stillingarnar þínar verða fluttar inn.</item>
+        <item quantity="one">%1$d straumur og stillingarnar þínar verða fluttar inn.</item>
+        <item quantity="other">%1$d straumar og stillingarnar þínar verða fluttar inn.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d áskrift og stillingarnar þínar fluttar inn.</item>
-        <item quantity="other">%1$d áskriftir og stillingarnar þínar fluttar inn.</item>
+        <item quantity="one">%1$d straumur og stillingarnar þínar fluttar inn.</item>
+        <item quantity="other">%1$d straumar og stillingarnar þínar fluttar inn.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Samstilling mistókst (%1$d tilraun)</item>

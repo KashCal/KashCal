@@ -370,10 +370,11 @@
     <string name="accounts_section_add">Ongeza Akaunti</string>
     <string name="accounts_empty_title">Hakuna akaunti zilizounganishwa</string>
     <string name="accounts_empty_subtitle">Ongeza akaunti ili kusawazisha kalenda zako kwenye vifaa</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Zaidi</string>
+    <string name="accounts_row_label">Akaunti za Kalenda</string>
+    <string name="accounts_row_hint">k.m. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Ongeza iCloud</string>
     <string name="accounts_add_caldav">Ongeza CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Zaidi</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Zaidi</string>
     <string name="accounts_caldav_help_title">CalDAV ni nini?</string>
     <string name="accounts_caldav_help_description">CalDAV ni kiwango huria cha kusawazisha kalenda. Kinasapotiwa na:</string>
     <string name="accounts_caldav_help_more">&amp; zaidi</string>
@@ -393,6 +394,7 @@
     <string name="subscriptions_row_hint">mfano sikukuu, michezo, shule</string>
 
     <string name="birthdays_anniversaries_row_label">Siku za Kuzaliwa &amp; Kumbukumbu</string>
+    <string name="birthdays_anniversaries_row_hint">Kutoka kwa anwani za simu yako</string>
     <string name="birthdays_section_title">Siku za Kuzaliwa</string>
     <string name="anniversaries_section_title">Kumbukumbu</string>
     <string name="settings_contact_birthdays">Siku za Kuzaliwa za Anwani</string>
@@ -441,6 +443,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Kalenda za Kifaa</string>
+    <string name="settings_device_calendars_hint">Kalenda kutoka kwa programu zingine</string>
     <string name="settings_quick_event_add">Ongeza Tukio Haraka</string>
     <string name="settings_week_numbers">Nambari za Wiki</string>
     <string name="settings_show_declined">Onyesha matukio yaliyokataliwa</string>
@@ -553,16 +556,16 @@
         <item quantity="other">%1$s · kalenda %2$d</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">Usajili %1$d</item>
-        <item quantity="other">Usajili %1$d</item>
+        <item quantity="one">Mlisho %1$d</item>
+        <item quantity="other">Milisho %1$d</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d usajili na mapendeleo yako yataingizwa.</item>
-        <item quantity="other">Usajili %1$d na mapendeleo yako yataingizwa.</item>
+        <item quantity="one">Mlisho %1$d na mapendeleo yako yataingizwa.</item>
+        <item quantity="other">Milisho %1$d na mapendeleo yako yataingizwa.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d usajili na mapendeleo yako vimeingizwa.</item>
-        <item quantity="other">Usajili %1$d na mapendeleo yako vimeingizwa.</item>
+        <item quantity="one">Mlisho %1$d na mapendeleo yako vimeingizwa.</item>
+        <item quantity="other">Milisho %1$d na mapendeleo yako vimeingizwa.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Kusawazisha kumeshindikana (jaribio %1$d)</item>

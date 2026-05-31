@@ -382,10 +382,11 @@
     <string name="accounts_section_add">Lisa konto</string>
     <string name="accounts_empty_title">Ühendatud kontosid pole</string>
     <string name="accounts_empty_subtitle">Lisage konto, et sünkroonida kalendreid seadmete vahel</string>
-    <string name="accounts_row_label">iCloud, Nextcloud ja muud</string>
+    <string name="accounts_row_label">Kalendri kontod</string>
+    <string name="accounts_row_hint">nt iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Lisa iCloud</string>
     <string name="accounts_add_caldav">Lisa CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail ja muud</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail ja muud</string>
     <string name="accounts_caldav_help_title">Mis on CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV on avatud standard kalendrite sünkroonimiseks. Toetatud:</string>
     <string name="accounts_caldav_help_more">ja muud</string>
@@ -407,6 +408,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Sünnipäevad ja aastapäevad</string>
+    <string name="birthdays_anniversaries_row_hint">Telefoni kontaktidest</string>
     <string name="birthdays_section_title">Sünnipäevad</string>
     <string name="anniversaries_section_title">Aastapäevad</string>
     <string name="settings_contact_birthdays">Kontaktide sünnipäevad</string>
@@ -460,6 +462,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Seadme kalendrid</string>
+    <string name="settings_device_calendars_hint">Kalendrid teistest rakendustest</string>
     <string name="settings_quick_event_add">Kiire sündmuse lisamine</string>
     <string name="settings_week_numbers">Nädalanumbrid</string>
     <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
@@ -584,16 +587,16 @@
         <item quantity="other">%1$s · %2$d kalendrit</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d tellimus</item>
-        <item quantity="other">%1$d tellimust</item>
+        <item quantity="one">%1$d voog</item>
+        <item quantity="other">%1$d voogu</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d tellimus ja sinu eelistused imporditakse.</item>
-        <item quantity="other">%1$d tellimust ja sinu eelistused imporditakse.</item>
+        <item quantity="one">%1$d voog ja sinu eelistused imporditakse.</item>
+        <item quantity="other">%1$d voogu ja sinu eelistused imporditakse.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Imporditi %1$d tellimus ja sinu eelistused.</item>
-        <item quantity="other">Imporditi %1$d tellimust ja sinu eelistused.</item>
+        <item quantity="one">Imporditi %1$d voog ja sinu eelistused.</item>
+        <item quantity="other">Imporditi %1$d voogu ja sinu eelistused.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sünkroonimine ebaõnnestus (%1$d katse)</item>

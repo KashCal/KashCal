@@ -400,10 +400,11 @@
     <string name="accounts_section_add">ఖాతా జోడించు</string>
     <string name="accounts_empty_title">ఖాతాలు కనెక్ట్ చేయబడలేదు</string>
     <string name="accounts_empty_subtitle">పరికరాల మధ్య క్యాలెండర్లు సింక్ చేయడానికి ఖాతా జోడించండి</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; మరిన్ని</string>
+    <string name="accounts_row_label">క్యాలెండర్ ఖాతాలు</string>
+    <string name="accounts_row_hint">ఉదా. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud జోడించు</string>
     <string name="accounts_add_caldav">CalDAV జోడించు</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; మరిన్ని</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; మరిన్ని</string>
     <string name="accounts_caldav_help_title">CalDAV అంటే ఏమిటి?</string>
     <string name="accounts_caldav_help_description">CalDAV క్యాలెండర్లను సింక్ చేయడానికి ఒక ఓపెన్ స్టాండర్డ్. వీటిచే మద్దతు:</string>
     <string name="accounts_caldav_help_more">&amp; మరిన్ని</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">పుట్టినరోజులు &amp; వార్షికోత్సవాలు</string>
+    <string name="birthdays_anniversaries_row_hint">మీ ఫోన్ కాంటాక్ట్‌ల నుండి</string>
     <string name="birthdays_section_title">పుట్టినరోజులు</string>
     <string name="anniversaries_section_title">వార్షికోత్సవాలు</string>
     <string name="settings_contact_birthdays">కాంటాక్ట్ పుట్టినరోజులు</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">పరికర క్యాలెండర్లు</string>
+    <string name="settings_device_calendars_hint">ఇతర యాప్‌ల నుండి క్యాలెండర్లు</string>
     <string name="settings_quick_event_add">త్వరిత ఈవెంట్ జోడింపు</string>
     <string name="settings_week_numbers">వారం సంఖ్యలు</string>
     <string name="settings_show_declined">తిరస్కరించిన ఈవెంట్‌లను చూపించు</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d క్యాలెండర్లు</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d సబ్‌స్క్రిప్షన్</item>
-        <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు</item>
+        <item quantity="one">%1$d ఫీడ్</item>
+        <item quantity="other">%1$d ఫీడ్‌లు</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d సబ్‌స్క్రిప్షన్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
-        <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
+        <item quantity="one">%1$d ఫీడ్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
+        <item quantity="other">%1$d ఫీడ్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d సబ్‌స్క్రిప్షన్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
-        <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
+        <item quantity="one">%1$d ఫీడ్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
+        <item quantity="other">%1$d ఫీడ్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">సింక్ విఫలమైంది (%1$d ప్రయత్నం)</item>

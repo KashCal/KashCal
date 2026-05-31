@@ -337,10 +337,11 @@
     <string name="accounts_section_add">Thêm tài khoản</string>
     <string name="accounts_empty_title">Chưa kết nối tài khoản nào</string>
     <string name="accounts_empty_subtitle">Thêm tài khoản để đồng bộ lịch giữa các thiết bị</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; thêm nữa</string>
+    <string name="accounts_row_label">Tài khoản lịch</string>
+    <string name="accounts_row_hint">vd. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Thêm iCloud</string>
     <string name="accounts_add_caldav">Thêm CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; thêm nữa</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; thêm nữa</string>
     <string name="accounts_caldav_help_title">CalDAV là gì?</string>
     <string name="accounts_caldav_help_description">CalDAV là tiêu chuẩn mở để đồng bộ lịch. Được hỗ trợ bởi:</string>
     <string name="accounts_caldav_help_more">&amp; thêm nữa</string>
@@ -362,6 +363,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Sinh nhật &amp; Kỷ niệm</string>
+    <string name="birthdays_anniversaries_row_hint">Từ danh bạ điện thoại</string>
     <string name="birthdays_section_title">Sinh nhật</string>
     <string name="anniversaries_section_title">Kỷ niệm</string>
     <string name="settings_contact_birthdays">Sinh nhật danh bạ</string>
@@ -415,6 +417,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Lịch thiết bị</string>
+    <string name="settings_device_calendars_hint">Lịch từ các ứng dụng khác</string>
     <string name="settings_quick_event_add">Thêm nhanh sự kiện</string>
     <string name="settings_week_numbers">Số tuần</string>
     <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
@@ -536,13 +539,13 @@
         <item quantity="other">%1$s · %2$d lịch</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d đăng ký</item>
+        <item quantity="other">%1$d nguồn</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">Sẽ nhập %1$d đăng ký và tùy chọn của bạn.</item>
+        <item quantity="other">Sẽ nhập %1$d nguồn và tùy chọn của bạn.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">Đã nhập %1$d đăng ký và tùy chọn của bạn.</item>
+        <item quantity="other">Đã nhập %1$d nguồn và tùy chọn của bạn.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">Đồng bộ thất bại (%1$d lần)</item>

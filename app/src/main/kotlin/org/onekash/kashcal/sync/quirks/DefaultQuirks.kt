@@ -12,7 +12,7 @@ import java.util.TimeZone
  * - Nextcloud
  * - Baikal
  * - Radicale
- * - FastMail
+ * - Fastmail
  * - Any standard CalDAV server
  *
  * Unlike ICloudQuirks, this implementation:

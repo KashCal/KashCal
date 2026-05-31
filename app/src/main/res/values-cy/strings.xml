@@ -411,10 +411,11 @@
     <string name="accounts_section_add">Ychwanegu Cyfrif</string>
     <string name="accounts_empty_title">Dim cyfrifon wedi\'u cysylltu</string>
     <string name="accounts_empty_subtitle">Ychwanegwch gyfrif i gysoni\'ch calendrau ar draws dyfeisiau</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Mwy</string>
+    <string name="accounts_row_label">Cyfrifon Calendr</string>
+    <string name="accounts_row_hint">e.e. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Ychwanegu iCloud</string>
     <string name="accounts_add_caldav">Ychwanegu CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Mwy</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Mwy</string>
     <string name="accounts_caldav_help_title">Beth yw CalDAV?</string>
     <string name="accounts_caldav_help_description">Mae CalDAV yn safon agored ar gyfer cysoni calendrau. Cefnogir gan:</string>
     <string name="accounts_caldav_help_more">&amp; mwy</string>
@@ -436,6 +437,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Pen-blwyddi &amp; Pen-blwyddi Priodas</string>
+    <string name="birthdays_anniversaries_row_hint">O\'ch cysylltiadau ffôn</string>
     <string name="birthdays_section_title">Pen-blwyddi</string>
     <string name="anniversaries_section_title">Pen-blwyddi Priodas</string>
     <string name="settings_contact_birthdays">Pen-blwyddi Cysylltiadau</string>
@@ -490,6 +492,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Calendrau\'r Ddyfais</string>
+    <string name="settings_device_calendars_hint">Calendrau o apiau eraill</string>
     <string name="settings_quick_event_add">Ychwanegu Digwyddiad Cyflym</string>
     <string name="settings_week_numbers">Rhifau Wythnosau</string>
     <string name="settings_show_declined">Dangos digwyddiadau a wrthodwyd</string>
@@ -620,28 +623,28 @@
         <item quantity="other">%1$s · %2$d calendr</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="zero">%1$d tanysgrifiad</item>
-        <item quantity="one">%1$d tanysgrifiad</item>
-        <item quantity="two">%1$d danysgrifiad</item>
-        <item quantity="few">%1$d thanysgrifiad</item>
-        <item quantity="many">%1$d thanysgrifiad</item>
-        <item quantity="other">%1$d tanysgrifiad</item>
+        <item quantity="zero">%1$d ffrwd</item>
+        <item quantity="one">%1$d ffrwd</item>
+        <item quantity="two">%1$d ffrwd</item>
+        <item quantity="few">%1$d ffrwd</item>
+        <item quantity="many">%1$d ffrwd</item>
+        <item quantity="other">%1$d ffrwd</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="zero">%1$d tanysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
-        <item quantity="one">%1$d tanysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
-        <item quantity="two">%1$d danysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
-        <item quantity="few">%1$d thanysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
-        <item quantity="many">%1$d thanysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
-        <item quantity="other">%1$d tanysgrifiad a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="zero">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="one">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="two">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="few">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="many">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
+        <item quantity="other">%1$d ffrwd a dy ddewisiadau yn cael eu mewnforio.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="zero">Mewnforiwyd %1$d tanysgrifiad a dy ddewisiadau.</item>
-        <item quantity="one">Mewnforiwyd %1$d tanysgrifiad a dy ddewisiadau.</item>
-        <item quantity="two">Mewnforiwyd %1$d danysgrifiad a dy ddewisiadau.</item>
-        <item quantity="few">Mewnforiwyd %1$d thanysgrifiad a dy ddewisiadau.</item>
-        <item quantity="many">Mewnforiwyd %1$d thanysgrifiad a dy ddewisiadau.</item>
-        <item quantity="other">Mewnforiwyd %1$d tanysgrifiad a dy ddewisiadau.</item>
+        <item quantity="zero">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
+        <item quantity="one">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
+        <item quantity="two">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
+        <item quantity="few">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
+        <item quantity="many">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
+        <item quantity="other">Mewnforiwyd %1$d ffrwd a dy ddewisiadau.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="zero">Cysoni wedi methu (%1$d ymgais)</item>

@@ -400,10 +400,11 @@
     <string name="accounts_section_add">അക്കൗണ്ട് ചേർക്കുക</string>
     <string name="accounts_empty_title">അക്കൗണ്ടുകൾ കണക്ട് ചെയ്തിട്ടില്ല</string>
     <string name="accounts_empty_subtitle">ഉപകരണങ്ങൾക്കിടയിൽ കലണ്ടറുകൾ സിങ്ക് ചെയ്യാൻ ഒരു അക്കൗണ്ട് ചേർക്കുക</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; കൂടുതൽ</string>
+    <string name="accounts_row_label">കലണ്ടർ അക്കൗണ്ടുകൾ</string>
+    <string name="accounts_row_hint">ഉദാ. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud ചേർക്കുക</string>
     <string name="accounts_add_caldav">CalDAV ചേർക്കുക</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; കൂടുതൽ</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; കൂടുതൽ</string>
     <string name="accounts_caldav_help_title">CalDAV എന്താണ്?</string>
     <string name="accounts_caldav_help_description">CalDAV കലണ്ടറുകൾ സിങ്ക് ചെയ്യാനുള്ള ഒരു ഓപ്പൺ സ്റ്റാൻഡേർഡ് ആണ്. ഇവ പിന്തുണയ്ക്കുന്നു:</string>
     <string name="accounts_caldav_help_more">&amp; കൂടുതൽ</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ജന്മദിനങ്ങൾ &amp; വാർഷികങ്ങൾ</string>
+    <string name="birthdays_anniversaries_row_hint">നിങ്ങളുടെ ഫോൺ കോൺടാക്ടുകളിൽ നിന്ന്</string>
     <string name="birthdays_section_title">ജന്മദിനങ്ങൾ</string>
     <string name="anniversaries_section_title">വാർഷികങ്ങൾ</string>
     <string name="settings_contact_birthdays">കോൺടാക്ട് ജന്മദിനങ്ങൾ</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
+    <string name="settings_device_calendars_hint">മറ്റ് ആപ്പുകളിൽ നിന്നുള്ള കലണ്ടറുകൾ</string>
     <string name="settings_quick_event_add">ദ്രുത ഇവന്റ് ചേർക്കൽ</string>
     <string name="settings_week_numbers">ആഴ്ച നമ്പറുകൾ</string>
     <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d കലണ്ടറുകൾ</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d സബ്സ്ക്രിപ്ഷൻ</item>
-        <item quantity="other">%1$d സബ്സ്ക്രിപ്ഷനുകൾ</item>
+        <item quantity="one">%1$d ഫീഡ്</item>
+        <item quantity="other">%1$d ഫീഡുകൾ</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d സബ്‌സ്‌ക്രിപ്ഷനും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
-        <item quantity="other">%1$d സബ്‌സ്‌ക്രിപ്ഷനുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
+        <item quantity="one">%1$d ഫീഡും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
+        <item quantity="other">%1$d ഫീഡുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d സബ്‌സ്‌ക്രിപ്ഷനും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
-        <item quantity="other">%1$d സബ്‌സ്‌ക്രിപ്ഷനുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
+        <item quantity="one">%1$d ഫീഡും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
+        <item quantity="other">%1$d ഫീഡുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">സിങ്ക് പരാജയപ്പെട്ടു (%1$d ശ്രമം)</item>

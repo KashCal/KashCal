@@ -398,10 +398,11 @@
     <string name="accounts_section_add">Hesap Ekle</string>
     <string name="accounts_empty_title">Bağlı hesap yok</string>
     <string name="accounts_empty_subtitle">Takvimlerini cihazlar arasında eşitlemek için hesap ekle</string>
-    <string name="accounts_row_label">iCloud, Nextcloud ve Daha Fazlası</string>
+    <string name="accounts_row_label">Takvim Hesapları</string>
+    <string name="accounts_row_hint">örn. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud Ekle</string>
     <string name="accounts_add_caldav">CalDAV Ekle</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail ve Daha Fazlası</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail ve Daha Fazlası</string>
     <string name="accounts_caldav_help_title">CalDAV nedir?</string>
     <string name="accounts_caldav_help_description">CalDAV, takvimleri eşitlemek için açık bir standarttır. Destekleyen servisler:</string>
     <string name="accounts_caldav_help_more">ve daha fazlası</string>
@@ -423,6 +424,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Doğum Günleri ve Yıl Dönümleri</string>
+    <string name="birthdays_anniversaries_row_hint">Telefon kişilerinden</string>
     <string name="birthdays_section_title">Doğum Günleri</string>
     <string name="anniversaries_section_title">Yıl Dönümleri</string>
     <string name="settings_contact_birthdays">Kişi Doğum Günleri</string>
@@ -479,6 +481,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Cihaz Takvimleri</string>
+    <string name="settings_device_calendars_hint">Diğer uygulamalardaki takvimler</string>
     <string name="settings_quick_event_add">Hızlı Etkinlik Ekleme</string>
     <string name="settings_week_numbers">Hafta Numaraları</string>
     <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d takvim</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abonelik</item>
-        <item quantity="other">%1$d abonelik</item>
+        <item quantity="one">%1$d akış</item>
+        <item quantity="other">%1$d akış</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abonelik ve tercihlerin içe aktarılacak.</item>
-        <item quantity="other">%1$d abonelik ve tercihlerin içe aktarılacak.</item>
+        <item quantity="one">%1$d akış ve tercihlerin içe aktarılacak.</item>
+        <item quantity="other">%1$d akış ve tercihlerin içe aktarılacak.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d abonelik ve tercihlerin içe aktarıldı.</item>
-        <item quantity="other">%1$d abonelik ve tercihlerin içe aktarıldı.</item>
+        <item quantity="one">%1$d akış ve tercihlerin içe aktarıldı.</item>
+        <item quantity="other">%1$d akış ve tercihlerin içe aktarıldı.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Eşitleme başarısız (%1$d deneme)</item>

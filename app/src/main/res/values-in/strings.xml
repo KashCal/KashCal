@@ -382,10 +382,11 @@
     <string name="accounts_section_add">Tambah Akun</string>
     <string name="accounts_empty_title">Tidak ada akun terhubung</string>
     <string name="accounts_empty_subtitle">Tambah akun untuk menyinkronkan kalender Anda di seluruh perangkat</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Lainnya</string>
+    <string name="accounts_row_label">Akun Kalender</string>
+    <string name="accounts_row_hint">mis. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Tambah iCloud</string>
     <string name="accounts_add_caldav">Tambah CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Lainnya</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Lainnya</string>
     <string name="accounts_caldav_help_title">Apa itu CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV adalah standar terbuka untuk menyinkronkan kalender. Didukung oleh:</string>
     <string name="accounts_caldav_help_more">&amp; lainnya</string>
@@ -407,6 +408,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Ulang Tahun &amp; Hari Jadi</string>
+    <string name="birthdays_anniversaries_row_hint">Dari kontak telepon Anda</string>
     <string name="birthdays_section_title">Ulang Tahun</string>
     <string name="anniversaries_section_title">Hari Jadi</string>
     <string name="settings_contact_birthdays">Ulang Tahun Kontak</string>
@@ -460,6 +462,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalender Perangkat</string>
+    <string name="settings_device_calendars_hint">Kalender dari aplikasi lain</string>
     <string name="settings_quick_event_add">Tambah Acara Cepat</string>
     <string name="settings_week_numbers">Nomor Minggu</string>
     <string name="settings_show_declined">Tampilkan acara yang ditolak</string>
@@ -578,13 +581,13 @@
         <item quantity="other">%1$s · %2$d kalender</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">%1$d langganan</item>
+        <item quantity="other">%1$d umpan</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">%1$d langganan dan preferensi Anda akan diimpor.</item>
+        <item quantity="other">%1$d umpan dan preferensi Anda akan diimpor.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">%1$d langganan dan preferensi Anda diimpor.</item>
+        <item quantity="other">%1$d umpan dan preferensi Anda diimpor.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">Sinkronisasi gagal (%1$d percobaan)</item>

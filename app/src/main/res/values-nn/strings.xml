@@ -361,10 +361,11 @@
     <string name="accounts_section_add">Legg til konto</string>
     <string name="accounts_empty_title">Ingen kontoar tilkopla</string>
     <string name="accounts_empty_subtitle">Legg til ein konto for å synkronisere kalendrane dine på tvers av einingar</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; meir</string>
+    <string name="accounts_row_label">Kalenderkontoar</string>
+    <string name="accounts_row_hint">t.d. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Legg til iCloud</string>
     <string name="accounts_add_caldav">Legg til CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; meir</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; meir</string>
     <string name="accounts_caldav_help_title">Kva er CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV er ein open standard for kalendersynkronisering. Støtta av:</string>
     <string name="accounts_caldav_help_more">&amp; meir</string>
@@ -386,6 +387,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Bursdagar &amp; jubileum</string>
+    <string name="birthdays_anniversaries_row_hint">Frå telefonkontaktane dine</string>
     <string name="birthdays_section_title">Bursdagar</string>
     <string name="anniversaries_section_title">Jubileum</string>
     <string name="settings_contact_birthdays">Bursdagar til kontaktar</string>
@@ -439,6 +441,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Einingskalendrar</string>
+    <string name="settings_device_calendars_hint">Kalendrar frå andre appar</string>
     <string name="settings_quick_event_add">Raskt hendingstillegg</string>
     <string name="settings_week_numbers">Vekenummer</string>
     <string name="settings_show_declined">Vis avslåtte hendingar</string>
@@ -562,16 +565,16 @@
         <item quantity="other">%1$s · %2$d kalendrar</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d abonnement</item>
-        <item quantity="other">%1$d abonnement</item>
+        <item quantity="one">%1$d straum</item>
+        <item quantity="other">%1$d straumar</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d abonnement og innstillingane dine vert importerte.</item>
-        <item quantity="other">%1$d abonnement og innstillingane dine vert importerte.</item>
+        <item quantity="one">%1$d straum og innstillingane dine vert importerte.</item>
+        <item quantity="other">%1$d straumar og innstillingane dine vert importerte.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d abonnement og innstillingane dine importerte.</item>
-        <item quantity="other">%1$d abonnement og innstillingane dine importerte.</item>
+        <item quantity="one">%1$d straum og innstillingane dine importerte.</item>
+        <item quantity="other">%1$d straumar og innstillingane dine importerte.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synkronisering mislukkast (%1$d forsøk)</item>

@@ -382,10 +382,11 @@
     <string name="accounts_section_add">အကောင့် ထည့်</string>
     <string name="accounts_empty_title">ချိတ်ဆက်ထားသော အကောင့် မရှိပါ</string>
     <string name="accounts_empty_subtitle">စက်များကြား ပြက္ခဒိန်များ ချိန်ကိုက်ရန် အကောင့် ထည့်ပါ</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; အခြား</string>
+    <string name="accounts_row_label">ပြက္ခဒိန် အကောင့်များ</string>
+    <string name="accounts_row_hint">ဥပမာ iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud ထည့်</string>
     <string name="accounts_add_caldav">CalDAV ထည့်</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; အခြား</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; အခြား</string>
     <string name="accounts_caldav_help_title">CalDAV ဆိုတာ ဘာလဲ?</string>
     <string name="accounts_caldav_help_description">CalDAV သည် ပြက္ခဒိန်များ ချိန်ကိုက်ရန် ပွင့်လင်းစံနှုန်း ဖြစ်သည်။ ပံ့ပိုးသူများ:</string>
     <string name="accounts_caldav_help_more">&amp; အခြား</string>
@@ -407,6 +408,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">မွေးနေ့များ &amp; နှစ်ပတ်လည်များ</string>
+    <string name="birthdays_anniversaries_row_hint">သင့်ဖုန်း အဆက်အသွယ်များမှ</string>
     <string name="birthdays_section_title">မွေးနေ့များ</string>
     <string name="anniversaries_section_title">နှစ်ပတ်လည်များ</string>
     <string name="settings_contact_birthdays">အဆက်အသွယ် မွေးနေ့များ</string>
@@ -460,6 +462,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>
+    <string name="settings_device_calendars_hint">အခြားအက်ပ်များမှ ပြက္ခဒိန်များ</string>
     <string name="settings_quick_event_add">ပွဲ အမြန်ထည့်</string>
     <string name="settings_week_numbers">အပတ် နံပါတ်များ</string>
     <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
@@ -578,13 +581,13 @@
         <item quantity="other">%1$s · ပြက္ခဒိန် %2$d ခု</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="other">စာရင်းသွင်းမှု %1$d ခု</item>
+        <item quantity="other">ဖိဒ် %1$d ခု</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="other">%1$d ခု စာရင်းသွင်းမှုနှင့် သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</item>
+        <item quantity="other">ဖိဒ် %1$d ခုနှင့် သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="other">%1$d ခု စာရင်းသွင်းမှုနှင့် သင့်ရှေးချယ်မှုများ တင်သွင်းပြီးပါပြီ။</item>
+        <item quantity="other">ဖိဒ် %1$d ခုနှင့် သင့်ရှေးချယ်မှုများ တင်သွင်းပြီးပါပြီ။</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">ချိန်ကိုက် မအောင်မြင် (ကြိုးစားမှု %1$d ခု)</item>

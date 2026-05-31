@@ -398,10 +398,11 @@
     <string name="accounts_section_add">Додај сметка</string>
     <string name="accounts_empty_title">Нема поврзани сметки</string>
     <string name="accounts_empty_subtitle">Додајте сметка за да ги синхронизирате вашите календари меѓу уреди</string>
-    <string name="accounts_row_label">iCloud, Nextcloud и повеќе</string>
+    <string name="accounts_row_label">Календарски сметки</string>
+    <string name="accounts_row_hint">напр. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Додај iCloud</string>
     <string name="accounts_add_caldav">Додај CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail и повеќе</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail и повеќе</string>
     <string name="accounts_caldav_help_title">Што е CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV е отворен стандард за синхронизација на календари. Поддржан е од:</string>
     <string name="accounts_caldav_help_more">и повеќе</string>
@@ -423,6 +424,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Родендени и годишнини</string>
+    <string name="birthdays_anniversaries_row_hint">Од контактите на телефонот</string>
     <string name="birthdays_section_title">Родендени</string>
     <string name="anniversaries_section_title">Годишнини</string>
     <string name="settings_contact_birthdays">Родендени на контакти</string>
@@ -479,6 +481,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари на уредот</string>
+    <string name="settings_device_calendars_hint">Календари од други апликации</string>
     <string name="settings_quick_event_add">Брзо додавање настан</string>
     <string name="settings_week_numbers">Броеви на недели</string>
     <string name="settings_show_declined">Прикажи одбиени настани</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d календари</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d претплата</item>
-        <item quantity="other">%1$d претплати</item>
+        <item quantity="one">%1$d канал</item>
+        <item quantity="other">%1$d канали</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d претплата и вашите поставки ќе бидат увезени.</item>
-        <item quantity="other">%1$d претплати и вашите поставки ќе бидат увезени.</item>
+        <item quantity="one">%1$d канал и вашите поставки ќе бидат увезени.</item>
+        <item quantity="other">%1$d канали и вашите поставки ќе бидат увезени.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d претплата и вашите поставки се увезени.</item>
-        <item quantity="other">%1$d претплати и вашите поставки се увезени.</item>
+        <item quantity="one">%1$d канал и вашите поставки се увезени.</item>
+        <item quantity="other">%1$d канали и вашите поставки се увезени.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Синхронизацијата не успеа (%1$d обид)</item>

@@ -370,10 +370,11 @@
     <string name="accounts_section_add">ගිණුමක් එකතු කරන්න</string>
     <string name="accounts_empty_title">ගිණුම් සම්බන්ධ කර නැත</string>
     <string name="accounts_empty_subtitle">උපාංග හරහා ඔබේ දින දර්ශන සමමුහුර්ත කිරීමට ගිණුමක් එකතු කරන්න</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; තවත්</string>
+    <string name="accounts_row_label">දින දර්ශන ගිණුම්</string>
+    <string name="accounts_row_hint">උදා. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud එකතු කරන්න</string>
     <string name="accounts_add_caldav">CalDAV එකතු කරන්න</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; තවත්</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; තවත්</string>
     <string name="accounts_caldav_help_title">CalDAV යනු කුමක්ද?</string>
     <string name="accounts_caldav_help_description">CalDAV යනු දින දර්ශන සමමුහුර්ත කිරීම සඳහා විවෘත ප්‍රමිතියකි. සහාය දක්වන්නේ:</string>
     <string name="accounts_caldav_help_more">&amp; තවත්</string>
@@ -393,6 +394,7 @@
     <string name="subscriptions_row_hint">උදා. නිවාඩු, ක්‍රීඩා, පාසල</string>
 
     <string name="birthdays_anniversaries_row_label">උපන්දින &amp; සංවත්සර</string>
+    <string name="birthdays_anniversaries_row_hint">ඔබේ දුරකථන සම්බන්ධතාවලින්</string>
     <string name="birthdays_section_title">උපන්දින</string>
     <string name="anniversaries_section_title">සංවත්සර</string>
     <string name="settings_contact_birthdays">සම්බන්ධතා උපන්දින</string>
@@ -441,6 +443,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>
+    <string name="settings_device_calendars_hint">වෙනත් යෙදුම්වල දින දර්ශන</string>
     <string name="settings_quick_event_add">ඉක්මන් සිදුවීම් එකතුව</string>
     <string name="settings_week_numbers">සතිය අංක</string>
     <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
@@ -553,16 +556,16 @@
         <item quantity="other">%1$s · දින දර්ශන %2$d</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">දායකත්ව %1$d</item>
-        <item quantity="other">දායකත්ව %1$d</item>
+        <item quantity="one">පෝෂණය %1$d</item>
+        <item quantity="other">පෝෂණ %1$d</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d දායකත්වය සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
-        <item quantity="other">%1$d දායකත්වයන් සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
+        <item quantity="one">පෝෂණය %1$d සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
+        <item quantity="other">පෝෂණ %1$d සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d දායකත්වය සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
-        <item quantity="other">%1$d දායකත්වයන් සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
+        <item quantity="one">පෝෂණය %1$d සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
+        <item quantity="other">පෝෂණ %1$d සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">සමමුහුර්තය අසාර්ථකයි (උත්සාහ %1$d)</item>

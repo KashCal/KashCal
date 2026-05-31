@@ -387,10 +387,11 @@
     <string name="accounts_section_add">Pievienot kontu</string>
     <string name="accounts_empty_title">Nav savienotu kontu</string>
     <string name="accounts_empty_subtitle">Pievienojiet kontu, lai sinhronizētu kalendārus starp ierīcēm</string>
-    <string name="accounts_row_label">iCloud, Nextcloud un citi</string>
+    <string name="accounts_row_label">Kalendāra konti</string>
+    <string name="accounts_row_hint">piem., iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Pievienot iCloud</string>
     <string name="accounts_add_caldav">Pievienot CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail un citi</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail un citi</string>
     <string name="accounts_caldav_help_title">Kas ir CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV ir atvērts standarts kalendāru sinhronizēšanai. Atbalsta:</string>
     <string name="accounts_caldav_help_more">un citi</string>
@@ -412,6 +413,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Dzimšanas dienas un jubilejas</string>
+    <string name="birthdays_anniversaries_row_hint">No tālruņa kontaktiem</string>
     <string name="birthdays_section_title">Dzimšanas dienas</string>
     <string name="anniversaries_section_title">Jubilejas</string>
     <string name="settings_contact_birthdays">Kontaktu dzimšanas dienas</string>
@@ -465,6 +467,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ierīces kalendāri</string>
+    <string name="settings_device_calendars_hint">Kalendāri no citām lietotnēm</string>
     <string name="settings_quick_event_add">Ātrā notikuma pievienošana</string>
     <string name="settings_week_numbers">Nedēļu numuri</string>
     <string name="settings_show_declined">Rādīt noraidītos notikumus</string>
@@ -591,19 +594,19 @@
         <item quantity="other">%1$s · %2$d kalendāri</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="zero">%1$d abonementu</item>
-        <item quantity="one">%1$d abonements</item>
-        <item quantity="other">%1$d abonementi</item>
+        <item quantity="zero">%1$d plūsmu</item>
+        <item quantity="one">%1$d plūsma</item>
+        <item quantity="other">%1$d plūsmas</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="zero">%1$d abonementi un jūsu iestatījumi tiks importēti.</item>
-        <item quantity="one">%1$d abonements un jūsu iestatījumi tiks importēti.</item>
-        <item quantity="other">%1$d abonementi un jūsu iestatījumi tiks importēti.</item>
+        <item quantity="zero">%1$d plūsmu un jūsu iestatījumi tiks importēti.</item>
+        <item quantity="one">%1$d plūsma un jūsu iestatījumi tiks importēti.</item>
+        <item quantity="other">%1$d plūsmas un jūsu iestatījumi tiks importēti.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="zero">Importēti %1$d abonementi un jūsu iestatījumi.</item>
-        <item quantity="one">Importēts %1$d abonements un jūsu iestatījumi.</item>
-        <item quantity="other">Importēti %1$d abonementi un jūsu iestatījumi.</item>
+        <item quantity="zero">Importētas %1$d plūsmu un jūsu iestatījumi.</item>
+        <item quantity="one">Importēta %1$d plūsma un jūsu iestatījumi.</item>
+        <item quantity="other">Importētas %1$d plūsmas un jūsu iestatījumi.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="zero">Sinhronizācija neizdevās (%1$d mēģinājumu)</item>

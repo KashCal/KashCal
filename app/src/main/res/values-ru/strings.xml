@@ -392,10 +392,11 @@
     <string name="accounts_section_add">Добавить учётную запись</string>
     <string name="accounts_empty_title">Нет подключённых учётных записей</string>
     <string name="accounts_empty_subtitle">Добавьте учётную запись для синхронизации календарей между устройствами</string>
-    <string name="accounts_row_label">iCloud, Nextcloud и другие</string>
+    <string name="accounts_row_label">Учётные записи календаря</string>
+    <string name="accounts_row_hint">напр. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Добавить iCloud</string>
     <string name="accounts_add_caldav">Добавить CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail и другие</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail и другие</string>
     <string name="accounts_caldav_help_title">Что такое CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV — открытый стандарт синхронизации календарей. Поддерживается:</string>
     <string name="accounts_caldav_help_more">и другими</string>
@@ -417,6 +418,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Дни рождения и годовщины</string>
+    <string name="birthdays_anniversaries_row_hint">Из контактов телефона</string>
     <string name="birthdays_section_title">Дни рождения</string>
     <string name="anniversaries_section_title">Годовщины</string>
     <string name="settings_contact_birthdays">Дни рождения из контактов</string>
@@ -470,6 +472,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари устройства</string>
+    <string name="settings_device_calendars_hint">Календари других приложений</string>
     <string name="settings_quick_event_add">Быстрое добавление</string>
     <string name="settings_week_numbers">Номера недель</string>
     <string name="settings_show_declined">Показывать отклонённые события</string>
@@ -597,22 +600,22 @@
         <item quantity="other">%1$s · %2$d календарей</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d подписка</item>
-        <item quantity="few">%1$d подписки</item>
-        <item quantity="many">%1$d подписок</item>
-        <item quantity="other">%1$d подписок</item>
+        <item quantity="one">%1$d лента</item>
+        <item quantity="few">%1$d ленты</item>
+        <item quantity="many">%1$d лент</item>
+        <item quantity="other">%1$d ленты</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">Будет импортирована %1$d подписка и ваши настройки.</item>
-        <item quantity="few">Будут импортированы %1$d подписки и ваши настройки.</item>
-        <item quantity="many">Будет импортировано %1$d подписок и ваши настройки.</item>
-        <item quantity="other">%1$d подписки и ваши настройки будут импортированы.</item>
+        <item quantity="one">Будет импортирована %1$d лента и ваши настройки.</item>
+        <item quantity="few">Будут импортированы %1$d ленты и ваши настройки.</item>
+        <item quantity="many">Будет импортировано %1$d лент и ваши настройки.</item>
+        <item quantity="other">%1$d ленты и ваши настройки будут импортированы.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Импортирована %1$d подписка и ваши настройки.</item>
-        <item quantity="few">Импортированы %1$d подписки и ваши настройки.</item>
-        <item quantity="many">Импортировано %1$d подписок и ваши настройки.</item>
-        <item quantity="other">Импортированы %1$d подписки и ваши настройки.</item>
+        <item quantity="one">Импортирована %1$d лента и ваши настройки.</item>
+        <item quantity="few">Импортированы %1$d ленты и ваши настройки.</item>
+        <item quantity="many">Импортировано %1$d лент и ваши настройки.</item>
+        <item quantity="other">Импортированы %1$d ленты и ваши настройки.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Ошибка синхронизации (%1$d попытка)</item>

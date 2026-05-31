@@ -593,7 +593,7 @@ private fun FlatSettingsContent(
             onEmitted = emittedTracker::onEmitted,
         ) {
             val accountCount = (if (isConnected) 1 else 0) + calDavAccounts.size
-            val accountsSubtitle = if (accountCount == 0) null
+            val accountsSubtitle = if (accountCount == 0) stringResource(R.string.accounts_row_hint)
                 else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount)
             row(label = stringResource(R.string.accounts_row_label), subtitle = accountsSubtitle, id = "accounts") {
                 SettingsRow(
@@ -609,7 +609,7 @@ private fun FlatSettingsContent(
             val baSubtitle = buildList {
                 if (birthdayCount > 0) add(pluralStringResource(R.plurals.birthday_count, birthdayCount, birthdayCount))
                 if (anniversaryCount > 0) add(pluralStringResource(R.plurals.anniversary_count, anniversaryCount, anniversaryCount))
-            }.joinToString(", ").ifEmpty { null }
+            }.joinToString(", ").ifEmpty { stringResource(R.string.birthdays_anniversaries_row_hint) }
             row(label = stringResource(R.string.birthdays_anniversaries_row_label), subtitle = baSubtitle, id = "birthdays") {
                 SettingsRow(
                     icon = Icons.Default.Cake,
@@ -635,7 +635,7 @@ private fun FlatSettingsContent(
                 )
             }
 
-            val deviceCalendarsSubtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else null
+            val deviceCalendarsSubtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else stringResource(R.string.settings_device_calendars_hint)
             row(label = stringResource(R.string.settings_device_calendars), subtitle = deviceCalendarsSubtitle, id = "device-calendars") {
                 SettingsRow(
                     icon = Icons.Default.CalendarMonth,

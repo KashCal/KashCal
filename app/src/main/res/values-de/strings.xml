@@ -361,10 +361,11 @@
     <string name="accounts_section_add">Konto hinzufügen</string>
     <string name="accounts_empty_title">Keine Konten verbunden</string>
     <string name="accounts_empty_subtitle">Füge ein Konto hinzu, um deine Kalender geräteübergreifend zu synchronisieren</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; mehr</string>
+    <string name="accounts_row_label">Kalenderkonten</string>
+    <string name="accounts_row_hint">z. B. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud hinzufügen</string>
     <string name="accounts_add_caldav">CalDAV hinzufügen</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; mehr</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; mehr</string>
     <string name="accounts_caldav_help_title">Was ist CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV ist ein offener Standard zur Kalendersynchronisierung. Unterstützt von:</string>
     <string name="accounts_caldav_help_more">&amp; mehr</string>
@@ -386,6 +387,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Geburtstage &amp; Jahrestage</string>
+    <string name="birthdays_anniversaries_row_hint">Aus deinen Kontakten</string>
     <string name="birthdays_section_title">Geburtstage</string>
     <string name="anniversaries_section_title">Jahrestage</string>
     <string name="settings_contact_birthdays">Kontakt-Geburtstage</string>
@@ -439,6 +441,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Gerätekalender</string>
+    <string name="settings_device_calendars_hint">Kalender aus anderen Apps</string>
     <string name="settings_quick_event_add">Schnelleingabe</string>
     <string name="settings_week_numbers">Kalenderwochen</string>
     <string name="settings_show_declined">Abgelehnte Termine anzeigen</string>
@@ -562,16 +565,16 @@
         <item quantity="other">%1$s · %2$d Kalender</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d Abonnement</item>
-        <item quantity="other">%1$d Abonnements</item>
+        <item quantity="one">%1$d Feed</item>
+        <item quantity="other">%1$d Feeds</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d Abo und deine Einstellungen werden importiert.</item>
-        <item quantity="other">%1$d Abos und deine Einstellungen werden importiert.</item>
+        <item quantity="one">%1$d Feed und deine Einstellungen werden importiert.</item>
+        <item quantity="other">%1$d Feeds und deine Einstellungen werden importiert.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d Abo und deine Einstellungen importiert.</item>
-        <item quantity="other">%1$d Abos und deine Einstellungen importiert.</item>
+        <item quantity="one">%1$d Feed und deine Einstellungen importiert.</item>
+        <item quantity="other">%1$d Feeds und deine Einstellungen importiert.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sync fehlgeschlagen (%1$d Versuch)</item>

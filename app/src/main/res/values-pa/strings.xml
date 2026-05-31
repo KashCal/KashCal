@@ -370,10 +370,11 @@
     <string name="accounts_section_add">ਖਾਤਾ ਜੋੜੋ</string>
     <string name="accounts_empty_title">ਕੋਈ ਖਾਤਾ ਨਹੀਂ ਜੁੜਿਆ</string>
     <string name="accounts_empty_subtitle">ਡਿਵਾਈਸਾਂ ਵਿੱਚ ਆਪਣੇ ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਨ ਲਈ ਖਾਤਾ ਜੋੜੋ</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; ਹੋਰ</string>
+    <string name="accounts_row_label">ਕੈਲੰਡਰ ਖਾਤੇ</string>
+    <string name="accounts_row_hint">ਉਦਾ. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud ਜੋੜੋ</string>
     <string name="accounts_add_caldav">CalDAV ਜੋੜੋ</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; ਹੋਰ</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; ਹੋਰ</string>
     <string name="accounts_caldav_help_title">CalDAV ਕੀ ਹੈ?</string>
     <string name="accounts_caldav_help_description">CalDAV ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਨ ਲਈ ਖੁੱਲ੍ਹਾ ਮਿਆਰ ਹੈ। ਸਮਰਥਿਤ:</string>
     <string name="accounts_caldav_help_more">&amp; ਹੋਰ</string>
@@ -393,6 +394,7 @@
     <string name="subscriptions_row_hint">ਜਿਵੇਂ ਛੁੱਟੀਆਂ, ਖੇਡਾਂ, ਸਕੂਲ</string>
 
     <string name="birthdays_anniversaries_row_label">ਜਨਮਦਿਨ &amp; ਵਰ੍ਹੇਗੰਢਾਂ</string>
+    <string name="birthdays_anniversaries_row_hint">ਤੁਹਾਡੇ ਫ਼ੋਨ ਸੰਪਰਕਾਂ ਤੋਂ</string>
     <string name="birthdays_section_title">ਜਨਮਦਿਨ</string>
     <string name="anniversaries_section_title">ਵਰ੍ਹੇਗੰਢਾਂ</string>
     <string name="settings_contact_birthdays">ਸੰਪਰਕ ਜਨਮਦਿਨ</string>
@@ -441,6 +443,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
+    <string name="settings_device_calendars_hint">ਹੋਰ ਐਪਾਂ ਦੇ ਕੈਲੰਡਰ</string>
     <string name="settings_quick_event_add">ਤੁਰੰਤ ਘਟਨਾ ਜੋੜੋ</string>
     <string name="settings_week_numbers">ਹਫ਼ਤਾ ਨੰਬਰ</string>
     <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
@@ -553,16 +556,16 @@
         <item quantity="other">%1$s · %2$d ਕੈਲੰਡਰ</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d ਸਬਸਕ੍ਰਿਪਸ਼ਨ</item>
-        <item quantity="other">%1$d ਸਬਸਕ੍ਰਿਪਸ਼ਨਾਂ</item>
+        <item quantity="one">%1$d ਫ਼ੀਡ</item>
+        <item quantity="other">%1$d ਫ਼ੀਡਾਂ</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d ਮੈਂਬਰਸ਼ਿਪ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</item>
-        <item quantity="other">%1$d ਮੈਂਬਰਸ਼ਿਪਾਂ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</item>
+        <item quantity="one">%1$d ਫ਼ੀਡ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</item>
+        <item quantity="other">%1$d ਫ਼ੀਡਾਂ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d ਮੈਂਬਰਸ਼ਿਪ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
-        <item quantity="other">%1$d ਮੈਂਬਰਸ਼ਿਪਾਂ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
+        <item quantity="one">%1$d ਫ਼ੀਡ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
+        <item quantity="other">%1$d ਫ਼ੀਡਾਂ ਅਤੇ ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਗਈਆਂ।</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ਸਿੰਕ ਅਸਫ਼ਲ (%1$d ਕੋਸ਼ਿਸ਼)</item>

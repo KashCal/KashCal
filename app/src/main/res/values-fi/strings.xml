@@ -382,10 +382,11 @@
     <string name="accounts_section_add">Lisää tili</string>
     <string name="accounts_empty_title">Ei yhdistettyjä tilejä</string>
     <string name="accounts_empty_subtitle">Lisää tili synkronoidaksesi kalenterit laitteiden välillä</string>
-    <string name="accounts_row_label">iCloud, Nextcloud ja muut</string>
+    <string name="accounts_row_label">Kalenteritilit</string>
+    <string name="accounts_row_hint">esim. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Lisää iCloud</string>
     <string name="accounts_add_caldav">Lisää CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail ja muut</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail ja muut</string>
     <string name="accounts_caldav_help_title">Mikä on CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV on avoin standardi kalenterien synkronointiin. Tuetut:</string>
     <string name="accounts_caldav_help_more">ja muut</string>
@@ -407,6 +408,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Syntymäpäivät ja vuosipäivät</string>
+    <string name="birthdays_anniversaries_row_hint">Puhelimen yhteystiedoista</string>
     <string name="birthdays_section_title">Syntymäpäivät</string>
     <string name="anniversaries_section_title">Vuosipäivät</string>
     <string name="settings_contact_birthdays">Yhteystietojen syntymäpäivät</string>
@@ -460,6 +462,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Laitteen kalenterit</string>
+    <string name="settings_device_calendars_hint">Muiden sovellusten kalenterit</string>
     <string name="settings_quick_event_add">Nopea tapahtuman lisäys</string>
     <string name="settings_week_numbers">Viikkonumerot</string>
     <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
@@ -584,16 +587,16 @@
         <item quantity="other">%1$s · %2$d kalenteria</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d tilaus</item>
-        <item quantity="other">%1$d tilausta</item>
+        <item quantity="one">%1$d syöte</item>
+        <item quantity="other">%1$d syötettä</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d tilaus ja asetuksesi tuodaan.</item>
-        <item quantity="other">%1$d tilausta ja asetuksesi tuodaan.</item>
+        <item quantity="one">%1$d syöte ja asetuksesi tuodaan.</item>
+        <item quantity="other">%1$d syötettä ja asetuksesi tuodaan.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Tuotu %1$d tilaus ja asetuksesi.</item>
-        <item quantity="other">Tuotu %1$d tilausta ja asetuksesi.</item>
+        <item quantity="one">Tuotu %1$d syöte ja asetuksesi.</item>
+        <item quantity="other">Tuotu %1$d syötettä ja asetuksesi.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synkronointi epäonnistui (%1$d yritys)</item>

@@ -379,10 +379,11 @@
     <string name="accounts_section_add">Afegir compte</string>
     <string name="accounts_empty_title">Cap compte connectat</string>
     <string name="accounts_empty_subtitle">Afegeix un compte per sincronitzar els teus calendaris entre dispositius</string>
-    <string name="accounts_row_label">iCloud, Nextcloud i més</string>
+    <string name="accounts_row_label">Comptes de calendari</string>
+    <string name="accounts_row_hint">p. ex. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Afegir iCloud</string>
     <string name="accounts_add_caldav">Afegir CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail i més</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail i més</string>
     <string name="accounts_caldav_help_title">Què és CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV és un estàndard obert per sincronitzar calendaris. Compatible amb:</string>
     <string name="accounts_caldav_help_more">i més</string>
@@ -404,6 +405,7 @@
 
     <!-- Birthdays & Anniversaries -->
     <string name="birthdays_anniversaries_row_label">Aniversaris i efemèrides</string>
+    <string name="birthdays_anniversaries_row_hint">Dels contactes del telèfon</string>
     <string name="birthdays_section_title">Aniversaris</string>
     <string name="anniversaries_section_title">Efemèrides</string>
     <string name="settings_contact_birthdays">Aniversaris de contactes</string>
@@ -457,6 +459,7 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Calendaris del dispositiu</string>
+    <string name="settings_device_calendars_hint">Calendaris d\'altres aplicacions</string>
     <string name="settings_quick_event_add">Afegir esdeveniment ràpid</string>
     <string name="settings_week_numbers">Números de setmana</string>
     <string name="settings_show_declined">Mostra els esdeveniments rebutjats</string>
@@ -579,16 +582,16 @@
         <item quantity="other">%1$s · %2$d calendaris</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d subscripció</item>
-        <item quantity="other">%1$d subscripcions</item>
+        <item quantity="one">%1$d flux</item>
+        <item quantity="other">%1$d fluxos</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">S\'importaran %1$d subscripció i les teves preferències.</item>
-        <item quantity="other">S\'importaran %1$d subscripcions i les teves preferències.</item>
+        <item quantity="one">S\'importaran %1$d flux i les teves preferències.</item>
+        <item quantity="other">S\'importaran %1$d fluxos i les teves preferències.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importades %1$d subscripció i les teves preferències.</item>
-        <item quantity="other">Importades %1$d subscripcions i les teves preferències.</item>
+        <item quantity="one">Importats %1$d flux i les teves preferències.</item>
+        <item quantity="other">Importats %1$d fluxos i les teves preferències.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sincronització fallada (%1$d intent)</item>

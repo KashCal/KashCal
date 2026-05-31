@@ -367,10 +367,11 @@
     <string name="accounts_section_add">Přidat účet</string>
     <string name="accounts_empty_title">Žádné připojené účty</string>
     <string name="accounts_empty_subtitle">Přidejte účet pro synchronizaci kalendářů mezi zařízeními</string>
-    <string name="accounts_row_label">iCloud, Nextcloud a další</string>
+    <string name="accounts_row_label">Účty kalendáře</string>
+    <string name="accounts_row_hint">např. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Přidat iCloud</string>
     <string name="accounts_add_caldav">Přidat CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail a další</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail a další</string>
     <string name="accounts_caldav_help_title">Co je CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV je otevřený standard pro synchronizaci kalendářů. Podporovaný:</string>
     <string name="accounts_caldav_help_more">a další</string>
@@ -390,6 +391,7 @@
     <string name="subscriptions_add_ics">Přidat kalendář ICS</string>
 
     <string name="birthdays_anniversaries_row_label">Narozeniny a výročí</string>
+    <string name="birthdays_anniversaries_row_hint">Z kontaktů telefonu</string>
     <string name="birthdays_section_title">Narozeniny</string>
     <string name="anniversaries_section_title">Výročí</string>
     <string name="settings_contact_birthdays">Narozeniny kontaktů</string>
@@ -438,6 +440,7 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <string name="settings_device_calendars">Kalendáře zařízení</string>
+    <string name="settings_device_calendars_hint">Kalendáře z jiných aplikací</string>
     <string name="settings_quick_event_add">Rychlé přidání události</string>
     <string name="settings_week_numbers">Čísla týdnů</string>
     <string name="settings_show_declined">Zobrazit odmítnuté události</string>
@@ -560,22 +563,22 @@
         <item quantity="other">%1$s · %2$d kalendářů</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d odběr</item>
-        <item quantity="few">%1$d odběry</item>
-        <item quantity="many">%1$d odběrů</item>
-        <item quantity="other">%1$d odběrů</item>
+        <item quantity="one">%1$d kanál</item>
+        <item quantity="few">%1$d kanály</item>
+        <item quantity="many">%1$d kanálů</item>
+        <item quantity="other">%1$d kanálů</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d odběr a vaše předvolby budou importovány.</item>
-        <item quantity="few">%1$d odběry a vaše předvolby budou importovány.</item>
-        <item quantity="many">%1$d odběrů a vaše předvolby budou importovány.</item>
-        <item quantity="other">%1$d odběrů a vaše předvolby budou importovány.</item>
+        <item quantity="one">%1$d kanál a vaše předvolby budou importovány.</item>
+        <item quantity="few">%1$d kanály a vaše předvolby budou importovány.</item>
+        <item quantity="many">%1$d kanálů a vaše předvolby budou importovány.</item>
+        <item quantity="other">%1$d kanálů a vaše předvolby budou importovány.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">Importován %1$d odběr a vaše předvolby.</item>
-        <item quantity="few">Importovány %1$d odběry a vaše předvolby.</item>
-        <item quantity="many">Importováno %1$d odběrů a vaše předvolby.</item>
-        <item quantity="other">Importováno %1$d odběrů a vaše předvolby.</item>
+        <item quantity="one">Importován %1$d kanál a vaše předvolby.</item>
+        <item quantity="few">Importovány %1$d kanály a vaše předvolby.</item>
+        <item quantity="many">Importováno %1$d kanálů a vaše předvolby.</item>
+        <item quantity="other">Importováno %1$d kanálů a vaše předvolby.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronizace selhala (%1$d pokus)</item>

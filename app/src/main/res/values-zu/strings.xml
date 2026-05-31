@@ -399,10 +399,11 @@
     <string name="accounts_section_add">Engeza I-Akhawunti</string>
     <string name="accounts_empty_title">Awekho ama-akhawunti axhunyiwe</string>
     <string name="accounts_empty_subtitle">Engeza i-akhawunti ukuze uvumelanise amakhalenda akho phakathi kwamadivayisi</string>
-    <string name="accounts_row_label">iCloud, Nextcloud &amp; Okunye</string>
+    <string name="accounts_row_label">Ama-akhawunti Wekhalenda</string>
+    <string name="accounts_row_hint">isb. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Engeza iCloud</string>
     <string name="accounts_add_caldav">Engeza CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Okunye</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail &amp; Okunye</string>
     <string name="accounts_caldav_help_title">Iyini CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV iyisilinganiso esivulekile sokuvumelanisa amakhalenda. Isekelwa:</string>
     <string name="accounts_caldav_help_more">&amp; okunye</string>
@@ -424,6 +425,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Izinsuku Zokuzalwa &amp; Izinkumbulo</string>
+    <string name="birthdays_anniversaries_row_hint">Kusuka kubantu abaxhunywe nabo befoni yakho</string>
     <string name="birthdays_section_title">Izinsuku Zokuzalwa</string>
     <string name="anniversaries_section_title">Izinkumbulo</string>
     <string name="settings_contact_birthdays">Izinsuku Zokuzalwa Zabantu Abaxhunywe Nabo</string>
@@ -477,6 +479,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Amakhalenda Edivayisi</string>
+    <string name="settings_device_calendars_hint">Amakhalenda asuka kwezinye izinhlelo</string>
     <string name="settings_quick_event_add">Ukwengeza Umcimbi Ngokushesha</string>
     <string name="settings_week_numbers">Izinombolo Zamasonto</string>
     <string name="settings_show_declined">Bonisa imicimbi enqatshelwe</string>
@@ -597,16 +600,16 @@
         <item quantity="other">%1$s · amakhalenda angu-%2$d</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d okubhaliselwe</item>
-        <item quantity="other">%1$d okubhaliselwe</item>
+        <item quantity="one">%1$d ifidi</item>
+        <item quantity="other">%1$d amafidi</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d ukubhalisa kanye nokuncamelwayo kwakho kuzongeniswa.</item>
-        <item quantity="other">%1$d ukubhalisa kanye nokuncamelwayo kwakho kuzongeniswa.</item>
+        <item quantity="one">%1$d ifidi kanye nokuncamelwayo kwakho kuzongeniswa.</item>
+        <item quantity="other">%1$d amafidi kanye nokuncamelwayo kwakho kuzongeniswa.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d ukubhalisa kanye nokuncamelwayo kwakho kungenisiwe.</item>
-        <item quantity="other">%1$d ukubhalisa kanye nokuncamelwayo kwakho kungenisiwe.</item>
+        <item quantity="one">%1$d ifidi kanye nokuncamelwayo kwakho kungenisiwe.</item>
+        <item quantity="other">%1$d amafidi kanye nokuncamelwayo kwakho kungenisiwe.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Ukuvumelanisa kwehlulekile (umzamo ongu-%1$d)</item>

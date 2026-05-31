@@ -214,6 +214,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("quick_view", result)
@@ -232,6 +233,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("create", result)
@@ -250,6 +252,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("search", result)
@@ -268,6 +271,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("today", result)
@@ -286,6 +290,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("go_to_date", result)
@@ -311,6 +316,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("import", result)
@@ -336,9 +342,73 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("calendar_intent", result)
+    }
+
+    // ==================== QuickAddFromText Tests ====================
+
+    @Test
+    fun `QuickAddFromText stores fields correctly`() {
+        val action = PendingAction.QuickAddFromText(
+            text = "Lunch tomorrow 1pm",
+            location = "https://meet.zoom.us/abc",
+            referenceMs = 1704067200000L
+        )
+
+        assertEquals("Lunch tomorrow 1pm", action.text)
+        assertEquals("https://meet.zoom.us/abc", action.location)
+        assertEquals(1704067200000L, action.referenceMs)
+    }
+
+    @Test
+    fun `QuickAddFromText allows null location`() {
+        val action = PendingAction.QuickAddFromText(
+            text = "Lunch",
+            location = null,
+            referenceMs = 0L
+        )
+        assertNull(action.location)
+    }
+
+    @Test
+    fun `QuickAddFromText equality works correctly`() {
+        val a = PendingAction.QuickAddFromText("x", null, 1L)
+        val b = PendingAction.QuickAddFromText("x", null, 1L)
+        val c = PendingAction.QuickAddFromText("y", null, 1L)
+        assertEquals(a, b)
+        assertFalse(a == c)
+    }
+
+    @Test
+    fun `QuickAddFromText copy works correctly`() {
+        val original = PendingAction.QuickAddFromText("Lunch", null, 1L)
+        val copied = original.copy(location = "https://x.com")
+
+        assertEquals("Lunch", copied.text)
+        assertEquals("https://x.com", copied.location)
+        assertEquals(1L, copied.referenceMs)
+    }
+
+    @Test
+    fun `when expression matches QuickAddFromText`() {
+        val action: PendingAction = PendingAction.QuickAddFromText("Lunch", null, 0L)
+
+        val result = when (action) {
+            is PendingAction.ShowEventQuickView -> "quick_view"
+            is PendingAction.CreateEvent -> "create"
+            is PendingAction.OpenSearch -> "search"
+            is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
+            is PendingAction.ImportIcsFile -> "import"
+            is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
+        }
+
+        assertEquals("quick_add_from_text", result)
     }
 
     // ==================== Source Enum Tests ====================

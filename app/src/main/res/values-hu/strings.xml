@@ -398,10 +398,11 @@
     <string name="accounts_section_add">Fiók hozzáadása</string>
     <string name="accounts_empty_title">Nincs csatlakoztatott fiók</string>
     <string name="accounts_empty_subtitle">Adj hozzá fiókot a naptáraid eszközök közötti szinkronizálásához</string>
-    <string name="accounts_row_label">iCloud, Nextcloud és több</string>
+    <string name="accounts_row_label">Naptárfiókok</string>
+    <string name="accounts_row_hint">pl. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud hozzáadása</string>
     <string name="accounts_add_caldav">CalDAV hozzáadása</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail és több</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail és több</string>
     <string name="accounts_caldav_help_title">Mi az a CalDAV?</string>
     <string name="accounts_caldav_help_description">A CalDAV nyílt szabvány naptárak szinkronizálásához. Támogatják:</string>
     <string name="accounts_caldav_help_more">és több</string>
@@ -423,6 +424,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Születésnapok és évfordulók</string>
+    <string name="birthdays_anniversaries_row_hint">A telefon névjegyeiből</string>
     <string name="birthdays_section_title">Születésnapok</string>
     <string name="anniversaries_section_title">Évfordulók</string>
     <string name="settings_contact_birthdays">Névjegy születésnapok</string>
@@ -479,6 +481,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Eszköz naptárak</string>
+    <string name="settings_device_calendars_hint">Naptárak más alkalmazásokból</string>
     <string name="settings_quick_event_add">Gyors esemény hozzáadás</string>
     <string name="settings_week_numbers">Hétszámok</string>
     <string name="settings_show_declined">Visszautasított események megjelenítése</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d naptár</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d feliratkozás</item>
-        <item quantity="other">%1$d feliratkozás</item>
+        <item quantity="one">%1$d hírcsatorna</item>
+        <item quantity="other">%1$d hírcsatorna</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d feliratkozás és a beállításaid importálásra kerülnek.</item>
-        <item quantity="other">%1$d feliratkozás és a beállításaid importálásra kerülnek.</item>
+        <item quantity="one">%1$d hírcsatorna és a beállításaid importálásra kerülnek.</item>
+        <item quantity="other">%1$d hírcsatorna és a beállításaid importálásra kerülnek.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d feliratkozás és a beállításaid importálva.</item>
-        <item quantity="other">%1$d feliratkozás és a beállításaid importálva.</item>
+        <item quantity="one">%1$d hírcsatorna és a beállításaid importálva.</item>
+        <item quantity="other">%1$d hírcsatorna és a beállításaid importálva.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Szinkronizálás sikertelen (%1$d próbálkozás)</item>

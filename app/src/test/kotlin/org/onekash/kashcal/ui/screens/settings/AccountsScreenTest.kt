@@ -56,7 +56,7 @@ class AccountsScreenTest {
         val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
-            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2)
+            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "Fastmail", calendarCount = 2)
         )
 
         val accountCount = (if (iCloudAccount != null) 1 else 0) + calDavAccounts.size
@@ -86,7 +86,7 @@ class AccountsScreenTest {
         val iCloudAccount: ICloudAccountUiModel? = null
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
-            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2)
+            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "Fastmail", calendarCount = 2)
         )
 
         val previewNames = buildList {
@@ -94,7 +94,7 @@ class AccountsScreenTest {
             calDavAccounts.take(2).forEach { add(it.displayName) }
         }.take(2).joinToString(", ")
 
-        assertEquals("Nextcloud, FastMail", previewNames)
+        assertEquals("Nextcloud, Fastmail", previewNames)
     }
 
     @Test
@@ -102,7 +102,7 @@ class AccountsScreenTest {
         val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
-            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2),
+            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "Fastmail", calendarCount = 2),
             CalDavAccountUiModel(id = 3, email = "user@posteo.com", displayName = "Posteo", calendarCount = 1)
         )
 
@@ -119,7 +119,7 @@ class AccountsScreenTest {
         val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
-            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2)
+            CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "Fastmail", calendarCount = 2)
         )
 
         val accountCount = (if (iCloudAccount != null) 1 else 0) + calDavAccounts.size

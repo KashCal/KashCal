@@ -400,10 +400,11 @@
     <string name="accounts_section_add">অ্যাকাউন্ট যোগ করুন</string>
     <string name="accounts_empty_title">কোনো অ্যাকাউন্ট সংযুক্ত নেই</string>
     <string name="accounts_empty_subtitle">ডিভাইসগুলিতে ক্যালেন্ডার সিংক করতে একটি অ্যাকাউন্ট যোগ করুন</string>
-    <string name="accounts_row_label">iCloud, Nextcloud এবং আরও</string>
+    <string name="accounts_row_label">ক্যালেন্ডার অ্যাকাউন্ট</string>
+    <string name="accounts_row_hint">যেমন iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">iCloud যোগ করুন</string>
     <string name="accounts_add_caldav">CalDAV যোগ করুন</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail এবং আরও</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, Fastmail এবং আরও</string>
     <string name="accounts_caldav_help_title">CalDAV কী?</string>
     <string name="accounts_caldav_help_description">CalDAV ক্যালেন্ডার সিংক করার একটি ওপেন স্ট্যান্ডার্ড। এটি সমর্থন করে:</string>
     <string name="accounts_caldav_help_more">এবং আরও</string>
@@ -425,6 +426,7 @@
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">জন্মদিন এবং বার্ষিকী</string>
+    <string name="birthdays_anniversaries_row_hint">আপনার ফোনের যোগাযোগ থেকে</string>
     <string name="birthdays_section_title">জন্মদিন</string>
     <string name="anniversaries_section_title">বার্ষিকী</string>
     <string name="settings_contact_birthdays">যোগাযোগের জন্মদিন</string>
@@ -478,6 +480,7 @@
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ডিভাইস ক্যালেন্ডার</string>
+    <string name="settings_device_calendars_hint">অন্যান্য অ্যাপের ক্যালেন্ডার</string>
     <string name="settings_quick_event_add">দ্রুত ইভেন্ট যোগ</string>
     <string name="settings_week_numbers">সপ্তাহ নম্বর</string>
     <string name="settings_show_declined">প্রত্যাখ্যাত ইভেন্ট দেখান</string>
@@ -601,16 +604,16 @@
         <item quantity="other">%1$s · %2$d ক্যালেন্ডার</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d সাবস্ক্রিপশন</item>
-        <item quantity="other">%1$d সাবস্ক্রিপশন</item>
+        <item quantity="one">%1$d ফিড</item>
+        <item quantity="other">%1$d ফিড</item>
     </plurals>
     <plurals name="restore_confirm_message_with_subs">
-        <item quantity="one">%1$d সাবস্ক্রিপশন এবং আপনার পছন্দগুলি আমদানি করা হবে।</item>
-        <item quantity="other">%1$d সাবস্ক্রিপশন এবং আপনার পছন্দগুলি আমদানি করা হবে।</item>
+        <item quantity="one">%1$d ফিড এবং আপনার পছন্দগুলি আমদানি করা হবে।</item>
+        <item quantity="other">%1$d ফিড এবং আপনার পছন্দগুলি আমদানি করা হবে।</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
-        <item quantity="one">%1$d সাবস্ক্রিপশন এবং আপনার পছন্দগুলি আমদানি করা হয়েছে।</item>
-        <item quantity="other">%1$d সাবস্ক্রিপশন এবং আপনার পছন্দগুলি আমদানি করা হয়েছে।</item>
+        <item quantity="one">%1$d ফিড এবং আপনার পছন্দগুলি আমদানি করা হয়েছে।</item>
+        <item quantity="other">%1$d ফিড এবং আপনার পছন্দগুলি আমদানি করা হয়েছে।</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">সিংক ব্যর্থ (%1$d চেষ্টা)</item>

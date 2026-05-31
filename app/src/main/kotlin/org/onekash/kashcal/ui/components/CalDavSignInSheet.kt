@@ -57,7 +57,7 @@ import org.onekash.kashcal.ui.util.asString
 /**
  * Bottom sheet for CalDAV account sign-in.
  *
- * Supports generic CalDAV servers (Nextcloud, Baikal, FastMail, Radicale, etc.)
+ * Supports generic CalDAV servers (Nextcloud, Baikal, Fastmail, Radicale, etc.)
  *
  * Simplified flow (v21.5.0):
  * 1. NotConnected: Show server/username/password fields -> Connect button
