@@ -1151,6 +1151,14 @@
     </plurals>
     <string name="share_availability_days_through">До %1$s</string>
     <string name="share_availability_window_duration">Опсег од %1$s часа</string>
+    <string name="share_as_card_action">Сподели како картичка</string>
+    <string name="share_as_card_chip_standard">Стандардно</string>
+    <string name="share_as_card_chip_celebration">Прослава</string>
+    <string name="share_as_card_send">Испрати</string>
+    <string name="share_as_card_attribution">Изработено со KashCal</string>
+    <string name="share_as_card_all_day">Цел ден</string>
+    <string name="share_as_card_chooser_title">Сподели настан</string>
+    <string name="share_as_card_share_failed">Не може да се сподели картичката</string>
     <string name="attendee_sheet_title">Учесници</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d поканет</item>

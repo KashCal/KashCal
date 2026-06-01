@@ -1095,6 +1095,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s asti</string>
     <string name="share_availability_window_duration">%1$s tunnin ikkuna</string>
+    <string name="share_as_card_action">Jaa korttina</string>
+    <string name="share_as_card_chip_standard">Tavallinen</string>
+    <string name="share_as_card_chip_celebration">Juhla</string>
+    <string name="share_as_card_send">Lähetä</string>
+    <string name="share_as_card_attribution">Tehty KashCal-sovelluksella</string>
+    <string name="share_as_card_all_day">Koko päivä</string>
+    <string name="share_as_card_chooser_title">Jaa tapahtuma</string>
+    <string name="share_as_card_share_failed">Korttia ei voitu jakaa</string>
     <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
     <string name="attendee_sheet_title">Osallistujat</string>
     <plurals name="attendee_count_invited">

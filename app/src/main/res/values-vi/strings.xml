@@ -1079,6 +1079,14 @@
     <string name="share_availability_hours_section">Giờ làm việc</string>
     <string name="share_availability_days_through">Đến %1$s</string>
     <string name="share_availability_window_duration">Khung %1$s giờ</string>
+    <string name="share_as_card_action">Chia sẻ dưới dạng thẻ</string>
+    <string name="share_as_card_chip_standard">Tiêu chuẩn</string>
+    <string name="share_as_card_chip_celebration">Chúc mừng</string>
+    <string name="share_as_card_send">Gửi</string>
+    <string name="share_as_card_attribution">Tạo bằng KashCal</string>
+    <string name="share_as_card_all_day">Cả ngày</string>
+    <string name="share_as_card_chooser_title">Chia sẻ sự kiện</string>
+    <string name="share_as_card_share_failed">Không thể chia sẻ thẻ</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d ngày</item>
     </plurals>

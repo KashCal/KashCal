@@ -175,8 +175,12 @@ fun DeviceEvent.toExportEvent(reminderMinutes: List<Int> = emptyList()): Event {
     )
 }
 
-/** CalendarProvider STATUS int → RFC 5545 status string. */
-private fun statusIntToString(status: Int): String = when (status) {
+/**
+ * CalendarProvider STATUS int → RFC 5545 status string. Shared by
+ * [toExportEvent] and [DisplayEvent.Device.toEventForShareCard] so a
+ * TENTATIVE device event preserves its status across both share paths.
+ */
+internal fun statusIntToString(status: Int): String = when (status) {
     CalendarContract.Events.STATUS_TENTATIVE -> "TENTATIVE"
     CalendarContract.Events.STATUS_CANCELED -> "CANCELLED"
     else -> "CONFIRMED"

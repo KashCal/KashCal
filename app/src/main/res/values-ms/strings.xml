@@ -1080,6 +1080,14 @@
     <string name="share_availability_hours_section">Waktu kerja</string>
     <string name="share_availability_days_through">Hingga %1$s</string>
     <string name="share_availability_window_duration">Tempoh %1$s jam</string>
+    <string name="share_as_card_action">Kongsi sebagai kad</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Sambutan</string>
+    <string name="share_as_card_send">Hantar</string>
+    <string name="share_as_card_attribution">Dibuat dengan KashCal</string>
+    <string name="share_as_card_all_day">Sepanjang hari</string>
+    <string name="share_as_card_chooser_title">Kongsi acara</string>
+    <string name="share_as_card_share_failed">Tidak dapat berkongsi kad</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d hari</item>
     </plurals>

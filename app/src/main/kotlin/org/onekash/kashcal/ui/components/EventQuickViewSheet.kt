@@ -93,6 +93,11 @@ import java.time.ZoneId
  * @param onDuplicate Called to duplicate the event
  * @param onShare Called to share the event as text
  * @param onExportIcs Called to export the event as .ics file
+ * @param onShareAsCard Called to open the share-as-card sheet (top-right icon)
+ * @param showShareCardTooltip True on first appearance to display the
+ *   one-shot coach mark on the Share icon. Caller persists dismissal.
+ * @param onShareCardTooltipDismissed Invoked when the tooltip should be
+ *   marked as displayed (after first show or first tap on the Share icon).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +117,9 @@ fun EventQuickViewSheet(
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
     onExportIcs: () -> Unit = {},
+    onShareAsCard: () -> Unit = {},
+    showShareCardTooltip: Boolean = false,
+    onShareCardTooltipDismissed: () -> Unit = {},
     onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     timeFormat: String = "system"
 ) {
@@ -181,6 +189,21 @@ fun EventQuickViewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
+            // Top row beneath the drag handle: calendar dot+name pill on the
+            // left, Share-as-card icon on the right. The pill was relocated
+            // from its previous in-body position so this row reads as a
+            // header strip (calendar identity + share affordance).
+            ShareAsCardTopRow(
+                calendarColor = calendarColor,
+                calendarName = calendarName,
+                onShareClick = {
+                    onShareCardTooltipDismissed()
+                    onShareAsCard()
+                },
+                showTooltip = showShareCardTooltip,
+                onTooltipDisplayed = onShareCardTooltipDismissed,
+            )
+
             // Event details with color stripe
             Row(
                 modifier = Modifier
@@ -300,25 +323,8 @@ fun EventQuickViewSheet(
                             )
                         }
 
-                        // Calendar name
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .background(
-                                        color = Color(calendarColor),
-                                        shape = RoundedCornerShape(50)
-                                    )
-                            )
-                            Text(
-                                text = calendarName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        // Calendar dot + name was relocated to the top row
+                        // (see ShareAsCardTopRow) so it reads as a header strip.
                     }
                 }
             }

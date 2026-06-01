@@ -230,11 +230,83 @@ class DeviceCalendarImporterTest {
     }
 
     @Test
-    fun `event without reminders passes empty list`() = runTest {
+    fun `event without reminders passes empty list when no default configured`() = runTest {
+        // Default args (REMINDER_OFF) → no fallback applied. Caller didn't
+        // pass user's preference so behavior matches the old contract.
         val events = listOf(makeEvent(reminders = null))
 
         val repo = CapturingRepo()
         importEventsToDeviceCalendar(events, 5L, repo)
+
+        assertEquals(emptyList<Int>(), repo.reminders)
+    }
+
+    @Test
+    fun `timed event without reminders applies user's default timed reminder`() = runTest {
+        // Caller (a ViewModel) passed the user's configured default in.
+        val events = listOf(makeEvent(isAllDay = false, reminders = null))
+
+        val repo = CapturingRepo()
+        importEventsToDeviceCalendar(
+            events = events,
+            calendarId = 5L,
+            repo = repo,
+            defaultTimedReminderMinutes = 15,
+            defaultAllDayReminderMinutes = 540
+        )
+
+        assertEquals(listOf(15), repo.reminders)
+    }
+
+    @Test
+    fun `all-day event without reminders applies user's default all-day reminder`() = runTest {
+        val events = listOf(makeEvent(isAllDay = true, reminders = null))
+
+        val repo = CapturingRepo()
+        importEventsToDeviceCalendar(
+            events = events,
+            calendarId = 5L,
+            repo = repo,
+            defaultTimedReminderMinutes = 15,
+            defaultAllDayReminderMinutes = 540
+        )
+
+        assertEquals(listOf(540), repo.reminders)
+    }
+
+    @Test
+    fun `event with ICS reminders preserves them and ignores default`() = runTest {
+        val events = listOf(
+            makeEvent(reminders = listOf("-PT30M", "-PT1H"))
+        )
+
+        val repo = CapturingRepo()
+        importEventsToDeviceCalendar(
+            events = events,
+            calendarId = 5L,
+            repo = repo,
+            defaultTimedReminderMinutes = 15,
+            defaultAllDayReminderMinutes = 540
+        )
+
+        // The ICS file's VALARMs win — default is not appended.
+        assertEquals(listOf(30, 60), repo.reminders)
+    }
+
+    @Test
+    fun `event without reminders skips default when user set REMINDER_OFF`() = runTest {
+        val events = listOf(makeEvent(reminders = null))
+
+        val repo = CapturingRepo()
+        importEventsToDeviceCalendar(
+            events = events,
+            calendarId = 5L,
+            repo = repo,
+            defaultTimedReminderMinutes =
+                org.onekash.kashcal.data.preferences.KashCalDataStore.REMINDER_OFF,
+            defaultAllDayReminderMinutes =
+                org.onekash.kashcal.data.preferences.KashCalDataStore.REMINDER_OFF
+        )
 
         assertEquals(emptyList<Int>(), repo.reminders)
     }

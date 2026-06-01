@@ -1300,6 +1300,14 @@
     </plurals>
     <string name="share_availability_days_through">Go dtí %1$s</string>
     <string name="share_availability_window_duration">Fuinneog %1$s uair</string>
+    <string name="share_as_card_action">Roinn mar chárta</string>
+    <string name="share_as_card_chip_standard">Caighdeánach</string>
+    <string name="share_as_card_chip_celebration">Ceiliúradh</string>
+    <string name="share_as_card_send">Seol</string>
+    <string name="share_as_card_attribution">Déanta le KashCal</string>
+    <string name="share_as_card_all_day">Lá iomlán</string>
+    <string name="share_as_card_chooser_title">Roinn imeacht</string>
+    <string name="share_as_card_share_failed">Níorbh fhéidir an cárta a roinnt</string>
     <string name="share_from_kashcal_footer">Roinnte ó KashCal</string>
     <string name="attendee_sheet_title">Freastalaithe</string>
     <plurals name="attendee_count_invited">

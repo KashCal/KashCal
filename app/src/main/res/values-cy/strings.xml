@@ -1351,6 +1351,14 @@
     </plurals>
     <string name="share_availability_days_through">Hyd at %1$s</string>
     <string name="share_availability_window_duration">Ffenestr %1$s awr</string>
+    <string name="share_as_card_action">Rhannu fel cerdyn</string>
+    <string name="share_as_card_chip_standard">Safonol</string>
+    <string name="share_as_card_chip_celebration">Dathliad</string>
+    <string name="share_as_card_send">Anfon</string>
+    <string name="share_as_card_attribution">Wedi\'i wneud gyda KashCal</string>
+    <string name="share_as_card_all_day">Trwy\'r dydd</string>
+    <string name="share_as_card_chooser_title">Rhannu digwyddiad</string>
+    <string name="share_as_card_share_failed">Methu rhannu\'r cerdyn</string>
     <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
     <string name="attendee_sheet_title">Mynychwyr</string>
     <plurals name="attendee_count_invited">

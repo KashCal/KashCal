@@ -1079,6 +1079,14 @@
     <string name="share_availability_hours_section">근무 시간</string>
     <string name="share_availability_days_through">%1$s까지</string>
     <string name="share_availability_window_duration">%1$s시간 창</string>
+    <string name="share_as_card_action">카드로 공유</string>
+    <string name="share_as_card_chip_standard">기본</string>
+    <string name="share_as_card_chip_celebration">축하</string>
+    <string name="share_as_card_send">보내기</string>
+    <string name="share_as_card_attribution">KashCal로 만듦</string>
+    <string name="share_as_card_all_day">종일</string>
+    <string name="share_as_card_chooser_title">일정 공유</string>
+    <string name="share_as_card_share_failed">카드를 공유할 수 없어요</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d일</item>
     </plurals>

@@ -1148,6 +1148,14 @@
     </plurals>
     <string name="share_availability_days_through">እስከ %1$s</string>
     <string name="share_availability_window_duration">%1$s ሰዓት መስኮት</string>
+    <string name="share_as_card_action">እንደ ካርድ አጋራ</string>
+    <string name="share_as_card_chip_standard">መደበኛ</string>
+    <string name="share_as_card_chip_celebration">በዓል</string>
+    <string name="share_as_card_send">ላክ</string>
+    <string name="share_as_card_attribution">በKashCal የተሰራ</string>
+    <string name="share_as_card_all_day">ሙሉ ቀን</string>
+    <string name="share_as_card_chooser_title">ክስተት አጋራ</string>
+    <string name="share_as_card_share_failed">ካርዱን ማጋራት አልተቻለም</string>
     <string name="share_from_kashcal_footer">ከKashCal ተጋርቷል</string>
     <string name="attendee_sheet_title">ተሳታፊዎች</string>
     <plurals name="attendee_count_invited">

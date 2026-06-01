@@ -1079,6 +1079,14 @@
     <string name="share_availability_hours_section">工作時間</string>
     <string name="share_availability_days_through">截至 %1$s</string>
     <string name="share_availability_window_duration">%1$s 小時時段</string>
+    <string name="share_as_card_action">分享為卡片</string>
+    <string name="share_as_card_chip_standard">標準</string>
+    <string name="share_as_card_chip_celebration">慶祝</string>
+    <string name="share_as_card_send">傳送</string>
+    <string name="share_as_card_attribution">由 KashCal 製作</string>
+    <string name="share_as_card_all_day">全天</string>
+    <string name="share_as_card_chooser_title">分享活動</string>
+    <string name="share_as_card_share_failed">無法分享卡片</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d 天</item>
     </plurals>

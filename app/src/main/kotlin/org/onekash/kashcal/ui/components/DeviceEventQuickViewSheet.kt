@@ -83,6 +83,11 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
  * @param onDelete Called to delete all occurrences (or single event if not recurring)
  * @param onDuplicate Called to duplicate this event into a KashCal calendar
  * @param onShare Called to share event details as text
+ * @param onShareAsCard Called to open the share-as-card sheet (top-right icon)
+ * @param showShareCardTooltip True on first appearance to display the
+ *   one-shot coach mark on the Share icon. Caller persists dismissal.
+ * @param onShareCardTooltipDismissed Invoked when the tooltip should be
+ *   marked as displayed (after first show or first tap on the Share icon).
  * @param timeFormat Time format preference: "system", "12h", or "24h"
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,6 +104,9 @@ fun DeviceEventQuickViewSheet(
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
     onExportIcs: () -> Unit = {},
+    onShareAsCard: () -> Unit = {},
+    showShareCardTooltip: Boolean = false,
+    onShareCardTooltipDismissed: () -> Unit = {},
     timeFormat: String = "system"
 ) {
     val canWrite = hasWritePermission && isWritableCalendar
@@ -132,6 +140,21 @@ fun DeviceEventQuickViewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
+            // Top row beneath the drag handle: calendar dot+name pill on the
+            // left, Share-as-card icon on the right. Mirrors
+            // EventQuickViewSheet's header strip so the device-event sheet
+            // surfaces the same share affordance as the Room sheet.
+            ShareAsCardTopRow(
+                calendarColor = displayEvent.calendarColor,
+                calendarName = displayEvent.calendarName,
+                onShareClick = {
+                    onShareCardTooltipDismissed()
+                    onShareAsCard()
+                },
+                showTooltip = showShareCardTooltip,
+                onTooltipDisplayed = onShareCardTooltipDismissed,
+            )
+
             // Event details with color stripe (same layout as EventQuickViewSheet)
             Row(
                 modifier = Modifier
@@ -243,26 +266,6 @@ fun DeviceEventQuickViewSheet(
                             Text(
                                 text = "\uD83D\uDD01 $repeatText",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        // Calendar name
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .background(
-                                        color = Color(displayEvent.calendarColor),
-                                        shape = RoundedCornerShape(50)
-                                    )
-                            )
-                            Text(
-                                text = displayEvent.calendarName,
-                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }

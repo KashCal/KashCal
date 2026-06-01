@@ -272,6 +272,11 @@ dependencies {
     // (drives LibRecurParityEngine against ical4j in the parity harness)
     // after the production migration to icaldav-core in v23.6.20.
     testImplementation(libs.lib.recur)
+    // Compose UI tests under Robolectric — used by ShareCardComposable layout
+    // tests. Test-only; not shipped. Mirrors androidTest counterparts below.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test.manifest)
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)

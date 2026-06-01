@@ -1161,6 +1161,14 @@
     </plurals>
     <string name="share_availability_days_through">Да %1$s</string>
     <string name="share_availability_window_duration">Акно %1$s гадз</string>
+    <string name="share_as_card_action">Падзяліцца карткай</string>
+    <string name="share_as_card_chip_standard">Звычайны</string>
+    <string name="share_as_card_chip_celebration">Святочны</string>
+    <string name="share_as_card_send">Адправіць</string>
+    <string name="share_as_card_attribution">Зроблена ў KashCal</string>
+    <string name="share_as_card_all_day">Увесь дзень</string>
+    <string name="share_as_card_chooser_title">Падзяліцца падзеяй</string>
+    <string name="share_as_card_share_failed">Не ўдалося падзяліцца карткай</string>
     <string name="share_from_kashcal_footer">Адпраўлена з KashCal</string>
     <string name="attendee_sheet_title">Удзельнікі</string>
     <plurals name="attendee_count_invited">

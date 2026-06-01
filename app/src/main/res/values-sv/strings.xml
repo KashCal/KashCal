@@ -1118,6 +1118,14 @@
     </plurals>
     <string name="share_availability_days_through">Till och med %1$s</string>
     <string name="share_availability_window_duration">Fönster på %1$s timmar</string>
+    <string name="share_as_card_action">Dela som kort</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Fest</string>
+    <string name="share_as_card_send">Skicka</string>
+    <string name="share_as_card_attribution">Skapad med KashCal</string>
+    <string name="share_as_card_all_day">Heldag</string>
+    <string name="share_as_card_chooser_title">Dela händelse</string>
+    <string name="share_as_card_share_failed">Kortet kunde inte delas</string>
     <string name="share_from_kashcal_footer">Delat från KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Nästa %1$d dag</item>

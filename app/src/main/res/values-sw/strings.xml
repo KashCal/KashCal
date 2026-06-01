@@ -1096,6 +1096,14 @@
     </plurals>
     <string name="share_availability_days_through">Hadi %1$s</string>
     <string name="share_availability_window_duration">Kipindi cha saa %1$s</string>
+    <string name="share_as_card_action">Shiriki kama kadi</string>
+    <string name="share_as_card_chip_standard">Kawaida</string>
+    <string name="share_as_card_chip_celebration">Sherehe</string>
+    <string name="share_as_card_send">Tuma</string>
+    <string name="share_as_card_attribution">Imetengenezwa kwa KashCal</string>
+    <string name="share_as_card_all_day">Siku nzima</string>
+    <string name="share_as_card_chooser_title">Shiriki tukio</string>
+    <string name="share_as_card_share_failed">Imeshindwa kushiriki kadi</string>
     <string name="attendee_sheet_title">Washiriki</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d aliyealikwa</item>

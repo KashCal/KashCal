@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
@@ -56,6 +57,7 @@ class EventCoordinatorTest {
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
+    private lateinit var dataStore: KashCalDataStore
 
     // System under test
     private lateinit var coordinator: EventCoordinator
@@ -121,6 +123,12 @@ class EventCoordinatorTest {
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        dataStore = mockk(relaxed = true)
+        // The user's configured default reminder. Tests use representative
+        // values (15 / 540); the production code reads whatever the user set
+        // via dataStore.defaultReminderMinutes / defaultAllDayReminder.
+        every { dataStore.defaultReminderMinutes } returns flowOf(15)
+        every { dataStore.defaultAllDayReminder } returns flowOf(540)
 
         // Default local calendar setup
         coEvery { localCalendarInitializer.ensureLocalCalendarExists() } returns localCalendarId
@@ -145,7 +153,8 @@ class EventCoordinatorTest {
             syncScheduler = syncScheduler,
             reminderScheduler = reminderScheduler,
             widgetUpdateManager = widgetUpdateManager,
-            inviteNotifier = mockk(relaxed = true)
+            inviteNotifier = mockk(relaxed = true),
+            dataStore = dataStore
         )
     }
 
@@ -1052,10 +1061,120 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `importIcsEvents skips reminder scheduling for events without reminders`() = runTest {
+    fun `importIcsEvents applies user's default timed reminder when ICS has no VALARM`() = runTest {
+        // setup() stubs the user's preference at 15 minutes; ICS file
+        // omitted VALARM entirely so reminders=null reaches the import path.
+        // The point of the test is "whatever the user configured", not 15.
+        val timedEventNoReminders = testEvent.copy(
+            id = 0L,
+            uid = "no-reminder@test",
+            isAllDay = false,
+            reminders = null
+        )
+        val createdEvent = timedEventNoReminders.copy(id = 303L, reminders = listOf("-PT15M"))
+        val testOccurrence = Occurrence(
+            eventId = createdEvent.id,
+            calendarId = localCalendarId,
+            startTs = createdEvent.startTs,
+            endTs = createdEvent.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+
+        coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+
+        val count = coordinator.importIcsEvents(listOf(timedEventNoReminders), localCalendarId)
+
+        assertEquals(1, count)
+        // Default applied: writer received an event whose reminders match the
+        // timed default formatted as ISO duration.
+        coVerify {
+            eventWriter.createEvent(
+                match { it.reminders == listOf("-PT15M") },
+                any()
+            )
+        }
+        // Reminder scheduling fired because a default was applied.
+        coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents applies user's default all-day reminder when ICS has no VALARM`() = runTest {
+        // setup() stubs user's all-day default at 540 minutes (9 hours before).
+        val allDayEventNoReminders = testEvent.copy(
+            id = 0L,
+            uid = "all-day-no-reminder@test",
+            isAllDay = true,
+            reminders = null
+        )
+        val createdEvent = allDayEventNoReminders.copy(id = 304L, reminders = listOf("-PT9H"))
+        val testOccurrence = Occurrence(
+            eventId = createdEvent.id,
+            calendarId = localCalendarId,
+            startTs = createdEvent.startTs,
+            endTs = createdEvent.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+
+        coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+
+        coordinator.importIcsEvents(listOf(allDayEventNoReminders), localCalendarId)
+
+        coVerify {
+            eventWriter.createEvent(
+                match { it.reminders == listOf("-PT9H") },
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `importIcsEvents preserves ICS VALARM reminders and does not overwrite with default`() = runTest {
+        // ICS file already specified VALARMs (parsed into reminders). Default
+        // must NOT override what the file said.
+        val eventWithIcsReminders = testEvent.copy(
+            id = 0L,
+            uid = "ics-with-alarm@test",
+            isAllDay = false,
+            reminders = listOf("-PT30M", "-PT1H")
+        )
+        val createdEvent = eventWithIcsReminders.copy(id = 305L)
+        val testOccurrence = Occurrence(
+            eventId = createdEvent.id,
+            calendarId = localCalendarId,
+            startTs = createdEvent.startTs,
+            endTs = createdEvent.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+
+        coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+
+        coordinator.importIcsEvents(listOf(eventWithIcsReminders), localCalendarId)
+
+        coVerify {
+            eventWriter.createEvent(
+                match { it.reminders == listOf("-PT30M", "-PT1H") },
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `importIcsEvents skips reminder scheduling when default is REMINDER_OFF`() = runTest {
+        // User explicitly disabled the default reminder. Imported events with
+        // no VALARM stay reminder-less.
+        every { dataStore.defaultReminderMinutes } returns flowOf(KashCalDataStore.REMINDER_OFF)
+        every { dataStore.defaultAllDayReminder } returns flowOf(KashCalDataStore.REMINDER_OFF)
+
         val eventWithoutReminders = testEvent.copy(
             id = 0L,
             uid = "no-reminder@test",
+            isAllDay = false,
             reminders = null
         )
         val createdEvent = eventWithoutReminders.copy(id = 303L)
@@ -1065,7 +1184,12 @@ class EventCoordinatorTest {
         val count = coordinator.importIcsEvents(listOf(eventWithoutReminders), localCalendarId)
 
         assertEquals(1, count)
-        // Verify reminder scheduling was NOT called (no reminders on event)
+        coVerify {
+            eventWriter.createEvent(
+                match { it.reminders == null },
+                any()
+            )
+        }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 

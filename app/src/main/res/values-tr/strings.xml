@@ -1153,6 +1153,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s tarihine kadar</string>
     <string name="share_availability_window_duration">%1$s saatlik aralık</string>
+    <string name="share_as_card_action">Kart olarak paylaş</string>
+    <string name="share_as_card_chip_standard">Standart</string>
+    <string name="share_as_card_chip_celebration">Kutlama</string>
+    <string name="share_as_card_send">Gönder</string>
+    <string name="share_as_card_attribution">KashCal ile yapıldı</string>
+    <string name="share_as_card_all_day">Tüm gün</string>
+    <string name="share_as_card_chooser_title">Etkinliği paylaş</string>
+    <string name="share_as_card_share_failed">Kart paylaşılamadı</string>
     <string name="attendee_sheet_title">Katılımcılar</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d davetli</item>

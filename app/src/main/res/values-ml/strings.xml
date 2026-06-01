@@ -1117,6 +1117,14 @@
     <string name="share_availability_hours_section">ജോലി സമയം</string>
     <string name="share_availability_days_through">%1$s വരെ</string>
     <string name="share_availability_window_duration">%1$s മണിക്കൂർ വിൻഡോ</string>
+    <string name="share_as_card_action">കാർഡായി പങ്കിടുക</string>
+    <string name="share_as_card_chip_standard">സ്റ്റാൻഡേർഡ്</string>
+    <string name="share_as_card_chip_celebration">ആഘോഷം</string>
+    <string name="share_as_card_send">അയയ്ക്കുക</string>
+    <string name="share_as_card_attribution">KashCal ഉപയോഗിച്ച് നിർമ്മിച്ചത്</string>
+    <string name="share_as_card_all_day">മുഴുവൻ ദിവസം</string>
+    <string name="share_as_card_chooser_title">ഇവന്റ് പങ്കിടുക</string>
+    <string name="share_as_card_share_failed">കാർഡ് പങ്കിടാൻ കഴിഞ്ഞില്ല</string>
     <plurals name="share_availability_days_hero">
         <item quantity="one">%1$d ദിവസം</item>
         <item quantity="other">%1$d ദിവസങ്ങൾ</item>

@@ -1249,6 +1249,14 @@
     </plurals>
     <string name="share_availability_days_through">Gu ruige %1$s</string>
     <string name="share_availability_window_duration">Uinneag de %1$s uair</string>
+    <string name="share_as_card_action">Co-roinn mar chairt</string>
+    <string name="share_as_card_chip_standard">Stannardach</string>
+    <string name="share_as_card_chip_celebration">Subhachas</string>
+    <string name="share_as_card_send">Cuir</string>
+    <string name="share_as_card_attribution">Air a dhèanamh le KashCal</string>
+    <string name="share_as_card_all_day">Fad an latha</string>
+    <string name="share_as_card_chooser_title">Co-roinn tachartas</string>
+    <string name="share_as_card_share_failed">Cha b\'urrainn dhuinn an cairt a cho-roinneadh</string>
     <string name="share_from_kashcal_footer">Air co-roinneadh o KashCal</string>
     <string name="attendee_sheet_title">Luchd-frithealaidh</string>
     <plurals name="attendee_count_invited">

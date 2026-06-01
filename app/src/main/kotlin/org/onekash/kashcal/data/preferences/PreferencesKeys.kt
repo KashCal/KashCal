@@ -117,6 +117,9 @@ object PreferencesKeys {
     /** Has shown local calendar intro */
     val SHOWN_LOCAL_CALENDAR_INTRO = booleanPreferencesKey("shown_local_calendar_intro")
 
+    /** Has shown the share-as-card top-right Share icon coach mark */
+    val SHOWN_SHARE_CARD_TOOLTIP = booleanPreferencesKey("shown_share_card_tooltip")
+
     /** Onboarding sheet dismissed */
     val ONBOARDING_DISMISSED = booleanPreferencesKey("onboarding_dismissed")
 

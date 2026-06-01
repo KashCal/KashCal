@@ -1149,6 +1149,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s дейін</string>
     <string name="share_availability_window_duration">%1$s сағаттық терезе</string>
+    <string name="share_as_card_action">Карта ретінде бөлісу</string>
+    <string name="share_as_card_chip_standard">Стандартты</string>
+    <string name="share_as_card_chip_celebration">Мерекелік</string>
+    <string name="share_as_card_send">Жіберу</string>
+    <string name="share_as_card_attribution">KashCal көмегімен жасалған</string>
+    <string name="share_as_card_all_day">Күні бойы</string>
+    <string name="share_as_card_chooser_title">Оқиғаны бөлісу</string>
+    <string name="share_as_card_share_failed">Картамен бөлісу мүмкін болмады</string>
     <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
     <string name="attendee_sheet_title">Қатысушылар</string>
     <plurals name="attendee_count_invited">

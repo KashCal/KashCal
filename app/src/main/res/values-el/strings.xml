@@ -1153,6 +1153,14 @@
     </plurals>
     <string name="share_availability_days_through">Έως %1$s</string>
     <string name="share_availability_window_duration">Εύρος %1$s ωρών</string>
+    <string name="share_as_card_action">Κοινοποίηση ως κάρτα</string>
+    <string name="share_as_card_chip_standard">Τυπικό</string>
+    <string name="share_as_card_chip_celebration">Γιορτή</string>
+    <string name="share_as_card_send">Αποστολή</string>
+    <string name="share_as_card_attribution">Δημιουργήθηκε με το KashCal</string>
+    <string name="share_as_card_all_day">Ολοήμερο</string>
+    <string name="share_as_card_chooser_title">Κοινοποίηση εκδήλωσης</string>
+    <string name="share_as_card_share_failed">Δεν ήταν δυνατή η κοινοποίηση της κάρτας</string>
     <string name="attendee_sheet_title">Συμμετέχοντες</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d καλεσμένος</item>

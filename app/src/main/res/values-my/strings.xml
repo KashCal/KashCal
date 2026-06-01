@@ -1078,6 +1078,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s အထိ</string>
     <string name="share_availability_window_duration">%1$s နာရီ ကာလ</string>
+    <string name="share_as_card_action">ကတ်အဖြစ် မျှဝေရန်</string>
+    <string name="share_as_card_chip_standard">စံ</string>
+    <string name="share_as_card_chip_celebration">ပွဲတော်</string>
+    <string name="share_as_card_send">ပို့ရန်</string>
+    <string name="share_as_card_attribution">KashCal ဖြင့် ပြုလုပ်ထားသည်</string>
+    <string name="share_as_card_all_day">တစ်နေကုန်</string>
+    <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
+    <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
     <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
     <plurals name="attendee_count_invited">
         <item quantity="other">ဖိတ်ထား %d ယောက်</item>

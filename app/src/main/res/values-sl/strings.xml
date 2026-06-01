@@ -1225,5 +1225,13 @@
     </plurals>
     <string name="share_availability_days_through">Do %1$s</string>
     <string name="share_availability_window_duration">Okno %1$s ur</string>
+    <string name="share_as_card_action">Deli kot kartico</string>
+    <string name="share_as_card_chip_standard">Standardni</string>
+    <string name="share_as_card_chip_celebration">Praznovanje</string>
+    <string name="share_as_card_send">Pošlji</string>
+    <string name="share_as_card_attribution">Ustvarjeno v KashCal</string>
+    <string name="share_as_card_all_day">Ves dan</string>
+    <string name="share_as_card_chooser_title">Deli dogodek</string>
+    <string name="share_as_card_share_failed">Kartice ni bilo mogoče deliti</string>
     <string name="share_from_kashcal_footer">Deljeno iz KashCal</string>
 </resources>

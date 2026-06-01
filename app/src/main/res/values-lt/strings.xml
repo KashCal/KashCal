@@ -1165,6 +1165,14 @@
     </plurals>
     <string name="share_availability_days_through">Iki %1$s</string>
     <string name="share_availability_window_duration">%1$s val. langas</string>
+    <string name="share_as_card_action">Bendrinti kaip kortelę</string>
+    <string name="share_as_card_chip_standard">Įprastas</string>
+    <string name="share_as_card_chip_celebration">Šventinis</string>
+    <string name="share_as_card_send">Siųsti</string>
+    <string name="share_as_card_attribution">Sukurta su KashCal</string>
+    <string name="share_as_card_all_day">Visa diena</string>
+    <string name="share_as_card_chooser_title">Bendrinti įvykį</string>
+    <string name="share_as_card_share_failed">Nepavyko bendrinti kortelės</string>
     <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
     <string name="attendee_sheet_title">Dalyviai</string>
     <plurals name="attendee_count_invited">

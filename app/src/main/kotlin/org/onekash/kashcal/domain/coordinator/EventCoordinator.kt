@@ -3,6 +3,7 @@ package org.onekash.kashcal.domain.coordinator
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactEventSyncResult
@@ -14,6 +15,7 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
@@ -66,7 +68,8 @@ class EventCoordinator @Inject constructor(
     private val syncScheduler: SyncScheduler,
     private val reminderScheduler: ReminderScheduler,
     private val widgetUpdateManager: WidgetUpdateManager,
-    private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier
+    private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier,
+    private val dataStore: KashCalDataStore
 ) {
     // ========== Initialization ==========
 
@@ -923,8 +926,20 @@ class EventCoordinator @Inject constructor(
         var importCount = 0
         val now = System.currentTimeMillis()
 
+        // Apply the user's default reminder when the source ICS had no
+        // VALARM (parser leaves reminders=null in that case). Mirrors the
+        // Quick Add path so file-imported events behave like in-app creates.
+        // Reminders parsed from the ICS file are preserved as-is.
+        val defaultTimedReminder = dataStore.defaultReminderMinutes.first()
+        val defaultAllDayReminder = dataStore.defaultAllDayReminder.first()
+
         events.forEach { event ->
             try {
+                val effectiveReminders = event.reminders ?: defaultRemindersFor(
+                    isAllDay = event.isAllDay,
+                    timedDefault = defaultTimedReminder,
+                    allDayDefault = defaultAllDayReminder
+                )
                 // Create new event with fresh UID and appropriate sync status
                 val importEvent = event.copy(
                     id = 0, // New event, auto-generate ID
@@ -939,6 +954,7 @@ class EventCoordinator @Inject constructor(
                     localModifiedAt = if (isLocal) null else now,
                     lastSyncError = null,
                     syncRetryCount = 0,
+                    reminders = effectiveReminders,
                     // Clear exception linking - these are standalone imports
                     originalEventId = null,
                     originalInstanceTime = null,
@@ -1219,6 +1235,16 @@ class EventCoordinator @Inject constructor(
     suspend fun getContactAnniversaryEventCount(): Int {
         val calendarId = contactAnniversaryRepository.getCalendarId() ?: return 0
         return eventReader.getEventCountForCalendar(calendarId)
+    }
+
+    private fun defaultRemindersFor(
+        isAllDay: Boolean,
+        timedDefault: Int,
+        allDayDefault: Int
+    ): List<String>? {
+        val minutes = if (isAllDay) allDayDefault else timedDefault
+        if (minutes == KashCalDataStore.REMINDER_OFF) return null
+        return listOf(ContactEventUtils.minutesToIsoDuration(minutes))
     }
 
     companion object {

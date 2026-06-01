@@ -2,6 +2,7 @@ package org.onekash.kashcal.util
 
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -13,12 +14,20 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param events List of events to import
  * @param calendarId Target device calendar ID
  * @param repo CalendarProviderRepository for writing
+ * @param defaultTimedReminderMinutes The user's configured default for timed
+ *   events (KashCalDataStore.defaultReminderMinutes). Applied when a parsed
+ *   event has no reminders (no VALARM in the ICS file). Pass
+ *   [KashCalDataStore.REMINDER_OFF] to skip default.
+ * @param defaultAllDayReminderMinutes The user's configured default for
+ *   all-day events. Same semantics.
  * @return Count of successfully imported events
  */
 suspend fun importEventsToDeviceCalendar(
     events: List<Event>,
     calendarId: Long,
-    repo: CalendarProviderRepository
+    repo: CalendarProviderRepository,
+    defaultTimedReminderMinutes: Int = KashCalDataStore.REMINDER_OFF,
+    defaultAllDayReminderMinutes: Int = KashCalDataStore.REMINDER_OFF
 ): Int {
     var successCount = 0
 
@@ -34,7 +43,23 @@ suspend fun importEventsToDeviceCalendar(
             }
 
             val timezone = event.timezone ?: java.util.TimeZone.getDefault().id
-            val reminders = isoRemindersToMinutes(event.reminders)
+            // ICS file had VALARMs → preserve them. Otherwise apply the user's
+            // configured default (matches the EventCoordinator import path so
+            // device-calendar imports behave the same way).
+            val reminders = if (event.reminders != null) {
+                isoRemindersToMinutes(event.reminders)
+            } else {
+                val defaultMinutes = if (event.isAllDay) {
+                    defaultAllDayReminderMinutes
+                } else {
+                    defaultTimedReminderMinutes
+                }
+                if (defaultMinutes == KashCalDataStore.REMINDER_OFF) {
+                    emptyList()
+                } else {
+                    listOf(defaultMinutes)
+                }
+            }
 
             val result = repo.createEvent(
                 calendarId = calendarId,

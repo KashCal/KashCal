@@ -1120,6 +1120,14 @@
     </plurals>
     <string name="share_availability_days_through">Til og með %1$s</string>
     <string name="share_availability_window_duration">%1$s klst. tímabil</string>
+    <string name="share_as_card_action">Deila sem korti</string>
+    <string name="share_as_card_chip_standard">Staðlað</string>
+    <string name="share_as_card_chip_celebration">Hátíð</string>
+    <string name="share_as_card_send">Senda</string>
+    <string name="share_as_card_attribution">Búið til með KashCal</string>
+    <string name="share_as_card_all_day">Allan daginn</string>
+    <string name="share_as_card_chooser_title">Deila viðburði</string>
+    <string name="share_as_card_share_failed">Ekki tókst að deila kortinu</string>
     <string name="share_from_kashcal_footer">Deilt frá KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Næsti %1$d dagur</item>

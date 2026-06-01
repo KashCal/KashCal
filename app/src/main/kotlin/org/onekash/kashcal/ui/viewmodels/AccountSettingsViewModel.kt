@@ -2030,7 +2030,13 @@ class AccountSettingsViewModel @Inject constructor(
      * @return Count of successfully imported events
      */
     suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
-        return importEventsToDeviceCalendar(events, calendarId, calendarProviderRepository)
+        return importEventsToDeviceCalendar(
+            events = events,
+            calendarId = calendarId,
+            repo = calendarProviderRepository,
+            defaultTimedReminderMinutes = dataStore.defaultReminderMinutes.first(),
+            defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
+        )
     }
 
     // ==================== Snackbar ====================

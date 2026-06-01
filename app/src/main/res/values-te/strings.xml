@@ -1117,6 +1117,14 @@
     <string name="share_availability_hours_section">పని గంటలు</string>
     <string name="share_availability_days_through">%1$s వరకు</string>
     <string name="share_availability_window_duration">%1$s గంటల విండో</string>
+    <string name="share_as_card_action">కార్డ్‌గా షేర్ చేయండి</string>
+    <string name="share_as_card_chip_standard">ప్రామాణికం</string>
+    <string name="share_as_card_chip_celebration">వేడుక</string>
+    <string name="share_as_card_send">పంపండి</string>
+    <string name="share_as_card_attribution">KashCalతో రూపొందించబడింది</string>
+    <string name="share_as_card_all_day">రోజంతా</string>
+    <string name="share_as_card_chooser_title">ఈవెంట్‌ను షేర్ చేయండి</string>
+    <string name="share_as_card_share_failed">కార్డ్‌ను షేర్ చేయడం సాధ్యం కాలేదు</string>
     <plurals name="share_availability_days_hero">
         <item quantity="one">%1$d రోజు</item>
         <item quantity="other">%1$d రోజులు</item>

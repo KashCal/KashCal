@@ -1144,6 +1144,14 @@
     </plurals>
     <string name="share_availability_days_through">Through %1$s</string>
     <string name="share_availability_window_duration">%1$s hour window</string>
+    <string name="share_as_card_action">Share as card</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Celebration</string>
+    <string name="share_as_card_send">Send</string>
+    <string name="share_as_card_attribution">Made with KashCal</string>
+    <string name="share_as_card_all_day">All day</string>
+    <string name="share_as_card_chooser_title">Share event</string>
+    <string name="share_as_card_share_failed">Could not share card</string>
     <string name="share_from_kashcal_footer">Shared from KashCal</string>
     <string name="attendee_sheet_title">Attendees</string>
     <plurals name="attendee_count_invited">

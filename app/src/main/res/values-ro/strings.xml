@@ -1203,6 +1203,14 @@
     </plurals>
     <string name="share_availability_days_through">Până la %1$s</string>
     <string name="share_availability_window_duration">Interval de %1$s ore</string>
+    <string name="share_as_card_action">Partajează ca fișă</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Sărbătoare</string>
+    <string name="share_as_card_send">Trimite</string>
+    <string name="share_as_card_attribution">Creat cu KashCal</string>
+    <string name="share_as_card_all_day">Toată ziua</string>
+    <string name="share_as_card_chooser_title">Partajează evenimentul</string>
+    <string name="share_as_card_share_failed">Cardul nu a putut fi partajat</string>
     <string name="attendee_sheet_title">Participanți</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d invitat</item>

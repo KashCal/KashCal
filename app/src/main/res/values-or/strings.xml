@@ -1117,6 +1117,14 @@
     <string name="share_availability_hours_section">କାର୍ଯ୍ୟ ଘଣ୍ଟା</string>
     <string name="share_availability_days_through">%1$s ପର୍ଯ୍ୟନ୍ତ</string>
     <string name="share_availability_window_duration">%1$s ଘଣ୍ଟାର ୱିଣ୍ଡୋ</string>
+    <string name="share_as_card_action">କାର୍ଡ ଭାବେ ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_as_card_chip_standard">ମାନକ</string>
+    <string name="share_as_card_chip_celebration">ଉତ୍ସବ</string>
+    <string name="share_as_card_send">ପଠାନ୍ତୁ</string>
+    <string name="share_as_card_attribution">KashCal ସହିତ ନିର୍ମିତ</string>
+    <string name="share_as_card_all_day">ସାରାଦିନ</string>
+    <string name="share_as_card_chooser_title">ଇଭେଣ୍ଟ ସେୟାର କରନ୍ତୁ</string>
+    <string name="share_as_card_share_failed">କାର୍ଡ ସେୟାର କରାଯାଇପାରିଲା ନାହିଁ</string>
     <plurals name="share_availability_days_hero">
         <item quantity="one">%1$d ଦିନ</item>
         <item quantity="other">%1$d ଦିନ</item>

@@ -3,10 +3,12 @@ package org.onekash.kashcal.domain.model
 import android.provider.CalendarContract.Attendees
 import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
+import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
+import org.onekash.kashcal.domain.mapper.statusIntToString
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -121,6 +123,52 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     isAllDay = isAllDay,
     dtstamp = System.currentTimeMillis(),
     transp = availabilityIntToTransp(instance.availability)
+)
+
+/**
+ * Build a synthetic [Event] from a device calendar event so it can flow
+ * through the share-card pipeline (singleOccurrenceForShare → IcsExporter)
+ * unchanged. The Event is never persisted to Room — id and calendarId are
+ * 0 and the UID is fresh so the recipient sees a brand-new insert.
+ *
+ * Parity with the Room share path: AVAILABILITY → TRANSP, STATUS, per-event
+ * color override, and reminders all flow through, so sharing a device event
+ * produces the same .ics content the user would get from a Room event with
+ * the same field values.
+ *
+ * Series-membership state and server-side fields (rrule, originalEventId,
+ * rawIcal, organizer*, caldavUrl, etag, extraProperties) are left null —
+ * singleOccurrenceForShare synthesizes a single occurrence regardless, and
+ * we never read attendee or organizer data from CalendarProvider here, so
+ * PII can't leak in.
+ *
+ * Empty description / location strings (CalendarProvider exposes missing
+ * values as `""` via `cursor.getString(...).orEmpty()`) are normalized to
+ * null so the ICS generator skips the property entirely instead of emitting
+ * a literal blank line.
+ */
+fun DisplayEvent.Device.toEventForShareCard(): Event = Event(
+    uid = UUID.randomUUID().toString(),
+    calendarId = 0,
+    title = title,
+    location = location.ifEmpty { null },
+    description = description.ifEmpty { null },
+    startTs = startTs,
+    endTs = endTs,
+    // Android's CalendarProvider stores all-day BEGIN as UTC midnight
+    // regardless of the row's EVENT_TIMEZONE column. Force "UTC" on the
+    // synthetic Event so normalizeAllDay reads the timestamp in the same
+    // zone CalendarProvider wrote it — otherwise sync adapters that
+    // populate EVENT_TIMEZONE with a non-UTC IANA id (some Exchange/Outlook
+    // bridges) cause the emitted DTSTART/DTEND to drift by a day.
+    timezone = if (isAllDay) "UTC" else instance.timezone,
+    isAllDay = isAllDay,
+    status = statusIntToString(instance.status),
+    transp = availabilityIntToTransp(instance.availability),
+    color = eventColor,
+    reminders = instance.reminders.takeIf { it.isNotEmpty() }
+        ?.map { ContactEventUtils.minutesToIsoDuration(it) },
+    dtstamp = System.currentTimeMillis(),
 )
 
 /**

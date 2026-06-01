@@ -1509,4 +1509,23 @@
     <!-- Caption below the working-hours strip showing the window length (e.g. "8 hour window", "1.5 hour window"). %1$s = formatted hours. -->
     <string name="share_availability_window_duration">%1$s hour window</string>
 
+    <!-- Share-as-card feature: top-right Share icon action label and tooltip -->
+    <string name="share_as_card_action">Share as card</string>
+    <!-- Title of the bottom sheet that previews the card before sharing -->
+    <!-- Section heading above the style chips in the share-as-card sheet -->
+    <!-- Style chip label for the calm default presentation -->
+    <string name="share_as_card_chip_standard">Standard</string>
+    <!-- Style chip label for the festive presentation (parties, birthdays, weddings) -->
+    <string name="share_as_card_chip_celebration">Celebration</string>
+    <!-- Send button label in the share-as-card sheet -->
+    <string name="share_as_card_send">Send</string>
+    <!-- Attribution at the bottom-right of the rendered share card. Keep "KashCal" untranslated. -->
+    <string name="share_as_card_attribution">Made with KashCal</string>
+    <!-- All-day label shown on the share card when the event has no specific time -->
+    <string name="share_as_card_all_day">All day</string>
+    <!-- System chooser title shown when the user taps Send on a share card -->
+    <string name="share_as_card_chooser_title">Share event</string>
+    <!-- Toast shown when sharing the card fails (no app to handle, render error) -->
+    <string name="share_as_card_share_failed">Could not share card</string>
+
 </resources>

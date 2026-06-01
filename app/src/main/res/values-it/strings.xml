@@ -1208,5 +1208,13 @@
     </plurals>
     <string name="share_availability_days_through">Fino a %1$s</string>
     <string name="share_availability_window_duration">Intervallo di %1$s ore</string>
+    <string name="share_as_card_action">Condividi come scheda</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Celebrazione</string>
+    <string name="share_as_card_send">Invia</string>
+    <string name="share_as_card_attribution">Creato con KashCal</string>
+    <string name="share_as_card_all_day">Tutto il giorno</string>
+    <string name="share_as_card_chooser_title">Condividi evento</string>
+    <string name="share_as_card_share_failed">Impossibile condividere la scheda</string>
     <string name="share_from_kashcal_footer">Condiviso da KashCal</string>
 </resources>

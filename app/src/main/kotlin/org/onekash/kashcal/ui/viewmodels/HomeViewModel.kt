@@ -181,6 +181,21 @@ class HomeViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
 
     /**
+     * Whether the share-as-card top-right Share icon's first-time coach
+     * mark has been displayed. False until first appearance, then sticky
+     * true forever. Initial value matches the DataStore default (false) so
+     * a slow DataStore boot does NOT silently suppress the first-time
+     * tooltip on fresh installs.
+     */
+    val shownShareCardTooltip: StateFlow<Boolean> = dataStore.shownShareCardTooltip
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    /** Persist that the share-card coach mark has been shown. */
+    fun markShareCardTooltipShown() {
+        viewModelScope.launch { dataStore.setShownShareCardTooltip(true) }
+    }
+
+    /**
      * Reactive list of pending CalDAV invitations rendered by
      * `InvitationInboxSheet`. Backs both the count Flow below and the
      * sheet's row list, so the badge can never disagree with the sheet.
@@ -3482,7 +3497,13 @@ class HomeViewModel(
      */
     suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
         return withContext(ioDispatcher) {
-            importEventsToDeviceCalendar(events, calendarId, calendarProviderRepository)
+            importEventsToDeviceCalendar(
+                events = events,
+                calendarId = calendarId,
+                repo = calendarProviderRepository,
+                defaultTimedReminderMinutes = dataStore.defaultReminderMinutes.first(),
+                defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
+            )
         }
     }
 

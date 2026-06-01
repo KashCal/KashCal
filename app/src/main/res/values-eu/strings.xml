@@ -1134,6 +1134,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s arte</string>
     <string name="share_availability_window_duration">%1$s orduko tartea</string>
+    <string name="share_as_card_action">Partekatu txartel gisa</string>
+    <string name="share_as_card_chip_standard">Estandarra</string>
+    <string name="share_as_card_chip_celebration">Ospakizuna</string>
+    <string name="share_as_card_send">Bidali</string>
+    <string name="share_as_card_attribution">KashCal-ekin egina</string>
+    <string name="share_as_card_all_day">Egun osoa</string>
+    <string name="share_as_card_chooser_title">Partekatu gertaera</string>
+    <string name="share_as_card_share_failed">Ezin izan da txartela partekatu</string>
     <string name="share_from_kashcal_footer">KashCal-etik partekatua</string>
     <string name="attendee_sheet_title">Bertaratuak</string>
     <plurals name="attendee_count_invited">

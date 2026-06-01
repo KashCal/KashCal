@@ -1118,6 +1118,14 @@
     </plurals>
     <string name="share_availability_days_through">Bis %1$s</string>
     <string name="share_availability_window_duration">Zeitraum von %1$s Stunden</string>
+    <string name="share_as_card_action">Als Karte teilen</string>
+    <string name="share_as_card_chip_standard">Standard</string>
+    <string name="share_as_card_chip_celebration">Feier</string>
+    <string name="share_as_card_send">Senden</string>
+    <string name="share_as_card_attribution">Erstellt mit KashCal</string>
+    <string name="share_as_card_all_day">Ganztägig</string>
+    <string name="share_as_card_chooser_title">Termin teilen</string>
+    <string name="share_as_card_share_failed">Karte konnte nicht geteilt werden</string>
     <string name="share_from_kashcal_footer">Geteilt aus KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Nächster %1$d Tag</item>

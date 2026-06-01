@@ -1153,6 +1153,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s-ig</string>
     <string name="share_availability_window_duration">%1$s órás időszak</string>
+    <string name="share_as_card_action">Megosztás kártyaként</string>
+    <string name="share_as_card_chip_standard">Normál</string>
+    <string name="share_as_card_chip_celebration">Ünneplés</string>
+    <string name="share_as_card_send">Küldés</string>
+    <string name="share_as_card_attribution">Készült a KashCal alkalmazással</string>
+    <string name="share_as_card_all_day">Egész nap</string>
+    <string name="share_as_card_chooser_title">Esemény megosztása</string>
+    <string name="share_as_card_share_failed">A kártyát nem sikerült megosztani</string>
     <string name="attendee_sheet_title">Résztvevők</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d meghívott</item>

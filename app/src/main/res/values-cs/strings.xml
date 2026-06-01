@@ -1225,5 +1225,13 @@
     </plurals>
     <string name="share_availability_days_through">Do %1$s</string>
     <string name="share_availability_window_duration">Okno %1$s hod.</string>
+    <string name="share_as_card_action">Sdílet jako kartu</string>
+    <string name="share_as_card_chip_standard">Standardní</string>
+    <string name="share_as_card_chip_celebration">Oslava</string>
+    <string name="share_as_card_send">Odeslat</string>
+    <string name="share_as_card_attribution">Vytvořeno v KashCal</string>
+    <string name="share_as_card_all_day">Celý den</string>
+    <string name="share_as_card_chooser_title">Sdílet událost</string>
+    <string name="share_as_card_share_failed">Kartu se nepodařilo sdílet</string>
     <string name="share_from_kashcal_footer">Sdíleno z KashCal</string>
 </resources>

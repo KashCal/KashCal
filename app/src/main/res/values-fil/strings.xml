@@ -1124,6 +1124,14 @@
     </plurals>
     <string name="share_availability_days_through">Hanggang %1$s</string>
     <string name="share_availability_window_duration">%1$s oras na window</string>
+    <string name="share_as_card_action">Ibahagi bilang card</string>
+    <string name="share_as_card_chip_standard">Karaniwan</string>
+    <string name="share_as_card_chip_celebration">Pagdiriwang</string>
+    <string name="share_as_card_send">Ipadala</string>
+    <string name="share_as_card_attribution">Ginawa gamit ang KashCal</string>
+    <string name="share_as_card_all_day">Buong araw</string>
+    <string name="share_as_card_chooser_title">Ibahagi ang kaganapan</string>
+    <string name="share_as_card_share_failed">Hindi maibahagi ang card</string>
     <string name="attendee_sheet_title">Mga dadalo</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d inanyayahan</item>

@@ -1146,6 +1146,14 @@
     </plurals>
     <string name="share_availability_days_through">Līdz %1$s</string>
     <string name="share_availability_window_duration">%1$s stundu logs</string>
+    <string name="share_as_card_action">Kopīgot kā karti</string>
+    <string name="share_as_card_chip_standard">Standarta</string>
+    <string name="share_as_card_chip_celebration">Svētku</string>
+    <string name="share_as_card_send">Sūtīt</string>
+    <string name="share_as_card_attribution">Veidots ar KashCal</string>
+    <string name="share_as_card_all_day">Visu dienu</string>
+    <string name="share_as_card_chooser_title">Kopīgot notikumu</string>
+    <string name="share_as_card_share_failed">Neizdevās kopīgot kartīti</string>
     <string name="share_from_kashcal_footer">Kopīgots no KashCal</string>
     <string name="attendee_sheet_title">Dalībnieki</string>
     <plurals name="attendee_count_invited">

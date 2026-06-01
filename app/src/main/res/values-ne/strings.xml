@@ -1099,6 +1099,14 @@
     </plurals>
     <string name="share_availability_days_through">%1$s सम्म</string>
     <string name="share_availability_window_duration">%1$s घण्टाको अवधि</string>
+    <string name="share_as_card_action">कार्डको रूपमा साझेदारी गर्नुहोस्</string>
+    <string name="share_as_card_chip_standard">मानक</string>
+    <string name="share_as_card_chip_celebration">उत्सव</string>
+    <string name="share_as_card_send">पठाउनुहोस्</string>
+    <string name="share_as_card_attribution">KashCal बाट बनाइएको</string>
+    <string name="share_as_card_all_day">दिनभर</string>
+    <string name="share_as_card_chooser_title">कार्यक्रम साझेदारी गर्नुहोस्</string>
+    <string name="share_as_card_share_failed">कार्ड साझेदारी गर्न सकिएन</string>
     <string name="attendee_sheet_title">उपस्थित</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d आमन्त्रित</item>

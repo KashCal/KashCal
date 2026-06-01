@@ -1079,6 +1079,14 @@
     <string name="share_availability_hours_section">勤務時間</string>
     <string name="share_availability_days_through">%1$s まで</string>
     <string name="share_availability_window_duration">%1$s 時間の枠</string>
+    <string name="share_as_card_action">カードとして共有</string>
+    <string name="share_as_card_chip_standard">標準</string>
+    <string name="share_as_card_chip_celebration">お祝い</string>
+    <string name="share_as_card_send">送信</string>
+    <string name="share_as_card_attribution">KashCalで作成</string>
+    <string name="share_as_card_all_day">終日</string>
+    <string name="share_as_card_chooser_title">予定を共有</string>
+    <string name="share_as_card_share_failed">カードを共有できませんでした</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d 日間</item>
     </plurals>

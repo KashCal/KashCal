@@ -1134,6 +1134,14 @@
     </plurals>
     <string name="share_availability_days_through">Fins %1$s</string>
     <string name="share_availability_window_duration">Finestra de %1$s hores</string>
+    <string name="share_as_card_action">Compartir com a targeta</string>
+    <string name="share_as_card_chip_standard">Estàndard</string>
+    <string name="share_as_card_chip_celebration">Celebració</string>
+    <string name="share_as_card_send">Envia</string>
+    <string name="share_as_card_attribution">Fet amb KashCal</string>
+    <string name="share_as_card_all_day">Tot el dia</string>
+    <string name="share_as_card_chooser_title">Compartir esdeveniment</string>
+    <string name="share_as_card_share_failed">No s\'ha pogut compartir la targeta</string>
     <string name="share_from_kashcal_footer">Compartit des de KashCal</string>
     <string name="attendee_sheet_title">Assistents</string>
     <plurals name="attendee_count_invited">

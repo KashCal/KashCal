@@ -423,6 +423,13 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOWN_LOCAL_CALENDAR_INTRO, shown)
     }
 
+    val shownShareCardTooltip: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP, false)
+
+    suspend fun setShownShareCardTooltip(shown: Boolean) {
+        setPreference(PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP, shown)
+    }
+
     val onboardingDismissed: Flow<Boolean>
         get() = getPreference(PreferencesKeys.ONBOARDING_DISMISSED, false)
 

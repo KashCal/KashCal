@@ -27,7 +27,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.onekash.kashcal.domain.share.singleOccurrenceForShare
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.ics.IcsParserService
@@ -38,6 +41,7 @@ import org.onekash.kashcal.domain.mapper.toExportEvent
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.buildShareText
 import org.onekash.kashcal.domain.model.toEventForDuplicate
+import org.onekash.kashcal.domain.model.toEventForShareCard
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.ui.components.AppInfoSheet
@@ -101,6 +105,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var icsFileReader: IcsFileReader
+
+    @Inject
+    lateinit var shareCardRenderer: org.onekash.kashcal.domain.share.ShareCardRenderer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -166,6 +173,17 @@ class MainActivity : ComponentActivity() {
                 var showQuickViewSheet by remember { mutableStateOf(false) }
                 var quickViewEvent by remember { mutableStateOf<Event?>(null) }
                 var quickViewOccurrenceTs by remember { mutableStateOf<Long?>(null) }
+
+                // Share-as-card sheet state
+                var showShareCardSheet by remember { mutableStateOf(false) }
+                var shareCardEvent by remember { mutableStateOf<Event?>(null) }
+                // One-shot coach mark, shared across BOTH the Room and the
+                // device-event quick-view sheets. The flag is dismissed on
+                // first show in whichever sheet appears first; the user only
+                // ever sees the tooltip once per install regardless of which
+                // entry point they discover share-as-card from.
+                val shownShareCardTooltip by homeViewModel.shownShareCardTooltip
+                    .collectAsStateWithLifecycle(initialValue = false)
                 val quickViewAttendees by homeViewModel.quickViewAttendees.collectAsStateWithLifecycle()
                 val formAttendees by homeViewModel.formAttendees.collectAsStateWithLifecycle()
                 val formIsReadOnly by homeViewModel.formIsReadOnly.collectAsStateWithLifecycle()
@@ -201,6 +219,15 @@ class MainActivity : ComponentActivity() {
                     calendarIntentData = data
                     calendarIntentInvitees = invitees
                     showEventFormSheet = true
+                }
+
+                // Single entry point for the share-as-card flow. Both the
+                // Room and device-event quick views feed it; keeping the
+                // mutation in one place keeps any future change (analytics,
+                // peer-sheet dismissal, capture reset) from drifting.
+                val openShareCard = { event: Event ->
+                    shareCardEvent = event
+                    showShareCardSheet = true
                 }
 
                 // Process pending actions from intents (notification, widget, shortcut, ICS file)
@@ -734,7 +761,185 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onRsvp = { status -> homeViewModel.replyRsvp(event.id, status) },
+                        onShareAsCard = {
+                            // Don't dismiss the QuickViewSheet — user may
+                            // back out of share and return to it.
+                            openShareCard(event)
+                        },
+                        showShareCardTooltip = !shownShareCardTooltip,
+                        onShareCardTooltipDismissed = {
+                            homeViewModel.markShareCardTooltipShown()
+                        },
                         timeFormat = uiState.timeFormat
+                    )
+                }
+
+                // Share-as-card preview sheet — opened from the top-right
+                // Share icon on EventQuickViewSheet. Renders a 1080×1350 PNG
+                // via the on-screen preview's GraphicsLayer capture.
+                if (showShareCardSheet && shareCardEvent != null) {
+                    val event = shareCardEvent!!
+                    // shareCardZone forces UTC for all-day events (every
+                    // storage path — Room, ICS, device — anchors all-day
+                    // startTs to UTC midnight) and falls back to system
+                    // default for null / non-IANA timezones on timed
+                    // events so legacy adapter strings like "Pacific
+                    // Standard Time" don't crash the share flow.
+                    val zone = org.onekash.kashcal.domain.share.shareCardZone(
+                        timezone = event.timezone,
+                        isAllDay = event.isAllDay,
+                    )
+                    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                    val locales = androidx.core.os.ConfigurationCompat.getLocales(configuration)
+                    val locale = if (locales.isEmpty) java.util.Locale.US else locales.get(0)!!
+                    val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
+
+                    val viewerStartTs = quickViewOccurrenceTs ?: event.startTs
+                    val viewerEndTs = if (quickViewOccurrenceTs != null) {
+                        quickViewOccurrenceTs!! + (event.endTs - event.startTs)
+                    } else {
+                        event.endTs
+                    }
+
+                    // Multi-day classification. LocalDate-difference catches
+                    // calendar-spanning events; an 18-hour duration floor
+                    // excludes overnight events (Sat 10 PM → Sun 2 AM)
+                    // which calendar-pedantically span two days but read
+                    // to humans as a single Saturday-night affair.
+                    val isMultiDay = remember(viewerStartTs, viewerEndTs, zone) {
+                        val startDate = java.time.Instant.ofEpochMilli(viewerStartTs)
+                            .atZone(zone).toLocalDate()
+                        val endDate = java.time.Instant.ofEpochMilli(viewerEndTs)
+                            .atZone(zone).toLocalDate()
+                        val durationMs = viewerEndTs - viewerStartTs
+                        val eighteenHoursMs = 18L * 60 * 60 * 1000
+                        startDate != endDate && durationMs >= eighteenHoursMs
+                    }
+
+                    // Chip: single-day chip for non-multi-day events,
+                    // range chip ("MAY 31 – JUN 3") for multi-day. The
+                    // sealed DateChipText carries both shapes.
+                    val dateChip = remember(viewerStartTs, viewerEndTs, isMultiDay, zone, locale) {
+                        if (isMultiDay) {
+                            org.onekash.kashcal.domain.share.DateChipFormatter
+                                .formatRange(viewerStartTs, viewerEndTs, zone, locale)
+                        } else {
+                            org.onekash.kashcal.domain.share.DateChipFormatter
+                                .format(viewerStartTs, zone, locale)
+                        }
+                    }
+                    val stripe = remember(viewerStartTs, viewerEndTs, event.isAllDay, zone) {
+                        org.onekash.kashcal.domain.share.DayStripeMath.compute(
+                            startTs = viewerStartTs,
+                            endTs = viewerEndTs,
+                            isAllDay = event.isAllDay,
+                            zone = zone,
+                        )
+                    }
+                    val stripeLabels = remember(is24Hour) {
+                        org.onekash.kashcal.domain.share.StripeLabels.labelsFor(is24Hour)
+                    }
+                    val timePattern = remember(uiState.timeFormat, is24Hour) {
+                        org.onekash.kashcal.util.DateTimeUtils.getTimePattern(
+                            uiState.timeFormat, is24Hour
+                        )
+                    }
+                    val allDayLabel = stringResource(R.string.share_as_card_all_day)
+                    // Subtitle composition (single source of truth):
+                    //   single-day all-day      → "All day"
+                    //   single-day timed        → "9:00 AM – 5:00 PM"
+                    //   multi-day all-day       → "Sun – Wed · All day"
+                    //   multi-day timed         → "Sun – Wed"
+                    //
+                    // For multi-day events the chip already shows the
+                    // calendar dates ("MAY 31 – JUN 3"); the subtitle
+                    // adds DOW. Showing a 9–5 time range on a 4-day
+                    // timed event would mislead the recipient into
+                    // thinking 9 AM–5 PM each day; the .ics carries
+                    // the precise start/end times.
+                    val timeRangeText = remember(
+                        viewerStartTs, viewerEndTs, event.isAllDay, isMultiDay,
+                        timePattern, zone, locale, allDayLabel,
+                    ) {
+                        when {
+                            isMultiDay -> {
+                                val dow = org.onekash.kashcal.domain.share.DateChipFormatter
+                                    .formatDowRange(viewerStartTs, viewerEndTs, zone, locale)
+                                if (event.isAllDay) "$dow · $allDayLabel" else dow
+                            }
+                            event.isAllDay -> allDayLabel
+                            else -> {
+                                val start = java.time.Instant.ofEpochMilli(viewerStartTs)
+                                    .atZone(zone)
+                                    .format(java.time.format.DateTimeFormatter.ofPattern(timePattern, locale))
+                                val end = java.time.Instant.ofEpochMilli(viewerEndTs)
+                                    .atZone(zone)
+                                    .format(java.time.format.DateTimeFormatter.ofPattern(timePattern, locale))
+                                "$start – $end"
+                            }
+                        }
+                    }
+                    // Legacy fields preserved for ShareCardComposable's
+                    // signature; the composable no longer reads them
+                    // (timeRangeText is now the single source of subtitle
+                    // truth).
+                    val multiDayRangeText: String? = null
+
+                    val shareCardViewModel: org.onekash.kashcal.ui.viewmodels.ShareCardViewModel =
+                        hiltViewModel()
+                    val selectedStyle by shareCardViewModel.selectedStyle.collectAsStateWithLifecycle()
+                    // Re-key on showShareCardSheet so opening the same event
+                    // a second time auto-picks fresh from the title (rather
+                    // than holding a stale user override from a prior open).
+                    // Use event.uid (always fresh per share) instead of
+                    // event.id — synthetic device-event Events all have
+                    // id=0L, so id can't tell two distinct shares apart.
+                    LaunchedEffect(showShareCardSheet, event.uid) {
+                        if (showShareCardSheet) {
+                            shareCardViewModel.loadEventTitle(event.title)
+                        }
+                    }
+
+                    org.onekash.kashcal.ui.components.share.ShareCardSheet(
+                        title = event.title,
+                        location = event.location,
+                        timeRangeText = timeRangeText,
+                        dateChip = dateChip,
+                        stripe = stripe,
+                        stripeLabels = stripeLabels,
+                        isAllDay = event.isAllDay,
+                        isMultiDay = isMultiDay,
+                        multiDayRangeText = multiDayRangeText,
+                        selectedStyle = selectedStyle,
+                        onStyleChange = { shareCardViewModel.setStyle(it) },
+                        onDismiss = {
+                            showShareCardSheet = false
+                            shareCardEvent = null
+                        },
+                        renderer = shareCardRenderer,
+                        fileNameHint = (event.title.ifBlank { "event" }),
+                        icsUriProvider = {
+                            // Synthesize a single-occurrence Event for the
+                            // .ics so the recipient gets one standalone
+                            // calendar entry, not the whole recurring
+                            // series. The helper also strips rawIcal,
+                            // organizer, and X-* properties so attendee
+                            // emails don't leak to share-card recipients.
+                            //
+                            // File I/O on Dispatchers.IO so the Send tap
+                            // doesn't jank on slow filesystems. Failure
+                            // here is non-fatal; the sheet falls back to
+                            // image-only ACTION_SEND.
+                            withContext(Dispatchers.IO) {
+                                val occurrenceEvent = singleOccurrenceForShare(
+                                    event = event,
+                                    occurrenceStartTs = viewerStartTs,
+                                    occurrenceEndTs = viewerEndTs,
+                                )
+                                icsExporter.exportEvent(this@MainActivity, occurrenceEvent)
+                                    .getOrNull()
+                            }
+                        },
                     )
                 }
 
@@ -902,6 +1107,19 @@ class MainActivity : ComponentActivity() {
                                 showDeviceQuickViewSheet = false
                                 deviceQuickViewEvent = null
                             }
+                        },
+                        onShareAsCard = {
+                            // Synthesize a Room Event from the device
+                            // instance and feed it into the shared
+                            // share-card flow. The synthetic Event is
+                            // never persisted, and attendee/organizer
+                            // data can't sneak in because we don't
+                            // read it from CalendarProvider here.
+                            openShareCard(deviceQuickViewEvent!!.toEventForShareCard())
+                        },
+                        showShareCardTooltip = !shownShareCardTooltip,
+                        onShareCardTooltipDismissed = {
+                            homeViewModel.markShareCardTooltipShown()
                         },
                         timeFormat = uiState.timeFormat
                     )

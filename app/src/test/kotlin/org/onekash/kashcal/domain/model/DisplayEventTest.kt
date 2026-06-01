@@ -369,4 +369,277 @@ class DisplayEventTest {
         val display = DisplayEvent.Device(noneInstance)
         assertFalse(display.isDeclinedByMe)
     }
+
+    // ========== toEventForShareCard ==========
+    //
+    // The synthetic Event is fed into the existing share-card pipeline
+    // (singleOccurrenceForShare → IcsExporter). It is never persisted,
+    // so id and calendarId are 0L; it MUST carry a fresh UID so the
+    // recipient sees a brand-new insert; and it MUST carry the device
+    // event's raw timezone string verbatim so the share helper's
+    // ZoneId.of(...).getOrNull() ?: systemDefault() fallback governs.
+
+    @Test
+    fun `toEventForShareCard preserves title`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals("External Meeting", event.title)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves description`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals("Sync adapter event", event.description)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves location`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals("Conference Room B", event.location)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves startTs and endTs from instance`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals(1700100000000L, event.startTs)
+        assertEquals(1700103600000L, event.endTs)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves isAllDay`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertFalse(event.isAllDay)
+
+        val allDay = testInstance.copy(isAllDay = true)
+        val allDayEvent = DisplayEvent.Device(allDay).toEventForShareCard()
+        assertTrue(allDayEvent.isAllDay)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves timezone string verbatim`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals("America/New_York", event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves non-IANA timezone string verbatim`() {
+        // Some sync adapters store legacy/Outlook timezone names in
+        // Events.EVENT_TIMEZONE. The share-card helper handles this
+        // downstream via ZoneId.of(...).getOrNull() ?: systemDefault().
+        // The mapper must NOT silently rewrite to system default — the
+        // caller needs to see the original string.
+        val outlook = testInstance.copy(timezone = "Pacific Standard Time")
+        val event = DisplayEvent.Device(outlook).toEventForShareCard()
+        assertEquals("Pacific Standard Time", event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves null timezone as null`() {
+        val noTz = testInstance.copy(timezone = null)
+        val event = DisplayEvent.Device(noTz).toEventForShareCard()
+        assertNull(event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves empty timezone string as empty`() {
+        // CalendarProvider may surface empty strings for some sync adapters.
+        // Round-trip the raw value; the share helper's runCatching fallback
+        // will substitute the system default at use time.
+        val emptyTz = testInstance.copy(timezone = "")
+        val event = DisplayEvent.Device(emptyTz).toEventForShareCard()
+        assertEquals("", event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard sets id to 0`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals(0L, event.id)
+    }
+
+    @Test
+    fun `toEventForShareCard sets calendarId to 0`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals(0L, event.calendarId)
+    }
+
+    @Test
+    fun `toEventForShareCard assigns a fresh UUID, not the device id`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        // Must not be empty, must not be the device-instance id stringified.
+        assertTrue("uid should be non-blank", event.uid.isNotBlank())
+        assertFalse("uid must not be the device eventId", event.uid == "50")
+        assertFalse("uid must not be the instanceId", event.uid == "200")
+        // Standard UUID shape: 8-4-4-4-12 hex chars
+        assertTrue(
+            "uid should look like a UUID, was ${event.uid}",
+            event.uid.matches(Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+        )
+    }
+
+    @Test
+    fun `toEventForShareCard generates a unique UID per call`() {
+        val a = DisplayEvent.Device(testInstance).toEventForShareCard()
+        val b = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertFalse("each call must produce a fresh UID", a.uid == b.uid)
+    }
+
+    @Test
+    fun `toEventForShareCard does not set rrule, originalEventId, or originalInstanceTime`() {
+        // singleOccurrenceForShare normalizes a single occurrence anyway;
+        // the synthetic Event should not carry series-membership state.
+        val recurring = testInstance.copy(
+            hasRrule = true,
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            originalId = 999L,
+            originalInstanceTime = 1700000000000L,
+        )
+        val event = DisplayEvent.Device(recurring).toEventForShareCard()
+        assertNull(event.rrule)
+        assertNull(event.originalEventId)
+        assertNull(event.originalInstanceTime)
+    }
+
+    @Test
+    fun `toEventForShareCard does not set rawIcal, organizer, or caldavUrl`() {
+        // Defense-in-depth: the share pipeline strips these too, but
+        // there's no reason for the device-event mapper to populate them.
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertNull(event.rawIcal)
+        assertNull(event.organizerEmail)
+        assertNull(event.organizerName)
+        assertNull(event.caldavUrl)
+        assertNull(event.etag)
+    }
+
+    // ========== Parity with Room share path ==========
+    //
+    // The synthetic Event flows through the same IcsExporter that Room
+    // events use. Any field the Room sheet preserves end-to-end (transp,
+    // status, reminders, eventColor) should also flow from the device
+    // sheet — otherwise sharing the same event from two different entry
+    // points produces different .ics output.
+
+    @Test
+    fun `toEventForShareCard maps AVAILABILITY_FREE to TRANSPARENT`() {
+        // CalendarContract.Events.AVAILABILITY_FREE = 1.
+        val freeInstance = testInstance.copy(availability = 1)
+        val event = DisplayEvent.Device(freeInstance).toEventForShareCard()
+        assertEquals("TRANSPARENT", event.transp)
+    }
+
+    @Test
+    fun `toEventForShareCard maps AVAILABILITY_BUSY to OPAQUE`() {
+        val busyInstance = testInstance.copy(availability = 0)
+        val event = DisplayEvent.Device(busyInstance).toEventForShareCard()
+        assertEquals("OPAQUE", event.transp)
+    }
+
+    @Test
+    fun `toEventForShareCard maps STATUS_TENTATIVE to TENTATIVE`() {
+        // CalendarContract.Events.STATUS_TENTATIVE = 0.
+        val tentativeInstance = testInstance.copy(status = 0)
+        val event = DisplayEvent.Device(tentativeInstance).toEventForShareCard()
+        assertEquals("TENTATIVE", event.status)
+    }
+
+    @Test
+    fun `toEventForShareCard maps STATUS_CONFIRMED to CONFIRMED`() {
+        // CalendarContract.Events.STATUS_CONFIRMED = 1.
+        val confirmedInstance = testInstance.copy(status = 1)
+        val event = DisplayEvent.Device(confirmedInstance).toEventForShareCard()
+        assertEquals("CONFIRMED", event.status)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves per-event color override`() {
+        val withColor = testInstance.copy(eventColor = 0xFFFF0000.toInt())
+        val event = DisplayEvent.Device(withColor).toEventForShareCard()
+        assertEquals(0xFFFF0000.toInt(), event.color)
+    }
+
+    @Test
+    fun `toEventForShareCard leaves color null when no override is set`() {
+        val noOverride = testInstance.copy(eventColor = null)
+        val event = DisplayEvent.Device(noOverride).toEventForShareCard()
+        assertNull(event.color)
+    }
+
+    @Test
+    fun `toEventForShareCard converts reminder minutes to ISO durations`() {
+        val withReminders = testInstance.copy(reminders = listOf(15, 60, 1440))
+        val event = DisplayEvent.Device(withReminders).toEventForShareCard()
+        assertEquals(listOf("-PT15M", "-PT1H", "-P1D"), event.reminders)
+    }
+
+    @Test
+    fun `toEventForShareCard leaves reminders null when device has none`() {
+        val noReminders = testInstance.copy(reminders = emptyList())
+        val event = DisplayEvent.Device(noReminders).toEventForShareCard()
+        assertNull(event.reminders)
+    }
+
+    @Test
+    fun `toEventForShareCard normalizes empty description to null`() {
+        // CalendarProvider repository surfaces missing DESCRIPTION as ""
+        // (cursor.getString(...).orEmpty()). Keeping the empty string would
+        // emit a literal `DESCRIPTION:` line in the .ics; Room shares with
+        // a null description emit no line. Normalize at this boundary so
+        // both share paths produce the same output.
+        val empty = testInstance.copy(description = "")
+        val event = DisplayEvent.Device(empty).toEventForShareCard()
+        assertNull(event.description)
+    }
+
+    @Test
+    fun `toEventForShareCard normalizes empty location to null`() {
+        val empty = testInstance.copy(location = "")
+        val event = DisplayEvent.Device(empty).toEventForShareCard()
+        assertNull(event.location)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves non-empty description and location`() {
+        val event = DisplayEvent.Device(testInstance).toEventForShareCard()
+        assertEquals("Sync adapter event", event.description)
+        assertEquals("Conference Room B", event.location)
+    }
+
+    // ========== All-day timezone normalization ==========
+    //
+    // Android's CalendarProvider stores all-day BEGIN as UTC midnight
+    // regardless of the row's EVENT_TIMEZONE. KashCal-written rows use
+    // EVENT_TIMEZONE='UTC' (consistent with the BEGIN convention), but
+    // some sync adapters (Outlook/Exchange bridges) write a non-UTC
+    // EVENT_TIMEZONE. If toEventForShareCard surfaces that non-UTC
+    // string, normalizeAllDay reinterprets the UTC ms in the wrong
+    // zone and the emitted DTSTART/DTEND shift one day.
+
+    @Test
+    fun `toEventForShareCard forces timezone UTC for all-day events`() {
+        val allDayWithBadTz = testInstance.copy(
+            isAllDay = true,
+            timezone = "America/New_York",
+        )
+        val event = DisplayEvent.Device(allDayWithBadTz).toEventForShareCard()
+        assertEquals("UTC", event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard forces timezone UTC for all-day events even when device timezone is null`() {
+        val allDayNullTz = testInstance.copy(
+            isAllDay = true,
+            timezone = null,
+        )
+        val event = DisplayEvent.Device(allDayNullTz).toEventForShareCard()
+        assertEquals("UTC", event.timezone)
+    }
+
+    @Test
+    fun `toEventForShareCard preserves device timezone for non-all-day events`() {
+        val timed = testInstance.copy(
+            isAllDay = false,
+            timezone = "America/New_York",
+        )
+        val event = DisplayEvent.Device(timed).toEventForShareCard()
+        assertEquals("America/New_York", event.timezone)
+    }
 }

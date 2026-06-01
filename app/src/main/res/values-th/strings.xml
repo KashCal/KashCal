@@ -1079,6 +1079,14 @@
     <string name="share_availability_hours_section">เวลาทำงาน</string>
     <string name="share_availability_days_through">ถึง %1$s</string>
     <string name="share_availability_window_duration">ช่วง %1$s ชั่วโมง</string>
+    <string name="share_as_card_action">แชร์เป็นการ์ด</string>
+    <string name="share_as_card_chip_standard">มาตรฐาน</string>
+    <string name="share_as_card_chip_celebration">เฉลิมฉลอง</string>
+    <string name="share_as_card_send">ส่ง</string>
+    <string name="share_as_card_attribution">สร้างด้วย KashCal</string>
+    <string name="share_as_card_all_day">ทั้งวัน</string>
+    <string name="share_as_card_chooser_title">แชร์กิจกรรม</string>
+    <string name="share_as_card_share_failed">ไม่สามารถแชร์การ์ดได้</string>
     <plurals name="share_availability_days_hero">
         <item quantity="other">%1$d วัน</item>
     </plurals>

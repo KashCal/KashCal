@@ -1134,6 +1134,14 @@
     </plurals>
     <string name="share_availability_days_through">Ĝis %1$s</string>
     <string name="share_availability_window_duration">Fenestro de %1$s horoj</string>
+    <string name="share_as_card_action">Kunhavigi kiel karton</string>
+    <string name="share_as_card_chip_standard">Norma</string>
+    <string name="share_as_card_chip_celebration">Festo</string>
+    <string name="share_as_card_send">Sendi</string>
+    <string name="share_as_card_attribution">Farita per KashCal</string>
+    <string name="share_as_card_all_day">La tutan tagon</string>
+    <string name="share_as_card_chooser_title">Kunhavigi eventon</string>
+    <string name="share_as_card_share_failed">Ne eblis kunhavigi karton</string>
     <string name="share_from_kashcal_footer">Kunhavigita el KashCal</string>
     <string name="attendee_sheet_title">Ĉeestantoj</string>
     <plurals name="attendee_count_invited">

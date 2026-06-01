@@ -1146,6 +1146,14 @@
     </plurals>
     <string name="share_availability_days_through">Tot %1$s</string>
     <string name="share_availability_window_duration">%1$s-uur venster</string>
+    <string name="share_as_card_action">Deel as kaart</string>
+    <string name="share_as_card_chip_standard">Standaard</string>
+    <string name="share_as_card_chip_celebration">Viering</string>
+    <string name="share_as_card_send">Stuur</string>
+    <string name="share_as_card_attribution">Gemaak met KashCal</string>
+    <string name="share_as_card_all_day">Heeldag</string>
+    <string name="share_as_card_chooser_title">Deel gebeurtenis</string>
+    <string name="share_as_card_share_failed">Kon nie kaart deel nie</string>
     <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
     <string name="attendee_sheet_title">Bywoners</string>
     <plurals name="attendee_count_invited">
