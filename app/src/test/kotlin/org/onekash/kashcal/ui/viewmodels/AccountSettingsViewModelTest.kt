@@ -243,6 +243,15 @@ class AccountSettingsViewModelTest {
     }
 
     private fun createViewModel(): AccountSettingsViewModel {
+        // Stub context.getString(...) to return the resource id's symbolic name so
+        // assertions on Exception.message remain stable under the relaxed mock.
+        val stubContext: android.content.Context = io.mockk.mockk(relaxed = true) {
+            every { getString(org.onekash.kashcal.R.string.password_change_error_account_not_found) } returns "Account not found"
+            every { getString(org.onekash.kashcal.R.string.password_change_error_no_credentials) } returns "No existing credentials"
+            every { getString(org.onekash.kashcal.R.string.password_change_error_unsupported_provider) } returns "Provider does not support password change"
+            every { getString(org.onekash.kashcal.R.string.password_change_error_invalid) } returns "Invalid password"
+            every { getString(org.onekash.kashcal.R.string.password_change_error_network) } returns "Network error, try again"
+        }
         return AccountSettingsViewModel(
             accountRepository = accountRepository,
             userPreferences = userPreferences,
@@ -262,6 +271,7 @@ class AccountSettingsViewModelTest {
             backupImporter = backupImporter,
             permissionChecker = permissionChecker,
             icsScheduler = icsScheduler,
+            context = stubContext,
             applicationScope = applicationScope,
         )
     }

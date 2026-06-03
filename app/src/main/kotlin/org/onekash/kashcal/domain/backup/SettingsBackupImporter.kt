@@ -1,6 +1,9 @@
 package org.onekash.kashcal.domain.backup
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.SerializationException
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -34,6 +37,7 @@ class SettingsBackupImporter @Inject constructor(
     private val accountRepository: AccountRepository,
     private val calendarRepository: CalendarRepository,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
+    @ApplicationContext private val context: Context,
 ) {
 
     private val parser = parser()
@@ -123,7 +127,7 @@ class SettingsBackupImporter @Inject constructor(
             Account(
                 provider = AccountProvider.ICS,
                 email = ICS_ACCOUNT_EMAIL,
-                displayName = "ICS Subscriptions",
+                displayName = context.getString(R.string.subscriptions_title),
                 isEnabled = true,
             ),
         )

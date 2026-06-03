@@ -169,15 +169,24 @@ class ICalGenerator(
                 }
             }
 
-            calendar.events.forEach { appendVEvent(it, preserveDtstamp) }
-            calendar.todos.forEach { appendVTodo(it, preserveDtstamp) }
-            calendar.journals.forEach { appendVJournal(it, preserveDtstamp) }
+            // RFC 6638 §7.1/§7.2: a METHOD line means this is a scheduling
+            // message, so SCHEDULE-AGENT / SCHEDULE-FORCE-SEND must be stripped
+            // from ORGANIZER and ATTENDEE. Plain storage PUTs (no METHOD) keep them.
+            val isSchedulingMessage = calendar.method != null
+
+            calendar.events.forEach { appendVEvent(it, preserveDtstamp, isSchedulingMessage) }
+            calendar.todos.forEach { appendVTodo(it, preserveDtstamp, isSchedulingMessage) }
+            calendar.journals.forEach { appendVJournal(it, preserveDtstamp, isSchedulingMessage) }
 
             crlfLine("END:VCALENDAR")
         }
     }
 
-    private fun StringBuilder.appendVEvent(event: ICalEvent, preserveDtstamp: Boolean = false) {
+    private fun StringBuilder.appendVEvent(
+        event: ICalEvent,
+        preserveDtstamp: Boolean = false,
+        isSchedulingMessage: Boolean = false
+    ) {
         crlfLine("BEGIN:VEVENT")
 
         // Required properties
@@ -300,12 +309,12 @@ class ICalGenerator(
 
         // Organizer (for scheduling)
         event.organizer?.let { org ->
-            crlfLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org, isSchedulingMessage))
         }
 
         // Attendees (for scheduling)
         event.attendees.forEach { att ->
-            crlfLine(formatAttendee(att))
+            crlfLine(formatAttendee(att, isSchedulingMessage))
         }
 
         // VALARMs
@@ -513,16 +522,24 @@ class ICalGenerator(
 
     /**
      * Format ORGANIZER property with RFC 6638 scheduling parameters.
+     *
+     * @param isSchedulingMessage true when emitting a METHOD-bearing iTIP
+     *   message. RFC 6638 §7.1/§7.2 forbids a client from echoing
+     *   SCHEDULE-AGENT / SCHEDULE-FORCE-SEND in messages it sends, so they are
+     *   dropped in that case and preserved on plain resource-storage PUTs.
      */
-    private fun formatOrganizer(organizer: Organizer): String {
+    private fun formatOrganizer(organizer: Organizer, isSchedulingMessage: Boolean): String {
         val params = mutableListOf<String>()
 
         organizer.name?.let { params.add("CN=${escapeParamValue(it)}") }
         organizer.sentBy?.let { params.add("SENT-BY=\"mailto:$it\"") }
 
-        // RFC 6638 scheduling parameters
-        organizer.scheduleAgent?.let { params.add("SCHEDULE-AGENT=${it.value}") }
-        organizer.scheduleForceSend?.let { params.add("SCHEDULE-FORCE-SEND=${it.value}") }
+        // RFC 6638 scheduling parameters — server routing hints valid on stored
+        // resources, but a client MUST NOT echo them in scheduling messages.
+        if (!isSchedulingMessage) {
+            organizer.scheduleAgent?.let { params.add("SCHEDULE-AGENT=${it.value}") }
+            organizer.scheduleForceSend?.let { params.add("SCHEDULE-FORCE-SEND=${it.value}") }
+        }
         // Note: SCHEDULE-STATUS is server-generated, typically not output on requests
 
         val paramStr = if (params.isNotEmpty()) ";${params.joinToString(";")}" else ""
@@ -531,8 +548,11 @@ class ICalGenerator(
 
     /**
      * Format ATTENDEE property with all RFC 5545 and RFC 6638 parameters.
+     *
+     * @param isSchedulingMessage see [formatOrganizer] — drops SCHEDULE-AGENT /
+     *   SCHEDULE-FORCE-SEND when emitting a METHOD-bearing iTIP message.
      */
-    private fun formatAttendee(attendee: Attendee): String {
+    private fun formatAttendee(attendee: Attendee, isSchedulingMessage: Boolean): String {
         val params = mutableListOf<String>()
 
         attendee.name?.let { params.add("CN=${escapeParamValue(it)}") }
@@ -570,8 +590,12 @@ class ICalGenerator(
 
         // RFC 6638 scheduling parameters
         attendee.sentBy?.let { params.add("SENT-BY=\"mailto:$it\"") }
-        attendee.scheduleAgent?.let { params.add("SCHEDULE-AGENT=${it.value}") }
-        attendee.scheduleForceSend?.let { params.add("SCHEDULE-FORCE-SEND=${it.value}") }
+        // A client MUST NOT echo SCHEDULE-AGENT / SCHEDULE-FORCE-SEND in a
+        // scheduling message it sends; preserve them on resource-storage PUTs.
+        if (!isSchedulingMessage) {
+            attendee.scheduleAgent?.let { params.add("SCHEDULE-AGENT=${it.value}") }
+            attendee.scheduleForceSend?.let { params.add("SCHEDULE-FORCE-SEND=${it.value}") }
+        }
         // Note: SCHEDULE-STATUS is server-generated, typically not output on requests
 
         val paramStr = if (params.isNotEmpty()) ";${params.joinToString(";")}" else ""
@@ -642,7 +666,11 @@ class ICalGenerator(
         includeVTimezone = includeVTimezone
     )
 
-    private fun StringBuilder.appendVTodo(todo: ICalTodo, preserveDtstamp: Boolean = false) {
+    private fun StringBuilder.appendVTodo(
+        todo: ICalTodo,
+        preserveDtstamp: Boolean = false,
+        isSchedulingMessage: Boolean = false
+    ) {
         crlfLine("BEGIN:VTODO")
 
         // Required properties
@@ -736,12 +764,12 @@ class ICalGenerator(
 
         // Organizer (for task assignment)
         todo.organizer?.let { org ->
-            crlfLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org, isSchedulingMessage))
         }
 
         // Attendees (assignees)
         todo.attendees.forEach { att ->
-            crlfLine(formatAttendee(att))
+            crlfLine(formatAttendee(att, isSchedulingMessage))
         }
 
         // VALARMs
@@ -791,7 +819,11 @@ class ICalGenerator(
         includeVTimezone = includeVTimezone
     )
 
-    private fun StringBuilder.appendVJournal(journal: ICalJournal, preserveDtstamp: Boolean = false) {
+    private fun StringBuilder.appendVJournal(
+        journal: ICalJournal,
+        preserveDtstamp: Boolean = false,
+        isSchedulingMessage: Boolean = false
+    ) {
         crlfLine("BEGIN:VJOURNAL")
 
         // Required properties
@@ -859,12 +891,12 @@ class ICalGenerator(
 
         // Organizer
         journal.organizer?.let { org ->
-            crlfLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org, isSchedulingMessage))
         }
 
         // Attendees
         journal.attendees.forEach { att ->
-            crlfLine(formatAttendee(att))
+            crlfLine(formatAttendee(att, isSchedulingMessage))
         }
 
         // Created/Last-Modified

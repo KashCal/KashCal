@@ -123,6 +123,15 @@ object PreferencesKeys {
     /** Onboarding sheet dismissed */
     val ONBOARDING_DISMISSED = booleanPreferencesKey("onboarding_dismissed")
 
+    /**
+     * Highest versionCode whose What's New entry the user has acknowledged.
+     * 0 means "never tracked": fresh installs (and users present before this
+     * key shipped) record the current version on first launch and stay
+     * silent. After that, the sheet appears whenever any authored release
+     * has versionCode > this value.
+     */
+    val LAST_WHATSNEW_VERSION_SHOWN = intPreferencesKey("last_whatsnew_version_shown")
+
     // ========== Permission Tracking ==========
 
     /** Number of times notification permission was denied (for rationale/permanently denied logic) */

@@ -348,226 +348,191 @@ class ReminderSchedulerConstantsTest {
 }
 
 /**
- * Unit tests for calculateAllDayTriggerTime() timezone-aware all-day reminder calculations.
+ * Unit tests for calculateAllDayTriggerTime() — signed-offset-from-local-midnight model.
  *
- * These tests verify the fix for Bug 1 where all-day reminders were calculated
- * from UTC instead of the user's local timezone.
+ * Model: trigger = eventLocalMidnight + signedOffsetMs.
+ * - Negative offset = before the event's local-midnight start (e.g. -PT15H = 9 AM the day before).
+ * - Positive offset = after the start (e.g. PT9H = 9 AM on the event day).
+ * - PT0M = midnight (start of the event day).
  *
- * Expected behavior:
- * - "-PT9H" (9 AM day of event): Fire at 9 AM local on the event date
- * - "-P1D" (1 day before): Fire at 9 AM local, one day before
- * - "-P2D", "-P1W" etc.: Fire at 9 AM local, N days before
+ * Anchor is the event's LOCAL midnight (event date derived from the stored UTC midnight),
+ * so wall-clock fire time is timezone-stable on non-DST days. Offsets are applied as exact
+ * durations (RFC 5545 VALARM relative-trigger semantics; matches the platform and other clients), so on a DST
+ * transition day the wall-clock shifts by the transition amount — this is intentional
+ * (stored == fired == sent; wall-clock stability is impossible with duration-based storage).
+ *
+ * Chip offsets under this model: 9AM = PT9H, 1d = -PT15H, 2d = -PT39H, 1w = -PT159H.
  */
 class CalculateAllDayTriggerTimeTest {
 
-    // ==================== Sub-day offsets (e.g., "9 AM day of event") ====================
+    // ==================== Positive offset: "9 AM day of event" (PT9H) ====================
 
     @Test
-    fun `9 AM day of event in PST`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT9H")!!  // -32,400,000ms
+    fun `9 AM day of event (PT9H) in PST`() {
+        val utcMidnight = 1736121600000L // Jan 6 2025 00:00 UTC
+        val offset = parseReminderOffset("PT9H")!! // +32,400,000ms (after midnight)
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
-        // Jan 6 09:00 PST = Jan 6 17:00 UTC
+        // local midnight Jan 6 PST (= Jan 6 08:00 UTC) + 9h = Jan 6 09:00 PST = Jan 6 17:00 UTC
         assertEquals(1736182800000L, result)
     }
 
     @Test
-    fun `9 AM day of event in Tokyo (JST = UTC+9)`() {
-        // Jan 6, 2025 00:00 UTC
+    fun `9 AM day of event (PT9H) in Tokyo`() {
         val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT9H")!!
+        val offset = parseReminderOffset("PT9H")!!
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Tokyo"))
 
-        // Jan 6 09:00 JST = Jan 6 00:00 UTC
+        // local midnight Jan 6 JST (= Jan 5 15:00 UTC) + 9h = Jan 6 09:00 JST = Jan 6 00:00 UTC
         assertEquals(1736121600000L, result)
     }
 
     @Test
-    fun `9 AM day of event in New York (EST = UTC-5)`() {
-        // Jan 6, 2025 00:00 UTC
+    fun `9 AM day of event (PT9H) in India (IST UTC+530)`() {
         val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT9H")!!
+        val offset = parseReminderOffset("PT9H")!!
 
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/New_York"))
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Kolkata"))
 
-        // Jan 6 09:00 EST = Jan 6 14:00 UTC = 1736121600000 + 14*3600000 = 1736172000000
-        assertEquals(1736172000000L, result)
+        // local midnight Jan 6 IST (= Jan 5 18:30 UTC) + 9h = Jan 6 09:00 IST = Jan 6 03:30 UTC
+        assertEquals(1736134200000L, result)
     }
 
+    // ==================== Negative offsets: chip "before" values ====================
+
     @Test
-    fun `6 AM day of event in PST`() {
-        // Jan 6, 2025 00:00 UTC
+    fun `1d chip (-PT15H) fires 9 AM the day before in PST`() {
         val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT6H")!!
+        val offset = parseReminderOffset("-PT15H")!! // -54,000,000ms
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
-        // Jan 6 06:00 PST = Jan 6 14:00 UTC = 1736121600000 + 14*3600000 = 1736172000000
-        assertEquals(1736172000000L, result)
-    }
-
-    @Test
-    fun `12 noon day of event in PST`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT12H")!!
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // Jan 6 12:00 PST = Jan 6 20:00 UTC
-        assertEquals(1736193600000L, result)
-    }
-
-    // ==================== Day-based offsets (fire at 9 AM local) ====================
-
-    @Test
-    fun `1 day before in PST fires at 9 AM`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-P1D")!!  // -86,400,000ms
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // Jan 5 09:00 PST = Jan 5 17:00 UTC
+        // local midnight Jan 6 PST - 15h = Jan 5 09:00 PST = Jan 5 17:00 UTC
         assertEquals(1736096400000L, result)
     }
 
     @Test
-    fun `1 day before in Tokyo fires at 9 AM`() {
-        // Jan 6, 2025 00:00 UTC
+    fun `2d chip (-PT39H) fires 9 AM two days before in PST`() {
         val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-P1D")!!
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Tokyo"))
-
-        // Jan 5 09:00 JST = Jan 5 00:00 UTC
-        assertEquals(1736035200000L, result)
-    }
-
-    @Test
-    fun `2 days before in PST fires at 9 AM`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-P2D")!!
+        val offset = parseReminderOffset("-PT39H")!! // -140,400,000ms
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
-        // Jan 4 09:00 PST = Jan 4 17:00 UTC
+        // local midnight Jan 6 PST - 39h = Jan 4 09:00 PST = Jan 4 17:00 UTC
         assertEquals(1736010000000L, result)
     }
 
     @Test
-    fun `1 week before in PST fires at 9 AM`() {
-        // Jan 13, 2025 00:00 UTC
-        val utcMidnight = 1736726400000L
-        val offset = parseReminderOffset("-P1W")!!
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // Jan 6 09:00 PST = Jan 6 17:00 UTC
-        assertEquals(1736182800000L, result)
-    }
-
-    // ==================== DST transition edge cases ====================
-
-    @Test
-    fun `DST spring forward - 9 AM day of event in PST to PDT transition`() {
-        // March 9, 2025: PST → PDT (2 AM jumps to 3 AM)
-        // All-day event on March 9, 2025
-        // March 9, 2025 00:00 UTC
-        val marchUtcMidnight = 1741478400000L
-        val offset = parseReminderOffset("-PT9H")!!
-
-        val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // March 9 09:00 PDT = March 9 16:00 UTC (7hr offset after DST)
-        assertEquals(1741536000000L, result)
-    }
-
-    @Test
-    fun `DST fall back - 9 AM day of event in PDT to PST transition`() {
-        // Nov 2, 2025: PDT → PST (2 AM falls back to 1 AM)
-        // Nov 2, 2025 is Sunday (first Sunday of November = DST end)
-        // Nov 2, 2025 00:00 UTC
-        val novUtcMidnight = 1762041600000L
-        val offset = parseReminderOffset("-PT9H")!!
-
-        val result = calculateAllDayTriggerTime(novUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // Nov 2 09:00 PST = Nov 2 17:00 UTC (PST is UTC-8 after fall back)
-        assertEquals(1762102800000L, result)
-    }
-
-    @Test
-    fun `DST spring forward - 1 day before fires at correct 9 AM`() {
-        // Event on March 10, 2025 (day after DST spring forward)
-        // March 10, 2025 00:00 UTC
-        val marchUtcMidnight = 1741564800000L
-        val offset = parseReminderOffset("-P1D")!!
-
-        val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // March 9 09:00 PDT = March 9 16:00 UTC
-        // Note: March 9 is the DST transition day, but 9 AM is after 2 AM so it's PDT
-        assertEquals(1741536000000L, result)
-    }
-
-    // ==================== Edge cases ====================
-
-    @Test
-    fun `zero offset - fires at 9 AM for all-day events`() {
-        // Jan 6, 2025 00:00 UTC
+    fun `1d chip (-PT15H) fires 9 AM the day before in India`() {
         val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT0M")!!  // Returns 0
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
-
-        // For all-day events, zero offset means "day of event" which fires at 9 AM local
-        // (same as "-P0D" would behave - day-based offset defaults to 9 AM)
-        // Jan 6 09:00 PST = Jan 6 17:00 UTC = 1736182800000
-        assertEquals(1736182800000L, result)
-    }
-
-    @Test
-    fun `UTC timezone - no offset difference`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT9H")!!
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("UTC"))
-
-        // Jan 6 09:00 UTC
-        assertEquals(1736154000000L, result)
-    }
-
-    // ==================== Half-hour timezone offsets ====================
-
-    @Test
-    fun `9 AM day of event in India (IST UTC+530)`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-PT9H")!!
+        val offset = parseReminderOffset("-PT15H")!!
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Kolkata"))
 
-        // Jan 6 09:00 IST = Jan 6 03:30 UTC
-        assertEquals(1736134200000L, result)
-    }
-
-    @Test
-    fun `1 day before in India fires at 9 AM`() {
-        // Jan 6, 2025 00:00 UTC
-        val utcMidnight = 1736121600000L
-        val offset = parseReminderOffset("-P1D")!!
-
-        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Kolkata"))
-
-        // Jan 5 09:00 IST = Jan 5 03:30 UTC
+        // local midnight Jan 6 IST - 15h = Jan 5 09:00 IST = Jan 5 03:30 UTC
         assertEquals(1736047800000L, result)
+    }
+
+    // ==================== Midnight boundary (PT0M) ====================
+
+    @Test
+    fun `PT0M fires at local midnight of the event day`() {
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT0M")!! // 0
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // local midnight Jan 6 PST = Jan 6 08:00 UTC
+        assertEquals(1736150400000L, result)
+    }
+
+    // ==================== Timezone stability: same offset -> same local wall-clock ====================
+
+    @Test
+    fun `PT9H fires at 09 00 local in every timezone`() {
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("PT9H")!!
+
+        for (zoneId in listOf("America/Chicago", "America/New_York", "Asia/Kolkata", "Asia/Tokyo")) {
+            val zone = ZoneId.of(zoneId)
+            val result = calculateAllDayTriggerTime(utcMidnight, offset, zone)
+            val local = java.time.Instant.ofEpochMilli(result).atZone(zone)
+            assertEquals("Wrong hour in $zoneId", 9, local.hour)
+            assertEquals("Wrong minute in $zoneId", 0, local.minute)
+            assertEquals("Wrong date in $zoneId", 6, local.dayOfMonth)
+        }
+    }
+
+    @Test
+    fun `1d chip fires at 09 00 local the day before in every timezone`() {
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT15H")!!
+
+        for (zoneId in listOf("America/Chicago", "America/New_York", "Asia/Kolkata", "Asia/Tokyo")) {
+            val zone = ZoneId.of(zoneId)
+            val result = calculateAllDayTriggerTime(utcMidnight, offset, zone)
+            val local = java.time.Instant.ofEpochMilli(result).atZone(zone)
+            assertEquals("Wrong hour in $zoneId", 9, local.hour)
+            assertEquals("Wrong date in $zoneId", 5, local.dayOfMonth)
+        }
+    }
+
+    // ==================== DST: exact-duration semantics (stored == fired) ====================
+
+    @Test
+    fun `DST spring forward - PT9H lands 10 AM (exact-duration, matches other clients)`() {
+        // March 9 2025: PST -> PDT (02:00 -> 03:00). Event March 9.
+        val marchUtcMidnight = 1741478400000L // March 9 2025 00:00 UTC
+        val offset = parseReminderOffset("PT9H")!!
+
+        val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // local midnight March 9 PST (= March 9 08:00 UTC) + exactly 9h = March 9 17:00 UTC.
+        // Because 02:00-03:00 was skipped, 9 elapsed hours after midnight is 10:00 wall-clock PDT.
+        assertEquals(1741539600000L, result)
+        val local = java.time.Instant.ofEpochMilli(result).atZone(ZoneId.of("America/Los_Angeles"))
+        assertEquals(10, local.hour)
+    }
+
+    @Test
+    fun `non-DST day PT9H lands exactly 9 AM wall-clock`() {
+        // Sanity: on an ordinary day, exact-duration == wall-clock 9 AM.
+        val utcMidnight = 1736121600000L // Jan 6
+        val offset = parseReminderOffset("PT9H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/New_York"))
+        val local = java.time.Instant.ofEpochMilli(result).atZone(ZoneId.of("America/New_York"))
+
+        assertEquals(9, local.hour)
+        assertEquals(0, local.minute)
+    }
+
+    // ==================== Legacy reinterpretation (US6: no migration) ====================
+
+    @Test
+    fun `legacy -P1D now fires at local midnight the day before (was 9 AM)`() {
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-P1D")!! // -86,400,000ms
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // local midnight Jan 6 PST - 24h = Jan 5 00:00 PST = Jan 5 08:00 UTC.
+        // (Old behavior fired this at 9 AM the day before; reinterpreted in place per US6.)
+        assertEquals(1736064000000L, result)
+    }
+
+    @Test
+    fun `legacy -PT9H now fires 3 PM the day before (was 9 AM day of)`() {
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!! // -32,400,000ms
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // local midnight Jan 6 PST - 9h = Jan 5 15:00 PST = Jan 5 23:00 UTC.
+        // (Old behavior fired -PT9H at 9 AM day-of; the 9AM chip now stores PT9H instead.)
+        assertEquals(1736118000000L, result)
     }
 }
 

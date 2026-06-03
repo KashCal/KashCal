@@ -17,8 +17,8 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 19 key names`() {
-        assertEquals(19, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 20 key names`() {
+        assertEquals(20, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
     }
 
     @Test

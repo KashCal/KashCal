@@ -213,6 +213,79 @@ class AndroidCalendarProviderRepositoryTest {
         }
     }
 
+    // ========== mapToDeviceEvent inclusive-end conversion ==========
+    //
+    // The Events-table read path (used by getDeviceEvent/getDeviceEventWithExceptions
+    // for editing) must apply the same exclusive→inclusive conversion the Instances
+    // path applies in mapToInstances. Otherwise the edit form receives DTEND
+    // (next-day midnight UTC) and the date picker shows one day later than the user
+    // sees on the calendar grid.
+
+    @Test
+    fun `inclusiveEndForDeviceEvent converts all-day exclusive DTEND to inclusive end`() {
+        // 1-day all-day event on Feb 15
+        // CalendarProvider DTEND = Feb 16 00:00:00 UTC (exclusive)
+        val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+        val dtend = LocalDate.of(2026, 2, 16).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        val inclusive = inclusiveEndForDeviceEvent(dtend, dtstart, isAllDay = true)
+
+        // Inclusive end is last ms of Feb 15 (23:59:59.999 UTC)
+        assertEquals(dtend - 1, inclusive)
+    }
+
+    @Test
+    fun `inclusiveEndForDeviceEvent converts multi-day all-day exclusive DTEND to inclusive end`() {
+        // 3-day all-day event Feb 15-17
+        // DTEND = Feb 18 00:00 UTC (exclusive)
+        val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+        val dtend = LocalDate.of(2026, 2, 18).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        val inclusive = inclusiveEndForDeviceEvent(dtend, dtstart, isAllDay = true)
+
+        // Inclusive end is last ms of Feb 17
+        assertEquals(dtend - 1, inclusive)
+    }
+
+    @Test
+    fun `inclusiveEndForDeviceEvent leaves timed event endTs unchanged`() {
+        val dtstart = LocalDate.of(2026, 2, 15).atTime(10, 0)
+            .atZone(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val dtend = LocalDate.of(2026, 2, 15).atTime(11, 0)
+            .atZone(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+
+        val inclusive = inclusiveEndForDeviceEvent(dtend, dtstart, isAllDay = false)
+
+        assertEquals(dtend, inclusive)
+    }
+
+    @Test
+    fun `inclusiveEndForDeviceEvent returns null when DTEND is null`() {
+        val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        // Recurring all-day events use DURATION, not DTEND — endTs is null on read
+        assertEquals(null, inclusiveEndForDeviceEvent(null, dtstart, isAllDay = true))
+        assertEquals(null, inclusiveEndForDeviceEvent(null, dtstart, isAllDay = false))
+    }
+
+    @Test
+    fun `inclusiveEndForDeviceEvent leaves degenerate all-day end equal to start unchanged`() {
+        // Defensive: a malformed all-day event with DTEND == DTSTART (zero-length)
+        // shouldn't go negative. mapToInstances guards on endMs > beginMs;
+        // mirror that here.
+        val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        val inclusive = inclusiveEndForDeviceEvent(dtstart, dtstart, isAllDay = true)
+
+        assertEquals(dtstart, inclusive)
+    }
+
     // ========== Duration Parsing ==========
 
     @Test

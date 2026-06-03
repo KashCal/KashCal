@@ -43,18 +43,21 @@ class FormConstantsTimeFormatTest {
     // ==================== formatReminderOption tests ====================
 
     @Test
-    fun `formatReminderOption 540 allDay use24Hour true returns 09 colon 00 day of event`() {
-        assertEquals("09:00 day of event", formatReminderOption(540, isAllDay = true, use24Hour = true, resources = resources))
+    fun `formatReminderOption -540 allDay use24Hour true returns 09 colon 00 day of event`() {
+        // Signed model: 9 AM day of event is -540 (after midnight).
+        assertEquals("09:00 day of event", formatReminderOption(-540, isAllDay = true, use24Hour = true, resources = resources))
     }
 
     @Test
-    fun `formatReminderOption 540 allDay use24Hour false returns 9 AM day of event`() {
-        assertEquals("9 AM day of event", formatReminderOption(540, isAllDay = true, use24Hour = false, resources = resources))
+    fun `formatReminderOption -540 allDay use24Hour false returns 9 AM day of event`() {
+        assertEquals("9 AM day of event", formatReminderOption(-540, isAllDay = true, use24Hour = false, resources = resources))
     }
 
     @Test
-    fun `formatReminderOption 540 allDay default returns 9 AM day of event for backward compat`() {
-        assertEquals("9 AM day of event", formatReminderOption(540, isAllDay = true, resources = resources))
+    fun `formatReminderOption legacy 540 allDay renders by magnitude (matches fire time), not 9 AM day of`() {
+        // A legacy stored 540 now fires 9h BEFORE midnight; its label must reflect that,
+        // not the stale "9 AM day of event" (which would be a label/behavior mismatch).
+        assertEquals("9 hours before", formatReminderOption(540, isAllDay = true, resources = resources))
     }
 
     // ==================== getAllDayReminderOptions tests ====================
@@ -62,14 +65,14 @@ class FormConstantsTimeFormatTest {
     @Test
     fun `getAllDayReminderOptions use24Hour true has 09 colon 00 label`() {
         val options = getAllDayReminderOptions(use24Hour = true, resources = resources)
-        val dayOfOption = options.find { it.minutes == 540 }
+        val dayOfOption = options.find { it.minutes == -540 } // 9 AM day of (after midnight)
         assertEquals("09:00 day of event", dayOfOption?.label)
     }
 
     @Test
     fun `getAllDayReminderOptions use24Hour false has 9 AM label`() {
         val options = getAllDayReminderOptions(use24Hour = false, resources = resources)
-        val dayOfOption = options.find { it.minutes == 540 }
+        val dayOfOption = options.find { it.minutes == -540 }
         assertEquals("9 AM day of event", dayOfOption?.label)
     }
 

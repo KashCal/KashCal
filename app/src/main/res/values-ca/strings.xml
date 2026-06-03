@@ -63,6 +63,7 @@
     <string name="action_connect">Connectar</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="action_share">Compartir</string>
+    <string name="action_share_as_text">Comparteix com a text</string>
     <string name="action_export_ics">Exportar com a .ics</string>
     <string name="action_confirm_delete">Confirmar eliminació</string>
     <string name="action_delete_event">Eliminar esdeveniment</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">La resposta per a %1$s ha fallat: l\'esdeveniment s\'ha modificat. Torna a respondre.</string>
     <string name="invitees_host_tag">Amfitrió</string>
     <string name="invitees_summary_you_alone">Tu</string>
+    <string name="holiday_catalog_add">Afegeix un calendari de festius</string>
+    <string name="holiday_catalog_search_label">Cercar</string>
+    <string name="holiday_catalog_already_added">Afegit</string>
+    <string name="holiday_catalog_empty">No s\'ha trobat cap país</string>
+    <string name="holiday_catalog_empty_hint">Prova un altre nom</string>
+    <string name="holiday_catalog_validate_error">No s\'ha pogut accedir a aquest calendari. Comprova la connexió i torna-ho a provar.</string>
+    <string name="holiday_catalog_attribution">Calendaris de festius de Mozilla Thunderbird, amb llicència %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Tu · %d convidat</item>
         <item quantity="other">Tu · %d convidats</item>
@@ -243,6 +251,11 @@
     <string name="caldav_error_connection_timeout">La connexió ha esgotat el temps. Torneu-ho a provar.</string>
     <string name="caldav_error_no_calendars">No s\'han trobat calendaris en aquest servidor.</string>
     <string name="caldav_error_unexpected">Error inesperat. Torneu-ho a provar.</string>
+    <string name="password_change_error_account_not_found">Compte no trobat</string>
+    <string name="password_change_error_no_credentials">No hi ha credencials existents</string>
+    <string name="password_change_error_unsupported_provider">Aquest proveïdor no admet canviar la contrasenya</string>
+    <string name="password_change_error_invalid">Contrasenya no vàlida</string>
+    <string name="password_change_error_network">Error de xarxa, torneu-ho a provar</string>
 
     <string name="error_import_file_not_found">Fitxer no trobat o no es pot llegir.</string>
     <string name="error_import_invalid_format">Format de fitxer de calendari invàlid.</string>
@@ -313,7 +326,7 @@
     <string name="label_server_url">URL del servidor</string>
     <string name="label_username">Nom d\'usuari</string>
     <string name="label_password">Contrasenya</string>
-    <string name="label_display_name_optional">Nom visible (opcional)</string>
+    <string name="label_display_name_optional">Nom visible</string>
 
     <string name="placeholder_search_events">Cercar esdeveniments…</string>
 
@@ -547,7 +560,9 @@
     <string name="drawer_calendars">Calendaris</string>
     <string name="drawer_contacts">Contactes</string>
     <string name="drawer_device_calendars">Calendaris del dispositiu</string>
+    <string name="drawer_account_offline">Fora de línia</string>
     <string name="drawer_share_feedback">Compartir opinió</string>
+    <string name="event_title_fallback">Esdeveniment</string>
 
     <!-- App Info / About -->
     <string name="status_privacy_tagline">Per a tu, no per les teves dades.</string>
@@ -1155,5 +1170,13 @@
     <string name="attendee_section_pending">Pendent</string>
     <string name="attendee_section_declined">Refusat</string>
     <string name="attendee_section_delegated">Delegat</string>
-
+    <string name="whats_new_title">Novetats</string>
+    <string name="whats_new_dismiss">Entesos</string>
+    <string name="whats_new_v598_title">Ajuda a mantenir Android obert</string>
+    <string name="whats_new_v598_body">Google està canviant la manera com instal·les aplicacions al dispositiu. Necessitem la teva ajuda.</string>
+    <string name="whats_new_v598_action_label">Visita keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">D\'aquí a %1$d dia</item>
+        <item quantity="other">D\'aquí a %1$d dies</item>
+    </plurals>
 </resources>

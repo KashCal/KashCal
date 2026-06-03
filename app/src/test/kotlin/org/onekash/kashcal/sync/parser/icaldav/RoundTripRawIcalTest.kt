@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -145,7 +146,7 @@ class RoundTripRawIcalTest {
     }
 
     @Test
-    fun `IcsPatcher patch uses rawIcal to preserve 5 alarms when entity has only 3`() {
+    fun `IcsPatcher patch honors deletion when entity keeps only 3 of 5 displayed alarms`() {
         // Server ICS with 5 alarms
         val serverIcs = """
             BEGIN:VCALENDAR
@@ -193,7 +194,9 @@ class RoundTripRawIcalTest {
             reminders = listOf("-PT5M", "-PT15M", "-PT30M")  // Only first 3
         )
 
-        // Patch should use rawIcal and preserve ALL 5 alarms
+        // Patch uses rawIcal for non-alarm preservation, but the reminder list is
+        // authoritative for the displayed window: all 5 originals were displayed
+        // (index < 5), the user kept 3, so the other 2 are deleted — not re-added.
         val patched = IcsPatcher.patch(serverIcs, entity)
 
         // Parse result
@@ -201,10 +204,13 @@ class RoundTripRawIcalTest {
 
         assertEquals("Title should be updated", "Updated Title", result.summary)
         assertEquals(
-            "All 5 alarms should be preserved from rawIcal",
-            5,
+            "Deleted displayed alarms dropped; only the kept 3 remain",
+            3,
             result.alarms.size
         )
+        val triggers = result.alarms.mapNotNull { it.trigger?.toMinutes() }
+        assertFalse("deleted -PT1H dropped", triggers.contains(-60L))
+        assertFalse("deleted -P1D dropped", triggers.contains(-1440L))
     }
 
     @Test
@@ -576,12 +582,15 @@ class RoundTripRawIcalTest {
 
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
 
-        // Master should have ALL 4 alarms from rawIcal
+        // All 4 master alarms were displayed (index < 5); the user kept 3, so the
+        // 4th (-PT1H) was deleted and must not be re-added.
         assertEquals(
-            "Master should preserve all 4 alarms from rawIcal",
-            4,
+            "Deleted displayed alarm dropped; 3 kept",
+            3,
             parsedMaster.alarms.size
         )
+        val triggers = parsedMaster.alarms.mapNotNull { it.trigger?.toMinutes() }
+        assertFalse("deleted -PT1H dropped", triggers.contains(-60L))
     }
 
     // ==================== EDGE CASES ====================
@@ -842,7 +851,11 @@ class RoundTripRawIcalTest {
         assertEquals("Should preserve 2 attendees", 2, pushParsed.attendees.size)
         assertNotNull("Should preserve organizer", pushParsed.organizer)
         assertEquals("boss@company.com", pushParsed.organizer?.email)
-        assertEquals(4, pushParsed.sequence)  // Incremented from 3
+        // SEQUENCE is serialized verbatim by the patcher; the bump decision
+        // lives upstream in EventWriter (SequenceBumper), which this test
+        // bypasses by calling IcsPatcher directly. The edit here is title/
+        // location/description-only, so EventWriter would not have bumped it.
+        assertEquals(3, pushParsed.sequence)  // Preserved (patcher does not bump)
 
         // Preserved X-properties
         assertTrue(

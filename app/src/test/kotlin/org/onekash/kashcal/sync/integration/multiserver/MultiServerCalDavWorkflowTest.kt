@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -267,12 +268,20 @@ END:VCALENDAR
             "Failed to delete event on ${config.name}: ${(deleteResult as? CalDavResult.Error)?.message}"
         }
 
-        // Verify gone — most servers return 404, some (Zoho) return 200 with empty body
-        val fetchResult = client!!.fetchEvent(url)
-        val isGone = fetchResult.isNotFound() ||
+        // Verify gone — most servers return 404, some (Zoho) return 200 with empty body.
+        // Nextcloud is eventually consistent: an immediate re-fetch after DELETE
+        // occasionally still returns the event, so poll briefly before asserting.
+        var fetchResult = client!!.fetchEvent(url)
+        fun gone() = fetchResult.isNotFound() ||
             fetchResult.isError() ||
             (fetchResult.isSuccess() && fetchResult.getOrNull()!!.icalData.isBlank())
-        assert(isGone) {
+        var attempts = 0
+        while (!gone() && attempts < 5) {
+            delay(500)
+            fetchResult = client!!.fetchEvent(url)
+            attempts++
+        }
+        assert(gone()) {
             "Event should be deleted on ${config.name}, but fetch returned: $fetchResult"
         }
     }
@@ -478,6 +487,13 @@ END:VCALENDAR
         )
         val ctag1 = ctagResult1.getOrNull()?.ctag
 
+        // Some servers (SOGo) derive the ctag from a 1-second-granularity
+        // timestamp. Reading the baseline ctag, creating the event, and
+        // re-reading can all land in the same wall-clock second, so the
+        // unchanged ctag is correct rather than a bug. Cross a second boundary
+        // before the mutation so a coarse stamp is guaranteed to advance.
+        delay(1_100)
+
         // Create an event to change the ctag
         val uid = "test-ctag-${config.name.lowercase()}-${UUID.randomUUID()}"
         val ics = createTestIcs(uid, "Ctag Test on ${config.name}")
@@ -516,6 +532,12 @@ END:VCALENDAR
             tokenResult.isSuccess() && tokenResult.getOrNull() != null
         )
         val initialToken = tokenResult.getOrNull()!!
+
+        // SOGo's sync-token is timestamp-derived at 1-second granularity. A
+        // create landing in the same wall-clock second as the initial-token
+        // read isn't reported as a delta (its change stamp is not strictly
+        // after the token). Cross a second boundary so the create is visible.
+        delay(1_100)
 
         // Create an event
         val uid = "test-sync-${config.name.lowercase()}-${UUID.randomUUID()}"

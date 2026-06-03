@@ -63,6 +63,7 @@
     <string name="action_connect">जोड्नुहोस्</string>
     <string name="action_duplicate">नक्कल</string>
     <string name="action_share">साझा गर्नुहोस्</string>
+    <string name="action_share_as_text">पाठको रूपमा साझा गर्नुहोस्</string>
     <string name="action_export_ics">.ics को रूपमा निर्यात</string>
     <string name="action_confirm_delete">मेट्ने पुष्टि</string>
     <string name="action_delete_event">कार्यक्रम मेट्नुहोस्</string>
@@ -245,6 +246,11 @@
     <string name="caldav_error_connection_timeout">जडान समय सकियो। फेरि प्रयास गर्नुहोस्।</string>
     <string name="caldav_error_no_calendars">यो सर्भरमा कुनै क्यालेन्डर फेला परेन।</string>
     <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। फेरि प्रयास गर्नुहोस्।</string>
+    <string name="password_change_error_account_not_found">खाता फेला परेन</string>
+    <string name="password_change_error_no_credentials">कुनै विद्यमान प्रमाणपत्र छैन</string>
+    <string name="password_change_error_unsupported_provider">यो प्रदायकले पासवर्ड परिवर्तनलाई समर्थन गर्दैन</string>
+    <string name="password_change_error_invalid">अमान्य पासवर्ड</string>
+    <string name="password_change_error_network">नेटवर्क त्रुटि, फेरि प्रयास गर्नुहोस्</string>
 
     <string name="error_import_file_not_found">फाइल भेटिएन वा पढ्न सकिएन।</string>
     <string name="error_import_invalid_format">अमान्य क्यालेन्डर फाइल ढाँचा।</string>
@@ -315,7 +321,7 @@
     <string name="label_server_url">सर्भर URL</string>
     <string name="label_username">प्रयोगकर्ता नाम</string>
     <string name="label_password">पासवर्ड</string>
-    <string name="label_display_name_optional">प्रदर्शन नाम (ऐच्छिक)</string>
+    <string name="label_display_name_optional">प्रदर्शन नाम</string>
 
     <string name="placeholder_search_events">कार्यक्रम खोज्नुहोस्…</string>
 
@@ -525,7 +531,10 @@
     <string name="drawer_calendars">क्यालेन्डरहरू</string>
     <string name="drawer_contacts">सम्पर्कहरू</string>
     <string name="drawer_device_calendars">उपकरण क्यालेन्डरहरू</string>
+    <string name="drawer_account_offline">अफलाइन</string>
     <string name="drawer_share_feedback">प्रतिक्रिया साझा गर्नुहोस्</string>
+
+    <string name="event_title_fallback">कार्यक्रम</string>
 
     <string name="status_privacy_tagline">तपाईंका लागि, तपाईंको डेटाका लागि होइन।</string>
     <string name="action_keep_it_that_way">यसरी नै राख्नुहोस्</string>
@@ -763,6 +772,11 @@
     <string name="action_snooze">स्नुज</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">अहिले सुरु हुँदैछ</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d दिनमा</item>
+        <item quantity="other">%1$d दिनमा</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">भोलि, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1143,4 +1157,16 @@
         <item quantity="other">%1$s · थप %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">जवाफ बदल्नुहोस्</string>
+    <string name="whats_new_title">नयाँ के छ</string>
+    <string name="whats_new_dismiss">बुझेँ</string>
+    <string name="whats_new_v598_title">Android खुला राख्न मद्दत गर्नुहोस्</string>
+    <string name="whats_new_v598_body">Google तपाईंको यन्त्रमा एपहरू स्थापना गर्ने तरिका बदल्दैछ। हामीलाई तपाईंको सहयोग चाहिन्छ।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org मा जानुहोस्</string>
+    <string name="holiday_catalog_add">बिदा क्यालेन्डर थप्नुहोस्</string>
+    <string name="holiday_catalog_search_label">खोज</string>
+    <string name="holiday_catalog_already_added">थपियो</string>
+    <string name="holiday_catalog_empty">कुनै देश फेला परेन</string>
+    <string name="holiday_catalog_empty_hint">अर्को नाम प्रयास गर्नुहोस्</string>
+    <string name="holiday_catalog_validate_error">यो क्यालेन्डरमा पुग्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird बाट बिदा क्यालेन्डरहरू, %1$s अन्तर्गत इजाजतपत्र प्राप्त।</string>
 </resources>

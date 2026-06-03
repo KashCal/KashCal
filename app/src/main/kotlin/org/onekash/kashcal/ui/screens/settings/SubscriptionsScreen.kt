@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
 /**
@@ -65,6 +66,7 @@ fun SubscriptionsScreen(
 ) {
     // State for dialogs (rememberSaveable survives config changes)
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var showHolidayCatalog by rememberSaveable { mutableStateOf(false) }
     var editingSubscriptionId by rememberSaveable { mutableLongStateOf(-1L) }
 
     // Derive editingSubscription from ID (complex objects can't be saved directly)
@@ -139,6 +141,25 @@ fun SubscriptionsScreen(
                 SectionHeader(stringResource(R.string.subscriptions_section_add))
             }
 
+            item(key = "holiday_catalog_button", contentType = "add_button") {
+                OutlinedButton(
+                    onClick = { showHolidayCatalog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        stringResource(R.string.holiday_catalog_add),
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+
             item(key = "add_button", contentType = "add_button") {
                 OutlinedButton(
                     onClick = { showAddDialog = true },
@@ -158,6 +179,21 @@ fun SubscriptionsScreen(
                 }
             }
         }
+    }
+
+    // Holiday calendar catalog picker
+    if (showHolidayCatalog) {
+        val subscribedUrls = remember(subscriptions) {
+            subscriptions.mapTo(HashSet()) { it.url }
+        }
+        HolidayCatalogPicker(
+            subscribedUrls = subscribedUrls,
+            onPick = { url, name ->
+                onAddSubscription(url, name, EventColorPalette.randomArgb())
+                showHolidayCatalog = false
+            },
+            onDismiss = { showHolidayCatalog = false }
+        )
     }
 
     // Add subscription dialog

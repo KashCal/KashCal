@@ -64,6 +64,7 @@
     <string name="action_connect">Kopla til</string>
     <string name="action_duplicate">Dupliser</string>
     <string name="action_share">Del</string>
+    <string name="action_share_as_text">Del som tekst</string>
     <string name="action_export_ics">Eksporter som .ics</string>
     <string name="action_confirm_delete">Stadfest sletting</string>
     <string name="action_delete_event">Slett hending</string>
@@ -148,6 +149,12 @@
     <string name="onboarding_got_you">Vi hjelper deg.</string>
     <string name="onboarding_connect_prompt">Kopla til iCloud for å sjå hendingane dine her</string>
 
+    <!-- ==================== Nytt ==================== -->
+    <string name="whats_new_title">Nytt</string>
+    <string name="whats_new_dismiss">Forstått</string>
+    <string name="whats_new_v598_title">Hjelp til å halde Android open</string>
+    <string name="whats_new_v598_body">Google endrar måten du installerer appar på eininga. Vi treng hjelpa di.</string>
+    <string name="whats_new_v598_action_label">Besøk keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Kopla til iCloud</string>
     <string name="signin_caldav_title">Legg til CalDAV-konto</string>
@@ -223,6 +230,11 @@
     <string name="caldav_error_connection_timeout">Tilkoplinga fekk tidsavbrot. Prøv igjen.</string>
     <string name="caldav_error_no_calendars">Ingen kalendrar funne på denne tenaren.</string>
     <string name="caldav_error_unexpected">Uventa feil. Prøv igjen.</string>
+    <string name="password_change_error_account_not_found">Kontoen vart ikkje funnen</string>
+    <string name="password_change_error_no_credentials">Ingen eksisterande påloggingsdetaljar</string>
+    <string name="password_change_error_unsupported_provider">Denne leverandøren støttar ikkje endring av passordet</string>
+    <string name="password_change_error_invalid">Ugyldig passord</string>
+    <string name="password_change_error_network">Nettverksfeil, prøv igjen</string>
 
     <string name="error_import_file_not_found">Fila vart ikkje funnen eller kan ikkje lesast.</string>
     <string name="error_import_invalid_format">Ugyldig kalenderfilformat.</string>
@@ -294,7 +306,7 @@
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Brukarnamn</string>
     <string name="label_password">Passord</string>
-    <string name="label_display_name_optional">Visingsnamn (valfritt)</string>
+    <string name="label_display_name_optional">Visingsnamn</string>
 
     <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Søk i hendingar…</string>
@@ -530,7 +542,9 @@
     <string name="drawer_calendars">Kalendrar</string>
     <string name="drawer_contacts">Kontaktar</string>
     <string name="drawer_device_calendars">Einingskalendrar</string>
+    <string name="drawer_account_offline">Fråkopla</string>
     <string name="drawer_share_feedback">Del tilbakemelding</string>
+    <string name="event_title_fallback">Hending</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">For deg, ikkje dataa dine.</string>
@@ -1159,4 +1173,19 @@
         <item quantity="other">%1$s · %2$d til</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Endre svar</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dagar</item>
+    </plurals>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Legg til helgedagskalender</string>
+    <string name="holiday_catalog_search_label">Søk</string>
+    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
+    <string name="holiday_catalog_already_added">Lagt til</string>
+    <string name="holiday_catalog_empty">Ingen land funne</string>
+    <string name="holiday_catalog_empty_hint">Prøv eit anna namn</string>
+    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
+    <string name="holiday_catalog_validate_error">Kunne ikkje nå denne kalenderen. Sjekk tilkoplinga og prøv igjen.</string>
+    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
+    <string name="holiday_catalog_attribution">Helgedagskalendrar frå Mozilla Thunderbird, lisensiert under %1$s.</string>
 </resources>

@@ -534,12 +534,14 @@ class CriticalPatternMigrationTest {
         // Sequence should be preserved
         assertEquals(7, entity.sequence)
 
-        // IcsPatcher should increment on update
+        // IcsPatcher serializes SEQUENCE verbatim — the bump decision lives
+        // upstream in EventWriter (SequenceBumper), so a serialize round-trip
+        // does not change it.
         val regenerated = IcsPatcher.serialize(entity)
         val reparsed = parser.parseAllEvents(regenerated).getOrNull()!![0]
         assertEquals(
-            "Sequence should be incremented by IcsPatcher",
-            8,
+            "Sequence should be serialized verbatim by IcsPatcher",
+            7,
             reparsed.sequence
         )
     }

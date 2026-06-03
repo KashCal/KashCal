@@ -91,6 +91,7 @@ class BackupRoundTripIntegrationTest {
             accountRepository = buildAccountRepo(targetDb),
             calendarRepository = CalendarRepositoryImpl(targetDb.calendarsDao()),
             icsSubscriptionsDao = targetDb.icsSubscriptionsDao(),
+            context = context,
         )
     }
 

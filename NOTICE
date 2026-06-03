@@ -107,6 +107,23 @@ Licensed under the Apache License, Version 2.0
 https://developer.android.com/jetpack/androidx
 
 ================================================================================
+Holiday Calendar Catalog - bundled data (CC BY-SA 3.0)
+================================================================================
+
+The bundled holiday calendar list (app/src/main/res/raw/holiday_catalog.json)
+is derived from the public holiday calendars published by Mozilla Thunderbird.
+It contains calendar names and feed URLs only; it includes no calendar event
+data.
+
+Copyright Mozilla Foundation and contributors
+Licensed under the Creative Commons Attribution-ShareAlike 3.0 license
+(CC BY-SA 3.0), per the Mozilla website content license. This data file is
+distributed under CC BY-SA 3.0; the rest of KashCal is under its own license.
+
+https://www.thunderbird.net/en-US/calendar/holidays/
+https://creativecommons.org/licenses/by-sa/3.0/
+
+================================================================================
 Testing Libraries (Test scope only - not included in release APK)
 ================================================================================
 

@@ -196,7 +196,7 @@ fun AccountSettingsScreen(
     onRequestNotificationPermission: () -> Unit = {},
     // Default reminder preferences
     defaultReminderTimed: Int = 15,
-    defaultReminderAllDay: Int = 720,
+    defaultReminderAllDay: Int = 900, // 9 AM the day before (-PT15H)
     defaultEventDuration: Int = 30,
     onDefaultReminderTimedChange: (Int) -> Unit = {},
     onDefaultReminderAllDayChange: (Int) -> Unit = {},
@@ -771,7 +771,7 @@ private fun FlatSettingsContent(
             }
 
             if (calendars.isNotEmpty()) {
-                val alertsSubtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, resources)}"
+                val alertsSubtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources = resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, isAllDay = true, resources = resources)}"
                 row(label = stringResource(R.string.settings_default_alerts), subtitle = alertsSubtitle, id = "default-alerts") {
                     SettingsRow(
                         icon = Icons.Default.Notifications,

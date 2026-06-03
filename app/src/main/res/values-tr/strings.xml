@@ -63,6 +63,7 @@
     <string name="action_connect">Bağlan</string>
     <string name="action_duplicate">Çoğalt</string>
     <string name="action_share">Paylaş</string>
+    <string name="action_share_as_text">Metin olarak paylaş</string>
     <string name="action_export_ics">.ics olarak dışa aktar</string>
     <string name="action_confirm_delete">Silmeyi Onayla</string>
     <string name="action_delete_event">Etkinliği Sil</string>
@@ -75,6 +76,10 @@
     <string name="rsvp_modified_snackbar">%1$s için yanıt başarısız oldu — etkinlik değiştirildi. Lütfen yeniden yanıtlayın.</string>
     <string name="invitees_host_tag">Ev sahibi</string>
     <string name="invitees_summary_you_alone">Sen</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d gün sonra</item>
+        <item quantity="other">%1$d gün sonra</item>
+    </plurals>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Sen · %d davetli</item>
         <item quantity="other">Sen · %d davetli</item>
@@ -263,6 +268,12 @@
     <string name="caldav_error_no_calendars">Bu sunucuda takvim bulunamadı.</string>
     <string name="caldav_error_unexpected">Beklenmeyen hata. Lütfen tekrar deneyin.</string>
 
+    <string name="password_change_error_account_not_found">Hesap bulunamadı</string>
+    <string name="password_change_error_no_credentials">Mevcut kimlik bilgisi yok</string>
+    <string name="password_change_error_unsupported_provider">Bu sağlayıcı parola değiştirmeyi desteklemiyor</string>
+    <string name="password_change_error_invalid">Geçersiz parola</string>
+    <string name="password_change_error_network">Ağ hatası, lütfen tekrar deneyin</string>
+
     <string name="error_import_file_not_found">Dosya bulunamadı veya okunamıyor.</string>
     <string name="error_import_invalid_format">Geçersiz takvim dosyası biçimi.</string>
     <string name="error_import_partial">%1$d etkinlik içe aktarıldı, %2$d başarısız.</string>
@@ -332,7 +343,7 @@
     <string name="label_server_url">Sunucu URL</string>
     <string name="label_username">Kullanıcı Adı</string>
     <string name="label_password">Parola</string>
-    <string name="label_display_name_optional">Görünen Ad (isteğe bağlı)</string>
+    <string name="label_display_name_optional">Görünen Ad</string>
 
     <string name="placeholder_search_events">Etkinlik ara…</string>
 
@@ -569,7 +580,10 @@
     <string name="drawer_calendars">Takvimler</string>
     <string name="drawer_contacts">Kişiler</string>
     <string name="drawer_device_calendars">Cihaz takvimleri</string>
+    <string name="drawer_account_offline">Çevrimdışı</string>
     <string name="drawer_share_feedback">Geri bildirim paylaş</string>
+
+    <string name="event_title_fallback">Etkinlik</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Senin için, verilerinin değil.</string>
@@ -1173,4 +1187,17 @@
     <string name="attendee_section_pending">Bekliyor</string>
     <string name="attendee_section_declined">Reddetti</string>
     <string name="attendee_section_delegated">Devretti</string>
+    <string name="whats_new_title">Yenilikler</string>
+    <string name="whats_new_dismiss">Anladım</string>
+    <string name="whats_new_v598_title">Android\'ın açık kalmasına yardım et</string>
+    <string name="whats_new_v598_body">Google, cihazınıza uygulama yükleme şeklinizi değiştiriyor. Yardımınıza ihtiyacımız var.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org adresini ziyaret et</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Tatil takvimi ekle</string>
+    <string name="holiday_catalog_search_label">Ara</string>
+    <string name="holiday_catalog_already_added">Eklendi</string>
+    <string name="holiday_catalog_empty">Ülke bulunamadı</string>
+    <string name="holiday_catalog_empty_hint">Farklı bir ad deneyin</string>
+    <string name="holiday_catalog_validate_error">Bu takvime ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird tatil takvimleri, %1$s lisansı altında sunulmaktadır.</string>
 </resources>

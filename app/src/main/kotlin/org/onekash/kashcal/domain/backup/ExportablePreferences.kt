@@ -114,6 +114,7 @@ object ExportablePreferences {
         PreferencesKeys.SHOWN_LOCAL_CALENDAR_INTRO.name,
         PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP.name,
         PreferencesKeys.ONBOARDING_DISMISSED.name,
+        PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN.name,
         // Device calendar selection IDs — not portable across installs
         PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS.name,
         PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS.name,

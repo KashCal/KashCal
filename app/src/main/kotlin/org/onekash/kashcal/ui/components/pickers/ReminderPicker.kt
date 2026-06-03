@@ -76,7 +76,7 @@ fun ReminderPickerCard(
     val presets = if (isAllDay) ALL_DAY_PRESET_CHIPS else TIMED_PRESET_CHIPS
 
     // Build summary text
-    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current)
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current, isAllDay)
 
     OutlinedCard(
         modifier = modifier.fillMaxWidth(),
@@ -335,7 +335,7 @@ fun ReminderPickerRow(
     truncatedReminderCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current)
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current, isAllDay)
 
     EventFormRow(
         icon = Icons.Default.Notifications,

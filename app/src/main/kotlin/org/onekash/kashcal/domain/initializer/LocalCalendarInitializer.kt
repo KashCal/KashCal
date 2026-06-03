@@ -24,6 +24,7 @@ class LocalCalendarInitializer @Inject constructor(
 ) {
     companion object {
         const val LOCAL_EMAIL = "local"
+        // "Local" is the literal name of the calendar, not a translatable label.
         const val LOCAL_ACCOUNT_DISPLAY_NAME = "On This Device"
         const val LOCAL_CALENDAR_DISPLAY_NAME = "Local"
         const val LOCAL_CALENDAR_URL = "local://default"

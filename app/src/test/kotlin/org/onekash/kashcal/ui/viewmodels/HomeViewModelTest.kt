@@ -279,6 +279,7 @@ class HomeViewModelTest {
             networkMonitor = networkMonitor,
             calendarProviderRepository = calendarProviderRepository,
             attendeeBackfill = io.mockk.mockk(relaxed = true),
+            context = io.mockk.mockk(relaxed = true),
             ioDispatcher = testDispatcher,
             currentDayCodeProvider = provider
         )

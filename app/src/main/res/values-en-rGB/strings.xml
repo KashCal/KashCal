@@ -63,6 +63,7 @@
     <string name="action_connect">Connect</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_share">Share</string>
+    <string name="action_share_as_text">Share as text</string>
     <string name="action_export_ics">Export as .ics</string>
     <string name="action_confirm_delete">Confirm Delete</string>
     <string name="action_delete_event">Delete Event</string>
@@ -264,6 +265,12 @@
     <string name="caldav_error_no_calendars">No calendars found on this server.</string>
     <string name="caldav_error_unexpected">Unexpected error. Please try again.</string>
 
+    <string name="password_change_error_account_not_found">Account not found</string>
+    <string name="password_change_error_no_credentials">No existing credentials</string>
+    <string name="password_change_error_unsupported_provider">This provider doesn\'t support changing the password</string>
+    <string name="password_change_error_invalid">Invalid password</string>
+    <string name="password_change_error_network">Network error, please try again</string>
+
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
     <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
@@ -333,7 +340,7 @@
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
-    <string name="label_display_name_optional">Display Name (optional)</string>
+    <string name="label_display_name_optional">Display Name</string>
 
     <string name="placeholder_search_events">Search events…</string>
 
@@ -565,7 +572,10 @@
     <string name="drawer_calendars">Calendars</string>
     <string name="drawer_contacts">Contacts</string>
     <string name="drawer_device_calendars">Device calendars</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Share feedback</string>
+
+    <string name="event_title_fallback">Event</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">For you, not your data.</string>
@@ -1165,4 +1175,20 @@
     <string name="attendee_section_pending">Pending</string>
     <string name="attendee_section_declined">Declined</string>
     <string name="attendee_section_delegated">Delegated</string>
+    <string name="whats_new_title">What\'s new</string>
+    <string name="whats_new_dismiss">Got it</string>
+    <string name="whats_new_v598_title">Help keep Android open</string>
+    <string name="whats_new_v598_body">Google is changing the way you install apps on your device. We need your help.</string>
+    <string name="whats_new_v598_action_label">Visit keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">In %1$d day</item>
+        <item quantity="other">In %1$d days</item>
+    </plurals>
+    <string name="holiday_catalog_add">Add holiday calendar</string>
+    <string name="holiday_catalog_search_label">Search</string>
+    <string name="holiday_catalog_already_added">Added</string>
+    <string name="holiday_catalog_empty">No countries found</string>
+    <string name="holiday_catalog_empty_hint">Try a different name</string>
+    <string name="holiday_catalog_validate_error">Couldn\'t reach this calendar. Check your connection and try again.</string>
+    <string name="holiday_catalog_attribution">Holiday calendars from Mozilla Thunderbird, licensed under %1$s.</string>
 </resources>

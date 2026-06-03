@@ -63,6 +63,7 @@
     <string name="action_connect">සම්බන්ධ කරන්න</string>
     <string name="action_duplicate">අනුපිටපත</string>
     <string name="action_share">බෙදාගන්න</string>
+    <string name="action_share_as_text">පෙළ ලෙස බෙදාගන්න</string>
     <string name="action_export_ics">.ics ලෙස නිර්යාත</string>
     <string name="action_confirm_delete">මකීම තහවුරු කරන්න</string>
     <string name="action_delete_event">සිදුවීම මකන්න</string>
@@ -245,6 +246,11 @@
     <string name="caldav_error_connection_timeout">සම්බන්ධතාවයේ කාලය ඉකුත් විය. නැවත උත්සාහ කරන්න.</string>
     <string name="caldav_error_no_calendars">මෙම සේවාදායකයේ දින දසුන් හමු නොවීය.</string>
     <string name="caldav_error_unexpected">බලාපොරොත්තු නොවූ දෝෂයක්. නැවත උත්සාහ කරන්න.</string>
+    <string name="password_change_error_account_not_found">ගිණුම හමු නොවීය</string>
+    <string name="password_change_error_no_credentials">පවතින අක්තපත්‍ර නොමැත</string>
+    <string name="password_change_error_unsupported_provider">මෙම සැපයුම්කරු මුරපදය වෙනස් කිරීමට සහාය නොදක්වයි</string>
+    <string name="password_change_error_invalid">වලංගු නොවන මුරපදය</string>
+    <string name="password_change_error_network">ජාල දෝෂයකි, නැවත උත්සාහ කරන්න</string>
 
     <string name="error_import_file_not_found">ගොනුව හමු නොවීය හෝ කියවිය නොහැක.</string>
     <string name="error_import_invalid_format">වලංගු නොවන දින දර්ශන ගොනු ආකෘතිය.</string>
@@ -315,7 +321,7 @@
     <string name="label_server_url">සේවාදායක URL</string>
     <string name="label_username">පරිශීලක නාමය</string>
     <string name="label_password">මුරපදය</string>
-    <string name="label_display_name_optional">ප්‍රදර්ශන නාමය (විකල්ප)</string>
+    <string name="label_display_name_optional">ප්‍රදර්ශන නාමය</string>
 
     <string name="placeholder_search_events">සිදුවීම් සොයන්න…</string>
 
@@ -525,7 +531,10 @@
     <string name="drawer_calendars">දින දර්ශන</string>
     <string name="drawer_contacts">සම්බන්ධතා</string>
     <string name="drawer_device_calendars">උපාංග දින දර්ශන</string>
+    <string name="drawer_account_offline">මාර්ගගත නැත</string>
     <string name="drawer_share_feedback">ප්‍රතිචාර බෙදාගන්න</string>
+
+    <string name="event_title_fallback">සිදුවීම</string>
 
     <string name="status_privacy_tagline">ඔබ වෙනුවෙන්, ඔබේ දත්ත වෙනුවෙන් නොවේ.</string>
     <string name="action_keep_it_that_way">එසේම තබාගන්න</string>
@@ -763,6 +772,11 @@
     <string name="action_snooze">මදකට නවතන්න</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">දැන් ආරම්භ වෙයි</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">දින %1$dකින්</item>
+        <item quantity="other">දින %1$dකින්</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">හෙට, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1143,4 +1157,16 @@
         <item quantity="other">%1$s · තවත් %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">ප්‍රතිචාරය වෙනස් කරන්න</string>
+    <string name="whats_new_title">අලුත් මොනවද</string>
+    <string name="whats_new_dismiss">තේරුණා</string>
+    <string name="whats_new_v598_title">Android විවෘතව තබා ගැනීමට උදව් වන්න</string>
+    <string name="whats_new_v598_body">Google ඔබේ උපාංගයේ යෙදුම් ස්ථාපනය කරන ආකාරය වෙනස් කරමින් සිටී. අපට ඔබේ උදව් අවශ්‍යයි.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org වෙත යන්න</string>
+    <string name="holiday_catalog_add">නිවාඩු දින දර්ශනය එකතු කරන්න</string>
+    <string name="holiday_catalog_search_label">සොයන්න</string>
+    <string name="holiday_catalog_already_added">එකතු කළා</string>
+    <string name="holiday_catalog_empty">රටවල් හමු නොවීය</string>
+    <string name="holiday_catalog_empty_hint">වෙනත් නමක් උත්සාහ කරන්න</string>
+    <string name="holiday_catalog_validate_error">මෙම දින දර්ශනයට ළඟා විය නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird වෙතින් නිවාඩු දින දර්ශන, %1$s යටතේ බලපත්‍ර ලබා ඇත.</string>
 </resources>

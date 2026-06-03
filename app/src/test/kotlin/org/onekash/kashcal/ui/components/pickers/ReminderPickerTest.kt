@@ -108,27 +108,29 @@ class ReminderPickerTest {
 
     @Test
     fun `all-day event has 9 AM day of event option`() {
-        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(540))
+        // Signed offset: 9 AM day of fires after midnight -> -540.
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(-540))
     }
 
     @Test
     fun `all-day event has 1 day before option`() {
-        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(1440))
+        // 9 AM the day before = 15h before midnight -> 900.
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(900))
     }
 
     @Test
-    fun `all-day event has 12 hours before option`() {
-        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(720))
-    }
-
-    @Test
-    fun `all-day event no longer has 2 days before option in picker`() {
-        assertFalse("2 days before removed from picker", ALL_DAY_REMINDER_MINUTES.contains(2880))
+    fun `all-day event has 2 days before option`() {
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(2340))
     }
 
     @Test
     fun `all-day event has 1 week before option`() {
-        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(10080))
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(9540))
+    }
+
+    @Test
+    fun `all-day event no longer has legacy 12 hours before (720) option`() {
+        assertFalse("legacy 720 removed", ALL_DAY_REMINDER_MINUTES.contains(720))
     }
 
     // ==================== OPTIONS LISTS VERIFICATION ====================

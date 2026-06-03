@@ -63,6 +63,7 @@
     <string name="action_connect">Connetti</string>
     <string name="action_duplicate">Duplica</string>
     <string name="action_share">Condividi</string>
+    <string name="action_share_as_text">Condividi come testo</string>
     <string name="action_export_ics">Esporta come .ics</string>
     <string name="action_confirm_delete">Conferma eliminazione</string>
     <string name="action_delete_event">Elimina evento</string>
@@ -173,6 +174,12 @@
     <string name="onboarding_got_you">Ci pensiamo noi.</string>
     <string name="onboarding_connect_prompt">Connetti iCloud per vedere i tuoi eventi qui</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Novità</string>
+    <string name="whats_new_dismiss">Ho capito</string>
+    <string name="whats_new_v598_title">Aiuta a mantenere Android aperto</string>
+    <string name="whats_new_v598_body">Google sta cambiando il modo in cui installi le app sul tuo dispositivo. Abbiamo bisogno del tuo aiuto.</string>
+    <string name="whats_new_v598_action_label">Visita keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Connetti iCloud</string>
     <string name="signin_caldav_title">Aggiungi account CalDAV</string>
@@ -249,6 +256,12 @@
     <string name="caldav_error_no_calendars">Nessun calendario trovato su questo server.</string>
     <string name="caldav_error_unexpected">Errore imprevisto. Riprova.</string>
 
+    <string name="password_change_error_account_not_found">Account non trovato</string>
+    <string name="password_change_error_no_credentials">Nessuna credenziale esistente</string>
+    <string name="password_change_error_unsupported_provider">Questo provider non supporta la modifica della password</string>
+    <string name="password_change_error_invalid">Password non valida</string>
+    <string name="password_change_error_network">Errore di rete, riprova</string>
+
     <string name="error_import_file_not_found">File non trovato o non leggibile.</string>
     <string name="error_import_invalid_format">Formato file calendario non valido.</string>
     <string name="error_import_partial">%1$d eventi importati, %2$d non riusciti.</string>
@@ -318,7 +331,7 @@
     <string name="label_server_url">URL del server</string>
     <string name="label_username">Nome utente</string>
     <string name="label_password">Password</string>
-    <string name="label_display_name_optional">Nome visualizzato (facoltativo)</string>
+    <string name="label_display_name_optional">Nome visualizzato</string>
 
     <string name="placeholder_search_events">Cerca eventi…</string>
 
@@ -405,6 +418,13 @@
     <string name="subscriptions_empty_ics">Nessun abbonamento ICS</string>
     <string name="subscriptions_empty_ics_hint">Aggiungi un feed di calendario per vedere gli eventi</string>
     <string name="subscriptions_add_ics">Aggiungi calendario ICS</string>
+    <string name="holiday_catalog_add">Aggiungi calendario delle festività</string>
+    <string name="holiday_catalog_search_label">Cerca</string>
+    <string name="holiday_catalog_already_added">Aggiunto</string>
+    <string name="holiday_catalog_empty">Nessun paese trovato</string>
+    <string name="holiday_catalog_empty_hint">Prova con un altro nome</string>
+    <string name="holiday_catalog_validate_error">Impossibile raggiungere questo calendario. Controlla la connessione e riprova.</string>
+    <string name="holiday_catalog_attribution">Calendari delle festività di Mozilla Thunderbird, concessi in licenza %1$s.</string>
     <string name="subscriptions_row_label">Feed calendario (ICS)</string>
     <string name="subscriptions_row_hint">es. festività, sport, scuola</string>
 
@@ -553,7 +573,10 @@
     <string name="drawer_calendars">Calendari</string>
     <string name="drawer_contacts">Contatti</string>
     <string name="drawer_device_calendars">Calendari del dispositivo</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Invia feedback</string>
+
+    <string name="event_title_fallback">Evento</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Per te, non per i tuoi dati.</string>
@@ -733,6 +756,10 @@
         <item quantity="one">%1$d settimana prima</item>
         <item quantity="many">%1$d settimane prima</item>
         <item quantity="other">%1$d settimane prima</item>
+    </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Tra %1$d giorno</item>
+        <item quantity="other">Tra %1$d giorni</item>
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->

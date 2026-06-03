@@ -10,6 +10,7 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.identity.matchesAttendee
+import org.onekash.kashcal.domain.scheduling.SequenceBumper
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.util.RruleUtils
 import java.util.UUID
@@ -108,22 +109,19 @@ class EventWriter @Inject constructor(
 
             val now = System.currentTimeMillis()
 
-            // Check if RRULE changed
+            // RRULE/timing changes also drive occurrence regeneration below.
             val rruleChanged = existingEvent.rrule != event.rrule ||
                     existingEvent.exdate != event.exdate ||
                     existingEvent.rdate != event.rdate
-
-            // Check if timing changed
             val timingChanged = existingEvent.startTs != event.startTs ||
                     existingEvent.endTs != event.endTs ||
                     existingEvent.isAllDay != event.isAllDay
 
-            // Increment sequence for significant changes (CalDAV requirement)
-            val newSequence = if (rruleChanged || timingChanged) {
-                event.sequence + 1
-            } else {
-                event.sequence
-            }
+            // Bump SEQUENCE only for scheduling-significant changes so
+            // attendees aren't re-notified for cosmetic edits. SequenceBumper
+            // is the single source of truth; the wire serializer must not bump
+            // again on top of this.
+            val newSequence = SequenceBumper.nextSequence(existingEvent, event)
 
             // Determine sync status
             val newSyncStatus = when {
@@ -602,20 +600,11 @@ class EventWriter @Inject constructor(
             masterEvent.syncStatus == SyncStatus.PENDING_CREATE -> SyncStatus.PENDING_CREATE
             else -> SyncStatus.PENDING_UPDATE
         }
-        // Match updateEvent's predicate: bump SEQUENCE only when the
-        // change is iTIP-relevant. Title/notes/etc. don't require a
-        // bump per RFC 5545 §3.8.7.4.
-        val rruleChanged = masterEvent.rrule != modifiedEvent.rrule ||
-            masterEvent.exdate != modifiedEvent.exdate ||
-            masterEvent.rdate != modifiedEvent.rdate
-        val timingChanged = masterEvent.startTs != modifiedEvent.startTs ||
-            masterEvent.endTs != modifiedEvent.endTs ||
-            masterEvent.isAllDay != modifiedEvent.isAllDay
-        val newSequence = if (rruleChanged || timingChanged) {
-            masterEvent.sequence + 1
-        } else {
-            masterEvent.sequence
-        }
+        // Bump SEQUENCE only when the change is iTIP-relevant. Title/notes/etc.
+        // don't require a bump. SequenceBumper is the shared predicate with
+        // updateEvent so iTIP recipients see a monotonically increasing
+        // SEQUENCE only on scheduling changes.
+        val newSequence = SequenceBumper.nextSequence(masterEvent, modifiedEvent)
         val updated = modifiedEvent.copy(
             id = masterEvent.id,
             uid = masterEvent.uid,

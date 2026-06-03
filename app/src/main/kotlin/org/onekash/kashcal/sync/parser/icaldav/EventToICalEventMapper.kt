@@ -213,7 +213,7 @@ object EventToICalEventMapper {
      * icaldav-core's `email` is the bare local-part-plus-domain. Strip
      * `mailto:` here so the generator re-prefixes it on emit.
      */
-    private fun org.onekash.kashcal.data.db.entity.Attendee.toICalAttendee():
+    internal fun org.onekash.kashcal.data.db.entity.Attendee.toICalAttendee():
         org.onekash.icaldav.model.Attendee {
         val bareEmail = org.onekash.kashcal.util.AddressNormalizer.stripMailto(address)
         return org.onekash.icaldav.model.Attendee(

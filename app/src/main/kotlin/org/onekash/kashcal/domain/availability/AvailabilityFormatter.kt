@@ -90,10 +90,15 @@ class AvailabilityFormatter @Inject constructor() {
     }
 
     private fun formatMinutes(minutes: Int, is24Hour: Boolean, locale: Locale): String {
-        if (minutes >= 24 * 60) {
-            return if (is24Hour) "24:00" else "12:00 AM"
+        val safe = minutes.coerceIn(0, 24 * 60)
+        // 1440 (end-of-day) renders as "24:00" in 24h mode (universal). In 12h
+        // mode there's no clean equivalent, so render midnight via the locale's
+        // own AM/PM formatter — yields "12:00 AM" in English, "12:00 a. m." in
+        // Spanish, etc., instead of a hardcoded English literal.
+        if (safe == 24 * 60) {
+            return if (is24Hour) "24:00"
+            else DateTimeFormatter.ofPattern("h:mm a", locale).format(LocalTime.MIDNIGHT)
         }
-        val safe = minutes.coerceIn(0, 24 * 60 - 1)
         val hour = safe / 60
         val minute = safe % 60
         val pattern = if (is24Hour) "HH:mm" else "h:mm a"

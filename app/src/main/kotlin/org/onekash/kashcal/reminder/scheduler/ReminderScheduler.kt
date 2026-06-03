@@ -20,9 +20,8 @@ import org.onekash.kashcal.domain.reader.selfDeclinedEventIds
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.sync.parser.icaldav.RawIcsParser
-import java.time.Instant
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.ZoneId
-import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -125,58 +124,26 @@ internal fun parseIsoDuration(duration: String): Long? {
 }
 
 /**
- * Calculate trigger time for all-day event reminders in user's local timezone.
+ * Calculate trigger time for all-day event reminders: signed offset from local midnight.
  *
- * All-day events store startTs as UTC midnight. Reminders should fire at
- * appropriate LOCAL time, not UTC.
+ * All-day events store startTs as UTC midnight but begin at the user's LOCAL midnight.
+ * The trigger is the event's local-midnight instant plus the signed RFC 5545 offset
+ * (negative = before the start, positive = after), applied as an exact duration so that
+ * what KashCal fires equals what is stored and synced (see
+ * [DateTimeUtils.allDayReminderTriggerTime]).
  *
- * Uses LocalDate.atTime().atZone() pattern for DST-correct calculations.
- * This ensures correct behavior even on DST transition days.
- *
- * Offset semantics:
- * - "-PT9H" (540 min, "9 AM day of event"): Fire at 9 AM local on event date
- * - "-P1D" (1440 min, "1 day before"): Fire at 9 AM local, one day before
- * - "-P2D", "-P1W" etc.: Fire at 9 AM local, N days before
+ * Offset semantics (chip values): "PT9H" = 9 AM day of event; "-PT15H" = 9 AM day before;
+ * "-PT39H" = 9 AM two days before; "-PT0M" = local midnight (start of the event day).
  *
  * @param occurrenceStartTs UTC midnight of the all-day event
- * @param offsetMs The reminder offset in milliseconds (negative = before)
+ * @param offsetMs The reminder offset in milliseconds (signed: negative = before, positive = after)
  * @param localZone The user's timezone (default: device timezone)
  */
 internal fun calculateAllDayTriggerTime(
     occurrenceStartTs: Long,
     offsetMs: Long,
     localZone: ZoneId = ZoneId.systemDefault()
-): Long {
-    // Get the event date from UTC midnight (not affected by local zone)
-    val eventDate = Instant.ofEpochMilli(occurrenceStartTs)
-        .atZone(ZoneOffset.UTC)
-        .toLocalDate()
-    val oneDayMs = 24 * 60 * 60 * 1000L
-
-    return when {
-        // Sub-day offset (e.g., -PT9H for "9 AM day of event")
-        // Convert negative offset to hours/minutes, fire at that time on event day
-        offsetMs > -oneDayMs && offsetMs < 0 -> {
-            val hours = (-offsetMs / (60 * 60 * 1000L)).toInt()
-            val minutes = ((-offsetMs % (60 * 60 * 1000L)) / (60 * 1000L)).toInt()
-            eventDate.atTime(hours, minutes)
-                .atZone(localZone)
-                .toInstant()
-                .toEpochMilli()
-        }
-
-        // Day-based offset (e.g., -P1D = -86400000ms, -P2D, -P1W)
-        // Fire at 9 AM local, N days before (industry standard per common calendar apps)
-        else -> {
-            val days = (offsetMs / oneDayMs).toInt()
-            eventDate.plusDays(days.toLong())
-                .atTime(9, 0)
-                .atZone(localZone)
-                .toInstant()
-                .toEpochMilli()
-        }
-    }
-}
+): Long = DateTimeUtils.allDayReminderTriggerTime(occurrenceStartTs, offsetMs, localZone)
 
 /**
  * Schedules and manages event reminders using Android AlarmManager.

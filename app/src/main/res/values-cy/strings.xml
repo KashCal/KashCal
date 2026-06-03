@@ -63,6 +63,7 @@
     <string name="action_connect">Cysylltu</string>
     <string name="action_duplicate">Dyblygu</string>
     <string name="action_share">Rhannu</string>
+    <string name="action_share_as_text">Rhannu fel testun</string>
     <string name="action_export_ics">Allforio fel .ics</string>
     <string name="action_confirm_delete">Cadarnhau Dileu</string>
     <string name="action_delete_event">Dileu Digwyddiad</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">Methodd yr ymateb ar gyfer %1$s: cafodd y digwyddiad ei addasu. Ymateba eto.</string>
     <string name="invitees_host_tag">Gwesteiwr</string>
     <string name="invitees_summary_you_alone">Ti</string>
+    <string name="holiday_catalog_add">Ychwanegu calendr gwyliau</string>
+    <string name="holiday_catalog_search_label">Chwilio</string>
+    <string name="holiday_catalog_already_added">Wedi ychwanegu</string>
+    <string name="holiday_catalog_empty">Heb ddod o hyd i unrhyw wlad</string>
+    <string name="holiday_catalog_empty_hint">Rhowch gynnig ar enw gwahanol</string>
+    <string name="holiday_catalog_validate_error">Methwyd cyrraedd y calendr hwn. Gwiriwch eich cysylltiad a rhowch gynnig arall.</string>
+    <string name="holiday_catalog_attribution">Calendrau gwyliau gan Mozilla Thunderbird, dan drwydded %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="zero">Ti · neb wedi\'i wahodd</item>
         <item quantity="one">Ti · %d wedi\'i wahodd</item>
@@ -268,6 +276,11 @@
     <string name="caldav_error_connection_timeout">Mae\'r cysylltiad wedi dod i ben. Rhowch gynnig arall arni.</string>
     <string name="caldav_error_no_calendars">Ni chanfuwyd unrhyw galendrau ar y gweinydd hwn.</string>
     <string name="caldav_error_unexpected">Gwall annisgwyl. Rhowch gynnig arall arni.</string>
+    <string name="password_change_error_account_not_found">Heb ganfod y cyfrif</string>
+    <string name="password_change_error_no_credentials">Dim manylion adnabod presennol</string>
+    <string name="password_change_error_unsupported_provider">Nid yw\'r darparwr hwn yn cefnogi newid y cyfrinair</string>
+    <string name="password_change_error_invalid">Cyfrinair annilys</string>
+    <string name="password_change_error_network">Gwall rhwydwaith, rhowch gynnig arall arni</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Ffeil heb ei chanfod neu methu ei darllen.</string>
@@ -344,7 +357,7 @@
     <string name="label_server_url">URL Gweinydd</string>
     <string name="label_username">Enw defnyddiwr</string>
     <string name="label_password">Cyfrinair</string>
-    <string name="label_display_name_optional">Enw Arddangos (dewisol)</string>
+    <string name="label_display_name_optional">Enw Arddangos</string>
 
     <!-- Placeholders (Additional) -->
     <string name="placeholder_search_events">Chwilio digwyddiadau…</string>
@@ -580,7 +593,9 @@
     <string name="drawer_calendars">Calendrau</string>
     <string name="drawer_contacts">Cysylltiadau</string>
     <string name="drawer_device_calendars">Calendrau\'r ddyfais</string>
+    <string name="drawer_account_offline">All-lein</string>
     <string name="drawer_share_feedback">Rhannu adborth</string>
+    <string name="event_title_fallback">Digwyddiad</string>
 
     <!-- i18n: App Info / About -->
     <string name="status_privacy_tagline">I chi, nid eich data.</string>
@@ -1376,5 +1391,17 @@
     <string name="attendee_section_pending">Yn aros</string>
     <string name="attendee_section_declined">Wedi gwrthod</string>
     <string name="attendee_section_delegated">Wedi dirprwyo</string>
-
+    <string name="whats_new_title">Beth sy\'n newydd</string>
+    <string name="whats_new_dismiss">Iawn</string>
+    <string name="whats_new_v598_title">Helpwch i gadw Android yn agored</string>
+    <string name="whats_new_v598_body">Mae Google yn newid y ffordd rydych chi\'n gosod apiau ar eich dyfais. Mae arnom angen eich help.</string>
+    <string name="whats_new_v598_action_label">Ymwelwch â keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="zero">Mewn %1$d diwrnod</item>
+        <item quantity="one">Mewn %1$d diwrnod</item>
+        <item quantity="two">Mewn %1$d ddiwrnod</item>
+        <item quantity="few">Mewn %1$d diwrnod</item>
+        <item quantity="many">Mewn %1$d diwrnod</item>
+        <item quantity="other">Mewn %1$d diwrnod</item>
+    </plurals>
 </resources>

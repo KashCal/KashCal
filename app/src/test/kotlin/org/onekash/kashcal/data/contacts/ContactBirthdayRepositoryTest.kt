@@ -76,7 +76,7 @@ class ContactBirthdayRepositoryTest {
         id = 20L,
         accountId = 10L,
         caldavUrl = "local://contact_birthdays",
-        displayName = ContactEventType.BIRTHDAY.calendarDisplayName,
+        displayName = "Contact Birthdays",
         color = 0xFF9C27B0.toInt(),
         isReadOnly = true,
         isVisible = true,
@@ -111,7 +111,8 @@ class ContactBirthdayRepositoryTest {
             reminderScheduler = reminderScheduler,
             eventReader = eventReader,
             contentResolver = contentResolver,
-            dataStore = dataStore
+            dataStore = dataStore,
+            context = mockk(relaxed = true)
         )
     }
 

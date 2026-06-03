@@ -1,6 +1,6 @@
 # Licensing KashCal
 
-KashCal is open source under the Apache License 2.0. Free to use, modify, and redistribute under those terms.
+KashCal™ is open source under the Apache License 2.0. Free to use, modify, and redistribute under those terms.
 
 The Apache license covers the code. The **KashCal name and icon** are trademarks of onekash labs and are not granted by the open-source license.
 

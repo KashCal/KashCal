@@ -63,6 +63,7 @@
     <string name="action_connect">Konekti</string>
     <string name="action_duplicate">Duobligi</string>
     <string name="action_share">Kunhavigi</string>
+    <string name="action_share_as_text">Kunhavigi kiel teksto</string>
     <string name="action_export_ics">Eksporti kiel .ics</string>
     <string name="action_confirm_delete">Konfirmi forigon</string>
     <string name="action_delete_event">Forigi eventon</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">Respondo por %1$s malsukcesis: la evento estis modifita. Bonvolu respondi denove.</string>
     <string name="invitees_host_tag">Gastiganto</string>
     <string name="invitees_summary_you_alone">Vi</string>
+    <string name="holiday_catalog_add">Aldoni feritagan kalendaron</string>
+    <string name="holiday_catalog_search_label">Serĉi</string>
+    <string name="holiday_catalog_already_added">Aldonita</string>
+    <string name="holiday_catalog_empty">Neniu lando trovita</string>
+    <string name="holiday_catalog_empty_hint">Provu alian nomon</string>
+    <string name="holiday_catalog_validate_error">Ne eblis atingi ĉi tiun kalendaron. Kontrolu vian konekton kaj reprovu.</string>
+    <string name="holiday_catalog_attribution">Feritagaj kalendaroj de Mozilla Thunderbird, licencitaj sub %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Vi · %d invitita</item>
         <item quantity="other">Vi · %d invititaj</item>
@@ -243,6 +251,11 @@
     <string name="caldav_error_connection_timeout">Konekto eltempiĝis. Bonvolu reprovi.</string>
     <string name="caldav_error_no_calendars">Neniu kalendaro trovita sur ĉi tiu servilo.</string>
     <string name="caldav_error_unexpected">Neatendita eraro. Bonvolu reprovi.</string>
+    <string name="password_change_error_account_not_found">Konto ne trovita</string>
+    <string name="password_change_error_no_credentials">Neniuj ekzistantaj akreditaĵoj</string>
+    <string name="password_change_error_unsupported_provider">Ĉi tiu provizanto ne subtenas ŝanĝon de pasvorto</string>
+    <string name="password_change_error_invalid">Nevalida pasvorto</string>
+    <string name="password_change_error_network">Reta eraro, bonvolu reprovi</string>
 
     <string name="error_import_file_not_found">Dosiero ne trovita aŭ ne legebla.</string>
     <string name="error_import_invalid_format">Nevalida kalendara dosiero-formato.</string>
@@ -313,7 +326,7 @@
     <string name="label_server_url">Servila URL</string>
     <string name="label_username">Uzantonomo</string>
     <string name="label_password">Pasvorto</string>
-    <string name="label_display_name_optional">Montrata nomo (nedeviga)</string>
+    <string name="label_display_name_optional">Montrata nomo</string>
 
     <string name="placeholder_search_events">Serĉi eventojn…</string>
 
@@ -547,7 +560,9 @@
     <string name="drawer_calendars">Kalendaroj</string>
     <string name="drawer_contacts">Kontaktoj</string>
     <string name="drawer_device_calendars">Aparataj kalendaroj</string>
+    <string name="drawer_account_offline">Eksterrete</string>
     <string name="drawer_share_feedback">Kunhavigi reagojn</string>
+    <string name="event_title_fallback">Evento</string>
 
     <!-- App Info / About -->
     <string name="status_privacy_tagline">Por vi, ne por viaj datumoj.</string>
@@ -1155,5 +1170,13 @@
     <string name="attendee_section_pending">Atendantaj</string>
     <string name="attendee_section_declined">Rifuzis</string>
     <string name="attendee_section_delegated">Delegis</string>
-
+    <string name="whats_new_title">Novaĵoj</string>
+    <string name="whats_new_dismiss">Komprenite</string>
+    <string name="whats_new_v598_title">Helpu konservi Android-on malferma</string>
+    <string name="whats_new_v598_body">Google ŝanĝas la manieron kiel vi instalas aplikaĵojn sur via aparato. Ni bezonas vian helpon.</string>
+    <string name="whats_new_v598_action_label">Viziti keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Post %1$d tago</item>
+        <item quantity="other">Post %1$d tagoj</item>
+    </plurals>
 </resources>

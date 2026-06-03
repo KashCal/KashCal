@@ -33,7 +33,7 @@ class DeviceCalendarReminderActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         when (intent?.action) {
             DeviceCalendarReminderNotificationManager.ACTION_DEVICE_SNOOZE -> {
-                handleSnooze(intent)
+                handleSnooze(context, intent)
             }
             DeviceCalendarReminderNotificationManager.ACTION_DEVICE_DISMISS -> {
                 handleDismiss(intent)
@@ -44,10 +44,11 @@ class DeviceCalendarReminderActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleSnooze(intent: Intent) {
+    private fun handleSnooze(context: Context, intent: Intent) {
         val eventId = intent.getLongExtra(DeviceCalendarReminderNotificationManager.EXTRA_EVENT_ID, -1L)
         val occurrenceTs = intent.getLongExtra(DeviceCalendarReminderNotificationManager.EXTRA_OCCURRENCE_TS, -1L)
-        val title = intent.getStringExtra(DeviceCalendarReminderNotificationManager.EXTRA_TITLE) ?: "Event"
+        val title = intent.getStringExtra(DeviceCalendarReminderNotificationManager.EXTRA_TITLE)
+            ?: context.getString(org.onekash.kashcal.R.string.event_title_fallback)
         val location = intent.getStringExtra(DeviceCalendarReminderNotificationManager.EXTRA_LOCATION)
         val isAllDay = intent.getBooleanExtra(DeviceCalendarReminderNotificationManager.EXTRA_IS_ALL_DAY, false)
         val calendarColor = intent.getIntExtra(DeviceCalendarReminderNotificationManager.EXTRA_CALENDAR_COLOR, 0)

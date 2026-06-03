@@ -370,6 +370,137 @@ class DeviceEventMapperTest {
         assertEquals(1, endHour - startHour)
     }
 
+    // ==================== All-day end-date round-trip ====================
+    //
+    // DeviceEvent.endTs is the inclusive last-ms-of-last-day for all-day events
+    // (matching Room Event.endTs convention). Both AndroidCalendarProviderRepository
+    // read paths (mapToInstances + mapToDeviceEvent) must apply the exclusive→inclusive
+    // conversion before constructing a DeviceEvent. These tests assert the form-state
+    // side: given a properly inclusive endTs, the date picker shows the correct end
+    // date for a 1-day event (no spurious +1 day) and a multi-day event (Feb 17, not
+    // Feb 18 for a 3-day event spanning Feb 15-17).
+
+    @Test
+    fun `toFormState all-day single-day event renders end date same as start`() {
+        // 1-day all-day event on 2026-02-15
+        // startTs = Feb 15 00:00 UTC, endTs = Feb 15 23:59:59.999 UTC (inclusive)
+        val dayMs = 86_400_000L
+        val startTs = java.time.LocalDate.of(2026, 2, 15)
+            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val endTs = startTs + dayMs - 1L
+
+        val event = createDeviceEvent(
+            startTs = startTs,
+            endTs = endTs,
+            isAllDay = true,
+            timezone = "UTC"
+        )
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        // Both pickers should resolve to Feb 15 in the local zone
+        val startDate = java.time.Instant.ofEpochMilli(formState.dateMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+
+        assertEquals(java.time.LocalDate.of(2026, 2, 15), startDate)
+        assertEquals(java.time.LocalDate.of(2026, 2, 15), endDate)
+    }
+
+    @Test
+    fun `toFormState all-day multi-day event renders end date as last inclusive day`() {
+        // 3-day all-day event spanning 2026-02-15..2026-02-17
+        // startTs = Feb 15 00:00 UTC, endTs = Feb 17 23:59:59.999 UTC (inclusive)
+        val dayMs = 86_400_000L
+        val startTs = java.time.LocalDate.of(2026, 2, 15)
+            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+        val endTs = startTs + (3 * dayMs) - 1L
+
+        val event = createDeviceEvent(
+            startTs = startTs,
+            endTs = endTs,
+            isAllDay = true,
+            timezone = "UTC"
+        )
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+
+        // Feb 17, NOT Feb 18 — the user-visible last day is the inclusive end
+        assertEquals(java.time.LocalDate.of(2026, 2, 17), endDate)
+    }
+
+    @Test
+    fun `toFormState recurring all-day event with P1D duration renders end date same as start`() {
+        // Recurring all-day event: CalendarProvider stores DURATION="P1D", endTs=null.
+        // computeEndTs returns startTs + 86_400_000 (exclusive next-day midnight).
+        // The form must roll that back by 1ms before utcMidnightToLocalDate, otherwise
+        // the picker shows the next day — the sibling of the mapToDeviceEvent bug.
+        val startTs = java.time.LocalDate.of(2026, 2, 15)
+            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+
+        val event = createDeviceEvent(
+            startTs = startTs,
+            endTs = null,
+            duration = "P1D",
+            rrule = "FREQ=WEEKLY",
+            isAllDay = true,
+            timezone = "UTC"
+        )
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        assertEquals(java.time.LocalDate.of(2026, 2, 15), endDate)
+    }
+
+    @Test
+    fun `toFormState recurring all-day event with P3D duration renders end as last inclusive day`() {
+        // 3-day recurring all-day event: DURATION="P3D" → exclusive end = Feb 18 00:00 UTC.
+        // Picker should show Feb 17, not Feb 18.
+        val startTs = java.time.LocalDate.of(2026, 2, 15)
+            .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+
+        val event = createDeviceEvent(
+            startTs = startTs,
+            endTs = null,
+            duration = "P3D",
+            rrule = "FREQ=MONTHLY",
+            isAllDay = true,
+            timezone = "UTC"
+        )
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        assertEquals(java.time.LocalDate.of(2026, 2, 17), endDate)
+    }
+
     // ==================== Availability → transp mapping ====================
 
     @Test
@@ -631,7 +762,8 @@ class DeviceEventMapperTest {
     fun `toExportEvent converts multiple reminder minutes to ISO durations`() {
         val event = createDeviceEvent()
         val synthetic = event.toExportEvent(reminderMinutes = listOf(15, 60, 1440))
-        assertEquals(listOf("-PT15M", "-PT1H", "-P1D"), synthetic.reminders)
+        // Hour-form encoding (DST-stable): 1440 min -> -PT24H, not the period -P1D.
+        assertEquals(listOf("-PT15M", "-PT1H", "-PT24H"), synthetic.reminders)
     }
 
     @Test

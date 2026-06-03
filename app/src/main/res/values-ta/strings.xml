@@ -63,6 +63,7 @@
     <string name="action_connect">இணை</string>
     <string name="action_duplicate">நகலெடு</string>
     <string name="action_share">பகிர்</string>
+    <string name="action_share_as_text">உரையாக பகிர்</string>
     <string name="action_export_ics">.ics ஆக ஏற்றுமதி</string>
     <string name="action_confirm_delete">நீக்குவதை உறுதிசெய்</string>
     <string name="action_delete_event">நிகழ்வை நீக்கு</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">உங்களுக்கு உதவ தயாராக இருக்கிறோம்.</string>
     <string name="onboarding_connect_prompt">உங்கள் நிகழ்வுகளை இங்கே காண iCloud இணைக்கவும்</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">புதிதாக என்ன</string>
+    <string name="whats_new_dismiss">புரிந்தது</string>
+    <string name="whats_new_v598_title">Android-ஐ திறந்திருக்க உதவுங்கள்</string>
+    <string name="whats_new_v598_body">Google உங்கள் சாதனத்தில் பயன்பாடுகளை நிறுவும் முறையை மாற்றுகிறது. எங்களுக்கு உங்கள் உதவி தேவை.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org-க்குச் செல்லுங்கள்</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud இணை</string>
     <string name="signin_caldav_title">CalDAV கணக்கு சேர்</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">இணைப்பு நேரம் முடிந்தது. மீண்டும் முயற்சிக்கவும்.</string>
     <string name="caldav_error_no_calendars">இந்த சேவையகத்தில் நாட்காட்டிகள் எதுவும் இல்லை.</string>
     <string name="caldav_error_unexpected">எதிர்பாராத பிழை. மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="password_change_error_account_not_found">கணக்கு கிடைக்கவில்லை</string>
+    <string name="password_change_error_no_credentials">தற்போதைய அங்கீகாரத் தகவல்கள் இல்லை</string>
+    <string name="password_change_error_unsupported_provider">இந்த வழங்குநர் கடவுச்சொல்லை மாற்றுவதை ஆதரிக்கவில்லை</string>
+    <string name="password_change_error_invalid">தவறான கடவுச்சொல்</string>
+    <string name="password_change_error_network">பிணையப் பிழை, மீண்டும் முயற்சிக்கவும்</string>
 
     <string name="error_import_file_not_found">கோப்பு கிடைக்கவில்லை அல்லது படிக்க முடியவில்லை.</string>
     <string name="error_import_invalid_format">தவறான நாட்காட்டிக் கோப்பு வடிவம்.</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">சேவையக URL</string>
     <string name="label_username">பயனர் பெயர்</string>
     <string name="label_password">கடவுச்சொல்</string>
-    <string name="label_display_name_optional">காட்சிப் பெயர் (விருப்பம்)</string>
+    <string name="label_display_name_optional">காட்சிப் பெயர்</string>
 
     <string name="placeholder_search_events">நிகழ்வுகளைத் தேடு…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">நாட்காட்டிகள்</string>
     <string name="drawer_contacts">தொடர்புகள்</string>
     <string name="drawer_device_calendars">சாதன நாட்காட்டிகள்</string>
+    <string name="drawer_account_offline">ஆஃப்லைன்</string>
     <string name="drawer_share_feedback">கருத்தைப் பகிர்</string>
+
+    <string name="event_title_fallback">நிகழ்வு</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">உங்களுக்காக, உங்கள் தரவுக்கு அல்ல.</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">ஸ்னூஸ்</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">இப்போது தொடங்குகிறது</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d நாளில்</item>
+        <item quantity="other">%1$d நாட்களில்</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">நாளை, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">காத்திருக்கிறது</string>
     <string name="attendee_section_declined">மறுத்தனர்</string>
     <string name="attendee_section_delegated">ஒப்படைத்தனர்</string>
+    <string name="holiday_catalog_add">விடுமுறை நாட்காட்டியைச் சேர்க்கவும்</string>
+    <string name="holiday_catalog_search_label">தேடு</string>
+    <string name="holiday_catalog_already_added">சேர்க்கப்பட்டது</string>
+    <string name="holiday_catalog_empty">நாடுகள் எதுவும் கிடைக்கவில்லை</string>
+    <string name="holiday_catalog_empty_hint">வேறு பெயரை முயற்சிக்கவும்</string>
+    <string name="holiday_catalog_validate_error">இந்த நாட்காட்டியை அணுக முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird இலிருந்து விடுமுறை நாட்காட்டிகள், %1$s இன் கீழ் உரிமம் பெற்றவை.</string>
 </resources>

@@ -64,6 +64,7 @@
     <string name="action_connect">Підключити</string>
     <string name="action_duplicate">Дублювати</string>
     <string name="action_share">Поділитися</string>
+    <string name="action_share_as_text">Поділитися як текст</string>
     <string name="action_export_ics">Експорт у .ics</string>
     <string name="action_confirm_delete">Підтвердити видалення</string>
     <string name="action_delete_event">Видалити подію</string>
@@ -180,6 +181,12 @@
     <string name="onboarding_got_you">Ми допоможемо.</string>
     <string name="onboarding_connect_prompt">Підключіть iCloud, щоб бачити свої події тут</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Що нового</string>
+    <string name="whats_new_dismiss">Зрозуміло</string>
+    <string name="whats_new_v598_title">Допоможи зберегти Android відкритим</string>
+    <string name="whats_new_v598_body">Google змінює спосіб встановлення застосунків на пристрій. Нам потрібна твоя допомога.</string>
+    <string name="whats_new_v598_action_label">Перейти на keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Підключити iCloud</string>
     <string name="signin_caldav_title">Додати обліковий запис CalDAV</string>
@@ -256,6 +263,12 @@
     <string name="caldav_error_no_calendars">Календарі на цьому сервері не знайдено.</string>
     <string name="caldav_error_unexpected">Неочікувана помилка. Повторіть спробу.</string>
 
+    <string name="password_change_error_account_not_found">Обліковий запис не знайдено</string>
+    <string name="password_change_error_no_credentials">Немає збережених облікових даних</string>
+    <string name="password_change_error_unsupported_provider">Цей провайдер не підтримує зміну пароля</string>
+    <string name="password_change_error_invalid">Неправильний пароль</string>
+    <string name="password_change_error_network">Помилка мережі, повторіть спробу</string>
+
     <string name="error_import_file_not_found">Файл не знайдено або неможливо прочитати.</string>
     <string name="error_import_invalid_format">Невірний формат файлу календаря.</string>
     <string name="error_import_partial">Імпортовано подій: %1$d, помилок: %2$d.</string>
@@ -326,7 +339,7 @@
     <string name="label_server_url">URL сервера</string>
     <string name="label_username">Ім\'я користувача</string>
     <string name="label_password">Пароль</string>
-    <string name="label_display_name_optional">Назва для відображення (необов\'язково)</string>
+    <string name="label_display_name_optional">Назва для відображення</string>
 
     <string name="placeholder_search_events">Шукати події…</string>
 
@@ -413,6 +426,13 @@
     <string name="subscriptions_empty_ics">Немає підписок ICS</string>
     <string name="subscriptions_empty_ics_hint">Додайте стрічку календаря для перегляду подій</string>
     <string name="subscriptions_add_ics">Додати календар ICS</string>
+    <string name="holiday_catalog_add">Додати календар свят</string>
+    <string name="holiday_catalog_search_label">Пошук</string>
+    <string name="holiday_catalog_already_added">Додано</string>
+    <string name="holiday_catalog_empty">Країн не знайдено</string>
+    <string name="holiday_catalog_empty_hint">Спробуйте іншу назву</string>
+    <string name="holiday_catalog_validate_error">Не вдалося відкрити цей календар. Перевірте з\'єднання та повторіть спробу.</string>
+    <string name="holiday_catalog_attribution">Календарі свят від Mozilla Thunderbird, ліцензія %1$s.</string>
     <string name="subscriptions_row_label">Стрічки календаря (ICS)</string>
     <string name="subscriptions_row_hint">напр. свята, спорт, школа</string>
 
@@ -561,7 +581,10 @@
     <string name="drawer_calendars">Календарі</string>
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календарі пристрою</string>
+    <string name="drawer_account_offline">Немає мережі</string>
     <string name="drawer_share_feedback">Залишити відгук</string>
+
+    <string name="event_title_fallback">Подія</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Для вас, а не для ваших даних.</string>
@@ -1216,4 +1239,10 @@
     <string name="attendee_section_pending">Очікують</string>
     <string name="attendee_section_declined">Відмовились</string>
     <string name="attendee_section_delegated">Делегували</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Через %1$d день</item>
+        <item quantity="few">Через %1$d дні</item>
+        <item quantity="many">Через %1$d днів</item>
+        <item quantity="other">Через %1$d дня</item>
+    </plurals>
 </resources>

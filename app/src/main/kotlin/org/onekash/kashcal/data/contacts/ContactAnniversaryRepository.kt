@@ -1,6 +1,8 @@
 package org.onekash.kashcal.data.contacts
 
 import android.content.ContentResolver
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -27,11 +29,12 @@ class ContactAnniversaryRepository @Inject constructor(
     reminderScheduler: ReminderScheduler,
     eventReader: EventReader,
     contentResolver: ContentResolver,
-    dataStore: KashCalDataStore
+    dataStore: KashCalDataStore,
+    @ApplicationContext context: Context
 ) : BaseContactEventRepository(
     accountRepository, calendarsDao, eventsDao, occurrenceGenerator,
     reminderScheduler, eventReader, contentResolver, dataStore,
-    ContactEventType.ANNIVERSARY
+    ContactEventType.ANNIVERSARY, context
 ) {
     override suspend fun getReminderMinutes(): Int = dataStore.getAnniversaryReminder()
 }

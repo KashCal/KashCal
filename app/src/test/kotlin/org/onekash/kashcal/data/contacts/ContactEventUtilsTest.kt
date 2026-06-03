@@ -438,7 +438,7 @@ class ContactEventUtilsTest {
     }
 
     @Test
-    fun `minutesToIsoDuration - minutes only`() {
+    fun `minutesToIsoDuration - positive minutes are before start (negative trigger)`() {
         assertEquals("-PT30M", ContactEventUtils.minutesToIsoDuration(30))
     }
 
@@ -453,18 +453,25 @@ class ContactEventUtilsTest {
     }
 
     @Test
-    fun `minutesToIsoDuration - exact days`() {
-        assertEquals("-P1D", ContactEventUtils.minutesToIsoDuration(1440))
+    fun `minutesToIsoDuration - chip values use hour-form (DST-stable, not period)`() {
+        assertEquals("-PT15H", ContactEventUtils.minutesToIsoDuration(900))   // 1d chip
+        assertEquals("-PT39H", ContactEventUtils.minutesToIsoDuration(2340))  // 2d chip
+        assertEquals("-PT159H", ContactEventUtils.minutesToIsoDuration(9540)) // 1w chip
     }
 
     @Test
-    fun `minutesToIsoDuration - days and hours`() {
-        assertEquals("-P1DT2H", ContactEventUtils.minutesToIsoDuration(1560))
+    fun `minutesToIsoDuration - legacy day-and-week values stay hour-form`() {
+        assertEquals("-PT24H", ContactEventUtils.minutesToIsoDuration(1440))
+        assertEquals("-PT26H", ContactEventUtils.minutesToIsoDuration(1560))
+        assertEquals("-PT168H", ContactEventUtils.minutesToIsoDuration(10080))
     }
 
     @Test
-    fun `minutesToIsoDuration - weeks`() {
-        assertEquals("-P1W", ContactEventUtils.minutesToIsoDuration(10080))
+    fun `minutesToIsoDuration - negative minutes are after start (positive trigger)`() {
+        // The critical case: -540 ("9 AM day of", after midnight) must NOT collapse to PT0M.
+        assertEquals("PT9H", ContactEventUtils.minutesToIsoDuration(-540))
+        assertEquals("PT12H", ContactEventUtils.minutesToIsoDuration(-720))
+        assertEquals("PT30M", ContactEventUtils.minutesToIsoDuration(-30))
     }
 
     // ---------------------------------------------------------------

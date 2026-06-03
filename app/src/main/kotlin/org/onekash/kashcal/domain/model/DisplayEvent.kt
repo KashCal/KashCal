@@ -175,13 +175,19 @@ fun DisplayEvent.Device.toEventForShareCard(): Event = Event(
  * Build share text for a device calendar event.
  * Same format as EventQuickViewSheet share: title, date/time, location, footer.
  *
+ * Caller supplies all user-facing labels so this helper stays Context-free
+ * and unit-testable.
+ *
  * @param timePattern Time format pattern (e.g., "h:mm a" or "HH:mm")
- * @param footer Trailing line appended after a blank line (caller-resolved
- * so the helper stays Context-free and unit-testable).
+ * @param allDayLabel Parenthesized label appended to all-day dates (e.g., "(All day)")
+ * @param locationPrefix Label prefixed to the location line (e.g., "Location: ")
+ * @param footer Trailing line appended after a blank line
  */
 fun DisplayEvent.Device.buildShareText(
-    timePattern: String = "h:mm a",
-    footer: String = "Shared from KashCal"
+    timePattern: String,
+    allDayLabel: String,
+    locationPrefix: String,
+    footer: String
 ): String = buildString {
     appendLine(title)
 
@@ -195,9 +201,9 @@ fun DisplayEvent.Device.buildShareText(
         val startStr = utcDateFormat.format(Date(startTs))
         val endStr = utcDateFormat.format(Date(endTs))
         if (startStr != endStr) {
-            appendLine("$startStr - $endStr (All day)")
+            appendLine("$startStr - $endStr ($allDayLabel)")
         } else {
-            appendLine("$startStr (All day)")
+            appendLine("$startStr ($allDayLabel)")
         }
     } else {
         // Timed event
@@ -215,7 +221,7 @@ fun DisplayEvent.Device.buildShareText(
     }
 
     if (location.isNotEmpty()) {
-        appendLine("Location: $location")
+        appendLine("$locationPrefix$location")
     }
 
     appendLine()

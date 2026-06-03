@@ -297,6 +297,64 @@ object DateTimeUtils {
     }
 
     /**
+     * Relative whole-day count from when an all-day reminder fires to the event's date,
+     * for the notification subtitle ("Today" / "Tomorrow" / "In N days").
+     *
+     * Computed as a calendar-date difference (event local date minus fire-day local date),
+     * NOT a raw millisecond duration — so it is timezone-stable and does not sign-flip.
+     *
+     * @return 0 = fires on the event's own date ("Today"); 1 = the day before ("Tomorrow");
+     *         N = N days before ("In N days"). Clamps at 0 for same-day-or-later firing.
+     */
+    fun allDayRelativeDays(
+        occurrenceTimeUtcMidnight: Long,
+        triggerTime: Long,
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): Int {
+        val eventDate = eventTsToLocalDate(occurrenceTimeUtcMidnight, isAllDay = true, localZone)
+        val fireDate = Instant.ofEpochMilli(triggerTime).atZone(localZone).toLocalDate()
+        return ChronoUnit.DAYS.between(fireDate, eventDate).toInt().coerceAtLeast(0)
+    }
+
+    /**
+     * The event's LOCAL-midnight start instant (epoch ms).
+     *
+     * All-day events are stored as UTC midnight; this resolves the calendar date
+     * (in UTC, preserving the date) and re-anchors it to 00:00 in the user's local
+     * zone — the instant the all-day event actually begins for the user.
+     */
+    fun allDayLocalMidnightMs(
+        occurrenceTimeUtcMidnight: Long,
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): Long {
+        val eventDate = eventTsToLocalDate(occurrenceTimeUtcMidnight, isAllDay = true, localZone)
+        return eventDate.atStartOfDay(localZone).toInstant().toEpochMilli()
+    }
+
+    /**
+     * Trigger instant for an all-day reminder under the signed-offset model.
+     *
+     * trigger = localMidnight(eventDate) + signedOffsetMs, where the offset is the
+     * RFC 5545 VALARM relative trigger relative to the event's (midnight) start:
+     * negative = before, positive = after (e.g. PT9H = 9 AM on the event day).
+     *
+     * The offset is applied as an exact duration (stored == fired == sent), matching
+     * RFC 5545 and the platform. On a DST transition day the wall-clock therefore
+     * shifts by the transition amount; on ordinary days it equals the intended wall-clock.
+     *
+     * @param occurrenceTimeUtcMidnight The event's start, stored as UTC midnight
+     * @param signedOffsetMs Reminder offset in ms (negative = before start, positive = after)
+     * @param localZone The user's timezone (default: system)
+     */
+    fun allDayReminderTriggerTime(
+        occurrenceTimeUtcMidnight: Long,
+        signedOffsetMs: Long,
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): Long {
+        return allDayLocalMidnightMs(occurrenceTimeUtcMidnight, localZone) + signedOffsetMs
+    }
+
+    /**
      * Convert timestamp to day code (YYYYMMDD format).
      *
      * For all-day events: Uses UTC
@@ -641,40 +699,6 @@ object DateTimeUtils {
         ).toString()
     }
 
-    /**
-     * Format reminder minutes for dropdown display with full label.
-     *
-     * @param minutes Minutes before event (-1 for off, 0 for at event time)
-     * @param isAllDay True for all-day events (shows different options)
-     * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
-     * @return Full display label (e.g., "15 minutes before", "1 day before")
-     */
-    fun formatReminderLabel(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false, resources: Resources): String {
-        return if (isAllDay) {
-            when (minutes) {
-                org.onekash.kashcal.ui.shared.REMINDER_OFF -> resources.getString(R.string.reminder_none)
-                540 -> if (use24Hour) resources.getString(R.string.reminder_day_of_event_24h)
-                       else resources.getString(R.string.reminder_day_of_event_12h)
-                720 -> resources.getQuantityString(R.plurals.reminder_hours_before, 12, 12)
-                1440 -> resources.getQuantityString(R.plurals.reminder_days_before, 1, 1)
-                2880 -> resources.getQuantityString(R.plurals.reminder_days_before, 2, 2)
-                10080 -> resources.getQuantityString(R.plurals.reminder_weeks_before, 1, 1)
-                else -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-            }
-        } else {
-            when (minutes) {
-                org.onekash.kashcal.ui.shared.REMINDER_OFF -> resources.getString(R.string.reminder_none)
-                0 -> resources.getString(R.string.reminder_at_time_of_event)
-                5 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 5, 5)
-                10 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 10, 10)
-                15 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 15, 15)
-                30 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 30, 30)
-                60 -> resources.getQuantityString(R.plurals.reminder_hours_before, 1, 1)
-                120 -> resources.getQuantityString(R.plurals.reminder_hours_before, 2, 2)
-                else -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-            }
-        }
-    }
 
     /**
      * Format sync interval for display.

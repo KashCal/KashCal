@@ -63,6 +63,7 @@
     <string name="action_connect">সংযোগ করুন</string>
     <string name="action_duplicate">ডুপ্লিকেট</string>
     <string name="action_share">শেয়ার করুন</string>
+    <string name="action_share_as_text">টেক্সট হিসেবে শেয়ার করুন</string>
     <string name="action_export_ics">.ics হিসেবে এক্সপোর্ট</string>
     <string name="action_confirm_delete">মুছে ফেলা নিশ্চিত করুন</string>
     <string name="action_delete_event">ইভেন্ট মুছুন</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">আমরা আপনাকে সাহায্য করব।</string>
     <string name="onboarding_connect_prompt">আপনার ইভেন্ট এখানে দেখতে iCloud সংযোগ করুন</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">নতুন কী আছে</string>
+    <string name="whats_new_dismiss">বুঝেছি</string>
+    <string name="whats_new_v598_title">Android-কে উন্মুক্ত রাখতে সাহায্য করুন</string>
+    <string name="whats_new_v598_body">Google আপনার ডিভাইসে অ্যাপ ইনস্টল করার পদ্ধতি পরিবর্তন করছে। আমাদের আপনার সাহায্য দরকার।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org-এ যান</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud সংযোগ করুন</string>
     <string name="signin_caldav_title">CalDAV অ্যাকাউন্ট যোগ করুন</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">সংযোগের সময় শেষ হয়ে গেছে। আবার চেষ্টা করুন।</string>
     <string name="caldav_error_no_calendars">এই সার্ভারে কোনো ক্যালেন্ডার পাওয়া যায়নি।</string>
     <string name="caldav_error_unexpected">অপ্রত্যাশিত ত্রুটি। আবার চেষ্টা করুন।</string>
+    <string name="password_change_error_account_not_found">অ্যাকাউন্ট পাওয়া যায়নি</string>
+    <string name="password_change_error_no_credentials">কোনো বিদ্যমান ক্রেডেনশিয়াল নেই</string>
+    <string name="password_change_error_unsupported_provider">এই প্রদানকারী পাসওয়ার্ড পরিবর্তন সমর্থন করে না</string>
+    <string name="password_change_error_invalid">ভুল পাসওয়ার্ড</string>
+    <string name="password_change_error_network">নেটওয়ার্ক ত্রুটি, আবার চেষ্টা করুন</string>
 
     <string name="error_import_file_not_found">ফাইল পাওয়া যায়নি বা পড়া যাচ্ছে না।</string>
     <string name="error_import_invalid_format">ভুল ক্যালেন্ডার ফাইল ফরম্যাট।</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">সার্ভার URL</string>
     <string name="label_username">ব্যবহারকারীর নাম</string>
     <string name="label_password">পাসওয়ার্ড</string>
-    <string name="label_display_name_optional">প্রদর্শন নাম (ঐচ্ছিক)</string>
+    <string name="label_display_name_optional">প্রদর্শন নাম</string>
 
     <string name="placeholder_search_events">ইভেন্ট অনুসন্ধান করুন…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">ক্যালেন্ডার</string>
     <string name="drawer_contacts">যোগাযোগ</string>
     <string name="drawer_device_calendars">ডিভাইস ক্যালেন্ডার</string>
+    <string name="drawer_account_offline">অফলাইন</string>
     <string name="drawer_share_feedback">মতামত জানান</string>
+
+    <string name="event_title_fallback">ইভেন্ট</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">আপনার জন্য, আপনার ডেটার জন্য নয়।</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">স্নুজ</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">এখন শুরু হচ্ছে</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d দিনে</item>
+        <item quantity="other">%1$d দিনে</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">আগামীকাল, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">অপেক্ষমান</string>
     <string name="attendee_section_declined">প্রত্যাখ্যাত</string>
     <string name="attendee_section_delegated">অর্পিত</string>
+    <string name="holiday_catalog_add">ছুটির ক্যালেন্ডার যোগ করুন</string>
+    <string name="holiday_catalog_search_label">অনুসন্ধান</string>
+    <string name="holiday_catalog_already_added">যোগ করা হয়েছে</string>
+    <string name="holiday_catalog_empty">কোনো দেশ পাওয়া যায়নি</string>
+    <string name="holiday_catalog_empty_hint">অন্য একটি নাম চেষ্টা করুন</string>
+    <string name="holiday_catalog_validate_error">এই ক্যালেন্ডারে পৌঁছানো যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird থেকে ছুটির ক্যালেন্ডার, %1$s অধীনে লাইসেন্সপ্রাপ্ত।</string>
 </resources>

@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.DigestAuthenticator
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -101,8 +102,14 @@ class MultiServerRsvpFixturesTest(
      * `Schedule-Status`, and `If-Schedule-Tag-Match`. The production
      * `CalDavClient` interface doesn't expose these (yet); this is the
      * fixture-collection escape hatch.
+     *
+     * Built in [setup] once credentials are known so it can carry the same
+     * [DigestAuthenticator] the production client uses. The preemptive Basic
+     * header on each request satisfies Basic-auth servers directly; on a
+     * Digest-only server (BaikalDigest) that header is rejected with 401 and
+     * the authenticator answers the challenge — without it, every write 401s.
      */
-    private val rawHttp: OkHttpClient = OkHttpClient.Builder()
+    private var rawHttp: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .followRedirects(true)
@@ -118,6 +125,9 @@ class MultiServerRsvpFixturesTest(
         if (pair != null) {
             caldavClient = pair.first
             creds = pair.second
+            rawHttp = rawHttp.newBuilder()
+                .authenticator(DigestAuthenticator(pair.second.username, pair.second.password))
+                .build()
         }
     }
 

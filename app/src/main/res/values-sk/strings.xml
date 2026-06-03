@@ -63,6 +63,7 @@
     <string name="action_connect">Pripojiť</string>
     <string name="action_duplicate">Duplikovať</string>
     <string name="action_share">Zdieľať</string>
+    <string name="action_share_as_text">Zdieľať ako text</string>
     <string name="action_export_ics">Exportovať ako .ics</string>
     <string name="action_confirm_delete">Potvrdiť zmazanie</string>
     <string name="action_delete_event">Zmazať udalosť</string>
@@ -167,6 +168,12 @@
     <string name="onboarding_got_you">Poradíme si.</string>
     <string name="onboarding_connect_prompt">Pripojte iCloud a uvidíte svoje udalosti</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Novinky</string>
+    <string name="whats_new_dismiss">Rozumiem</string>
+    <string name="whats_new_v598_title">Pomôžte zachovať otvorenosť Androidu</string>
+    <string name="whats_new_v598_body">Google mení spôsob, akým inštalujete aplikácie na svoje zariadenie. Potrebujeme vašu pomoc.</string>
+    <string name="whats_new_v598_action_label">Navštíviť keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Pripojiť iCloud</string>
     <string name="signin_caldav_title">Pridať účet CalDAV</string>
@@ -243,6 +250,12 @@
     <string name="caldav_error_no_calendars">Na tomto serveri neboli nájdené žiadne kalendáre.</string>
     <string name="caldav_error_unexpected">Neočakávaná chyba. Skúste to znova.</string>
 
+    <string name="password_change_error_account_not_found">Účet sa nenašiel</string>
+    <string name="password_change_error_no_credentials">Žiadne existujúce prihlasovacie údaje</string>
+    <string name="password_change_error_unsupported_provider">Tento poskytovateľ nepodporuje zmenu hesla</string>
+    <string name="password_change_error_invalid">Neplatné heslo</string>
+    <string name="password_change_error_network">Chyba siete, skúste to znova</string>
+
     <string name="error_import_file_not_found">Súbor nenájdený alebo sa nedá prečítať.</string>
     <string name="error_import_invalid_format">Neplatný formát súboru kalendára.</string>
     <string name="error_import_partial">Importovaných %1$d udalostí, %2$d zlyhalo.</string>
@@ -312,7 +325,7 @@
     <string name="label_server_url">URL servera</string>
     <string name="label_username">Používateľské meno</string>
     <string name="label_password">Heslo</string>
-    <string name="label_display_name_optional">Zobrazovaný názov (voliteľné)</string>
+    <string name="label_display_name_optional">Zobrazovaný názov</string>
 
     <string name="placeholder_search_events">Hľadať udalosti…</string>
 
@@ -527,7 +540,10 @@
     <string name="drawer_calendars">Kalendáre</string>
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendáre zariadenia</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Zdieľať spätnú väzbu</string>
+
+    <string name="event_title_fallback">Udalosť</string>
 
     <string name="status_privacy_tagline">Pre vás, nie vaše dáta.</string>
     <string name="action_keep_it_that_way">Nechajme to tak</string>
@@ -1234,4 +1250,17 @@
     <string name="share_as_card_chooser_title">Zdieľať udalosť</string>
     <string name="share_as_card_share_failed">Kartu sa nepodarilo zdieľať</string>
     <string name="share_from_kashcal_footer">Zdieľané z KashCal</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">O %1$d deň</item>
+        <item quantity="few">O %1$d dni</item>
+        <item quantity="many">O %1$d dňa</item>
+        <item quantity="other">O %1$d dní</item>
+    </plurals>
+    <string name="holiday_catalog_add">Pridať kalendár sviatkov</string>
+    <string name="holiday_catalog_search_label">Hľadať</string>
+    <string name="holiday_catalog_already_added">Pridané</string>
+    <string name="holiday_catalog_empty">Nenašli sa žiadne krajiny</string>
+    <string name="holiday_catalog_empty_hint">Skúste iný názov</string>
+    <string name="holiday_catalog_validate_error">Tento kalendár sa nepodarilo načítať. Skontrolujte pripojenie a skúste to znova.</string>
+    <string name="holiday_catalog_attribution">Kalendáre sviatkov od Mozilla Thunderbird, licencované pod %1$s.</string>
 </resources>

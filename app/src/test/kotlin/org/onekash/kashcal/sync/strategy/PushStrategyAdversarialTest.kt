@@ -101,7 +101,8 @@ class PushStrategyAdversarialTest {
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
-            accountRepository = mockk(relaxed = true)
+            accountRepository = mockk(relaxed = true),
+            attendeesDao = mockk(relaxed = true)
         )
     }
 

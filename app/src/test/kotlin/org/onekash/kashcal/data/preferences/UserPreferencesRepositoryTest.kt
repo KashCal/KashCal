@@ -41,7 +41,7 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `KashCalDataStore has correct all-day reminder default`() {
-        assertEquals(720, KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES) // 12 hours before
+        assertEquals(900, KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES) // 9 AM the day before (-PT15H)
     }
 
     @Test

@@ -64,6 +64,7 @@
     <string name="action_connect">Tengja</string>
     <string name="action_duplicate">Afrita</string>
     <string name="action_share">Deila</string>
+    <string name="action_share_as_text">Deila sem texta</string>
     <string name="action_export_ics">Flytja út sem .ics</string>
     <string name="action_confirm_delete">Staðfesta eyðingu</string>
     <string name="action_delete_event">Eyða viðburði</string>
@@ -148,6 +149,12 @@
     <string name="onboarding_got_you">Við sjáum um þig.</string>
     <string name="onboarding_connect_prompt">Tengdu iCloud til að sjá viðburðina þína hér</string>
 
+    <!-- ==================== Nýjungar ==================== -->
+    <string name="whats_new_title">Nýjungar</string>
+    <string name="whats_new_dismiss">Í lagi</string>
+    <string name="whats_new_v598_title">Hjálpaðu til við að halda Android opnu</string>
+    <string name="whats_new_v598_body">Google er að breyta því hvernig þú setur upp forrit í tækinu þínu. Við þurfum hjálp þína.</string>
+    <string name="whats_new_v598_action_label">Heimsækja keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Tengja iCloud</string>
     <string name="signin_caldav_title">Bæta við CalDAV-reikningi</string>
@@ -223,6 +230,11 @@
     <string name="caldav_error_connection_timeout">Tenging rann út. Reyndu aftur.</string>
     <string name="caldav_error_no_calendars">Engin dagatöl fundust á þessum þjóni.</string>
     <string name="caldav_error_unexpected">Óvænt villa. Reyndu aftur.</string>
+    <string name="password_change_error_account_not_found">Reikningur fannst ekki</string>
+    <string name="password_change_error_no_credentials">Engin innskráningargögn til staðar</string>
+    <string name="password_change_error_unsupported_provider">Þessi þjónustuaðili styður ekki breytingu á lykilorði</string>
+    <string name="password_change_error_invalid">Ógilt lykilorð</string>
+    <string name="password_change_error_network">Netvilla, reyndu aftur</string>
 
     <string name="error_import_file_not_found">Skrá fannst ekki eða verður ekki lesin.</string>
     <string name="error_import_invalid_format">Ógilt dagatalsskráarsnið.</string>
@@ -294,7 +306,7 @@
     <string name="label_server_url">URL þjóns</string>
     <string name="label_username">Notandanafn</string>
     <string name="label_password">Lykilorð</string>
-    <string name="label_display_name_optional">Birtingarnafn (valfrjálst)</string>
+    <string name="label_display_name_optional">Birtingarnafn</string>
 
     <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Leita í viðburðum…</string>
@@ -530,7 +542,9 @@
     <string name="drawer_calendars">Dagatöl</string>
     <string name="drawer_contacts">Tengiliðir</string>
     <string name="drawer_device_calendars">Dagatöl tækis</string>
+    <string name="drawer_account_offline">Ónettengdur</string>
     <string name="drawer_share_feedback">Deila endurgjöf</string>
+    <string name="event_title_fallback">Viðburður</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Fyrir þig, ekki gögnin þín.</string>
@@ -1161,4 +1175,19 @@
         <item quantity="other">%1$s · %2$d til viðbótar</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Breyta svari</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Eftir %1$d dag</item>
+        <item quantity="other">Eftir %1$d daga</item>
+    </plurals>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Bæta við frídagadagatali</string>
+    <string name="holiday_catalog_search_label">Leita</string>
+    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
+    <string name="holiday_catalog_already_added">Bætt við</string>
+    <string name="holiday_catalog_empty">Engin lönd fundust</string>
+    <string name="holiday_catalog_empty_hint">Prófaðu annað heiti</string>
+    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
+    <string name="holiday_catalog_validate_error">Ekki tókst að ná í þetta dagatal. Athugaðu nettenginguna og reyndu aftur.</string>
+    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
+    <string name="holiday_catalog_attribution">Frídagadagatöl frá Mozilla Thunderbird, með leyfi samkvæmt %1$s.</string>
 </resources>

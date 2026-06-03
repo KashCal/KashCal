@@ -64,6 +64,7 @@
     <string name="action_connect">連線</string>
     <string name="action_duplicate">複製</string>
     <string name="action_share">分享</string>
+    <string name="action_share_as_text">分享為文字</string>
     <string name="action_export_ics">匯出為 .ics</string>
     <string name="action_confirm_delete">確認刪除</string>
     <string name="action_delete_event">刪除事件</string>
@@ -126,6 +127,12 @@
     <string name="onboarding_got_you">交給我們。</string>
     <string name="onboarding_connect_prompt">連接 iCloud 查看你的事件</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">新功能</string>
+    <string name="whats_new_dismiss">知道了</string>
+    <string name="whats_new_v598_title">協助保持 Android 開放</string>
+    <string name="whats_new_v598_body">Google 正在改變你在裝置上安裝應用程式的方式。我們需要你的協助。</string>
+    <string name="whats_new_v598_action_label">前往 keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">連接 iCloud</string>
     <string name="signin_caldav_title">新增 CalDAV 帳號</string>
@@ -201,6 +208,11 @@
     <string name="caldav_error_connection_timeout">連線逾時。請重試。</string>
     <string name="caldav_error_no_calendars">在此伺服器上找不到行事曆。</string>
     <string name="caldav_error_unexpected">意外錯誤。請重試。</string>
+    <string name="password_change_error_account_not_found">找不到帳戶</string>
+    <string name="password_change_error_no_credentials">沒有現有憑證</string>
+    <string name="password_change_error_unsupported_provider">此服務商不支援變更密碼</string>
+    <string name="password_change_error_invalid">密碼無效</string>
+    <string name="password_change_error_network">網路錯誤，請重試</string>
 
     <string name="error_import_file_not_found">找不到檔案或無法讀取。</string>
     <string name="error_import_invalid_format">行事曆檔案格式無效。</string>
@@ -271,7 +283,7 @@
     <string name="label_server_url">伺服器 URL</string>
     <string name="label_username">使用者名稱</string>
     <string name="label_password">密碼</string>
-    <string name="label_display_name_optional">顯示名稱（選填）</string>
+    <string name="label_display_name_optional">顯示名稱</string>
 
     <string name="placeholder_search_events">搜尋事件…</string>
 
@@ -506,7 +518,10 @@
     <string name="drawer_calendars">行事曆</string>
     <string name="drawer_contacts">聯絡人</string>
     <string name="drawer_device_calendars">裝置行事曆</string>
+    <string name="drawer_account_offline">離線</string>
     <string name="drawer_share_feedback">分享意見</string>
+
+    <string name="event_title_fallback">事件</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">為你，而非為你的資料。</string>
@@ -1097,4 +1112,14 @@
     <plurals name="share_availability_header">
         <item quantity="other">未來 %1$d 天空閒時段（%2$s – %3$s）：</item>
     </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d 天後</item>
+    </plurals>
+    <string name="holiday_catalog_add">新增假日日曆</string>
+    <string name="holiday_catalog_search_label">搜尋</string>
+    <string name="holiday_catalog_already_added">已新增</string>
+    <string name="holiday_catalog_empty">找不到國家</string>
+    <string name="holiday_catalog_empty_hint">請嘗試其他名稱</string>
+    <string name="holiday_catalog_validate_error">無法連線到此日曆。請檢查網路連線後再試一次。</string>
+    <string name="holiday_catalog_attribution">假日日曆來自 Mozilla Thunderbird，依據 %1$s 授權。</string>
 </resources>

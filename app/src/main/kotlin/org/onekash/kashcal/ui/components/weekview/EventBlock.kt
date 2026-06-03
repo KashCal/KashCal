@@ -116,12 +116,15 @@ fun EventBlock(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Time (if height >= 36dp)
+            // Time (if height >= 36dp). All-day events get their label
+            // even though they normally render in the all-day strip — this
+            // defends against any future path that places one in the grid.
             if (showTime) {
                 Text(
-                    text = WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern),
+                    text = eventTimeLabel(displayEvent, timePattern),
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.7f),
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -170,6 +173,7 @@ fun CompactEventBlock(
         }
     }
     val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    val timeLabel = eventTimeLabel(displayEvent, timePattern)
 
     Box(
         modifier = modifier
@@ -184,7 +188,7 @@ fun CompactEventBlock(
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
-            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)}",
+            text = "$formattedTitle - $timeLabel",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
             textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
@@ -217,6 +221,20 @@ fun OverflowBadge(
         )
     }
 }
+
+/**
+ * Resolves the time-line label for an event row: the localized "All day"
+ * string for all-day events, otherwise the formatted time range. Single
+ * source of truth so any future change to either branch reaches every
+ * surface that renders an event row.
+ */
+@Composable
+private fun eventTimeLabel(displayEvent: DisplayEvent, timePattern: String): String =
+    if (displayEvent.isAllDay) {
+        stringResource(R.string.label_all_day)
+    } else {
+        WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)
+    }
 
 // Height thresholds for content visibility
 private val HEIGHT_THRESHOLD_TIME = 36.dp

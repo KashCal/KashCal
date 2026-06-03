@@ -63,6 +63,7 @@
     <string name="action_connect">కనెక్ట్ చేయి</string>
     <string name="action_duplicate">నకలు</string>
     <string name="action_share">షేర్ చేయి</string>
+    <string name="action_share_as_text">టెక్స్ట్‌గా షేర్ చేయి</string>
     <string name="action_export_ics">.ics గా ఎగుమతి చేయి</string>
     <string name="action_confirm_delete">తొలగింపు నిర్ధారించు</string>
     <string name="action_delete_event">ఈవెంట్ తొలగించు</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">మేము మీకు సహాయం చేస్తాము.</string>
     <string name="onboarding_connect_prompt">మీ ఈవెంట్‌లు ఇక్కడ చూడటానికి iCloud కనెక్ట్ చేయండి</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">కొత్తగా ఏముంది</string>
+    <string name="whats_new_dismiss">అర్థమైంది</string>
+    <string name="whats_new_v598_title">Android-ని తెరిచి ఉంచడంలో సహాయం చేయండి</string>
+    <string name="whats_new_v598_body">Google మీ పరికరంలో అనువర్తనాలను ఇన్‌స్టాల్ చేసే విధానాన్ని మారుస్తోంది. మాకు మీ సహాయం అవసరం.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org-కి వెళ్లండి</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud కనెక్ట్ చేయి</string>
     <string name="signin_caldav_title">CalDAV ఖాతా జోడించు</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">కనెక్షన్ సమయం ముగిసింది. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
     <string name="caldav_error_no_calendars">ఈ సర్వర్‌లో క్యాలెండర్లు కనుగొనబడలేదు.</string>
     <string name="caldav_error_unexpected">ఊహించని లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
+    <string name="password_change_error_account_not_found">ఖాతా కనుగొనబడలేదు</string>
+    <string name="password_change_error_no_credentials">ప్రస్తుత ఆధారాలు లేవు</string>
+    <string name="password_change_error_unsupported_provider">ఈ ప్రదాత పాస్‌వర్డ్ మార్పును మద్దతు ఇవ్వదు</string>
+    <string name="password_change_error_invalid">చెల్లని పాస్‌వర్డ్</string>
+    <string name="password_change_error_network">నెట్‌వర్క్ లోపం, దయచేసి మళ్లీ ప్రయత్నించండి</string>
 
     <string name="error_import_file_not_found">ఫైల్ కనుగొనబడలేదు లేదా చదవలేము.</string>
     <string name="error_import_invalid_format">చెల్లని క్యాలెండర్ ఫైల్ ఫార్మాట్.</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">సర్వర్ URL</string>
     <string name="label_username">వినియోగదారు పేరు</string>
     <string name="label_password">పాస్‌వర్డ్</string>
-    <string name="label_display_name_optional">ప్రదర్శన పేరు (ఐచ్ఛికం)</string>
+    <string name="label_display_name_optional">ప్రదర్శన పేరు</string>
 
     <string name="placeholder_search_events">ఈవెంట్‌లు శోధించు…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">క్యాలెండర్లు</string>
     <string name="drawer_contacts">కాంటాక్ట్‌లు</string>
     <string name="drawer_device_calendars">పరికర క్యాలెండర్లు</string>
+    <string name="drawer_account_offline">ఆఫ్‌లైన్</string>
     <string name="drawer_share_feedback">అభిప్రాయం పంచుకో</string>
+
+    <string name="event_title_fallback">ఈవెంట్</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">మీ కోసం, మీ డేటా కోసం కాదు.</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">స్నూజ్</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ఇప్పుడు ప్రారంభమవుతోంది</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d రోజులో</item>
+        <item quantity="other">%1$d రోజుల్లో</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">రేపు, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">పెండింగ్</string>
     <string name="attendee_section_declined">తిరస్కరించారు</string>
     <string name="attendee_section_delegated">అప్పగించారు</string>
+    <string name="holiday_catalog_add">సెలవు క్యాలెండర్‌ను జోడించండి</string>
+    <string name="holiday_catalog_search_label">శోధించు</string>
+    <string name="holiday_catalog_already_added">జోడించబడింది</string>
+    <string name="holiday_catalog_empty">దేశాలు ఏవీ కనుగొనబడలేదు</string>
+    <string name="holiday_catalog_empty_hint">వేరే పేరును ప్రయత్నించండి</string>
+    <string name="holiday_catalog_validate_error">ఈ క్యాలెండర్‌ను చేరుకోలేకపోయాము. మీ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird నుండి సెలవు క్యాలెండర్‌లు, %1$s కింద లైసెన్స్ పొందినవి.</string>
 </resources>

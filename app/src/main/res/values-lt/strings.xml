@@ -63,6 +63,7 @@
     <string name="action_connect">Prijungti</string>
     <string name="action_duplicate">Dubliuoti</string>
     <string name="action_share">Dalintis</string>
+    <string name="action_share_as_text">Dalintis kaip tekstu</string>
     <string name="action_export_ics">Eksportuoti kaip .ics</string>
     <string name="action_confirm_delete">Patvirtinti trynimą</string>
     <string name="action_delete_event">Ištrinti įvykį</string>
@@ -179,6 +180,12 @@
     <string name="onboarding_got_you">Mes padėsime.</string>
     <string name="onboarding_connect_prompt">Prijunkite iCloud, kad matytumėte savo įvykius čia</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Kas naujo</string>
+    <string name="whats_new_dismiss">Supratau</string>
+    <string name="whats_new_v598_title">Padėk išlaikyti Android atvirą</string>
+    <string name="whats_new_v598_body">Google keičia tai, kaip diegi programėles savo įrenginyje. Mums reikia tavo pagalbos.</string>
+    <string name="whats_new_v598_action_label">Apsilankyti keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Prijungti iCloud</string>
     <string name="signin_caldav_title">Pridėti CalDAV paskyrą</string>
@@ -255,6 +262,12 @@
     <string name="caldav_error_no_calendars">Šiame serveryje kalendorių nerasta.</string>
     <string name="caldav_error_unexpected">Netikėta klaida. Bandykite dar kartą.</string>
 
+    <string name="password_change_error_account_not_found">Paskyra nerasta</string>
+    <string name="password_change_error_no_credentials">Nėra išsaugotų prisijungimo duomenų</string>
+    <string name="password_change_error_unsupported_provider">Šis tiekėjas nepalaiko slaptažodžio keitimo</string>
+    <string name="password_change_error_invalid">Neteisingas slaptažodis</string>
+    <string name="password_change_error_network">Tinklo klaida, bandykite dar kartą</string>
+
     <string name="error_import_file_not_found">Failas nerastas arba negali būti perskaitytas.</string>
     <string name="error_import_invalid_format">Neteisingas kalendoriaus failo formatas.</string>
     <string name="error_import_partial">Importuota įvykių: %1$d, nepavyko: %2$d.</string>
@@ -325,7 +338,7 @@
     <string name="label_server_url">Serverio URL</string>
     <string name="label_username">Naudotojo vardas</string>
     <string name="label_password">Slaptažodis</string>
-    <string name="label_display_name_optional">Rodomas vardas (neprivaloma)</string>
+    <string name="label_display_name_optional">Rodomas vardas</string>
 
     <string name="placeholder_search_events">Ieškoti įvykių…</string>
 
@@ -400,6 +413,13 @@
     <string name="subscriptions_empty_ics">Nėra ICS prenumeratų</string>
     <string name="subscriptions_empty_ics_hint">Pridėkite kalendoriaus srautą, kad matytumėte įvykius</string>
     <string name="subscriptions_add_ics">Pridėti ICS kalendorių</string>
+    <string name="holiday_catalog_add">Pridėti švenčių kalendorių</string>
+    <string name="holiday_catalog_search_label">Paieška</string>
+    <string name="holiday_catalog_already_added">Pridėta</string>
+    <string name="holiday_catalog_empty">Šalių nerasta</string>
+    <string name="holiday_catalog_empty_hint">Pabandykite kitą pavadinimą</string>
+    <string name="holiday_catalog_validate_error">Nepavyko pasiekti šio kalendoriaus. Patikrinkite ryšį ir bandykite dar kartą.</string>
+    <string name="holiday_catalog_attribution">Švenčių kalendoriai iš Mozilla Thunderbird, licencijuoti pagal %1$s.</string>
     <string name="subscriptions_row_label">Kalendoriaus srautai (ICS)</string>
     <string name="subscriptions_row_hint">pvz. šventės, sportas, mokykla</string>
 
@@ -539,7 +559,10 @@
     <string name="drawer_calendars">Kalendoriai</string>
     <string name="drawer_contacts">Kontaktai</string>
     <string name="drawer_device_calendars">Įrenginio kalendoriai</string>
+    <string name="drawer_account_offline">Nėra ryšio</string>
     <string name="drawer_share_feedback">Pasidalinti atsiliepimais</string>
+
+    <string name="event_title_fallback">Įvykis</string>
 
     <string name="status_privacy_tagline">Jums, ne jūsų duomenims.</string>
     <string name="action_keep_it_that_way">Palaikykite tai</string>
@@ -1188,4 +1211,10 @@
     <string name="attendee_section_pending">Laukiantys</string>
     <string name="attendee_section_declined">Atsisakė</string>
     <string name="attendee_section_delegated">Delegavo</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Po %1$d dienos</item>
+        <item quantity="few">Po %1$d dienų</item>
+        <item quantity="many">Po %1$d dienos</item>
+        <item quantity="other">Po %1$d dienų</item>
+    </plurals>
 </resources>

@@ -100,13 +100,15 @@ data class ICalAlarm(
 enum class AlarmAction {
     AUDIO,      // Play a sound
     DISPLAY,    // Display a notification
-    EMAIL;      // Send an email
+    EMAIL,      // Send an email
+    NONE;       // RFC 9074 "no action" sentinel — not a user-facing alarm
 
     companion object {
         fun fromString(value: String?): AlarmAction {
             return when (value?.uppercase()) {
                 "AUDIO" -> AUDIO
                 "EMAIL" -> EMAIL
+                "NONE" -> NONE
                 else -> DISPLAY
             }
         }

@@ -108,6 +108,7 @@ class HomeViewModelInsightsBackStackTest {
         networkMonitor = networkMonitor,
         calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
         attendeeBackfill = mockk(relaxed = true),
+        context = mockk(relaxed = true),
         ioDispatcher = testDispatcher,
         currentDayCodeProvider = { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
     )

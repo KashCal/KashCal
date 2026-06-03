@@ -64,6 +64,7 @@
     <string name="action_connect">Verbinden</string>
     <string name="action_duplicate">Dupliceren</string>
     <string name="action_share">Delen</string>
+    <string name="action_share_as_text">Delen als tekst</string>
     <string name="action_export_ics">Exporteren als .ics</string>
     <string name="action_confirm_delete">Verwijderen bevestigen</string>
     <string name="action_delete_event">Afspraak verwijderen</string>
@@ -148,6 +149,12 @@
     <string name="onboarding_got_you">Wij helpen je.</string>
     <string name="onboarding_connect_prompt">Verbind iCloud om je afspraken hier te zien</string>
 
+    <!-- ==================== Wat is nieuw ==================== -->
+    <string name="whats_new_title">Wat is nieuw</string>
+    <string name="whats_new_dismiss">Begrepen</string>
+    <string name="whats_new_v598_title">Help Android open te houden</string>
+    <string name="whats_new_v598_body">Google verandert de manier waarop je apps op je apparaat installeert. We hebben je hulp nodig.</string>
+    <string name="whats_new_v598_action_label">Bezoek keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud verbinden</string>
     <string name="signin_caldav_title">CalDAV-account toevoegen</string>
@@ -223,6 +230,11 @@
     <string name="caldav_error_connection_timeout">Verbindingstime-out. Probeer het opnieuw.</string>
     <string name="caldav_error_no_calendars">Geen agenda\'s gevonden op deze server.</string>
     <string name="caldav_error_unexpected">Onverwachte fout. Probeer het opnieuw.</string>
+    <string name="password_change_error_account_not_found">Account niet gevonden</string>
+    <string name="password_change_error_no_credentials">Geen bestaande inloggegevens</string>
+    <string name="password_change_error_unsupported_provider">Deze provider ondersteunt het wijzigen van het wachtwoord niet</string>
+    <string name="password_change_error_invalid">Ongeldig wachtwoord</string>
+    <string name="password_change_error_network">Netwerkfout, probeer het opnieuw</string>
 
     <string name="error_import_file_not_found">Bestand niet gevonden of kan niet worden gelezen.</string>
     <string name="error_import_invalid_format">Ongeldig agendabestandsformaat.</string>
@@ -294,7 +306,7 @@
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Gebruikersnaam</string>
     <string name="label_password">Wachtwoord</string>
-    <string name="label_display_name_optional">Weergavenaam (optioneel)</string>
+    <string name="label_display_name_optional">Weergavenaam</string>
 
     <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Afspraken zoeken…</string>
@@ -530,7 +542,9 @@
     <string name="drawer_calendars">Agenda\'s</string>
     <string name="drawer_contacts">Contacten</string>
     <string name="drawer_device_calendars">Apparaatagenda\'s</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Feedback delen</string>
+    <string name="event_title_fallback">Afspraak</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Voor jou, niet voor je gegevens.</string>
@@ -1159,4 +1173,19 @@
         <item quantity="other">%1$s · %2$d meer</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Antwoord wijzigen</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Over %1$d dag</item>
+        <item quantity="other">Over %1$d dagen</item>
+    </plurals>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Feestdagenkalender toevoegen</string>
+    <string name="holiday_catalog_search_label">Zoeken</string>
+    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
+    <string name="holiday_catalog_already_added">Toegevoegd</string>
+    <string name="holiday_catalog_empty">Geen landen gevonden</string>
+    <string name="holiday_catalog_empty_hint">Probeer een andere naam</string>
+    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
+    <string name="holiday_catalog_validate_error">Deze kalender kon niet worden bereikt. Controleer je verbinding en probeer het opnieuw.</string>
+    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
+    <string name="holiday_catalog_attribution">Feestdagenkalenders van Mozilla Thunderbird, gelicentieerd onder %1$s.</string>
 </resources>

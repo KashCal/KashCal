@@ -106,6 +106,7 @@
     <string name="action_connect">Connect</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_share">Share</string>
+    <string name="action_share_as_text">Share as text</string>
     <string name="action_export_ics">Export as .ics</string>
     <string name="action_confirm_delete">Confirm Delete</string>
     <string name="action_delete_event">Delete Event</string>
@@ -242,6 +243,22 @@
     <!-- Keep "iCloud" untranslated -->
     <string name="onboarding_connect_prompt">Connect iCloud to see your events here</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <!-- Heading on the post-update sheet that lists release highlights. -->
+    <string name="whats_new_title">What\'s new</string>
+    <!-- Acknowledgement button on the post-update sheet. -->
+    <string name="whats_new_dismiss">Got it</string>
+
+    <!-- v23.7.80 release-note: signal-boost for the keep-Android-open campaign. -->
+    <!-- Section title. "Android" is a brand name; keep untranslated. -->
+    <string name="whats_new_v598_title">Help keep Android open</string>
+    <!-- Section body. "Google" and "Android" are brand names; keep untranslated. -->
+    <string name="whats_new_v598_body">Google is changing the way you install apps on your device. We need your help.</string>
+    <!-- CTA button label. Domain "keepandroidopen.org" must not be translated. -->
+    <string name="whats_new_v598_action_label">Visit keepandroidopen.org</string>
+    <!-- URL the CTA opens. Don\'t translate. -->
+    <string name="whats_new_v598_action_url" translatable="false">https://keepandroidopen.org/</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <!-- Keep "iCloud" and "CalDAV" untranslated -->
     <string name="signin_icloud_title">Connect iCloud</string>
@@ -349,6 +366,13 @@
     <string name="caldav_error_no_calendars">No calendars found on this server.</string>
     <string name="caldav_error_unexpected">Unexpected error. Please try again.</string>
 
+    <!-- Errors shown when changing the password on an existing account -->
+    <string name="password_change_error_account_not_found">Account not found</string>
+    <string name="password_change_error_no_credentials">No existing credentials</string>
+    <string name="password_change_error_unsupported_provider">This provider doesn\'t support changing the password</string>
+    <string name="password_change_error_invalid">Invalid password</string>
+    <string name="password_change_error_network">Network error, please try again</string>
+
     <!-- Import/Export Errors — "import" = load events from .ics file -->
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
@@ -440,7 +464,7 @@
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
-    <string name="label_display_name_optional">Display Name (optional)</string>
+    <string name="label_display_name_optional">Display Name</string>
 
     <!-- ==================== Placeholders (Additional) ==================== -->
     <!-- Placeholder showing expected format -->
@@ -553,6 +577,18 @@
     <string name="subscriptions_empty_ics">No ICS subscriptions</string>
     <string name="subscriptions_empty_ics_hint">Add a calendar feed to see events</string>
     <string name="subscriptions_add_ics">Add ICS Calendar</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Add holiday calendar</string>
+    <string name="holiday_catalog_search_label">Search</string>
+    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
+    <string name="holiday_catalog_already_added">Added</string>
+    <string name="holiday_catalog_empty">No countries found</string>
+    <string name="holiday_catalog_empty_hint">Try a different name</string>
+    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
+    <string name="holiday_catalog_validate_error">Couldn\'t reach this calendar. Check your connection and try again.</string>
+    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
+    <string name="holiday_catalog_attribution">Holiday calendars from Mozilla Thunderbird, licensed under %1$s.</string>
+    <string name="holiday_catalog_attribution_license" translatable="false">CC BY-SA 3.0</string>
     <!-- subscriptions_count_one/other removed — use R.plurals.subscriptions_count -->
     <!-- Summary row for Settings screen. Keep "ICS" untranslated (file format). -->
     <string name="subscriptions_row_label">Calendar Feeds (ICS)</string>
@@ -758,7 +794,12 @@
     <string name="drawer_calendars">Calendars</string>
     <string name="drawer_contacts">Contacts</string>
     <string name="drawer_device_calendars">Device calendars</string>
+    <!-- Account header in drawer for events that aren't synced to any server -->
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Share feedback</string>
+
+    <!-- Fallback title shown when an event has no title (e.g., re-snoozed reminder where the title was lost). -->
+    <string name="event_title_fallback">Event</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <!-- Privacy tagline in about screen — short, punchy -->
@@ -1163,6 +1204,11 @@
     <string name="action_snooze">Snooze</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">Starting now</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">In %1$d day</item>
+        <item quantity="other">In %1$d days</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">Tomorrow, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->

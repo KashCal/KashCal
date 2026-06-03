@@ -157,6 +157,7 @@ class BackupRestoreViewModelStateTest {
         backupImporter = backupImporter,
         permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker(),
         icsScheduler = org.onekash.kashcal.sync.scheduler.FakeIcsScheduler(),
+        context = io.mockk.mockk(relaxed = true),
         applicationScope = CoroutineScope(SupervisorJob() + testDispatcher),
     )
 

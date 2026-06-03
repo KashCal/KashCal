@@ -64,6 +64,7 @@
     <string name="action_connect">Ühenda</string>
     <string name="action_duplicate">Dubleeri</string>
     <string name="action_share">Jaga</string>
+    <string name="action_share_as_text">Jaga tekstina</string>
     <string name="action_export_ics">Ekspordi .ics-failina</string>
     <string name="action_confirm_delete">Kinnita kustutamine</string>
     <string name="action_delete_event">Kustuta sündmus</string>
@@ -170,6 +171,12 @@
     <string name="onboarding_got_you">Meil on lahendus.</string>
     <string name="onboarding_connect_prompt">Ühenda iCloud, et näha siin oma sündmusi</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Mis on uut</string>
+    <string name="whats_new_dismiss">Sain aru</string>
+    <string name="whats_new_v598_title">Aita hoida Android avatuna</string>
+    <string name="whats_new_v598_body">Google muudab seda, kuidas sa rakendusi seadmesse paigaldad. Vajame sinu abi.</string>
+    <string name="whats_new_v598_action_label">Külasta keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ühenda iCloud</string>
     <string name="signin_caldav_title">Lisa CalDAV konto</string>
@@ -246,6 +253,12 @@
     <string name="caldav_error_no_calendars">Sellel serveril kalendreid ei leitud.</string>
     <string name="caldav_error_unexpected">Ootamatu viga. Proovige uuesti.</string>
 
+    <string name="password_change_error_account_not_found">Kontot ei leitud</string>
+    <string name="password_change_error_no_credentials">Salvestatud sisselogimisandmeid pole</string>
+    <string name="password_change_error_unsupported_provider">See teenusepakkuja ei toeta parooli muutmist</string>
+    <string name="password_change_error_invalid">Vale parool</string>
+    <string name="password_change_error_network">Võrguviga, proovi uuesti</string>
+
     <string name="error_import_file_not_found">Faili ei leitud või ei saa lugeda.</string>
     <string name="error_import_invalid_format">Vigane kalendrifaili vorming.</string>
     <string name="error_import_partial">Imporditud %1$d sündmust, %2$d ebaõnnestus.</string>
@@ -316,7 +329,7 @@
     <string name="label_server_url">Serveri URL</string>
     <string name="label_username">Kasutajanimi</string>
     <string name="label_password">Parool</string>
-    <string name="label_display_name_optional">Kuvatav nimi (valikuline)</string>
+    <string name="label_display_name_optional">Kuvatav nimi</string>
 
     <string name="placeholder_search_events">Otsi sündmusi…</string>
 
@@ -403,6 +416,13 @@
     <string name="subscriptions_empty_ics">ICS-tellimusi pole</string>
     <string name="subscriptions_empty_ics_hint">Lisage kalendrivoog, et näha sündmusi</string>
     <string name="subscriptions_add_ics">Lisa ICS-kalender</string>
+    <string name="holiday_catalog_add">Lisa pühade kalender</string>
+    <string name="holiday_catalog_search_label">Otsi</string>
+    <string name="holiday_catalog_already_added">Lisatud</string>
+    <string name="holiday_catalog_empty">Riike ei leitud</string>
+    <string name="holiday_catalog_empty_hint">Proovi muud nime</string>
+    <string name="holiday_catalog_validate_error">Selle kalendriga ei õnnestunud ühendust luua. Kontrolli ühendust ja proovi uuesti.</string>
+    <string name="holiday_catalog_attribution">Pühade kalendrid teenusest Mozilla Thunderbird, litsentsitud litsentsi %1$s alusel.</string>
     <string name="subscriptions_row_label">Kalendrivood (ICS)</string>
     <string name="subscriptions_row_hint">nt pühad, sport, kool</string>
 
@@ -551,7 +571,10 @@
     <string name="drawer_calendars">Kalendrid</string>
     <string name="drawer_contacts">Kontaktid</string>
     <string name="drawer_device_calendars">Seadme kalendrid</string>
+    <string name="drawer_account_offline">Võrguühenduseta</string>
     <string name="drawer_share_feedback">Jaga tagasisidet</string>
+
+    <string name="event_title_fallback">Sündmus</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Sinu jaoks, mitte sinu andmete.</string>
@@ -1116,4 +1139,8 @@
     <string name="attendee_section_pending">Ootel</string>
     <string name="attendee_section_declined">Keeldusid</string>
     <string name="attendee_section_delegated">Delegeerisid</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d päeva pärast</item>
+        <item quantity="other">%1$d päeva pärast</item>
+    </plurals>
 </resources>

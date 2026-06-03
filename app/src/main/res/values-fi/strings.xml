@@ -64,6 +64,7 @@
     <string name="action_connect">Yhdistä</string>
     <string name="action_duplicate">Kopioi</string>
     <string name="action_share">Jaa</string>
+    <string name="action_share_as_text">Jaa tekstinä</string>
     <string name="action_export_ics">Vie .ics-tiedostona</string>
     <string name="action_confirm_delete">Vahvista poistaminen</string>
     <string name="action_delete_event">Poista tapahtuma</string>
@@ -170,6 +171,12 @@
     <string name="onboarding_got_you">Me autamme.</string>
     <string name="onboarding_connect_prompt">Yhdistä iCloud nähdäksesi tapahtumasi täällä</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Mitä uutta</string>
+    <string name="whats_new_dismiss">Selvä</string>
+    <string name="whats_new_v598_title">Auta pitämään Android avoimena</string>
+    <string name="whats_new_v598_body">Google muuttaa tapaa, jolla asennat sovelluksia laitteellesi. Tarvitsemme apuasi.</string>
+    <string name="whats_new_v598_action_label">Vieraile keepandroidopen.org-sivustolla</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Yhdistä iCloud</string>
     <string name="signin_caldav_title">Lisää CalDAV-tili</string>
@@ -246,6 +253,12 @@
     <string name="caldav_error_no_calendars">Tältä palvelimelta ei löytynyt kalentereita.</string>
     <string name="caldav_error_unexpected">Odottamaton virhe. Yritä uudelleen.</string>
 
+    <string name="password_change_error_account_not_found">Tiliä ei löytynyt</string>
+    <string name="password_change_error_no_credentials">Tallennettuja kirjautumistietoja ei ole</string>
+    <string name="password_change_error_unsupported_provider">Tämä palveluntarjoaja ei tue salasanan vaihtoa</string>
+    <string name="password_change_error_invalid">Virheellinen salasana</string>
+    <string name="password_change_error_network">Verkkovirhe, yritä uudelleen</string>
+
     <string name="error_import_file_not_found">Tiedostoa ei löytynyt tai sitä ei voi lukea.</string>
     <string name="error_import_invalid_format">Virheellinen kalenteritiedoston muoto.</string>
     <string name="error_import_partial">Tuotiin %1$d tapahtumaa, %2$d epäonnistui.</string>
@@ -316,7 +329,7 @@
     <string name="label_server_url">Palvelimen URL</string>
     <string name="label_username">Käyttäjänimi</string>
     <string name="label_password">Salasana</string>
-    <string name="label_display_name_optional">Näyttönimi (valinnainen)</string>
+    <string name="label_display_name_optional">Näyttönimi</string>
 
     <string name="placeholder_search_events">Hae tapahtumia…</string>
 
@@ -403,6 +416,13 @@
     <string name="subscriptions_empty_ics">Ei ICS-tilauksia</string>
     <string name="subscriptions_empty_ics_hint">Lisää kalenterisyöte nähdäksesi tapahtumia</string>
     <string name="subscriptions_add_ics">Lisää ICS-kalenteri</string>
+    <string name="holiday_catalog_add">Lisää juhlapäiväkalenteri</string>
+    <string name="holiday_catalog_search_label">Hae</string>
+    <string name="holiday_catalog_already_added">Lisätty</string>
+    <string name="holiday_catalog_empty">Maita ei löytynyt</string>
+    <string name="holiday_catalog_empty_hint">Kokeile toista nimeä</string>
+    <string name="holiday_catalog_validate_error">Tähän kalenteriin ei saatu yhteyttä. Tarkista yhteytesi ja yritä uudelleen.</string>
+    <string name="holiday_catalog_attribution">Juhlapäiväkalenterit palvelusta Mozilla Thunderbird, lisensoitu lisenssillä %1$s.</string>
     <string name="subscriptions_row_label">Kalenterisyötteet (ICS)</string>
     <string name="subscriptions_row_hint">esim. juhlapyhät, urheilu, koulu</string>
 
@@ -551,7 +571,10 @@
     <string name="drawer_calendars">Kalenterit</string>
     <string name="drawer_contacts">Yhteystiedot</string>
     <string name="drawer_device_calendars">Laitteen kalenterit</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Anna palautetta</string>
+
+    <string name="event_title_fallback">Tapahtuma</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Sinulle, ei tiedoillesi.</string>
@@ -1116,4 +1139,8 @@
     <string name="attendee_section_pending">Odottaa</string>
     <string name="attendee_section_declined">Kieltäytyivät</string>
     <string name="attendee_section_delegated">Delegoivat</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d päivän kuluttua</item>
+        <item quantity="other">%1$d päivän kuluttua</item>
+    </plurals>
 </resources>

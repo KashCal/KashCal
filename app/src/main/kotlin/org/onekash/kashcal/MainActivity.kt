@@ -51,6 +51,7 @@ import org.onekash.kashcal.ui.components.EventQuickViewSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
 import org.onekash.kashcal.ui.components.OnboardingBanner
+import org.onekash.kashcal.ui.components.WhatsNewBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
@@ -687,14 +688,15 @@ class MainActivity : ComponentActivity() {
                                     }
                                     val startDate = java.util.Date(event.startTs)
                                     val endDate = java.util.Date(event.endTs)
+                                    val allDay = getString(R.string.label_all_day)
 
                                     // Check for multi-day
                                     val startStr = utcDateFormat.format(startDate)
                                     val endStr = utcDateFormat.format(endDate)
                                     if (startStr != endStr) {
-                                        appendLine("$startStr - $endStr (All day)")
+                                        appendLine("$startStr - $endStr ($allDay)")
                                     } else {
-                                        appendLine("$startStr (All day)")
+                                        appendLine("$startStr ($allDay)")
                                     }
                                 } else {
                                     // Timed event: Use local timezone
@@ -712,7 +714,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 if (!event.location.isNullOrEmpty()) {
-                                    appendLine("Location: ${event.location}")
+                                    appendLine("${getString(R.string.label_location)}: ${event.location}")
                                 }
 
                                 appendLine()
@@ -723,7 +725,7 @@ class MainActivity : ComponentActivity() {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)
                             }
-                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Share Event"))
+                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, getString(R.string.share_as_card_chooser_title)))
 
                             showQuickViewSheet = false
                             quickViewEvent = null
@@ -1052,6 +1054,8 @@ class MainActivity : ComponentActivity() {
                             val timePattern = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
                             val shareText = event.buildShareText(
                                 timePattern = timePattern,
+                                allDayLabel = getString(R.string.label_all_day),
+                                locationPrefix = "${getString(R.string.label_location)}: ",
                                 footer = getString(R.string.share_from_kashcal_footer)
                             )
 
@@ -1059,7 +1063,7 @@ class MainActivity : ComponentActivity() {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, shareText)
                             }
-                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, "Share Event"))
+                            startActivity(ShareChooser.createKashCalChooser(this@MainActivity, intent, getString(R.string.share_as_card_chooser_title)))
 
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
@@ -1358,6 +1362,14 @@ class MainActivity : ComponentActivity() {
                         onDismiss = {
                             homeViewModel.dismissOnboardingSheet()
                         }
+                    )
+                } else if (uiState.whatsNewReleases.isNotEmpty()) {
+                    // What's New only competes for the screen once onboarding
+                    // is out of the way, so first-launch users see the iCloud
+                    // prompt first.
+                    WhatsNewBanner(
+                        releases = uiState.whatsNewReleases,
+                        onDismiss = { homeViewModel.dismissWhatsNewSheet() },
                     )
                 }
 

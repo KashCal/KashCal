@@ -63,6 +63,7 @@
     <string name="action_connect">ਕਨੈਕਟ ਕਰੋ</string>
     <string name="action_duplicate">ਡੁਪਲੀਕੇਟ</string>
     <string name="action_share">ਸਾਂਝਾ ਕਰੋ</string>
+    <string name="action_share_as_text">ਟੈਕਸਟ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ</string>
     <string name="action_export_ics">.ics ਵਜੋਂ ਐਕਸਪੋਰਟ</string>
     <string name="action_confirm_delete">ਮਿਟਾਉਣ ਦੀ ਪੁਸ਼ਟੀ</string>
     <string name="action_delete_event">ਘਟਨਾ ਮਿਟਾਓ</string>
@@ -245,6 +246,11 @@
     <string name="caldav_error_connection_timeout">ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="caldav_error_no_calendars">ਇਸ ਸਰਵਰ \'ਤੇ ਕੋਈ ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ।</string>
     <string name="caldav_error_unexpected">ਅਣਕਿਆਸੀ ਗਲਤੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="password_change_error_account_not_found">ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ</string>
+    <string name="password_change_error_no_credentials">ਕੋਈ ਮੌਜੂਦਾ ਪ੍ਰਮਾਣ-ਪੱਤਰ ਨਹੀਂ</string>
+    <string name="password_change_error_unsupported_provider">ਇਹ ਪ੍ਰਦਾਤਾ ਪਾਸਵਰਡ ਬਦਲਣ ਦਾ ਸਮਰਥਨ ਨਹੀਂ ਕਰਦਾ</string>
+    <string name="password_change_error_invalid">ਗਲਤ ਪਾਸਵਰਡ</string>
+    <string name="password_change_error_network">ਨੈੱਟਵਰਕ ਗਲਤੀ, ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
 
     <string name="error_import_file_not_found">ਫ਼ਾਈਲ ਨਹੀਂ ਮਿਲੀ ਜਾਂ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ।</string>
     <string name="error_import_invalid_format">ਗਲਤ ਕੈਲੰਡਰ ਫ਼ਾਈਲ ਫ਼ਾਰਮੈਟ।</string>
@@ -315,7 +321,7 @@
     <string name="label_server_url">ਸਰਵਰ URL</string>
     <string name="label_username">ਯੂਜ਼ਰਨੇਮ</string>
     <string name="label_password">ਪਾਸਵਰਡ</string>
-    <string name="label_display_name_optional">ਡਿਸਪਲੇ ਨਾਮ (ਵਿਕਲਪਿਕ)</string>
+    <string name="label_display_name_optional">ਡਿਸਪਲੇ ਨਾਮ</string>
 
     <string name="placeholder_search_events">ਘਟਨਾਵਾਂ ਖੋਜੋ…</string>
 
@@ -525,7 +531,10 @@
     <string name="drawer_calendars">ਕੈਲੰਡਰ</string>
     <string name="drawer_contacts">ਸੰਪਰਕ</string>
     <string name="drawer_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
+    <string name="drawer_account_offline">ਆਫ਼ਲਾਈਨ</string>
     <string name="drawer_share_feedback">ਫ਼ੀਡਬੈਕ ਸਾਂਝਾ ਕਰੋ</string>
+
+    <string name="event_title_fallback">ਘਟਨਾ</string>
 
     <string name="status_privacy_tagline">ਤੁਹਾਡੇ ਲਈ, ਤੁਹਾਡੇ ਡਾਟੇ ਲਈ ਨਹੀਂ।</string>
     <string name="action_keep_it_that_way">ਇਸੇ ਤਰ੍ਹਾਂ ਰੱਖੋ</string>
@@ -763,6 +772,11 @@
     <string name="action_snooze">ਸਨੂਜ਼</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ਹੁਣੇ ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ਦਿਨ ਵਿੱਚ</item>
+        <item quantity="other">%1$d ਦਿਨਾਂ ਵਿੱਚ</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">ਕੱਲ੍ਹ, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1143,4 +1157,16 @@
         <item quantity="other">%1$s · ਹੋਰ %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">ਜਵਾਬ ਬਦਲੋ</string>
+    <string name="whats_new_title">ਨਵਾਂ ਕੀ ਹੈ</string>
+    <string name="whats_new_dismiss">ਸਮਝ ਗਿਆ</string>
+    <string name="whats_new_v598_title">Android ਨੂੰ ਖੁੱਲ੍ਹਾ ਰੱਖਣ ਵਿੱਚ ਮਦਦ ਕਰੋ</string>
+    <string name="whats_new_v598_body">Google ਤੁਹਾਡੇ ਡਿਵਾਈਸ \'ਤੇ ਐਪਾਂ ਇੰਸਟਾਲ ਕਰਨ ਦਾ ਤਰੀਕਾ ਬਦਲ ਰਿਹਾ ਹੈ। ਸਾਨੂੰ ਤੁਹਾਡੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org \'ਤੇ ਜਾਓ</string>
+    <string name="holiday_catalog_add">ਛੁੱਟੀ ਕੈਲੰਡਰ ਜੋੜੋ</string>
+    <string name="holiday_catalog_search_label">ਖੋਜ</string>
+    <string name="holiday_catalog_already_added">ਜੋੜਿਆ ਗਿਆ</string>
+    <string name="holiday_catalog_empty">ਕੋਈ ਦੇਸ਼ ਨਹੀਂ ਮਿਲਿਆ</string>
+    <string name="holiday_catalog_empty_hint">ਕੋਈ ਹੋਰ ਨਾਮ ਅਜ਼ਮਾਓ</string>
+    <string name="holiday_catalog_validate_error">ਇਸ ਕੈਲੰਡਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird ਤੋਂ ਛੁੱਟੀ ਕੈਲੰਡਰ, %1$s ਅਧੀਨ ਲਾਇਸੰਸਸ਼ੁਦਾ।</string>
 </resources>

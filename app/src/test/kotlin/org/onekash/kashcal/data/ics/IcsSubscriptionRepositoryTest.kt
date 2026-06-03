@@ -118,7 +118,8 @@ class IcsSubscriptionRepositoryTest {
             occurrenceGenerator = occurrenceGenerator,
             icsFetcher = icsFetcher,
             reminderScheduler = reminderScheduler,
-            eventReader = eventReader
+            eventReader = eventReader,
+            context = mockk(relaxed = true)
         )
 
         // Default: ICS account exists

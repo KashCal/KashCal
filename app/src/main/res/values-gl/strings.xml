@@ -63,6 +63,7 @@
     <string name="action_connect">Conectar</string>
     <string name="action_duplicate">Duplicar</string>
     <string name="action_share">Compartir</string>
+    <string name="action_share_as_text">Compartir como texto</string>
     <string name="action_export_ics">Exportar como .ics</string>
     <string name="action_confirm_delete">Confirmar eliminación</string>
     <string name="action_delete_event">Eliminar evento</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">A resposta para %1$s fallou: o evento foi modificado. Volve responder.</string>
     <string name="invitees_host_tag">Anfitrión</string>
     <string name="invitees_summary_you_alone">Ti</string>
+    <string name="holiday_catalog_add">Engadir calendario de festivos</string>
+    <string name="holiday_catalog_search_label">Buscar</string>
+    <string name="holiday_catalog_already_added">Engadido</string>
+    <string name="holiday_catalog_empty">Non se atopou ningún país</string>
+    <string name="holiday_catalog_empty_hint">Proba cun nome diferente</string>
+    <string name="holiday_catalog_validate_error">Non se puido acceder a este calendario. Comproba a conexión e téntao de novo.</string>
+    <string name="holiday_catalog_attribution">Calendarios de festivos de Mozilla Thunderbird, con licenza %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ti · %d convidado</item>
         <item quantity="other">Ti · %d convidados</item>
@@ -243,6 +251,11 @@
     <string name="caldav_error_connection_timeout">A conexión esgotou o tempo. Ténteo de novo.</string>
     <string name="caldav_error_no_calendars">Non se atoparon calendarios neste servidor.</string>
     <string name="caldav_error_unexpected">Erro inesperado. Ténteo de novo.</string>
+    <string name="password_change_error_account_not_found">Conta non atopada</string>
+    <string name="password_change_error_no_credentials">Non hai credenciais existentes</string>
+    <string name="password_change_error_unsupported_provider">Este provedor non admite cambiar o contrasinal</string>
+    <string name="password_change_error_invalid">Contrasinal non válido</string>
+    <string name="password_change_error_network">Erro de rede, ténteo de novo</string>
 
     <string name="error_import_file_not_found">Ficheiro non atopado ou non se pode ler.</string>
     <string name="error_import_invalid_format">Formato de ficheiro de calendario non válido.</string>
@@ -313,7 +326,7 @@
     <string name="label_server_url">URL do servidor</string>
     <string name="label_username">Nome de usuario</string>
     <string name="label_password">Contrasinal</string>
-    <string name="label_display_name_optional">Nome visible (opcional)</string>
+    <string name="label_display_name_optional">Nome visible</string>
 
     <string name="placeholder_search_events">Buscar eventos…</string>
 
@@ -547,7 +560,9 @@
     <string name="drawer_calendars">Calendarios</string>
     <string name="drawer_contacts">Contactos</string>
     <string name="drawer_device_calendars">Calendarios do dispositivo</string>
+    <string name="drawer_account_offline">Sen conexión</string>
     <string name="drawer_share_feedback">Compartir opinión</string>
+    <string name="event_title_fallback">Evento</string>
 
     <!-- App Info / About -->
     <string name="status_privacy_tagline">Para ti, non para os teus datos.</string>
@@ -1155,5 +1170,13 @@
     <string name="attendee_section_pending">Pendente</string>
     <string name="attendee_section_declined">Rexeitado</string>
     <string name="attendee_section_delegated">Delegado</string>
-
+    <string name="whats_new_title">Novidades</string>
+    <string name="whats_new_dismiss">Entendido</string>
+    <string name="whats_new_v598_title">Axuda a manter Android aberto</string>
+    <string name="whats_new_v598_body">Google está cambiando o xeito en que instalas aplicacións no teu dispositivo. Necesitamos a túa axuda.</string>
+    <string name="whats_new_v598_action_label">Visitar keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Dentro de %1$d día</item>
+        <item quantity="other">Dentro de %1$d días</item>
+    </plurals>
 </resources>

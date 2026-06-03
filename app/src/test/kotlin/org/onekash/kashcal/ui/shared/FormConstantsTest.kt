@@ -81,7 +81,7 @@ class FormConstantsTest {
     fun `getAllDayReminderOptionsI18n returns options for all-day events`() {
         val options = getAllDayReminderOptionsI18n(use24Hour = false, resources)
         assertEquals(ALL_DAY_REMINDER_MINUTES.size, options.size)
-        assertTrue("540 min should be valid for all-day", options.any { it.minutes == 540 })
+        assertTrue("-540 (9 AM day of) should be an all-day option", options.any { it.minutes == -540 })
         assertFalse("15 min should NOT be valid for all-day", options.any { it.minutes == 15 })
     }
 
@@ -190,9 +190,10 @@ class FormConstantsTest {
     }
 
     @Test
-    fun `540 minutes (9 AM) is valid for all-day events but not timed`() {
-        assertFalse("540 min should NOT be valid for timed", TIMED_REMINDER_MINUTES.contains(540))
-        assertTrue("540 min should be valid for all-day", ALL_DAY_REMINDER_MINUTES.contains(540))
+    fun `9 AM day-of (-540) is in the all-day option list`() {
+        // After-midnight signed offset; not a timed option.
+        assertFalse("-540 should NOT be a timed option", TIMED_REMINDER_MINUTES.contains(-540))
+        assertTrue("-540 (9 AM day of) should be an all-day option", ALL_DAY_REMINDER_MINUTES.contains(-540))
     }
 
     @Test
@@ -202,9 +203,10 @@ class FormConstantsTest {
     }
 
     @Test
-    fun `1440 minutes (1 day) is valid for both timed and all-day events`() {
-        assertTrue("1440 min should be valid for timed", TIMED_REMINDER_MINUTES.contains(1440))
-        assertTrue("1440 min should be valid for all-day", ALL_DAY_REMINDER_MINUTES.contains(1440))
+    fun `all-day default (900) and birthday default (-540) render as selectable options`() {
+        // Both must be members of the option list or the picker shows blank/unselected.
+        assertTrue("900 (all-day default, 9 AM day before) should be an option", ALL_DAY_REMINDER_MINUTES.contains(900))
+        assertTrue("-540 (birthday/anniversary default, 9 AM day of) should be an option", ALL_DAY_REMINDER_MINUTES.contains(-540))
     }
 
     // ==================== Event Duration Tests (v20.8.0) ====================
@@ -347,28 +349,28 @@ class FormConstantsTest {
     }
 
     @Test
-    fun `formatReminderDuration for all-day 540 min 12h format`() {
-        assertEquals("9 AM day of event", formatReminderDuration(540, isAllDay = true, use24Hour = false, resources = resources))
+    fun `formatReminderDuration for all-day 9 AM day of 12h format`() {
+        assertEquals("9 AM day of event", formatReminderDuration(-540, isAllDay = true, use24Hour = false, resources = resources))
     }
 
     @Test
-    fun `formatReminderDuration for all-day 540 min 24h format`() {
-        assertEquals("09:00 day of event", formatReminderDuration(540, isAllDay = true, use24Hour = true, resources = resources))
+    fun `formatReminderDuration for all-day 9 AM day of 24h format`() {
+        assertEquals("09:00 day of event", formatReminderDuration(-540, isAllDay = true, use24Hour = true, resources = resources))
     }
 
     @Test
     fun `formatReminderDuration for all-day 1 day before`() {
-        assertEquals("1 day before at 9 AM", formatReminderDuration(1440, isAllDay = true, use24Hour = false, resources = resources))
+        assertEquals("1 day before at 9 AM", formatReminderDuration(900, isAllDay = true, use24Hour = false, resources = resources))
     }
 
     @Test
     fun `formatReminderDuration for all-day 1 day before 24h`() {
-        assertEquals("1 day before at 09:00", formatReminderDuration(1440, isAllDay = true, use24Hour = true, resources = resources))
+        assertEquals("1 day before at 09:00", formatReminderDuration(900, isAllDay = true, use24Hour = true, resources = resources))
     }
 
     @Test
     fun `formatReminderDuration for all-day 2 days before`() {
-        assertEquals("2 days before at 9 AM", formatReminderDuration(2880, isAllDay = true, use24Hour = false, resources = resources))
+        assertEquals("2 days before at 9 AM", formatReminderDuration(2340, isAllDay = true, use24Hour = false, resources = resources))
     }
 
     @Test
@@ -426,11 +428,65 @@ class FormConstantsTest {
     }
 
     @Test
-    fun `ALL_DAY_PRESET_CHIPS has 4 chips`() {
+    fun `ALL_DAY_PRESET_CHIPS has 4 chips with signed offset values`() {
         assertEquals(4, ALL_DAY_PRESET_CHIPS.size)
-        assertEquals(540, ALL_DAY_PRESET_CHIPS[0].minutes)
-        assertEquals(1440, ALL_DAY_PRESET_CHIPS[1].minutes)
-        assertEquals(2880, ALL_DAY_PRESET_CHIPS[2].minutes)
-        assertEquals(10080, ALL_DAY_PRESET_CHIPS[3].minutes)
+        // Labels stay short and unchanged; stored values are the signed offsets.
+        assertEquals("9AM", ALL_DAY_PRESET_CHIPS[0].label)
+        assertEquals(-540, ALL_DAY_PRESET_CHIPS[0].minutes) // 9 AM day of (after midnight)
+        assertEquals("1d", ALL_DAY_PRESET_CHIPS[1].label)
+        assertEquals(900, ALL_DAY_PRESET_CHIPS[1].minutes) // 9 AM day before
+        assertEquals("2d", ALL_DAY_PRESET_CHIPS[2].label)
+        assertEquals(2340, ALL_DAY_PRESET_CHIPS[2].minutes)
+        assertEquals("1w", ALL_DAY_PRESET_CHIPS[3].label)
+        assertEquals(9540, ALL_DAY_PRESET_CHIPS[3].minutes)
+    }
+
+    // ==================== All-day signed-offset labels ====================
+
+    @Test
+    fun `formatReminderOption labels the new all-day values (not raw hours)`() {
+        assertEquals("9 AM day of event", formatReminderOption(-540, isAllDay = true, resources = resources))
+        assertEquals("1 day before", formatReminderOption(900, isAllDay = true, resources = resources))
+        assertEquals("2 days before", formatReminderOption(2340, isAllDay = true, resources = resources))
+        assertEquals("1 week before", formatReminderOption(9540, isAllDay = true, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort labels all-day values as day counts, not hours`() {
+        assertEquals("9AM", formatReminderShort(-540, isAllDay = true, resources = resources))
+        assertEquals("1d", formatReminderShort(900, isAllDay = true, resources = resources))
+        assertEquals("2d", formatReminderShort(2340, isAllDay = true, resources = resources))
+        assertEquals("1w", formatReminderShort(9540, isAllDay = true, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderShort keeps timed semantics for the same numeric value`() {
+        // 900 as a TIMED reminder is a 15h-before alarm, not the all-day "1d" chip.
+        assertEquals("15h", formatReminderShort(900, isAllDay = false, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderDuration gives fuller wording for all-day before-values`() {
+        assertEquals("9 AM day of event", formatReminderDuration(-540, isAllDay = true, use24Hour = false, resources = resources))
+        // "1 day before at 9 AM" style (exact string from reminder_before_at_12h).
+        assertTrue(formatReminderDuration(900, isAllDay = true, use24Hour = false, resources = resources).contains("9 AM"))
+    }
+
+    @Test
+    fun `minutesToComponents decomposes by magnitude for negative (after-start) offsets`() {
+        // -540 = 9h after midnight -> 0d 9h 0m by magnitude (sign conveyed elsewhere).
+        assertEquals(Triple(0, 9, 0), minutesToComponents(-540))
+    }
+
+    @Test
+    fun `formatReminderShort renders non-chip all-day offset by magnitude (no negative label)`() {
+        // A synced after-start alarm of -720 (noon day of) must not render "-720m".
+        assertEquals("12h", formatReminderShort(-720, isAllDay = true, resources = resources))
+    }
+
+    @Test
+    fun `formatReminderDuration renders non-chip all-day offset without 'at time of event'`() {
+        val label = formatReminderDuration(-720, isAllDay = true, use24Hour = false, resources = resources)
+        assertFalse("should not collapse to 'at time of event'", label.contains("time of event"))
     }
 }

@@ -63,6 +63,7 @@
     <string name="action_connect">Csatlakozás</string>
     <string name="action_duplicate">Másolat</string>
     <string name="action_share">Megosztás</string>
+    <string name="action_share_as_text">Megosztás szövegként</string>
     <string name="action_export_ics">Exportálás .ics-ként</string>
     <string name="action_confirm_delete">Törlés megerősítése</string>
     <string name="action_delete_event">Esemény törlése</string>
@@ -75,6 +76,10 @@
     <string name="rsvp_modified_snackbar">A válasz a következőre nem sikerült: %1$s — az eseményt módosították. Kérjük, válaszoljon újra.</string>
     <string name="invitees_host_tag">Házigazda</string>
     <string name="invitees_summary_you_alone">Te</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d nap múlva</item>
+        <item quantity="other">%1$d nap múlva</item>
+    </plurals>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Te · %d meghívott</item>
         <item quantity="other">Te · %d meghívott</item>
@@ -263,6 +268,12 @@
     <string name="caldav_error_no_calendars">Ezen a kiszolgálón nem található naptár.</string>
     <string name="caldav_error_unexpected">Váratlan hiba. Próbáld újra.</string>
 
+    <string name="password_change_error_account_not_found">Fiók nem található</string>
+    <string name="password_change_error_no_credentials">Nincsenek meglévő hitelesítő adatok</string>
+    <string name="password_change_error_unsupported_provider">Ez a szolgáltató nem támogatja a jelszó módosítását</string>
+    <string name="password_change_error_invalid">Érvénytelen jelszó</string>
+    <string name="password_change_error_network">Hálózati hiba, próbáld újra</string>
+
     <string name="error_import_file_not_found">A fájl nem található vagy nem olvasható.</string>
     <string name="error_import_invalid_format">Érvénytelen naptárfájl formátum.</string>
     <string name="error_import_partial">%1$d esemény importálva, %2$d sikertelen.</string>
@@ -332,7 +343,7 @@
     <string name="label_server_url">Szerver URL</string>
     <string name="label_username">Felhasználónév</string>
     <string name="label_password">Jelszó</string>
-    <string name="label_display_name_optional">Megjelenítendő név (opcionális)</string>
+    <string name="label_display_name_optional">Megjelenítendő név</string>
 
     <string name="placeholder_search_events">Események keresése…</string>
 
@@ -569,7 +580,10 @@
     <string name="drawer_calendars">Naptárak</string>
     <string name="drawer_contacts">Névjegyek</string>
     <string name="drawer_device_calendars">Eszköz naptárak</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Visszajelzés küldése</string>
+
+    <string name="event_title_fallback">Esemény</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Neked készült, nem az adataidért.</string>
@@ -1173,4 +1187,17 @@
     <string name="attendee_section_pending">Függőben</string>
     <string name="attendee_section_declined">Elutasították</string>
     <string name="attendee_section_delegated">Átadták</string>
+    <string name="whats_new_title">Újdonságok</string>
+    <string name="whats_new_dismiss">Értem</string>
+    <string name="whats_new_v598_title">Segíts nyitva tartani az Androidot</string>
+    <string name="whats_new_v598_body">A Google megváltoztatja, ahogyan alkalmazásokat telepítesz a készülékedre. Szükségünk van a segítségedre.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org megnyitása</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Ünnepnaptár hozzáadása</string>
+    <string name="holiday_catalog_search_label">Keresés</string>
+    <string name="holiday_catalog_already_added">Hozzáadva</string>
+    <string name="holiday_catalog_empty">Nincs találat</string>
+    <string name="holiday_catalog_empty_hint">Próbálj másik nevet</string>
+    <string name="holiday_catalog_validate_error">Nem sikerült elérni ezt a naptárt. Ellenőrizd a kapcsolatot, és próbáld újra.</string>
+    <string name="holiday_catalog_attribution">Ünnepnaptárak a Mozilla Thunderbird forrásból, %1$s licenc alatt.</string>
 </resources>

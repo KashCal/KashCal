@@ -63,6 +63,7 @@
     <string name="action_connect">Poveži</string>
     <string name="action_duplicate">Podvoji</string>
     <string name="action_share">Deli</string>
+    <string name="action_share_as_text">Deli kot besedilo</string>
     <string name="action_export_ics">Izvozi kot .ics</string>
     <string name="action_confirm_delete">Potrdi brisanje</string>
     <string name="action_delete_event">Izbriši dogodek</string>
@@ -167,6 +168,12 @@
     <string name="onboarding_got_you">Poskrbljeno.</string>
     <string name="onboarding_connect_prompt">Poveži iCloud za prikaz svojih dogodkov</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Novosti</string>
+    <string name="whats_new_dismiss">Razumem</string>
+    <string name="whats_new_v598_title">Pomagaj ohraniti Android odprt</string>
+    <string name="whats_new_v598_body">Google spreminja način, kako nameščate aplikacije v napravi. Potrebujemo tvojo pomoč.</string>
+    <string name="whats_new_v598_action_label">Obišči keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Poveži iCloud</string>
     <string name="signin_caldav_title">Dodaj CalDAV račun</string>
@@ -243,6 +250,12 @@
     <string name="caldav_error_no_calendars">Na tem strežniku ni najdenih koledarjev.</string>
     <string name="caldav_error_unexpected">Nepričakovana napaka. Poskusite znova.</string>
 
+    <string name="password_change_error_account_not_found">Računa ni mogoče najti</string>
+    <string name="password_change_error_no_credentials">Ni obstoječih poverilnic</string>
+    <string name="password_change_error_unsupported_provider">Ta ponudnik ne podpira spreminjanja gesla</string>
+    <string name="password_change_error_invalid">Neveljavno geslo</string>
+    <string name="password_change_error_network">Napaka omrežja, poskusite znova</string>
+
     <string name="error_import_file_not_found">Datoteka ni najdena ali je ni mogoče prebrati.</string>
     <string name="error_import_invalid_format">Neveljavna oblika koledarske datoteke.</string>
     <string name="error_import_partial">Uvoženih %1$d dogodkov, %2$d neuspešnih.</string>
@@ -312,7 +325,7 @@
     <string name="label_server_url">URL strežnika</string>
     <string name="label_username">Uporabniško ime</string>
     <string name="label_password">Geslo</string>
-    <string name="label_display_name_optional">Prikazno ime (neobvezno)</string>
+    <string name="label_display_name_optional">Prikazno ime</string>
 
     <string name="placeholder_search_events">Išči dogodke…</string>
 
@@ -527,7 +540,10 @@
     <string name="drawer_calendars">Koledarji</string>
     <string name="drawer_contacts">Stiki</string>
     <string name="drawer_device_calendars">Koledarji naprave</string>
+    <string name="drawer_account_offline">Brez povezave</string>
     <string name="drawer_share_feedback">Delite povratne informacije</string>
+
+    <string name="event_title_fallback">Dogodek</string>
 
     <string name="status_privacy_tagline">Za vas, ne vaše podatke.</string>
     <string name="action_keep_it_that_way">Naj tako ostane</string>
@@ -1234,4 +1250,17 @@
     <string name="share_as_card_chooser_title">Deli dogodek</string>
     <string name="share_as_card_share_failed">Kartice ni bilo mogoče deliti</string>
     <string name="share_from_kashcal_footer">Deljeno iz KashCal</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Čez %1$d dan</item>
+        <item quantity="two">Čez %1$d dneva</item>
+        <item quantity="few">Čez %1$d dni</item>
+        <item quantity="other">Čez %1$d dni</item>
+    </plurals>
+    <string name="holiday_catalog_add">Dodaj koledar praznikov</string>
+    <string name="holiday_catalog_search_label">Iskanje</string>
+    <string name="holiday_catalog_already_added">Dodano</string>
+    <string name="holiday_catalog_empty">Ni najdenih držav</string>
+    <string name="holiday_catalog_empty_hint">Poskusite z drugim imenom</string>
+    <string name="holiday_catalog_validate_error">Tega koledarja ni bilo mogoče doseči. Preverite povezavo in poskusite znova.</string>
+    <string name="holiday_catalog_attribution">Koledarji praznikov iz Mozilla Thunderbird, licencirano pod %1$s.</string>
 </resources>

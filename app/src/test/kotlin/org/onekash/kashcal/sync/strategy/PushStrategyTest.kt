@@ -34,6 +34,7 @@ class PushStrategyTest {
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var accountRepository: AccountRepository
+    private lateinit var attendeesDao: org.onekash.kashcal.data.db.dao.AttendeesDao
     private lateinit var pushStrategy: PushStrategy
 
     private val testCalendar = Calendar(
@@ -91,17 +92,22 @@ class PushStrategyTest {
         eventsDao = mockk()
         pendingOperationsDao = mockk()
         accountRepository = mockk()
+        attendeesDao = mockk()
 
         // Default batch query mocks - return empty so fallback to getById is used
         // Individual tests can override these for specific scenarios
         coEvery { eventsDao.getByIds(any()) } returns emptyList()
         coEvery { calendarRepository.getCalendarsByIds(any()) } returns emptyList()
+        // Push path loads attendees before serialize; default to none so
+        // existing tests are unaffected. Attendee-specific tests override.
+        coEvery { attendeesDao.getForEventOnce(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
-            accountRepository = accountRepository
+            accountRepository = accountRepository,
+            attendeesDao = attendeesDao
         )
     }
 
@@ -593,6 +599,62 @@ class PushStrategyTest {
 
         // Verify exception etag was updated (v14.2.20)
         coVerify { eventsDao.markSynced(exceptionEvent.id, "etag", any()) }
+    }
+
+    @Test
+    fun `pushAll emits master AND per-exception attendees on the wire`() = runTest {
+        // Organizer push of a recurring series: the master's attendees AND each
+        // exception VEVENT's own attendees must round-trip. Exception attendees
+        // were silently dropped before T3.B3.
+        val masterEvent = testEvent.copy(
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            originalEventId = null,
+            rawIcal = null // locally created → fresh generation path
+        )
+        val exceptionEvent = testEvent.copy(
+            id = 101L,
+            originalEventId = masterEvent.id,
+            originalInstanceTime = System.currentTimeMillis(),
+            rrule = null,
+            rawIcal = null
+        )
+
+        val operation = PendingOperation(
+            id = 1L,
+            eventId = masterEvent.id,
+            operation = PendingOperation.OPERATION_CREATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
+        coEvery { calendarRepository.getCalendarById(masterEvent.calendarId) } returns testCalendar
+        coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exceptionEvent)
+        coEvery { attendeesDao.getForEventOnce(masterEvent.id) } returns listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = masterEvent.id, address = "mailto:alice@example.test", partstat = "ACCEPTED"
+            )
+        )
+        coEvery { attendeesDao.getForEventOnce(exceptionEvent.id) } returns listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = exceptionEvent.id, address = "mailto:carol@example.test", partstat = "NEEDS-ACTION"
+            )
+        )
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        val bodySlot = slot<String>()
+        coEvery {
+            client.createEvent(any(), any(), capture(bodySlot))
+        } returns CalDavResult.success(Pair("url", "etag"))
+
+        pushStrategy.pushAll(client)
+
+        val body = bodySlot.captured
+        assertTrue("master attendee alice must be on the wire", body.contains("alice@example.test"))
+        assertTrue("exception attendee carol must be on the wire", body.contains("carol@example.test"))
     }
 
     @Test

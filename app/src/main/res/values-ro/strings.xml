@@ -63,6 +63,7 @@
     <string name="action_connect">Conectează</string>
     <string name="action_duplicate">Duplică</string>
     <string name="action_share">Partajează</string>
+    <string name="action_share_as_text">Partajează ca text</string>
     <string name="action_export_ics">Exportă ca .ics</string>
     <string name="action_confirm_delete">Confirmă ștergerea</string>
     <string name="action_delete_event">Șterge eveniment</string>
@@ -75,6 +76,11 @@
     <string name="rsvp_modified_snackbar">Răspunsul pentru %1$s a eșuat — evenimentul a fost modificat. Te rugăm să răspunzi din nou.</string>
     <string name="invitees_host_tag">Gazdă</string>
     <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Peste %1$d zi</item>
+        <item quantity="few">Peste %1$d zile</item>
+        <item quantity="other">Peste %1$d de zile</item>
+    </plurals>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Tu · %d invitat</item>
         <item quantity="few">Tu · %d invitați</item>
@@ -268,6 +274,12 @@
     <string name="caldav_error_no_calendars">Nu s-au găsit calendare pe acest server.</string>
     <string name="caldav_error_unexpected">Eroare neașteptată. Încercați din nou.</string>
 
+    <string name="password_change_error_account_not_found">Cont negăsit</string>
+    <string name="password_change_error_no_credentials">Nu există credențiale</string>
+    <string name="password_change_error_unsupported_provider">Acest furnizor nu acceptă schimbarea parolei</string>
+    <string name="password_change_error_invalid">Parolă nevalidă</string>
+    <string name="password_change_error_network">Eroare de rețea, încercați din nou</string>
+
     <string name="error_import_file_not_found">Fișierul nu a fost găsit sau nu poate fi citit.</string>
     <string name="error_import_invalid_format">Format de fișier calendar invalid.</string>
     <string name="error_import_partial">%1$d evenimente importate, %2$d au eșuat.</string>
@@ -337,7 +349,7 @@
     <string name="label_server_url">URL server</string>
     <string name="label_username">Nume utilizator</string>
     <string name="label_password">Parolă</string>
-    <string name="label_display_name_optional">Nume afișat (opțional)</string>
+    <string name="label_display_name_optional">Nume afișat</string>
 
     <string name="placeholder_search_events">Caută evenimente…</string>
 
@@ -574,7 +586,10 @@
     <string name="drawer_calendars">Calendare</string>
     <string name="drawer_contacts">Contacte</string>
     <string name="drawer_device_calendars">Calendare dispozitiv</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Trimite feedback</string>
+
+    <string name="event_title_fallback">Eveniment</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Pentru tine, nu pentru datele tale.</string>
@@ -1224,4 +1239,17 @@
     <string name="attendee_section_pending">În așteptare</string>
     <string name="attendee_section_declined">Refuzat</string>
     <string name="attendee_section_delegated">Delegat</string>
+    <string name="whats_new_title">Noutăți</string>
+    <string name="whats_new_dismiss">Am înțeles</string>
+    <string name="whats_new_v598_title">Ajută să păstrăm Android deschis</string>
+    <string name="whats_new_v598_body">Google schimbă modul în care instalezi aplicații pe dispozitivul tău. Avem nevoie de ajutorul tău.</string>
+    <string name="whats_new_v598_action_label">Vizitează keepandroidopen.org</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Adaugă calendar de sărbători</string>
+    <string name="holiday_catalog_search_label">Caută</string>
+    <string name="holiday_catalog_already_added">Adăugat</string>
+    <string name="holiday_catalog_empty">Nicio țară găsită</string>
+    <string name="holiday_catalog_empty_hint">Încearcă un alt nume</string>
+    <string name="holiday_catalog_validate_error">Nu s-a putut accesa acest calendar. Verifică conexiunea și încearcă din nou.</string>
+    <string name="holiday_catalog_attribution">Calendare de sărbători de la Mozilla Thunderbird, sub licența %1$s.</string>
 </resources>

@@ -22,10 +22,12 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Launch
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -408,13 +410,19 @@ private fun DeviceEventActionButtons(
                             onClick = {
                                 showMoreMenu = false
                                 onDuplicate()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.cd_duplicate))
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_share)) },
+                            text = { Text(stringResource(R.string.action_share_as_text)) },
                             onClick = {
                                 showMoreMenu = false
                                 onShare()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.cd_share))
                             }
                         )
                         DropdownMenuItem(

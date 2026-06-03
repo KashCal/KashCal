@@ -63,6 +63,7 @@
     <string name="action_connect">ಸಂಪರ್ಕಿಸಿ</string>
     <string name="action_duplicate">ನಕಲು</string>
     <string name="action_share">ಹಂಚಿ</string>
+    <string name="action_share_as_text">ಪಠ್ಯವಾಗಿ ಹಂಚಿ</string>
     <string name="action_export_ics">.ics ಆಗಿ ರಫ್ತು ಮಾಡಿ</string>
     <string name="action_confirm_delete">ಅಳಿಸುವಿಕೆ ದೃಢೀಕರಿಸಿ</string>
     <string name="action_delete_event">ಈವೆಂಟ್ ಅಳಿಸಿ</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">ನಾವು ನಿಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತೇವೆ.</string>
     <string name="onboarding_connect_prompt">ನಿಮ್ಮ ಈವೆಂಟ್‌ಗಳನ್ನು ಇಲ್ಲಿ ನೋಡಲು iCloud ಸಂಪರ್ಕಿಸಿ</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">ಹೊಸತು ಏನು</string>
+    <string name="whats_new_dismiss">ಅರ್ಥವಾಯಿತು</string>
+    <string name="whats_new_v598_title">Android ತೆರೆದಿರಲು ಸಹಾಯ ಮಾಡಿ</string>
+    <string name="whats_new_v598_body">Google ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಸ್ಥಾಪಿಸುವ ವಿಧಾನವನ್ನು ಬದಲಾಯಿಸುತ್ತಿದೆ. ನಮಗೆ ನಿಮ್ಮ ಸಹಾಯ ಬೇಕು.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org ಭೇಟಿ ನೀಡಿ</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud ಸಂಪರ್ಕಿಸಿ</string>
     <string name="signin_caldav_title">CalDAV ಖಾತೆ ಸೇರಿಸಿ</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">ಸಂಪರ್ಕ ಸಮಯ ಮೀರಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="caldav_error_no_calendars">ಈ ಸರ್ವರ್‌ನಲ್ಲಿ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.</string>
     <string name="caldav_error_unexpected">ಅನಿರೀಕ್ಷಿತ ದೋಷ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="password_change_error_account_not_found">ಖಾತೆ ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="password_change_error_no_credentials">ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ರುಜುವಾತುಗಳಿಲ್ಲ</string>
+    <string name="password_change_error_unsupported_provider">ಈ ಪೂರೈಕೆದಾರ ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾವಣೆಯನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ</string>
+    <string name="password_change_error_invalid">ಅಮಾನ್ಯ ಪಾಸ್‌ವರ್ಡ್</string>
+    <string name="password_change_error_network">ನೆಟ್‌ವರ್ಕ್ ದೋಷ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
 
     <string name="error_import_file_not_found">ಫೈಲ್ ಕಂಡುಬಂದಿಲ್ಲ ಅಥವಾ ಓದಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="error_import_invalid_format">ಅಮಾನ್ಯ ಕ್ಯಾಲೆಂಡರ್ ಫೈಲ್ ಸ್ವರೂಪ.</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">ಸರ್ವರ್ URL</string>
     <string name="label_username">ಬಳಕೆದಾರ ಹೆಸರು</string>
     <string name="label_password">ಪಾಸ್‌ವರ್ಡ್</string>
-    <string name="label_display_name_optional">ಪ್ರದರ್ಶನ ಹೆಸರು (ಐಚ್ಛಿಕ)</string>
+    <string name="label_display_name_optional">ಪ್ರದರ್ಶನ ಹೆಸರು</string>
 
     <string name="placeholder_search_events">ಈವೆಂಟ್‌ಗಳನ್ನು ಹುಡುಕಿ…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="drawer_contacts">ಸಂಪರ್ಕಗಳು</string>
     <string name="drawer_device_calendars">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
+    <string name="drawer_account_offline">ಆಫ್‌ಲೈನ್</string>
     <string name="drawer_share_feedback">ಅಭಿಪ್ರಾಯ ಹಂಚಿ</string>
+
+    <string name="event_title_fallback">ಈವೆಂಟ್</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">ನಿಮಗಾಗಿ, ನಿಮ್ಮ ಡೇಟಾಗಾಗಿ ಅಲ್ಲ.</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">ಸ್ನೂಜ್</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ಈಗ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ದಿನದಲ್ಲಿ</item>
+        <item quantity="other">%1$d ದಿನಗಳಲ್ಲಿ</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">ನಾಳೆ, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">ಬಾಕಿ</string>
     <string name="attendee_section_declined">ನಿರಾಕರಿಸಿದ್ದಾರೆ</string>
     <string name="attendee_section_delegated">ಪ್ರತಿನಿಧಿಸಿದ್ದಾರೆ</string>
+    <string name="holiday_catalog_add">ರಜಾ ಕ್ಯಾಲೆಂಡರ್ ಸೇರಿಸಿ</string>
+    <string name="holiday_catalog_search_label">ಹುಡುಕಿ</string>
+    <string name="holiday_catalog_already_added">ಸೇರಿಸಲಾಗಿದೆ</string>
+    <string name="holiday_catalog_empty">ಯಾವುದೇ ದೇಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="holiday_catalog_empty_hint">ಬೇರೆ ಹೆಸರನ್ನು ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="holiday_catalog_validate_error">ಈ ಕ್ಯಾಲೆಂಡರ್ ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird ನಿಂದ ರಜಾ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು, %1$s ಅಡಿಯಲ್ಲಿ ಪರವಾನಗಿ ಪಡೆದಿವೆ.</string>
 </resources>

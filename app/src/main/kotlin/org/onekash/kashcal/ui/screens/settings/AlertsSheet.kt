@@ -72,7 +72,10 @@ fun AlertsSheet(
     var expandedSection by remember { mutableIntStateOf(-1) }
 
     val timedWheelMinutes = if (defaultReminderTimed == REMINDER_OFF) 15 else defaultReminderTimed
-    val allDayWheelMinutes = if (defaultReminderAllDay == REMINDER_OFF) 540 else defaultReminderAllDay
+    // 900 = "9 AM the day before" (the all-day default). The wheel shows only "before"
+    // durations; an after-midnight value like -540 (9 AM day of) decomposes to 0 there
+    // and is selected via its chip instead.
+    val allDayWheelMinutes = if (defaultReminderAllDay == REMINDER_OFF) 900 else defaultReminderAllDay
 
     val noneLabel = stringResource(R.string.alert_none)
     val timedChips = remember(noneLabel) { listOf(PresetChip(noneLabel, REMINDER_OFF)) + TIMED_PRESET_CHIPS }

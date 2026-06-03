@@ -751,33 +751,6 @@ class DateTimeUtilsTest {
             result.contains("December") && result.contains("2023"))
     }
 
-    // ==================== Format Reminder Label Tests ====================
-
-    @Test
-    fun `formatReminderLabel timed event shows correct labels`() {
-        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = false, resources = resources))
-        assertEquals("At time of event", DateTimeUtils.formatReminderLabel(0, isAllDay = false, resources = resources))
-        assertEquals("5 minutes before", DateTimeUtils.formatReminderLabel(5, isAllDay = false, resources = resources))
-        assertEquals("15 minutes before", DateTimeUtils.formatReminderLabel(15, isAllDay = false, resources = resources))
-        assertEquals("1 hour before", DateTimeUtils.formatReminderLabel(60, isAllDay = false, resources = resources))
-        assertEquals("2 hours before", DateTimeUtils.formatReminderLabel(120, isAllDay = false, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderLabel all-day event shows correct labels`() {
-        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = true, resources = resources))
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, resources = resources))
-        assertEquals("1 day before", DateTimeUtils.formatReminderLabel(1440, isAllDay = true, resources = resources))
-        assertEquals("2 days before", DateTimeUtils.formatReminderLabel(2880, isAllDay = true, resources = resources))
-        assertEquals("1 week before", DateTimeUtils.formatReminderLabel(10080, isAllDay = true, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderLabel unknown value shows minutes`() {
-        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = false, resources = resources))
-        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = true, resources = resources))
-    }
-
     // ==================== Format Reminder Short Tests ====================
 
     @Test
@@ -816,21 +789,6 @@ class DateTimeUtilsTest {
     @Test
     fun `formatReminderShort 540 use24Hour false returns 9AM`() {
         assertEquals("9AM", formatReminderShort(540, use24Hour = false, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderLabel 540 allDay use24Hour true returns 09 colon 00 day of event`() {
-        assertEquals("09:00 day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = true, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderLabel 540 allDay use24Hour false returns 9 AM day of event`() {
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = false, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderLabel 540 allDay default returns 9 AM day of event`() {
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, resources = resources))
     }
 
     // ==================== Format Sync Interval Tests ====================
@@ -1415,4 +1373,101 @@ class DateTimeUtilsTest {
             DateTimeUtils.calculateTotalDays(startTs, endTs, isAllDay = true)
         )
     }
+
+    // ==================== allDayRelativeDays ====================
+    // All-day events store start as UTC midnight but begin at the user's LOCAL
+    // midnight. The notification subtitle is a calendar-date day count (Today /
+    // Tomorrow / In N days), measured from the fire day's local date to the event's
+    // local date, so it is timezone-stable and never sign-flips.
+
+    @Test
+    fun `allDayRelativeDays is 0 when firing on the event date (Today)`() {
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+        val trigger = localMs(2026, 1, 6, 9, 0, zone) // 9 AM day-of
+
+        assertEquals(0, DateTimeUtils.allDayRelativeDays(occurrence, trigger, zone))
+    }
+
+    @Test
+    fun `allDayRelativeDays is 1 when firing the day before (Tomorrow)`() {
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+        val trigger = localMs(2026, 1, 5, 9, 0, zone)
+
+        assertEquals(1, DateTimeUtils.allDayRelativeDays(occurrence, trigger, zone))
+    }
+
+    @Test
+    fun `allDayRelativeDays is 2 when firing two days before`() {
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+        val trigger = localMs(2026, 1, 4, 9, 0, zone)
+
+        assertEquals(2, DateTimeUtils.allDayRelativeDays(occurrence, trigger, zone))
+    }
+
+    @Test
+    fun `allDayRelativeDays is timezone-stable for the same calendar offset`() {
+        // 9 AM the day before is "Tomorrow" (1) in every zone, not skewed by UTC offset.
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+        for (zoneId in listOf("America/New_York", "Asia/Kolkata", "Asia/Tokyo", "America/Los_Angeles")) {
+            val zone = ZoneId.of(zoneId)
+            val trigger = localMs(2026, 1, 5, 9, 0, zone)
+            assertEquals("wrong day count in $zoneId", 1, DateTimeUtils.allDayRelativeDays(occurrence, trigger, zone))
+        }
+    }
+
+    @Test
+    fun `allDayRelativeDays clamps to 0 when firing after the event date (snooze)`() {
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+        val trigger = localMs(2026, 1, 6, 12, 0, zone) // snoozed to noon day-of
+
+        assertEquals(0, DateTimeUtils.allDayRelativeDays(occurrence, trigger, zone))
+    }
+
+    @Test
+    fun `device MINUTES round-trips to the same instant as the Room offset`() {
+        // A device all-day reminder of MINUTES=-540 (9 AM day of) and the Room "9AM"
+        // chip (Int -540 -> ISO PT9H -> offset +540min) must fire at the same instant.
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+
+        // Device path: offsetMs = -reminderMinutes*60000, reminderMinutes = -540.
+        val deviceOffsetMs = -(-540).toLong() * 60_000
+        val deviceTrigger = DateTimeUtils.allDayReminderTriggerTime(occurrence, deviceOffsetMs, zone)
+
+        // Room path: chip Int -540 encodes to PT9H = +540 minutes after midnight.
+        val roomOffsetMs = 540L * 60_000
+        val roomTrigger = DateTimeUtils.allDayReminderTriggerTime(occurrence, roomOffsetMs, zone)
+
+        assertEquals(roomTrigger, deviceTrigger)
+        // And it is 9 AM local on the event day.
+        val local = java.time.Instant.ofEpochMilli(deviceTrigger).atZone(zone)
+        assertEquals(9, local.hour)
+        assertEquals(6, local.dayOfMonth)
+    }
+
+    @Test
+    fun `device MINUTES of -1 fires one minute after midnight (not treated as OFF)`() {
+        // A literal device MINUTES=-1 is "1 minute after start", distinct from the
+        // in-app REMINDER_OFF sentinel (which never reaches the trigger math).
+        val zone = ZoneId.of("America/New_York")
+        val occurrence = utcMs(2026, 1, 6, 0, 0)
+
+        val offsetMs = -(-1).toLong() * 60_000 // +60000
+        val trigger = DateTimeUtils.allDayReminderTriggerTime(occurrence, offsetMs, zone)
+
+        val local = java.time.Instant.ofEpochMilli(trigger).atZone(zone)
+        assertEquals(0, local.hour)
+        assertEquals(1, local.minute)
+        assertEquals(6, local.dayOfMonth)
+    }
+
+    private fun localMs(year: Int, month: Int, day: Int, hour: Int, minute: Int, zone: ZoneId): Long =
+        java.time.LocalDateTime.of(year, month, day, hour, minute)
+            .atZone(zone)
+            .toInstant()
+            .toEpochMilli()
 }

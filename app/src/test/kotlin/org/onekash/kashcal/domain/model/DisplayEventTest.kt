@@ -567,7 +567,8 @@ class DisplayEventTest {
     fun `toEventForShareCard converts reminder minutes to ISO durations`() {
         val withReminders = testInstance.copy(reminders = listOf(15, 60, 1440))
         val event = DisplayEvent.Device(withReminders).toEventForShareCard()
-        assertEquals(listOf("-PT15M", "-PT1H", "-P1D"), event.reminders)
+        // Hour-form encoding (DST-stable): 1440 min -> -PT24H, not the period -P1D.
+        assertEquals(listOf("-PT15M", "-PT1H", "-PT24H"), event.reminders)
     }
 
     @Test

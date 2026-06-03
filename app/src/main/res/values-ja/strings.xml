@@ -64,6 +64,7 @@
     <string name="action_connect">接続</string>
     <string name="action_duplicate">複製</string>
     <string name="action_share">共有</string>
+    <string name="action_share_as_text">テキストとして共有</string>
     <string name="action_export_ics">.icsとしてエクスポート</string>
     <string name="action_confirm_delete">削除を確認</string>
     <string name="action_delete_event">イベントを削除</string>
@@ -126,6 +127,12 @@
     <string name="onboarding_got_you">お任せください。</string>
     <string name="onboarding_connect_prompt">iCloudに接続してイベントを表示</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">新着情報</string>
+    <string name="whats_new_dismiss">OK</string>
+    <string name="whats_new_v598_title">Androidをオープンに保つお手伝いを</string>
+    <string name="whats_new_v598_body">Googleは、あなたが端末にアプリをインストールする方法を変更しようとしています。皆さんのご協力が必要です。</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org を開く</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloudに接続</string>
     <string name="signin_caldav_title">CalDAVアカウントを追加</string>
@@ -201,6 +208,11 @@
     <string name="caldav_error_connection_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
     <string name="caldav_error_no_calendars">このサーバーでカレンダーが見つかりませんでした。</string>
     <string name="caldav_error_unexpected">予期しないエラーが発生しました。もう一度お試しください。</string>
+    <string name="password_change_error_account_not_found">アカウントが見つかりません</string>
+    <string name="password_change_error_no_credentials">既存の認証情報がありません</string>
+    <string name="password_change_error_unsupported_provider">このプロバイダーはパスワード変更に対応していません</string>
+    <string name="password_change_error_invalid">パスワードが無効です</string>
+    <string name="password_change_error_network">ネットワークエラーが発生しました。もう一度お試しください。</string>
 
     <string name="error_import_file_not_found">ファイルが見つからないか、読み取れません。</string>
     <string name="error_import_invalid_format">無効なカレンダーファイル形式です。</string>
@@ -271,7 +283,7 @@
     <string name="label_server_url">サーバーURL</string>
     <string name="label_username">ユーザー名</string>
     <string name="label_password">パスワード</string>
-    <string name="label_display_name_optional">表示名（任意）</string>
+    <string name="label_display_name_optional">表示名</string>
 
     <string name="placeholder_search_events">イベントを検索…</string>
 
@@ -506,7 +518,10 @@
     <string name="drawer_calendars">カレンダー</string>
     <string name="drawer_contacts">連絡先</string>
     <string name="drawer_device_calendars">デバイスカレンダー</string>
+    <string name="drawer_account_offline">オフライン</string>
     <string name="drawer_share_feedback">フィードバックを送る</string>
+
+    <string name="event_title_fallback">予定</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">あなたのために、あなたのデータのためではなく。</string>
@@ -1097,4 +1112,14 @@
     <plurals name="share_availability_header">
         <item quantity="other">次の %1$d 日間（%2$s – %3$s）の空き時間：</item>
     </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d日後</item>
+    </plurals>
+    <string name="holiday_catalog_add">祝日カレンダーを追加</string>
+    <string name="holiday_catalog_search_label">検索</string>
+    <string name="holiday_catalog_already_added">追加済み</string>
+    <string name="holiday_catalog_empty">該当する国が見つかりません</string>
+    <string name="holiday_catalog_empty_hint">別の名前で試してください</string>
+    <string name="holiday_catalog_validate_error">このカレンダーに接続できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="holiday_catalog_attribution">祝日カレンダーは Mozilla Thunderbird より提供され、%1$s の下でライセンスされています。</string>
 </resources>

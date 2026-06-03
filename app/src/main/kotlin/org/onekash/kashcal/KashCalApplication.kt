@@ -43,8 +43,17 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     companion object {
         private const val TAG = "KashCalApplication"
-        private const val PREFS_NAME = "kashcal_upgrade"
-        private const val KEY_LAST_VERSION = "last_version_code"
+        const val PREFS_NAME = "kashcal_upgrade"
+        const val KEY_LAST_VERSION = "last_version_code"
+        /**
+         * Previous versionCode captured by [handleAppUpgrade] before
+         * [KEY_LAST_VERSION] is overwritten on each app start. 0 means
+         * either fresh install or prior to this key being introduced.
+         * Used as the seed signal for the What's New sheet so existing
+         * users from before the feature shipped don't fall through the
+         * "DataStore default 0 = silent fresh install" trap.
+         */
+        const val KEY_PREVIOUS_VERSION = "previous_version_code"
     }
 
     @Inject
@@ -176,10 +185,15 @@ class KashCalApplication : Application(), Configuration.Provider {
             }
         }
 
-        // Store current version
+        // Store current version, capturing the previous value first so
+        // downstream features (e.g. What's New) can tell a real upgrade
+        // from a fresh install.
         if (lastVersion != currentVersion) {
-            prefs.edit().putInt(KEY_LAST_VERSION, currentVersion).apply()
-            Log.d(TAG, "Stored version code: $currentVersion")
+            prefs.edit()
+                .putInt(KEY_PREVIOUS_VERSION, lastVersion)
+                .putInt(KEY_LAST_VERSION, currentVersion)
+                .apply()
+            Log.d(TAG, "Stored version code: $currentVersion (previous=$lastVersion)")
         }
     }
 

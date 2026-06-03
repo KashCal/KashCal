@@ -61,11 +61,21 @@ data class CalendarGroup(
          *
          * @param calendars List of calendars to group
          * @param accounts List of accounts for display names
+         * @param localLabel Localized header for the LOCAL account (e.g., "Offline")
+         * @param icsLabel Localized header for the ICS account (e.g., "Calendar Feeds")
+         * @param localizeCalendarName Maps a Calendar to its user-facing display name.
+         *   Lets the caller localize synthetic display names ("Local", "Contact
+         *   Birthdays", "Contact Anniversaries") that older installs persisted
+         *   to the DB in English. For all other calendars this should return
+         *   `calendar.displayName` unchanged.
          * @return List of CalendarGroup sorted by account name
          */
         fun fromCalendarsAndAccounts(
             calendars: List<Calendar>,
-            accounts: List<Account>
+            accounts: List<Account>,
+            localLabel: String,
+            icsLabel: String,
+            localizeCalendarName: (Calendar) -> String = { it.displayName }
         ): List<CalendarGroup> {
             val accountMap = accounts.associateBy { it.id }
 
@@ -74,12 +84,17 @@ data class CalendarGroup(
                 .map { (accountId, accountCalendars) ->
                     val account = accountMap[accountId]
                     val accountName = when (account?.provider) {
-                        AccountProvider.LOCAL -> "Offline"
+                        AccountProvider.LOCAL -> localLabel
+                        AccountProvider.ICS -> icsLabel
                         else -> account?.displayName
                             ?: account?.provider?.displayName
                             ?: "Unknown"
                     }
-                    val sorted = accountCalendars.sortedBy { it.displayName.lowercase() }
+                    val localized = accountCalendars.map { c ->
+                        val name = localizeCalendarName(c)
+                        if (name == c.displayName) c else c.copy(displayName = name)
+                    }
+                    val sorted = localized.sortedBy { it.displayName.lowercase() }
                     CalendarGroup(
                         accountName = accountName,
                         accountId = accountId,

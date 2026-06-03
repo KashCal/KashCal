@@ -97,6 +97,7 @@ class HomeViewModelSaveAttendeeRemindersTest {
         networkMonitor = networkMonitor,
         calendarProviderRepository = fakeCalendarProviderRepository,
         attendeeBackfill = mockk(relaxed = true),
+        context = mockk(relaxed = true),
         ioDispatcher = testDispatcher
     )
 

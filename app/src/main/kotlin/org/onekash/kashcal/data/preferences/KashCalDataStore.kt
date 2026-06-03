@@ -437,6 +437,15 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.ONBOARDING_DISMISSED, dismissed)
     }
 
+    val lastWhatsNewVersionShown: Flow<Int>
+        get() = getPreference(PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN, 0)
+
+    suspend fun getLastWhatsNewVersionShown(): Int = lastWhatsNewVersionShown.first()
+
+    suspend fun setLastWhatsNewVersionShown(version: Int) {
+        setPreference(PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN, version)
+    }
+
     // ========== Permission Tracking ==========
 
     /**
@@ -493,9 +502,9 @@ class KashCalDataStore(
     }
 
     /**
-     * Birthday reminder minutes.
-     * Uses ALL_DAY_REMINDER_OPTIONS values (540 = 9 AM day of, 1440 = 1 day before, etc.)
-     * Default: 540 (9 AM on day of birthday)
+     * Birthday reminder minutes (signed "minutes before midnight": negative = after
+     * local midnight). Uses ALL_DAY_REMINDER_MINUTES values, e.g. -540 = 9 AM day of,
+     * 900 = 9 AM the day before. Default: -540 (9 AM on day of birthday).
      */
     val birthdayReminder: Flow<Int>
         get() = getPreference(PreferencesKeys.BIRTHDAY_REMINDER, DEFAULT_BIRTHDAY_REMINDER_MINUTES)
@@ -533,9 +542,9 @@ class KashCalDataStore(
     }
 
     /**
-     * Anniversary reminder minutes.
-     * Uses ALL_DAY_REMINDER_OPTIONS values (540 = 9 AM day of, 1440 = 1 day before, etc.)
-     * Default: 540 (9 AM on day of anniversary)
+     * Anniversary reminder minutes (signed "minutes before midnight": negative = after
+     * local midnight). Uses ALL_DAY_REMINDER_MINUTES values, e.g. -540 = 9 AM day of,
+     * 900 = 9 AM the day before. Default: -540 (9 AM on day of anniversary).
      */
     val anniversaryReminder: Flow<Int>
         get() = getPreference(PreferencesKeys.ANNIVERSARY_REMINDER, DEFAULT_ANNIVERSARY_REMINDER_MINUTES)
@@ -838,9 +847,10 @@ class KashCalDataStore(
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
-        const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 12 * 60 // 12 hours before (720)
-        const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = 9 * 60 // 9 AM day of birthday (540)
-        const val DEFAULT_ANNIVERSARY_REMINDER_MINUTES = 9 * 60 // 9 AM day of anniversary (540)
+        // Signed "minutes before start" (Android CalendarProvider convention): positive = before, negative = after.
+        const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 15 * 60 // 9 AM the day before (-PT15H, Int 900)
+        const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = -9 * 60 // 9 AM day of birthday (PT9H, Int -540)
+        const val DEFAULT_ANNIVERSARY_REMINDER_MINUTES = -9 * 60 // 9 AM day of anniversary (PT9H, Int -540)
 
         // Sync constants
         const val DEFAULT_SYNC_INTERVAL_MINUTES = 60  // 1 hour

@@ -295,45 +295,104 @@ class ReminderNotificationManagerTest {
         assertEquals("Starting now", contentText)
     }
 
-    @Test
-    fun `content text shows Today for all-day event with negative diffMs`() = runBlocking {
-        val eventTime = System.currentTimeMillis()
+    // ==================== All-day: Today / Tomorrow / In N days ====================
 
-        val reminder = createTestReminder(
+    private fun allDayReminder(eventDate: LocalDate, fireDateTime: ZonedDateTime): ScheduledReminder {
+        val occurrenceUtcMidnight = ZonedDateTime.of(
+            eventDate, LocalTime.MIDNIGHT, ZoneId.of("UTC")
+        ).toInstant().toEpochMilli()
+        return createTestReminder(
             id = 1L,
             eventId = 100L,
             eventTitle = "All Day Event",
-            occurrenceTime = eventTime,
-            triggerTime = eventTime + 60_000, // trigger after occurrence -> diffMs < 0
+            occurrenceTime = occurrenceUtcMidnight,
+            triggerTime = fireDateTime.toInstant().toEpochMilli(),
             isAllDay = true
         )
-
-        val notification = manager.buildNotification(reminder)
-        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
-
-        assertEquals("Today", contentText)
     }
 
     @Test
-    fun `content text shows duration for all-day event with positive diffMs`() = runBlocking {
-        val triggerTime = System.currentTimeMillis()
-        val occurrenceTime = triggerTime + 24 * 60 * 60 * 1000L // 1 day later
-
-        val reminder = createTestReminder(
-            id = 1L,
-            eventId = 100L,
-            eventTitle = "Tomorrow All Day",
-            occurrenceTime = occurrenceTime,
-            triggerTime = triggerTime,
-            isAllDay = true
+    fun `all-day reminder firing on the event date shows Today`() = runBlocking {
+        // 9 AM day-of (PT9H): fires on the event's own date.
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 6),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 6), LocalTime.of(9, 0), zone)
         )
 
         val notification = manager.buildNotification(reminder)
-        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
 
-        // Should be a duration string (e.g., "24 hours"), not a clock time
-        assertNotNull(contentText)
-        assertFalse("All-day content should not contain colon (clock time)", contentText!!.contains(":"))
+        assertEquals("Today", notification.extras.getString(Notification.EXTRA_TEXT))
+    }
+
+    @Test
+    fun `all-day reminder firing the day before shows Tomorrow`() = runBlocking {
+        // 1d chip (-PT15H): fires 9 AM the day before.
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 6),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 5), LocalTime.of(9, 0), zone)
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertEquals("Tomorrow", notification.extras.getString(Notification.EXTRA_TEXT))
+    }
+
+    @Test
+    fun `all-day reminder firing two days before shows In 2 days`() = runBlocking {
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 6),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 4), LocalTime.of(9, 0), zone)
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertEquals("In 2 days", notification.extras.getString(Notification.EXTRA_TEXT))
+    }
+
+    @Test
+    fun `all-day reminder firing a week before shows In 6 days`() = runBlocking {
+        // 1w chip (-PT159H = 6d15h): fires 9 AM, 6 calendar days before.
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 13),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 7), LocalTime.of(9, 0), zone)
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertEquals("In 6 days", notification.extras.getString(Notification.EXTRA_TEXT))
+    }
+
+    @Test
+    fun `all-day reminder subtitle never contains a clock time or hour-countdown`() = runBlocking {
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 6),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 5), LocalTime.of(9, 0), zone)
+        )
+
+        val text = manager.buildNotification(reminder).extras.getString(Notification.EXTRA_TEXT)
+
+        assertNotNull(text)
+        assertFalse("must not contain clock time", text!!.contains(":"))
+        assertFalse("must not contain hour-countdown", text.contains("hour"))
+    }
+
+    @Test
+    fun `snoozed all-day reminder past local midnight shows Today`() = runBlocking {
+        // Snooze pushes the trigger to noon on the event day -> still "Today".
+        val zone = ZoneId.of("America/New_York")
+        val reminder = allDayReminder(
+            LocalDate.of(2026, 1, 6),
+            ZonedDateTime.of(LocalDate.of(2026, 1, 6), LocalTime.NOON, zone)
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertEquals("Today", notification.extras.getString(Notification.EXTRA_TEXT))
     }
 
     @Test
@@ -411,48 +470,49 @@ class ReminderNotificationManagerTest {
         )
     }
 
-    // ==================== Time Formatting Tests ====================
-
     @Test
-    fun `formatTimeUntil returns correct string for 1 minute`() {
-        val durationMs = 60 * 1000L
-        assertEquals("1 minute", manager.formatTimeUntil(durationMs))
+    fun `buildNotification hides header time for all-day reminder`() = runBlocking {
+        // All-day events store occurrenceTime as UTC midnight. Showing it in the
+        // notification header renders a misleading timezone-shifted clock time, so
+        // the header timestamp must be suppressed for all-day reminders.
+        val occurrenceTime = ZonedDateTime.of(
+            LocalDate.of(2026, 1, 6), LocalTime.MIDNIGHT, ZoneId.of("UTC")
+        ).toInstant().toEpochMilli()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "All Day Event",
+            occurrenceTime = occurrenceTime,
+            isAllDay = true
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertFalse(
+            "All-day reminder must not show a header timestamp",
+            notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN, true)
+        )
     }
 
     @Test
-    fun `formatTimeUntil returns correct string for 15 minutes`() {
-        val durationMs = 15 * 60 * 1000L
-        assertEquals("15 minutes", manager.formatTimeUntil(durationMs))
-    }
+    fun `buildNotification shows header time for timed reminder`() = runBlocking {
+        val occurrenceTime = System.currentTimeMillis() + 900_000L
 
-    @Test
-    fun `formatTimeUntil returns correct string for 1 hour`() {
-        val durationMs = 60 * 60 * 1000L
-        assertEquals("1 hour", manager.formatTimeUntil(durationMs))
-    }
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Test Meeting",
+            occurrenceTime = occurrenceTime,
+            isAllDay = false
+        )
 
-    @Test
-    fun `formatTimeUntil returns correct string for 2 hours`() {
-        val durationMs = 2 * 60 * 60 * 1000L
-        assertEquals("2 hours", manager.formatTimeUntil(durationMs))
-    }
+        val notification = manager.buildNotification(reminder)
 
-    @Test
-    fun `formatTimeUntil returns correct string for 1 hour 1 minute`() {
-        val durationMs = (60 + 1) * 60 * 1000L
-        assertEquals("1 hour 1 minute", manager.formatTimeUntil(durationMs))
-    }
-
-    @Test
-    fun `formatTimeUntil returns correct string for 2 hours 30 minutes`() {
-        val durationMs = (2 * 60 + 30) * 60 * 1000L
-        assertEquals("2 hours 30 minutes", manager.formatTimeUntil(durationMs))
-    }
-
-    @Test
-    fun `formatTimeUntil returns 0 minutes for 0 duration`() {
-        val durationMs = 0L
-        assertEquals("0 minutes", manager.formatTimeUntil(durationMs))
+        assertTrue(
+            "Timed reminder should keep the header countdown",
+            notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN, false)
+        )
     }
 
     // Helper function to create test reminders

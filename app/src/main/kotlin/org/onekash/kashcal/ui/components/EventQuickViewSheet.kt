@@ -477,7 +477,7 @@ fun EventQuickViewSheet(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.action_share)) },
+                                    text = { Text(stringResource(R.string.action_share_as_text)) },
                                     onClick = {
                                         showMoreMenu = false
                                         onShare()

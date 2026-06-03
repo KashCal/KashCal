@@ -64,6 +64,7 @@
     <string name="action_connect">Sambung</string>
     <string name="action_duplicate">Duplikat</string>
     <string name="action_share">Kongsi</string>
+    <string name="action_share_as_text">Kongsi sebagai teks</string>
     <string name="action_export_ics">Eksport sebagai .ics</string>
     <string name="action_confirm_delete">Sahkan Padam</string>
     <string name="action_delete_event">Padam Acara</string>
@@ -126,6 +127,12 @@
     <string name="onboarding_got_you">Kami boleh bantu.</string>
     <string name="onboarding_connect_prompt">Sambungkan iCloud untuk lihat acara anda di sini</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Apa yang baharu</string>
+    <string name="whats_new_dismiss">Faham</string>
+    <string name="whats_new_v598_title">Bantu pastikan Android kekal terbuka</string>
+    <string name="whats_new_v598_body">Google sedang mengubah cara anda memasang aplikasi pada peranti anda. Kami memerlukan bantuan anda.</string>
+    <string name="whats_new_v598_action_label">Lawati keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Sambung iCloud</string>
     <string name="signin_caldav_title">Tambah Akaun CalDAV</string>
@@ -201,6 +208,11 @@
     <string name="caldav_error_connection_timeout">Sambungan tamat masa. Sila cuba lagi.</string>
     <string name="caldav_error_no_calendars">Tiada kalendar dijumpai pada pelayan ini.</string>
     <string name="caldav_error_unexpected">Ralat tidak dijangka. Sila cuba lagi.</string>
+    <string name="password_change_error_account_not_found">Akaun tidak dijumpai</string>
+    <string name="password_change_error_no_credentials">Tiada kelayakan sedia ada</string>
+    <string name="password_change_error_unsupported_provider">Penyedia ini tidak menyokong penukaran kata laluan</string>
+    <string name="password_change_error_invalid">Kata laluan tidak sah</string>
+    <string name="password_change_error_network">Ralat rangkaian, sila cuba lagi</string>
 
     <string name="error_import_file_not_found">Fail tidak dijumpai atau tidak boleh dibaca.</string>
     <string name="error_import_invalid_format">Format fail kalendar tidak sah.</string>
@@ -271,7 +283,7 @@
     <string name="label_server_url">URL Pelayan</string>
     <string name="label_username">Nama pengguna</string>
     <string name="label_password">Kata laluan</string>
-    <string name="label_display_name_optional">Nama Paparan (pilihan)</string>
+    <string name="label_display_name_optional">Nama Paparan</string>
 
     <string name="placeholder_search_events">Cari acara…</string>
 
@@ -506,7 +518,10 @@
     <string name="drawer_calendars">Kalendar</string>
     <string name="drawer_contacts">Kenalan</string>
     <string name="drawer_device_calendars">Kalendar peranti</string>
+    <string name="drawer_account_offline">Luar talian</string>
     <string name="drawer_share_feedback">Kongsi maklum balas</string>
+
+    <string name="event_title_fallback">Acara</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Untuk anda, bukan data anda.</string>
@@ -1098,4 +1113,14 @@
     <plurals name="share_availability_header">
         <item quantity="other">Lapang dalam %1$d hari akan datang (%2$s – %3$s):</item>
     </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="other">Dalam %1$d hari</item>
+    </plurals>
+    <string name="holiday_catalog_add">Tambah kalendar cuti</string>
+    <string name="holiday_catalog_search_label">Cari</string>
+    <string name="holiday_catalog_already_added">Ditambah</string>
+    <string name="holiday_catalog_empty">Tiada negara dijumpai</string>
+    <string name="holiday_catalog_empty_hint">Cuba nama lain</string>
+    <string name="holiday_catalog_validate_error">Tidak dapat menghubungi kalendar ini. Sila semak sambungan anda dan cuba lagi.</string>
+    <string name="holiday_catalog_attribution">Kalendar cuti daripada Mozilla Thunderbird, dilesenkan di bawah %1$s.</string>
 </resources>

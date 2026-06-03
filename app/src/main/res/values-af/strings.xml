@@ -63,6 +63,7 @@
     <string name="action_connect">Koppel</string>
     <string name="action_duplicate">Dupliseer</string>
     <string name="action_share">Deel</string>
+    <string name="action_share_as_text">Deel as teks</string>
     <string name="action_export_ics">Voer uit as .ics</string>
     <string name="action_confirm_delete">Bevestig Verwydering</string>
     <string name="action_delete_event">Verwyder Gebeurtenis</string>
@@ -264,6 +265,12 @@
     <string name="caldav_error_no_calendars">Geen kalenders op hierdie bediener gevind nie.</string>
     <string name="caldav_error_unexpected">Onverwagte fout. Probeer asseblief weer.</string>
 
+    <string name="password_change_error_account_not_found">Rekening nie gevind nie</string>
+    <string name="password_change_error_no_credentials">Geen bestaande geloofsbriewe nie</string>
+    <string name="password_change_error_unsupported_provider">Hierdie verskaffer ondersteun nie wagwoordverandering nie</string>
+    <string name="password_change_error_invalid">Ongeldige wagwoord</string>
+    <string name="password_change_error_network">Netwerkfout, probeer asseblief weer</string>
+
     <string name="error_import_file_not_found">Lêer nie gevind nie of kan nie gelees word nie.</string>
     <string name="error_import_invalid_format">Ongeldige kalenderlêerformaat.</string>
     <string name="error_import_partial">%1$d gebeurtenisse ingevoer, %2$d het misluk.</string>
@@ -333,7 +340,7 @@
     <string name="label_server_url">Bediener-URL</string>
     <string name="label_username">Gebruikersnaam</string>
     <string name="label_password">Wagwoord</string>
-    <string name="label_display_name_optional">Vertoonnaam (opsioneel)</string>
+    <string name="label_display_name_optional">Vertoonnaam</string>
 
     <string name="placeholder_search_events">Soek gebeurtenisse…</string>
 
@@ -565,7 +572,10 @@
     <string name="drawer_calendars">Kalenders</string>
     <string name="drawer_contacts">Kontakte</string>
     <string name="drawer_device_calendars">Toestelkalenders</string>
+    <string name="drawer_account_offline">Vanlyn</string>
     <string name="drawer_share_feedback">Deel terugvoer</string>
+
+    <string name="event_title_fallback">Gebeurtenis</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Vir jou, nie jou data nie.</string>
@@ -1167,4 +1177,20 @@
     <string name="attendee_section_pending">Hangend</string>
     <string name="attendee_section_declined">Geweier</string>
     <string name="attendee_section_delegated">Gedelegeer</string>
+    <string name="whats_new_title">Wat\'s nuut</string>
+    <string name="whats_new_dismiss">Verstaan</string>
+    <string name="whats_new_v598_title">Help om Android oop te hou</string>
+    <string name="whats_new_v598_body">Google verander die manier waarop jy programme op jou toestel installeer. Ons het jou hulp nodig.</string>
+    <string name="whats_new_v598_action_label">Besoek keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Oor %1$d dag</item>
+        <item quantity="other">Oor %1$d dae</item>
+    </plurals>
+    <string name="holiday_catalog_add">Voeg vakansiekalender by</string>
+    <string name="holiday_catalog_search_label">Soek</string>
+    <string name="holiday_catalog_already_added">Bygevoeg</string>
+    <string name="holiday_catalog_empty">Geen lande gevind nie</string>
+    <string name="holiday_catalog_empty_hint">Probeer \'n ander naam</string>
+    <string name="holiday_catalog_validate_error">Kon nie hierdie kalender bereik nie. Gaan jou verbinding na en probeer weer.</string>
+    <string name="holiday_catalog_attribution">Vakansiekalenders van Mozilla Thunderbird, gelisensieer onder %1$s.</string>
 </resources>

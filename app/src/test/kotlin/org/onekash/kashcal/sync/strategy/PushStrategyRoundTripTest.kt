@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -141,7 +142,7 @@ class PushStrategyRoundTripTest {
     // ==================== UPDATE: Server Event Re-Serialization ====================
 
     @Test
-    fun `UPDATE server event preserves 5 alarms from rawIcal`() {
+    fun `UPDATE server event honors deletion of displayed alarms`() {
         val serverIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -186,7 +187,14 @@ class PushStrategyRoundTripTest {
         val parsed = parser.parseAllEvents(icalData).getOrNull()!!.first()
 
         assertEquals("Server Event - UPDATED", parsed.summary)
-        assertEquals("All 5 alarms preserved from rawIcal", 5, parsed.alarms.size)
+        // All 5 original alarms were within the DISPLAYED set (index < 5), so the
+        // user's 3-reminder list is authoritative: the 2 alarms the user dropped
+        // (-PT1H, -P1D) must not be re-added. Only events with alarms BEYOND the
+        // displayed window (index >= 5) preserve the hidden tail.
+        assertEquals("Deleted displayed alarms are dropped", 3, parsed.alarms.size)
+        val triggers = parsed.alarms.mapNotNull { it.trigger?.let { d -> org.onekash.icaldav.model.ICalAlarm.formatDuration(d) } }
+        assertFalse("dropped -PT1H", triggers.contains("-PT1H"))
+        assertFalse("dropped -P1D", triggers.contains("-P1D"))
     }
 
     @Test

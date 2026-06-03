@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,9 +69,12 @@ fun WheelDurationPicker(
     val hapticFeedback = LocalHapticFeedback.current
     val resources = LocalResources.current
 
-    // Decompose total minutes into wheel components
-    // Round minutes to nearest 5 for wheel display (preserves original until user edits)
-    val (initDays, initHours, initMinsRaw) = minutesToComponents(selectedMinutes)
+    // Decompose total minutes into wheel components.
+    // The wheel only represents non-negative "before" durations. After-start (negative)
+    // offsets such as the all-day "9 AM day of" (-540) are authored via the chip; opening
+    // the wheel on one shows a neutral 0d 0h 0m, and scrolling produces a normal value.
+    val (initDays, initHours, initMinsRaw) =
+        if (selectedMinutes <= 0) Triple(0, 0, 0) else minutesToComponents(selectedMinutes)
     val initMins = roundToWheelStep(initMinsRaw)
 
     var currentDays by remember(selectedMinutes) { mutableIntStateOf(initDays) }
@@ -82,12 +86,21 @@ fun WheelDurationPicker(
     val hourItems = (0..23).toList()
     val minuteItems = (0..55 step 5).toList()
 
+    // Tracks whether the user actually moved a wheel. Until then, an after-midnight
+    // value (e.g. the all-day "9 AM day of" = -540) that the wheel can't represent
+    // shows a neutral 0d 0h 0m but must NOT be silently rewritten to 0 on Done.
+    var touched by remember(selectedMinutes) { mutableStateOf(false) }
+
     // Current total for summary and chip matching
     val currentTotal = componentsToMinutes(currentDays, currentHours, currentMins)
 
+    // Value to commit: the live wheel total once touched, otherwise the original
+    // (preserves a chip-only negative offset when the wheel was merely opened).
+    val committedValue = if (touched || selectedMinutes >= 0) currentTotal else selectedMinutes
+
     fun notifyChange() {
-        val total = componentsToMinutes(currentDays, currentHours, currentMins)
-        onDurationSelected(total)
+        touched = true
+        onDurationSelected(componentsToMinutes(currentDays, currentHours, currentMins))
     }
 
     Column(
@@ -243,7 +256,7 @@ fun WheelDurationPicker(
         // Done button
         FilledTonalButton(
             onClick = {
-                onDurationSelected(currentTotal)
+                onDurationSelected(committedValue)
                 onDismiss()
             },
             modifier = Modifier.align(Alignment.End)

@@ -77,6 +77,7 @@ class SettingsBackupImporterApplyTest {
             accountRepository = accountRepository,
             calendarRepository = calendarRepository,
             icsSubscriptionsDao = icsSubscriptionsDao,
+            context = io.mockk.mockk(relaxed = true),
         )
     }
 

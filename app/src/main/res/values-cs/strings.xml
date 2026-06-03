@@ -63,6 +63,7 @@
     <string name="action_connect">Připojit</string>
     <string name="action_duplicate">Duplikovat</string>
     <string name="action_share">Sdílet</string>
+    <string name="action_share_as_text">Sdílet jako text</string>
     <string name="action_export_ics">Exportovat jako .ics</string>
     <string name="action_confirm_delete">Potvrdit smazání</string>
     <string name="action_delete_event">Smazat událost</string>
@@ -167,6 +168,12 @@
     <string name="onboarding_got_you">Poradíme si.</string>
     <string name="onboarding_connect_prompt">Připojte iCloud a uvidíte své události</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Novinky</string>
+    <string name="whats_new_dismiss">Rozumím</string>
+    <string name="whats_new_v598_title">Pomozte zachovat otevřenost Androidu</string>
+    <string name="whats_new_v598_body">Google mění způsob, jak instalujete aplikace na svém zařízení. Potřebujeme vaši pomoc.</string>
+    <string name="whats_new_v598_action_label">Navštívit keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Připojit iCloud</string>
     <string name="signin_caldav_title">Přidat účet CalDAV</string>
@@ -243,6 +250,12 @@
     <string name="caldav_error_no_calendars">Na tomto serveru nebyly nalezeny žádné kalendáře.</string>
     <string name="caldav_error_unexpected">Neočekávaná chyba. Zkuste to znovu.</string>
 
+    <string name="password_change_error_account_not_found">Účet nenalezen</string>
+    <string name="password_change_error_no_credentials">Žádné existující přihlašovací údaje</string>
+    <string name="password_change_error_unsupported_provider">Tento poskytovatel nepodporuje změnu hesla</string>
+    <string name="password_change_error_invalid">Neplatné heslo</string>
+    <string name="password_change_error_network">Chyba sítě, zkuste to znovu</string>
+
     <string name="error_import_file_not_found">Soubor nenalezen nebo nelze přečíst.</string>
     <string name="error_import_invalid_format">Neplatný formát souboru kalendáře.</string>
     <string name="error_import_partial">Importováno %1$d událostí, %2$d selhalo.</string>
@@ -312,7 +325,7 @@
     <string name="label_server_url">URL serveru</string>
     <string name="label_username">Uživatelské jméno</string>
     <string name="label_password">Heslo</string>
-    <string name="label_display_name_optional">Zobrazovaný název (volitelné)</string>
+    <string name="label_display_name_optional">Zobrazovaný název</string>
 
     <string name="placeholder_search_events">Hledat události…</string>
 
@@ -527,7 +540,10 @@
     <string name="drawer_calendars">Kalendáře</string>
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendáře zařízení</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Sdílet zpětnou vazbu</string>
+
+    <string name="event_title_fallback">Událost</string>
 
     <string name="status_privacy_tagline">Pro vás, ne vaše data.</string>
     <string name="action_keep_it_that_way">Zachovejme to</string>
@@ -1234,4 +1250,17 @@
     <string name="share_as_card_chooser_title">Sdílet událost</string>
     <string name="share_as_card_share_failed">Kartu se nepodařilo sdílet</string>
     <string name="share_from_kashcal_footer">Sdíleno z KashCal</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Za %1$d den</item>
+        <item quantity="few">Za %1$d dny</item>
+        <item quantity="many">Za %1$d dne</item>
+        <item quantity="other">Za %1$d dní</item>
+    </plurals>
+    <string name="holiday_catalog_add">Přidat kalendář svátků</string>
+    <string name="holiday_catalog_search_label">Hledat</string>
+    <string name="holiday_catalog_already_added">Přidáno</string>
+    <string name="holiday_catalog_empty">Nebyly nalezeny žádné země</string>
+    <string name="holiday_catalog_empty_hint">Zkuste jiný název</string>
+    <string name="holiday_catalog_validate_error">Tento kalendář se nepodařilo načíst. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="holiday_catalog_attribution">Kalendáře svátků od Mozilla Thunderbird, licencováno pod %1$s.</string>
 </resources>

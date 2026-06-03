@@ -173,6 +173,8 @@ data class HomeUiState(
     // === UI DIALOGS/SHEETS ===
     /** Show onboarding for first-time users */
     val showOnboardingSheet: Boolean = false,
+    /** Release notes the upgraded user hasn't acknowledged yet (sorted ascending by versionCode). */
+    val whatsNewReleases: ImmutableList<org.onekash.kashcal.domain.whatsnew.ReleaseNote> = persistentListOf(),
     /** Show app info sheet */
     val showAppInfoSheet: Boolean = false,
     /** Show share-availability bottom sheet */

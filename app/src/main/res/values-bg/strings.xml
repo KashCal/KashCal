@@ -63,6 +63,7 @@
     <string name="action_connect">Свържи</string>
     <string name="action_duplicate">Дублирай</string>
     <string name="action_share">Сподели</string>
+    <string name="action_share_as_text">Сподели като текст</string>
     <string name="action_export_ics">Експортирай като .ics</string>
     <string name="action_confirm_delete">Потвърди изтриването</string>
     <string name="action_delete_event">Изтрий събитие</string>
@@ -75,6 +76,10 @@
     <string name="rsvp_modified_snackbar">Отговорът за %1$s не успя — събитието беше променено. Моля, отговорете отново.</string>
     <string name="invitees_host_tag">Домакин</string>
     <string name="invitees_summary_you_alone">Ти</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">След %1$d ден</item>
+        <item quantity="other">След %1$d дни</item>
+    </plurals>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ти · %d поканен</item>
         <item quantity="other">Ти · %d поканен</item>
@@ -263,6 +268,12 @@
     <string name="caldav_error_no_calendars">Не са намерени календари на този сървър.</string>
     <string name="caldav_error_unexpected">Неочаквана грешка. Опитайте отново.</string>
 
+    <string name="password_change_error_account_not_found">Акаунтът не е намерен</string>
+    <string name="password_change_error_no_credentials">Няма съществуващи идентификационни данни</string>
+    <string name="password_change_error_unsupported_provider">Този доставчик не поддържа смяна на паролата</string>
+    <string name="password_change_error_invalid">Невалидна парола</string>
+    <string name="password_change_error_network">Мрежова грешка, опитайте отново</string>
+
     <string name="error_import_file_not_found">Файлът не е намерен или не може да бъде прочетен.</string>
     <string name="error_import_invalid_format">Невалиден формат на файл с календар.</string>
     <string name="error_import_partial">Импортирани %1$d събития, %2$d неуспешни.</string>
@@ -332,7 +343,7 @@
     <string name="label_server_url">URL на сървъра</string>
     <string name="label_username">Потребителско име</string>
     <string name="label_password">Парола</string>
-    <string name="label_display_name_optional">Показвано име (незадължително)</string>
+    <string name="label_display_name_optional">Показвано име</string>
 
     <string name="placeholder_search_events">Търсене на събития…</string>
 
@@ -569,7 +580,10 @@
     <string name="drawer_calendars">Календари</string>
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календари на устройството</string>
+    <string name="drawer_account_offline">Офлайн</string>
     <string name="drawer_share_feedback">Споделете обратна връзка</string>
+
+    <string name="event_title_fallback">Събитие</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">За вас, не за вашите данни.</string>
@@ -1171,4 +1185,17 @@
     <string name="attendee_section_pending">Чакащи</string>
     <string name="attendee_section_declined">Отказали</string>
     <string name="attendee_section_delegated">Делегирани</string>
+    <string name="whats_new_title">Какво ново</string>
+    <string name="whats_new_dismiss">Разбрах</string>
+    <string name="whats_new_v598_title">Помогни Android да остане отворен</string>
+    <string name="whats_new_v598_body">Google променя начина, по който инсталираш приложения на устройството си. Нуждаем се от твоята помощ.</string>
+    <string name="whats_new_v598_action_label">Посети keepandroidopen.org</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Добавяне на календар с празници</string>
+    <string name="holiday_catalog_search_label">Търсене</string>
+    <string name="holiday_catalog_already_added">Добавено</string>
+    <string name="holiday_catalog_empty">Няма намерени държави</string>
+    <string name="holiday_catalog_empty_hint">Опитай с друго име</string>
+    <string name="holiday_catalog_validate_error">Този календар не можа да бъде достигнат. Провери връзката и опитай отново.</string>
+    <string name="holiday_catalog_attribution">Календари с празници от Mozilla Thunderbird, лицензирани под %1$s.</string>
 </resources>

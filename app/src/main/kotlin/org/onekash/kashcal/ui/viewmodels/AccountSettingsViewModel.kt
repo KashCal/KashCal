@@ -1,9 +1,11 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -135,6 +137,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val backupImporter: SettingsBackupImporter,
     private val permissionChecker: PermissionChecker,
     private val icsScheduler: IcsScheduler,
+    @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
@@ -384,7 +387,18 @@ class AccountSettingsViewModel @Inject constructor(
                 eventCoordinator.getAllCalendars(),
                 eventCoordinator.getAllAccounts()
             ) { calendarList, accounts ->
-                val groups = CalendarGroup.fromCalendarsAndAccounts(calendarList, accounts)
+                val groups = CalendarGroup.fromCalendarsAndAccounts(
+                    calendarList,
+                    accounts,
+                    localLabel = context.getString(R.string.drawer_account_offline),
+                    icsLabel = context.getString(R.string.subscriptions_title),
+                    localizeCalendarName = { cal ->
+                        org.onekash.kashcal.data.contacts.ContactEventType
+                            .fromCaldavUrl(cal.caldavUrl)
+                            ?.calendarDisplayName(context.resources)
+                            ?: cal.displayName
+                    }
+                )
                 calendarList to groups
             }.collect { (calendarList, groups) ->
                 _calendars.value = calendarList
@@ -2301,13 +2315,13 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val account = accountRepository.getAccountById(accountId)
             if (account == null) {
-                onResult(Result.failure(Exception("Account not found")))
+                onResult(Result.failure(Exception(context.getString(R.string.password_change_error_account_not_found))))
                 return@launch
             }
 
             val oldCredentials = accountRepository.getCredentials(accountId)
             if (oldCredentials == null) {
-                onResult(Result.failure(Exception("No existing credentials")))
+                onResult(Result.failure(Exception(context.getString(R.string.password_change_error_no_credentials))))
                 return@launch
             }
 
@@ -2320,7 +2334,7 @@ class AccountSettingsViewModel @Inject constructor(
                 AccountProvider.ICLOUD -> discoveryService.refreshCalendars(accountId)
                 AccountProvider.CALDAV -> calDavDiscoveryService.refreshCalendars(accountId)
                 else -> {
-                    onResult(Result.failure(Exception("Provider does not support password change")))
+                    onResult(Result.failure(Exception(context.getString(R.string.password_change_error_unsupported_provider))))
                     return@launch
                 }
             }
@@ -2336,12 +2350,12 @@ class AccountSettingsViewModel @Inject constructor(
                 is DiscoveryResult.AuthError -> {
                     // Revert to old credentials
                     accountRepository.saveCredentials(accountId, oldCredentials)
-                    onResult(Result.failure(Exception("Invalid password")))
+                    onResult(Result.failure(Exception(context.getString(R.string.password_change_error_invalid))))
                 }
                 is DiscoveryResult.Error -> {
                     // Revert to old credentials
                     accountRepository.saveCredentials(accountId, oldCredentials)
-                    onResult(Result.failure(Exception("Network error, try again")))
+                    onResult(Result.failure(Exception(context.getString(R.string.password_change_error_network))))
                 }
             }
         }

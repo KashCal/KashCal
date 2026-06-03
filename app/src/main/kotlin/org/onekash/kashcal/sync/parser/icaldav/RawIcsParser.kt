@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
+import org.onekash.icaldav.model.AlarmAction
 import org.onekash.icaldav.model.ICalAlarm
 import org.onekash.icaldav.parser.ICalParser
 
@@ -29,7 +30,10 @@ object RawIcsParser {
 
         return try {
             val events = parser.parseAllEvents(rawIcal).getOrNull()
-            events?.firstOrNull()?.alarms.orEmpty()
+            // Exclude RFC 9074 ACTION:NONE sentinels (Apple's "no action" placeholder),
+            // matching ICalEventMapper so the >3-alarm scheduling path can never turn a
+            // sentinel into a phantom reminder. All callers here (triggers, count) inherit this.
+            events?.firstOrNull()?.alarms.orEmpty().filter { it.action != AlarmAction.NONE }
         } catch (_: Exception) {
             emptyList()
         }

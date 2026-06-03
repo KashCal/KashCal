@@ -63,6 +63,7 @@
     <string name="action_connect">አገናኝ</string>
     <string name="action_duplicate">ቅዳ</string>
     <string name="action_share">አጋራ</string>
+    <string name="action_share_as_text">እንደ ጽሑፍ አጋራ</string>
     <string name="action_export_ics">እንደ .ics ላክ</string>
     <string name="action_confirm_delete">ሰርዝ አረጋግጥ</string>
     <string name="action_delete_event">ክስተት ሰርዝ</string>
@@ -264,6 +265,12 @@
     <string name="caldav_error_no_calendars">በዚህ አገልጋይ ላይ የቀን መቁጠሪያዎች አልተገኙም።</string>
     <string name="caldav_error_unexpected">ያልተጠበቀ ስህተት። እባክዎ እንደገና ይሞክሩ።</string>
 
+    <string name="password_change_error_account_not_found">መለያው አልተገኘም</string>
+    <string name="password_change_error_no_credentials">ምንም ነባር ምስክርነቶች የሉም</string>
+    <string name="password_change_error_unsupported_provider">ይህ አቅራቢ የይለፍ ቃል መቀየርን አይደግፍም</string>
+    <string name="password_change_error_invalid">ልክ ያልሆነ የይለፍ ቃል</string>
+    <string name="password_change_error_network">የአውታረ መረብ ስህተት፣ እባክዎ እንደገና ይሞክሩ</string>
+
     <string name="error_import_file_not_found">ፋይል አልተገኘም ወይም ሊነበብ አይችልም።</string>
     <string name="error_import_invalid_format">ልክ ያልሆነ የቀን መቁጠሪያ ፋይል ቅርጸት።</string>
     <string name="error_import_partial">%1$d ክስተቶች ገብተዋል፣ %2$d አልተሳኩም።</string>
@@ -333,7 +340,7 @@
     <string name="label_server_url">የአገልጋይ URL</string>
     <string name="label_username">የተጠቃሚ ስም</string>
     <string name="label_password">የይለፍ ቃል</string>
-    <string name="label_display_name_optional">የማሳያ ስም (አማራጭ)</string>
+    <string name="label_display_name_optional">የማሳያ ስም</string>
 
     <string name="placeholder_search_events">ክስተቶችን ፈልግ…</string>
 
@@ -565,7 +572,10 @@
     <string name="drawer_calendars">ቀን መቁጠሪያዎች</string>
     <string name="drawer_contacts">እውቂያዎች</string>
     <string name="drawer_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
+    <string name="drawer_account_offline">ከመስመር ውጭ</string>
     <string name="drawer_share_feedback">አስተያየት አጋራ</string>
+
+    <string name="event_title_fallback">ክስተት</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">ለአንተ፣ ለመረጃህ አይደለም።</string>
@@ -1169,4 +1179,20 @@
     <string name="attendee_section_pending">በመጠባበቅ</string>
     <string name="attendee_section_declined">ተቃውመዋል</string>
     <string name="attendee_section_delegated">ተወክሏል</string>
+    <string name="whats_new_title">አዲስ ምን አለ</string>
+    <string name="whats_new_dismiss">ገብቶኛል</string>
+    <string name="whats_new_v598_title">Android ክፍት ሆኖ እንዲቆይ ይርዱ</string>
+    <string name="whats_new_v598_body">Google መሣሪያዎ ላይ መተግበሪያዎችን የሚጭኑበትን መንገድ እየለወጠ ነው። እርዳታዎ ያስፈልገናል።</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org ን ይጎብኙ</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">በ%1$d ቀን ውስጥ</item>
+        <item quantity="other">በ%1$d ቀናት ውስጥ</item>
+    </plurals>
+    <string name="holiday_catalog_add">የበዓል ቀን መቁጠሪያ አክል</string>
+    <string name="holiday_catalog_search_label">ፈልግ</string>
+    <string name="holiday_catalog_already_added">ታክሏል</string>
+    <string name="holiday_catalog_empty">ምንም አገሮች አልተገኙም</string>
+    <string name="holiday_catalog_empty_hint">የተለየ ስም ይሞክሩ</string>
+    <string name="holiday_catalog_validate_error">ይህን ቀን መቁጠሪያ መድረስ አልተቻለም። ግንኙነትዎን ይፈትሹና እንደገና ይሞክሩ።</string>
+    <string name="holiday_catalog_attribution">የበዓል ቀን መቁጠሪያዎች ከ Mozilla Thunderbird፣ በ%1$s ስር ፈቃድ ተሰጥቷቸዋል።</string>
 </resources>

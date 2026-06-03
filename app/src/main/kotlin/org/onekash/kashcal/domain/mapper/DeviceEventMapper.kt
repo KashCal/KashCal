@@ -92,13 +92,21 @@ fun DeviceEvent.toFormState(
 
 /**
  * Compute end timestamp from duration (for recurring) or endTs (for single events).
+ *
+ * For recurring all-day events, parseDurationToMillis returns whole-day milliseconds
+ * (P1D = 86_400_000), so startTs + duration yields the exclusive next-day midnight.
+ * Roll back 1 ms to match KashCal's inclusive last-ms-of-last-day convention — the
+ * same convention non-recurring all-day events arrive in via inclusiveEndForDeviceEvent.
+ * Without this, the edit form's date picker would show the day after the event's
+ * actual last day for any recurring all-day event.
  */
 private fun DeviceEvent.computeEndTs(): Long? {
     // For recurring events, CalendarProvider uses DURATION instead of DTEND
     if (!duration.isNullOrEmpty()) {
         val durationMs = DateTimeUtils.parseDurationToMillis(duration)
         if (durationMs != null) {
-            return startTs + durationMs
+            val rawEnd = startTs + durationMs
+            return if (isAllDay && rawEnd > startTs) rawEnd - 1 else rawEnd
         }
     }
 

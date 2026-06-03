@@ -212,13 +212,11 @@ class MultiServerScopeSheetWireTest(
         // Documented server quirks (see docs/RECURRING_EDIT_FIXTURE_FINDINGS.md):
         // - Zoho strips ATTENDEEs/ORGANIZER on synthetic-organizer PUTs and
         //   collapses the master+exception bundle.
-        // - mxRoute splits master and exception into separate hrefs; the
-        //   single-href fetch returns only the master without RECURRENCE-ID.
         // Same skip applied to MultiServerCalDavWorkflowTest's '08 edit
         // single occurrence with RECURRENCE-ID' upstream.
         assumeTrue(
             "${config.name} collapses master+exception bundle on single-href fetch (documented quirk)",
-            config.name != "Zoho" && config.name != "mxRoute",
+            config.name != "Zoho",
         )
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
@@ -715,8 +713,7 @@ END:VCALENDAR
         // the captured RECURRENCE-ID line so the per-server behavior is
         // visible in test output without coupling the assertion to a
         // specific normalization choice (different servers do different
-        // things — most preserve verbatim, Zoho strips RECURRENCE-ID,
-        // mxRoute drops bundled exceptions entirely).
+        // things — most preserve verbatim, Zoho strips RECURRENCE-ID).
         val recurrenceIdLines = unfolded.lines()
             .filter { it.startsWith("RECURRENCE-ID") }
         // Some servers normalize/strip the mismatched form. That's a
@@ -725,7 +722,7 @@ END:VCALENDAR
         // normalization to a code defect.
         assumeTrue(
             "Server stripped or normalized RECURRENCE-ID on ${config.name} " +
-                "(known quirks: Zoho strips, mxRoute drops bundled exceptions). " +
+                "(known quirks: Zoho strips). " +
                 "Server-side mitigation; KashCal pull not affected on this server.",
             recurrenceIdLines.isNotEmpty()
         )

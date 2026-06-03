@@ -328,28 +328,27 @@ object ContactEventUtils {
     }
 
     /**
-     * Convert reminder minutes to ISO 8601 duration format.
-     * Positive minutes = before event (negative trigger in iCal).
+     * Convert reminder minutes to ISO 8601 duration trigger.
+     *
+     * Signed "minutes before start" (Android CalendarContract convention): positive =
+     * before the start (negative iCal trigger), negative = after the start (positive
+     * iCal trigger). e.g. 900 -> "-PT15H" (15h before), -540 -> "PT9H" (9h after),
+     * 0 -> "PT0M" (at start). Uses hour-form (never period -P_D) so all-day offsets
+     * are DST-stable as exact durations.
      */
     fun minutesToIsoDuration(minutes: Int): String {
-        return when {
-            minutes <= 0 -> "PT0M"
-            minutes < 60 -> "-PT${minutes}M"
-            minutes < 1440 -> {
-                val hours = minutes / 60
-                val mins = minutes % 60
-                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
-            }
-            minutes < 10080 -> { // Less than 1 week
-                val days = minutes / 1440
-                val hours = (minutes % 1440) / 60
-                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
-            }
-            else -> {
-                val weeks = minutes / 10080
-                "-P${weeks}W"
-            }
+        if (minutes == 0) return "PT0M"
+        // Sign of the iCal trigger is the negation of the "minutes before" sign.
+        val sign = if (minutes > 0) "-" else ""
+        val abs = kotlin.math.abs(minutes)
+        val hours = abs / 60
+        val mins = abs % 60
+        val body = when {
+            hours == 0 -> "T${mins}M"
+            mins == 0 -> "T${hours}H"
+            else -> "T${hours}H${mins}M"
         }
+        return "${sign}P$body"
     }
 
     private fun isValidMonthDay(month: Int, day: Int): Boolean {

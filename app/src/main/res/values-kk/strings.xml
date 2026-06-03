@@ -63,6 +63,7 @@
     <string name="action_connect">Қосылу</string>
     <string name="action_duplicate">Көшірмелеу</string>
     <string name="action_share">Бөлісу</string>
+    <string name="action_share_as_text">Мәтін ретінде бөлісу</string>
     <string name="action_export_ics">.ics ретінде экспорттау</string>
     <string name="action_confirm_delete">Жоюды растау</string>
     <string name="action_delete_event">Оқиғаны жою</string>
@@ -264,6 +265,12 @@
     <string name="caldav_error_no_calendars">Бұл серверде күнтізбелер табылмады.</string>
     <string name="caldav_error_unexpected">Күтпеген қате. Қайталап көріңіз.</string>
 
+    <string name="password_change_error_account_not_found">Аккаунт табылмады</string>
+    <string name="password_change_error_no_credentials">Бар тіркелгі деректері жоқ</string>
+    <string name="password_change_error_unsupported_provider">Бұл провайдер құпия сөзді өзгертуді қолдамайды</string>
+    <string name="password_change_error_invalid">Жарамсыз құпия сөз</string>
+    <string name="password_change_error_network">Желі қатесі, қайталап көріңіз</string>
+
     <string name="error_import_file_not_found">Файл табылмады немесе оқу мүмкін емес.</string>
     <string name="error_import_invalid_format">Жарамсыз күнтізбе файл пішімі.</string>
     <string name="error_import_partial">%1$d оқиға импортталды, %2$d сәтсіз.</string>
@@ -333,7 +340,7 @@
     <string name="label_server_url">Сервер URL</string>
     <string name="label_username">Пайдаланушы аты</string>
     <string name="label_password">Құпия сөз</string>
-    <string name="label_display_name_optional">Көрсетілетін атау (міндетті емес)</string>
+    <string name="label_display_name_optional">Көрсетілетін атау</string>
 
     <string name="placeholder_search_events">Оқиғаларды іздеу…</string>
 
@@ -565,7 +572,10 @@
     <string name="drawer_calendars">Күнтізбелер</string>
     <string name="drawer_contacts">Контактілер</string>
     <string name="drawer_device_calendars">Құрылғы күнтізбелері</string>
+    <string name="drawer_account_offline">Желіден тыс</string>
     <string name="drawer_share_feedback">Пікір білдіру</string>
+
+    <string name="event_title_fallback">Оқиға</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Сіз үшін, деректеріңіз үшін емес.</string>
@@ -1170,4 +1180,20 @@
     <string name="attendee_section_pending">Күтуде</string>
     <string name="attendee_section_declined">Бас тартты</string>
     <string name="attendee_section_delegated">Тапсырды</string>
+    <string name="whats_new_title">Не жаңалық</string>
+    <string name="whats_new_dismiss">Түсіндім</string>
+    <string name="whats_new_v598_title">Android ашық қалуына көмектесіңіз</string>
+    <string name="whats_new_v598_body">Google құрылғыңызға қолданбаларды орнату тәсілін өзгертуде. Сіздің көмегіңіз қажет.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org сайтына кіру</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d күннен кейін</item>
+        <item quantity="other">%1$d күннен кейін</item>
+    </plurals>
+    <string name="holiday_catalog_add">Мереке күнтізбесін қосу</string>
+    <string name="holiday_catalog_search_label">Іздеу</string>
+    <string name="holiday_catalog_already_added">Қосылды</string>
+    <string name="holiday_catalog_empty">Ел табылмады</string>
+    <string name="holiday_catalog_empty_hint">Басқа атауды қолданып көріңіз</string>
+    <string name="holiday_catalog_validate_error">Бұл күнтізбеге қосылу мүмкін болмады. Байланысыңызды тексеріп, қайталап көріңіз.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird мереке күнтізбелері, %1$s аясында лицензияланған.</string>
 </resources>

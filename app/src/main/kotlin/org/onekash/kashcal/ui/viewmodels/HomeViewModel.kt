@@ -1,9 +1,11 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -31,11 +33,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.identity.canEditAsOrganizer
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -61,6 +65,11 @@ import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.domain.whatsnew.ALL_RELEASE_NOTES
+import org.onekash.kashcal.domain.whatsnew.WhatsNewGate
+import org.onekash.kashcal.domain.whatsnew.WhatsNewSeeder
+import org.onekash.kashcal.BuildConfig
+import org.onekash.kashcal.KashCalApplication
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.computeDurationString
 import org.onekash.kashcal.util.importEventsToDeviceCalendar
@@ -108,6 +117,7 @@ class HomeViewModel(
     private val networkMonitor: NetworkMonitor,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
+    private val context: Context,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val currentDayCodeProvider: () -> Int
 ) : ViewModel() {
@@ -123,6 +133,7 @@ class HomeViewModel(
         networkMonitor: NetworkMonitor,
         calendarProviderRepository: CalendarProviderRepository,
         attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
+        @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ) : this(
         eventCoordinator,
@@ -134,6 +145,7 @@ class HomeViewModel(
         networkMonitor,
         calendarProviderRepository,
         attendeeBackfill,
+        context,
         ioDispatcher,
         { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
     )
@@ -458,6 +470,13 @@ class HomeViewModel(
                     _uiState.update { it.copy(showOnboardingSheet = true) }
                 }
             }
+
+            // What's New: surface release notes the user hasn't acknowledged.
+            // Onboarding takes the screen on first launch — defer to it; the
+            // sheet will appear on the next cold start. Also silently records
+            // the current version on the very first launch (lastShown == 0)
+            // so future upgrades are detected.
+            initializeWhatsNew()
 
             // Load persisted view from DataStore before building UI.
             // Seed previousNonInsightsMode from the same persisted default so back-from-Insights
@@ -860,7 +879,18 @@ class HomeViewModel(
                         is DefaultCalendar.Device -> userPrefDefault
                         null -> null
                     }
-                    val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+                    val groups = CalendarGroup.fromCalendarsAndAccounts(
+                        calendars,
+                        accounts,
+                        localLabel = context.getString(R.string.drawer_account_offline),
+                        icsLabel = context.getString(R.string.subscriptions_title),
+                        localizeCalendarName = { cal ->
+                            org.onekash.kashcal.data.contacts.ContactEventType
+                                .fromCaldavUrl(cal.caldavUrl)
+                                ?.calendarDisplayName(context.resources)
+                                ?: cal.displayName
+                        }
+                    )
                     val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
                     CalendarsSnapshot(calendars, groups, validatedDefault, deviceGroups)
@@ -918,7 +948,18 @@ class HomeViewModel(
                         is DefaultCalendar.Device -> userPrefDefault
                         null -> null
                     }
-                    val calGroups = CalendarGroup.fromCalendarsAndAccounts(cals, accounts)
+                    val calGroups = CalendarGroup.fromCalendarsAndAccounts(
+                        cals,
+                        accounts,
+                        localLabel = context.getString(R.string.drawer_account_offline),
+                        icsLabel = context.getString(R.string.subscriptions_title),
+                        localizeCalendarName = { cal ->
+                            org.onekash.kashcal.data.contacts.ContactEventType
+                                .fromCaldavUrl(cal.caldavUrl)
+                                ?.calendarDisplayName(context.resources)
+                                ?: cal.displayName
+                        }
+                    )
                     val deviceEnabled = dataStore.getDeviceCalendarsEnabled()
                     val enabledIds = dataStore.getEnabledDeviceCalendarIds()
                     val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
@@ -2183,9 +2224,78 @@ class HomeViewModel(
     }
 
     fun dismissOnboardingSheet() {
-        _uiState.update { it.copy(showOnboardingSheet = false) }
         viewModelScope.launch {
-            dataStore.setOnboardingDismissed(true)
+            // Persist first so a process death between UI clear and write
+            // can't re-show the sheet on next launch.
+            try {
+                dataStore.setOnboardingDismissed(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to persist onboarding dismissal", e)
+            }
+            _uiState.update { it.copy(showOnboardingSheet = false) }
+        }
+    }
+
+    /**
+     * If DataStore has no record yet (default 0), seed it from the
+     * application-level upgrade signal so existing users from before this
+     * feature shipped see release-note content for any release they
+     * upgraded into. True fresh installs still record current and stay
+     * silent. After seeding, run the gate against authored releases.
+     *
+     * DataStore IO failures must never propagate from a viewModelScope.launch
+     * — they would escape to Looper.main and crash the app on cold start.
+     */
+    private suspend fun initializeWhatsNew() {
+        try {
+            val current = BuildConfig.VERSION_CODE
+            val initialDsLastShown = dataStore.getLastWhatsNewVersionShown()
+            val seedValue = if (initialDsLastShown == 0) {
+                val prefs = context.getSharedPreferences(KashCalApplication.PREFS_NAME, Context.MODE_PRIVATE)
+                val prevVersion = prefs.getInt(KashCalApplication.KEY_PREVIOUS_VERSION, 0)
+                WhatsNewSeeder.decideSeed(initialDsLastShown, prevVersion, current)
+            } else {
+                null
+            }
+            val effectiveLastShown = if (seedValue != null) {
+                dataStore.setLastWhatsNewVersionShown(seedValue)
+                seedValue
+            } else {
+                initialDsLastShown
+            }
+            val toShow = WhatsNewGate.releasesToShow(
+                releases = ALL_RELEASE_NOTES,
+                lastShownVersion = effectiveLastShown,
+                currentVersion = current,
+            )
+            if (toShow.isNotEmpty()) {
+                _uiState.update { it.copy(whatsNewReleases = toShow.toPersistentList()) }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to initialize What's New state", e)
+        }
+    }
+
+    fun dismissWhatsNewSheet() {
+        // Re-entry guard: ModalBottomSheet's onDismissRequest can fire
+        // multiple times during the dismiss animation. The empty-list check
+        // makes a second call a no-op so we don't launch duplicate writes.
+        if (_uiState.value.whatsNewReleases.isEmpty()) return
+        viewModelScope.launch {
+            // Persist first so a process death between UI clear and write
+            // can't re-show release notes on next launch.
+            try {
+                dataStore.setLastWhatsNewVersionShown(BuildConfig.VERSION_CODE)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to persist What's New dismissal", e)
+            }
+            _uiState.update { it.copy(whatsNewReleases = persistentListOf()) }
         }
     }
 
@@ -3702,8 +3812,11 @@ class HomeViewModel(
 
     /**
      * Build device reminders list from form minutes.
-     * Returns list of minutes (not ISO format like Room events).
-     * Deduplicates and sorts before returning.
+     *
+     * Intentional pass-through: the form's signed "minutes before start" already matches
+     * Android CalendarContract.Reminders.MINUTES exactly (positive = before start, negative
+     * = after). So an all-day "9 AM day of" (Int -540) is stored as MINUTES = -540 verbatim,
+     * with no transform or clamping. Returns minutes (not ISO format like Room events).
      */
     private fun buildDeviceReminders(reminderMinutes: List<Int>): List<Int> {
         return deduplicateAndSortReminders(reminderMinutes)
@@ -3721,17 +3834,13 @@ class HomeViewModel(
     }
 
     /**
-     * Convert minutes to ISO 8601 duration format.
-     * e.g., 15 minutes -> "-PT15M", 60 minutes -> "-PT1H"
+     * Convert signed reminder minutes to an ISO 8601 duration trigger.
+     * Positive minutes = before start ("-PT..."), negative = after start ("PT..."),
+     * 0 = at start. Hour-form only (no period -P_D) for DST-stable exact durations.
+     * Delegates to the shared [ContactEventUtils.minutesToIsoDuration] encoder.
      */
-    private fun minutesToIsoDuration(minutes: Int): String {
-        return when {
-            minutes == 0 -> "-PT0M"
-            minutes >= 1440 && minutes % 1440 == 0 -> "-P${minutes / 1440}D"
-            minutes >= 60 && minutes % 60 == 0 -> "-PT${minutes / 60}H"
-            else -> "-PT${minutes}M"
-        }
-    }
+    private fun minutesToIsoDuration(minutes: Int): String =
+        ContactEventUtils.minutesToIsoDuration(minutes)
 
     /**
      * Get local calendar ID for fallback.

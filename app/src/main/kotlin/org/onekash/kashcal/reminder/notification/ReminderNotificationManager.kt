@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.abs
 
 /**
  * Builds and shows reminder notifications with Snooze/Dismiss actions.
@@ -100,8 +99,19 @@ class ReminderNotificationManager @Inject constructor(
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setColor(reminder.calendarColor)
             .setContentIntent(createOpenAppIntent(reminder))
-            .setWhen(reminder.occurrenceTime + 30_000L)
-            .setShowWhen(true)
+
+        // All-day events store occurrenceTime as UTC midnight; rendering it in the
+        // notification header shows a misleading timezone-shifted clock time. The
+        // body already carries a relative-day subtitle (Today / Tomorrow / In N days),
+        // so suppress the header timestamp for all-day reminders. Timed reminders keep
+        // it as a live countdown to the event start.
+        if (!reminder.isAllDay) {
+            builder
+                .setWhen(reminder.occurrenceTime + 30_000L)
+                .setShowWhen(true)
+        } else {
+            builder.setShowWhen(false)
+        }
 
         // Add location if available
         reminder.eventLocation?.let { location ->
@@ -136,9 +146,11 @@ class ReminderNotificationManager @Inject constructor(
      *
      * For all-day events: shows "Today" or relative duration.
      *
-     * The absolute time complements Android's live countdown in the
-     * notification header (set via setWhen), giving users two useful
-     * pieces of information: when the event starts and how long until then.
+     * For timed events the absolute time complements Android's live countdown
+     * in the notification header (set via setWhen), giving users both the start
+     * time and how long until then. All-day reminders suppress that header
+     * timestamp (occurrenceTime is UTC midnight, which renders as a misleading
+     * shifted clock time), so the relative-day subtitle stands alone.
      *
      * @param reminder The scheduled reminder
      * @return Formatted content text
@@ -148,7 +160,9 @@ class ReminderNotificationManager @Inject constructor(
 
         return when {
             reminder.isAllDay -> {
-                if (diffMs < 0) context.getString(R.string.label_today) else formatTimeUntil(diffMs)
+                // All-day events have no clock-time start; show a relative-day subtitle
+                // (Today / Tomorrow / In N days) based on the event's local date.
+                formatAllDayRelative(reminder.occurrenceTime, reminder.triggerTime)
             }
             diffMs <= 0 -> context.getString(R.string.notification_starting_now)
             else -> {
@@ -177,25 +191,14 @@ class ReminderNotificationManager @Inject constructor(
     }
 
     /**
-     * Format time duration for display.
+     * Relative-day subtitle for an all-day reminder: "Today" / "Tomorrow" / "In N days".
      * Used by the all-day event path in [formatNotificationContent].
-     *
-     * @param durationMs Duration in milliseconds
-     * @return Human-readable duration (e.g., "15 minutes", "1 hour 30 minutes")
      */
-    fun formatTimeUntil(durationMs: Long): String {
-        val totalMinutes = (abs(durationMs) / 60_000).toInt()
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-
-        return when {
-            hours == 0 -> context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-            minutes == 0 -> context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
-            else -> {
-                val hourPart = context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
-                val minutePart = context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-                "$hourPart $minutePart"
-            }
+    fun formatAllDayRelative(occurrenceTimeUtcMidnight: Long, triggerTime: Long): String {
+        return when (val days = DateTimeUtils.allDayRelativeDays(occurrenceTimeUtcMidnight, triggerTime)) {
+            0 -> context.getString(R.string.label_today)
+            1 -> context.getString(R.string.label_tomorrow)
+            else -> context.resources.getQuantityString(R.plurals.reminder_in_days, days, days)
         }
     }
 

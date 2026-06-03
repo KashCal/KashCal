@@ -1,6 +1,7 @@
 package org.onekash.kashcal.data.contacts
 
 import android.content.ContentResolver
+import android.content.Context
 import android.database.Cursor
 import android.provider.ContactsContract
 import android.util.Log
@@ -50,7 +51,8 @@ abstract class BaseContactEventRepository(
     private val eventReader: EventReader,
     private val contentResolver: ContentResolver,
     protected val dataStore: KashCalDataStore,
-    protected val eventType: ContactEventType
+    protected val eventType: ContactEventType,
+    protected val context: Context
 ) {
     private val tag: String get() = eventType.logTag
 
@@ -93,7 +95,7 @@ abstract class BaseContactEventRepository(
             account = Account(
                 provider = AccountProvider.CONTACTS,
                 email = eventType.accountEmail,
-                displayName = eventType.calendarDisplayName
+                displayName = eventType.calendarDisplayName(context.resources)
             )
             val accountId = accountRepository.createAccount(account)
             account = account.copy(id = accountId)
@@ -110,7 +112,7 @@ abstract class BaseContactEventRepository(
         val calendar = Calendar(
             accountId = account.id,
             caldavUrl = eventType.localCalendarUrl,
-            displayName = eventType.calendarDisplayName,
+            displayName = eventType.calendarDisplayName(context.resources),
             color = color,
             isReadOnly = true,
             isVisible = true,
@@ -166,10 +168,10 @@ abstract class BaseContactEventRepository(
     suspend fun syncEvents(): ContactEventSyncResult = withContext(Dispatchers.IO) {
         try {
             val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, eventType.accountEmail)
-                ?: return@withContext ContactEventSyncResult.Error("${eventType.calendarDisplayName} calendar not created")
+                ?: return@withContext ContactEventSyncResult.Error("${eventType.calendarDisplayName(context.resources)} calendar not created")
 
             val calendar = calendarsDao.getByAccountIdOnce(account.id).firstOrNull()
-                ?: return@withContext ContactEventSyncResult.Error("${eventType.calendarDisplayName} calendar not created")
+                ?: return@withContext ContactEventSyncResult.Error("${eventType.calendarDisplayName(context.resources)} calendar not created")
 
             val calendarId = calendar.id
 
@@ -191,7 +193,7 @@ abstract class BaseContactEventRepository(
             var deleted = 0
 
             // Pre-compute loop-invariant values
-            val expectedReminders = if (reminderMinutes > 0) {
+            val expectedReminders = if (reminderMinutes != KashCalDataStore.REMINDER_OFF) {
                 listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
             } else {
                 null
@@ -335,7 +337,7 @@ abstract class BaseContactEventRepository(
         val endTs = DateTimeUtils.utcMidnightToEndOfDay(startTs)
 
         // Convert reminder minutes to ISO 8601 duration format
-        val reminders = if (reminderMinutes > 0) {
+        val reminders = if (reminderMinutes != KashCalDataStore.REMINDER_OFF) {
             listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
         } else {
             null

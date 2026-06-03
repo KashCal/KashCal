@@ -495,12 +495,13 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals(5, entity.sequence)
 
-        // IcsPatcher increments sequence on update
+        // IcsPatcher serializes SEQUENCE verbatim; the bump decision lives
+        // upstream in EventWriter (SequenceBumper), not in the serializer.
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Sequence incremented by IcsPatcher.patch()
-        assertEquals(6, event2.sequence)
+        // Sequence preserved through the serialize round-trip
+        assertEquals(5, event2.sequence)
     }
 
     @Test

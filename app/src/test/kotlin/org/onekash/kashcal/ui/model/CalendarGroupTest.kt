@@ -19,6 +19,14 @@ class CalendarGroupTest {
     private fun calendar(id: Long, accountId: Long, displayName: String = "Cal $id") =
         Calendar(id = id, accountId = accountId, caldavUrl = "url_$id", displayName = displayName, color = 0xFF0000)
 
+    private fun group(calendars: List<Calendar>, accounts: List<Account>) =
+        CalendarGroup.fromCalendarsAndAccounts(
+            calendars,
+            accounts,
+            localLabel = "Offline",
+            icsLabel = "Calendar Feeds"
+        )
+
     // ========== Display Name Mapping ==========
 
     @Test
@@ -26,7 +34,7 @@ class CalendarGroupTest {
         val accounts = listOf(account(1L, AccountProvider.LOCAL, displayName = "On This Device"))
         val calendars = listOf(calendar(10L, 1L))
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals(1, groups.size)
         assertEquals("Offline", groups[0].accountName)
@@ -37,9 +45,20 @@ class CalendarGroupTest {
         val accounts = listOf(account(1L, AccountProvider.ICLOUD, displayName = "Work iCloud"))
         val calendars = listOf(calendar(10L, 1L))
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals("Work iCloud", groups[0].accountName)
+    }
+
+    @Test
+    fun `ICS account maps to icsLabel regardless of stored displayName`() {
+        // The DB displayName is the legacy hardcoded "ICS Subscriptions" — it must not leak through.
+        val accounts = listOf(account(1L, AccountProvider.ICS, displayName = "ICS Subscriptions"))
+        val calendars = listOf(calendar(10L, 1L))
+
+        val groups = group(calendars, accounts)
+
+        assertEquals("Calendar Feeds", groups[0].accountName)
     }
 
     @Test
@@ -47,7 +66,7 @@ class CalendarGroupTest {
         val accounts = listOf(account(1L, AccountProvider.CALDAV, displayName = null))
         val calendars = listOf(calendar(10L, 1L))
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals("CalDAV", groups[0].accountName)
     }
@@ -67,7 +86,7 @@ class CalendarGroupTest {
             calendar(30L, 3L)
         )
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         val providerMap = groups.associate { it.accountName to it.provider }
         assertEquals(AccountProvider.ICLOUD, providerMap["iCloud"])
@@ -81,7 +100,7 @@ class CalendarGroupTest {
         val accounts = emptyList<Account>()
         val calendars = listOf(calendar(10L, 999L))
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals(1, groups.size)
         assertNull(groups[0].provider)
@@ -105,7 +124,7 @@ class CalendarGroupTest {
             calendar(40L, 4L, "Contact Anniversaries")
         )
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         // First two should be non-CONTACTS (iCloud, Offline), last two should be CONTACTS
         assertEquals(4, groups.size)
@@ -128,7 +147,7 @@ class CalendarGroupTest {
             calendar(30L, 3L)
         )
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals("Apple", groups[0].accountName)
         assertEquals("Offline", groups[1].accountName)
@@ -147,7 +166,7 @@ class CalendarGroupTest {
             calendar(20L, 2L, "Contact Anniversaries")
         )
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals("Contact Anniversaries", groups[0].accountName)
         assertEquals("Contact Birthdays", groups[1].accountName)
@@ -157,7 +176,7 @@ class CalendarGroupTest {
 
     @Test
     fun `empty calendars returns empty groups`() {
-        val groups = CalendarGroup.fromCalendarsAndAccounts(emptyList(), emptyList())
+        val groups = group(emptyList(), emptyList())
         assertEquals(0, groups.size)
     }
 
@@ -169,7 +188,7 @@ class CalendarGroupTest {
             calendar(20L, 1L, "Personal")
         )
 
-        val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+        val groups = group(calendars, accounts)
 
         assertEquals(1, groups.size)
         assertEquals(2, groups[0].calendars.size)

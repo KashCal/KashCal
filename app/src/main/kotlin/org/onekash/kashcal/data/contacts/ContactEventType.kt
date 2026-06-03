@@ -2,6 +2,8 @@ package org.onekash.kashcal.data.contacts
 
 import android.content.res.Resources
 import android.provider.ContactsContract
+import androidx.annotation.StringRes
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
 
 /**
@@ -13,7 +15,7 @@ import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
  */
 enum class ContactEventType(
     val accountEmail: String,
-    val calendarDisplayName: String,
+    @StringRes val calendarDisplayNameRes: Int,
     val sourcePrefix: String,
     val localCalendarUrl: String,
     val defaultColor: Int,
@@ -25,7 +27,7 @@ enum class ContactEventType(
 ) {
     BIRTHDAY(
         accountEmail = "contact_birthdays",
-        calendarDisplayName = "Contact Birthdays",
+        calendarDisplayNameRes = R.string.settings_contact_birthdays,
         sourcePrefix = "contact_birthday",
         localCalendarUrl = "local://contact_birthdays",
         defaultColor = SubscriptionColors.Purple,
@@ -37,7 +39,7 @@ enum class ContactEventType(
     ),
     ANNIVERSARY(
         accountEmail = "contact_anniversaries",
-        calendarDisplayName = "Contact Anniversaries",
+        calendarDisplayNameRes = R.string.settings_contact_anniversaries,
         sourcePrefix = "contact_anniversary",
         localCalendarUrl = "local://contact_anniversaries",
         defaultColor = SubscriptionColors.Pink,
@@ -47,6 +49,10 @@ enum class ContactEventType(
         formatTitle = ContactEventUtils::formatAnniversaryTitle,
         formatTitleI18n = ContactEventUtils::formatAnniversaryTitle,
     );
+
+    /** Localized display name for the contact event calendar. */
+    fun calendarDisplayName(resources: Resources): String =
+        resources.getString(calendarDisplayNameRes)
 
     fun getCaldavUrl(lookupKey: String, month: Int, day: Int): String =
         "$sourcePrefix:$lookupKey:$month-$day"

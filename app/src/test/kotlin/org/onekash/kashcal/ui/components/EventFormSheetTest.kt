@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.ui.components.pickers.DateSelectionMode
@@ -1618,5 +1619,42 @@ class EventFormSheetTest {
         )
         val cal = java.util.Calendar.getInstance().apply { timeInMillis = startTs }
         assertEquals("Should snap to 1 AM", 1, cal.get(java.util.Calendar.HOUR_OF_DAY))
+    }
+
+    // ========== Signed reminder offset parsing (ISO -> minutes-before) ==========
+
+    @Test
+    fun `parseIso8601DurationToMinutes preserves sign for before and after triggers`() {
+        // Negative iCal trigger (before start) -> positive minutes-before.
+        assertEquals(900, parseIso8601DurationToMinutes("-PT15H")) // 1d chip
+        assertEquals(2340, parseIso8601DurationToMinutes("-PT39H")) // 2d chip
+        assertEquals(15, parseIso8601DurationToMinutes("-PT15M"))
+        // Positive iCal trigger (after start) -> negative minutes-before.
+        assertEquals(-540, parseIso8601DurationToMinutes("PT9H")) // 9 AM day-of
+        assertEquals(-720, parseIso8601DurationToMinutes("PT12H"))
+        // At start.
+        assertEquals(0, parseIso8601DurationToMinutes("PT0M"))
+    }
+
+    @Test
+    fun `parseIso8601DurationToMinutes returns null on unparseable (distinct from REMINDER_OFF)`() {
+        assertNull(parseIso8601DurationToMinutes(null))
+        assertNull(parseIso8601DurationToMinutes(""))
+        assertNull(parseIso8601DurationToMinutes("garbage"))
+    }
+
+    @Test
+    fun `parseIso8601DurationToMinutes parses legacy period forms`() {
+        assertEquals(1440, parseIso8601DurationToMinutes("-P1D"))
+        assertEquals(10080, parseIso8601DurationToMinutes("-P1W"))
+        assertEquals(1560, parseIso8601DurationToMinutes("-P1DT2H"))
+    }
+
+    @Test
+    fun `reminder offset round-trips Int - ISO - Int including after-start values`() {
+        for (minutes in listOf(-540, 0, 15, 30, 900, 2340, 9540, -720)) {
+            val iso = org.onekash.kashcal.data.contacts.ContactEventUtils.minutesToIsoDuration(minutes)
+            assertEquals("round-trip failed for $minutes (iso=$iso)", minutes, parseIso8601DurationToMinutes(iso))
+        }
     }
 }

@@ -63,6 +63,7 @@
     <string name="action_connect">Ceangail</string>
     <string name="action_duplicate">Dùblaich</string>
     <string name="action_share">Co-roinn</string>
+    <string name="action_share_as_text">Co-roinn mar theacsa</string>
     <string name="action_export_ics">Às-phortaich mar .ics</string>
     <string name="action_confirm_delete">Dearbhaich Sguabadh Às</string>
     <string name="action_delete_event">Sguab Tachartas Às</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">Dh\'fhàillig am freagairt airson %1$s: chaidh an tachartas atharrachadh. Freagair a-rithist.</string>
     <string name="invitees_host_tag">Aoigh</string>
     <string name="invitees_summary_you_alone">Thu</string>
+    <string name="holiday_catalog_add">Cuir mìosachan làithean-saora ris</string>
+    <string name="holiday_catalog_search_label">Lorg</string>
+    <string name="holiday_catalog_already_added">Air a chur ris</string>
+    <string name="holiday_catalog_empty">Cha deach dùthaich a lorg</string>
+    <string name="holiday_catalog_empty_hint">Feuch ainm eile</string>
+    <string name="holiday_catalog_validate_error">Cha b\'urrainn dhuinn am mìosachan seo a ruigsinn. Thoir sùil air a\' cheangal agad is feuch ris a-rithist.</string>
+    <string name="holiday_catalog_attribution">Mìosachain làithean-saora o Mozilla Thunderbird, fo cheadachas %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Thu · %d air a chuireadh</item>
         <item quantity="two">Thu · %d air an cuireadh</item>
@@ -258,6 +266,11 @@
     <string name="caldav_error_connection_timeout">Dh\'fhalbh an ùine air a\' cheangal. Feuch ris a-rithist.</string>
     <string name="caldav_error_no_calendars">Cha deach mìosachan sam bith a lorg air an fhrithealaiche seo.</string>
     <string name="caldav_error_unexpected">Mearachd ris nach robh dùil. Feuch ris a-rithist.</string>
+    <string name="password_change_error_account_not_found">Cha deach an cunntas a lorg</string>
+    <string name="password_change_error_no_credentials">Chan eil teisteasan ann</string>
+    <string name="password_change_error_unsupported_provider">Chan eil am solaraiche seo a\' cur taic ri atharrachadh facail-fhaire</string>
+    <string name="password_change_error_invalid">Facal-faire mì-dhligheach</string>
+    <string name="password_change_error_network">Mearachd lìonraidh, feuch ris a-rithist</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Faidhle nach deach a lorg no nach urrainnear a leughadh.</string>
@@ -334,7 +347,7 @@
     <string name="label_server_url">URL Frithealaiche</string>
     <string name="label_username">Ainm-cleachdaiche</string>
     <string name="label_password">Facal-faire</string>
-    <string name="label_display_name_optional">Ainm Taisbeanaidh (roghainneil)</string>
+    <string name="label_display_name_optional">Ainm Taisbeanaidh</string>
 
     <!-- Placeholders (Additional) -->
     <string name="placeholder_search_events">Lorg tachartasan…</string>
@@ -570,7 +583,9 @@
     <string name="drawer_calendars">Mìosachain</string>
     <string name="drawer_contacts">Luchd-aithne</string>
     <string name="drawer_device_calendars">Mìosachain an uidheim</string>
+    <string name="drawer_account_offline">Far loidhne</string>
     <string name="drawer_share_feedback">Co-roinn beachd</string>
+    <string name="event_title_fallback">Tachartas</string>
 
     <!-- i18n: App Info / About -->
     <string name="status_privacy_tagline">Air do shon-sa, chan ann airson do dàta.</string>
@@ -1272,5 +1287,15 @@
     <string name="attendee_section_pending">A\' feitheamh</string>
     <string name="attendee_section_declined">Air dhiùltadh</string>
     <string name="attendee_section_delegated">Air sgaoileadh</string>
-
+    <string name="whats_new_title">Dè tha ùr</string>
+    <string name="whats_new_dismiss">Tha mi tuigsinn</string>
+    <string name="whats_new_v598_title">Cuidich gus Android a chumail fosgailte</string>
+    <string name="whats_new_v598_body">Tha Google ag atharrachadh mar a chuireas tu a-steach aplacaidean air an inneal agad. Tha feum againn air do chuideachadh.</string>
+    <string name="whats_new_v598_action_label">Tadhail air keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">An ceann %1$d latha</item>
+        <item quantity="two">An ceann %1$d latha</item>
+        <item quantity="few">An ceann %1$d latha</item>
+        <item quantity="other">An ceann %1$d latha</item>
+    </plurals>
 </resources>

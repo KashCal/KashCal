@@ -64,6 +64,7 @@
     <string name="action_connect">연결</string>
     <string name="action_duplicate">복제</string>
     <string name="action_share">공유</string>
+    <string name="action_share_as_text">텍스트로 공유</string>
     <string name="action_export_ics">.ics로 내보내기</string>
     <string name="action_confirm_delete">삭제 확인</string>
     <string name="action_delete_event">일정 삭제</string>
@@ -126,6 +127,12 @@
     <string name="onboarding_got_you">저희가 도와드릴게요.</string>
     <string name="onboarding_connect_prompt">iCloud를 연결하여 일정을 확인하세요</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">새로운 기능</string>
+    <string name="whats_new_dismiss">확인</string>
+    <string name="whats_new_v598_title">Android를 열린 상태로 유지하도록 도와주세요</string>
+    <string name="whats_new_v598_body">Google이 사용자가 기기에 앱을 설치하는 방식을 변경하고 있어요. 여러분의 도움이 필요해요.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org 방문하기</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud 연결</string>
     <string name="signin_caldav_title">CalDAV 계정 추가</string>
@@ -201,6 +208,11 @@
     <string name="caldav_error_connection_timeout">연결 시간이 초과되었습니다. 다시 시도해 주세요.</string>
     <string name="caldav_error_no_calendars">이 서버에서 캘린더를 찾을 수 없습니다.</string>
     <string name="caldav_error_unexpected">예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.</string>
+    <string name="password_change_error_account_not_found">계정을 찾을 수 없어요</string>
+    <string name="password_change_error_no_credentials">기존 인증 정보가 없어요</string>
+    <string name="password_change_error_unsupported_provider">이 제공자는 비밀번호 변경을 지원하지 않아요</string>
+    <string name="password_change_error_invalid">비밀번호가 올바르지 않아요</string>
+    <string name="password_change_error_network">네트워크 오류가 발생했어요. 다시 시도해 주세요.</string>
 
     <string name="error_import_file_not_found">파일을 찾을 수 없거나 읽을 수 없어요.</string>
     <string name="error_import_invalid_format">잘못된 캘린더 파일 형식이에요.</string>
@@ -271,7 +283,7 @@
     <string name="label_server_url">서버 URL</string>
     <string name="label_username">사용자 이름</string>
     <string name="label_password">비밀번호</string>
-    <string name="label_display_name_optional">표시 이름 (선택 사항)</string>
+    <string name="label_display_name_optional">표시 이름</string>
 
     <string name="placeholder_search_events">일정 검색…</string>
 
@@ -506,7 +518,10 @@
     <string name="drawer_calendars">캘린더</string>
     <string name="drawer_contacts">연락처</string>
     <string name="drawer_device_calendars">기기 캘린더</string>
+    <string name="drawer_account_offline">오프라인</string>
     <string name="drawer_share_feedback">피드백 보내기</string>
+
+    <string name="event_title_fallback">일정</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">당신을 위한 앱, 데이터를 위한 것이 아니에요.</string>
@@ -1097,4 +1112,14 @@
     <plurals name="share_availability_header">
         <item quantity="other">다음 %1$d일 동안 여유 시간 (%2$s – %3$s):</item>
     </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d일 후</item>
+    </plurals>
+    <string name="holiday_catalog_add">공휴일 달력 추가</string>
+    <string name="holiday_catalog_search_label">검색</string>
+    <string name="holiday_catalog_already_added">추가됨</string>
+    <string name="holiday_catalog_empty">국가를 찾을 수 없어요</string>
+    <string name="holiday_catalog_empty_hint">다른 이름으로 검색해 보세요</string>
+    <string name="holiday_catalog_validate_error">이 달력에 연결할 수 없어요. 연결 상태를 확인하고 다시 시도해 주세요.</string>
+    <string name="holiday_catalog_attribution">공휴일 달력은 Mozilla Thunderbird에서 제공하며 %1$s 라이선스를 따라요.</string>
 </resources>

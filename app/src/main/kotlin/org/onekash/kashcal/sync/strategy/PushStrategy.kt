@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -33,7 +34,8 @@ class PushStrategy @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val attendeesDao: AttendeesDao
 ) {
     companion object {
         private const val TAG = "PushStrategy"
@@ -863,14 +865,27 @@ class PushStrategy @Inject constructor(
      * condition where a newly created exception gets an etag but wasn't pushed.
      */
     private suspend fun serializeEventWithExceptions(event: Event): Pair<String, List<Event>> {
+        // Load the authoritative ATTENDEE set from the table (populated on pull)
+        // before serializing, rather than relying on the rawIcal body — locally
+        // created events have no rawIcal, and exception VEVENTs carry their own
+        // per-instance attendees that the master's body doesn't include.
+        val masterAttendees = attendeesDao.getForEventOnce(event.id)
         return if (event.rrule != null && event.originalEventId == null) {
-            // Master recurring event - include exceptions
+            // Master recurring event - include exceptions, each with its own
+            // attendee set so per-occurrence attendees round-trip on push.
             val exceptions = eventsDao.getExceptionsForMaster(event.id)
-            val icalData = IcsPatcher.serializeWithExceptions(event, exceptions)
+            val exceptionsWithAttendees = exceptions.map { exception ->
+                exception to attendeesDao.getForEventOnce(exception.id)
+            }
+            val icalData = IcsPatcher.serializeWithExceptions(
+                master = event,
+                masterAttendees = masterAttendees,
+                exceptionsWithAttendees = exceptionsWithAttendees
+            )
             icalData to exceptions
         } else {
             // Single event or exception event
-            IcsPatcher.serialize(event) to emptyList()
+            IcsPatcher.serialize(event, masterAttendees) to emptyList()
         }
     }
 

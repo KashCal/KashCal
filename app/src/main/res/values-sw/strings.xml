@@ -63,6 +63,7 @@
     <string name="action_connect">Unganisha</string>
     <string name="action_duplicate">Nakili</string>
     <string name="action_share">Shiriki</string>
+    <string name="action_share_as_text">Shiriki kama maandishi</string>
     <string name="action_export_ics">Hamisha kama .ics</string>
     <string name="action_confirm_delete">Thibitisha Kufuta</string>
     <string name="action_delete_event">Futa Tukio</string>
@@ -245,6 +246,11 @@
     <string name="caldav_error_connection_timeout">Muda wa muunganisho umekwisha. Jaribu tena.</string>
     <string name="caldav_error_no_calendars">Hakuna kalenda zilizopatikana kwenye seva hii.</string>
     <string name="caldav_error_unexpected">Hitilafu isiyotarajiwa. Jaribu tena.</string>
+    <string name="password_change_error_account_not_found">Akaunti haijapatikana</string>
+    <string name="password_change_error_no_credentials">Hakuna kitambulisho kilichopo</string>
+    <string name="password_change_error_unsupported_provider">Mtoa huduma huyu hasaidii kubadilisha nywila</string>
+    <string name="password_change_error_invalid">Nywila si sahihi</string>
+    <string name="password_change_error_network">Hitilafu ya mtandao, jaribu tena</string>
 
     <string name="error_import_file_not_found">Faili haijapatikana au haiwezi kusomwa.</string>
     <string name="error_import_invalid_format">Muundo wa faili ya kalenda si sahihi.</string>
@@ -315,7 +321,7 @@
     <string name="label_server_url">URL ya Seva</string>
     <string name="label_username">Jina la mtumiaji</string>
     <string name="label_password">Nenosiri</string>
-    <string name="label_display_name_optional">Jina la Kuonyesha (si lazima)</string>
+    <string name="label_display_name_optional">Jina la Kuonyesha</string>
 
     <string name="placeholder_search_events">Tafuta matukio…</string>
 
@@ -525,7 +531,10 @@
     <string name="drawer_calendars">Kalenda</string>
     <string name="drawer_contacts">Anwani</string>
     <string name="drawer_device_calendars">Kalenda za kifaa</string>
+    <string name="drawer_account_offline">Nje ya mtandao</string>
     <string name="drawer_share_feedback">Shiriki maoni</string>
+
+    <string name="event_title_fallback">Tukio</string>
 
     <string name="status_privacy_tagline">Kwa ajili yako, si data yako.</string>
     <string name="action_keep_it_that_way">Iendelee hivyo</string>
@@ -763,6 +772,11 @@
     <string name="action_snooze">Ahirisha</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">Inaanza sasa</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">Baada ya siku %1$d</item>
+        <item quantity="other">Baada ya siku %1$d</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">Kesho, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1140,4 +1154,16 @@
         <item quantity="other">%1$s · %2$d zaidi</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Badilisha jibu</string>
+    <string name="whats_new_title">Mpya</string>
+    <string name="whats_new_dismiss">Nimeelewa</string>
+    <string name="whats_new_v598_title">Saidia kuhakikisha Android inabaki wazi</string>
+    <string name="whats_new_v598_body">Google inabadilisha jinsi unavyoweka programu kwenye kifaa chako. Tunahitaji msaada wako.</string>
+    <string name="whats_new_v598_action_label">Tembelea keepandroidopen.org</string>
+    <string name="holiday_catalog_add">Ongeza kalenda ya likizo</string>
+    <string name="holiday_catalog_search_label">Tafuta</string>
+    <string name="holiday_catalog_already_added">Imeongezwa</string>
+    <string name="holiday_catalog_empty">Hakuna nchi zilizopatikana</string>
+    <string name="holiday_catalog_empty_hint">Jaribu jina lingine</string>
+    <string name="holiday_catalog_validate_error">Imeshindwa kufikia kalenda hii. Angalia muunganisho wako kisha ujaribu tena.</string>
+    <string name="holiday_catalog_attribution">Kalenda za likizo kutoka Mozilla Thunderbird, zenye leseni chini ya %1$s.</string>
 </resources>

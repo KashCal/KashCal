@@ -64,6 +64,7 @@
     <string name="action_connect">Ikonekta</string>
     <string name="action_duplicate">I-duplicate</string>
     <string name="action_share">I-share</string>
+    <string name="action_share_as_text">I-share bilang teksto</string>
     <string name="action_export_ics">I-export bilang .ics</string>
     <string name="action_confirm_delete">Kumpirmahin ang Pagbura</string>
     <string name="action_delete_event">Burahin ang Event</string>
@@ -246,6 +247,11 @@
     <string name="caldav_error_connection_timeout">Nag-time out ang koneksyon. Subukan ulit.</string>
     <string name="caldav_error_no_calendars">Walang kalendaryong natagpuan sa server na ito.</string>
     <string name="caldav_error_unexpected">Hindi inaasahang error. Subukan ulit.</string>
+    <string name="password_change_error_account_not_found">Hindi natagpuan ang account</string>
+    <string name="password_change_error_no_credentials">Walang umiiral na kredensyal</string>
+    <string name="password_change_error_unsupported_provider">Hindi sinusuportahan ng provider na ito ang pagpapalit ng password</string>
+    <string name="password_change_error_invalid">Hindi wastong password</string>
+    <string name="password_change_error_network">Error sa network, subukan ulit</string>
 
     <string name="error_import_file_not_found">Hindi natagpuan o hindi mabasa ang file.</string>
     <string name="error_import_invalid_format">Hindi wasto ang format ng calendar file.</string>
@@ -316,7 +322,7 @@
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
-    <string name="label_display_name_optional">Display Name (opsyonal)</string>
+    <string name="label_display_name_optional">Display Name</string>
 
     <string name="placeholder_search_events">Maghanap ng mga event…</string>
 
@@ -547,7 +553,10 @@
     <string name="drawer_calendars">Mga Kalendaryo</string>
     <string name="drawer_contacts">Mga Contact</string>
     <string name="drawer_device_calendars">Mga device calendar</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Mag-share ng feedback</string>
+
+    <string name="event_title_fallback">Event</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Para sa\'yo, hindi sa iyong data.</string>
@@ -793,6 +802,11 @@
     <string name="action_snooze">I-snooze</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">Nagsisimula na</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">Sa %1$d araw</item>
+        <item quantity="other">Sa %1$d na araw</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">Bukas, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1168,4 +1182,16 @@
         <item quantity="other">%1$s · %2$d pa</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Baguhin ang sagot</string>
+    <string name="whats_new_title">Bago ngayon</string>
+    <string name="whats_new_dismiss">Nakuha ko</string>
+    <string name="whats_new_v598_title">Tumulong na manatiling bukas ang Android</string>
+    <string name="whats_new_v598_body">Binabago ng Google ang paraan ng pag-install mo ng mga app sa iyong device. Kailangan namin ng tulong mo.</string>
+    <string name="whats_new_v598_action_label">Bisitahin ang keepandroidopen.org</string>
+    <string name="holiday_catalog_add">Magdagdag ng kalendaryo ng pista opisyal</string>
+    <string name="holiday_catalog_search_label">Maghanap</string>
+    <string name="holiday_catalog_already_added">Naidagdag na</string>
+    <string name="holiday_catalog_empty">Walang nahanap na bansa</string>
+    <string name="holiday_catalog_empty_hint">Sumubok ng ibang pangalan</string>
+    <string name="holiday_catalog_validate_error">Hindi maabot ang kalendaryong ito. Suriin ang iyong koneksyon at subukang muli.</string>
+    <string name="holiday_catalog_attribution">Mga kalendaryo ng pista opisyal mula sa Mozilla Thunderbird, lisensyado sa ilalim ng %1$s.</string>
 </resources>

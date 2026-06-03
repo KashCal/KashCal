@@ -63,6 +63,7 @@
     <string name="action_connect">Ceangail</string>
     <string name="action_duplicate">Dúbligh</string>
     <string name="action_share">Comhroinn</string>
+    <string name="action_share_as_text">Comhroinn mar théacs</string>
     <string name="action_export_ics">Eas-phortáil mar .ics</string>
     <string name="action_confirm_delete">Deimhnigh Scriosadh</string>
     <string name="action_delete_event">Scrios Imeacht</string>
@@ -77,6 +78,13 @@
     <string name="rsvp_modified_snackbar">Theip ar fhreagra do %1$s: athraíodh an t-imeacht. Freagair arís.</string>
     <string name="invitees_host_tag">Óstach</string>
     <string name="invitees_summary_you_alone">Tú</string>
+    <string name="holiday_catalog_add">Cuir féilire saoire leis</string>
+    <string name="holiday_catalog_search_label">Cuardaigh</string>
+    <string name="holiday_catalog_already_added">Curtha leis</string>
+    <string name="holiday_catalog_empty">Níor aimsíodh aon tír</string>
+    <string name="holiday_catalog_empty_hint">Bain triail as ainm eile</string>
+    <string name="holiday_catalog_validate_error">Níorbh fhéidir an féilire seo a rochtain. Seiceáil do cheangal agus bain triail eile as.</string>
+    <string name="holiday_catalog_attribution">Féilirí saoire ó Mozilla Thunderbird, ceadúnaithe faoi %1$s.</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Tú · %d cuireadh tugtha</item>
         <item quantity="two">Tú · %d chuireadh tugtha</item>
@@ -263,6 +271,11 @@
     <string name="caldav_error_connection_timeout">Chuaigh an ceangal thar am. Bain triail eile as.</string>
     <string name="caldav_error_no_calendars">Níor aimsíodh aon fhéilirí ar an bhfreastalaí seo.</string>
     <string name="caldav_error_unexpected">Earráid gan choinne. Bain triail eile as.</string>
+    <string name="password_change_error_account_not_found">Cuntas gan aimsiú</string>
+    <string name="password_change_error_no_credentials">Níl aon dintiúir ann</string>
+    <string name="password_change_error_unsupported_provider">Ní thacaíonn an soláthraí seo le hathrú pasfhocail</string>
+    <string name="password_change_error_invalid">Pasfhocal neamhbhailí</string>
+    <string name="password_change_error_network">Earráid líonra, bain triail eile as</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Comhad gan aimsiú nó ní féidir é a léamh.</string>
@@ -339,7 +352,7 @@
     <string name="label_server_url">URL Freastalaí</string>
     <string name="label_username">Ainm úsáideora</string>
     <string name="label_password">Focal faire</string>
-    <string name="label_display_name_optional">Ainm Taispeána (roghnach)</string>
+    <string name="label_display_name_optional">Ainm Taispeána</string>
 
     <!-- Placeholders (Additional) -->
     <string name="placeholder_search_events">Cuardaigh imeachtaí…</string>
@@ -575,7 +588,9 @@
     <string name="drawer_calendars">Féilirí</string>
     <string name="drawer_contacts">Teagmhálaí</string>
     <string name="drawer_device_calendars">Féilirí na gléine</string>
+    <string name="drawer_account_offline">As líne</string>
     <string name="drawer_share_feedback">Roinn aiseolas</string>
+    <string name="event_title_fallback">Imeacht</string>
 
     <!-- i18n: App Info / About -->
     <string name="status_privacy_tagline">Duit féin, ní do chuid sonraí.</string>
@@ -1324,5 +1339,16 @@
     <string name="attendee_section_pending">Ar feitheamh</string>
     <string name="attendee_section_declined">Diúltaithe</string>
     <string name="attendee_section_delegated">Tarmligthe</string>
-
+    <string name="whats_new_title">Cad atá nua</string>
+    <string name="whats_new_dismiss">Tuigthe</string>
+    <string name="whats_new_v598_title">Cabhraigh le Android a choinneáil oscailte</string>
+    <string name="whats_new_v598_body">Tá Google ag athrú an tslí a ndéanann tú feidhmchláir a shuiteáil ar do ghléas. Tá do chabhair de dhíth orainn.</string>
+    <string name="whats_new_v598_action_label">Tabhair cuairt ar keepandroidopen.org</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">I gceann %1$d lá</item>
+        <item quantity="two">I gceann %1$d lá</item>
+        <item quantity="few">I gceann %1$d lá</item>
+        <item quantity="many">I gceann %1$d lá</item>
+        <item quantity="other">I gceann %1$d lá</item>
+    </plurals>
 </resources>

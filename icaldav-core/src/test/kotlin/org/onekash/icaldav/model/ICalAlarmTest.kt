@@ -311,6 +311,15 @@ class ICalAlarmTest {
             assertEquals(AlarmAction.DISPLAY, AlarmAction.fromString("UNKNOWN"))
             assertEquals(AlarmAction.DISPLAY, AlarmAction.fromString("PROCEDURE")) // Deprecated
         }
+
+        @Test
+        fun `fromString parses NONE (RFC 9074 sentinel)`() {
+            // ACTION:NONE marks a "no action" placeholder (Apple writes one with a
+            // 1976 absolute trigger to suppress default alarms). It must be modeled
+            // distinctly so it is never laundered into a live DISPLAY alarm.
+            assertEquals(AlarmAction.NONE, AlarmAction.fromString("NONE"))
+            assertEquals(AlarmAction.NONE, AlarmAction.fromString("none"))
+        }
     }
 
     // ==================== AlarmProximity Tests (RFC 9074) ====================

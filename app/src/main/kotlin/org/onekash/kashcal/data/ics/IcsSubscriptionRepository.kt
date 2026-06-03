@@ -1,9 +1,12 @@
 package org.onekash.kashcal.data.ics
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -70,7 +73,8 @@ class IcsSubscriptionRepository @Inject constructor(
     private val occurrenceGenerator: OccurrenceGenerator,
     private val icsFetcher: IcsFetcher,
     private val reminderScheduler: ReminderScheduler,
-    private val eventReader: EventReader
+    private val eventReader: EventReader,
+    @ApplicationContext private val context: Context
 ) {
 
     // ========== Subscription Management ==========
@@ -374,7 +378,7 @@ class IcsSubscriptionRepository @Inject constructor(
         val account = Account(
             provider = AccountProvider.ICS,
             email = IcsSubscription.ACCOUNT_EMAIL,
-            displayName = "ICS Subscriptions",
+            displayName = context.getString(R.string.subscriptions_title),
             isEnabled = true
         )
 

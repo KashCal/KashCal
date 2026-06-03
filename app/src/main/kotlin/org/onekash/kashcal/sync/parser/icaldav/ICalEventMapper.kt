@@ -1,6 +1,8 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
 import android.graphics.Color
+import org.onekash.icaldav.model.AlarmAction
+import org.onekash.icaldav.model.ICalAlarm
 import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.util.DurationUtils
@@ -81,19 +83,28 @@ object ICalEventMapper {
             effectiveEnd.timestamp
         }
 
-        // Convert alarms to reminder strings (closest 5 by duration)
-        // Sort by absolute duration so closest reminders appear first in UI
-        val reminders = icalEvent.alarms
-            .filter { it.trigger != null && !it.triggerRelatedToEnd }
-            .sortedBy { it.trigger?.abs() }
+        // Convert alarms to reminder triggers (closest 5 by duration).
+        // START-relative alarms keep their (signed) duration; absolute (DATE-TIME)
+        // triggers are converted to a duration from DTSTART rather than dropped, so
+        // an absolute "9 AM day of" all-day alarm round-trips like a relative one.
+        // Sort by absolute duration so closest reminders appear first in UI.
+        val alarmDurations = icalEvent.alarms
+            .filter { !it.triggerRelatedToEnd }
+            // RFC 9074 ACTION:NONE is a "no action" sentinel (Apple emits one with a
+            // 1976 absolute trigger to suppress default alarms). Excluding it here keeps
+            // it out of both reminders and alarmCount, so its absolute trigger never
+            // becomes a phantom multi-day reminder offset.
+            .filter { it.action != AlarmAction.NONE }
+            .mapNotNull { alarm -> alarmToStartDuration(alarm, icalEvent.dtStart.timestamp) }
+
+        val reminders = alarmDurations
+            .sortedBy { it.abs() }
             .take(5)
-            .mapNotNull { alarm ->
-                alarm.trigger?.let { formatTriggerDuration(it) }
-            }
+            .map { formatTriggerDuration(it) }
             .takeIf { it.isNotEmpty() }
 
         // Total alarm count for optimization (when >5, use RawIcsParser)
-        val alarmCount = icalEvent.alarms.count { it.trigger != null && !it.triggerRelatedToEnd }
+        val alarmCount = alarmDurations.size
 
         // Parse EXDATE timestamps to comma-separated string
         val exdate = icalEvent.exdates
@@ -236,6 +247,19 @@ object ICalEventMapper {
      */
     private fun formatTriggerDuration(duration: Duration): String {
         return DurationUtils.format(duration)
+    }
+
+    /**
+     * Resolve a START-relative alarm to its trigger duration relative to DTSTART.
+     *
+     * Relative triggers are returned verbatim (sign preserved). Absolute
+     * (DATE-TIME) triggers are converted to `triggerInstant - dtStart` so they
+     * become equivalent relative offsets instead of being dropped. Returns null
+     * when the alarm carries neither form.
+     */
+    private fun alarmToStartDuration(alarm: ICalAlarm, dtStartMs: Long): Duration? {
+        alarm.trigger?.let { return it }
+        return alarm.triggerAbsolute?.let { Duration.ofMillis(it.timestamp - dtStartMs) }
     }
 
     /**

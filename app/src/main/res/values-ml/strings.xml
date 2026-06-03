@@ -63,6 +63,7 @@
     <string name="action_connect">കണക്ട് ചെയ്യുക</string>
     <string name="action_duplicate">ഡ്യൂപ്ലിക്കേറ്റ്</string>
     <string name="action_share">പങ്കിടുക</string>
+    <string name="action_share_as_text">ടെക്സ്റ്റായി പങ്കിടുക</string>
     <string name="action_export_ics">.ics ആയി എക്സ്‌പോർട്ട് ചെയ്യുക</string>
     <string name="action_confirm_delete">ഇല്ലാതാക്കൽ സ്ഥിരീകരിക്കുക</string>
     <string name="action_delete_event">ഇവന്റ് ഇല്ലാതാക്കുക</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">ഞങ്ങൾ നിങ്ങളെ സഹായിക്കാം.</string>
     <string name="onboarding_connect_prompt">നിങ്ങളുടെ ഇവന്റുകൾ ഇവിടെ കാണാൻ iCloud കണക്ട് ചെയ്യുക</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">പുതിയത് എന്ത്</string>
+    <string name="whats_new_dismiss">മനസ്സിലായി</string>
+    <string name="whats_new_v598_title">Android തുറന്നുകിടക്കാൻ സഹായിക്കുക</string>
+    <string name="whats_new_v598_body">Google നിങ്ങളുടെ ഉപകരണത്തിൽ ആപ്പുകൾ ഇൻസ്റ്റാൾ ചെയ്യുന്ന രീതി മാറ്റുകയാണ്. ഞങ്ങൾക്ക് നിങ്ങളുടെ സഹായം ആവശ്യമാണ്.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org സന്ദർശിക്കുക</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud കണക്ട് ചെയ്യുക</string>
     <string name="signin_caldav_title">CalDAV അക്കൗണ്ട് ചേർക്കുക</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">കണക്ഷൻ സമയം കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="caldav_error_no_calendars">ഈ സെർവറിൽ കലണ്ടറുകൾ കണ്ടെത്തിയില്ല.</string>
     <string name="caldav_error_unexpected">അപ്രതീക്ഷിത പിശക്. വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="password_change_error_account_not_found">അക്കൗണ്ട് കണ്ടെത്തിയില്ല</string>
+    <string name="password_change_error_no_credentials">നിലവിലുള്ള ക്രെഡൻഷ്യലുകൾ ഇല്ല</string>
+    <string name="password_change_error_unsupported_provider">ഈ ദാതാവ് പാസ്‌വേഡ് മാറ്റം പിന്തുണയ്ക്കുന്നില്ല</string>
+    <string name="password_change_error_invalid">അസാധുവായ പാസ്‌വേഡ്</string>
+    <string name="password_change_error_network">നെറ്റ്‌വർക്ക് പിശക്, വീണ്ടും ശ്രമിക്കുക</string>
 
     <string name="error_import_file_not_found">ഫയൽ കണ്ടെത്തിയില്ല അല്ലെങ്കിൽ വായിക്കാൻ കഴിയില്ല.</string>
     <string name="error_import_invalid_format">അസാധുവായ കലണ്ടർ ഫയൽ ഫോർമാറ്റ്.</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">സർവർ URL</string>
     <string name="label_username">ഉപയോക്തൃനാമം</string>
     <string name="label_password">പാസ്‌വേഡ്</string>
-    <string name="label_display_name_optional">ഡിസ്പ്ലേ പേര് (ഐച്ഛികം)</string>
+    <string name="label_display_name_optional">ഡിസ്പ്ലേ പേര്</string>
 
     <string name="placeholder_search_events">ഇവന്റുകൾ തിരയുക…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">കലണ്ടറുകൾ</string>
     <string name="drawer_contacts">കോൺടാക്ടുകൾ</string>
     <string name="drawer_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
+    <string name="drawer_account_offline">ഓഫ്‌ലൈൻ</string>
     <string name="drawer_share_feedback">ഫീഡ്ബാക്ക് പങ്കിടുക</string>
+
+    <string name="event_title_fallback">ഇവന്റ്</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">നിങ്ങൾക്ക് വേണ്ടി, നിങ്ങളുടെ ഡാറ്റയ്ക്ക് വേണ്ടിയല്ല.</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">സ്നൂസ്</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ഇപ്പോൾ ആരംഭിക്കുന്നു</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ദിവസത്തിൽ</item>
+        <item quantity="other">%1$d ദിവസങ്ങളിൽ</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">നാളെ, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">കാത്തിരിക്കുന്നു</string>
     <string name="attendee_section_declined">നിരസിച്ചു</string>
     <string name="attendee_section_delegated">ഏല്പിച്ചു</string>
+    <string name="holiday_catalog_add">അവധി കലണ്ടർ ചേർക്കുക</string>
+    <string name="holiday_catalog_search_label">തിരയുക</string>
+    <string name="holiday_catalog_already_added">ചേർത്തു</string>
+    <string name="holiday_catalog_empty">രാജ്യങ്ങളൊന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="holiday_catalog_empty_hint">മറ്റൊരു പേര് ശ്രമിക്കുക</string>
+    <string name="holiday_catalog_validate_error">ഈ കലണ്ടറിലേക്ക് എത്താനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird-ൽ നിന്നുള്ള അവധി കലണ്ടറുകൾ, %1$s പ്രകാരം ലൈസൻസ് ചെയ്തവ.</string>
 </resources>

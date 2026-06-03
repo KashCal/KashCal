@@ -106,7 +106,12 @@ class DeviceEventActionsTest {
             location = "Conference Room A"
         ))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         assertTrue("Should contain title", text.contains("Team Meeting"))
         assertTrue("Should contain location", text.contains("Location: Conference Room A"))
@@ -117,7 +122,12 @@ class DeviceEventActionsTest {
     fun `buildShareText formats all-day event with All day label`() {
         val device = DisplayEvent.Device(createTestInstance(isAllDay = true))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         assertTrue("Should contain 'All day'", text.contains("All day"))
     }
@@ -126,7 +136,12 @@ class DeviceEventActionsTest {
     fun `buildShareText omits location when empty`() {
         val device = DisplayEvent.Device(createTestInstance(location = ""))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         assertFalse("Should not contain Location line", text.contains("Location:"))
     }
@@ -143,7 +158,12 @@ class DeviceEventActionsTest {
             isAllDay = false
         ))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         val lines = text.lines()
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }
@@ -168,7 +188,12 @@ class DeviceEventActionsTest {
             isAllDay = false
         ))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         val lines = text.lines()
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }
@@ -194,7 +219,12 @@ class DeviceEventActionsTest {
             isAllDay = false
         ))
 
-        val text = device.buildShareText(timePattern = "h:mm a")
+        val text = device.buildShareText(
+            timePattern = "h:mm a",
+            allDayLabel = "All day",
+            locationPrefix = "Location: ",
+            footer = "Shared from KashCal"
+        )
 
         val lines = text.lines()
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }

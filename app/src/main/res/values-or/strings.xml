@@ -63,6 +63,7 @@
     <string name="action_connect">ସଂଯୋଗ କରନ୍ତୁ</string>
     <string name="action_duplicate">ନକଲ</string>
     <string name="action_share">ଶେୟାର</string>
+    <string name="action_share_as_text">ଟେକ୍ସଟ ଭାବେ ଶେୟାର କରନ୍ତୁ</string>
     <string name="action_export_ics">.ics ରେ ରପ୍ତାନୀ କରନ୍ତୁ</string>
     <string name="action_confirm_delete">ଡିଲିଟ ନିଶ୍ଚିତ କରନ୍ତୁ</string>
     <string name="action_delete_event">ଇଭେଣ୍ଟ ଡିଲିଟ</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">ଆମେ ଆପଣଙ୍କୁ ସାହାଯ୍ୟ କରିବୁ.</string>
     <string name="onboarding_connect_prompt">ଆପଣଙ୍କ ଇଭେଣ୍ଟ ଏଠାରେ ଦେଖିବା ପାଇଁ iCloud ସଂଯୋଗ କରନ୍ତୁ</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">ନୂଆ କଣ ଅଛି</string>
+    <string name="whats_new_dismiss">ବୁଝିଲି</string>
+    <string name="whats_new_v598_title">Android କୁ ଖୋଲା ରଖିବାରେ ସାହାଯ୍ୟ କରନ୍ତୁ</string>
+    <string name="whats_new_v598_body">Google ଆପଣଙ୍କ ଡିଭାଇସରେ ଆପ୍ ଇନଷ୍ଟଲ୍ କରିବାର ଉପାୟ ବଦଳାଉଛି। ଆମକୁ ଆପଣଙ୍କ ସାହାଯ୍ୟ ଦରକାର।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org କୁ ଯାଆନ୍ତୁ</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud ସଂଯୋଗ କରନ୍ତୁ</string>
     <string name="signin_caldav_title">CalDAV ଆକାଉଣ୍ଟ ଯୋଡ଼ନ୍ତୁ</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">ସଂଯୋଗର ସମୟ ଶେଷ ହୋଇଗଲା। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="caldav_error_no_calendars">ଏହି ସର୍ଭରରେ କୌଣସି କ୍ୟାଲେଣ୍ଡର ମିଳିଲା ନାହିଁ।</string>
     <string name="caldav_error_unexpected">ଅପ୍ରତ୍ୟାଶିତ ତ୍ରୁଟି। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="password_change_error_account_not_found">ଆକାଉଣ୍ଟ ମିଳିଲା ନାହିଁ</string>
+    <string name="password_change_error_no_credentials">କୌଣସି ବର୍ତ୍ତମାନର କ୍ରେଡେନସିଆଲ ନାହିଁ</string>
+    <string name="password_change_error_unsupported_provider">ଏହି ପ୍ରଦାନକାରୀ ପାସୱାର୍ଡ ବଦଳାଇବାକୁ ସମର୍ଥନ କରନ୍ତି ନାହିଁ</string>
+    <string name="password_change_error_invalid">ଅବୈଧ ପାସୱାର୍ଡ</string>
+    <string name="password_change_error_network">ନେଟୱାର୍କ ତ୍ରୁଟି, ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ</string>
 
     <string name="error_import_file_not_found">ଫାଇଲ ମିଳିଲା ନାହିଁ ବା ପଢ଼ିହେଉ ନାହିଁ।</string>
     <string name="error_import_invalid_format">ଅବୈଧ କ୍ୟାଲେଣ୍ଡର ଫାଇଲ ଫର୍ମାଟ।</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">ସର୍ଭର URL</string>
     <string name="label_username">ବ୍ୟବହାରକାରୀ ନାମ</string>
     <string name="label_password">ପାସୱାର୍ଡ</string>
-    <string name="label_display_name_optional">ପ୍ରଦର୍ଶନ ନାମ (ଐଚ୍ଛିକ)</string>
+    <string name="label_display_name_optional">ପ୍ରଦର୍ଶନ ନାମ</string>
 
     <string name="placeholder_search_events">ଇଭେଣ୍ଟ ଖୋଜନ୍ତୁ…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">କ୍ୟାଲେଣ୍ଡର</string>
     <string name="drawer_contacts">ସମ୍ପର୍କ</string>
     <string name="drawer_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>
+    <string name="drawer_account_offline">ଅଫଲାଇନ</string>
     <string name="drawer_share_feedback">ମତାମତ ଦିଅନ୍ତୁ</string>
+
+    <string name="event_title_fallback">ଇଭେଣ୍ଟ</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">ଆପଣଙ୍କ ପାଇଁ, ଆପଣଙ୍କ ଡାଟା ପାଇଁ ନୁହେଁ।</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">ସ୍ନୁଜ୍</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ବର୍ତ୍ତମାନ ଆରମ୍ଭ ହେଉଛି</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ଦିନରେ</item>
+        <item quantity="other">%1$d ଦିନରେ</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">ଆସନ୍ତାକାଲି, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">ଅପେକ୍ଷାରତ</string>
     <string name="attendee_section_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ</string>
     <string name="attendee_section_delegated">ସମର୍ପଣ</string>
+    <string name="holiday_catalog_add">ଛୁଟି କ୍ୟାଲେଣ୍ଡର ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="holiday_catalog_search_label">ଖୋଜନ୍ତୁ</string>
+    <string name="holiday_catalog_already_added">ଯୋଡ଼ାଗଲା</string>
+    <string name="holiday_catalog_empty">କୌଣସି ଦେଶ ମିଳିଲା ନାହିଁ</string>
+    <string name="holiday_catalog_empty_hint">ଅନ୍ୟ ଏକ ନାମ ଚେଷ୍ଟା କରନ୍ତୁ</string>
+    <string name="holiday_catalog_validate_error">ଏହି କ୍ୟାଲେଣ୍ଡରରେ ପହଞ୍ଚି ହେଲା ନାହିଁ। ଆପଣଙ୍କ ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird ରୁ ଛୁଟି କ୍ୟାଲେଣ୍ଡର, %1$s ଅଧୀନରେ ଲାଇସେନ୍ସପ୍ରାପ୍ତ।</string>
 </resources>

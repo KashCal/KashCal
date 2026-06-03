@@ -227,7 +227,7 @@ class MoveOperationRawIcalTest {
     // ==================== Serialization After MOVE Tests ====================
 
     @Test
-    fun `serialization after MOVE uses preserved rawIcal - preserves 4 alarms`() = runTest {
+    fun `serialization after MOVE honors stored reminder set for displayed alarms`() = runTest {
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         eventWriter.moveEventToCalendar(event.id, calendarBId)
@@ -238,10 +238,12 @@ class MoveOperationRawIcalTest {
         val pushIcs = IcsPatcher.serialize(movedEvent)
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // Should preserve all 4 alarms from rawIcal
+        // richServerIcs has 4 alarms, all within the displayed window (index < 5).
+        // The stored entity keeps only 2 reminders, so the other 2 are deleted —
+        // MOVE must not resurrect them. (rawIcal still preserves attendees/X-props.)
         assertEquals(
-            "All 4 alarms should be preserved via rawIcal after MOVE",
-            4,
+            "Displayed alarms beyond the stored 2 are dropped after MOVE",
+            2,
             parsed.alarms.size
         )
     }
@@ -502,7 +504,10 @@ class MoveOperationRawIcalTest {
         // Verify all data preserved
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
         assertEquals("Should preserve all 50 attendees", 50, parsed.attendees.size)
-        assertEquals("Should preserve all 10 alarms", 10, parsed.alarms.size)
+        // 10 alarms: first 5 are the displayed window (stored reminder set keeps 2,
+        // so 3 displayed are dropped); alarms at index >= 5 were never shown to the
+        // user and are preserved verbatim. 2 kept + 5 hidden = 7.
+        assertEquals("Displayed deletions honored, hidden alarms preserved", 7, parsed.alarms.size)
     }
 
     // ==================== Helper Methods ====================

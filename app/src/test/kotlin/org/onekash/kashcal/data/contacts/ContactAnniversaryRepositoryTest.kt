@@ -76,7 +76,7 @@ class ContactAnniversaryRepositoryTest {
         id = 20L,
         accountId = 10L,
         caldavUrl = "local://contact_anniversaries",
-        displayName = ContactEventType.ANNIVERSARY.calendarDisplayName,
+        displayName = "Contact Anniversaries",
         color = 0xFFE91E63.toInt(),
         isReadOnly = true,
         isVisible = true,
@@ -111,7 +111,8 @@ class ContactAnniversaryRepositoryTest {
             reminderScheduler = reminderScheduler,
             eventReader = eventReader,
             contentResolver = contentResolver,
-            dataStore = dataStore
+            dataStore = dataStore,
+            context = mockk(relaxed = true)
         )
     }
 

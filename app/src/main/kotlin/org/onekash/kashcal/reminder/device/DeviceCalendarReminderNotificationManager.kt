@@ -154,8 +154,19 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setColor(calendarColor)
             .setContentIntent(createOpenAppIntent(eventId, occurrenceTs, calendarId))
-            .setWhen(occurrenceTs + 30_000L)
-            .setShowWhen(true)
+
+        // All-day events store occurrenceTs as UTC midnight; rendering it in the
+        // notification header shows a misleading timezone-shifted clock time. The
+        // body already carries a relative-day subtitle (Today / Tomorrow / In N days),
+        // so suppress the header timestamp for all-day reminders. Timed reminders keep
+        // it as a live countdown to the event start.
+        if (!isAllDay) {
+            builder
+                .setWhen(occurrenceTs + 30_000L)
+                .setShowWhen(true)
+        } else {
+            builder.setShowWhen(false)
+        }
 
         // Add location if available
         if (!location.isNullOrBlank()) {
@@ -203,7 +214,13 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
 
         return when {
             isAllDay -> {
-                if (diffMs < 0) context.getString(R.string.label_today) else formatTimeUntil(diffMs)
+                // All-day events have no clock-time start; show a relative-day subtitle
+                // (Today / Tomorrow / In N days) based on the event's local date.
+                when (val days = DateTimeUtils.allDayRelativeDays(occurrenceTs, triggerTime)) {
+                    0 -> context.getString(R.string.label_today)
+                    1 -> context.getString(R.string.label_tomorrow)
+                    else -> context.resources.getQuantityString(R.plurals.reminder_in_days, days, days)
+                }
             }
             diffMs <= 0 -> context.getString(R.string.notification_starting_now)
             else -> {
@@ -225,25 +242,6 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
                         context.getString(R.string.notification_date_time, eventDate.format(dateFormatter), timeStr)
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Format time duration for display.
-     */
-    private fun formatTimeUntil(durationMs: Long): String {
-        val totalMinutes = (abs(durationMs) / 60_000).toInt()
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-
-        return when {
-            hours == 0 -> context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-            minutes == 0 -> context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
-            else -> {
-                val hourPart = context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
-                val minutePart = context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
-                "$hourPart $minutePart"
             }
         }
     }

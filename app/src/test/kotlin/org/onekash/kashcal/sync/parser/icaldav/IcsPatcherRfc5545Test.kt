@@ -281,8 +281,11 @@ class IcsPatcherRfc5545Test {
     // ==================== RFC 5545 Section 3.8.7.4: SEQUENCE ====================
 
     @Test
-    fun `patch increments SEQUENCE`() {
-        // RFC 5545: SEQUENCE is incremented when the organizer makes changes
+    fun `patch serializes stored SEQUENCE verbatim`() {
+        // RFC 5546 §2.1.4: SEQUENCE is bumped only on scheduling-significant
+        // changes, and that decision lives upstream in EventWriter
+        // (SequenceBumper) — not in the patcher. The patcher serializes the
+        // SEQUENCE the entity already carries, so a title-only edit keeps it.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -301,14 +304,14 @@ class IcsPatcherRfc5545Test {
         val event = createEvent(
             uid = "seq-test@kashcal.test",
             title = "Updated Title",
-            sequence = 3, // Current sequence
+            sequence = 3, // Stored sequence — emitted verbatim
             rawIcal = originalIcs
         )
 
         val patched = IcsPatcher.patch(originalIcs, event)
 
-        // Should contain SEQUENCE:4 (incremented by 1)
-        assertTrue("SEQUENCE should be incremented to 4", patched.contains("SEQUENCE:4"))
+        assertTrue("SEQUENCE should be serialized verbatim", patched.contains("SEQUENCE:3"))
+        assertFalse("Patcher must not bump SEQUENCE", patched.contains("SEQUENCE:4"))
     }
 
     // ==================== RFC 5545 Section 3.8.1.11: STATUS ====================
@@ -833,8 +836,10 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serialize(event)
 
-        // Should be patched (not fresh) since rawIcal is available
-        assertTrue("Should increment SEQUENCE from patch", ics.contains("SEQUENCE:3"))
+        // Should be patched (not fresh) since rawIcal is available. SEQUENCE is
+        // serialized verbatim — the patcher no longer bumps (EventWriter owns
+        // the bump decision via SequenceBumper).
+        assertTrue("Should serialize stored SEQUENCE verbatim", ics.contains("SEQUENCE:2"))
         assertTrue("Should have updated title", ics.contains("SUMMARY:Updated"))
     }
 

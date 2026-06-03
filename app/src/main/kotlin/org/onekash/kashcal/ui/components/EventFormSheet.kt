@@ -1724,19 +1724,23 @@ fun EventFormSheet(
 // Helper functions
 
 /**
- * Parse ISO 8601 duration string to minutes.
- * Supports formats like: "-PT15M", "-PT1H", "-PT1H30M", "-P1D", "-P1DT9H"
- * Returns REMINDER_OFF if the duration cannot be parsed.
+ * Parse an ISO 8601 duration trigger into signed "minutes before start".
+ *
+ * Sign is preserved (Android CalendarContract convention): a negative iCal trigger
+ * ("-PT15H", before start) yields a positive Int (900); a positive trigger ("PT9H",
+ * after start) yields a negative Int (-540); "PT0M" yields 0 (at start).
+ * Returns null if the duration cannot be parsed (distinct from REMINDER_OFF).
  */
-private fun parseIso8601DurationToMinutes(duration: String?): Int {
-    if (duration.isNullOrBlank()) return REMINDER_OFF
+internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
+    if (duration.isNullOrBlank()) return null
 
     try {
-        // Remove leading minus sign (reminder is always "before")
-        val normalized = duration.trimStart('-')
+        // A leading '-' means "before start" -> positive minutes-before (Int).
+        val isBefore = duration.startsWith("-")
+        val normalized = duration.removePrefix("-").removePrefix("+")
 
         // Must start with P
-        if (!normalized.startsWith("P")) return REMINDER_OFF
+        if (!normalized.startsWith("P")) return null
 
         var totalMinutes = 0
         var remaining = normalized.substring(1) // Remove 'P'
@@ -1749,48 +1753,44 @@ private fun parseIso8601DurationToMinutes(duration: String?): Int {
             if (dayMatch != null) {
                 totalMinutes += dayMatch.groupValues[1].toInt() * 1440 // 24 * 60
             }
+            val weekMatch = Regex("(\\d+)W").find(datePart)
+            if (weekMatch != null) {
+                totalMinutes += weekMatch.groupValues[1].toInt() * 10080 // 7 * 24 * 60
+            }
             remaining = remaining.substring(tIndex + 1)
         } else if (tIndex == 0) {
             remaining = remaining.substring(1)
         } else {
-            // No T, could be just days like "P1D"
-            val dayMatch = Regex("(\\d+)D").find(remaining)
-            if (dayMatch != null) {
-                totalMinutes += dayMatch.groupValues[1].toInt() * 1440
-            }
-            return if (totalMinutes > 0) totalMinutes else REMINDER_OFF
+            // No T: date-only like "P1D" or "P1W"
+            Regex("(\\d+)D").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 1440 }
+            Regex("(\\d+)W").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 10080 }
+            return if (isBefore) totalMinutes else -totalMinutes
         }
 
         // Parse hours
-        val hourMatch = Regex("(\\d+)H").find(remaining)
-        if (hourMatch != null) {
-            totalMinutes += hourMatch.groupValues[1].toInt() * 60
-        }
-
+        Regex("(\\d+)H").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 60 }
         // Parse minutes
-        val minuteMatch = Regex("(\\d+)M").find(remaining)
-        if (minuteMatch != null) {
-            totalMinutes += minuteMatch.groupValues[1].toInt()
-        }
+        Regex("(\\d+)M").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() }
 
-        return if (totalMinutes > 0) totalMinutes else 0 // 0 means "at time of event"
+        // 0 means "at time of event"; otherwise apply the before/after sign.
+        return if (isBefore) totalMinutes else -totalMinutes
     } catch (e: Exception) {
         Log.w(TAG, "Failed to parse duration: $duration", e)
-        return REMINDER_OFF
+        return null
     }
 }
 
 /**
- * Parse reminders list from event into List<Int> of minutes.
+ * Parse reminders list from event into List<Int> of signed minutes.
  * Takes first MAX_REMINDERS (5), computes truncation count from alarmCount.
- * Returns Pair(reminderMinutes, truncatedCount).
+ * Returns Pair(reminderMinutes, truncatedCount). Unparseable entries are dropped;
+ * after-start (negative) values are kept.
  */
 private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 0): Pair<List<Int>, Int> {
     if (reminders.isNullOrEmpty()) return Pair(emptyList(), 0)
 
     val parsed = reminders.take(MAX_REMINDERS).mapNotNull { duration ->
-        val minutes = parseIso8601DurationToMinutes(duration)
-        if (minutes >= 0) minutes else null
+        parseIso8601DurationToMinutes(duration)
     }
     val truncatedCount = (alarmCount - MAX_REMINDERS).coerceAtLeast(0)
 

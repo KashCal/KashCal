@@ -203,11 +203,11 @@ class CalDavSyncWorkerDefaultReminderTest {
         coEvery { eventReader.getEventById(1L) } returns event
 
         // Logic should use different default for all-day events
-        val defaultMinutes = if (event.isAllDay) 720 else 15
+        val defaultMinutes = if (event.isAllDay) 900 else 15
         val shouldApply = shouldApplyDefaultReminder(change, event, defaultMinutes)
 
         assertTrue("All-day event should get default reminder", shouldApply)
-        assertEquals(720, defaultMinutes) // Should use all-day default
+        assertEquals(900, defaultMinutes) // All-day default = 9 AM the day before (-PT15H)
     }
 
     @Test
@@ -273,9 +273,10 @@ class CalDavSyncWorkerDefaultReminderTest {
     }
 
     @Test
-    fun `minutesToIsoDuration converts 1440 minutes (1 day) correctly`() {
+    fun `minutesToIsoDuration converts 1440 minutes (1 day) to hour-form`() {
+        // Hour-form (DST-stable): 1440 min -> -PT24H, not the period -P1D.
         val duration = ContactEventUtils.minutesToIsoDuration(1440)
-        assertEquals("-P1D", duration)
+        assertEquals("-PT24H", duration)
     }
 
     // ==================== Edge Cases ====================

@@ -9,7 +9,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.icaldav.model.AlarmAction
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.robolectric.RobolectricTestRunner
@@ -33,8 +35,11 @@ class IcsPatcherTest {
     // ========== Patch Tests - Preserve Original Properties ==========
 
     @Test
-    fun `patch preserves alarms beyond first 3`() {
-        // Original ICS with 5 alarms
+    fun `patch preserves genuinely-hidden alarms beyond MAX_DISPLAYED but honors deletions within it`() {
+        // Original ICS with 6 alarms. The first 5 (indices 0-4) are the DISPLAYED set
+        // the user sees in the form; index 5 (-P1W) is hidden (never shown). The user's
+        // stored reminders keep only the first 3 displayed alarms — indices 3-4 were
+        // displayed and deleted, so they must NOT survive. Index 5 (hidden) must.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -46,28 +51,34 @@ class IcsPatcherTest {
             DTEND:20251225T110000Z
             SUMMARY:Original Title
             BEGIN:VALARM
-            UID:alarm-1
+            UID:alarm-0
             ACTION:DISPLAY
             TRIGGER:-PT15M
             DESCRIPTION:15 min
             END:VALARM
             BEGIN:VALARM
-            UID:alarm-2
+            UID:alarm-1
             ACTION:DISPLAY
             TRIGGER:-PT30M
             DESCRIPTION:30 min
             END:VALARM
             BEGIN:VALARM
-            UID:alarm-3
+            UID:alarm-2
             ACTION:DISPLAY
             TRIGGER:-PT1H
             DESCRIPTION:1 hour
             END:VALARM
             BEGIN:VALARM
+            UID:alarm-3
+            ACTION:DISPLAY
+            TRIGGER:-PT2H
+            DESCRIPTION:2 hour
+            END:VALARM
+            BEGIN:VALARM
             UID:alarm-4
             ACTION:DISPLAY
-            TRIGGER:-P1D
-            DESCRIPTION:1 day
+            TRIGGER:-PT3H
+            DESCRIPTION:3 hour
             END:VALARM
             BEGIN:VALARM
             UID:alarm-5
@@ -79,35 +90,183 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Parse and create entity (only stores first 3 alarms)
-        val originalEvents = parser.parseAllEvents(originalIcs).getOrNull()!!
-        val originalEvent = originalEvents.first()
+        val originalEvent = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
 
-        // Create Event entity with only the first 3 reminders
+        // User kept only the first 3 displayed reminders (deleted displayed indices 3-4)
         val entity = createTestEvent(
             uid = "multi-alarm@kashcal.test",
-            title = "Updated Title",  // Changed
+            title = "Updated Title",
             startTs = originalEvent.dtStart.timestamp,
             endTs = originalEvent.effectiveEnd().timestamp,
             reminders = listOf("-PT15M", "-PT30M", "-PT1H")
         )
 
-        // Patch with updated title
         val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
 
-        // Re-parse the patched ICS
-        val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
-        val patchedEvent = patchedEvents.first()
-
-        // Verify title was updated
         assertEquals("Updated Title", patchedEvent.summary)
 
-        // Verify ALL 5 alarms are preserved
-        assertEquals(
-            "All 5 original alarms should be preserved",
-            5,
-            patchedEvent.alarms.size
+        // 3 kept displayed + 1 hidden (index 5) = 4. Deleted displayed indices 3-4 dropped.
+        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.let { d -> org.onekash.icaldav.model.ICalAlarm.formatDuration(d) } }
+        assertEquals("Kept 3 displayed + 1 hidden = 4 alarms", 4, patchedEvent.alarms.size)
+        assertTrue("displayed -PT15M kept", triggers.contains("-PT15M"))
+        assertTrue("displayed -PT30M kept", triggers.contains("-PT30M"))
+        assertTrue("displayed -PT1H kept", triggers.contains("-PT1H"))
+        assertFalse("deleted displayed -PT2H dropped", triggers.contains("-PT2H"))
+        assertFalse("deleted displayed -PT3H dropped", triggers.contains("-PT3H"))
+        // -P1W normalizes to -P7D via DurationUtils.format (same instant).
+        assertTrue("hidden 1-week (index 5) preserved", triggers.contains("-P7D"))
+    }
+
+    @Test
+    fun `patch normalizes a non-NONE absolute-trigger alarm to a single relative alarm`() {
+        // A real (non-NONE) absolute-trigger VALARM in the displayed window. KashCal's
+        // pull path converts absolute triggers to relative offsets (instant - dtStart)
+        // and stores them in event.reminders, so the entity carries a relative string
+        // for it. On patch, mergeAlarms must reconcile by position and emit ONE clean
+        // relative alarm — not preserve the absolute verbatim AND append a relative twin
+        // (the old code's latent duplicate bug). DTSTART 10:00Z, trigger 09:00Z = -PT1H.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Server//Test//EN
+            BEGIN:VEVENT
+            UID:abs-trigger@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Abs Trigger Event
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER;VALUE=DATE-TIME:20251225T090000Z
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val originalEvent = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
+        // Pull path converts the absolute trigger to -PT1H; that's what the entity stores.
+        val entity = createTestEvent(
+            uid = "abs-trigger@kashcal.test",
+            title = "Abs Trigger Event",
+            startTs = originalEvent.dtStart.timestamp,
+            endTs = originalEvent.effectiveEnd().timestamp,
+            reminders = listOf("-PT1H")
         )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        // Exactly one alarm, relative, no leftover absolute trigger, no duplicate.
+        assertEquals("Single normalized alarm (no verbatim-abs + relative-twin)", 1, patchedEvent.alarms.size)
+        val alarm = patchedEvent.alarms.first()
+        assertNull("Absolute trigger cleared on overwrite", alarm.triggerAbsolute)
+        assertEquals("Trigger is the relative offset", -60L, alarm.trigger?.toMinutes())
+        assertFalse("No absolute DATE-TIME trigger in output ICS", patched.contains("VALUE=DATE-TIME"))
+    }
+
+    @Test
+    fun `patch drops ACTION_NONE sentinel and deleted displayed alarm (real iCloud case)`() {
+        // Real-world shape from an iCloud 'test alert' event: 3 DISPLAY alarms + Apple's
+        // ACTION:NONE sentinel (1976 absolute trigger). User kept only 2 reminders
+        // (deleted the 1-week -P6DT15H). Expected PUT: exactly 2 VALARMs, no NONE/phantom.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Apple Inc.//iPhone OS 26.1//EN
+            BEGIN:VEVENT
+            UID:test-alert@kashcal.test
+            DTSTAMP:20260603T120000Z
+            DTSTART;VALUE=DATE:20260605
+            DTEND;VALUE=DATE:20260606
+            SUMMARY:test alert
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:PT9H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:-P1DT15H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:-P6DT15H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:NONE
+            TRIGGER;VALUE=DATE-TIME:19760401T005545Z
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val originalEvent = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
+
+        val entity = createTestEvent(
+            uid = "test-alert@kashcal.test",
+            title = "test alert",
+            startTs = originalEvent.dtStart.timestamp,
+            endTs = originalEvent.effectiveEnd().timestamp,
+            isAllDay = true,
+            reminders = listOf("PT9H", "-P1DT15H")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("Exactly the 2 kept reminders", 2, patchedEvent.alarms.size)
+        assertFalse("No ACTION:NONE in output", patched.contains("ACTION:NONE"))
+        assertFalse("No 1976 phantom absolute trigger", patched.contains("19760401"))
+        assertFalse("No deleted 1-week -P6DT15H", patched.contains("-P6DT15H"))
+        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.let { d -> org.onekash.icaldav.model.ICalAlarm.formatDuration(d) } }
+        assertTrue("9 AM day-of kept", triggers.contains("PT9H"))
+        // -P1DT15H normalizes to -PT39H (same instant); accept either encoding
+        assertTrue("2-days-before kept", triggers.any { it == "-P1DT15H" || it == "-PT39H" })
+    }
+
+    @Test
+    fun `patch drops ACTION_NONE even when it is the only original alarm`() {
+        // NONE-only original + the user has a reminder -> NONE dropped, reminder emitted
+        // as a fresh DISPLAY alarm (the else-branch path in mergeAlarms).
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Apple Inc.//iPhone OS 26.1//EN
+            BEGIN:VEVENT
+            UID:none-only@kashcal.test
+            DTSTAMP:20260603T120000Z
+            DTSTART;VALUE=DATE:20260605
+            DTEND;VALUE=DATE:20260606
+            SUMMARY:none only
+            BEGIN:VALARM
+            ACTION:NONE
+            TRIGGER;VALUE=DATE-TIME:19760401T005545Z
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val originalEvent = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
+        val entity = createTestEvent(
+            uid = "none-only@kashcal.test",
+            title = "none only",
+            startTs = originalEvent.dtStart.timestamp,
+            endTs = originalEvent.effectiveEnd().timestamp,
+            isAllDay = true,
+            reminders = listOf("PT9H")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("Only the user's fresh DISPLAY alarm", 1, patchedEvent.alarms.size)
+        assertFalse("No NONE", patched.contains("ACTION:NONE"))
+        assertFalse("No 1976 phantom", patched.contains("19760401"))
+        assertEquals(org.onekash.icaldav.model.AlarmAction.DISPLAY, patchedEvent.alarms.first().action)
     }
 
     @Test
@@ -182,7 +341,7 @@ class IcsPatcherTest {
     }
 
     @Test
-    fun `patch increments sequence number`() {
+    fun `patch serializes stored sequence verbatim`() {
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -210,7 +369,11 @@ class IcsPatcherTest {
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         val patchedEvent = patchedEvents.first()
 
-        assertEquals("Sequence should be incremented", 6, patchedEvent.sequence)
+        // The patcher serializes the entity's stored SEQUENCE verbatim and does
+        // not compare old-vs-new — the bump decision lives upstream in
+        // EventWriter (SequenceBumper). Even though this fixture's startTs
+        // differs from the original DTSTART, the patcher emits the stored 5.
+        assertEquals("Sequence should be serialized verbatim", 5, patchedEvent.sequence)
     }
 
     @Test
@@ -467,6 +630,40 @@ class IcsPatcherTest {
         val alarms = RawIcsParser.getAllAlarms(ics)
 
         assertEquals("Should have 4 alarms", 4, alarms.size)
+    }
+
+    @Test
+    fun `RawIcsParser excludes ACTION_NONE sentinels`() {
+        // The >3-alarm scheduling path (ReminderScheduler) enumerates alarms via
+        // RawIcsParser. An ACTION:NONE sentinel must be excluded there too, so it can
+        // never schedule a phantom reminder — consistent with ICalEventMapper's filter.
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Apple Inc.//iPhone OS 26.1//EN
+            BEGIN:VEVENT
+            UID:raw-none@kashcal.test
+            DTSTAMP:20260603T120000Z
+            DTSTART;VALUE=DATE:20260605
+            DTEND;VALUE=DATE:20260606
+            SUMMARY:raw none
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:PT9H
+            DESCRIPTION:Reminder
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:NONE
+            TRIGGER;VALUE=DATE-TIME:19760401T005545Z
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val alarms = RawIcsParser.getAllAlarms(ics)
+        assertEquals("NONE sentinel excluded", 1, alarms.size)
+        assertEquals("Only the real DISPLAY alarm remains", AlarmAction.DISPLAY, alarms.first().action)
+        assertEquals("getAlarmCount excludes NONE", 1, RawIcsParser.getAlarmCount(ics))
     }
 
     @Test
@@ -1063,8 +1260,8 @@ class IcsPatcherTest {
     }
 
     @Test
-    fun `BUG - patch preserves extra alarms but should also sync user edits`() {
-        // Original ICS with 5 alarms
+    fun `patch syncs user edits and drops deleted displayed alarms`() {
+        // Original ICS with 5 alarms — all within the displayed window (index < 5).
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1099,13 +1296,13 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // User edits: changes first alarm from 15m to 45m
+        // User edits: changes first alarm to 45m and keeps only two reminders.
         val entity = createTestEvent(
             uid = "five-alarm-edit@kashcal.test",
             title = "Meeting",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            reminders = listOf("-PT45M", "-PT30M")  // User changed first alarm
+            reminders = listOf("-PT45M", "-PT30M")
         )
 
         val patched = IcsPatcher.patch(originalIcs, entity)
@@ -1114,20 +1311,15 @@ class IcsPatcherTest {
 
         val alarmTriggers = patchedEvent.alarms.mapNotNull { it.trigger?.toMinutes() }
 
-        // Should have 5 alarms total (user's 2 edits + 3 preserved)
-        assertEquals("Should have 5 alarms", 5, patchedEvent.alarms.size)
-
-        // BUG: First alarm should be -45 (user's edit), not -15 (original)
-        assertEquals(
-            "First alarm should be user's edit (-45 min)",
-            -45L,
-            alarmTriggers[0]
-        )
-
-        // Alarms 3-5 should be preserved from original
-        assertEquals("Third alarm preserved", -60L, alarmTriggers[2])
-        assertEquals("Fourth alarm preserved", -120L, alarmTriggers[3])
-        assertEquals("Fifth alarm preserved", -1440L, alarmTriggers[4])
+        // All 5 originals were displayed; the user kept 2, so the other 3 are deleted.
+        assertEquals("Only the user's 2 reminders remain", 2, patchedEvent.alarms.size)
+        // First alarm reflects the user's edit (-45), not the original -15.
+        assertEquals("First alarm is the user's edit (-45 min)", -45L, alarmTriggers[0])
+        assertEquals("Second alarm (-30 min)", -30L, alarmTriggers[1])
+        // Deleted displayed alarms are gone.
+        assertFalse("deleted -PT1H", alarmTriggers.contains(-60L))
+        assertFalse("deleted -PT2H", alarmTriggers.contains(-120L))
+        assertFalse("deleted -P1D", alarmTriggers.contains(-1440L))
     }
 
     @Test
@@ -1792,6 +1984,89 @@ class IcsPatcherTest {
         assertEquals(
             org.onekash.icaldav.model.PartStat.ACCEPTED,
             parsed.attendees.first { it.email == "self@example.test" }.partStat
+        )
+    }
+
+    // ==================== Organizer-side ATTENDEE emission (T3.B3) ====================
+
+    private fun attendee(eventId: Long, address: String, partstat: String = "NEEDS-ACTION") =
+        Attendee(eventId = eventId, address = address, partstat = partstat)
+
+    @Test
+    fun `generateFresh with attendees emits ATTENDEE lines`() {
+        val event = createTestEvent(
+            uid = "fresh-attendees@example.test",
+            title = "Planning",
+            startTs = 1_700_000_000_000L,
+            endTs = 1_700_003_600_000L
+        )
+        val ics = IcsPatcher.generateFresh(
+            event,
+            attendees = listOf(
+                attendee(event.id, "mailto:alice@example.test", "ACCEPTED"),
+                attendee(event.id, "mailto:bob@example.test")
+            )
+        )
+        assertTrue("alice must round-trip", ics.contains("alice@example.test"))
+        assertTrue("bob must round-trip", ics.contains("bob@example.test"))
+    }
+
+    @Test
+    fun `generateFresh without attendees emits no ATTENDEE - share-card PII guard`() {
+        // The share-card path nulls rawIcal and passes no attendees so the
+        // recipient's .ics never leaks the master's attendee list. The default
+        // empty list MUST keep generateFresh attendee-free.
+        val event = createTestEvent(
+            uid = "share-card@example.test",
+            title = "Private",
+            startTs = 1_700_000_000_000L,
+            endTs = 1_700_003_600_000L
+        )
+        val ics = IcsPatcher.generateFresh(event)
+        assertFalse("share-card must not emit ATTENDEE", ics.contains("ATTENDEE"))
+    }
+
+    @Test
+    fun `serializeWithExceptions emits attendees on master AND each exception VEVENT`() {
+        val master = createTestEvent(
+            uid = "recurring-attendees@example.test",
+            title = "Weekly Sync",
+            startTs = 1_700_000_000_000L,
+            endTs = 1_700_003_600_000L,
+            rrule = "FREQ=WEEKLY"
+        )
+        val exception = createExceptionEvent(
+            masterId = master.id,
+            masterUid = master.uid,
+            originalInstanceTime = 1_700_086_400_000L,
+            title = "Weekly Sync (moved)",
+            startTs = 1_700_086_400_000L,
+            endTs = 1_700_090_000_000L
+        )
+        val masterAttendees = listOf(attendee(master.id, "mailto:alice@example.test", "ACCEPTED"))
+        val exceptionAttendees = listOf(
+            attendee(exception.id, "mailto:alice@example.test", "ACCEPTED"),
+            attendee(exception.id, "mailto:carol@example.test")
+        )
+
+        val ics = IcsPatcher.serializeWithExceptions(
+            master = master,
+            masterAttendees = masterAttendees,
+            exceptionsWithAttendees = listOf(exception to exceptionAttendees)
+        )
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val masterVevent = events.first { it.recurrenceId == null }
+        val exceptionVevent = events.first { it.recurrenceId != null }
+
+        assertTrue(
+            "master VEVENT must carry its attendee",
+            masterVevent.attendees.any { it.email == "alice@example.test" }
+        )
+        // This is the bug T3.B3 fixes: exception attendees previously dropped.
+        assertTrue(
+            "exception VEVENT must carry carol (previously dropped on push)",
+            exceptionVevent.attendees.any { it.email == "carol@example.test" }
         )
     }
 }

@@ -64,6 +64,7 @@
     <string name="action_connect">เชื่อมต่อ</string>
     <string name="action_duplicate">ทำซ้ำ</string>
     <string name="action_share">แชร์</string>
+    <string name="action_share_as_text">แชร์เป็นข้อความ</string>
     <string name="action_export_ics">ส่งออกเป็น .ics</string>
     <string name="action_confirm_delete">ยืนยันการลบ</string>
     <string name="action_delete_event">ลบกิจกรรม</string>
@@ -126,6 +127,12 @@
     <string name="onboarding_got_you">เราช่วยได้</string>
     <string name="onboarding_connect_prompt">เชื่อมต่อ iCloud เพื่อดูกิจกรรมของคุณ</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">มีอะไรใหม่</string>
+    <string name="whats_new_dismiss">เข้าใจแล้ว</string>
+    <string name="whats_new_v598_title">ช่วยให้ Android ยังคงเปิดกว้าง</string>
+    <string name="whats_new_v598_body">Google กำลังเปลี่ยนวิธีที่คุณติดตั้งแอปบนอุปกรณ์ของคุณ เราต้องการความช่วยเหลือจากคุณ</string>
+    <string name="whats_new_v598_action_label">ไปที่ keepandroidopen.org</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">เชื่อมต่อ iCloud</string>
     <string name="signin_caldav_title">เพิ่มบัญชี CalDAV</string>
@@ -201,6 +208,11 @@
     <string name="caldav_error_connection_timeout">หมดเวลาการเชื่อมต่อ โปรดลองอีกครั้ง</string>
     <string name="caldav_error_no_calendars">ไม่พบปฏิทินบนเซิร์ฟเวอร์นี้</string>
     <string name="caldav_error_unexpected">เกิดข้อผิดพลาดที่ไม่คาดคิด โปรดลองอีกครั้ง</string>
+    <string name="password_change_error_account_not_found">ไม่พบบัญชี</string>
+    <string name="password_change_error_no_credentials">ไม่มีข้อมูลรับรองที่มีอยู่</string>
+    <string name="password_change_error_unsupported_provider">ผู้ให้บริการนี้ไม่รองรับการเปลี่ยนรหัสผ่าน</string>
+    <string name="password_change_error_invalid">รหัสผ่านไม่ถูกต้อง</string>
+    <string name="password_change_error_network">เกิดข้อผิดพลาดของเครือข่าย โปรดลองอีกครั้ง</string>
 
     <string name="error_import_file_not_found">ไม่พบไฟล์หรืออ่านไม่ได้</string>
     <string name="error_import_invalid_format">รูปแบบไฟล์ปฏิทินไม่ถูกต้อง</string>
@@ -271,7 +283,7 @@
     <string name="label_server_url">URL เซิร์ฟเวอร์</string>
     <string name="label_username">ชื่อผู้ใช้</string>
     <string name="label_password">รหัสผ่าน</string>
-    <string name="label_display_name_optional">ชื่อที่แสดง (ไม่จำเป็น)</string>
+    <string name="label_display_name_optional">ชื่อที่แสดง</string>
 
     <string name="placeholder_search_events">ค้นหากิจกรรม…</string>
 
@@ -506,7 +518,10 @@
     <string name="drawer_calendars">ปฏิทิน</string>
     <string name="drawer_contacts">ผู้ติดต่อ</string>
     <string name="drawer_device_calendars">ปฏิทินอุปกรณ์</string>
+    <string name="drawer_account_offline">ออฟไลน์</string>
     <string name="drawer_share_feedback">แสดงความคิดเห็น</string>
+
+    <string name="event_title_fallback">กิจกรรม</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">เพื่อคุณ ไม่ใช่ข้อมูลของคุณ</string>
@@ -1097,4 +1112,14 @@
     <plurals name="share_availability_header">
         <item quantity="other">ว่างใน %1$d วันถัดไป (%2$s – %3$s):</item>
     </plurals>
+    <plurals name="reminder_in_days">
+        <item quantity="other">ในอีก %1$d วัน</item>
+    </plurals>
+    <string name="holiday_catalog_add">เพิ่มปฏิทินวันหยุด</string>
+    <string name="holiday_catalog_search_label">ค้นหา</string>
+    <string name="holiday_catalog_already_added">เพิ่มแล้ว</string>
+    <string name="holiday_catalog_empty">ไม่พบประเทศ</string>
+    <string name="holiday_catalog_empty_hint">ลองใช้ชื่ออื่น</string>
+    <string name="holiday_catalog_validate_error">ไม่สามารถเชื่อมต่อปฏิทินนี้ได้ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
+    <string name="holiday_catalog_attribution">ปฏิทินวันหยุดจาก Mozilla Thunderbird อยู่ภายใต้สัญญาอนุญาต %1$s</string>
 </resources>

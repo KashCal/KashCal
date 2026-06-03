@@ -626,11 +626,12 @@ private fun AllDayRow(
 private fun formatMinutesAsClock(minutes: Int, is24Hour: Boolean): String {
     val safeMinutes = minutes.coerceIn(0, 1440)
     // 1440 = end of day; LocalTime can't represent 24:00, so render the
-    // boundary explicitly. In 12h mode show "12:00 AM" (midnight); in 24h
-    // mode show "24:00". Without this, both modes would display the same as
-    // 23:59 / 11:59 PM, lying to the user about a one-minute gap.
-    if (safeMinutes >= 1440) {
-        return if (is24Hour) "24:00" else "12:00 AM"
+    // boundary explicitly. 24h mode shows "24:00" (universal); 12h mode
+    // formats midnight via the locale's own AM/PM formatter so non-English
+    // users see locale-appropriate text instead of a hardcoded "12:00 AM".
+    if (safeMinutes == 1440) {
+        return if (is24Hour) "24:00"
+        else DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()).format(LocalTime.MIDNIGHT)
     }
     val h = safeMinutes / 60
     val m = safeMinutes % 60

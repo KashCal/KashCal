@@ -1380,36 +1380,14 @@ class AndroidCalendarProviderRepository @Inject constructor(
         reminderMinutes: Int,
         isAllDay: Boolean
     ): Long {
+        // Android CalendarContract.Reminders.MINUTES is "minutes before start":
+        // positive = before, negative = after. The signed offset is the negation of that.
         val offsetMs = -reminderMinutes.toLong() * 60 * 1000
 
         return if (isAllDay) {
-            // For all-day events, fire at 9 AM local, N days before
-            val localZone = java.time.ZoneId.systemDefault()
-            val eventDate = java.time.Instant.ofEpochMilli(occurrenceStartTs)
-                .atZone(java.time.ZoneOffset.UTC)
-                .toLocalDate()
-
-            val oneDayMs = 24 * 60 * 60 * 1000L
-            when {
-                // Sub-day offset (e.g., -540 min for "9 AM day of event")
-                offsetMs > -oneDayMs && offsetMs < 0 -> {
-                    val hours = (-offsetMs / (60 * 60 * 1000L)).toInt()
-                    val minutes = ((-offsetMs % (60 * 60 * 1000L)) / (60 * 1000L)).toInt()
-                    eventDate.atTime(hours, minutes)
-                        .atZone(localZone)
-                        .toInstant()
-                        .toEpochMilli()
-                }
-                // Day-based offset (e.g., -1440 min = 1 day before)
-                else -> {
-                    val days = (offsetMs / oneDayMs).toInt()
-                    eventDate.plusDays(days.toLong())
-                        .atTime(9, 0) // 9 AM local
-                        .atZone(localZone)
-                        .toInstant()
-                        .toEpochMilli()
-                }
-            }
+            // Signed offset from the event's LOCAL midnight (stored == fired == synced),
+            // identical formula to the Room scheduler's calculateAllDayTriggerTime.
+            DateTimeUtils.allDayReminderTriggerTime(occurrenceStartTs, offsetMs)
         } else {
             // Timed events: simple subtraction
             occurrenceStartTs + offsetMs
@@ -1455,7 +1433,14 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
     private fun mapToDeviceEvent(cursor: android.database.Cursor): DeviceEvent {
         val isAllDay = cursor.getInt(8) == 1
-        val endTs = if (cursor.isNull(6)) null else cursor.getLong(6)
+        val startTs = cursor.getLong(5)
+        val rawEndTs = if (cursor.isNull(6)) null else cursor.getLong(6)
+        // Convert CalendarProvider's exclusive DTEND (midnight next day) to inclusive
+        // end (last ms of last day) for all-day events, matching the convention used
+        // by mapToInstances and Room Event.endTs. The edit form's date picker reads
+        // this back through DateTimeUtils.utcMidnightToLocalDate; without this
+        // conversion the picker would show the day after the event's actual last day.
+        val endTs = inclusiveEndForDeviceEvent(rawEndTs, startTs, isAllDay)
 
         return DeviceEvent(
             id = cursor.getLong(0),
@@ -1463,7 +1448,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             title = cursor.getString(2).orEmpty(),
             description = cursor.getString(3),
             location = cursor.getString(4),
-            startTs = cursor.getLong(5),
+            startTs = startTs,
             endTs = endTs,
             duration = cursor.getString(7),
             isAllDay = isAllDay,
@@ -1481,6 +1466,26 @@ class AndroidCalendarProviderRepository @Inject constructor(
             eventColor = if (cursor.isNull(20)) null else cursor.getInt(20)
         )
     }
+}
+
+/**
+ * Convert CalendarProvider's exclusive DTEND to KashCal's inclusive endTs for an
+ * all-day event read off the Events table.
+ *
+ * Mirrors the conversion in mapToInstances (line ~184). Both must agree so an event
+ * shown on the calendar grid renders the same end date when reopened in the edit
+ * form. Returns null when DTEND is null (recurring events use DURATION instead).
+ * Guards against a degenerate `dtend == dtstart` row by leaving it unchanged
+ * rather than going negative.
+ */
+internal fun inclusiveEndForDeviceEvent(
+    dtend: Long?,
+    dtstart: Long,
+    isAllDay: Boolean
+): Long? {
+    if (dtend == null) return null
+    if (!isAllDay) return dtend
+    return if (dtend > dtstart) dtend - 1 else dtend
 }
 
 /**

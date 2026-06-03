@@ -64,6 +64,7 @@
     <string name="action_connect">ချိတ်ဆက်</string>
     <string name="action_duplicate">ပွားယူ</string>
     <string name="action_share">မျှဝေ</string>
+    <string name="action_share_as_text">စာသားအဖြစ် မျှဝေရန်</string>
     <string name="action_export_ics">.ics အဖြစ် ထုတ်ယူ</string>
     <string name="action_confirm_delete">ဖျက်ရန် အတည်ပြု</string>
     <string name="action_delete_event">ပွဲ ဖျက်</string>
@@ -246,6 +247,11 @@
     <string name="caldav_error_connection_timeout">ချိတ်ဆက်ချိန် ကုန်ဆုံးသွားပါပြီ။ ထပ်စမ်းကြည့်ပါ။</string>
     <string name="caldav_error_no_calendars">ဤဆာဗာတွင် ပြက္ခဒိန်များ မတွေ့ရှိပါ။</string>
     <string name="caldav_error_unexpected">မမျှော်လင့်သော အမှားတစ်ခု။ ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="password_change_error_account_not_found">အကောင့် မတွေ့ရှိပါ</string>
+    <string name="password_change_error_no_credentials">ရှိရင်းစွဲ အထောက်အထား မရှိပါ</string>
+    <string name="password_change_error_unsupported_provider">ဤဝန်ဆောင်မှုပေးသူသည် စကားဝှက် ပြောင်းခြင်းကို မပံ့ပိုးပါ</string>
+    <string name="password_change_error_invalid">စကားဝှက် မမှန်ကန်ပါ</string>
+    <string name="password_change_error_network">ကွန်ရက် အမှား၊ ထပ်စမ်းကြည့်ပါ</string>
 
     <string name="error_import_file_not_found">ဖိုင် မတွေ့ရှိ သို့မဟုတ် ဖတ်၍ မရပါ။</string>
     <string name="error_import_invalid_format">ပြက္ခဒိန် ဖိုင်ပုံစံ မမှန်ကန်ပါ။</string>
@@ -316,7 +322,7 @@
     <string name="label_server_url">ဆာဗာ URL</string>
     <string name="label_username">အသုံးပြုသူအမည်</string>
     <string name="label_password">စကားဝှက်</string>
-    <string name="label_display_name_optional">ပြသမည့်အမည် (မဖြစ်မနေ မဟုတ်)</string>
+    <string name="label_display_name_optional">ပြသမည့်အမည်</string>
 
     <string name="placeholder_search_events">ပွဲများ ရှာဖွေ…</string>
 
@@ -547,7 +553,10 @@
     <string name="drawer_calendars">ပြက္ခဒိန်များ</string>
     <string name="drawer_contacts">အဆက်အသွယ်များ</string>
     <string name="drawer_device_calendars">စက် ပြက္ခဒိန်များ</string>
+    <string name="drawer_account_offline">အော့ဖ်လိုင်း</string>
     <string name="drawer_share_feedback">အကြံပြုချက် မျှဝေ</string>
+
+    <string name="event_title_fallback">ပွဲ</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">သင့်အတွက်, သင့်ဒေတာအတွက် မဟုတ်။</string>
@@ -762,6 +771,10 @@
     <string name="action_snooze">ခဏဆိုင်းငံ့</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">ယခုစတင်နေသည်</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d ရက်အတွင်း</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">မနက်ဖြန်, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1116,4 +1129,16 @@
         <item quantity="other">%1$s · နောက်ထပ် %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">တုံ့ပြန်မှု ပြောင်းရန်</string>
+    <string name="whats_new_title">အသစ်တင်ထားသောအရာများ</string>
+    <string name="whats_new_dismiss">ရပါပြီ</string>
+    <string name="whats_new_v598_title">Android ဖွင့်ထားရန် ကူညီပါ</string>
+    <string name="whats_new_v598_body">Google သည် သင့်စက်ပစ္စည်းတွင် အက်ပ်များ တပ်ဆင်ပုံကို ပြောင်းလဲနေသည်။ သင့်အကူအညီ လိုအပ်သည်။</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org သို့ သွားပါ</string>
+    <string name="holiday_catalog_add">အားလပ်ရက် ပြက္ခဒိန် ထည့်ပါ</string>
+    <string name="holiday_catalog_search_label">ရှာဖွေ</string>
+    <string name="holiday_catalog_already_added">ထည့်ပြီးပါပြီ</string>
+    <string name="holiday_catalog_empty">နိုင်ငံ မတွေ့ပါ</string>
+    <string name="holiday_catalog_empty_hint">အခြားအမည်ဖြင့် စမ်းကြည့်ပါ</string>
+    <string name="holiday_catalog_validate_error">ဤပြက္ခဒိန်ကို မရောက်ရှိနိုင်ပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird မှ အားလပ်ရက် ပြက္ခဒိန်များ၊ %1$s အောက်တွင် လိုင်စင်ရထားသည်။</string>
 </resources>

@@ -49,7 +49,10 @@ fun getTimedReminderOptions(resources: Resources): List<ReminderOption> =
  *
  * For time-format-aware labels, use [getAllDayReminderOptions] instead.
  */
-val ALL_DAY_REMINDER_MINUTES = listOf(REMINDER_OFF, 540, 720, 1440, 10080)
+// Signed "minutes before start" (Android CalendarProvider convention): positive = before midnight,
+// negative = after midnight. 9AM-day-of fires after midnight so it is negative (-540).
+// 1d/2d/1w fire 9 AM on the prior day(s) = hour-based before-offsets (DST-stable).
+val ALL_DAY_REMINDER_MINUTES = listOf(REMINDER_OFF, -540, 900, 2340, 9540)
 
 fun getAllDayReminderOptionsI18n(use24Hour: Boolean, resources: Resources): List<ReminderOption> =
     ALL_DAY_REMINDER_MINUTES.map { minutes ->
@@ -59,7 +62,7 @@ fun getAllDayReminderOptionsI18n(use24Hour: Boolean, resources: Resources): List
 /**
  * Returns all-day reminder options with time-format-aware labels.
  *
- * The 540-minute option ("9 AM day of event") label changes based on [use24Hour]:
+ * The "9 AM day of event" option (stored as -540) label changes based on [use24Hour]:
  * - 24-hour format: "09:00 day of event"
  * - 12-hour format: "9 AM day of event"
  *
@@ -80,14 +83,23 @@ fun getAllDayReminderOptions(use24Hour: Boolean, resources: Resources): List<Rem
  * @return Human-readable label for the reminder
  */
 fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false, resources: Resources): String {
+    // All-day reminders use signed "minutes before midnight": negative = after the
+    // event's local midnight (e.g. -540 = 9 AM day of), positive = before.
+    if (isAllDay) {
+        when (minutes) {
+            -540 -> return resources.getString(if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h)
+            900 -> return resources.getQuantityString(R.plurals.reminder_days_before, 1, 1)
+            2340 -> return resources.getQuantityString(R.plurals.reminder_days_before, 2, 2)
+            9540 -> return resources.getQuantityString(R.plurals.reminder_weeks_before, 1, 1)
+        }
+    }
     return when (minutes) {
         REMINDER_OFF -> resources.getString(R.string.reminder_none)
         0 -> resources.getString(R.string.reminder_at_time_of_event)
-        540 -> if (isAllDay) {
-            resources.getString(if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h)
-        } else {
-            resources.getQuantityString(R.plurals.reminder_hours_before, 9, 9)
-        }
+        // 540 is a timed "9 hours before" value. (Under the signed all-day model
+        // "9 AM day of event" is -540, handled in the isAllDay block above; a legacy
+        // all-day 540 falls here and renders "9 hours before", matching its fire time.)
+        540 -> resources.getQuantityString(R.plurals.reminder_hours_before, 9, 9)
         else -> when {
             minutes >= 10080 && minutes % 10080 == 0 -> {
                 val weeks = minutes / 10080
@@ -113,21 +125,38 @@ fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = f
  * Handles both current and legacy values, plus arbitrary values from external calendars.
  *
  * @param minutes Reminder minutes value
- * @param use24Hour Whether to use 24-hour format for the 540-minute option (default: false)
+ * @param use24Hour Whether to use 24-hour format for the 9 AM option (default: false)
+ * @param isAllDay Whether this is an all-day reminder (changes how signed offsets are labelled)
  * @return Short label (e.g., "15m", "1h", "1d", "09:00" or "9AM")
  */
-fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, resources: Resources): String {
+fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, isAllDay: Boolean = false, resources: Resources): String {
+    // All-day signed offsets: -540 = 9 AM day of; 900/2340/9540 = 9 AM N days before.
+    // Gated on isAllDay so timed reminders (e.g. 900 = a 15h-before alarm) are unaffected.
+    if (isAllDay && minutes != REMINDER_OFF) {
+        when (minutes) {
+            -540 -> return resources.getString(if (use24Hour) R.string.reminder_short_9am_24h else R.string.reminder_short_9am_12h)
+            900 -> return resources.getString(R.string.reminder_short_days, 1)
+            2340 -> return resources.getString(R.string.reminder_short_days, 2)
+            9540 -> return resources.getString(R.string.reminder_short_weeks, 1)
+            // Any other all-day offset (e.g. a synced after-start alarm) renders by
+            // magnitude so it never shows a negative "-540m"; sign meaning is conveyed
+            // by the firing time, not this compact summary chip.
+            else -> return reminderShortByMagnitude(kotlin.math.abs(minutes), resources)
+        }
+    }
     return when (minutes) {
         REMINDER_OFF -> resources.getString(R.string.reminder_short_off)
         0 -> resources.getString(R.string.reminder_short_at_event)
         540 -> resources.getString(if (use24Hour) R.string.reminder_short_9am_24h else R.string.reminder_short_9am_12h)
-        else -> when {
-            minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_short_weeks, minutes / 10080)
-            minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
-            minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
-            else -> resources.getString(R.string.reminder_short_minutes, minutes)
-        }
+        else -> reminderShortByMagnitude(minutes, resources)
     }
+}
+
+private fun reminderShortByMagnitude(minutes: Int, resources: Resources): String = when {
+    minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_short_weeks, minutes / 10080)
+    minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
+    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
+    else -> resources.getString(R.string.reminder_short_minutes, minutes)
 }
 
 // ==================== Custom Reminders: Duration Helpers ====================
@@ -154,12 +183,19 @@ val TIMED_PRESET_CHIPS = listOf(
     PresetChip("1d", 1440)
 )
 
-/** Quick preset chips for all-day events: 9AM day of, 1d before, 2d before, 1w before */
+/**
+ * Quick preset chips for all-day events. Stored values are signed "minutes before
+ * the event's local midnight" (positive = before, negative = after):
+ * - 9AM day of   = -540  ("PT9H", fires 9 AM on the event day, after midnight)
+ * - 1d before    =  900  ("-PT15H", fires 9 AM the day before)
+ * - 2d before    = 2340  ("-PT39H", fires 9 AM two days before)
+ * - 1w before    = 9540  ("-PT159H", fires 9 AM a week before)
+ */
 val ALL_DAY_PRESET_CHIPS = listOf(
-    PresetChip("9AM", 540),
-    PresetChip("1d", 1440),
-    PresetChip("2d", 2880),
-    PresetChip("1w", 10080)
+    PresetChip("9AM", -540),
+    PresetChip("1d", 900),
+    PresetChip("2d", 2340),
+    PresetChip("1w", 9540)
 )
 
 /**
@@ -169,8 +205,9 @@ val ALL_DAY_PRESET_CHIPS = listOf(
  * @return Triple of (days, hours, minutes)
  */
 fun minutesToComponents(totalMinutes: Int): Triple<Int, Int, Int> {
-    val days = totalMinutes / 1440
-    val remaining = totalMinutes % 1440
+    val abs = kotlin.math.abs(totalMinutes)
+    val days = abs / 1440
+    val remaining = abs % 1440
     val hours = remaining / 60
     val minutes = remaining % 60
     return Triple(days, hours, minutes)
@@ -210,12 +247,13 @@ fun formatReminderDuration(minutes: Int, isAllDay: Boolean, use24Hour: Boolean, 
     if (minutes == 0 && !isAllDay) return resources.getString(R.string.reminder_at_time_of_event)
 
     if (isAllDay) {
-        when {
-            minutes == 540 -> return resources.getString(
+        // Signed offsets: -540 = 9 AM day of; 900/2340/9540 = 9 AM, N days before.
+        when (minutes) {
+            -540 -> return resources.getString(
                 if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h
             )
-            minutes >= 1440 && minutes % 1440 == 0 -> {
-                val days = minutes / 1440
+            900, 2340, 9540 -> {
+                val days = when (minutes) { 900 -> 1; 2340 -> 2; else -> 7 }
                 val dayStr = resources.getQuantityString(R.plurals.time_days, days, days)
                 return resources.getString(
                     if (use24Hour) R.string.reminder_before_at_24h else R.string.reminder_before_at_12h, dayStr
@@ -261,9 +299,9 @@ fun deduplicateAndSortReminders(reminders: List<Int>): List<Int> =
  * @param use24Hour Whether to use 24-hour format
  * @return Summary string like "15m, 1h, 1d" or "None"
  */
-fun formatReminderSummary(reminderMinutes: List<Int>, use24Hour: Boolean, resources: Resources): String {
+fun formatReminderSummary(reminderMinutes: List<Int>, use24Hour: Boolean, resources: Resources, isAllDay: Boolean = false): String {
     if (reminderMinutes.isEmpty()) return resources.getString(R.string.reminder_summary_none)
-    return reminderMinutes.joinToString(", ") { formatReminderShort(it, use24Hour, resources) }
+    return reminderMinutes.joinToString(", ") { formatReminderShort(it, use24Hour, isAllDay, resources) }
 }
 
 /**

@@ -63,6 +63,7 @@
     <string name="action_connect">Σύνδεση</string>
     <string name="action_duplicate">Αντιγραφή</string>
     <string name="action_share">Κοινοποίηση</string>
+    <string name="action_share_as_text">Κοινοποίηση ως κείμενο</string>
     <string name="action_export_ics">Εξαγωγή ως .ics</string>
     <string name="action_confirm_delete">Επιβεβαίωση διαγραφής</string>
     <string name="action_delete_event">Διαγραφή συμβάντος</string>
@@ -75,6 +76,10 @@
     <string name="rsvp_modified_snackbar">Η απάντηση για %1$s απέτυχε — το συμβάν τροποποιήθηκε. Παρακαλώ απαντήστε ξανά.</string>
     <string name="invitees_host_tag">Οικοδεσπότης</string>
     <string name="invitees_summary_you_alone">Εσύ</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Σε %1$d ημέρα</item>
+        <item quantity="other">Σε %1$d ημέρες</item>
+    </plurals>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Εσύ · %d καλεσμένος</item>
         <item quantity="other">Εσύ · %d καλεσμένοι</item>
@@ -263,6 +268,12 @@
     <string name="caldav_error_no_calendars">Δεν βρέθηκαν ημερολόγια σε αυτόν τον διακομιστή.</string>
     <string name="caldav_error_unexpected">Απρόσμενο σφάλμα. Δοκιμάστε ξανά.</string>
 
+    <string name="password_change_error_account_not_found">Ο λογαριασμός δεν βρέθηκε</string>
+    <string name="password_change_error_no_credentials">Δεν υπάρχουν διαπιστευτήρια</string>
+    <string name="password_change_error_unsupported_provider">Αυτός ο πάροχος δεν υποστηρίζει αλλαγή κωδικού πρόσβασης</string>
+    <string name="password_change_error_invalid">Μη έγκυρος κωδικός πρόσβασης</string>
+    <string name="password_change_error_network">Σφάλμα δικτύου, δοκιμάστε ξανά</string>
+
     <string name="error_import_file_not_found">Το αρχείο δεν βρέθηκε ή δεν μπορεί να διαβαστεί.</string>
     <string name="error_import_invalid_format">Μη έγκυρη μορφή αρχείου ημερολογίου.</string>
     <string name="error_import_partial">Εισαγωγή %1$d συμβάντων, %2$d απέτυχαν.</string>
@@ -332,7 +343,7 @@
     <string name="label_server_url">URL διακομιστή</string>
     <string name="label_username">Όνομα χρήστη</string>
     <string name="label_password">Κωδικός</string>
-    <string name="label_display_name_optional">Εμφανιζόμενο όνομα (προαιρετικό)</string>
+    <string name="label_display_name_optional">Εμφανιζόμενο όνομα</string>
 
     <string name="placeholder_search_events">Αναζήτηση συμβάντων…</string>
 
@@ -569,7 +580,10 @@
     <string name="drawer_calendars">Ημερολόγια</string>
     <string name="drawer_contacts">Επαφές</string>
     <string name="drawer_device_calendars">Ημερολόγια συσκευής</string>
+    <string name="drawer_account_offline">Εκτός σύνδεσης</string>
     <string name="drawer_share_feedback">Στείλτε σχόλια</string>
+
+    <string name="event_title_fallback">Συμβάν</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Για εσάς, όχι τα δεδομένα σας.</string>
@@ -1173,4 +1187,17 @@
     <string name="attendee_section_pending">Σε αναμονή</string>
     <string name="attendee_section_declined">Αρνήθηκαν</string>
     <string name="attendee_section_delegated">Ανέθεσαν</string>
+    <string name="whats_new_title">Τι νέο</string>
+    <string name="whats_new_dismiss">Κατάλαβα</string>
+    <string name="whats_new_v598_title">Βοηθήστε να παραμείνει το Android ανοιχτό</string>
+    <string name="whats_new_v598_body">Η Google αλλάζει τον τρόπο με τον οποίο εγκαθιστάτε εφαρμογές στη συσκευή σας. Χρειαζόμαστε τη βοήθειά σας.</string>
+    <string name="whats_new_v598_action_label">Επίσκεψη στο keepandroidopen.org</string>
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">Προσθήκη ημερολογίου αργιών</string>
+    <string name="holiday_catalog_search_label">Αναζήτηση</string>
+    <string name="holiday_catalog_already_added">Προστέθηκε</string>
+    <string name="holiday_catalog_empty">Δεν βρέθηκαν χώρες</string>
+    <string name="holiday_catalog_empty_hint">Δοκιμάστε διαφορετικό όνομα</string>
+    <string name="holiday_catalog_validate_error">Δεν ήταν δυνατή η σύνδεση με αυτό το ημερολόγιο. Ελέγξτε τη σύνδεσή σας και προσπαθήστε ξανά.</string>
+    <string name="holiday_catalog_attribution">Ημερολόγια αργιών από το Mozilla Thunderbird, υπό την άδεια %1$s.</string>
 </resources>

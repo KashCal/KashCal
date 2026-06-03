@@ -63,6 +63,7 @@
     <string name="action_connect">कनेक्ट करें</string>
     <string name="action_duplicate">डुप्लिकेट</string>
     <string name="action_share">शेयर करें</string>
+    <string name="action_share_as_text">टेक्स्ट के रूप में शेयर करें</string>
     <string name="action_export_ics">.ics के रूप में निर्यात करें</string>
     <string name="action_confirm_delete">हटाने की पुष्टि करें</string>
     <string name="action_delete_event">इवेंट हटाएँ</string>
@@ -188,6 +189,12 @@
     <string name="onboarding_got_you">हम आपकी मदद करेंगे।</string>
     <string name="onboarding_connect_prompt">अपने इवेंट यहाँ देखने के लिए iCloud कनेक्ट करें</string>
 
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">नया क्या है</string>
+    <string name="whats_new_dismiss">समझ गया</string>
+    <string name="whats_new_v598_title">Android को खुला रखने में मदद करें</string>
+    <string name="whats_new_v598_body">Google आपके डिवाइस पर ऐप्स इंस्टॉल करने का तरीका बदल रहा है। हमें आपकी मदद चाहिए।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org पर जाएँ</string>
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud कनेक्ट करें</string>
     <string name="signin_caldav_title">CalDAV अकाउंट जोड़ें</string>
@@ -263,6 +270,11 @@
     <string name="caldav_error_connection_timeout">कनेक्शन का समय समाप्त हो गया। कृपया पुनः प्रयास करें।</string>
     <string name="caldav_error_no_calendars">इस सर्वर पर कोई कैलेंडर नहीं मिला।</string>
     <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। कृपया पुनः प्रयास करें।</string>
+    <string name="password_change_error_account_not_found">खाता नहीं मिला</string>
+    <string name="password_change_error_no_credentials">कोई मौजूदा क्रेडेंशियल नहीं</string>
+    <string name="password_change_error_unsupported_provider">यह प्रदाता पासवर्ड बदलने का समर्थन नहीं करता</string>
+    <string name="password_change_error_invalid">अमान्य पासवर्ड</string>
+    <string name="password_change_error_network">नेटवर्क त्रुटि, कृपया पुनः प्रयास करें</string>
 
     <string name="error_import_file_not_found">फ़ाइल नहीं मिली या पढ़ी नहीं जा सकती।</string>
     <string name="error_import_invalid_format">अमान्य कैलेंडर फ़ाइल प्रारूप।</string>
@@ -334,7 +346,7 @@
     <string name="label_server_url">सर्वर URL</string>
     <string name="label_username">उपयोगकर्ता नाम</string>
     <string name="label_password">पासवर्ड</string>
-    <string name="label_display_name_optional">प्रदर्शन नाम (वैकल्पिक)</string>
+    <string name="label_display_name_optional">प्रदर्शन नाम</string>
 
     <string name="placeholder_search_events">इवेंट खोजें…</string>
 
@@ -569,7 +581,10 @@
     <string name="drawer_calendars">कैलेंडर</string>
     <string name="drawer_contacts">संपर्क</string>
     <string name="drawer_device_calendars">डिवाइस कैलेंडर</string>
+    <string name="drawer_account_offline">ऑफ़लाइन</string>
     <string name="drawer_share_feedback">प्रतिक्रिया साझा करें</string>
+
+    <string name="event_title_fallback">इवेंट</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">आपके लिए, आपके डेटा के लिए नहीं।</string>
@@ -816,6 +831,10 @@
     <string name="action_snooze">स्नूज़</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">अभी शुरू हो रहा है</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d दिन में</item>
+        <item quantity="other">%1$d दिनों में</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">कल, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1158,4 +1177,11 @@
     <string name="attendee_section_pending">लंबित</string>
     <string name="attendee_section_declined">अस्वीकृत</string>
     <string name="attendee_section_delegated">सौंपा गया</string>
+    <string name="holiday_catalog_add">छुट्टी कैलेंडर जोड़ें</string>
+    <string name="holiday_catalog_search_label">खोजें</string>
+    <string name="holiday_catalog_already_added">जोड़ा गया</string>
+    <string name="holiday_catalog_empty">कोई देश नहीं मिला</string>
+    <string name="holiday_catalog_empty_hint">कोई दूसरा नाम आज़माएँ</string>
+    <string name="holiday_catalog_validate_error">इस कैलेंडर तक नहीं पहुँचा जा सका। अपना कनेक्शन जाँचें और फिर से प्रयास करें।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird से छुट्टी कैलेंडर, %1$s के अंतर्गत लाइसेंस प्राप्त।</string>
 </resources>

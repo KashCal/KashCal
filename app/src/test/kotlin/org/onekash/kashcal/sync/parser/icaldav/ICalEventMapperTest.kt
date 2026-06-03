@@ -72,6 +72,51 @@ class ICalEventMapperTest {
     }
 
     @Test
+    fun `toEntity drops ACTION_NONE sentinel from reminders and alarmCount`() {
+        // Apple's RFC 9074 ACTION:NONE sentinel (1976 absolute trigger) must never
+        // become a reminder duration or inflate alarmCount on pull — otherwise its
+        // (trigger - dtStart) offset surfaces as a ~-18000-day phantom reminder.
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Apple Inc.//iPhone OS 26.1//EN
+            BEGIN:VEVENT
+            UID:none-pull@kashcal.test
+            DTSTAMP:20260603T120000Z
+            DTSTART;VALUE=DATE:20260605
+            DTEND;VALUE=DATE:20260606
+            SUMMARY:test alert
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:PT9H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:-P1DT15H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:NONE
+            TRIGGER;VALUE=DATE-TIME:19760401T005545Z
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals("alarmCount excludes NONE sentinel", 2, entity.alarmCount)
+        val reminders = entity.reminders.orEmpty()
+        assertEquals("Only the 2 real DISPLAY alarms become reminders", 2, reminders.size)
+        assertFalse(
+            "No phantom multi-day reminder from the 1976 absolute trigger",
+            reminders.any { it.contains("18") || it.startsWith("-P1") && it.length > 8 }
+        )
+    }
+
+    @Test
     fun `maps all-day event correctly`() {
         val ics = """
             BEGIN:VCALENDAR
@@ -1191,5 +1236,64 @@ class ICalEventMapperTest {
             "createdAt must not be stomped by sync clock; got ${entity.createdAt}",
             entity.createdAt < 1_600_000_000_000L
         )
+    }
+
+    // ========== Signed / absolute trigger handling ==========
+
+    @Test
+    fun `preserves a positive (after-start) relative trigger without sign-mangling`() {
+        // PT9H = 9 hours after start (e.g. all-day "9 AM day of" anchored at midnight).
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-after@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART;VALUE=DATE:20251225
+            SUMMARY:All-day with 9 AM reminder
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:PT9H
+            DESCRIPTION:9 AM day of
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Positive trigger preserved", "PT9H", entity.reminders!!.first())
+    }
+
+    @Test
+    fun `converts an absolute DATE-TIME trigger to a duration from start (not dropped)`() {
+        // Absolute trigger one hour before the 10:00 start -> -PT1H.
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-abs@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with absolute alarm
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER;VALUE=DATE-TIME:20251225T090000Z
+            DESCRIPTION:Absolute one hour before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertNotNull("Absolute trigger must not be dropped", entity.reminders)
+        assertEquals("-PT1H", entity.reminders!!.first())
     }
 }

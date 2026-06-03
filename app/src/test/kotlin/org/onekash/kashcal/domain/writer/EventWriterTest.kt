@@ -238,6 +238,75 @@ class EventWriterTest {
     }
 
     @Test
+    fun `updateEvent increments sequence when EXDATE changes`() = runTest {
+        val original = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY"),
+            isLocal = true
+        )
+
+        val updated = eventWriter.updateEvent(
+            original.copy(exdate = "${original.startTs + 86400000}"),
+            isLocal = true
+        )
+
+        assertEquals(1, updated.sequence)
+    }
+
+    @Test
+    fun `updateEvent increments sequence when RDATE changes`() = runTest {
+        val original = eventWriter.createEvent(createBaseEvent(), isLocal = true)
+
+        val updated = eventWriter.updateEvent(
+            original.copy(rdate = "${original.startTs + 172800000}"),
+            isLocal = true
+        )
+
+        assertEquals(1, updated.sequence)
+    }
+
+    @Test
+    fun `updateEvent increments sequence when DURATION changes`() = runTest {
+        val original = eventWriter.createEvent(
+            createBaseEvent().copy(duration = "PT1H"),
+            isLocal = true
+        )
+
+        val updated = eventWriter.updateEvent(
+            original.copy(duration = "PT2H"),
+            isLocal = true
+        )
+
+        assertEquals(1, updated.sequence)
+    }
+
+    @Test
+    fun `updateEvent increments sequence when STATUS transitions to CANCELLED`() = runTest {
+        val original = eventWriter.createEvent(
+            createBaseEvent().copy(status = "CONFIRMED"),
+            isLocal = true
+        )
+
+        val updated = eventWriter.updateEvent(
+            original.copy(status = "CANCELLED"),
+            isLocal = true
+        )
+
+        assertEquals(1, updated.sequence)
+    }
+
+    @Test
+    fun `updateEvent does not increment sequence for description or location change`() = runTest {
+        val original = eventWriter.createEvent(createBaseEvent(), isLocal = true)
+
+        val updated = eventWriter.updateEvent(
+            original.copy(description = "Bring the deck", location = "Room B"),
+            isLocal = true
+        )
+
+        assertEquals(0, updated.sequence)
+    }
+
+    @Test
     fun `updateEvent regenerates occurrences when RRULE changes`() = runTest {
         val original = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),

@@ -64,6 +64,7 @@
     <string name="action_connect">Hubungkan</string>
     <string name="action_duplicate">Duplikat</string>
     <string name="action_share">Bagikan</string>
+    <string name="action_share_as_text">Bagikan sebagai teks</string>
     <string name="action_export_ics">Ekspor sebagai .ics</string>
     <string name="action_confirm_delete">Konfirmasi Hapus</string>
     <string name="action_delete_event">Hapus Acara</string>
@@ -246,6 +247,11 @@
     <string name="caldav_error_connection_timeout">Waktu sambungan habis. Silakan coba lagi.</string>
     <string name="caldav_error_no_calendars">Tidak ada kalender ditemukan di server ini.</string>
     <string name="caldav_error_unexpected">Kesalahan tak terduga. Silakan coba lagi.</string>
+    <string name="password_change_error_account_not_found">Akun tidak ditemukan</string>
+    <string name="password_change_error_no_credentials">Tidak ada kredensial yang tersimpan</string>
+    <string name="password_change_error_unsupported_provider">Penyedia ini tidak mendukung penggantian kata sandi</string>
+    <string name="password_change_error_invalid">Kata sandi tidak valid</string>
+    <string name="password_change_error_network">Kesalahan jaringan, silakan coba lagi</string>
 
     <string name="error_import_file_not_found">File tidak ditemukan atau tidak dapat dibaca.</string>
     <string name="error_import_invalid_format">Format file kalender tidak valid.</string>
@@ -316,7 +322,7 @@
     <string name="label_server_url">URL Server</string>
     <string name="label_username">Nama pengguna</string>
     <string name="label_password">Kata sandi</string>
-    <string name="label_display_name_optional">Nama Tampilan (opsional)</string>
+    <string name="label_display_name_optional">Nama Tampilan</string>
 
     <string name="placeholder_search_events">Cari acara…</string>
 
@@ -547,7 +553,10 @@
     <string name="drawer_calendars">Kalender</string>
     <string name="drawer_contacts">Kontak</string>
     <string name="drawer_device_calendars">Kalender perangkat</string>
+    <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Bagikan masukan</string>
+
+    <string name="event_title_fallback">Acara</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Untuk Anda, bukan data Anda.</string>
@@ -762,6 +771,10 @@
     <string name="action_snooze">Tunda</string>
     <!-- Reminder notification content -->
     <string name="notification_starting_now">Dimulai sekarang</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="other">Dalam %1$d hari</item>
+    </plurals>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">Besok, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -1116,4 +1129,16 @@
         <item quantity="other">%1$s · %2$d lainnya</item>
     </plurals>
     <string name="rsvp_action_change_a11y">Ubah respons</string>
+    <string name="whats_new_title">Apa yang baru</string>
+    <string name="whats_new_dismiss">Mengerti</string>
+    <string name="whats_new_v598_title">Bantu Android tetap terbuka</string>
+    <string name="whats_new_v598_body">Google sedang mengubah cara Anda memasang aplikasi di perangkat. Kami butuh bantuan Anda.</string>
+    <string name="whats_new_v598_action_label">Kunjungi keepandroidopen.org</string>
+    <string name="holiday_catalog_add">Tambah kalender hari libur</string>
+    <string name="holiday_catalog_search_label">Cari</string>
+    <string name="holiday_catalog_already_added">Ditambahkan</string>
+    <string name="holiday_catalog_empty">Tidak ada negara ditemukan</string>
+    <string name="holiday_catalog_empty_hint">Coba nama lain</string>
+    <string name="holiday_catalog_validate_error">Tidak dapat menjangkau kalender ini. Periksa koneksi Anda lalu coba lagi.</string>
+    <string name="holiday_catalog_attribution">Kalender hari libur dari Mozilla Thunderbird, dilisensikan di bawah %1$s.</string>
 </resources>
