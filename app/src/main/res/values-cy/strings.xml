@@ -1404,4 +1404,5 @@
         <item quantity="many">Mewn %1$d diwrnod</item>
         <item quantity="other">Mewn %1$d diwrnod</item>
     </plurals>
+    <string name="qs_tile_label">Ychwanegu</string>
 </resources>

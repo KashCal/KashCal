@@ -432,6 +432,7 @@
     <string name="subscriptions_empty_ics">Nincs ICS feliratkozás</string>
     <string name="subscriptions_empty_ics_hint">Adj hozzá naptárhírcsatornát az események megtekintéséhez</string>
     <string name="subscriptions_add_ics">ICS naptár hozzáadása</string>
+    <string name="qs_tile_label">Esemény</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Születésnapok és évfordulók</string>

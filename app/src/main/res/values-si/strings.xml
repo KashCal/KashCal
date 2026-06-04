@@ -1169,4 +1169,5 @@
     <string name="holiday_catalog_empty_hint">වෙනත් නමක් උත්සාහ කරන්න</string>
     <string name="holiday_catalog_validate_error">මෙම දින දර්ශනයට ළඟා විය නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird වෙතින් නිවාඩු දින දර්ශන, %1$s යටතේ බලපත්‍ර ලබා ඇත.</string>
+    <string name="qs_tile_label">සිදුවීමක් එක් කරන්න</string>
 </resources>

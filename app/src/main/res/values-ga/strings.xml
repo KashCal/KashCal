@@ -1351,4 +1351,5 @@
         <item quantity="many">I gceann %1$d lá</item>
         <item quantity="other">I gceann %1$d lá</item>
     </plurals>
+    <string name="qs_tile_label">Cuir leis</string>
 </resources>

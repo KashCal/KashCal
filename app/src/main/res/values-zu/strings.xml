@@ -1195,4 +1195,5 @@
     <string name="holiday_catalog_empty_hint">Zama elinye igama</string>
     <string name="holiday_catalog_validate_error">Ayikwazanga ukufinyelela le khalenda. Hlola uxhumano lwakho bese uzama futhi.</string>
     <string name="holiday_catalog_attribution">Amakhalenda amaholide avela ku-Mozilla Thunderbird, alayisensiwe ngaphansi kwe-%1$s.</string>
+    <string name="qs_tile_label">Engeza</string>
 </resources>

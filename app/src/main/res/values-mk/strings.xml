@@ -432,6 +432,7 @@
     <string name="subscriptions_empty_ics">Нема ICS претплати</string>
     <string name="subscriptions_empty_ics_hint">Додајте канал со календар за да видите настани</string>
     <string name="subscriptions_add_ics">Додај ICS календар</string>
+    <string name="qs_tile_label">Додај настан</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Родендени и годишнини</string>

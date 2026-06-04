@@ -1141,4 +1141,5 @@
     <string name="holiday_catalog_empty_hint">အခြားအမည်ဖြင့် စမ်းကြည့်ပါ</string>
     <string name="holiday_catalog_validate_error">ဤပြက္ခဒိန်ကို မရောက်ရှိနိုင်ပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်စမ်းကြည့်ပါ။</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird မှ အားလပ်ရက် ပြက္ခဒိန်များ၊ %1$s အောက်တွင် လိုင်စင်ရထားသည်။</string>
+    <string name="qs_tile_label">ပွဲထည့်ရန်</string>
 </resources>

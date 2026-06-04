@@ -1123,4 +1123,5 @@
     <string name="holiday_catalog_empty_hint">Cuba nama lain</string>
     <string name="holiday_catalog_validate_error">Tidak dapat menghubungi kalendar ini. Sila semak sambungan anda dan cuba lagi.</string>
     <string name="holiday_catalog_attribution">Kalendar cuti daripada Mozilla Thunderbird, dilesenkan di bawah %1$s.</string>
+    <string name="qs_tile_label">Tambah acara</string>
 </resources>

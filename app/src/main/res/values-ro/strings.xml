@@ -438,6 +438,7 @@
     <string name="subscriptions_empty_ics">Niciun abonament ICS</string>
     <string name="subscriptions_empty_ics_hint">Adaugă un flux de calendar pentru a vedea evenimente</string>
     <string name="subscriptions_add_ics">Adaugă calendar ICS</string>
+    <string name="qs_tile_label">Adaugă eveniment</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Zile de naștere și aniversări</string>

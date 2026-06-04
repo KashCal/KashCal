@@ -1188,4 +1188,5 @@
     <string name="holiday_catalog_validate_error">Deze kalender kon niet worden bereikt. Controleer je verbinding en probeer het opnieuw.</string>
     <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
     <string name="holiday_catalog_attribution">Feestdagenkalenders van Mozilla Thunderbird, gelicentieerd onder %1$s.</string>
+    <string name="qs_tile_label">Afspraak</string>
 </resources>

@@ -1184,4 +1184,5 @@
     <string name="holiday_catalog_empty_hint">कोई दूसरा नाम आज़माएँ</string>
     <string name="holiday_catalog_validate_error">इस कैलेंडर तक नहीं पहुँचा जा सका। अपना कनेक्शन जाँचें और फिर से प्रयास करें।</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird से छुट्टी कैलेंडर, %1$s के अंतर्गत लाइसेंस प्राप्त।</string>
+    <string name="qs_tile_label">इवेंट जोड़ें</string>
 </resources>

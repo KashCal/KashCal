@@ -432,6 +432,7 @@
     <string name="subscriptions_empty_ics">ICS aboneliği yok</string>
     <string name="subscriptions_empty_ics_hint">Etkinlikleri görmek için takvim akışı ekle</string>
     <string name="subscriptions_add_ics">ICS Takvimi Ekle</string>
+    <string name="qs_tile_label">Etkinlik ekle</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Doğum Günleri ve Yıl Dönümleri</string>

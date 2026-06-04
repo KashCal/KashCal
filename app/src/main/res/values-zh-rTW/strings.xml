@@ -1122,4 +1122,5 @@
     <string name="holiday_catalog_empty_hint">請嘗試其他名稱</string>
     <string name="holiday_catalog_validate_error">無法連線到此日曆。請檢查網路連線後再試一次。</string>
     <string name="holiday_catalog_attribution">假日日曆來自 Mozilla Thunderbird，依據 %1$s 授權。</string>
+    <string name="qs_tile_label">新增活動</string>
 </resources>

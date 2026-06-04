@@ -1122,4 +1122,5 @@
     <string name="holiday_catalog_empty_hint">ลองใช้ชื่ออื่น</string>
     <string name="holiday_catalog_validate_error">ไม่สามารถเชื่อมต่อปฏิทินนี้ได้ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
     <string name="holiday_catalog_attribution">ปฏิทินวันหยุดจาก Mozilla Thunderbird อยู่ภายใต้สัญญาอนุญาต %1$s</string>
+    <string name="qs_tile_label">เพิ่มกิจกรรม</string>
 </resources>

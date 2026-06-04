@@ -1179,4 +1179,5 @@
         <item quantity="one">Dentro de %1$d día</item>
         <item quantity="other">Dentro de %1$d días</item>
     </plurals>
+    <string name="qs_tile_label">Engadir</string>
 </resources>

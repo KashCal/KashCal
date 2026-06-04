@@ -1169,4 +1169,5 @@
     <string name="holiday_catalog_empty_hint">अर्को नाम प्रयास गर्नुहोस्</string>
     <string name="holiday_catalog_validate_error">यो क्यालेन्डरमा पुग्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird बाट बिदा क्यालेन्डरहरू, %1$s अन्तर्गत इजाजतपत्र प्राप्त।</string>
+    <string name="qs_tile_label">घटना थप्नुहोस्</string>
 </resources>

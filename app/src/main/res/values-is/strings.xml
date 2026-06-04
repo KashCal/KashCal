@@ -1190,4 +1190,5 @@
     <string name="holiday_catalog_validate_error">Ekki tókst að ná í þetta dagatal. Athugaðu nettenginguna og reyndu aftur.</string>
     <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
     <string name="holiday_catalog_attribution">Frídagadagatöl frá Mozilla Thunderbird, með leyfi samkvæmt %1$s.</string>
+    <string name="qs_tile_label">Bæta við</string>
 </resources>

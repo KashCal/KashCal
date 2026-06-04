@@ -1,0 +1,3 @@
+• Take the KashCal Challenge: show off a feature you love and tag #KashCal
+• New: add events straight from your Quick Settings panel
+• Defensive hardening to keep startup smooth and steady

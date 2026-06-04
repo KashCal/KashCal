@@ -1217,4 +1217,5 @@
         <item quantity="many">Po %1$d dienos</item>
         <item quantity="other">Po %1$d dienų</item>
     </plurals>
+    <string name="qs_tile_label">Įvykis</string>
 </resources>

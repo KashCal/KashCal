@@ -399,6 +399,21 @@
         </service>
 
         <!--
+            Quick Settings tile: fast event capture from the notification shade.
+            Stateless launch tile (no toggle/ACTIVE_TILE) — onClick opens Quick Add.
+        -->
+        <service
+            android:name=".widget.QuickAddTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_tile_calendar"
+            android:label="@string/qs_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!--
             FileProvider for secure file sharing (ICS exports).
             Required for sharing files via Intent on Android 7.0+.
             Uses content:// URIs instead of file:// URIs.

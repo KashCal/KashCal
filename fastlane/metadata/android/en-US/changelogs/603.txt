@@ -1,4 +1,0 @@
-• Subscribe to holiday calendars right inside the app, sourced from Thunderbird
-• Fixed editing an all-day event making it one day longer
-• All-day reminders now fire at the right time, with clearer notifications
-• Fixed synced reminders that could return after deletion or fire long before the event

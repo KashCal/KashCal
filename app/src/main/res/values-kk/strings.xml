@@ -1196,4 +1196,5 @@
     <string name="holiday_catalog_empty_hint">Басқа атауды қолданып көріңіз</string>
     <string name="holiday_catalog_validate_error">Бұл күнтізбеге қосылу мүмкін болмады. Байланысыңызды тексеріп, қайталап көріңіз.</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird мереке күнтізбелері, %1$s аясында лицензияланған.</string>
+    <string name="qs_tile_label">Қосу</string>
 </resources>

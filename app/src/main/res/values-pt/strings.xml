@@ -418,6 +418,7 @@
     <string name="subscriptions_empty_ics">Sem subscrições ICS</string>
     <string name="subscriptions_empty_ics_hint">Adiciona um feed de calendário para ver eventos</string>
     <string name="subscriptions_add_ics">Adicionar calendário ICS</string>
+    <string name="qs_tile_label">Adicionar evento</string>
     <string name="holiday_catalog_add">Adicionar calendário de feriados</string>
     <string name="holiday_catalog_search_label">Pesquisar</string>
     <string name="holiday_catalog_already_added">Adicionado</string>

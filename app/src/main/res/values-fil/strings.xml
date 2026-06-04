@@ -1194,4 +1194,5 @@
     <string name="holiday_catalog_empty_hint">Sumubok ng ibang pangalan</string>
     <string name="holiday_catalog_validate_error">Hindi maabot ang kalendaryong ito. Suriin ang iyong koneksyon at subukang muli.</string>
     <string name="holiday_catalog_attribution">Mga kalendaryo ng pista opisyal mula sa Mozilla Thunderbird, lisensyado sa ilalim ng %1$s.</string>
+    <string name="qs_tile_label">Magdagdag</string>
 </resources>

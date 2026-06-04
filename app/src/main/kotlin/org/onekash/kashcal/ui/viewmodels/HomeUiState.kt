@@ -198,8 +198,14 @@ data class HomeUiState(
     val showYearOverlay: Boolean = false,
 
     // === NAVIGATION EVENTS (one-shot) ===
-    /** Navigate to today (consumed after use) */
+    /** Navigate to today with an animated scroll (user-initiated; consumed after use) */
     val pendingNavigateToToday: Boolean = false,
+    /**
+     * Navigate to today with an instant (non-animated) scroll - consumed after use.
+     * Used for the programmatic cold-start land so the pager settles in one frame
+     * with no in-flight animation for concurrent state writes to fight.
+     */
+    val pendingNavigateToTodayInstant: Boolean = false,
     /** Navigate to specific month (year, month) - consumed after use */
     val pendingNavigateToMonth: Pair<Int, Int>? = null,
     /** Scroll agenda list to top (today) - consumed after use */

@@ -1122,4 +1122,5 @@
     <string name="holiday_catalog_empty_hint">別の名前で試してください</string>
     <string name="holiday_catalog_validate_error">このカレンダーに接続できませんでした。接続を確認してもう一度お試しください。</string>
     <string name="holiday_catalog_attribution">祝日カレンダーは Mozilla Thunderbird より提供され、%1$s の下でライセンスされています。</string>
+    <string name="qs_tile_label">予定を追加</string>
 </resources>

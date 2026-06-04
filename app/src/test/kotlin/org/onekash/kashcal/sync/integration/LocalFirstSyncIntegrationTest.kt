@@ -81,6 +81,11 @@ class LocalFirstSyncIntegrationTest {
 
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
+        // PullStrategy reads the sync-lookback window during pull; stub it like
+        // the sibling PullStrategy tests so the pull doesn't fail on a missing
+        // Flow. Int.MAX_VALUE = "All" lookback, which keeps these fixtures' events
+        // (no past-window clamping) in scope.
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         pullStrategy = PullStrategy(
             database = database,

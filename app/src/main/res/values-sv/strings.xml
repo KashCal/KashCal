@@ -1188,4 +1188,5 @@
     <string name="holiday_catalog_validate_error">Det gick inte att nå den här kalendern. Kontrollera din anslutning och försök igen.</string>
     <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
     <string name="holiday_catalog_attribution">Helgdagskalendrar från Mozilla Thunderbird, licensierade under %1$s.</string>
+    <string name="qs_tile_label">Lägg till</string>
 </resources>

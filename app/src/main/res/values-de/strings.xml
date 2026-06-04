@@ -1188,4 +1188,5 @@
     <string name="holiday_catalog_validate_error">Dieser Kalender konnte nicht erreicht werden. Überprüfe deine Verbindung und versuch es erneut.</string>
     <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
     <string name="holiday_catalog_attribution">Feiertagskalender von Mozilla Thunderbird, lizenziert unter %1$s.</string>
+    <string name="qs_tile_label">Termin</string>
 </resources>

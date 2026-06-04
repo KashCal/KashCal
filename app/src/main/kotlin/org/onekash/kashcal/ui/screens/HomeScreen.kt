@@ -183,6 +183,7 @@ fun HomeScreen(
     onGoToToday: () -> Unit,
     onSetViewingMonth: (Int, Int) -> Unit,
     onClearNavigateToToday: () -> Unit,
+    onClearNavigateToTodayInstant: () -> Unit = {},
     onClearNavigateToMonth: () -> Unit,
     // Event callbacks
     onEventClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, occurrenceStartTs)
@@ -357,11 +358,20 @@ fun HomeScreen(
         }
     }
 
-    // Handle Today button navigation
+    // Handle Today button navigation (user-initiated: animate the scroll)
     LaunchedEffect(uiState.pendingNavigateToToday) {
         if (uiState.pendingNavigateToToday) {
             pagerState.animateScrollToPage(initialPage)
             onClearNavigateToToday()
+        }
+    }
+
+    // Handle cold-start land (programmatic: jump instantly so the pager settles
+    // in one frame with no in-flight animation for concurrent writes to fight)
+    LaunchedEffect(uiState.pendingNavigateToTodayInstant) {
+        if (uiState.pendingNavigateToTodayInstant) {
+            pagerState.scrollToPage(initialPage)
+            onClearNavigateToTodayInstant()
         }
     }
 

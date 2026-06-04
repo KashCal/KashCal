@@ -373,6 +373,7 @@ class MainActivity : ComponentActivity() {
                     onGoToToday = { homeViewModel.goToToday() },
                     onSetViewingMonth = { year, month -> homeViewModel.setViewingMonth(year, month) },
                     onClearNavigateToToday = { homeViewModel.clearNavigateToToday() },
+                    onClearNavigateToTodayInstant = { homeViewModel.clearNavigateToTodayInstant() },
                     onClearNavigateToMonth = { homeViewModel.clearNavigateToMonth() },
                     // Event callbacks
                     onEventClick = { event, occurrenceTs ->

@@ -503,8 +503,10 @@ class HomeViewModel(
             val today = Calendar.getInstance()
             buildEventDots(today.get(Calendar.YEAR), today.get(Calendar.MONTH))
 
-            // Auto-select today (routes to correct view based on viewMode)
-            goToToday()
+            // Auto-select today (routes to correct view based on viewMode).
+            // Cold-start land is instant (no animation) so the month pager settles
+            // in one frame; the user-pressed Today button keeps its animation.
+            goToToday(animate = false)
 
             Log.d(TAG, "initializeAsync - COMPLETE")
         } catch (e: Exception) {
@@ -1305,8 +1307,13 @@ class HomeViewModel(
     /**
      * Navigate to today and select it.
      * Context-aware: If in 3-day view, navigates week view to today.
+     *
+     * @param animate when true (user-initiated, e.g. the Today button) the month
+     *   pager animates its scroll; when false (programmatic cold-start land) it
+     *   jumps instantly so the pager settles in a single frame. Only the
+     *   MONTH/MONTH_FULL branch distinguishes the two — other views are unaffected.
      */
-    fun goToToday() {
+    fun goToToday(animate: Boolean = true) {
         when (_uiState.value.viewMode) {
             ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                 goToTodayWeek()
@@ -1323,7 +1330,8 @@ class HomeViewModel(
                     it.copy(
                         viewingYear = year,
                         viewingMonth = month,
-                        pendingNavigateToToday = true
+                        pendingNavigateToToday = animate,
+                        pendingNavigateToTodayInstant = !animate
                     )
                 }
 
@@ -1345,6 +1353,13 @@ class HomeViewModel(
      */
     fun clearNavigateToToday() {
         _uiState.update { it.copy(pendingNavigateToToday = false) }
+    }
+
+    /**
+     * Clear the instant navigate to today flag (consumed by UI).
+     */
+    fun clearNavigateToTodayInstant() {
+        _uiState.update { it.copy(pendingNavigateToTodayInstant = false) }
     }
 
     /**
@@ -1766,12 +1781,30 @@ class HomeViewModel(
 
     /**
      * Select a date and load its events.
+     *
+     * The incoming timestamp may carry a time-of-day (e.g. cold-start passes a
+     * wall-clock Calendar.getInstance(), an event start, etc.). We normalize to
+     * that calendar day's local midnight so every selectedDate writer agrees on
+     * one representation — the day pager's page math, month sync, and dot
+     * highlighting all key off the calendar day, and a time-bearing value would
+     * otherwise force a redundant rewrite when those midnight-based paths echo
+     * back. 0L is the "no selection" sentinel and is left untouched.
      */
     fun selectDate(dateMillis: Long) {
+        val normalized = if (dateMillis == 0L) {
+            0L
+        } else {
+            Instant.ofEpochMilli(dateMillis)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        }
         _uiState.update {
             it.copy(
-                selectedDate = dateMillis,
-                selectedDayLabel = formatDateLabel(dateMillis)
+                selectedDate = normalized,
+                selectedDayLabel = formatDateLabel(normalized)
             )
         }
     }

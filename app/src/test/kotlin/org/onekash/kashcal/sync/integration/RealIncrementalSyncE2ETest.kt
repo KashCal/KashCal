@@ -138,6 +138,9 @@ class RealIncrementalSyncE2ETest {
         // DataStore defaults
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
+        // PullStrategy reads the sync-lookback window during pull; without this
+        // the relaxed mock returns a non-functional Flow and the pull fails.
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         pullStrategy = PullStrategy(
             database = database,

@@ -1196,4 +1196,5 @@
         <item quantity="one">Pēc %1$d dienas</item>
         <item quantity="other">Pēc %1$d dienām</item>
     </plurals>
+    <string name="qs_tile_label">Notikums</string>
 </resources>

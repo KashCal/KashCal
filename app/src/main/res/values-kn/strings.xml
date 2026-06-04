@@ -1184,4 +1184,5 @@
     <string name="holiday_catalog_empty_hint">ಬೇರೆ ಹೆಸರನ್ನು ಪ್ರಯತ್ನಿಸಿ</string>
     <string name="holiday_catalog_validate_error">ಈ ಕ್ಯಾಲೆಂಡರ್ ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird ನಿಂದ ರಜಾ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು, %1$s ಅಡಿಯಲ್ಲಿ ಪರವಾನಗಿ ಪಡೆದಿವೆ.</string>
+    <string name="qs_tile_label">ಈವೆಂಟ್ ಸೇರಿಸಿ</string>
 </resources>

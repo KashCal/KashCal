@@ -1191,4 +1191,5 @@
     <string name="holiday_catalog_empty_hint">Try a different name</string>
     <string name="holiday_catalog_validate_error">Couldn\'t reach this calendar. Check your connection and try again.</string>
     <string name="holiday_catalog_attribution">Holiday calendars from Mozilla Thunderbird, licensed under %1$s.</string>
+    <string name="qs_tile_label">Add event</string>
 </resources>

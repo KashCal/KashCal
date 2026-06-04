@@ -1141,4 +1141,5 @@
     <string name="holiday_catalog_empty_hint">Coba nama lain</string>
     <string name="holiday_catalog_validate_error">Tidak dapat menjangkau kalender ini. Periksa koneksi Anda lalu coba lagi.</string>
     <string name="holiday_catalog_attribution">Kalender hari libur dari Mozilla Thunderbird, dilisensikan di bawah %1$s.</string>
+    <string name="qs_tile_label">Tambah acara</string>
 </resources>

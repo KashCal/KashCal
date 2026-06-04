@@ -1166,4 +1166,5 @@
     <string name="holiday_catalog_empty_hint">Jaribu jina lingine</string>
     <string name="holiday_catalog_validate_error">Imeshindwa kufikia kalenda hii. Angalia muunganisho wako kisha ujaribu tena.</string>
     <string name="holiday_catalog_attribution">Kalenda za likizo kutoka Mozilla Thunderbird, zenye leseni chini ya %1$s.</string>
+    <string name="qs_tile_label">Ongeza tukio</string>
 </resources>

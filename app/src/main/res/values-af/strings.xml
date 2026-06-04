@@ -1193,4 +1193,5 @@
     <string name="holiday_catalog_empty_hint">Probeer \'n ander naam</string>
     <string name="holiday_catalog_validate_error">Kon nie hierdie kalender bereik nie. Gaan jou verbinding na en probeer weer.</string>
     <string name="holiday_catalog_attribution">Vakansiekalenders van Mozilla Thunderbird, gelisensieer onder %1$s.</string>
+    <string name="qs_tile_label">Voeg by</string>
 </resources>

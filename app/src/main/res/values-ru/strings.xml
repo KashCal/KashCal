@@ -1245,4 +1245,5 @@
         <item quantity="many">Через %1$d дней</item>
         <item quantity="other">Через %1$d дня</item>
     </plurals>
+    <string name="qs_tile_label">Событие</string>
 </resources>

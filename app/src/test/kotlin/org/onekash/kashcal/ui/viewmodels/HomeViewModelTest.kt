@@ -642,6 +642,85 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.pendingNavigateToToday)
     }
 
+    @Test
+    fun `goToToday animate false in MONTH uses instant flag not animated flag`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        // Reset both flags after cold-start init so this asserts the handler itself.
+        viewModel.clearNavigateToToday()
+        viewModel.clearNavigateToTodayInstant()
+        advanceUntilIdle()
+
+        viewModel.goToToday(animate = false)
+        advanceUntilIdle()
+
+        assertTrue(
+            "Programmatic land must set the instant flag",
+            viewModel.uiState.value.pendingNavigateToTodayInstant
+        )
+        assertFalse(
+            "Programmatic land must NOT set the animated flag",
+            viewModel.uiState.value.pendingNavigateToToday
+        )
+    }
+
+    @Test
+    fun `goToToday default in MONTH still uses animated flag`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.clearNavigateToToday()
+        viewModel.clearNavigateToTodayInstant()
+        advanceUntilIdle()
+
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        assertTrue(
+            "User Today button must keep the animated flag (issue #151)",
+            viewModel.uiState.value.pendingNavigateToToday
+        )
+        assertFalse(
+            "User Today button must NOT set the instant flag",
+            viewModel.uiState.value.pendingNavigateToTodayInstant
+        )
+    }
+
+    @Test
+    fun `cold start in MONTH lands instantly not animated`() = runTest {
+        // initializeAsync() reads onboardingDismissed.first() before reaching the
+        // goToToday() cold-start land; stub it so init runs to completion.
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+
+        // createViewModel() runs initializeAsync() -> goToToday(animate=false)
+        // internally. Drives the actual cold-start path, not the handler alone.
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(
+            "Cold start must use the instant (no-animation) land",
+            viewModel.uiState.value.pendingNavigateToTodayInstant
+        )
+        assertFalse(
+            "Cold start must not trigger the animated scroll",
+            viewModel.uiState.value.pendingNavigateToToday
+        )
+    }
+
+    @Test
+    fun `clearNavigateToTodayInstant clears flag`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.goToToday(animate = false)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.pendingNavigateToTodayInstant)
+
+        viewModel.clearNavigateToTodayInstant()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.pendingNavigateToTodayInstant)
+    }
+
     // ==================== Resume Rollover Tests ====================
 
     @Test
@@ -2536,6 +2615,70 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(0L, viewModel.uiState.value.selectedDate)
+    }
+
+    @Test
+    fun `selectDate normalizes a time-bearing timestamp to local midnight`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // A wall-clock timestamp carrying a time-of-day (e.g. 14:37:11.500) — the
+        // shape goToToday() passes at cold start via Calendar.getInstance().
+        val timeBearing = JavaCalendar.getInstance().apply {
+            set(2026, 5, 4, 14, 37, 11)
+            set(JavaCalendar.MILLISECOND, 500)
+        }.timeInMillis
+
+        viewModel.selectDate(timeBearing)
+        advanceUntilIdle()
+
+        val stored = viewModel.uiState.value.selectedDate
+
+        // Same calendar day...
+        assertEquals(
+            "selectDate must preserve the calendar day",
+            DayPagerUtils.msToDayCode(timeBearing),
+            DayPagerUtils.msToDayCode(stored)
+        )
+        // ...but normalized to that day's local midnight so every selectedDate
+        // writer agrees on one representation (no startup round-trip rewrite).
+        val expectedMidnight = java.time.Instant.ofEpochMilli(timeBearing)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+            .atStartOfDay(java.time.ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        assertEquals(
+            "selectDate must store local midnight (no time-of-day)",
+            expectedMidnight,
+            stored
+        )
+    }
+
+    @Test
+    fun `selectDate normalizes pre-1970 time-bearing timestamp to local midnight`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Negative epoch millis with a time-of-day — guards against arithmetic
+        // truncation (dateMs % DAY_MS) which is wrong for negative values.
+        val timeBearing = JavaCalendar.getInstance().apply {
+            set(1969, 6, 20, 14, 37, 11)
+            set(JavaCalendar.MILLISECOND, 500)
+        }.timeInMillis
+        assertTrue("Pre-1970 date should have negative millis", timeBearing < 0)
+
+        viewModel.selectDate(timeBearing)
+        advanceUntilIdle()
+
+        val stored = viewModel.uiState.value.selectedDate
+        val expectedMidnight = java.time.Instant.ofEpochMilli(timeBearing)
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate()
+            .atStartOfDay(java.time.ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        assertEquals(expectedMidnight, stored)
     }
 
     @Test

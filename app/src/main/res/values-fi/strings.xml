@@ -1143,4 +1143,5 @@
         <item quantity="one">%1$d päivän kuluttua</item>
         <item quantity="other">%1$d päivän kuluttua</item>
     </plurals>
+    <string name="qs_tile_label">Tapahtuma</string>
 </resources>

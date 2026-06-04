@@ -1213,4 +1213,5 @@
         <item quantity="many">Праз %1$d дзён</item>
         <item quantity="other">Праз %1$d дня</item>
     </plurals>
+    <string name="qs_tile_label">Падзея</string>
 </resources>

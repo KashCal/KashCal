@@ -1143,4 +1143,5 @@
         <item quantity="one">%1$d päeva pärast</item>
         <item quantity="other">%1$d päeva pärast</item>
     </plurals>
+    <string name="qs_tile_label">Sündmus</string>
 </resources>

@@ -1298,4 +1298,5 @@
         <item quantity="few">An ceann %1$d latha</item>
         <item quantity="other">An ceann %1$d latha</item>
     </plurals>
+    <string name="qs_tile_label">Cuir ris</string>
 </resources>

@@ -402,6 +402,7 @@
     <string name="subscriptions_empty_ics">Žádné odběry ICS</string>
     <string name="subscriptions_empty_ics_hint">Přidejte kanál kalendáře pro zobrazení událostí</string>
     <string name="subscriptions_add_ics">Přidat kalendář ICS</string>
+    <string name="qs_tile_label">Přidat</string>
 
     <string name="birthdays_anniversaries_row_label">Narozeniny a výročí</string>
     <string name="birthdays_anniversaries_row_hint">Z kontaktů telefonu</string>

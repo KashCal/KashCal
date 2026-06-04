@@ -1122,4 +1122,5 @@
     <string name="holiday_catalog_empty_hint">다른 이름으로 검색해 보세요</string>
     <string name="holiday_catalog_validate_error">이 달력에 연결할 수 없어요. 연결 상태를 확인하고 다시 시도해 주세요.</string>
     <string name="holiday_catalog_attribution">공휴일 달력은 Mozilla Thunderbird에서 제공하며 %1$s 라이선스를 따라요.</string>
+    <string name="qs_tile_label">일정 추가</string>
 </resources>

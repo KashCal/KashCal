@@ -1195,4 +1195,5 @@
     <string name="holiday_catalog_empty_hint">የተለየ ስም ይሞክሩ</string>
     <string name="holiday_catalog_validate_error">ይህን ቀን መቁጠሪያ መድረስ አልተቻለም። ግንኙነትዎን ይፈትሹና እንደገና ይሞክሩ።</string>
     <string name="holiday_catalog_attribution">የበዓል ቀን መቁጠሪያዎች ከ Mozilla Thunderbird፣ በ%1$s ስር ፈቃድ ተሰጥቷቸዋል።</string>
+    <string name="qs_tile_label">አክል</string>
 </resources>

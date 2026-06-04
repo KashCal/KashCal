@@ -1184,4 +1184,5 @@
     <string name="holiday_catalog_empty_hint">வேறு பெயரை முயற்சிக்கவும்</string>
     <string name="holiday_catalog_validate_error">இந்த நாட்காட்டியை அணுக முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
     <string name="holiday_catalog_attribution">Mozilla Thunderbird இலிருந்து விடுமுறை நாட்காட்டிகள், %1$s இன் கீழ் உரிமம் பெற்றவை.</string>
+    <string name="qs_tile_label">நிகழ்வு சேர்</string>
 </resources>

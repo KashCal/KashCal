@@ -1122,4 +1122,5 @@
     <string name="holiday_catalog_empty_hint">Hãy thử một tên khác</string>
     <string name="holiday_catalog_validate_error">Không thể kết nối tới lịch này. Hãy kiểm tra kết nối và thử lại.</string>
     <string name="holiday_catalog_attribution">Lịch ngày lễ từ Mozilla Thunderbird, được cấp phép theo %1$s.</string>
+    <string name="qs_tile_label">Thêm sự kiện</string>
 </resources>
