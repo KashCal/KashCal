@@ -15,15 +15,14 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * A0.4 — RDATE pushable on patch path.
+ * RDATE pushable on patch path.
  *
  * `IcsPatcher.patchToICalEvent` previously preserved server RDATEs via Kotlin
  * `copy()` omission — local edits to `Event.rdate` were silently dropped on push.
  * Mirror the existing `exdates` handling by adding rdates to the copy() call.
  *
  * Note on timestamps: `Event.rdate` CSV must be stringified millisecond-epoch
- * longs (parseTimestampCsv uses toLongOrNull). See IcsPatcherRfc5545Test:669-677
- * for the established pattern used throughout.
+ * longs (parseTimestampCsv uses toLongOrNull).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -60,7 +59,7 @@ class RDatePatchPathTest {
 
     private fun createEvent(
         uid: String = "a04-test@kashcal.test",
-        title: String = "A0.4 Test",
+        title: String = "RDATE Patch-Path Test",
         startTs: Long = 1_767_088_800_000L,   // 2025-12-30T14:00:00Z
         endTs: Long = 1_767_092_400_000L,     // 2025-12-30T15:00:00Z (1 hour)
         isAllDay: Boolean = false,
@@ -189,7 +188,7 @@ class RDatePatchPathTest {
     @Test
     fun `patch path emits multiple RDATE lines for CSV with multiple timestamps`() {
         // Two RDATEs in Event.rdate column → two separate RDATE lines in output
-        // (ICalGenerator.kt:202-204 emits forEach, one line per entry).
+        // (the generator emits forEach, one line per entry).
         val raw = buildRawIcal(rdateIcs = emptyList())
         val event = createEvent(
             rdate = "$rdateMs_Feb14,$rdateMs_Jun1",
@@ -343,7 +342,7 @@ class RDatePatchPathTest {
     @Test
     fun `fresh path still emits RDATE from Event rdate unchanged`() {
         // Regression guard: fresh path (no rawIcal) must continue to emit RDATE
-        // from Event.rdate. A0.4 does not touch EventToICalEventMapper.
+        // from Event.rdate. This change does not touch EventToICalEventMapper.
         val event = createEvent(
             rdate = "$rdateMs_Feb14",
             rawIcal = null

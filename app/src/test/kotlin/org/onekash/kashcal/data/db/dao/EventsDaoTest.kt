@@ -1999,6 +1999,33 @@ class EventsDaoTest {
         assertEquals(beforeUpdate.endTs, afterUpdate.endTs)
     }
 
+    // ==================== updateOrganizerScheduleStatus ====================
+
+    @Test
+    fun `updateOrganizerScheduleStatus sets only that column`() = runTest {
+        val id = eventsDao.insert(createTestEvent(title = "Meeting", caldavUrl = "https://test.com/cal/e.ics"))
+        eventsDao.updateEtag(id, "etag-before")
+        val before = eventsDao.getById(id)!!
+
+        eventsDao.updateOrganizerScheduleStatus(id, "1.2")
+
+        val after = eventsDao.getById(id)!!
+        assertEquals("1.2", after.organizerScheduleStatus)
+        // Unrelated columns untouched (mirrors the updateEtag-style targeted update).
+        assertEquals("Meeting", after.title)
+        assertEquals("etag-before", after.etag)
+        assertEquals(before.caldavUrl, after.caldavUrl)
+        assertEquals(before.startTs, after.startTs)
+    }
+
+    @Test
+    fun `updateOrganizerScheduleStatus can clear the column with null`() = runTest {
+        val id = eventsDao.insert(createTestEvent())
+        eventsDao.updateOrganizerScheduleStatus(id, "2.0")
+        eventsDao.updateOrganizerScheduleStatus(id, null)
+        assertEquals(null, eventsDao.getById(id)!!.organizerScheduleStatus)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createTestEvent(

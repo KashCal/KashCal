@@ -6,24 +6,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -46,6 +43,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.SearchPillTextField
 import org.onekash.kashcal.domain.catalog.HolidayCatalogEntry
 import org.onekash.kashcal.domain.catalog.filterCatalog
 import org.onekash.kashcal.domain.catalog.loadHolidayCatalog
@@ -109,29 +107,24 @@ fun HolidayCatalogPicker(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
+        // Pin the sheet to the top of the screen so the list has a stable,
+        // full-height area to scroll within instead of resizing to content.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .padding(bottom = 24.dp),
         ) {
             AttributionFooter()
 
-            OutlinedTextField(
-                value = query,
-                onValueChange = {
+            SearchPillTextField(
+                query = query,
+                onQueryChange = {
                     query = it
                     errorMessage = null
                 },
-                label = { Text(stringResource(R.string.holiday_catalog_search_label)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear))
-                        }
-                    }
-                },
-                singleLine = true,
+                placeholder = stringResource(R.string.holiday_catalog_search_label),
+                leadingIcon = Icons.Default.Search,
                 enabled = validatingUrl == null,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,7 +154,7 @@ fun HolidayCatalogPicker(
             if (filtered.isEmpty()) {
                 CatalogEmptyState()
             } else {
-                LazyColumn(modifier = Modifier.heightIn(max = 520.dp)) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
                     items(filtered, key = { it.entry.url }) { marked ->
                         CatalogRow(
                             entry = marked.entry,

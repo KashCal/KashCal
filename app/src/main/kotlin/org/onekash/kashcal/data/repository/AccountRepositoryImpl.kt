@@ -183,6 +183,10 @@ class AccountRepositoryImpl @Inject constructor(
         accountsDao.updateCalendarUserAddresses(accountId, addresses)
     }
 
+    override suspend fun updateScheduleOutboxUrl(accountId: Long, outboxUrl: String?) {
+        accountsDao.updateScheduleOutboxUrl(accountId, outboxUrl)
+    }
+
     override suspend fun setEnabled(accountId: Long, enabled: Boolean) {
         accountsDao.setEnabled(accountId, enabled)
     }

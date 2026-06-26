@@ -35,6 +35,7 @@ class PushStrategyTest {
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var accountRepository: AccountRepository
     private lateinit var attendeesDao: org.onekash.kashcal.data.db.dao.AttendeesDao
+    private lateinit var pendingCancelsDao: org.onekash.kashcal.data.db.dao.PendingCancelsDao
     private lateinit var pushStrategy: PushStrategy
 
     private val testCalendar = Calendar(
@@ -93,6 +94,7 @@ class PushStrategyTest {
         pendingOperationsDao = mockk()
         accountRepository = mockk()
         attendeesDao = mockk()
+        pendingCancelsDao = mockk()
 
         // Default batch query mocks - return empty so fallback to getById is used
         // Individual tests can override these for specific scenarios
@@ -101,13 +103,17 @@ class PushStrategyTest {
         // Push path loads attendees before serialize; default to none so
         // existing tests are unaffected. Attendee-specific tests override.
         coEvery { attendeesDao.getForEventOnce(any()) } returns emptyList()
+        // Cancel drain: default to an empty queue so existing tests are
+        // unaffected; removal-specific tests override getForEvent.
+        coEvery { pendingCancelsDao.getForEvent(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = accountRepository,
-            attendeesDao = attendeesDao
+            attendeesDao = attendeesDao,
+            pendingCancelsDao = pendingCancelsDao
         )
     }
 
@@ -228,6 +234,56 @@ class PushStrategyTest {
         assert(success.operationsFailed == 0)
 
         coVerify { eventsDao.markSynced(eventWithUrl.id, newEtag, any()) }
+    }
+
+    @Test
+    fun `pushAll preserves rawIcal attendees when the attendee table is empty`() = runTest {
+        // Regression: an event synced before the attendees table existed (or
+        // whose etag is unchanged so the pull-side backfill never ran) keeps its
+        // ATTENDEEs only in rawIcal; getForEventOnce returns empty. Pushing a
+        // cosmetic edit must NOT clear them on the wire (an empty table is not an
+        // authoritative "no attendees" signal).
+        val rawIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:preserve-attendees@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Old Title
+            ORGANIZER;CN=Boss:mailto:boss@example.com
+            ATTENDEE;CN=Jane;PARTSTAT=ACCEPTED:mailto:jane@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+        val eventWithUrl = testEvent.copy(
+            uid = "preserve-attendees@kashcal.test",
+            title = "New Title", // cosmetic edit
+            caldavUrl = "https://caldav.icloud.com/123/calendar/preserve.ics",
+            etag = "etag-old", rawIcal = rawIcal, syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 9L, eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_UPDATE, status = PendingOperation.STATUS_PENDING
+        )
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // Default attendeesDao.getForEventOnce → emptyList (the empty-table case).
+        val bodySlot = slot<String>()
+        coEvery { client.updateEvent(any(), capture(bodySlot), any()) } returns CalDavResult.success("etag-new")
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        assert(bodySlot.isCaptured) { "expected a PUT body" }
+        assert(bodySlot.captured.contains("jane@example.com")) {
+            "empty table must NOT strip the rawIcal attendee on a cosmetic edit:\n${bodySlot.captured}"
+        }
     }
 
     @Test
@@ -508,6 +564,11 @@ class PushStrategyTest {
 
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), any(), any()) }
         coVerify { eventsDao.recordSyncError(testEvent.id, any(), any()) }
+
+        // A retryable failure (will retry next sync) is a soft WARNING, not an error.
+        val success = result as PushResult.Success
+        assertEquals("retryable failure should be a warning", 1, success.pushWarnings.size)
+        assertTrue("retryable failure must NOT be an error", success.pushErrors.isEmpty())
     }
 
     @Test
@@ -536,6 +597,11 @@ class PushStrategyTest {
         // Should mark as failed, not schedule retry
         coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
         coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
+
+        // A permanently-failed push (change lost, no retry) is an ERROR, not a warning.
+        val success = result as PushResult.Success
+        assertEquals("permanent failure should be an error", 1, success.pushErrors.size)
+        assertTrue("permanent failure must NOT be a warning", success.pushWarnings.isEmpty())
     }
 
     @Test
@@ -605,10 +671,13 @@ class PushStrategyTest {
     fun `pushAll emits master AND per-exception attendees on the wire`() = runTest {
         // Organizer push of a recurring series: the master's attendees AND each
         // exception VEVENT's own attendees must round-trip. Exception attendees
-        // were silently dropped before T3.B3.
+        // were silently dropped before the per-exception fix.
+        // ATTENDEE requires ORGANIZER (RFC 6638 §3.1) — a real organizer push
+        // resolves one, so the fixture carries it.
         val masterEvent = testEvent.copy(
             rrule = "FREQ=WEEKLY;BYDAY=MO",
             originalEventId = null,
+            organizerEmail = "host@example.test",
             rawIcal = null // locally created → fresh generation path
         )
         val exceptionEvent = testEvent.copy(
@@ -616,6 +685,7 @@ class PushStrategyTest {
             originalEventId = masterEvent.id,
             originalInstanceTime = System.currentTimeMillis(),
             rrule = null,
+            organizerEmail = "host@example.test",
             rawIcal = null
         )
 
@@ -1055,8 +1125,8 @@ class PushStrategyTest {
     @Test
     fun `pushAll retries when null etag and PROPFIND fails with network error`() = runTest {
         // Given: event with caldavUrl but etag=null, PROPFIND returns networkError (isRetryable=true)
-        // TDD Pre-Test: This test should FAIL before the fix is implemented
-        // because the current code returns isRetryable=false unconditionally.
+        // This should FAIL before the fix is implemented because the current
+        // code returns isRetryable=false unconditionally.
         val eventNullEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = null,
@@ -1135,8 +1205,8 @@ class PushStrategyTest {
     @Test
     fun `pushAll triggers PROPFIND when etag is empty string`() = runTest {
         // Given: event with empty string etag (edge case from Zoho servers)
-        // TDD Pre-Test: This test should FAIL before the fix is implemented
-        // because current code only checks `!= null`, not `isNullOrEmpty()`.
+        // This should FAIL before the fix is implemented because current code
+        // only checks `!= null`, not `isNullOrEmpty()`.
         val eventEmptyEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "",  // Empty string, not null
@@ -1180,7 +1250,7 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll with empty etag and PROPFIND network error schedules retry`() = runTest {
-        // Combined test: empty string etag (Chunk 2) + PROPFIND network failure (Chunk 1)
+        // Combined test: empty string etag + PROPFIND network failure.
         // Verifies both fixes work together
         val eventEmptyEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
@@ -1208,9 +1278,9 @@ class PushStrategyTest {
 
         assert(result is PushResult.Success)
 
-        // Empty etag should trigger PROPFIND (Chunk 2)
+        // Empty etag should trigger PROPFIND
         coVerify { client.fetchEtag(eventEmptyEtag.caldavUrl!!) }
-        // Network error should schedule retry (Chunk 1)
+        // Network error should schedule retry
         coVerify { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
         // Should NOT mark as failed
         coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
@@ -1306,7 +1376,7 @@ class PushStrategyTest {
         assert(success.operationsProcessed == 2)
     }
 
-    // ========== B3 — PARTSTAT-only RSVP write path ==========
+    // ========== PARTSTAT-only RSVP write path ==========
 
     private val rsvpRawIcal = """
         BEGIN:VCALENDAR
@@ -1535,9 +1605,9 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll partstat_only UPDATE 412 retry also uses operation targetUrl when caldavUrl is null`() = runTest {
-        // Regression-prevention assertion from plan review R1: the 412 retry
-        // branch reads the same caldavUrl local var as the first PUT, so when
-        // event.caldavUrl is null, BOTH PUTs must hit operation.targetUrl.
+        // Regression-prevention assertion: the 412 retry branch reads the same
+        // caldavUrl local var as the first PUT, so when event.caldavUrl is null,
+        // BOTH PUTs must hit operation.targetUrl.
         val capturedUrl = "https://caldav.example.com/rsvp-retry-captured.ics"
         val event = testEvent.copy(
             caldavUrl = null,

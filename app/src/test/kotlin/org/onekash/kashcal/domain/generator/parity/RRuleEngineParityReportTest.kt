@@ -14,7 +14,7 @@ import java.io.File
  *
  *   1. `app/src/test/resources/parity/baseline-librecur.json`
  *   2. `app/src/test/resources/parity/baseline-ical4j.json`
- *   3. `docs/RRULE_ENGINE_PARITY.md`
+ *   3. a human-readable parity report
  *
  * The test PASSES as long as report generation succeeds. Divergences are
  * DATA, not failures. A separate [RRuleEngineBaselineTest] locks the

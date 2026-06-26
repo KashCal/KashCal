@@ -30,7 +30,7 @@ import java.io.File
 /**
  * Unit tests for share-availability DataStore preferences.
  *
- * Covers Chunk 1 of the share-availability TDD plan:
+ * Covers:
  * - Defaults when keys are absent (days=7, work-start=540, work-end=1020, all-day=false)
  * - Round-trip set-then-read for each pref
  * - Write-side clamping (out-of-range coerced to default)

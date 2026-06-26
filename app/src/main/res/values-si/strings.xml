@@ -35,6 +35,8 @@
     <string name="action_close">වසන්න</string>
     <string name="action_ok">හරි</string>
     <string name="action_not_now">දැන් නොවේ</string>
+    <string name="action_allow">ඉඩ දෙන්න</string>
+    <string name="action_no_thanks">එපා, ස්තූතියි</string>
     <string name="action_sign_in">පිවිසෙන්න</string>
     <string name="action_select">තෝරන්න</string>
     <string name="action_show_password">මුරපදය පෙන්වන්න</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">මුරපදය පෙන්වන්න</string>
     <string name="account_detail_cd_hide_password">මුරපදය සඟවන්න</string>
 
-    <string name="sync_failure_notification_title">%1$s සමඟ සමමුහුර්ත ගැටලුව</string>
-    <string name="sync_failure_notification_text">දින දර්ශන සමමුහුර්තය වාර %1$d ක් අසාර්ථක විය</string>
 
     <string name="rename_account_title">ගිණුම නැවත නම් කරන්න</string>
     <string name="rename_account_label">ගිණුම් නම</string>
@@ -798,6 +798,7 @@
     <string name="sync_notification_expired_title">සමමුහුර්ත වෙනස්කම් කල් ඉකුත් විය</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">දින 30 කට පසු %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
+    <string name="sync_notification_expired_content_calendar">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>
@@ -1073,6 +1074,18 @@
     <string name="attendee_status_declined">ප්‍රතික්ෂේප කළා</string>
     <string name="attendee_status_tentative">අවිනිශ්චිතයි</string>
     <string name="attendee_status_delegated">පවරන ලදී</string>
+    <string name="attendee_picker_title">සහභාගිවන්නන් එක් කරන්න</string>
+    <string name="attendee_pick_add_people">සහභාගිවන්නන් එක් කරන්න</string>
+    <string name="attendee_pick_from_contacts">නම හෝ ඊමේල්</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+තවත් %1$d</item>
+        <item quantity="other">+තවත් %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">ඔබේ සම්බන්ධතා වෙතින් පුද්ගලයින් යෝජනා කරන්න</string>
+    <string name="attendee_invalid_email">සම්පූර්ණ ඊමේල් ලිපිනයක් ඇතුළත් කරන්න</string>
+    <string name="attendee_add_typed">\"%1$s\" එක් කරන්න</string>
+    <string name="attendee_scheduling_unavailable">මෙම ගිණුමේ පුද්ගලයින් ආරාධනා කිරීම ලබා ගත නොහැක</string>
+    <string name="action_save_and_notify">සුරකින්න සහ දැනුම් දෙන්න</string>
     <string name="attendee_status_pending">පොරොත්තුවේ</string>
     <string name="inbox_empty_caught_up">සියල්ල අවසන්</string>
     <string name="inbox_organizer_suffix">(සංවිධායක)</string>

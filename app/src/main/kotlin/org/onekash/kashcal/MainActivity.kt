@@ -3,6 +3,7 @@ package org.onekash.kashcal
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.app.ActivityCompat
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -70,6 +71,7 @@ import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
+import org.onekash.kashcal.util.IcsShareIntentParser
 import org.onekash.kashcal.util.ShareChooser
 import org.onekash.kashcal.util.ShareIntentRouter
 import org.onekash.kashcal.util.IcsFileReader
@@ -151,6 +153,45 @@ class MainActivity : ComponentActivity() {
                     pendingPermissionCallback = null
                 }
 
+                // Contacts permission state for the attendee picker. The
+                // rationale-flip signal (sampled before/after the request)
+                // distinguishes "can ask again" from "don't ask again".
+                var contactsPermissionState by remember {
+                    mutableStateOf<org.onekash.kashcal.ui.permission.ContactsPermissionState>(
+                        org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested
+                    )
+                }
+                var contactsRationaleBefore by remember { mutableStateOf(false) }
+                val contactsPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { granted ->
+                    val after = ActivityCompat.shouldShowRequestPermissionRationale(
+                        this@MainActivity, Manifest.permission.READ_CONTACTS
+                    )
+                    contactsPermissionState = org.onekash.kashcal.ui.permission.classifyAfterRequest(
+                        granted = granted,
+                        rationaleBefore = contactsRationaleBefore,
+                        rationaleAfter = after,
+                    )
+                    // A system-dialog denial that won't re-prompt (permanent) is
+                    // a "no" — persist it so the banner doesn't return. A denial
+                    // that's still askable (rationale) leaves the banner for a
+                    // later, gentler retry.
+                    if (!granted && !after) {
+                        homeViewModel.declineContactSuggestions()
+                    }
+                }
+
+                // Attendee-editing context (account + can-send-invitations) for
+                // the form, resolved when the sheet opens or its calendar changes.
+                var formAttendeeContext by remember {
+                    mutableStateOf(org.onekash.kashcal.ui.viewmodels.FormAttendeeContext(null, true))
+                }
+                // Tracks the in-flight attendee-context resolution so a rapid
+                // calendar switch cancels the prior lookup — otherwise two
+                // resolutions could finish out of order and pin a stale context.
+                var attendeeContextJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
                 // Quick Add dialog state
                 var showQuickAddDialog by remember { mutableStateOf(false) }
                 // Seed for share-target opens. Null on user-initiated opens.
@@ -188,6 +229,7 @@ class MainActivity : ComponentActivity() {
                 val quickViewAttendees by homeViewModel.quickViewAttendees.collectAsStateWithLifecycle()
                 val formAttendees by homeViewModel.formAttendees.collectAsStateWithLifecycle()
                 val formIsReadOnly by homeViewModel.formIsReadOnly.collectAsStateWithLifecycle()
+                val contactsDeclined by homeViewModel.contactSuggestionsDeclined.collectAsStateWithLifecycle()
                 val dayAttendeesMap by homeViewModel.dayAttendees.collectAsStateWithLifecycle()
                 val pendingInvitesCount by homeViewModel.pendingInvitationsCount.collectAsStateWithLifecycle()
                 val pendingInvitations by homeViewModel.pendingInvitations.collectAsStateWithLifecycle()
@@ -198,6 +240,32 @@ class MainActivity : ComponentActivity() {
                 // Drive form-side attendee state when the form opens for an existing event.
                 androidx.compose.runtime.LaunchedEffect(showEventFormSheet, editingEventId) {
                     homeViewModel.setFormEventId(if (showEventFormSheet) editingEventId else null)
+                }
+                // Resolve the form's attendee-editing context + sync the contacts
+                // permission state when the sheet opens.
+                androidx.compose.runtime.LaunchedEffect(showEventFormSheet, editingEventId) {
+                    if (showEventFormSheet) {
+                        // For an edit, use the event's calendar; for a new event,
+                        // the form defaults to the user's default calendar, so
+                        // resolve the schedulable/account context from that.
+                        val calId = editingEventId?.let { homeViewModel.getEventForEdit(it)?.calendarId }
+                            ?: uiState.defaultCalendar?.calendarId
+                        formAttendeeContext = homeViewModel.getFormAttendeeContext(calId)
+                        // Recompute the live permission state on every open so a
+                        // grant/revoke done in system Settings while the app was
+                        // alive is reflected (don't only upgrade to Granted, or a
+                        // later revoke leaves a stale Granted that queries a
+                        // revoked permission and hides the re-request banner).
+                        val granted = androidx.core.content.ContextCompat.checkSelfPermission(
+                            this@MainActivity, Manifest.permission.READ_CONTACTS
+                        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                        contactsPermissionState = org.onekash.kashcal.ui.permission.resolveContactsPermissionState(
+                            granted = granted,
+                            shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                                this@MainActivity, Manifest.permission.READ_CONTACTS
+                            ),
+                        )
+                    }
                 }
 
                 // Device event quick view sheet state
@@ -320,8 +388,25 @@ class MainActivity : ComponentActivity() {
                                         deviceQuickViewEvent = deviceEvent
                                         showDeviceQuickViewSheet = true
                                     } else {
-                                        Log.w(TAG, "Widget: Device event ${action.eventId} not found")
-                                        homeViewModel.showSnackbar("Event not found")
+                                        // The occurrence didn't match exactly (e.g. an external
+                                        // launcher supplied a begin time slightly off the
+                                        // materialized instance). Fall back to navigating to the
+                                        // event's start date so the user lands near it rather than
+                                        // on a dead-end "not found" — but only if the event exists.
+                                        navigateToDeviceEventOrNotFound(homeViewModel, action.eventId)
+                                    }
+                                }
+                                is PendingAction.OpenDeviceEventById -> {
+                                    // External intent gave only the event ID. Open the quick-view
+                                    // sheet at the resolved occurrence (next instance for a
+                                    // recurring series, DTSTART otherwise). If no occurrence
+                                    // resolves (e.g. an ended series), fall back to date nav.
+                                    val deviceEvent = homeViewModel.getDeviceEventForQuickViewById(action.eventId)
+                                    if (deviceEvent != null) {
+                                        deviceQuickViewEvent = deviceEvent
+                                        showDeviceQuickViewSheet = true
+                                    } else {
+                                        navigateToDeviceEventOrNotFound(homeViewModel, action.eventId)
                                     }
                                 }
                                 is PendingAction.QuickAddFromText -> {
@@ -1251,6 +1336,9 @@ class MainActivity : ComponentActivity() {
                         onLoadEvent = { eventId ->
                             homeViewModel.getEventForEdit(eventId)
                         },
+                        onLoadAttendees = { eventId ->
+                            homeViewModel.getAttendeesForEdit(eventId)
+                        },
                         defaultReminderTimed = defaultReminderTimed,
                         defaultReminderAllDay = defaultReminderAllDay,
                         defaultEventDuration = defaultEventDuration,
@@ -1308,7 +1396,30 @@ class MainActivity : ComponentActivity() {
                                     IllegalStateException("No editing event ID")
                                 )
                             homeViewModel.saveAttendeeReminders(id, reminders)
-                        }
+                        },
+                        attendeeAccount = formAttendeeContext.account,
+                        isSchedulable = formAttendeeContext.isSchedulable,
+                        onCalendarSelected = { calId ->
+                            // Recompute the attendee/organizer context when the
+                            // user switches the target calendar mid-form, so the
+                            // schedulable gate + "You" detection track the new
+                            // calendar's account. Cancel any prior in-flight
+                            // resolution so rapid switches can't land out of order.
+                            attendeeContextJob?.cancel()
+                            attendeeContextJob = coroutineScope.launch {
+                                formAttendeeContext = homeViewModel.getFormAttendeeContext(calId)
+                            }
+                        },
+                        onQueryContacts = { prefix -> homeViewModel.queryContactEmails(prefix) },
+                        contactsPermissionState = contactsPermissionState,
+                        onRequestContactsPermission = {
+                            contactsRationaleBefore = ActivityCompat.shouldShowRequestPermissionRationale(
+                                this@MainActivity, Manifest.permission.READ_CONTACTS
+                            )
+                            contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                        },
+                        contactsDeclined = contactsDeclined,
+                        onDeclineContacts = { homeViewModel.declineContactSuggestions() }
                     )
                 }
 
@@ -1624,6 +1735,17 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        // Handle shared .ics files (ACTION_SEND with the file in EXTRA_STREAM) -
+        // the share-sheet counterpart to the ACTION_VIEW "open with" path below.
+        // Checked after the text/plain share router so plain-text shares still win.
+        // intent.action is cleared so rotation/recreation does not re-fire the import.
+        IcsShareIntentParser.parse(intent)?.let { uri ->
+            Log.d(TAG, "Handling shared ICS file: $uri")
+            intent?.action = null
+            homeViewModel.setPendingAction(PendingAction.ImportIcsFile(uri))
+            return
+        }
+
         // Handle calendar provider intents (ACTION_INSERT/EDIT) - for "Add to Calendar" from other apps
         CalendarIntentParser.parse(intent)?.let { (data, invitees) ->
             Log.d(TAG, "Calendar intent: title=${data.title}, start=${data.startTimeMillis}, invitees=${invitees.size}")
@@ -1644,6 +1766,17 @@ class MainActivity : ComponentActivity() {
                     homeViewModel.setPendingAction(
                         PendingAction.CreateEventFromCalendarIntent(action.data, action.invitees)
                     )
+                }
+                is CalendarContractAction.OpenDeviceEvent -> {
+                    if (action.beginTimeMillis != null) {
+                        Log.d(TAG, "CalendarContract: open device event ${action.eventId} at occurrence")
+                        homeViewModel.setPendingAction(
+                            PendingAction.ShowDeviceEventQuickView(action.eventId, action.beginTimeMillis)
+                        )
+                    } else {
+                        Log.d(TAG, "CalendarContract: open device event ${action.eventId} (no occurrence; navigate to date)")
+                        homeViewModel.setPendingAction(PendingAction.OpenDeviceEventById(action.eventId))
+                    }
                 }
                 is CalendarContractAction.OpenApp -> {
                     Log.d(TAG, "CalendarContract: open app (fallback)")
@@ -1676,13 +1809,28 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Check if MIME type indicates an ICS calendar file.
+     * Navigate to a device event's start date, or show a "not found" snackbar if the event
+     * can't be resolved. Used both when no occurrence timestamp was supplied and as the
+     * fallback when an exact-occurrence quick-view lookup misses — so a stale or slightly-off
+     * timestamp lands the user near the event instead of on a dead end.
      */
-    private fun isIcsMimeType(mimeType: String?): Boolean {
-        return mimeType in listOf(
-            "text/calendar",
-            "application/ics",
-            "text/x-vcalendar"
-        )
+    private suspend fun navigateToDeviceEventOrNotFound(homeViewModel: HomeViewModel, eventId: Long) {
+        val dayCode = homeViewModel.getDeviceEventDayCode(eventId)
+        if (dayCode != null) {
+            Log.d(TAG, "Navigating to device event $eventId on $dayCode")
+            homeViewModel.navigateToDate(
+                org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(dayCode)
+            )
+        } else {
+            Log.w(TAG, "Device event $eventId not found")
+            homeViewModel.showSnackbar(getString(R.string.error_device_event_not_found))
+        }
     }
+
+    /**
+     * Check if MIME type indicates an ICS calendar file. Single source of truth
+     * shared with the share-sheet (ACTION_SEND) path.
+     */
+    private fun isIcsMimeType(mimeType: String?): Boolean =
+        IcsShareIntentParser.isIcsMimeType(mimeType)
 }

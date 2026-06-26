@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.ScopeOption
 import org.onekash.kashcal.ui.components.ScopeTint
+import org.onekash.kashcal.util.RruleUtils
 
 /**
  * Pure helpers that compute the list of [ScopeOption]s for a given
@@ -59,12 +60,24 @@ private val ICON_DELETE_ALL: ImageVector = Icons.Default.DeleteOutline
  * - First occurrence: THIS_AND_FUTURE collapses with ALL_EVENTS;
  *   disable it.
  * - Detached exception: only THIS_EVENT applies; disable the others.
- * - Caller changed RRULE: THIS_EVENT and ALL_EVENTS are both
- *   disabled. THIS_EVENT can't apply because exception events strip
- *   RRULE per RFC 5545 §3.8.5. ALL_EVENTS can't apply because the
- *   form was opened on an off-master DTSTART occurrence and rewriting
- *   the master's cadence at that anchor is ambiguous; THIS_AND_FUTURE
- *   is the legitimate "change cadence going forward" path.
+ * - Caller changed RRULE on an off-master occurrence: THIS_EVENT and
+ *   ALL_EVENTS are both disabled. THIS_EVENT can't apply because
+ *   exception events strip RRULE per RFC 5545 §3.8.5. ALL_EVENTS can't
+ *   apply because rewriting the master's cadence at an off-master
+ *   DTSTART anchor is ambiguous; THIS_AND_FUTURE is the legitimate
+ *   "change cadence going forward" path.
+ * - Caller changed RRULE on the FIRST occurrence: ALL_EVENTS stays
+ *   enabled. The form is open on the master at its own DTSTART, so
+ *   applying the cadence/UNTIL change to the whole series is
+ *   unambiguous. THIS_AND_FUTURE remains disabled (it collapses with
+ *   ALL_EVENTS here) and THIS_EVENT remains disabled (can't carry an
+ *   RRULE). Without this carve-out, first-occurrence + RRULE-change
+ *   disabled every option and left no way to save (issue #274).
+ * An attendee-set change does NOT gate any scope: a single-occurrence
+ * edit routes the edited guest set to the exception path, THIS_AND_FUTURE
+ * to the series split, and ALL_EVENTS to the master update — each carries
+ * the change. (An RRULE change still disables THIS_EVENT independently,
+ * per the rule above.)
  *
  * "All events" is tinted Warn — a subtle visual brake on misclicks.
  */
@@ -75,11 +88,15 @@ fun computeEditScopeOptions(
     resources: Resources,
 ): List<ScopeOption> {
     val isFirstOccurrence = context.occurrenceTs <= context.masterStartTs
-    val rruleChanged = originalRrule != currentRrule
+    // Compare by meaning, not bytes: the picker can re-emit a
+    // cosmetically different but identical rule (reordered parts, case,
+    // whitespace), which a raw compare would misread as a user change
+    // and spuriously disable save options.
+    val rruleChanged = !RruleUtils.rrulesEquivalent(originalRrule, currentRrule)
 
     val thisEventEnabled = !rruleChanged
     val thisAndFutureEnabled = !context.isDetachedException && !isFirstOccurrence
-    val allEventsEnabled = !context.isDetachedException && !rruleChanged
+    val allEventsEnabled = !context.isDetachedException && (!rruleChanged || isFirstOccurrence)
 
     return listOf(
         ScopeOption(

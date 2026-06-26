@@ -14,9 +14,8 @@ import java.time.ZonedDateTime
 /**
  * Pure-logic tests for FreeBlockFinder.
  *
- * Covers Chunk 2 of the share-availability TDD plan. Per CLAUDE.md feedback memory
- * "test user outcomes through the public surface" — FreeBlockFinder IS the public
- * surface; this is the one place direct unit tests are appropriate.
+ * FreeBlockFinder is the public surface for free-block computation, so direct
+ * unit tests are appropriate here.
  */
 class FreeBlockFinderTest {
 

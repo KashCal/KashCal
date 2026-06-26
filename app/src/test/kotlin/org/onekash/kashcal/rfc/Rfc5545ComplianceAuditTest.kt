@@ -250,7 +250,12 @@ END:VCALENDAR
     }
 
     @Test
-    fun `RFC 5545 §3-6-1 - recurring VEVENT prefers DURATION over DTEND for DST safety`() {
+    fun `RFC 5545 §3-6-1 - recurring VEVENT emits DTEND not DURATION`() {
+        // RFC 5545 §3.6.1 allows either DTEND or DURATION (never both). KashCal emits
+        // DTEND for every event so all serialize paths agree (the patch path and the
+        // exception overload already do), and for interop: iCloud rejects an EXDATE
+        // update on a bounded recurring scheduling object expressed with DURATION,
+        // while DTEND is accepted across servers.
         val zone = ZoneId.of("America/New_York")
         val start = ZonedDateTime.of(2026, 3, 1, 9, 0, 0, 0, zone).toInstant().toEpochMilli()
         val event = baseEvent(
@@ -260,10 +265,13 @@ END:VCALENDAR
             rrule = "FREQ=WEEKLY;COUNT=10"
         )
         val ics = IcsPatcher.serialize(event)
-        assertTrue("Recurring event should emit DURATION:\n$ics", ics.contains("DURATION:"))
-        assertFalse(
-            "Recurring event should not emit DTEND (DST-safe per app convention; RFC 5545 §3.6.1 allows either):\n$ics",
+        assertTrue(
+            "Recurring event should emit DTEND:\n$ics",
             Regex("(?m)^DTEND[:;]").containsMatchIn(ics)
+        )
+        assertFalse(
+            "Recurring event should not emit DURATION (DTEND form for path convergence + interop):\n$ics",
+            ics.contains("DURATION:")
         )
     }
 

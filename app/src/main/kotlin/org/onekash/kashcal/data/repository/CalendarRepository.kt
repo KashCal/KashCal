@@ -113,6 +113,13 @@ interface CalendarRepository {
     suspend fun updateCtag(calendarId: Long, ctag: String?)
 
     /**
+     * Persist this collection's auto-schedule capability (RFC 6638 §2).
+     * Tri-state: null = unknown/not probed, false = not advertised,
+     * true = advertised.
+     */
+    suspend fun updateAutoScheduleSupported(calendarId: Long, supported: Boolean?)
+
+    /**
      * Update calendar metadata (color, displayName, isReadOnly) atomically.
      *
      * Used by [PullStrategy.maybeRefreshMetadata] to refresh server-side

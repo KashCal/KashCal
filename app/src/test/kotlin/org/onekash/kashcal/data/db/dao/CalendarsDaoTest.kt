@@ -66,6 +66,21 @@ class CalendarsDaoTest : BaseDaoTest() {
         assertEquals(testAccountId, retrieved.accountId)
     }
 
+    @Test
+    fun `auto_schedule_supported defaults to null then round-trips tri-state`() = runTest {
+        val id = calendarsDao.insert(createCalendar())
+        assertNull(calendarsDao.getById(id)!!.autoScheduleSupported)
+
+        calendarsDao.updateAutoScheduleSupported(id, true)
+        assertEquals(true, calendarsDao.getById(id)!!.autoScheduleSupported)
+
+        calendarsDao.updateAutoScheduleSupported(id, false)
+        assertEquals(false, calendarsDao.getById(id)!!.autoScheduleSupported)
+
+        calendarsDao.updateAutoScheduleSupported(id, null)
+        assertNull(calendarsDao.getById(id)!!.autoScheduleSupported)
+    }
+
     // ========== FK Constraint Tests ==========
 
     @Test(expected = android.database.sqlite.SQLiteConstraintException::class)

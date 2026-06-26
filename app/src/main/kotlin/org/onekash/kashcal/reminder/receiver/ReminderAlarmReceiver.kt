@@ -13,6 +13,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 
 /**
@@ -60,7 +61,7 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
-                    handleAlarm(reminderId)
+                    handleAlarm(reminderScheduler, notificationManager, reminderId)
                 }
                 if (completed == null) {
                     Log.w(TAG, "Alarm handling timed out for reminder $reminderId")
@@ -73,7 +74,16 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun handleAlarm(reminderId: Long) {
+    /**
+     * Extracted for test access: `@AndroidEntryPoint`'s generated `onReceive`
+     * re-runs field injection on every dispatch, clobbering any values set
+     * manually by a test. Callers must pass the dependencies explicitly.
+     */
+    internal suspend fun handleAlarm(
+        reminderScheduler: ReminderScheduler,
+        notificationManager: ReminderNotificationManager,
+        reminderId: Long,
+    ) {
         // Get the reminder from database
         val reminder = reminderScheduler.getReminder(reminderId)
         if (reminder == null) {
@@ -81,9 +91,32 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        // Check if already dismissed or fired (avoid duplicate notifications)
+        // Check if already dismissed (avoid duplicate notifications)
         if (reminder.status == ReminderStatus.DISMISSED) {
             Log.d(TAG, "Reminder $reminderId already dismissed, skipping")
+            return
+        }
+
+        // The reminder row denormalizes event data, so it can fire "blind"
+        // after its whole event was deleted or soft-deleted (e.g. a CalDAV
+        // delete not yet pushed, or a server-side event delete pulled in the
+        // background). Suppress the notification and clean up the stale row +
+        // sibling alarms.
+        if (!reminderScheduler.shouldFireReminder(reminder.eventId)) {
+            Log.d(TAG, "Suppressed stale reminder $reminderId for event ${reminder.eventId.maskEventId()}")
+            reminderScheduler.cancelRemindersForEvent(reminder.eventId)
+            return
+        }
+
+        // The whole event is still live, but this reminder is for ONE occurrence
+        // of it — and that single instance may have been cancelled (an organizer
+        // skipped one meeting of a recurring series, pulled in via CalDAV as an
+        // EXDATE or a cancelled exception). Suppress this slot's notification and
+        // clean up only its row + alarm; the series' other live occurrences keep
+        // their reminders.
+        if (!reminderScheduler.hasLiveOccurrenceForReminder(reminder)) {
+            Log.d(TAG, "Suppressed reminder $reminderId for cancelled occurrence of event ${reminder.eventId.maskEventId()}")
+            reminderScheduler.cancelReminderForOccurrence(reminder.eventId, reminder.occurrenceTime)
             return
         }
 

@@ -35,6 +35,8 @@
     <string name="action_cancel">Avbryt</string>
     <string name="action_close">Lukk</string>
     <string name="action_ok">OK</string>
+    <string name="action_allow">Tillat</string>
+    <string name="action_no_thanks">Nei takk</string>
     <string name="action_not_now">Ikkje no</string>
     <string name="action_sign_in">Logg inn</string>
     <string name="action_select">Vel</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">Vis passord</string>
     <string name="account_detail_cd_hide_password">Gøym passord</string>
 
-    <string name="sync_failure_notification_title">Synkroniseringsproblem med %1$s</string>
-    <string name="sync_failure_notification_text">Kalendersynkronisering har mislukkast %1$d gonger</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Gje nytt namn til konto</string>
@@ -814,6 +814,7 @@
     <string name="sync_notification_expired_title">Synkroniseringsendringar utløpte</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s kunne ikkje synkroniserast etter 30 dagar. Tenarversjonen vert brukt. Tving synkronisering for å prøva igjen.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s i %2$s kunne ikkje synkroniserast etter 30 dagar. Tenarversjonen vert brukt. Tving synkronisering for å prøva igjen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender synkronisert</item>
@@ -1101,6 +1102,18 @@
     <string name="attendee_section_pending">Ventar</string>
     <string name="attendee_section_declined">Avslått</string>
     <string name="attendee_section_delegated">Delegert</string>
+    <string name="attendee_picker_title">Legg til deltakarar</string>
+    <string name="attendee_pick_add_people">Legg til deltakarar</string>
+    <string name="attendee_pick_from_contacts">Namn eller e-post</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d til</item>
+        <item quantity="other">+%1$d til</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Føreslå personar frå kontaktane dine</string>
+    <string name="attendee_invalid_email">Skriv inn ei fullstendig e-postadresse</string>
+    <string name="attendee_add_typed">Legg til \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Det er ikkje mogleg å invitere personar på denne kontoen</string>
+    <string name="action_save_and_notify">Lagre &amp; varsle</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alt er ajour</string>
     <string name="inbox_organizer_suffix">(arrangør)</string>

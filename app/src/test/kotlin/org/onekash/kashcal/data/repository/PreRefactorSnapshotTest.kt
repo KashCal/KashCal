@@ -27,7 +27,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
  * They serve as:
  * 1. Documentation of existing bugs (reminder cleanup missing)
  * 2. Regression guards for post-refactor verification
- * 3. Evidence of improvement after Phase 7-10
+ * 3. Evidence of improvement once discovery services adopt AccountRepository
  *
  * BUG DOCUMENTATION:
  * - ICloudAccountDiscoveryService.removeAccount() does NOT cancel reminders
@@ -35,7 +35,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
  * - Neither cancels WorkManager sync jobs
  * - Neither deletes pending operations
  *
- * After Phase 7, these services will delegate to AccountRepository.deleteAccount()
+ * Once migrated, these services delegate to AccountRepository.deleteAccount()
  * which handles all cleanup properly.
  */
 class PreRefactorSnapshotTest {
@@ -77,7 +77,7 @@ class PreRefactorSnapshotTest {
      * ```
      *
      * Impact: Orphaned alarms remain in AlarmManager after sign-out.
-     * Fix: Phase 7 will replace with accountRepository.deleteAccount()
+     * Fix: the migration replaces this with accountRepository.deleteAccount()
      */
     @Test
     fun `BUG - ICloudAccountDiscoveryService removeAccount does NOT cancel reminders`() {
@@ -105,7 +105,7 @@ class PreRefactorSnapshotTest {
         // ASSERT: reminderScheduler was NEVER called (BUG!)
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
 
-        // After Phase 7, this will be:
+        // After migration, this will be:
         // coVerify { reminderScheduler.cancelRemindersForEvent(any()) }
     }
 
@@ -124,7 +124,7 @@ class PreRefactorSnapshotTest {
      * ```
      *
      * Impact: Same as iCloud - orphaned alarms.
-     * Fix: Phase 7 will replace with accountRepository.deleteAccount()
+     * Fix: the migration replaces this with accountRepository.deleteAccount()
      */
     @Test
     fun `BUG - CalDavAccountDiscoveryService removeAccount does NOT cancel reminders`() {
@@ -166,7 +166,7 @@ class PreRefactorSnapshotTest {
     @Test
     fun `BUG - Discovery services do NOT cancel WorkManager jobs on account removal`() {
         // Current behavior: accountsDao.delete() without WorkManager cleanup
-        // After Phase 7: workManager.cancelUniqueWork("sync_account_$accountId")
+        // After migration: workManager.cancelUniqueWork("sync_account_$accountId")
 
         // This test documents that WorkManager is NOT part of current cleanup
         assertTrue(
@@ -188,7 +188,7 @@ class PreRefactorSnapshotTest {
     @Test
     fun `BUG - Discovery services do NOT delete pending operations on account removal`() {
         // Current behavior: Let FK cascade handle it (works but suboptimal)
-        // After Phase 7: pendingOperationsDao.deleteForEvent() for each event
+        // After migration: pendingOperationsDao.deleteForEvent() for each event
 
         assertTrue(
             "Pending operations cleanup missing - fixed in AccountRepository",
@@ -293,18 +293,18 @@ class PreRefactorSnapshotTest {
     // ========== Backup Rules Documentation ==========
 
     /**
-     * Documents backup exclusion rules (Phase 1 fix).
+     * Documents backup exclusion rules.
      *
-     * After Phase 1, all credential files are excluded from backup:
+     * All credential files are excluded from backup:
      * - icloud_credentials.xml (was already excluded)
-     * - caldav_credentials.xml (ADDED in Phase 1)
-     * - unified_credentials.xml (ADDED in Phase 1)
+     * - caldav_credentials.xml
+     * - unified_credentials.xml
      *
      * This prevents credentials from being restored to a device where
      * they can't be decrypted (different Android Keystore master key).
      */
     @Test
-    fun `DOC - backup_rules excludes all credential files after Phase 1`() {
+    fun `DOC - backup_rules excludes all credential files`() {
         // Files that should be excluded from backup
         val excludedFiles = listOf(
             "icloud_credentials.xml",
@@ -312,8 +312,8 @@ class PreRefactorSnapshotTest {
             "unified_credentials.xml"
         )
 
-        // Phase 1 added caldav_credentials.xml and unified_credentials.xml
-        // to both backup_rules.xml and data_extraction_rules.xml
+        // caldav_credentials.xml and unified_credentials.xml are excluded
+        // via both backup_rules.xml and data_extraction_rules.xml
         excludedFiles.forEach { file ->
             assertTrue(
                 "File '$file' should be excluded from backup",
@@ -325,37 +325,37 @@ class PreRefactorSnapshotTest {
     // ========== Post-Refactor Verification Hooks ==========
 
     /**
-     * After Phase 7 completion, this test should be updated to verify
-     * that ICloudAccountDiscoveryService.removeAccount() now delegates
-     * to AccountRepository.deleteAccount().
+     * Once the discovery-service migration completes, this test should be
+     * updated to verify that ICloudAccountDiscoveryService.removeAccount()
+     * now delegates to AccountRepository.deleteAccount().
      */
     @Test
-    fun `VERIFY AFTER PHASE 7 - ICloudAccountDiscoveryService uses AccountRepository`() {
-        // TODO: After Phase 7, update this test to verify:
+    fun `VERIFY AFTER MIGRATION - ICloudAccountDiscoveryService uses AccountRepository`() {
+        // TODO: After migration, update this test to verify:
         // - ICloudAccountDiscoveryService has AccountRepository injected
         // - removeAccount() calls accountRepository.deleteAccount()
         // - Direct accountsDao.delete() is removed
 
         assertTrue(
-            "Update after Phase 7: Verify ICloudAccountDiscoveryService migration",
+            "Update after migration: Verify ICloudAccountDiscoveryService migration",
             true
         )
     }
 
     /**
-     * After Phase 7 completion, this test should be updated to verify
-     * that CalDavAccountDiscoveryService.removeAccount() now delegates
-     * to AccountRepository.deleteAccount().
+     * Once the discovery-service migration completes, this test should be
+     * updated to verify that CalDavAccountDiscoveryService.removeAccount()
+     * now delegates to AccountRepository.deleteAccount().
      */
     @Test
-    fun `VERIFY AFTER PHASE 7 - CalDavAccountDiscoveryService uses AccountRepository`() {
-        // TODO: After Phase 7, update this test to verify:
+    fun `VERIFY AFTER MIGRATION - CalDavAccountDiscoveryService uses AccountRepository`() {
+        // TODO: After migration, update this test to verify:
         // - CalDavAccountDiscoveryService has AccountRepository injected
         // - removeAccount() calls accountRepository.deleteAccount()
         // - Direct accountsDao.delete() and credentialManager calls removed
 
         assertTrue(
-            "Update after Phase 7: Verify CalDavAccountDiscoveryService migration",
+            "Update after migration: Verify CalDavAccountDiscoveryService migration",
             true
         )
     }

@@ -29,8 +29,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Tests for InsightsRepository.getOccurrencesForRange — Chunk 5 of the
- * share-availability TDD plan.
+ * Tests for InsightsRepository.getOccurrencesForRange.
  *
  * Adds an explicit-range overload that returns merged Room+device occurrences
  * for an arbitrary [startTs, endTs) window. The existing

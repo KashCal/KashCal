@@ -59,6 +59,8 @@
     <string name="action_confirm">Confirm</string>
     <string name="action_discard">Discard</string>
     <string name="action_dismiss">Dismiss</string>
+    <string name="action_allow">Allow</string>
+    <string name="action_no_thanks">No thanks</string>
     <string name="action_show_all">Show All</string>
     <string name="action_connect">Connect</string>
     <string name="action_duplicate">Duplicate</string>
@@ -469,8 +471,6 @@
     <string name="account_detail_cd_show_password">Show password</string>
     <string name="account_detail_cd_hide_password">Hide password</string>
 
-    <string name="sync_failure_notification_title">Sync issue with %1$s</string>
-    <string name="sync_failure_notification_text">Calendar sync has failed %1$d times</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Rename Account</string>
@@ -844,6 +844,7 @@
     <string name="sync_notification_expired_title">Sync changes expired</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s in %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synced %1$d calendar</item>
@@ -1116,6 +1117,18 @@
     <string name="attendee_status_tentative">Tentative</string>
     <string name="attendee_status_delegated">Delegated</string>
     <string name="attendee_status_pending">Pending</string>
+    <string name="attendee_picker_title">Add attendees</string>
+    <string name="attendee_pick_add_people">Add attendees</string>
+    <string name="attendee_pick_from_contacts">Name or email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d more</item>
+        <item quantity="other">+%1$d more</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Suggest people from your contacts</string>
+    <string name="attendee_invalid_email">Enter a full email address</string>
+    <string name="attendee_add_typed">Add \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Inviting people isn\'t available on this account</string>
+    <string name="action_save_and_notify">Save &amp; notify</string>
     <string name="inbox_empty_caught_up">All caught up</string>
     <string name="inbox_organizer_suffix">(organiser)</string>
     <string name="menu_invites">Invites</string>

@@ -35,6 +35,8 @@
     <string name="action_close">बन्द गर्नुहोस्</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">अहिले होइन</string>
+    <string name="action_allow">अनुमति दिनुहोस्</string>
+    <string name="action_no_thanks">पर्दैन, धन्यवाद</string>
     <string name="action_sign_in">साइन इन</string>
     <string name="action_select">चयन गर्नुहोस्</string>
     <string name="action_show_password">पासवर्ड देखाउनुहोस्</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">पासवर्ड देखाउनुहोस्</string>
     <string name="account_detail_cd_hide_password">पासवर्ड लुकाउनुहोस्</string>
 
-    <string name="sync_failure_notification_title">%1$s सँग सिंक समस्या</string>
-    <string name="sync_failure_notification_text">क्यालेन्डर सिंक %1$d पटक असफल भयो</string>
 
     <string name="rename_account_title">खाता नाम बदल्नुहोस्</string>
     <string name="rename_account_label">खाता नाम</string>
@@ -798,6 +798,7 @@
     <string name="sync_notification_expired_title">सिंक परिवर्तनहरू म्याद सकियो</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s मा %1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d क्यालेन्डर सिंक गरियो</item>
@@ -1073,6 +1074,18 @@
     <string name="attendee_status_declined">अस्वीकृत</string>
     <string name="attendee_status_tentative">अनिश्चित</string>
     <string name="attendee_status_delegated">प्रतिनिधित्व गरिएको</string>
+    <string name="attendee_picker_title">सहभागीहरू थप्नुहोस्</string>
+    <string name="attendee_pick_add_people">सहभागीहरू थप्नुहोस्</string>
+    <string name="attendee_pick_from_contacts">नाम वा इमेल</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d थप</item>
+        <item quantity="other">+%1$d थप</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">तपाईंका सम्पर्कहरूबाट मानिसहरू सुझाव दिनुहोस्</string>
+    <string name="attendee_invalid_email">पूरा इमेल ठेगाना प्रविष्ट गर्नुहोस्</string>
+    <string name="attendee_add_typed">\"%1$s\" थप्नुहोस्</string>
+    <string name="attendee_scheduling_unavailable">यो खातामा मानिसहरू निम्तो दिन उपलब्ध छैन</string>
+    <string name="action_save_and_notify">सुरक्षित गर्नुहोस् र सूचित गर्नुहोस्</string>
     <string name="attendee_status_pending">पर्खाइमा</string>
     <string name="inbox_empty_caught_up">सबै सम्पन्न</string>
     <string name="inbox_organizer_suffix">(आयोजक)</string>

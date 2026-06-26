@@ -68,6 +68,47 @@ class SequenceBumperTest {
     }
 
     @Test
+    fun `cosmetically reordered RRULE does not bump`() {
+        // The recurrence picker can re-emit the same rule with parts in
+        // a different order. That is not a scheduling change, so it must
+        // not bump SEQUENCE and spuriously re-notify attendees.
+        val old = baseEvent().copy(rrule = "FREQ=WEEKLY;BYDAY=MO,WE")
+        val new = old.copy(rrule = "BYDAY=WE,MO;FREQ=WEEKLY")
+        assertFalse(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `cosmetic RRULE rewrite (case, whitespace, trailing separator) does not bump`() {
+        val old = baseEvent().copy(rrule = "FREQ=WEEKLY;COUNT=10")
+        val new = old.copy(rrule = " freq=WEEKLY; COUNT=10; ")
+        assertFalse(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `genuine FREQ change still bumps`() {
+        val old = baseEvent().copy(rrule = "FREQ=WEEKLY;COUNT=10")
+        val new = old.copy(rrule = "FREQ=DAILY;COUNT=10")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `genuine UNTIL value change still bumps`() {
+        val old = baseEvent().copy(rrule = "FREQ=WEEKLY;UNTIL=20271231T000000Z")
+        val new = old.copy(rrule = "FREQ=WEEKLY;UNTIL=20261231T000000Z")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `ordinal BYDAY change still bumps`() {
+        // "first Sunday" vs "last Sunday" is a real cadence change. The
+        // semantic compare sorts BYxxx set members but must not collapse
+        // the ordinal prefix, so this must still bump.
+        val old = baseEvent().copy(rrule = "FREQ=MONTHLY;BYDAY=1SU")
+        val new = old.copy(rrule = "FREQ=MONTHLY;BYDAY=-1SU")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
     fun `RDATE change bumps`() {
         val old = baseEvent()
         val new = old.copy(rdate = "${now + 86_400_000}")

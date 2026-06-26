@@ -51,6 +51,16 @@ import org.onekash.kashcal.sync.session.SyncType
  */
 class PullStrategyTest {
 
+    companion object {
+        // Fixed event timestamp for createEvent(). Using a constant (rather than
+        // System.currentTimeMillis() evaluated three separate times) keeps the
+        // helper deterministic: two createEvent() calls produce byte-identical
+        // start/end/dtstamp, so content-equality tests can't flake on a clock
+        // tick between the calls. 2025-06-01T12:00:00Z, well inside any sync
+        // window. Tests that care about a specific time still .copy() their own.
+        private const val FIXED_START_TS = 1_748_779_200_000L
+    }
+
     private lateinit var pullStrategy: PullStrategy
 
     @MockK
@@ -2185,9 +2195,9 @@ class PullStrategyTest {
         uid = "test-uid-$id",
         calendarId = 1,
         title = title,
-        startTs = System.currentTimeMillis(),
-        endTs = System.currentTimeMillis() + 3600000,
-        dtstamp = System.currentTimeMillis(),
+        startTs = FIXED_START_TS,
+        endTs = FIXED_START_TS + 3600000,
+        dtstamp = FIXED_START_TS,
         caldavUrl = caldavUrl,
         syncStatus = SyncStatus.SYNCED
     )

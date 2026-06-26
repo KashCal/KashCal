@@ -35,6 +35,8 @@
     <string name="action_cancel">Avbryt</string>
     <string name="action_close">Stäng</string>
     <string name="action_ok">OK</string>
+    <string name="action_allow">Tillåt</string>
+    <string name="action_no_thanks">Nej tack</string>
     <string name="action_not_now">Inte nu</string>
     <string name="action_sign_in">Logga in</string>
     <string name="action_select">Välj</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">Visa lösenord</string>
     <string name="account_detail_cd_hide_password">Dölj lösenord</string>
 
-    <string name="sync_failure_notification_title">Synkproblem med %1$s</string>
-    <string name="sync_failure_notification_text">Kalendersynkronisering har misslyckats %1$d gånger</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Byt namn på konto</string>
@@ -814,6 +814,7 @@
     <string name="sync_notification_expired_title">Synkroniseringsändringar utgångna</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s i %2$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender synkroniserad</item>
@@ -1101,6 +1102,18 @@
     <string name="attendee_section_pending">Väntar</string>
     <string name="attendee_section_declined">Avböjt</string>
     <string name="attendee_section_delegated">Delegerat</string>
+    <string name="attendee_picker_title">Lägg till deltagare</string>
+    <string name="attendee_pick_add_people">Lägg till deltagare</string>
+    <string name="attendee_pick_from_contacts">Namn eller e-post</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d till</item>
+        <item quantity="other">+%1$d till</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Föreslå personer från dina kontakter</string>
+    <string name="attendee_invalid_email">Ange en fullständig e-postadress</string>
+    <string name="attendee_add_typed">Lägg till \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Det går inte att bjuda in personer på det här kontot</string>
+    <string name="action_save_and_notify">Spara &amp; meddela</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt är ikapp</string>
     <string name="inbox_organizer_suffix">(arrangör)</string>

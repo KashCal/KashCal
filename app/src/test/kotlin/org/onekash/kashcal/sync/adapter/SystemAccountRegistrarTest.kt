@@ -35,9 +35,11 @@ class SystemAccountRegistrarTest {
         context = ApplicationProvider.getApplicationContext()
         accountManager = AccountManager.get(context)
 
-        // AccountManager is a process-wide singleton; Robolectric does not
-        // always reset it between test classes in the same fork, which can
-        // leak accounts into this test and break the idempotency assertion.
+        // AccountManager is a process-wide singleton that Robolectric does not
+        // reset between test classes in the same JVM fork. Clear any leftover
+        // KashCal accounts so each test starts from a known-empty state.
+        // (App-boot no longer races us: KashCalApplication.onCreate skips its
+        // background account registration under unit tests.)
         accountManager.getAccountsByType(KashCalAuthenticator.ACCOUNT_TYPE)
             .forEach { accountManager.removeAccountExplicitly(it) }
 

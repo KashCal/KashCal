@@ -35,6 +35,8 @@
     <string name="action_close">বন্ধ করুন</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">এখন নয়</string>
+    <string name="action_allow">অনুমতি দিন</string>
+    <string name="action_no_thanks">না, ধন্যবাদ</string>
     <string name="action_sign_in">সাইন ইন</string>
     <string name="action_select">নির্বাচন করুন</string>
     <string name="action_show_password">পাসওয়ার্ড দেখান</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">পাসওয়ার্ড দেখান</string>
     <string name="account_detail_cd_hide_password">পাসওয়ার্ড লুকান</string>
 
-    <string name="sync_failure_notification_title">%1$s-এ সিংক সমস্যা</string>
-    <string name="sync_failure_notification_text">ক্যালেন্ডার সিংক %1$d বার ব্যর্থ হয়েছে</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">অ্যাকাউন্টের নাম পরিবর্তন করুন</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">সিংক পরিবর্তনের মেয়াদ শেষ</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 দিন পরেও %1$s সিংক হয়নি। সার্ভার সংস্করণ ব্যবহার করা হবে। পুনরায় চেষ্টা করতে ফোর্স সিংক করুন।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s-এ %1$s 30 দিন পরেও সিংক হয়নি। সার্ভার সংস্করণ ব্যবহার করা হবে। পুনরায় চেষ্টা করতে ফোর্স সিংক করুন।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ক্যালেন্ডার সিংক হয়েছে</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">প্রত্যাখ্যাত</string>
     <string name="attendee_card_tentative">অনিশ্চিত</string>
     <string name="attendee_card_hosting">আয়োজন করছি</string>
+    <string name="attendee_picker_title">অংশগ্রহণকারী যোগ করুন</string>
+    <string name="attendee_pick_add_people">অংশগ্রহণকারী যোগ করুন</string>
+    <string name="attendee_pick_from_contacts">নাম বা ইমেল</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d আরও</item>
+        <item quantity="other">+%1$d আরও</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">আপনার পরিচিতি থেকে লোকজনের পরামর্শ দিন</string>
+    <string name="attendee_invalid_email">একটি সম্পূর্ণ ইমেল ঠিকানা লিখুন</string>
+    <string name="attendee_add_typed">\"%1$s\" যোগ করুন</string>
+    <string name="attendee_scheduling_unavailable">এই অ্যাকাউন্টে লোকদের আমন্ত্রণ জানানো উপলব্ধ নয়</string>
+    <string name="action_save_and_notify">সংরক্ষণ করুন ও জানান</string>
     <string name="attendee_action_copy">ইমেল কপি করুন</string>
     <string name="attendee_action_email">ইমেল পাঠান</string>
     <string name="attendee_group_icon_description">মানুষ</string>

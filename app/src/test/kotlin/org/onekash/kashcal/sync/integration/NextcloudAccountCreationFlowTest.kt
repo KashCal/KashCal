@@ -225,7 +225,7 @@ class NextcloudAccountCreationFlowTest {
                 runBlocking { saveCredentials(any(), any()) }
             } returns true
 
-            // updateCalendarUserAddresses (A2.0) - record on the mock account row
+            // updateCalendarUserAddresses - record on the mock account row
             every {
                 runBlocking { updateCalendarUserAddresses(any(), any()) }
             } answers {
@@ -437,13 +437,13 @@ class NextcloudAccountCreationFlowTest {
         assertNotNull("Account 2 should exist with email=$username2", account2)
         assertNotEquals("Account IDs should be different", account1?.id, account2?.id)
 
-        // A2.0: every account created via the picker UI flow must have
+        // Every account created via the picker UI flow must have
         // calendar-user-address-set discovered and persisted. The
         // discovery is non-fatal, so size==0 is acceptable when the
         // server didn't return entries — but the mock would never have
         // been called at all if the wiring is missing.
         assertNotNull(
-            "Account 1 should have calendarUserAddresses populated (A2.0 wired into createAccountWithSelectedCalendars)",
+            "Account 1 should have calendarUserAddresses populated (address discovery wired into createAccountWithSelectedCalendars)",
             account1?.calendarUserAddresses
         )
         assertNotNull(

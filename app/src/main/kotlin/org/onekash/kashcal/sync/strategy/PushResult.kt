@@ -19,8 +19,27 @@ sealed class PushResult {
         val operationsProcessed: Int,
         val operationsFailed: Int,
         val pushedEventIds: Set<Long> = emptySet(),
-        val pushWarnings: List<String> = emptyList()
+        /**
+         * Soft, recoverable conditions surfaced to the sync session as
+         * warnings: a retryable operation rescheduled for the next cycle, a
+         * 412 conflict pending resolution, a MOVE-orphan note. These will
+         * self-resolve or are being handled — not a lost change.
+         */
+        val pushWarnings: List<String> = emptyList(),
+        /**
+         * Permanent push failures — an operation that exhausted retries or is
+         * non-retryable and was `markFailed`. The user's change did NOT reach
+         * the server and will NOT be retried, so this is surfaced as a sync
+         * ERROR (not a warning). Distinct channel so the engine routes these to
+         * `SyncError` rather than `addWarning`. Carries the HTTP/error [code] so
+         * downstream classification (auth vs server vs not-found) is preserved
+         * rather than collapsed to a generic message string.
+         */
+        val pushErrors: List<PushFailure> = emptyList()
     ) : PushResult()
+
+    /** A permanent per-operation push failure, with its error code preserved. */
+    data class PushFailure(val code: Int, val message: String)
 
     /**
      * No pending operations to push.

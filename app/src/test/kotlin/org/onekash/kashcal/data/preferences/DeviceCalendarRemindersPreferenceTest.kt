@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for device calendar reminders preference (Phase 4).
+ * Unit tests for device calendar reminders preference.
  *
  * Tests cover:
  * - Default value is false (opt-in feature)

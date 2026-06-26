@@ -509,7 +509,7 @@ class CalculateAllDayTriggerTimeTest {
         assertEquals(0, local.minute)
     }
 
-    // ==================== Legacy reinterpretation (US6: no migration) ====================
+    // ==================== Legacy reinterpretation (no migration) ====================
 
     @Test
     fun `legacy -P1D now fires at local midnight the day before (was 9 AM)`() {
@@ -519,7 +519,7 @@ class CalculateAllDayTriggerTimeTest {
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
         // local midnight Jan 6 PST - 24h = Jan 5 00:00 PST = Jan 5 08:00 UTC.
-        // (Old behavior fired this at 9 AM the day before; reinterpreted in place per US6.)
+        // (Old behavior fired this at 9 AM the day before; reinterpreted in place.)
         assertEquals(1736064000000L, result)
     }
 

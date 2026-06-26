@@ -419,4 +419,70 @@ class RruleUtilsTest {
         // case is COUNT-specific.
         assertFalse(RruleUtils.isDegenerateCountSplit("FREQ=WEEKLY;UNTIL=20270101T000000Z", pastCount = 0))
     }
+
+    // ===== rrulesEquivalent =====
+    // The scope sheet decides whether the user changed the recurrence
+    // rule by comparing the loaded RRULE against the form's. A raw
+    // string compare misfires when the picker re-emits a cosmetically
+    // different but semantically identical rule (reordered parts, case,
+    // whitespace, trailing separators), spuriously disabling save
+    // options. rrulesEquivalent compares by meaning instead.
+
+    @Test
+    fun `rrulesEquivalent treats identical strings as equal`() {
+        assertTrue(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;COUNT=10", "FREQ=WEEKLY;COUNT=10"))
+    }
+
+    @Test
+    fun `rrulesEquivalent treats both-null as equal`() {
+        assertTrue(RruleUtils.rrulesEquivalent(null, null))
+    }
+
+    @Test
+    fun `rrulesEquivalent treats null vs non-null as different`() {
+        assertFalse(RruleUtils.rrulesEquivalent(null, "FREQ=WEEKLY"))
+        assertFalse(RruleUtils.rrulesEquivalent("FREQ=WEEKLY", null))
+    }
+
+    @Test
+    fun `rrulesEquivalent ignores part ordering`() {
+        assertTrue(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;BYDAY=MO,TU", "BYDAY=MO,TU;FREQ=WEEKLY"))
+    }
+
+    @Test
+    fun `rrulesEquivalent ignores key case and RRULE prefix`() {
+        assertTrue(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;COUNT=10", "RRULE:freq=WEEKLY;count=10"))
+    }
+
+    @Test
+    fun `rrulesEquivalent ignores surrounding whitespace and trailing separator`() {
+        assertTrue(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;COUNT=10", " FREQ=WEEKLY; COUNT=10; "))
+    }
+
+    @Test
+    fun `rrulesEquivalent ignores BYDAY value ordering`() {
+        assertTrue(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;BYDAY=MO,WE,FR", "FREQ=WEEKLY;BYDAY=FR,MO,WE"))
+    }
+
+    @Test
+    fun `rrulesEquivalent reports a real frequency change as different`() {
+        assertFalse(RruleUtils.rrulesEquivalent("FREQ=WEEKLY;COUNT=10", "FREQ=DAILY;COUNT=10"))
+    }
+
+    @Test
+    fun `rrulesEquivalent reports a real UNTIL change as different`() {
+        assertFalse(
+            RruleUtils.rrulesEquivalent(
+                "FREQ=WEEKLY;UNTIL=20271231T000000Z",
+                "FREQ=WEEKLY;UNTIL=20261231T000000Z",
+            )
+        )
+    }
+
+    @Test
+    fun `rrulesEquivalent does not equate COUNT with UNTIL`() {
+        // Different bounds shape is a real semantic difference; we only
+        // normalize cosmetics, not COUNT-to-UNTIL conversion.
+        assertFalse(RruleUtils.rrulesEquivalent("FREQ=DAILY;COUNT=10", "FREQ=DAILY;UNTIL=20260115T000000Z"))
+    }
 }

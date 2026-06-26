@@ -1,8 +1,11 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
+import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.db.dao.PendingCancelsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -10,9 +13,22 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.icaldav.scheduling.ITipBuilder
+import org.onekash.kashcal.data.db.entity.Attendee
+import org.onekash.kashcal.domain.identity.canEditAsOrganizer
+import org.onekash.kashcal.domain.identity.effectiveAddresses
+import org.onekash.kashcal.domain.scheduling.DeliveryAction
+import org.onekash.kashcal.domain.scheduling.DeliveryState
+import org.onekash.kashcal.domain.scheduling.classifyDelivery
+import org.onekash.kashcal.domain.scheduling.routeDelivery
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.OutboxDeliveryClass
+import org.onekash.kashcal.sync.client.model.classifyRequestStatus
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
+import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
+import org.onekash.kashcal.util.AddressNormalizer
 import javax.inject.Inject
 
 /**
@@ -35,10 +51,22 @@ class PushStrategy @Inject constructor(
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val accountRepository: AccountRepository,
-    private val attendeesDao: AttendeesDao
+    private val attendeesDao: AttendeesDao,
+    private val pendingCancelsDao: PendingCancelsDao
 ) {
+    private val icalParser = ICalParser()
+
     companion object {
         private const val TAG = "PushStrategy"
+
+        /**
+         * Cap on CANCEL delivery attempts before abandoning a pending_cancels
+         * row. Bounds a row whose server never yields a usable delivery channel
+         * (declined with no outbox, or no receipt ever stamped) so it cannot
+         * retry forever. The cancelled guest's removal still took locally; this
+         * only stops an undeliverable client-side CANCEL from looping.
+         */
+        private const val MAX_CANCEL_ATTEMPTS = 10
 
         /** Extract .ics filename from caldavUrl for privacy-safe warning messages. */
         private fun filenameOf(url: String?): String =
@@ -87,6 +115,7 @@ class PushStrategy @Inject constructor(
         var failed = 0
         val pushedEventIds = mutableSetOf<Long>()
         val warnings = mutableListOf<String>()
+        val errors = mutableListOf<PushResult.PushFailure>()
 
         for (operation in readyOperations) {
             // Mark as in progress
@@ -137,8 +166,11 @@ class PushStrategy @Inject constructor(
                     failed++
                 }
                 is SinglePushResult.Error -> {
+                    val msg = "Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}"
                     if (result.isRetryable && operation.shouldRetry) {
+                        // Recoverable — will retry next sync. Soft warning.
                         scheduleRetry(operation, result.message)
+                        warnings.add(msg)
                     } else {
                         // Mark as permanently failed
                         pendingOperationsDao.markFailed(
@@ -153,9 +185,11 @@ class PushStrategy @Inject constructor(
                             pendingOperationsDao.deleteLinkedDelete(operation.linkedMoveId)
                             Log.d(TAG, "Removed linked DELETE for failed CREATE (linkedMoveId=${operation.linkedMoveId})")
                         }
+                        // Permanent failure — the change did NOT reach the server
+                        // and will NOT be retried. Surface as an ERROR, not a warning.
+                        errors.add(PushResult.PushFailure(result.code, msg))
                     }
                     failed++
-                    warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
                 }
             }
         }
@@ -169,7 +203,8 @@ class PushStrategy @Inject constructor(
             operationsProcessed = readyOperations.size,
             operationsFailed = failed,
             pushedEventIds = pushedEventIds,
-            pushWarnings = warnings
+            pushWarnings = warnings,
+            pushErrors = errors
         )
     }
 
@@ -228,6 +263,7 @@ class PushStrategy @Inject constructor(
         var failed = 0
         val pushedEventIds = mutableSetOf<Long>()
         val warnings = mutableListOf<String>()
+        val errors = mutableListOf<PushResult.PushFailure>()
 
         for (operation in calendarOperations) {
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
@@ -269,8 +305,11 @@ class PushStrategy @Inject constructor(
                     failed++
                 }
                 is SinglePushResult.Error -> {
+                    val msg = "Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}"
                     if (result.isRetryable && operation.shouldRetry) {
+                        // Recoverable — will retry next sync. Soft warning.
                         scheduleRetry(operation, result.message)
+                        warnings.add(msg)
                     } else {
                         pendingOperationsDao.markFailed(
                             operation.id,
@@ -284,9 +323,11 @@ class PushStrategy @Inject constructor(
                             pendingOperationsDao.deleteLinkedDelete(operation.linkedMoveId)
                             Log.d(TAG, "Removed linked DELETE for failed CREATE (linkedMoveId=${operation.linkedMoveId})")
                         }
+                        // Permanent failure — change did NOT reach the server and
+                        // will NOT be retried. Surface as an ERROR, not a warning.
+                        errors.add(PushResult.PushFailure(result.code, msg))
                     }
                     failed++
-                    warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
                 }
             }
         }
@@ -298,7 +339,8 @@ class PushStrategy @Inject constructor(
             operationsProcessed = calendarOperations.size,
             operationsFailed = failed,
             pushedEventIds = pushedEventIds,
-            pushWarnings = warnings
+            pushWarnings = warnings,
+            pushErrors = errors
         )
     }
 
@@ -378,6 +420,10 @@ class PushStrategy @Inject constructor(
                 if (serializedExceptions.isNotEmpty()) {
                     Log.d(TAG, "Updated etag for ${serializedExceptions.size} bundled exceptions")
                 }
+
+                // Capture the server's scheduling decision (RFC 6638 §3.2.1).
+                readBackScheduleStatus(event, url, clientToUse, serializedExceptions)
+                drainPendingCancels(event, clientToUse)
 
                 Log.d(TAG, "Event created successfully: $url")
                 SinglePushResult.Success(newEtag = etag, newUrl = url)
@@ -490,6 +536,10 @@ class PushStrategy @Inject constructor(
                     Log.d(TAG, "Updated etag for ${serializedExceptions.size} bundled exceptions")
                 }
 
+                // Capture the server's scheduling decision (RFC 6638 §3.2.1).
+                readBackScheduleStatus(event, caldavUrl, clientToUse, serializedExceptions)
+                drainPendingCancels(event, clientToUse)
+
                 Log.d(TAG, "Event updated successfully")
                 SinglePushResult.Success(newEtag = newEtag)
             }
@@ -517,6 +567,9 @@ class PushStrategy @Inject constructor(
                             for (exception in serializedExceptions) {
                                 eventsDao.markSynced(exception.id, newEtag, now)
                             }
+                            // Capture the server's scheduling decision (RFC 6638 §3.2.1).
+                            readBackScheduleStatus(event, caldavUrl, clientToUse, serializedExceptions)
+                            drainPendingCancels(event, clientToUse)
                             Log.d(TAG, "412 retry succeeded for ${event.title}")
                             SinglePushResult.Success(newEtag = newEtag)
                         }
@@ -817,6 +870,11 @@ class PushStrategy @Inject constructor(
                 eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
                 Log.d(TAG, "MOVE Phase 1: Event created successfully at $url")
 
+                // Deliberately NO SCHEDULE-STATUS read-back here: a calendar
+                // move is a relocation, not an organizer re-invite, so it does
+                // not eagerly re-capture scheduling receipts. Any receipt the
+                // target server stamps is picked up on the next normal pull.
+
                 // Now DELETE from source (after CREATE succeeded - safe order)
                 var moveOrphanWarning: String? = null
                 val sourceUrl = operation.targetUrl
@@ -857,6 +915,446 @@ class PushStrategy @Inject constructor(
     }
 
     /**
+     * Read back the server's scheduling decision after a successful PUT of an
+     * organizer event that carries attendees (RFC 6638 §3.2.1).
+     *
+     * A scheduling-aware server delivers the invitation on the implicit PUT and
+     * stamps the outcome onto the stored resource as `SCHEDULE-STATUS` /
+     * `SCHEDULE-AGENT` parameters (§3.2.9, §7.1, §7.3). The client never echoes
+     * those on its own PUT, so the only way to learn what the server decided is
+     * to re-fetch and inspect — that captured signal is what later drives the
+     * delivery-routing decision.
+     *
+     * Best-effort and strictly non-fatal: any failure (no URL, fetch error,
+     * parse error) leaves the columns for the next normal pull to populate and
+     * never fails the push. Only the master VEVENT's receipts are captured
+     * here; per-occurrence (exception) receipts ride the next normal pull,
+     * which already persists them.
+     *
+     * Skips entirely unless the event has attendees AND the account is the
+     * organizer (so no extra request is issued for non-scheduling events).
+     */
+    private suspend fun readBackScheduleStatus(
+        event: Event,
+        serverUrl: String?,
+        client: CalDavClient,
+        serializedExceptions: List<Event> = emptyList()
+    ) {
+        try {
+            if (serverUrl == null) return
+
+            // Exceptions ride the master's PUT; their per-occurrence attendees
+            // (a guest added to one instance) live on their own rows and need
+            // the same receipt read-back + outbox send as the master's. Reuse
+            // the exact set the caller just serialized + pushed (don't re-query)
+            // so delivery matches what went on the wire and the etag logic.
+            val exceptions = serializedExceptions
+
+            // Gate: only organizer events that carry attendees somewhere on the
+            // bundle — the master OR any bundled exception. A per-occurrence add
+            // can leave the master with no attendees while an override carries
+            // the new guest, so checking the master alone would skip delivery.
+            // The actual receipts come from the server re-fetch below, not these
+            // rows.
+            val masterHasAttendees = attendeesDao.getForEventOnce(event.id).isNotEmpty()
+            val anyExceptionHasAttendees = exceptions.any { attendeesDao.getForEventOnce(it.id).isNotEmpty() }
+            if (!masterHasAttendees && !anyExceptionHasAttendees) return
+
+            val calendar = calendarRepository.getCalendarById(event.calendarId) ?: return
+            val account = accountRepository.getAccountById(calendar.accountId) ?: return
+            if (!account.canEditAsOrganizer(event)) return
+
+            // Re-fetch the resource at the URL we PUT to. Note: this is the
+            // client-constructed PUT URL ({calendar}/{uid}.ics), not a server
+            // Location — a server that stores the resource at a different path
+            // (rare; observed only on a non-delivering server) would 404 here
+            // and capture nothing this cycle; the next normal pull reconciles.
+            val fetched = (client.fetchEvent(serverUrl) as? CalDavResult.Success)?.data ?: return
+            val parsedEvents = icalParser.parseAllEvents(fetched.icalData).getOrNull().orEmpty()
+            // The master carries the series-level ATTENDEE + ORGANIZER receipts.
+            val master = parsedEvents.firstOrNull { it.recurrenceId == null } ?: return
+
+            // Re-fetched ATTENDEE set is server-authoritative; the replaceForEvent
+            // merge preserves any prior receipt the server didn't restate
+            // (async-stamp races) per RFC 6638 §7.3.
+            //
+            // An EMPTY parsed set is NOT an authoritative "no attendees" — the
+            // gate above already confirmed this event HAS attendees, so an empty
+            // re-fetch means the server echoed a minimal body that dropped the
+            // ATTENDEE block, not that everyone was uninvited. Replacing with
+            // empty would wipe the rows AND the receipts we just captured. Skip
+            // it and let the next normal pull reconcile (same empty-is-not-
+            // authoritative rule serializeEventWithExceptions follows).
+            val attendeeRows = ICalEventMapper.toAttendeeRows(master, eventId = event.id)
+            if (attendeeRows.isNotEmpty()) {
+                attendeesDao.replaceForEvent(event.id, attendeeRows)
+            }
+
+            // ORGANIZER-line SCHEDULE-STATUS (§7.3) — the reply-delivery receipt.
+            val organizerStatus = master.organizer?.scheduleStatus?.firstOrNull()?.code
+            if (organizerStatus != null) {
+                eventsDao.updateOrganizerScheduleStatus(event.id, organizerStatus)
+            }
+
+            // RFC 6638 §6: for any attendee the server declined to deliver to
+            // (SCHEDULE-AGENT=CLIENT), fall back to a client-side outbox POST.
+            // Deliberately placed after the read-back's parse + replaceForEvent:
+            // the send must fire off the server's freshly captured decision, so
+            // if the read-back GET failed (early return above) we conservatively
+            // don't send this cycle — the next push re-reads the decision and
+            // retries (non-fatal; the marker is never advanced on a skip, so no
+            // invite is lost or duplicated). Reuses the account already loaded
+            // here. Self-contained error handling lives in maybeSendViaOutbox so
+            // a send-build failure is not mislabeled as a read-back failure.
+            maybeSendViaOutbox(event, account, client)
+
+            // Per-occurrence delivery: each bundled override VEVENT carries its
+            // own attendee set (a guest added to just that instance). Match the
+            // parsed exception to its local row by RECURRENCE-ID == the row's
+            // originalInstanceTime, write that override's receipts onto the
+            // exception's own rows, and run the same outbox send keyed on the
+            // exception's own sequence/organizer — so an exception-only invitee
+            // is delivered to on the servers that don't schedule a per-instance
+            // attendee implicitly. Each exception is isolated: one failing
+            // override must not starve the others.
+            for (exception in exceptions) {
+                try {
+                    // A null originalInstanceTime would match the master VEVENT
+                    // (its recurrenceId is null too), so guard it explicitly:
+                    // only a real per-instance anchor can match an override.
+                    val instanceTime = exception.originalInstanceTime ?: continue
+                    val parsedException = parsedEvents.firstOrNull {
+                        it.recurrenceId != null && it.recurrenceId?.timestamp == instanceTime
+                    } ?: continue
+
+                    val exceptionRows = ICalEventMapper.toAttendeeRows(parsedException, eventId = exception.id)
+                    if (exceptionRows.isNotEmpty()) {
+                        attendeesDao.replaceForEvent(exception.id, exceptionRows)
+                    }
+
+                    val exceptionOrganizerStatus =
+                        parsedException.organizer?.scheduleStatus?.firstOrNull()?.code
+                    if (exceptionOrganizerStatus != null) {
+                        eventsDao.updateOrganizerScheduleStatus(exception.id, exceptionOrganizerStatus)
+                    }
+
+                    maybeSendViaOutbox(exception, account, client)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Exception read-back failed for ${exception.id}: ${e.message}")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "SCHEDULE-STATUS read-back failed for event ${event.id}: ${e.message}")
+        }
+    }
+
+    /**
+     * Client-side iTIP send fallback (RFC 6638 §6). On servers that decline to
+     * self-schedule (stamping `SCHEDULE-AGENT=CLIENT`), the implicit PUT
+     * delivers nothing — the client must POST a `METHOD:REQUEST` to the
+     * principal's scheduling outbox so the invitation actually reaches the
+     * attendee.
+     *
+     * Gating (all must hold, else no POST):
+     * - the account has a discovered scheduling-outbox URL;
+     * - at least one attendee routes to [DeliveryAction.ClientOutboxPost] via
+     *   the shared [routeDelivery]/[classifyDelivery] (the same rule the routing
+     *   decision turns on — never re-derived here);
+     * - that attendee has not already been sent a REQUEST at the event's
+     *   current SEQUENCE (the per-attendee `itip_request_sequence` marker —
+     *   null means never sent, including a late-added invitee). This is what
+     *   stops a re-push from spamming duplicate invites (RFC 5546 §3.2.2.1/.2:
+     *   a same-SEQUENCE re-REQUEST is an update, not a reschedule).
+     *
+     * Sends ONE POST per recipient (not one batched POST): the only server that
+     * reaches this path returns a single schedule-response per POST regardless
+     * of recipient count, so a batched POST would leave un-echoed recipients
+     * unmarked and re-deliver to them every cycle. Each recipient is carried
+     * both as the single ATTENDEE in its REQUEST body and as the `Recipient`
+     * header (handled by [CalDavClient.postToOutbox]). The ORGANIZER/Originator
+     * is the account's own calendar-user-address (RFC 6638 §6 — the ORGANIZER
+     * must match the outbox owner — never synthesized from the username); when
+     * the account holds several addresses, the one matching the event's stored
+     * organizer is preferred so a multi-alias account keeps a stable ORGANIZER
+     * across the PUT and the outbox REQUEST.
+     *
+     * Per-recipient outcome drives a class-aware retry (RFC 6638 §3.6): a `2.x`
+     * success advances the marker (done); a permanent `3.x`/`5.2`/`5.3` also
+     * advances it to STOP the loop (recovery rides a later SEQUENCE bump or
+     * address correction); a transient `5.1`/network failure leaves the marker
+     * unadvanced so the next push retries. The raw status is persisted for a
+     * future delivery badge. Strictly non-fatal — any failure (including a
+     * REQUEST-build error) leaves the push a success and is reconciled later.
+     */
+    private suspend fun maybeSendViaOutbox(
+        event: Event,
+        account: Account,
+        client: CalDavClient
+    ) {
+        try {
+            val outboxUrl = account.scheduleOutboxUrl ?: return
+
+            // Read the post-merge rows: schedule_agent/status reflect the server's
+            // decision, and itip_request_sequence carries the preserved marker.
+            // Route each attendee through the shared rule (single home) — only
+            // those the rule says the client must POST, and only when not already
+            // sent at this SEQUENCE, are POSTed.
+            val rows = attendeesDao.getForEventOnce(event.id)
+            val toSend = rows.filter { row ->
+                routeDelivery(
+                    classifyDelivery(row.scheduleStatus, row.scheduleAgent),
+                    // Derived from the actual URL, not hardcoded — so the gate stays
+                    // correct even if the early-return above is ever moved/removed.
+                    hasOutboxUrl = outboxUrl.isNotBlank(),
+                ) == DeliveryAction.ClientOutboxPost &&
+                    (row.itipRequestSequence == null || event.sequence > row.itipRequestSequence)
+            }
+            if (toSend.isEmpty()) return
+
+            // Originator = the account's own address. Prefer the one matching the
+            // event's stored ORGANIZER when the account holds several, so a
+            // multi-alias account emits the same ORGANIZER it used on the PUT;
+            // otherwise the first (preferred) address.
+            val addresses = account.effectiveAddresses().map { AddressNormalizer.stripMailto(it) }
+            val organizerBare = event.organizerEmail?.let { AddressNormalizer.stripMailto(it) }
+            val originator = addresses.firstOrNull {
+                organizerBare != null &&
+                    AddressNormalizer.canonical(it) == AddressNormalizer.canonical(organizerBare)
+            } ?: addresses.firstOrNull() ?: return
+
+            // One POST per recipient — NOT one POST with many Recipients.
+            // RFC 6638 §5 requires the schedule-response to carry one
+            // CALDAV:response per recipient, but a real server (Zoho, the only
+            // server that reaches this path) returns a SINGLE response per POST
+            // regardless of how many recipients were listed. With a batched POST
+            // the un-echoed recipients would never match a response, their
+            // markers would never advance, and they would be re-sent (and the
+            // server re-delivers the whole ATTENDEE body) on every push —
+            // escalating duplicate spam. A per-recipient POST makes attribution
+            // exact on both conformant servers and Zoho: each POST yields one
+            // response for the one recipient it carried.
+            // Force the body ORGANIZER to the account's own address (RFC 6638
+            // §6: the VEVENT ORGANIZER MUST match the outbox owner or the server
+            // rewrites/rejects it). A non-blank organizer also stops the mapper
+            // dropping the ATTENDEE block on a lone-author event (organizerEmail
+            // == null). Loop-invariant, so built once. The copy is local; it
+            // never touches the stored event.
+            val organizerEvent = event.copy(organizerEmail = originator)
+
+            for (row in toSend) {
+                // Isolate each recipient: a build/serialize/POST failure for one
+                // must not starve the others this cycle. Anything that throws
+                // here (mapper, ITipBuilder, client) is logged and skipped; the
+                // marker stays unadvanced so that recipient retries next push.
+                try {
+                    val recipient = AddressNormalizer.stripMailto(row.address)
+
+                    // Single-recipient REQUEST. SEQUENCE is serialized verbatim —
+                    // the bump, if any, already happened on the PUT path.
+                    val icalEvent = EventToICalEventMapper.toICalEvent(organizerEvent, listOf(row))
+                    val ics = ITipBuilder.default.createRequest(icalEvent, icalEvent.attendees)
+
+                    val result = client.postToOutbox(outboxUrl, originator, listOf(recipient), ics)
+                    val response = (result as? CalDavResult.Success)?.data ?: run {
+                        // Transport/HTTP failure: leave this marker unadvanced —
+                        // the next push retries (RFC 6638 §3.6 transient).
+                        Log.w(TAG, "Outbox POST failed for event ${event.id} recipient: $result")
+                        return@run null
+                    } ?: continue
+
+                    // Exactly one recipient was POSTed. Prefer the response whose
+                    // recipient href canonical-matches this row; otherwise (a
+                    // server that echoes the recipient in a non-mailto form, or a
+                    // bare single response) attribute the sole/first status
+                    // positionally — without this the marker would never advance
+                    // and the invite would re-POST every cycle (duplicate spam).
+                    val rawStatus = response.recipients
+                        .firstOrNull { AddressNormalizer.canonical(it.recipient) == AddressNormalizer.canonical(row.address) }
+                        ?.requestStatus
+                        ?: response.recipients.firstOrNull()?.requestStatus
+
+                    when (classifyRequestStatus(rawStatus)) {
+                        OutboxDeliveryClass.SUCCESS,
+                        OutboxDeliveryClass.PERMANENT ->
+                            // Advance the marker: SUCCESS = done; PERMANENT = stop
+                            // the loop (recovery rides a SEQUENCE bump / addr fix).
+                            attendeesDao.markItipRequestSent(row.id, event.sequence, rawStatus)
+                        OutboxDeliveryClass.TRANSIENT ->
+                            // Leave the marker unadvanced so the next push retries.
+                            Unit
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Outbox send to a recipient failed for event ${event.id}: ${e.message}")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Outbox iTIP send failed for event ${event.id}: ${e.message}")
+        }
+    }
+
+    /**
+     * Deliver the iTIP CANCEL for guests removed from [event] (RFC 5546
+     * §3.2.2.6), draining the pending_cancels queue after a successful push.
+     *
+     * Runs at the push-success level — NOT inside [readBackScheduleStatus],
+     * whose early returns (no surviving attendees, not organizer, read-back GET
+     * failed) would skip the drain exactly when the last guest was removed
+     * (the event is left empty). Each removed recipient is classified from the
+     * delivery context captured at removal time:
+     * - [DeliveryState.ServerOwnsDelivery]: the shrunk PUT already cancelled
+     *   them server-side (RFC 6638 §3.2.1.2) — delete the row, no client POST.
+     * - [DeliveryState.ClientMustDeliver] with a discovered outbox: POST a
+     *   per-attendee METHOD:CANCEL (the builder bumps SEQUENCE per §2.1.4);
+     *   delete on 2.x/permanent, keep + count the attempt on a transient.
+     * - [DeliveryState.ClientMustDeliver] with no outbox, or
+     *   [DeliveryState.NoReceipt] (server stance not yet known): keep the row
+     *   to retry a later cycle, bounded by [MAX_CANCEL_ATTEMPTS] so an
+     *   undeliverable row is eventually abandoned rather than looping forever.
+     *
+     * Per-recipient isolation + strictly non-fatal, mirroring [maybeSendViaOutbox].
+     */
+    private suspend fun drainPendingCancels(event: Event, client: CalDavClient) {
+        try {
+            val pending = pendingCancelsDao.getForEvent(event.id)
+            if (pending.isEmpty()) return
+
+            val calendar = calendarRepository.getCalendarById(event.calendarId) ?: return
+            val account = accountRepository.getAccountById(calendar.accountId) ?: return
+            if (!account.canEditAsOrganizer(event)) return
+            val outboxUrl = account.scheduleOutboxUrl
+
+            val addresses = account.effectiveAddresses().map { AddressNormalizer.stripMailto(it) }
+            val organizerBare = event.organizerEmail?.let { AddressNormalizer.stripMailto(it) }
+            val originator = addresses.firstOrNull {
+                organizerBare != null &&
+                    AddressNormalizer.canonical(it) == AddressNormalizer.canonical(organizerBare)
+            } ?: addresses.firstOrNull()
+
+            for (row in pending) {
+                try {
+                    val state = classifyDelivery(row.scheduleStatus, row.scheduleAgent)
+                    val action = routeDelivery(state, hasOutboxUrl = !outboxUrl.isNullOrBlank())
+
+                    when (action) {
+                        // Server cancelled via the shrunk PUT — nothing to send.
+                        DeliveryAction.ServerHandles -> pendingCancelsDao.deleteById(row.id)
+
+                        DeliveryAction.ClientOutboxPost -> {
+                            if (originator == null || outboxUrl.isNullOrBlank()) {
+                                abandonOrRetry(row)
+                                continue
+                            }
+                            val recipient = AddressNormalizer.stripMailto(row.address)
+                            // Build a CANCEL targeting this one recipient. The
+                            // ORGANIZER is forced to the account's own address
+                            // (RFC 6638 §6) and SEQUENCE is bumped on the wire by
+                            // createCancel (§2.1.4).
+                            val cancelRow = row.toAttendee(eventId = event.id)
+                            val cancelBase = event.copy(organizerEmail = originator, sequence = row.sequence)
+                            val recurrenceId = row.recurrenceId
+                            val icalEvent = if (recurrenceId != null) {
+                                // Per-occurrence cancel: route through the exception
+                                // overload so the body carries RECURRENCE-ID (and no
+                                // RRULE) — the guest is uninvited from that single
+                                // instance, not the whole series. The exception
+                                // overload derives RECURRENCE-ID and DTSTART from the
+                                // event's start/originalInstanceTime, so set both to
+                                // the occurrence's own time (recurrenceId) — not the
+                                // master's first-occurrence start — keeping the
+                                // instance's duration.
+                                val duration = event.endTs - event.startTs
+                                EventToICalEventMapper.toICalEvent(
+                                    masterUid = event.uid,
+                                    exception = cancelBase.copy(
+                                        originalInstanceTime = recurrenceId,
+                                        startTs = recurrenceId,
+                                        endTs = recurrenceId + duration,
+                                        rrule = null,
+                                    ),
+                                    attendees = listOf(cancelRow),
+                                )
+                            } else {
+                                EventToICalEventMapper.toICalEvent(cancelBase, listOf(cancelRow))
+                            }
+                            val ics = ITipBuilder.default.createCancel(icalEvent, icalEvent.attendees)
+                            val result = client.postToOutbox(outboxUrl, originator, listOf(recipient), ics)
+                            val response = (result as? CalDavResult.Success)?.data
+                            if (response == null) {
+                                // Transport failure — retry next cycle (bounded).
+                                abandonOrRetry(row)
+                                continue
+                            }
+                            if (response.recipients.isEmpty()) {
+                                // The POST was accepted (HTTP 2xx) but the server
+                                // returned an EMPTY schedule-response — no
+                                // per-recipient status to report. Observed live on
+                                // Zoho/SOGo/Mailbox for a CANCEL, even with a real
+                                // recipient (not a fake-address artifact). The
+                                // server took ownership and has nothing further to
+                                // say; treat the cancel as RESOLVED. Without this an
+                                // empty response classifies as TRANSIENT and the
+                                // CANCEL re-POSTs every cycle up to the attempt cap.
+                                pendingCancelsDao.deleteById(row.id)
+                                continue
+                            }
+                            val rawStatus = response.recipients
+                                .firstOrNull { AddressNormalizer.canonical(it.recipient) == AddressNormalizer.canonical(row.address) }
+                                ?.requestStatus
+                                ?: response.recipients.firstOrNull()?.requestStatus
+                            when (classifyRequestStatus(rawStatus)) {
+                                OutboxDeliveryClass.SUCCESS,
+                                OutboxDeliveryClass.PERMANENT ->
+                                    // Delivered, or permanently undeliverable —
+                                    // either way the cancel is resolved.
+                                    pendingCancelsDao.deleteById(row.id)
+                                OutboxDeliveryClass.TRANSIENT -> abandonOrRetry(row)
+                            }
+                        }
+
+                        // No usable channel this cycle: keep to retry, bounded.
+                        // Both a genuine NoReceipt (server stance not yet stamped)
+                        // and a declined-with-no-outbox row may become deliverable
+                        // later — the server may stamp a decision, or an outbox may
+                        // be discovered on a subsequent sync. Keep either, capped by
+                        // MAX_CANCEL_ATTEMPTS so neither leaks forever (rather than
+                        // silently dropping the CANCEL on the first drain).
+                        DeliveryAction.NoRemedy -> abandonOrRetry(row)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "CANCEL send failed for event ${event.id} recipient: ${e.message}")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Pending-cancel drain failed for event ${event.id}: ${e.message}")
+        }
+    }
+
+    /**
+     * A CANCEL that couldn't be delivered this cycle: keep the row to retry
+     * unless it has exhausted [MAX_CANCEL_ATTEMPTS], in which case abandon it
+     * (delete) so an undeliverable cancel doesn't loop forever.
+     */
+    private suspend fun abandonOrRetry(row: org.onekash.kashcal.data.db.entity.PendingCancel) {
+        if (row.attemptCount + 1 >= MAX_CANCEL_ATTEMPTS) {
+            pendingCancelsDao.deleteById(row.id)
+        } else {
+            pendingCancelsDao.incrementAttempt(row.id)
+        }
+    }
+
+    /**
      * Serialize event, including exceptions if it's a recurring master.
      *
      * Returns both the iCal data and the list of exceptions that were serialized.
@@ -869,13 +1367,23 @@ class PushStrategy @Inject constructor(
         // before serializing, rather than relying on the rawIcal body — locally
         // created events have no rawIcal, and exception VEVENTs carry their own
         // per-instance attendees that the master's body doesn't include.
-        val masterAttendees = attendeesDao.getForEventOnce(event.id)
+        //
+        // An EMPTY table is NOT an authoritative "no attendees" signal: events
+        // synced before the attendees table existed (or whose etag hasn't
+        // changed, so the pull-side backfill never ran) keep their ATTENDEEs
+        // only in rawIcal. Passing empty would tell IcsPatcher to CLEAR them,
+        // silently uninviting everyone on a cosmetic edit. So map empty → null
+        // (preserve the rawIcal block); only a non-empty table is authoritative
+        // enough to replace the wire set.
+        fun authoritative(rows: List<org.onekash.kashcal.data.db.entity.Attendee>) =
+            rows.ifEmpty { null }
+        val masterAttendees = authoritative(attendeesDao.getForEventOnce(event.id))
         return if (event.rrule != null && event.originalEventId == null) {
             // Master recurring event - include exceptions, each with its own
             // attendee set so per-occurrence attendees round-trip on push.
             val exceptions = eventsDao.getExceptionsForMaster(event.id)
             val exceptionsWithAttendees = exceptions.map { exception ->
-                exception to attendeesDao.getForEventOnce(exception.id)
+                exception to authoritative(attendeesDao.getForEventOnce(exception.id))
             }
             val icalData = IcsPatcher.serializeWithExceptions(
                 master = event,

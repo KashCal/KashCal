@@ -36,6 +36,8 @@
     <string name="action_close">Đóng</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Không phải bây giờ</string>
+    <string name="action_allow">Cho phép</string>
+    <string name="action_no_thanks">Không, cảm ơn</string>
     <string name="action_sign_in">Đăng nhập</string>
     <string name="action_select">Chọn</string>
     <string name="action_show_password">Hiển thị mật khẩu</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">Hiển thị mật khẩu</string>
     <string name="account_detail_cd_hide_password">Ẩn mật khẩu</string>
 
-    <string name="sync_failure_notification_title">Sự cố đồng bộ với %1$s</string>
-    <string name="sync_failure_notification_text">Đồng bộ lịch đã thất bại %1$d lần</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Đổi tên tài khoản</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">Các thay đổi đồng bộ đã hết hạn</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s trong %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">Đã đồng bộ %1$d lịch</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">Người tham dự</string>
     <string name="attendee_you_marker">Bạn</string>
     <string name="attendee_organizer_pill">Người tổ chức</string>
+    <string name="attendee_picker_title">Thêm người tham dự</string>
+    <string name="attendee_pick_add_people">Thêm người tham dự</string>
+    <string name="attendee_pick_from_contacts">Tên hoặc email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d nữa</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Gợi ý mọi người từ danh bạ của bạn</string>
+    <string name="attendee_invalid_email">Nhập địa chỉ email đầy đủ</string>
+    <string name="attendee_add_typed">Thêm \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Không thể mời người khác trên tài khoản này</string>
+    <string name="action_save_and_notify">Lưu &amp; thông báo</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d nữa</item>
     </plurals>

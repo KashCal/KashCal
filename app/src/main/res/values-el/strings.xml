@@ -35,6 +35,8 @@
     <string name="action_close">Κλείσιμο</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Όχι τώρα</string>
+    <string name="action_allow">Να επιτρέπεται</string>
+    <string name="action_no_thanks">Όχι, ευχαριστώ</string>
     <string name="action_sign_in">Σύνδεση</string>
     <string name="action_select">Επιλογή</string>
     <string name="action_show_password">Εμφάνιση κωδικού</string>
@@ -476,8 +478,6 @@
     <string name="account_detail_cd_show_password">Εμφάνιση κωδικού</string>
     <string name="account_detail_cd_hide_password">Απόκρυψη κωδικού</string>
 
-    <string name="sync_failure_notification_title">Πρόβλημα συγχρονισμού με %1$s</string>
-    <string name="sync_failure_notification_text">Ο συγχρονισμός ημερολογίου απέτυχε %1$d φορές</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Μετονομασία λογαριασμού</string>
@@ -853,6 +853,7 @@
     <string name="sync_notification_expired_title">Οι αλλαγές συγχρονισμού έληξαν</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s στο %2$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ημερολόγιο συγχρονίστηκε</item>
@@ -1127,6 +1128,18 @@
     <string name="attendee_status_accepted">Αποδεκτό</string>
     <string name="attendee_status_declined">Απορρίφθηκε</string>
     <string name="attendee_status_tentative">Πιθανώς</string>
+    <string name="attendee_picker_title">Προσθήκη συμμετεχόντων</string>
+    <string name="attendee_pick_add_people">Προσθήκη συμμετεχόντων</string>
+    <string name="attendee_pick_from_contacts">Όνομα ή email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ακόμη</item>
+        <item quantity="other">+%1$d ακόμη</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Πρόταση ατόμων από τις επαφές σας</string>
+    <string name="attendee_invalid_email">Εισαγάγετε μια πλήρη διεύθυνση email</string>
+    <string name="attendee_add_typed">Προσθήκη \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Η πρόσκληση ατόμων δεν είναι διαθέσιμη σε αυτόν τον λογαριασμό</string>
+    <string name="action_save_and_notify">Αποθήκευση και ειδοποίηση</string>
     <string name="attendee_status_delegated">Εκχωρήθηκε</string>
     <string name="attendee_status_pending">Εκκρεμές</string>
     <string name="inbox_empty_caught_up">Όλα ενημερωμένα</string>

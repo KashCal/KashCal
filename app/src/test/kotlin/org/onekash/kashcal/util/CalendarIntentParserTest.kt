@@ -834,9 +834,69 @@ class CalendarIntentParserTest {
     // ==================== parseCalendarContractUri - Fallback Tests ====================
 
     @Test
-    fun `parseCalendarContractUri returns OpenApp for VIEW events with ID`() {
+    fun `parseCalendarContractUri returns OpenDeviceEvent for VIEW events with ID`() {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/events/123")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenDeviceEvent(123L, null), result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri OpenDeviceEvent carries positive begin time`() {
+        val beginTime = 1704369600000L
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/456")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenDeviceEvent(456L, beginTime), result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri OpenDeviceEvent has null begin time for zero extra`() {
+        // A zero/absent begin time must degrade to the navigate-to-date branch, not 0L.
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/789")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 0L)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenDeviceEvent(789L, null), result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events with non-numeric ID`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/abc")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events with zero ID`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/0")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events with negative ID`() {
+        // Locks the positive-only id contract (a `> 0` guard, not `!= null`).
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/-5")
         }
 
         val result = CalendarIntentParser.parseCalendarContractUri(intent)

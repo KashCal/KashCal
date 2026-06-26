@@ -3,6 +3,8 @@ package org.onekash.kashcal.sync.parser
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -13,8 +15,8 @@ import org.robolectric.annotation.Config
 
 /**
  * Tests for [CalDavXmlParser.extractCalendarUserAddresses] against
- * real-shape fixtures captured during the P1.9 discovery probe across
- * seven CalDAV implementations.
+ * real-shape fixtures captured during a calendar-user-address discovery
+ * probe across seven CalDAV implementations.
  *
  * Fixtures: `app/src/test/resources/caldav/<server>/06_calendar_user_address_set.xml`
  * (Zoho uses 07_ to avoid collision with existing 06_calendar_multiget.xml).
@@ -35,6 +37,11 @@ class CalDavXmlParserAddressSetTest {
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.d(any(), any<String>()) } returns 0
         parser = CalDavXmlParser()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     private fun loadResource(path: String): String =

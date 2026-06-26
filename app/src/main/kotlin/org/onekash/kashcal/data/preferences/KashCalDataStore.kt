@@ -437,6 +437,20 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.ONBOARDING_DISMISSED, dismissed)
     }
 
+    /**
+     * True once the user has tapped "No thanks" on the attendee picker's
+     * contacts-permission card (or denied the system dialog). Suppresses the
+     * banner permanently — Android exposes no "user said no for good" signal,
+     * so we persist the decision ourselves. Only gates the banner; if contacts
+     * are later granted in system settings, suggestions still work.
+     */
+    val contactSuggestionsDeclined: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED, false)
+
+    suspend fun setContactSuggestionsDeclined(declined: Boolean) {
+        setPreference(PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED, declined)
+    }
+
     val lastWhatsNewVersionShown: Flow<Int>
         get() = getPreference(PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN, 0)
 

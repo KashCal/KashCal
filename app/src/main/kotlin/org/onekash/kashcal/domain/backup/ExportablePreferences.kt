@@ -115,6 +115,8 @@ object ExportablePreferences {
         PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP.name,
         PreferencesKeys.ONBOARDING_DISMISSED.name,
         PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN.name,
+        // Permission-banner dismissal — tied to this device's contacts permission, not portable
+        PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name,
         // Device calendar selection IDs — not portable across installs
         PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS.name,
         PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS.name,

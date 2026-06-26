@@ -52,7 +52,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker()
         val result = worker.doWork()
 
-        assertTrue("Should succeed when both disabled", result is Result)
+        assertTrue("Should succeed when both disabled", result is Result.Success)
         // Should not attempt sync on either repository
         coVerify(exactly = 0) { birthdayRepository.syncEvents() }
         coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
@@ -140,7 +140,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker()
         val result = worker.doWork()
 
-        assertTrue("Should succeed when neither enabled", result is Result)
+        assertTrue("Should succeed when neither enabled", result is Result.Success)
         coVerify(exactly = 0) { birthdayRepository.syncEvents() }
         coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
@@ -187,8 +187,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker(runAttemptCount = 3) // At max
         val result = worker.doWork()
 
-        assertTrue("Should fail after max retries: $result", result is Result)
-        // Result.failure() returns a Result with failure state
+        assertTrue("Should fail after max retries: $result", result is Result.Failure)
     }
 
     // ========== SecurityException ==========

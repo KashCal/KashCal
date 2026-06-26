@@ -4,6 +4,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,6 +100,7 @@ class HomeViewModelSaveAttendeeRemindersTest {
         networkMonitor = networkMonitor,
         calendarProviderRepository = fakeCalendarProviderRepository,
         attendeeBackfill = mockk(relaxed = true),
+        contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
         ioDispatcher = testDispatcher
     )
@@ -123,5 +127,59 @@ class HomeViewModelSaveAttendeeRemindersTest {
         advanceUntilIdle()
 
         coVerify { eventCoordinator.saveAttendeeReminders(42L, emptyList()) }
+    }
+
+    // ===== form attendees thread through saveEvent → coordinator =====
+
+    @Test
+    fun `saveEvent forwards picked attendees as mapped entities`() = runTest {
+        val attSlot = slot<List<org.onekash.kashcal.data.db.entity.Attendee>>()
+        coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
+        coEvery { eventCoordinator.createEvent(any(), any(), capture(attSlot)) } answers {
+            firstArg<org.onekash.kashcal.data.db.entity.Event>()
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.saveEvent(
+            org.onekash.kashcal.ui.components.EventFormState(
+                title = "Planning",
+                selectedCalendarId = 1L,
+                attendees = listOf(
+                    org.onekash.kashcal.data.db.entity.Attendee(
+                        eventId = 0,
+                        address = "mailto:bob@example.test",
+                        displayName = "Bob",
+                        partstat = "NEEDS-ACTION",
+                        sortOrder = 0
+                    )
+                ),
+                attendeesEdited = true
+            )
+        )
+        advanceUntilIdle()
+
+        assertTrue(attSlot.isCaptured)
+        assertEquals(listOf("mailto:bob@example.test"), attSlot.captured.map { it.address })
+        assertEquals("NEEDS-ACTION", attSlot.captured.first().partstat)
+    }
+
+    @Test
+    fun `saveEvent passes null attendees when the form has none`() = runTest {
+        coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
+        coEvery { eventCoordinator.createEvent(any(), any(), any()) } answers {
+            firstArg<org.onekash.kashcal.data.db.entity.Event>()
+        }
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.saveEvent(
+            org.onekash.kashcal.ui.components.EventFormState(title = "Solo", selectedCalendarId = 1L)
+        )
+        advanceUntilIdle()
+
+        // Empty form attendees → coordinator receives null (table left untouched),
+        // never an empty list (which would clear).
+        coVerify { eventCoordinator.createEvent(any(), any(), attendees = null) }
     }
 }

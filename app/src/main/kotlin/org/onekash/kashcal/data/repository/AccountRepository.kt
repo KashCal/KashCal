@@ -145,6 +145,12 @@ interface AccountRepository {
     suspend fun updateCalendarUserAddresses(accountId: Long, addresses: List<String>)
 
     /**
+     * Persist the principal's scheduling Outbox URL (RFC 6638 §2.1.1) for
+     * the given account. Null clears it (server advertises no outbox).
+     */
+    suspend fun updateScheduleOutboxUrl(accountId: Long, outboxUrl: String?)
+
+    /**
      * Set account enabled state.
      */
     suspend fun setEnabled(accountId: Long, enabled: Boolean)

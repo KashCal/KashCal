@@ -279,6 +279,7 @@ class HomeViewModelTest {
             networkMonitor = networkMonitor,
             calendarProviderRepository = calendarProviderRepository,
             attendeeBackfill = io.mockk.mockk(relaxed = true),
+            contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
             ioDispatcher = testDispatcher,
             currentDayCodeProvider = provider
@@ -2069,8 +2070,7 @@ class HomeViewModelTest {
     }
 
     // ==================== Save-Time Scope Sheet Integration ====================
-    // These tests are the integration coverage that was missing in
-    // the previous /implement run. They drive the save-time deferral
+    // These tests are the integration coverage for the save-time deferral
     // round-trip (requestFormSave → saveEvent(scope)) and the delete
     // round-trip (requestDeleteRoom → confirmDelete(scope)) end-to-end
     // through the ViewModel, asserting the right coordinator method
@@ -2096,7 +2096,7 @@ class HomeViewModelTest {
     @Test
     fun `requestFormSave + saveEvent THIS_EVENT routes to editSingleOccurrence`() = runTest {
         coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
-        coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any()) } returns recurringEvent_
+        coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) } returns recurringEvent_
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2122,13 +2122,103 @@ class HomeViewModelTest {
         viewModel.saveEvent(pending.formState, EditScope.THIS_EVENT)
         advanceUntilIdle()
 
-        coVerify { eventCoordinator.editSingleOccurrence(recurringEvent_.id, occurrenceTs, any()) }
+        coVerify { eventCoordinator.editSingleOccurrence(recurringEvent_.id, occurrenceTs, any(), any()) }
+    }
+
+    @Test
+    fun `THIS_EVENT on the first occurrence with no rule change creates an exception for that instance`() = runTest {
+        // Case A: the user edits content (title etc.) of the FIRST
+        // occurrence and leaves the recurrence rule alone. The scope
+        // sheet must offer THIS_EVENT (it is gated only on rruleChanged,
+        // not isFirstOccurrence), and picking it must split that single
+        // instance off via editSingleOccurrence — leaving the master
+        // series untouched. Mirrors the real flow on the first instance,
+        // which the existing THIS_EVENT test does not cover (it uses an
+        // off-master occurrence).
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // First occurrence: occurrenceTs == master start; rrule unchanged.
+        val firstOccurrenceTs = recurringEvent_.startTs
+        viewModel.requestFormSave(
+            formState = recurringFormState().copy(
+                title = "Edited first instance",
+                dateMillis = firstOccurrenceTs,
+                endDateMillis = firstOccurrenceTs,
+                editingOccurrenceTs = firstOccurrenceTs,
+                rrule = recurringEvent_.rrule, // no rule change
+            ),
+            occurrenceTs = firstOccurrenceTs,
+            originalRrule = recurringEvent_.rrule,
+            masterStartTs = recurringEvent_.startTs,
+            isDetachedException = false,
+            isRecurringDevice = false,
+            loadedIsAllDay = false,
+        )
+        advanceUntilIdle()
+
+        // The scope sheet's options must enable THIS_EVENT on the first
+        // occurrence when the rule is unchanged.
+        val pending = viewModel.uiState.value.pendingFormSave
+        assertNotNull(pending)
+        val options = computeEditScopeOptions(
+            context = ScopeContext(
+                masterStartTs = pending!!.masterStartTs,
+                occurrenceTs = pending.occurrenceTs,
+                isDetachedException = pending.isDetachedException,
+                isAllDay = pending.loadedIsAllDay,
+            ),
+            originalRrule = pending.originalRrule,
+            currentRrule = pending.formState.rrule,
+            resources = org.robolectric.RuntimeEnvironment.getApplication().resources,
+        )
+        assertTrue(
+            "THIS_EVENT must be enabled on the first occurrence with no rule change",
+            options.first { it.scope == EditScope.THIS_EVENT }.enabled,
+        )
+
+        // Picking THIS_EVENT splits just the first instance off.
+        viewModel.cancelPendingFormSave()
+        viewModel.saveEvent(pending.formState, EditScope.THIS_EVENT)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.editSingleOccurrence(recurringEvent_.id, firstOccurrenceTs, any(), any()) }
+        // The master series is never updated wholesale on a THIS_EVENT save.
+        coVerify(exactly = 0) { eventCoordinator.updateEvent(any()) }
+    }
+
+    @Test
+    fun `THIS_EVENT save forwards the edited attendee set to editSingleOccurrence`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val edited = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 0, address = "mailto:newguest@example.test", partstat = "NEEDS-ACTION", sortOrder = 0
+            )
+        )
+        val occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L
+        // attendeesEdited=true makes attendeesArg the authoritative set.
+        val formState = recurringFormState().copy(attendees = edited, attendeesEdited = true)
+
+        viewModel.saveEvent(formState, EditScope.THIS_EVENT)
+        advanceUntilIdle()
+
+        coVerify {
+            eventCoordinator.editSingleOccurrence(recurringEvent_.id, occurrenceTs, edited, any())
+        }
     }
 
     @Test
     fun `requestFormSave + saveEvent THIS_AND_FUTURE routes to editThisAndFuture`() = runTest {
         coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
-        coEvery { eventCoordinator.editThisAndFuture(any(), any(), any()) } returns recurringEvent_
+        coEvery { eventCoordinator.editThisAndFuture(any(), any(), any(), any()) } returns recurringEvent_
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2150,7 +2240,32 @@ class HomeViewModelTest {
         viewModel.saveEvent(pending.formState, EditScope.THIS_AND_FUTURE)
         advanceUntilIdle()
 
-        coVerify { eventCoordinator.editThisAndFuture(recurringEvent_.id, occurrenceTs, any()) }
+        coVerify { eventCoordinator.editThisAndFuture(recurringEvent_.id, occurrenceTs, any(), any()) }
+    }
+
+    @Test
+    fun `THIS_AND_FUTURE save forwards the edited attendee set to editThisAndFuture`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        coEvery { eventCoordinator.editThisAndFuture(any(), any(), any(), any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val edited = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 0, address = "mailto:newguest@example.test", partstat = "NEEDS-ACTION", sortOrder = 0
+            )
+        )
+        val occurrenceTs = recurringEvent_.startTs + 7L * 86_400_000L
+        // attendeesEdited=true makes attendeesArg the authoritative set.
+        val formState = recurringFormState().copy(attendees = edited, attendeesEdited = true)
+
+        viewModel.saveEvent(formState, EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+
+        coVerify {
+            eventCoordinator.editThisAndFuture(recurringEvent_.id, occurrenceTs, edited, any())
+        }
     }
 
     @Test
@@ -2179,6 +2294,36 @@ class HomeViewModelTest {
 
         // ALL_EVENTS scope: occurrenceTs is dropped, master is updated directly.
         coVerify { eventCoordinator.updateEvent(any()) }
+    }
+
+    @Test
+    fun `ALL_EVENTS save on an exception id resolves to the master before updating`() = runTest {
+        // If the form was opened on a detached exception row,
+        // editingEventId is the exception's id. ALL_EVENTS must rewrite
+        // the MASTER's rrule, not the exception's — so the branch
+        // climbs originalEventId like its THIS_AND_FUTURE / exception
+        // siblings do. Updating the exception id would corrupt the
+        // wrong row.
+        val masterId = recurringEvent_.id
+        val exception = recurringEvent_.copy(
+            id = 7_777L,
+            originalEventId = masterId,
+            rrule = null,
+        )
+        coEvery { eventCoordinator.getEventById(exception.id) } returns exception
+        coEvery { eventCoordinator.getEventById(masterId) } returns recurringEvent_
+        coEvery { eventCoordinator.updateEvent(any()) } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = recurringFormState().copy(editingEventId = exception.id)
+        viewModel.saveEvent(formState, EditScope.ALL_EVENTS)
+        advanceUntilIdle()
+
+        // The updated event must be the master row, not the exception.
+        coVerify { eventCoordinator.updateEvent(match { it.id == masterId }) }
+        coVerify(exactly = 0) { eventCoordinator.updateEvent(match { it.id == exception.id }) }
     }
 
     @Test
@@ -2371,7 +2516,7 @@ class HomeViewModelTest {
 
         assertTrue(result.isSuccess)
         coVerify { eventCoordinator.updateEvent(any()) }
-        coVerify(exactly = 0) { eventCoordinator.editSingleOccurrence(any(), any(), any()) }
+        coVerify(exactly = 0) { eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) }
     }
 
     @Test

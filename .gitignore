@@ -91,3 +91,7 @@ docker/
 
 # Local scripts workspace (internal tooling)
 scripts/
+
+# Locally-downloaded RFC text for spec-audit reproducibility (not shipped)
+rfcs/
+releases/*.apk

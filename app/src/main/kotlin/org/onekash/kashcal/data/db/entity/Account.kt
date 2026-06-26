@@ -111,5 +111,15 @@ data class Account(
      * when the user creates an invite. No `isPrimary` flag.
      */
     @ColumnInfo(name = "calendar_user_addresses", defaultValue = "[]")
-    val calendarUserAddresses: List<String> = emptyList()
+    val calendarUserAddresses: List<String> = emptyList(),
+
+    /**
+     * URL of this principal's scheduling Outbox collection
+     * (RFC 6638 §2.1.1 CALDAV:schedule-outbox-URL), discovered by a PROPFIND
+     * on the principal. Null means either not yet discovered or the server
+     * does not advertise an outbox — in both cases the account is not enabled
+     * for client-side sending of scheduling messages.
+     */
+    @ColumnInfo(name = "schedule_outbox_url")
+    val scheduleOutboxUrl: String? = null
 )

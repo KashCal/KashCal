@@ -35,6 +35,8 @@
     <string name="action_close">അടയ്ക്കുക</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">ഇപ്പോൾ വേണ്ട</string>
+    <string name="action_allow">അനുവദിക്കുക</string>
+    <string name="action_no_thanks">വേണ്ട, നന്ദി</string>
     <string name="action_sign_in">സൈൻ ഇൻ</string>
     <string name="action_select">തിരഞ്ഞെടുക്കുക</string>
     <string name="action_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
     <string name="account_detail_cd_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
 
-    <string name="sync_failure_notification_title">%1$s ൽ സിങ്ക് പ്രശ്നം</string>
-    <string name="sync_failure_notification_text">കലണ്ടർ സിങ്ക് %1$d തവണ പരാജയപ്പെട്ടു</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">അക്കൗണ്ട് പേരുമാറ്റുക</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">സിങ്ക് മാറ്റങ്ങൾ കാലഹരണപ്പെട്ടു</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ദിവസത്തിന് ശേഷവും %1$s സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s-ലെ %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d കലണ്ടർ സിങ്ക് ചെയ്തു</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">നിരസിച്ചു</string>
     <string name="attendee_card_tentative">താൽക്കാലികം</string>
     <string name="attendee_card_hosting">ആതിഥേയത്വം വഹിക്കുന്നു</string>
+    <string name="attendee_picker_title">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
+    <string name="attendee_pick_add_people">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
+    <string name="attendee_pick_from_contacts">പേര് അല്ലെങ്കിൽ ഇമെയിൽ</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d കൂടി</item>
+        <item quantity="other">+%1$d കൂടി</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">നിങ്ങളുടെ കോൺടാക്റ്റുകളിൽ നിന്ന് ആളുകളെ നിർദ്ദേശിക്കുക</string>
+    <string name="attendee_invalid_email">പൂർണ്ണമായ ഇമെയിൽ വിലാസം നൽകുക</string>
+    <string name="attendee_add_typed">\"%1$s\" ചേർക്കുക</string>
+    <string name="attendee_scheduling_unavailable">ഈ അക്കൗണ്ടിൽ ആളുകളെ ക്ഷണിക്കാൻ കഴിയില്ല</string>
+    <string name="action_save_and_notify">സംരക്ഷിച്ച് അറിയിക്കുക</string>
     <string name="attendee_action_copy">ഇമെയിൽ പകർത്തുക</string>
     <string name="attendee_action_email">ഇമെയിൽ അയയ്ക്കുക</string>
     <string name="attendee_group_icon_description">ആളുകൾ</string>

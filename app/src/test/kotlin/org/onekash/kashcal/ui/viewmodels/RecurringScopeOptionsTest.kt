@@ -124,7 +124,57 @@ class RecurringScopeOptionsTest {
         assertFalse("RRULE changes can't apply to ALL_EVENTS at an off-master DTSTART", allEvents.enabled)
     }
 
-    // Regression: finding #7 — the previous synth-Event approach used
+    @Test
+    fun `edit options on first occurrence with changed RRULE keep ALL_EVENTS enabled`() {
+        // Regression for the save dead-end: correcting a recurring
+        // series' end date (RRULE UNTIL) while the form is open on the
+        // first occurrence changed every scope option to disabled,
+        // leaving no way to save. On the first occurrence the user is
+        // editing the master at its own DTSTART, so rewriting the
+        // cadence for the whole series via ALL_EVENTS is unambiguous and
+        // must stay enabled. THIS_AND_FUTURE still collapses with
+        // ALL_EVENTS here, and THIS_EVENT still can't carry an RRULE.
+        val options = computeEditScopeOptions(
+            context = ctx(occurrenceTs = masterStart), // first occurrence
+            originalRrule = "FREQ=WEEKLY;UNTIL=20271231T000000Z",
+            currentRrule = "FREQ=WEEKLY;UNTIL=20261231T000000Z", // end date corrected
+            resources = resources,
+        )
+
+        assertTrue(
+            "ALL_EVENTS must stay enabled so the corrected series can be saved",
+            options.first { it.scope == EditScope.ALL_EVENTS }.enabled,
+        )
+        assertFalse(
+            "THIS_EVENT still can't carry an RRULE",
+            options.first { it.scope == EditScope.THIS_EVENT }.enabled,
+        )
+        assertFalse(
+            "THIS_AND_FUTURE still collapses with ALL_EVENTS on the first occurrence",
+            options.first { it.scope == EditScope.THIS_AND_FUTURE }.enabled,
+        )
+    }
+
+    @Test
+    fun `edit options treat a cosmetically reordered RRULE as unchanged`() {
+        // The recurrence picker can re-emit the same rule with parts in
+        // a different order. That is not a user change, so all three
+        // options must stay enabled (rruleChanged is computed by
+        // meaning, not raw string equality).
+        val options = computeEditScopeOptions(
+            context = ctx(),
+            originalRrule = "FREQ=WEEKLY;BYDAY=MO,WE",
+            currentRrule = "BYDAY=WE,MO;FREQ=WEEKLY", // reordered, identical meaning
+            resources = resources,
+        )
+
+        assertTrue(
+            "A cosmetic-only RRULE difference must not disable any option",
+            options.all { it.enabled },
+        )
+    }
+
+    // Regression: the previous synth-Event approach used
     // formState.dateMillis as event.startTs, so editing the date later
     // spuriously made occurrenceTs <= startTs (false-positive
     // first-occurrence). With ScopeContext.masterStartTs anchored to
@@ -191,7 +241,7 @@ class RecurringScopeOptionsTest {
         assertFalse(options.first { it.scope == EditScope.ALL_EVENTS }.enabled)
     }
 
-    // Regression: finding #8 — the previous synth-Event for device
+    // Regression: the previous synth-Event for device
     // delete set startTs = occurrenceTs, so isFirstOccurrence was
     // always true and THIS_AND_FUTURE was permanently disabled for
     // every device recurring delete. ScopeContext.masterStartTs lets

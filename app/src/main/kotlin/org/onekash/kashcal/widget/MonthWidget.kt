@@ -30,7 +30,7 @@ import java.time.YearMonth
  * - Tap day → navigate to that day in app
  * - Tap header → return to current month (if navigated) or open app at today
  * - Tap "+" → create event
- * - Month navigation via forward/backward arrows (US4)
+ * - Month navigation via forward/backward arrows
  *
  * Updates:
  * - On event create/update/delete

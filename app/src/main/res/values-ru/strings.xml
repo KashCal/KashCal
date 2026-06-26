@@ -36,6 +36,8 @@
     <string name="action_close">Закрыть</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Не сейчас</string>
+    <string name="action_allow">Разрешить</string>
+    <string name="action_no_thanks">Нет, спасибо</string>
     <string name="action_sign_in">Войти</string>
     <string name="action_select">Выбрать</string>
     <string name="action_show_password">Показать пароль</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">Показать пароль</string>
     <string name="account_detail_cd_hide_password">Скрыть пароль</string>
 
-    <string name="sync_failure_notification_title">Проблема синхронизации с %1$s</string>
-    <string name="sync_failure_notification_text">Синхронизация не удалась %1$d раз</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Переименовать учётную запись</string>
@@ -895,6 +895,7 @@
     <string name="sync_notification_conflict_multi">Локальные изменения %1$s утрачены из-за конфликтов синхронизации. Будут использованы версии сервера.</string>
     <string name="sync_notification_expired_title">Изменения синхронизации устарели</string>
     <string name="sync_notification_expired_content">%1$s не удалось синхронизировать за 30 дней. Будет использована версия сервера. Принудительная синхронизация для повтора.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s в %2$s не удалось синхронизировать за 30 дней. Будет использована версия сервера. Принудительная синхронизация для повтора.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Синхронизирован %1$d календарь</item>
         <item quantity="few">Синхронизировано %1$d календаря</item>
@@ -1239,6 +1240,20 @@
     <string name="attendee_section_pending">Ожидают</string>
     <string name="attendee_section_declined">Отказались</string>
     <string name="attendee_section_delegated">Делегировали</string>
+    <string name="attendee_picker_title">Добавить участников</string>
+    <string name="attendee_pick_add_people">Добавить участников</string>
+    <string name="attendee_pick_from_contacts">Имя или эл. почта</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ещё</item>
+        <item quantity="few">+%1$d ещё</item>
+        <item quantity="many">+%1$d ещё</item>
+        <item quantity="other">+%1$d ещё</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Подсказывать людей из контактов</string>
+    <string name="attendee_invalid_email">Введи полный адрес e-mail</string>
+    <string name="attendee_add_typed">Добавить \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Приглашение людей недоступно в этой учётной записи</string>
+    <string name="action_save_and_notify">Сохранить и уведомить</string>
     <plurals name="reminder_in_days">
         <item quantity="one">Через %1$d день</item>
         <item quantity="few">Через %1$d дня</item>

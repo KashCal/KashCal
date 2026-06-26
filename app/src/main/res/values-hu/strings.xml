@@ -35,6 +35,8 @@
     <string name="action_close">Bezárás</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Most nem</string>
+    <string name="action_allow">Engedélyezés</string>
+    <string name="action_no_thanks">Most nem</string>
     <string name="action_sign_in">Bejelentkezés</string>
     <string name="action_select">Kiválasztás</string>
     <string name="action_show_password">Jelszó mutatása</string>
@@ -476,8 +478,6 @@
     <string name="account_detail_cd_show_password">Jelszó mutatása</string>
     <string name="account_detail_cd_hide_password">Jelszó elrejtése</string>
 
-    <string name="sync_failure_notification_title">Szinkronizálási probléma: %1$s</string>
-    <string name="sync_failure_notification_text">A naptár szinkronizálás %1$d alkalommal sikertelen volt</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Fiók átnevezése</string>
@@ -853,6 +853,7 @@
     <string name="sync_notification_expired_title">Szinkronizálási változások lejártak</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s a(z) %2$s naptárban nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d naptár szinkronizálva</item>
@@ -1127,6 +1128,18 @@
     <string name="attendee_status_accepted">Elfogadva</string>
     <string name="attendee_status_declined">Elutasítva</string>
     <string name="attendee_status_tentative">Bizonytalan</string>
+    <string name="attendee_picker_title">Résztvevők hozzáadása</string>
+    <string name="attendee_pick_add_people">Résztvevők hozzáadása</string>
+    <string name="attendee_pick_from_contacts">Név vagy e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d további</item>
+        <item quantity="other">+%1$d további</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Javasoljon embereket a névjegyekből</string>
+    <string name="attendee_invalid_email">Adjon meg egy teljes e-mail-címet</string>
+    <string name="attendee_add_typed">\"%1$s\" hozzáadása</string>
+    <string name="attendee_scheduling_unavailable">Az emberek meghívása nem érhető el ezen a fiókon</string>
+    <string name="action_save_and_notify">Mentés és értesítés</string>
     <string name="attendee_status_delegated">Átruházva</string>
     <string name="attendee_status_pending">Függő</string>
     <string name="inbox_empty_caught_up">Mindennel megvagy</string>

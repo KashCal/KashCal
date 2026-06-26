@@ -209,13 +209,13 @@ class ConflictResolverTest {
         )
     }
 
-    // ========== A2 Attendee Persistence ==========
+    // ========== Attendee Persistence ==========
 
     @Test
     fun `resolveServerWins persists server attendees (must not silently drop)`() = runTest {
-        // Review-plan finding #2: SERVER_WINS resolution must not drop attendees.
+        // SERVER_WINS resolution must not drop attendees.
         // This test asserts the production write at ConflictResolver fires with the
-        // server's attendee list, locking in the contract for B3+ scheduling work.
+        // server's attendee list, locking in the contract for later scheduling work.
         val event = Event(
             id = 99L,
             uid = "with-attendees-uid",
@@ -294,11 +294,11 @@ class ConflictResolverTest {
         )
     }
 
-    // ========== B3 — SERVER_WINS upsert + attendees runs inside runInTransaction ==========
+    // ========== SERVER_WINS upsert + attendees runs inside runInTransaction ==========
 
     @Test
     fun `resolveServerWins runs upsert and attendees-replace inside a single transaction`() = runTest {
-        // The deferred-from-A2 fix: ConflictResolver SERVER_WINS must wrap
+        // ConflictResolver SERVER_WINS must wrap
         // event upsert + attendees replaceForEvent in database.runInTransaction
         // so a partial write rolls back rather than leaving the event row
         // out-of-sync with its attendees table.
@@ -370,9 +370,9 @@ class ConflictResolverTest {
     @Test
     fun `resolveServerWins rolls back when attendees-replace throws`() = runTest {
         // If attendees-replace blows up mid-transaction, the upsert must NOT
-        // be committed. This locks in the rollback semantic: prior to this
-        // chunk, the writes were sequential and a failure mid-stream would
-        // leave the event row updated but attendees stale.
+        // be committed. This locks in the rollback semantic: previously the
+        // writes were sequential and a failure mid-stream would leave the
+        // event row updated but attendees stale.
         val event = Event(
             id = 88L,
             uid = "rollback-uid",

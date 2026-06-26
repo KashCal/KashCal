@@ -161,11 +161,11 @@ class CredentialAdversarialTest {
     fun `delete non-existent account is safe`() = runTest {
         val nonExistentId = 99999L
 
-        // Should not throw
+        // Should not throw (the assertion is that the next line runs at all)
         database.accountsDao().deleteById(nonExistentId)
 
-        // Verify no crash
-        assertTrue(true)
+        // And the row genuinely isn't present afterwards
+        assertEquals(null, database.accountsDao().getById(nonExistentId))
     }
 
     // ==================== Sync Failure Tracking Tests ====================

@@ -36,6 +36,8 @@
     <string name="action_close">關閉</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">稍後再說</string>
+    <string name="action_allow">允許</string>
+    <string name="action_no_thanks">不用了</string>
     <string name="action_sign_in">登入</string>
     <string name="action_select">選取</string>
     <string name="action_show_password">顯示密碼</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">顯示密碼</string>
     <string name="account_detail_cd_hide_password">隱藏密碼</string>
 
-    <string name="sync_failure_notification_title">%1$s 同步問題</string>
-    <string name="sync_failure_notification_text">行事曆同步已失敗 %1$d 次</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">重新命名帳號</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">同步變更已過期</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s在30天後仍無法同步。將使用伺服器版本。請嘗試強制同步。</string>
+    <string name="sync_notification_expired_content_calendar">%2$s中的%1$s在30天後仍無法同步。將使用伺服器版本。請嘗試強制同步。</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">已同步%1$d個行事曆</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">參與者</string>
     <string name="attendee_you_marker">我</string>
     <string name="attendee_organizer_pill">主辦人</string>
+    <string name="attendee_picker_title">新增參與者</string>
+    <string name="attendee_pick_add_people">新增參與者</string>
+    <string name="attendee_pick_from_contacts">姓名或電子郵件</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d人</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">從通訊錄建議聯絡人</string>
+    <string name="attendee_invalid_email">請輸入完整的電子郵件地址</string>
+    <string name="attendee_add_typed">新增\"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">此帳戶無法邀請成員</string>
+    <string name="action_save_and_notify">儲存並通知</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d 個</item>
     </plurals>

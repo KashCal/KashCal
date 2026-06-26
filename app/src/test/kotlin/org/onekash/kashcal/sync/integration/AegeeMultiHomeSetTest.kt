@@ -3,11 +3,13 @@ package org.onekash.kashcal.sync.integration
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -79,6 +81,11 @@ class AegeeMultiHomeSetTest {
                 chain.proceed(request)
             }
             .build()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     // ===== Proposed new method (inlined — does NOT touch production code) =====

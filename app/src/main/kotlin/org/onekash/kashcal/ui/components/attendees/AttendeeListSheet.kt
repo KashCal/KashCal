@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -32,9 +32,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -85,28 +86,32 @@ fun AttendeeListSheet(
         buildAttendeeListSections(attendees, query)
     }
 
+    // Pin to a tall fixed height so the viewer opens consistently (matching the
+    // picker) instead of wrapping to a handful of rows. Read-only, so it stays
+    // swipe-dismissable — there's nothing in progress to lose.
+    val configuration = LocalConfiguration.current
+    val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
+        (configuration.screenHeightDp * 0.95f).dp
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
-        Row(
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(sheetHeight)
+        ) {
+        Text(
+            text = stringResource(R.string.attendee_sheet_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.attendee_sheet_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = pluralStringResource(R.plurals.attendee_count_invited, totalCount, totalCount),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        )
         if (canSearch) {
             OutlinedTextField(
                 value = query,
@@ -128,7 +133,7 @@ fun AttendeeListSheet(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.4f)
+                    .weight(1f)
                     .padding(24.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -142,6 +147,7 @@ fun AttendeeListSheet(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .padding(bottom = 16.dp),
             ) {
                 sections.forEach { section ->
@@ -163,6 +169,7 @@ fun AttendeeListSheet(
                     }
                 }
             }
+        }
         }
     }
 }
@@ -220,6 +227,10 @@ private fun AttendeeRow(model: AttendeeUiModel) {
     }
     val showAddressLine = !model.isYou &&
         !model.bareAddress.equals(model.displayName, ignoreCase = true)
+    // Surface the current user as "You" (matching AttendeeChip), so their own
+    // organizer/attendee row doesn't read as the account label (e.g. "iCloud").
+    // Avatar initials stay on the real name, not the word "You".
+    val nameLabel = if (model.isYou) stringResource(R.string.attendee_you_marker) else model.displayName
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,7 +255,7 @@ private fun AttendeeRow(model: AttendeeUiModel) {
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = model.displayName,
+                    text = nameLabel,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (model.isYou) FontWeight.SemiBold else FontWeight.Normal,
                     maxLines = 1,

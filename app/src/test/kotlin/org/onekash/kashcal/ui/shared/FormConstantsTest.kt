@@ -276,7 +276,7 @@ class FormConstantsTest {
         assertEquals("2h15m", formatDurationShort(135, resources))
     }
 
-    // ==================== Custom Reminders: Duration Helpers (Chunk 1) ====================
+    // ==================== Custom Reminders: Duration Helpers ====================
 
     @Test
     fun `componentsToMinutes converts days hours minutes to total minutes`() {

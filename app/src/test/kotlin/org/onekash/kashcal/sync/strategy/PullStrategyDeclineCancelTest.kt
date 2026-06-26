@@ -35,19 +35,19 @@ import org.onekash.kashcal.sync.notification.InviteNotifier
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 
 /**
- * Verifies the pull-side cancel hook for outcome 3 of the
- * decline-suppression spec: a server-side decline arriving via pull
- * cancels armed alarms inline, without waiting for the daily worker.
+ * Verifies the pull-side cancel hook for declined-reminder suppression:
+ * a server-side decline arriving via pull cancels armed alarms inline,
+ * without waiting for the daily worker.
  *
- * Cases (per the C4 chunk in declined-reminder-tracker.json):
+ * Cases:
  *  (a) DECLINED self attendee → cancelRemindersForEvent called once
  *  (b) ACCEPTED self → not called
  *  (c) no self attendee, none before → not called
  *  (d) accountForInvites null (orphan calendar) → not called
  *  (e) reminderScheduler throws → pull continues, no abort
  *  (f) UNINVITE: pre-replace had self row, post-replace does not → cancel
- *  (g) PARTSTAT-only delta (etag-only short-circuit at L1233-1236 must
- *      NOT swallow the cancel hook)
+ *  (g) PARTSTAT-only delta (the etag-only short-circuit must NOT swallow
+ *      the cancel hook)
  */
 class PullStrategyDeclineCancelTest {
 
@@ -290,7 +290,7 @@ class PullStrategyDeclineCancelTest {
         // Existing event identical in body content but DECLINED is the
         // only delta the server brings. This is the case where
         // hasContentChanged might return false on a partstat-only delta,
-        // but the cancel hook must still fire (outcome 3).
+        // but the cancel hook must still fire.
         val existing = Event(
             id = 100L,
             uid = "uid-g",

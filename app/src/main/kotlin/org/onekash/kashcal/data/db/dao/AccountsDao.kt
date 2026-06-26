@@ -185,6 +185,14 @@ interface AccountsDao {
     suspend fun updateCalendarUserAddresses(id: Long, addresses: List<String>)
 
     /**
+     * Update the principal's scheduling Outbox URL (RFC 6638 §2.1.1).
+     * Targeted UPDATE so concurrent sync writes to other columns can't lose
+     * this update via read-modify-write races. Null clears it.
+     */
+    @Query("UPDATE accounts SET schedule_outbox_url = :outboxUrl WHERE id = :id")
+    suspend fun updateScheduleOutboxUrl(id: Long, outboxUrl: String?)
+
+    /**
      * Update account enabled state.
      */
     @Query("UPDATE accounts SET is_enabled = :enabled WHERE id = :id")

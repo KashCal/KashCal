@@ -109,10 +109,10 @@ object IcsPatcher {
     fun patch(
         rawIcal: String?,
         event: Event,
-        attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
     ): String {
-        val icalEvent = patchToICalEvent(rawIcal, event)
-            ?: return generateFresh(event, attendees)
+        val icalEvent = patchToICalEvent(rawIcal, event, attendees)
+            ?: return generateFresh(event, attendees ?: emptyList())
         return generator.generate(icalEvent, method = null, includeVTimezone = true)
     }
 
@@ -121,22 +121,56 @@ object IcsPatcher {
      * `ICalEvent` parsed from `rawIcal`, preserving attendees, organizer,
      * and raw X-* properties from the original.
      *
-     * Attendees are preserved verbatim from the server's original ICS: it is
-     * the authoritative wire form (correct mailto:/urn:uuid: shape, server
-     * additions, line folding). The Room attendee set is only needed where
-     * there is no original to preserve — fresh/local events ([generateFresh])
-     * and exception VEVENTs (generated from the entity in
-     * [serializeWithExceptions]).
+     * Attendees: when [attendees] is null the original ICS's ATTENDEE block is
+     * preserved verbatim (its authoritative wire form — correct
+     * mailto:/urn:uuid: shape, server additions, line folding); this is the
+     * RSVP/export contract. When [attendees] is non-null it is the
+     * authoritative set the user edited (organizer push) and REPLACES the
+     * original block — an empty list clears all ATTENDEEs. Without this, an
+     * attendee add/remove on a server-synced event (which has rawIcal) would
+     * never reach the wire.
      *
      * Returns null when there's no rawIcal or parsing fails, so the caller
      * can fall back to a fresh generation path.
      */
-    private fun patchToICalEvent(rawIcal: String?, event: Event): ICalEvent? {
+    private fun patchToICalEvent(
+        rawIcal: String?,
+        event: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
+    ): ICalEvent? {
         if (rawIcal == null) return null
         val original = parser.parseAllEvents(rawIcal).getOrNull()?.firstOrNull() ?: return null
         val zone = resolveZone(event.timezone)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val mergedAlarms = mergeAlarms(original.alarms, event.reminders)
+        // Replace the ATTENDEE block with the caller's authoritative set only
+        // for an organized event (organizer present) — mirrors the fresh path's
+        // attendeesIfOrganized guard so a non-organizer push never rewrites the
+        // server's attendee list. null caller set, or no organizer, preserves
+        // the original verbatim.
+        val isOrganized = !event.organizerEmail.isNullOrBlank() || original.organizer != null
+        val mergedAttendees = if (attendees != null && isOrganized) {
+            attendees.map { with(EventToICalEventMapper) { it.toICalAttendee() } }
+        } else {
+            original.attendees
+        }
+        // Mirror the mergedAttendees gate: only on an organizer push (the caller
+        // hands an authoritative attendee set for an organized event) do we touch
+        // the organizer. The server's ORGANIZER is authoritative (correct
+        // mailto:/urn:uuid:/CN shape) so it always wins; only when the original
+        // has none — an event first synced without invitees — surface the
+        // organizer the coordinator stamped on the entity, so an attendee added
+        // later ships with an ORGANIZER the server can auto-schedule (RFC 6638
+        // §3). Without this the added ATTENDEE reaches the wire with no ORGANIZER
+        // and no invite is delivered. Non-push paths (cosmetic edit, export with
+        // attendees == null) preserve the original verbatim — they must not
+        // synthesize an ORGANIZER into a body that never had one.
+        val mergedOrganizer = if (attendees != null && isOrganized) {
+            original.organizer
+                ?: EventToICalEventMapper.organizerFor(event.organizerEmail, event.organizerName)
+        } else {
+            original.organizer
+        }
 
         return original.copy(
             uid = event.uid,
@@ -163,8 +197,14 @@ object IcsPatcher {
             color = iCalColorFor(event.color),
             url = event.url,
             categories = event.categories.orEmpty(),
+            attendees = mergedAttendees,
+            organizer = mergedOrganizer,
             lastModified = ICalDateTime.fromTimestamp(event.updatedAt, null, false)
-            // PRESERVED from original: attendees, organizer, rawProperties, created, dtstamp
+            // PRESERVED from original: rawProperties, created, dtstamp.
+            // Organizer: the original's wins when present; the entity's organizer
+            // fills in only when the original had none (see mergedOrganizer above).
+            // Attendees: preserved verbatim when caller passed null, else replaced
+            // with the caller's authoritative set (see mergedAttendees above).
         )
     }
 
@@ -199,14 +239,14 @@ object IcsPatcher {
      * This is the main entry point for serialization.
      *
      * @param event Event to serialize
-     * @param attendees Optional authoritative ATTENDEE rows (organizer push).
-     *   Default empty preserves the original ICS's attendees on the patch path
-     *   and emits none on the fresh path.
+     * @param attendees Authoritative ATTENDEE rows (organizer push), or null to
+     *   preserve the original ICS's attendees (RSVP/export). A non-null list
+     *   (incl. empty) replaces the set on both the patch and fresh paths.
      * @return Complete ICS string
      */
     fun serialize(
         event: Event,
-        attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
     ): String {
         return patch(event.rawIcal, event, attendees)
     }
@@ -217,8 +257,9 @@ object IcsPatcher {
      * RFC 5545 requires exception events to be bundled with the master
      * in the same VCALENDAR, sharing the same UID but with RECURRENCE-ID.
      *
-     * No-attendee overload — used by the export/share path, which never emits
-     * attendees. Delegates to the attendee-aware overload with empty lists.
+     * No-attendee overload — used by the export/share path. Passes null so the
+     * master's and each exception's original ATTENDEE block is preserved
+     * verbatim (export never rewrites attendees) rather than cleared.
      *
      * @param master The master recurring event
      * @param exceptions Exception events (modified occurrences)
@@ -227,8 +268,8 @@ object IcsPatcher {
     fun serializeWithExceptions(master: Event, exceptions: List<Event>): String =
         serializeWithExceptions(
             master = master,
-            masterAttendees = emptyList(),
-            exceptionsWithAttendees = exceptions.map { it to emptyList() }
+            masterAttendees = null,
+            exceptionsWithAttendees = exceptions.map { it to null }
         )
 
     /**
@@ -247,19 +288,22 @@ object IcsPatcher {
      */
     fun serializeWithExceptions(
         master: Event,
-        masterAttendees: List<org.onekash.kashcal.data.db.entity.Attendee>,
-        exceptionsWithAttendees: List<Pair<Event, List<org.onekash.kashcal.data.db.entity.Attendee>>>
+        masterAttendees: List<org.onekash.kashcal.data.db.entity.Attendee>?,
+        exceptionsWithAttendees: List<Pair<Event, List<org.onekash.kashcal.data.db.entity.Attendee>?>>
     ): String {
         if (exceptionsWithAttendees.isEmpty()) {
             return serialize(master, masterAttendees)
         }
 
-        // Master with rawIcal preserves its server-authoritative attendees
-        // verbatim; only the fresh fallback (no rawIcal) needs the Room set.
-        val masterICalEvent = patchToICalEvent(master.rawIcal, master)
-            ?: EventToICalEventMapper.toICalEvent(master, masterAttendees)
+        // Master: patch path applies the caller's attendee set when non-null
+        // (organizer edited the series) and preserves the original verbatim when
+        // null (export); fresh fallback uses the supplied set (or none).
+        val masterICalEvent = patchToICalEvent(master.rawIcal, master, masterAttendees)
+            ?: EventToICalEventMapper.toICalEvent(master, masterAttendees ?: emptyList())
+        // Exceptions are always regenerated from the entity; a null exception
+        // set means "no per-instance attendees supplied" → emit none.
         val exceptionICalEvents = exceptionsWithAttendees.map { (exception, attendees) ->
-            EventToICalEventMapper.toICalEvent(master, exception, attendees)
+            EventToICalEventMapper.toICalEvent(master, exception, attendees ?: emptyList())
         }
 
         return generator.generate(
@@ -277,15 +321,20 @@ object IcsPatcher {
      * Strategy:
      * - ACTION:NONE sentinels (RFC 9074) are dropped first — they are never reminders
      *   and must never be re-emitted or laundered into a DISPLAY alarm.
-     * - null/empty reminders = user wants no alarms → clear all (after NONE drop).
-     * - The DISPLAYED window (original positions 0 until MAX_DISPLAYED_ALARMS, after
-     *   NONE removal) is what the form showed the user, so the stored reminder list is
-     *   authoritative for it: user reminders update those alarms' triggers in order,
-     *   and any displayed alarm the user dropped is NOT re-added. Original
+     * - END-relative alarms (TRIGGER;RELATED=END) are partitioned out and preserved
+     *   verbatim. The pull path doesn't surface them in the form (the reminder list is
+     *   START-relative offsets), so they must never be reconciled against — or erased
+     *   by — START-relative user edits. Same "preserve what the user never saw"
+     *   rationale that keeps hidden alarms/attendees/X-props on the patch path.
+     * - null/empty reminders = user wants no DISPLAYED alarms → clear the displayed
+     *   set, but END-relative alarms still survive (they were never shown to delete).
+     * - The DISPLAYED window (START-relative positions 0 until MAX_DISPLAYED_ALARMS,
+     *   after NONE removal) is what the form showed the user, so the stored reminder
+     *   list is authoritative for it: user reminders update those alarms' triggers in
+     *   order, and any displayed alarm the user dropped is NOT re-added. Original
      *   action/description/uid are preserved for the alarms that survive.
-     * - Alarms at original positions >= MAX_DISPLAYED_ALARMS were never shown to the
-     *   user, so they are preserved verbatim (same rationale rawIcal preserves
-     *   attendees/organizer/X-props).
+     * - START-relative alarms at positions >= MAX_DISPLAYED_ALARMS were never shown to
+     *   the user, so they are preserved verbatim.
      * - Extra user reminders beyond the available displayed originals become new
      *   DISPLAY alarms.
      *
@@ -300,20 +349,25 @@ object IcsPatcher {
         // Drop RFC 9074 ACTION:NONE sentinels FIRST, so position-based splitting and
         // preservation below operate only on real alarms. (A NONE often lands at a high
         // index; filtering after the split would let it survive as a "hidden" alarm.)
-        val realAlarms = originalAlarms.filter { it.action != AlarmAction.NONE }
+        // Then partition END-relative alarms out: they are never surfaced as reminders,
+        // so they are always preserved verbatim and never reconciled/cleared.
+        val (endRelative, startRelative) = originalAlarms
+            .filter { it.action != AlarmAction.NONE }
+            .partition { it.triggerRelatedToEnd }
 
-        // User cleared all reminders → clear all alarms
+        // User cleared all reminders → clear all START-relative (displayed) alarms, but
+        // keep END-relative alarms the form never showed (so a save can't silently erase
+        // them from the server).
         if (userReminders.isNullOrEmpty()) {
-            return emptyList()
+            return endRelative
         }
 
         // Alarms the form never displayed (position >= MAX_DISPLAYED_ALARMS) are
         // preserved verbatim; the displayed window is reconciled against user edits.
-        val displayed = realAlarms.take(MAX_DISPLAYED_ALARMS)
-        val hidden = realAlarms.drop(MAX_DISPLAYED_ALARMS)
+        val displayed = startRelative.take(MAX_DISPLAYED_ALARMS).toMutableList()
+        val hidden = startRelative.drop(MAX_DISPLAYED_ALARMS)
 
         val result = mutableListOf<ICalAlarm>()
-        var displayedIndex = 0
 
         for (reminderStr in userReminders) {
             val userDuration = try {
@@ -324,12 +378,25 @@ object IcsPatcher {
 
             if (userDuration == null) continue
 
-            if (displayedIndex < displayed.size) {
-                // Reuse the displayed alarm's action/description/uid, update its trigger.
-                result.add(displayed[displayedIndex].copy(trigger = userDuration, triggerAbsolute = null))
-                displayedIndex++
+            // Reconcile by TRIGGER, not position: the stored reminder list is
+            // sorted by magnitude while the original alarms are in document
+            // order, so position-pairing would attach one alarm's
+            // action/description/uid to a different reminder's time (e.g. an
+            // EMAIL alarm firing at a DISPLAY alarm's offset). Match the
+            // displayed alarm with the same offset to preserve its metadata;
+            // consume it so duplicate user offsets fall through to fresh alarms.
+            val matchIndex = displayed.indexOfFirst { it.trigger == userDuration }
+            if (matchIndex >= 0) {
+                val match = displayed.removeAt(matchIndex)
+                result.add(match.copy(trigger = userDuration, triggerAbsolute = null))
+            } else if (hidden.any { it.trigger == userDuration }) {
+                // A genuinely-hidden alarm already covers this offset and is
+                // appended verbatim below — don't also synthesize a fresh
+                // DISPLAY alarm, or the same time would fire twice.
+                continue
             } else {
-                // More user reminders than displayed originals → fresh DISPLAY alarm.
+                // No alarm (displayed or hidden) at this offset (new/changed
+                // reminder) → fresh DISPLAY alarm.
                 result.add(ICalAlarm(
                     action = AlarmAction.DISPLAY,
                     trigger = userDuration,
@@ -341,8 +408,10 @@ object IcsPatcher {
         }
 
         // Displayed alarms past the user's reminder count were deleted in the UI — they
-        // are intentionally NOT re-added. Genuinely-hidden alarms are preserved.
+        // are intentionally NOT re-added. Genuinely-hidden alarms are preserved, as are
+        // END-relative alarms the form never surfaced.
         result.addAll(hidden)
+        result.addAll(endRelative)
 
         return result
     }

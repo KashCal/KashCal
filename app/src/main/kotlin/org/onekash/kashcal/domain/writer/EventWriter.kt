@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -43,6 +44,7 @@ class EventWriter @Inject constructor(
     private val pendingOpsDao by lazy { database.pendingOperationsDao() }
     private val occurrencesDao by lazy { database.occurrencesDao() }
     private val attendeesDao by lazy { database.attendeesDao() }
+    private val pendingCancelsDao by lazy { database.pendingCancelsDao() }
 
     /**
      * Create a new event.
@@ -51,7 +53,11 @@ class EventWriter @Inject constructor(
      * @param isLocal True if this is a local-only event (no sync)
      * @return The created event with assigned ID
      */
-    suspend fun createEvent(event: Event, isLocal: Boolean = false): Event {
+    suspend fun createEvent(
+        event: Event,
+        isLocal: Boolean = false,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
+    ): Event {
         return database.withTransaction {
             // Generate UID if not provided
             val eventWithUid = if (event.uid.isBlank()) {
@@ -73,6 +79,12 @@ class EventWriter @Inject constructor(
             // Insert event
             val eventId = eventsDao.insert(eventToInsert)
             val createdEvent = eventToInsert.copy(id = eventId)
+
+            // Persist attendees when supplied. null = caller isn't touching the
+            // attendee set (leave it alone); a list (incl. empty) replaces it.
+            if (attendees != null) {
+                attendeesDao.replaceForEvent(eventId, attendees.map { it.copy(eventId = eventId) })
+            }
 
             // Generate occurrences
             // Round startTs down to seconds and subtract 1 second to ensure DTSTART is included
@@ -101,7 +113,11 @@ class EventWriter @Inject constructor(
      * @param isLocal True if this is a local-only event
      * @return The updated event
      */
-    suspend fun updateEvent(event: Event, isLocal: Boolean = false): Event {
+    suspend fun updateEvent(
+        event: Event,
+        isLocal: Boolean = false,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
+    ): Event {
         return database.withTransaction {
             val existingEvent = requireNotNull(eventsDao.getById(event.id)) {
                 "Event not found: ${event.id}"
@@ -110,6 +126,11 @@ class EventWriter @Inject constructor(
             val now = System.currentTimeMillis()
 
             // RRULE/timing changes also drive occurrence regeneration below.
+            // This deliberately uses byte comparison, unlike the SEQUENCE-bump
+            // decision which compares the RRULE by meaning: a cosmetic rewrite
+            // would regenerate to identical occurrences (wasteful but harmless),
+            // whereas a spurious SEQUENCE bump re-notifies attendees. Don't
+            // unify the two — they answer different questions.
             val rruleChanged = existingEvent.rrule != event.rrule ||
                     existingEvent.exdate != event.exdate ||
                     existingEvent.rdate != event.rdate
@@ -139,6 +160,44 @@ class EventWriter @Inject constructor(
 
             // Update event
             eventsDao.update(eventToUpdate)
+
+            // Persist attendees when supplied. null = caller isn't touching the
+            // attendee set (leave it alone — e.g. a reschedule); a list (incl.
+            // empty) replaces it.
+            if (attendees != null) {
+                // Snapshot the pre-edit rows BEFORE the replace overwrites them:
+                // the cascade guard needs their addresses, and removal needs the
+                // dropped rows' captured delivery context to enqueue a CANCEL.
+                val preEditRows = attendeesDao.getForEventOnce(event.id)
+                val preEditMasterAddresses =
+                    if (existingEvent.rrule != null && existingEvent.originalEventId == null) {
+                        attendeeAddressSet(preEditRows)
+                    } else {
+                        emptySet()
+                    }
+                attendeesDao.replaceForEvent(event.id, attendees.map { it.copy(eventId = event.id) })
+                // Uninvite: a guest dropped from a SYNCED event (on the wire)
+                // owes an iTIP CANCEL. Enqueue each removed-and-synced row,
+                // capturing its delivery context, so the push can deliver after
+                // the attendee row is gone. recurrenceId = null (all-events /
+                // series scope). A never-synced event has nothing on the wire.
+                if (existingEvent.caldavUrl != null) {
+                    enqueueRemovedAttendeeCancels(
+                        eventId = event.id,
+                        preEditRows = preEditRows,
+                        survivors = attendees,
+                        recurrenceId = null,
+                        sequence = newSequence,
+                    )
+                }
+                // ALL_EVENTS attendee edit on a recurring master: bring the
+                // series' existing override rows into line with the new set.
+                // Gated on recurring-master so a plain non-recurring edit
+                // never runs the exception query.
+                if (existingEvent.rrule != null && existingEvent.originalEventId == null) {
+                    cascadeAttendeesToExceptions(event.id, attendees, preEditMasterAddresses)
+                }
+            }
 
             // Regenerate occurrences if RRULE or timing changed
             if (rruleChanged || timingChanged) {
@@ -283,13 +342,20 @@ class EventWriter @Inject constructor(
      * @param occurrenceTimeMs The original occurrence start time
      * @param modifiedEvent Event with modified fields (title, time, etc.)
      * @param isLocal True if master is local-only
+     * @param attendees The user-edited attendee set for THIS occurrence, or
+     *   null when the caller isn't touching attendees. A non-null list is
+     *   persisted to the exception's own rows (a per-occurrence guest set
+     *   that may diverge from the series). null preserves the prior behavior:
+     *   a new exception is seeded with the master's set, a re-edited exception
+     *   keeps its existing rows.
      * @return The created exception event
      */
     suspend fun editSingleOccurrence(
         masterEventId: Long,
         occurrenceTimeMs: Long,
         modifiedEvent: Event,
-        isLocal: Boolean = false
+        isLocal: Boolean = false,
+        attendees: List<Attendee>? = null
     ): Event {
         return database.withTransaction {
             val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
@@ -306,6 +372,17 @@ class EventWriter @Inject constructor(
             val (exceptionId, createdException) = if (existingException != null) {
                 // Update existing exception (re-editing a previously modified occurrence)
                 // Exception is bundled with master for sync, so mark as SYNCED locally
+                // Bump SEQUENCE when this re-edit is iTIP-relevant, relative to
+                // the exception's own prior revision so its counter climbs
+                // monotonically across successive edits. modifiedEvent carries
+                // the master's sequence (the coordinator derives it from the
+                // master), so anchor the floor on the existing exception rather
+                // than letting nextSequence read modifiedEvent.sequence.
+                val newSequence = if (SequenceBumper.shouldBump(existingException, modifiedEvent)) {
+                    existingException.sequence + 1
+                } else {
+                    existingException.sequence
+                }
                 val updatedEvent = modifiedEvent.copy(
                     id = existingException.id,
                     uid = existingException.uid, // Preserve UID (should equal master UID)
@@ -315,6 +392,7 @@ class EventWriter @Inject constructor(
                     rrule = null, // Exception cannot have RRULE
                     exdate = null,
                     rdate = null,
+                    sequence = newSequence,
                     // Exception is bundled with master for sync, so mark as SYNCED locally
                     syncStatus = SyncStatus.SYNCED,
                     dtstamp = now,
@@ -327,6 +405,16 @@ class EventWriter @Inject constructor(
             } else {
                 // Create new exception event
                 // RFC 5545: Exception MUST have same UID as master, distinguished by RECURRENCE-ID
+                // Rescheduling one occurrence is an organizer timing change, so
+                // the override must advance SEQUENCE (RFC 5546 §2.1.4) just like
+                // the master-edit and this-and-future paths. The baseline is the
+                // PRISTINE occurrence — the master projected onto this
+                // occurrence's start/end with recurrence fields cleared to match
+                // the exception shape — so the structural master→exception
+                // difference isn't mistaken for an edit (which would otherwise
+                // bump on a cosmetic-only change and re-notify attendees).
+                val pristineOccurrence = masterEvent.projectOntoOccurrence(occurrenceTimeMs)
+                val newSequence = SequenceBumper.nextSequence(pristineOccurrence, modifiedEvent)
                 val exceptionEvent = modifiedEvent.copy(
                     id = 0, // New event
                     uid = masterEvent.uid, // Same UID as master (RFC 5545 requirement)
@@ -336,6 +424,7 @@ class EventWriter @Inject constructor(
                     rrule = null, // Exception cannot have RRULE
                     exdate = null,
                     rdate = null,
+                    sequence = newSequence,
                     // Exception is bundled with master for sync, so mark as SYNCED locally
                     // Master will be marked PENDING_UPDATE to trigger the bundled push
                     syncStatus = SyncStatus.SYNCED,
@@ -352,6 +441,51 @@ class EventWriter @Inject constructor(
             // Using the Event overload updates start_ts, end_ts, start_day, end_day
             // to match the exception's modified times (critical for correct display)
             occurrenceGenerator.linkException(masterEventId, occurrenceTimeMs, createdException)
+
+            // Attendee rows for this occurrence's override VEVENT.
+            // - A non-null [attendees] is the user's per-occurrence edit (the
+            //   guest set for THIS instance, which may diverge from the
+            //   series); persist it verbatim on either branch.
+            // - null means the caller isn't touching attendees: a NEW
+            //   exception is seeded with the master's set so the bundled
+            //   override pushes the series' invitee list (mirrors splitSeries);
+            //   a re-edited existing exception keeps its own rows (which may
+            //   already differ per-instance) — don't clobber them.
+            if (attendees != null) {
+                // Per-occurrence uninvite: a guest dropped from THIS instance's
+                // set (vs whatever it carried before) owes a CANCEL scoped to
+                // the occurrence (RECURRENCE-ID = occurrenceTimeMs), so the
+                // cancel reaches them for this instance only — the series keeps
+                // them. Diff against the pre-edit rows (the existing exception's
+                // set, or the master's set this exception was seeded from for a
+                // brand-new override). Gated on the master being synced.
+                if (masterEvent.caldavUrl != null) {
+                    val preEditOccurrenceRows = if (existingException != null) {
+                        attendeesDao.getForEventOnce(existingException.id)
+                    } else {
+                        attendeesDao.getForEventOnce(masterEventId)
+                    }
+                    enqueueRemovedAttendeeCancels(
+                        eventId = masterEventId,
+                        preEditRows = preEditOccurrenceRows,
+                        survivors = attendees,
+                        recurrenceId = occurrenceTimeMs,
+                        sequence = createdException.sequence,
+                    )
+                }
+                attendeesDao.replaceForEvent(
+                    exceptionId,
+                    attendees.map { it.copy(id = 0, eventId = exceptionId) }
+                )
+            } else if (existingException == null) {
+                val masterAttendees = attendeesDao.getForEventOnce(masterEventId)
+                if (masterAttendees.isNotEmpty()) {
+                    attendeesDao.replaceForEvent(
+                        exceptionId,
+                        masterAttendees.map { it.copy(id = 0, eventId = exceptionId) }
+                    )
+                }
+            }
 
             // Queue sync on MASTER event (not exception)
             // Exception is bundled with master when serialized via serializeWithExceptions()
@@ -443,7 +577,8 @@ class EventWriter @Inject constructor(
         masterEventId: Long,
         splitTimeMs: Long,
         modifiedEvent: Event,
-        isLocal: Boolean = false
+        isLocal: Boolean = false,
+        attendees: List<Attendee>? = null
     ): Event {
         return database.withTransaction {
             val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
@@ -460,7 +595,7 @@ class EventWriter @Inject constructor(
             // own start is just an "edit all events" with no rrule
             // truncation needed.
             if (splitTimeMs <= masterEvent.startTs) {
-                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal)
+                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal, attendees)
             }
 
             // pastCount only matters for the COUNT branch of
@@ -494,7 +629,7 @@ class EventWriter @Inject constructor(
             // would yield invalid COUNT=0 on master or new series.
             // Fall back to in-place ALL_EVENTS update on the master.
             if (RruleUtils.isDegenerateCountSplit(rrule, pastCount)) {
-                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal)
+                return@withTransaction updateMasterInPlace(masterEvent, modifiedEvent, isLocal, attendees)
             }
 
             // Split the RRULE so the total instance count is preserved
@@ -554,13 +689,18 @@ class EventWriter @Inject constructor(
 
             // Carry attendees forward to the new series. Attendees live
             // in their own Room table; eventsDao.insert(Event) doesn't
-            // touch them, so without this copy the new series PUTs to
-            // the server with no attendees and the next pull drops them.
-            val masterAttendees = attendeesDao.getForEventOnce(masterEventId)
-            if (masterAttendees.isNotEmpty()) {
+            // touch them, so without this the new series PUTs to the
+            // server with no attendees and the next pull drops them.
+            //
+            // A non-null [attendees] is the user's edited set (the
+            // this-and-future attendee-edit path) and takes precedence;
+            // null means the caller isn't touching attendees, so copy the
+            // master's set verbatim.
+            val newSeriesAttendees = attendees ?: attendeesDao.getForEventOnce(masterEventId)
+            if (newSeriesAttendees.isNotEmpty()) {
                 attendeesDao.replaceForEvent(
                     newEventId,
-                    masterAttendees.map { it.copy(id = 0, eventId = newEventId) }
+                    newSeriesAttendees.map { it.copy(id = 0, eventId = newEventId) }
                 )
             }
 
@@ -593,6 +733,7 @@ class EventWriter @Inject constructor(
         masterEvent: Event,
         modifiedEvent: Event,
         isLocal: Boolean,
+        attendees: List<Attendee>? = null,
     ): Event {
         val now = System.currentTimeMillis()
         val newSyncStatus = when {
@@ -619,11 +760,103 @@ class EventWriter @Inject constructor(
             localModifiedAt = now,
         )
         eventsDao.update(updated)
+        // A non-null [attendees] is the user's edited set (the collapsed
+        // this-and-future / first-occurrence path); persist it. null leaves
+        // the existing attendee rows alone.
+        if (attendees != null) {
+            // Snapshot the series' pre-edit addresses before the replace so the
+            // cascade can skip a deliberately-customized override.
+            val preEditMasterAddresses = attendeeAddressSet(attendeesDao.getForEventOnce(masterEvent.id))
+            attendeesDao.replaceForEvent(masterEvent.id, attendees.map { it.copy(id = 0, eventId = masterEvent.id) })
+            cascadeAttendeesToExceptions(masterEvent.id, attendees, preEditMasterAddresses)
+        }
         occurrenceGenerator.regenerateOccurrences(updated)
         if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
             queueOperation(masterEvent.id, PendingOperation.OPERATION_UPDATE)
         }
         return updated
+    }
+
+    /**
+     * Cascade an all-events attendee change onto the series' existing
+     * exception (override) rows. Time-only exceptions are seeded with the
+     * master's attendee list at creation; when the organizer edits the
+     * series-wide guest list, those overrides must be brought into line so a
+     * shifted occurrence doesn't keep advertising a stale invitee set.
+     *
+     * An override whose own attendee set was deliberately customized
+     * (per-occurrence guest editing) must NOT be clobbered. We tell the two
+     * apart with [preEditMasterAddresses] — the series' attendee addresses
+     * BEFORE this edit: an override still matching that set was merely seeded
+     * and is safe to cascade; one that diverges is a deliberate customization
+     * and is skipped. Comparison is the canonical-address SET only (order- and
+     * PARTSTAT-insensitive) so a seeded override carrying server-stamped
+     * PARTSTAT/receipt differences still cascades.
+     *
+     * Caller must already be inside a `database.withTransaction { … }`.
+     */
+    private suspend fun cascadeAttendeesToExceptions(
+        masterEventId: Long,
+        attendees: List<Attendee>,
+        preEditMasterAddresses: Set<String>,
+    ) {
+        val exceptions = eventsDao.getExceptionsForMaster(masterEventId)
+        for (exception in exceptions) {
+            val exceptionAddresses = attendeeAddressSet(attendeesDao.getForEventOnce(exception.id))
+            // Skip a deliberately-customized override: its guest set diverges
+            // from what the series carried before this edit.
+            if (exceptionAddresses != preEditMasterAddresses) continue
+            attendeesDao.replaceForEvent(
+                exception.id,
+                attendees.map { it.copy(id = 0, eventId = exception.id) }
+            )
+        }
+    }
+
+    /** Canonical address set of an attendee list (order- and PARTSTAT-insensitive). */
+    private fun attendeeAddressSet(attendees: List<Attendee>): Set<String> =
+        attendees.map { org.onekash.kashcal.util.AddressNormalizer.canonical(it.address) }.toSet()
+
+    /**
+     * Enqueue an iTIP CANCEL for each attendee dropped from a synced event.
+     *
+     * A removed guest's row is replaced out of the attendee set, so the dropped
+     * row no longer exists to carry a client-side CANCEL. This captures each
+     * removed recipient — and the delivery context (schedule_agent/status) read
+     * from the pre-edit row — into the pending_cancels queue, which the push
+     * drains after a successful PUT. The capture is idempotent (upsert keyed on
+     * event+recurrence+address), so re-saving the same removal doesn't duplicate
+     * the cancel.
+     *
+     * [sequence] is the event SEQUENCE the CANCEL goes out at (the iTIP builder
+     * increments it on the wire per RFC 5546 §2.1.4). [recurrenceId] scopes the
+     * cancel: null = series/all-events, set = a single occurrence.
+     *
+     * Caller must already be inside a `database.withTransaction { … }` and must
+     * gate on the event being synced (a never-synced event has nothing on the
+     * wire to cancel).
+     */
+    private suspend fun enqueueRemovedAttendeeCancels(
+        eventId: Long,
+        preEditRows: List<Attendee>,
+        survivors: List<Attendee>,
+        recurrenceId: Long?,
+        sequence: Int,
+    ) {
+        val survivorAddresses = attendeeAddressSet(survivors)
+        for (row in preEditRows) {
+            if (org.onekash.kashcal.util.AddressNormalizer.canonical(row.address) in survivorAddresses) continue
+            pendingCancelsDao.upsert(
+                org.onekash.kashcal.data.db.entity.PendingCancel(
+                    eventId = eventId,
+                    recurrenceId = recurrenceId,
+                    address = row.address,
+                    scheduleAgent = row.scheduleAgent,
+                    scheduleStatus = row.scheduleStatus,
+                    sequence = sequence,
+                )
+            )
+        }
     }
 
     /**

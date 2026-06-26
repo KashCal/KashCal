@@ -17,8 +17,8 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 20 key names`() {
-        assertEquals(20, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 21 key names`() {
+        assertEquals(21, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
     }
 
     @Test
@@ -96,6 +96,18 @@ class ExportablePreferencesTest {
                 ExportablePreferences.EXCLUDED_KEY_NAMES.contains(key.name),
             )
         }
+    }
+
+    @Test
+    fun `CONTACT_SUGGESTIONS_DECLINED is excluded because it tracks a device-local permission dismissal`() {
+        assertTrue(
+            "CONTACT_SUGGESTIONS_DECLINED must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name),
+        )
+        assertFalse(
+            "CONTACT_SUGGESTIONS_DECLINED must not be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name },
+        )
     }
 
     @Test

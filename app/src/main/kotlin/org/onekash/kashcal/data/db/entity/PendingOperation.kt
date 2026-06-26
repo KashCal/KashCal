@@ -41,7 +41,7 @@ data class PendingOperation(
 
     /**
      * Current operation status.
-     * Values: "PENDING", "IN_PROGRESS", "FAILED"
+     * Values: "PENDING", "IN_PROGRESS", "FAILED", "ABANDONED"
      */
     @ColumnInfo(name = "status", defaultValue = "'PENDING'")
     val status: String = "PENDING",
@@ -221,6 +221,17 @@ data class PendingOperation(
         const val STATUS_PENDING = "PENDING"
         const val STATUS_IN_PROGRESS = "IN_PROGRESS"
         const val STATUS_FAILED = "FAILED"
+
+        /**
+         * Terminal status for operations abandoned after exceeding the 30-day
+         * lifetime. Unlike FAILED, an ABANDONED op is NOT re-detected by
+         * [PendingOperationsDao.getExpiredOperations] and is NOT resurrected by
+         * the 24h auto-reset — so the "sync expired" notification fires exactly
+         * once instead of re-posting every background sync. Force Sync
+         * (resetAllFailed) still re-arms ABANDONED ops with a fresh lifetime,
+         * honoring the notification's "Force Sync to retry" promise.
+         */
+        const val STATUS_ABANDONED = "ABANDONED"
 
         // Move operation phases (each phase has independent retry budget)
         const val MOVE_PHASE_DELETE = 0  // Phase 0: DELETE from old calendar

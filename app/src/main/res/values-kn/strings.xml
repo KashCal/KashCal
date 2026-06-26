@@ -35,6 +35,8 @@
     <string name="action_close">ಮುಚ್ಚಿ</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">ಈಗ ಬೇಡ</string>
+    <string name="action_allow">ಅನುಮತಿಸಿ</string>
+    <string name="action_no_thanks">ಬೇಡ, ಧನ್ಯವಾದಗಳು</string>
     <string name="action_sign_in">ಸೈನ್ ಇನ್</string>
     <string name="action_select">ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="action_show_password">ಪಾಸ್‌ವರ್ಡ್ ತೋರಿಸಿ</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">ಪಾಸ್‌ವರ್ಡ್ ತೋರಿಸಿ</string>
     <string name="account_detail_cd_hide_password">ಪಾಸ್‌ವರ್ಡ್ ಮರೆಮಾಡಿ</string>
 
-    <string name="sync_failure_notification_title">%1$s ನೊಂದಿಗೆ ಸಿಂಕ್ ಸಮಸ್ಯೆ</string>
-    <string name="sync_failure_notification_text">ಕ್ಯಾಲೆಂಡರ್ ಸಿಂಕ್ %1$d ಬಾರಿ ವಿಫಲವಾಗಿದೆ</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">ಖಾತೆ ಹೆಸರು ಬದಲಾಯಿಸಿ</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">ಸಿಂಕ್ ಬದಲಾವಣೆಗಳು ಅವಧಿ ಮುಗಿದಿವೆ</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ದಿನಗಳ ನಂತರವೂ %1$s ಸಿಂಕ್ ಆಗಲಿಲ್ಲ. ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಲಾಗುವುದು. ಮರುಪ್ರಯತ್ನಿಸಲು ಫೋರ್ಸ್ ಸಿಂಕ್ ಮಾಡಿ.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ನಲ್ಲಿರುವ %1$s 30 ದಿನಗಳ ನಂತರವೂ ಸಿಂಕ್ ಆಗಲಿಲ್ಲ. ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಲಾಗುವುದು. ಮರುಪ್ರಯತ್ನಿಸಲು ಫೋರ್ಸ್ ಸಿಂಕ್ ಮಾಡಿ.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ಕ್ಯಾಲೆಂಡರ್ ಸಿಂಕ್ ಆಯಿತು</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">ನಿರಾಕರಿಸಲಾಗಿದೆ</string>
     <string name="attendee_card_tentative">ತಾತ್ಕಾಲಿಕ</string>
     <string name="attendee_card_hosting">ಆಯೋಜಿಸುತ್ತಿದ್ದೇನೆ</string>
+    <string name="attendee_picker_title">ಭಾಗವಹಿಸುವವರನ್ನು ಸೇರಿಸಿ</string>
+    <string name="attendee_pick_add_people">ಭಾಗವಹಿಸುವವರನ್ನು ಸೇರಿಸಿ</string>
+    <string name="attendee_pick_from_contacts">ಹೆಸರು ಅಥವಾ ಇಮೇಲ್</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ಇನ್ನಷ್ಟು</item>
+        <item quantity="other">+%1$d ಇನ್ನಷ್ಟು</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">ನಿಮ್ಮ ಸಂಪರ್ಕಗಳಿಂದ ಜನರನ್ನು ಸೂಚಿಸಿ</string>
+    <string name="attendee_invalid_email">ಪೂರ್ಣ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ</string>
+    <string name="attendee_add_typed">\"%1$s\" ಸೇರಿಸಿ</string>
+    <string name="attendee_scheduling_unavailable">ಈ ಖಾತೆಯಲ್ಲಿ ಜನರನ್ನು ಆಹ್ವಾನಿಸುವುದು ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="action_save_and_notify">ಉಳಿಸಿ ಮತ್ತು ತಿಳಿಸಿ</string>
     <string name="attendee_action_copy">ಇಮೇಲ್ ನಕಲಿಸಿ</string>
     <string name="attendee_action_email">ಇಮೇಲ್ ಕಳುಹಿಸಿ</string>
     <string name="attendee_group_icon_description">ಜನರು</string>

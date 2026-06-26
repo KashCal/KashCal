@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter
  * Hygiene enforcement for the parity fixture corpus.
  *
  * These assertions exist to catch corpus-authoring errors before they reach
- * the engine-level parity runs in chunk 4. A malformed fixture case produces
+ * the engine-level parity runs. A malformed fixture case produces
  * a false divergence that wastes analyst time triaging what turns out to be
  * a transcription error.
  *
@@ -30,7 +30,7 @@ import java.time.format.DateTimeFormatter
  *   each timestamp within `[rangeStartMs, rangeEndMs)`.
  * - Every case with a non-null `knownDivergenceReason` has a non-blank reason.
  * - Pool identifiers match their expected category tag.
- * - Total corpus size within the tracker's 85..120 band.
+ * - Total corpus size within the 85..120 band.
  */
 class ParityCorpusValidationTest {
 
@@ -50,7 +50,7 @@ class ParityCorpusValidationTest {
     fun `total corpus size is within 85 to 120 cases`() {
         val size = allCases.size
         assertTrue(
-            "corpus size $size must be in 85..120 (per tracker chunk 3 acceptance)",
+            "corpus size $size must be in 85..120",
             size in 85..120,
         )
     }
@@ -128,7 +128,7 @@ class ParityCorpusValidationTest {
     @Test
     fun `Pool B has exactly 6 cases`() {
         assertEquals(
-            "tracker chunk 3 acceptance: Pool B must contain EXACTLY one case per expansion-related CRITICAL quirk (6 cases)",
+            "Pool B must contain EXACTLY one case per expansion-related CRITICAL quirk (6 cases)",
             6,
             CriticalBugCorpus.cases.size,
         )

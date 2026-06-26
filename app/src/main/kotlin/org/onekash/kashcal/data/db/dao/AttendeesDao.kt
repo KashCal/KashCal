@@ -28,8 +28,7 @@ interface AttendeesDao {
      * **Merge semantics for `notified_at`**: when a row in the new set
      * has the same canonical address (per [AddressNormalizer.canonical])
      * as a prior row, the prior `notified_at` is preserved on the new
-     * row. This prevents the self-RSVP race documented in
-     * `docs/SCHEDULING_SCOPE.md` T2 design notes — the optimistic UI
+     * row. This prevents the self-RSVP race — the optimistic UI
      * write writes ACCEPTED locally, but the next pull may race the
      * server's REPLY queue and return NEEDS-ACTION; without this
      * merge, the notification would re-fire for an event the user
@@ -49,15 +48,34 @@ interface AttendeesDao {
 
         val merged = attendees.map { incoming ->
             val canonical = AddressNormalizer.canonical(incoming.address)
-            val priorNotifiedAt = priorByAddress[canonical]?.notifiedAt
-            // Honor an explicit notifiedAt on the incoming row (e.g., when a
-            // caller is intentionally setting it). Fall back to the prior
-            // row's value when the incoming row leaves notifiedAt null.
-            if (incoming.notifiedAt == null && priorNotifiedAt != null) {
-                incoming.copy(notifiedAt = priorNotifiedAt)
-            } else {
-                incoming
-            }
+            val prior = priorByAddress[canonical]
+            // Honor an explicit value on the incoming row; otherwise fall back
+            // to the prior row's value when the incoming row leaves it null.
+            //
+            // notified_at: prevents the self-RSVP notification re-firing race.
+            //
+            // schedule_status / schedule_agent: server-written delivery
+            // receipts (RFC 6638 §7.3). A client never echoes SCHEDULE-STATUS
+            // on its own PUT, so a cosmetic re-push whose read-back races an
+            // async-stamping server returns the attendee with no receipt.
+            // RFC 6638 §7.3 says a client SHOULD NOT remove a server-provided
+            // parameter — so a null incoming preserves the prior receipt, while
+            // a non-null incoming (the server spoke again) is authoritative and
+            // overwrites.
+            //
+            // itip_request_sequence / itip_request_status: the client-outbox
+            // send marker. It exists ONLY locally (the server never echoes it),
+            // so every server-parsed incoming row carries it null. Preserving it
+            // here is what keeps the idempotency marker alive across the
+            // read-back's replace — without this, the marker would be wiped each
+            // cycle and the client would re-POST (spam) the same invitation.
+            incoming.copy(
+                notifiedAt = incoming.notifiedAt ?: prior?.notifiedAt,
+                scheduleStatus = incoming.scheduleStatus ?: prior?.scheduleStatus,
+                scheduleAgent = incoming.scheduleAgent ?: prior?.scheduleAgent,
+                itipRequestSequence = incoming.itipRequestSequence ?: prior?.itipRequestSequence,
+                itipRequestStatus = incoming.itipRequestStatus ?: prior?.itipRequestStatus,
+            )
         }
 
         deleteForEvent(eventId)
@@ -130,6 +148,16 @@ interface AttendeesDao {
      */
     @Query("UPDATE attendees SET notified_at = :ts WHERE id = :id")
     suspend fun markNotified(id: Long, ts: Long)
+
+    /**
+     * Record that a client-side `METHOD:REQUEST` was POSTed to this attendee's
+     * scheduling outbox at the given event SEQUENCE (RFC 6638 §6), and store the
+     * raw per-recipient request-status the outbox returned. Advancing
+     * `itip_request_sequence` is what suppresses a duplicate re-send on the next
+     * push cycle (the idempotency marker).
+     */
+    @Query("UPDATE attendees SET itip_request_sequence = :sequence, itip_request_status = :status WHERE id = :id")
+    suspend fun markItipRequestSent(id: Long, sequence: Int, status: String?)
 
     @Query("SELECT COUNT(*) FROM attendees WHERE event_id = :eventId")
     suspend fun countForEvent(eventId: Long): Int

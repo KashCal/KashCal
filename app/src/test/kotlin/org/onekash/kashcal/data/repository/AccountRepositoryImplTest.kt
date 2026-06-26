@@ -61,9 +61,29 @@ class AccountRepositoryImplTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        accountsDao = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
-        eventsDao = mockk(relaxed = true)
+        // Data-bearing DAOs are explicit (not relaxed) so an unexpected query
+        // throws instead of silently returning null/empty. Defaults below
+        // reproduce the previous relaxed behavior; per-test stubs override them.
+        accountsDao = mockk()
+        calendarsDao = mockk()
+        eventsDao = mockk()
+        coEvery { accountsDao.getById(any()) } returns null
+        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountsDao.getByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountsDao.getAllOnce() } returns emptyList()
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountsDao.getByProvider(any()) } returns emptyList()
+        every { accountsDao.getAll() } returns flowOf(emptyList())
+        every { accountsDao.getAccountCountByProvider(any()) } returns flowOf(0)
+        coEvery { accountsDao.insert(any()) } returns 0L
+        coEvery { accountsDao.deleteById(any()) } just Runs
+        coEvery { accountsDao.recordSyncSuccess(any(), any()) } just Runs
+        coEvery { accountsDao.recordSyncFailure(any(), any()) } just Runs
+        coEvery { accountsDao.updateCalDavUrls(any(), any(), any()) } just Runs
+        coEvery { accountsDao.setEnabled(any(), any()) } just Runs
+        coEvery { calendarsDao.getByAccountIdOnce(any()) } returns emptyList()
+        coEvery { eventsDao.getAllMasterEventsForCalendar(any()) } returns emptyList()
+
         pendingOperationsDao = mockk(relaxed = true)
         credentialManager = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)

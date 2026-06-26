@@ -17,6 +17,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
+import org.onekash.kashcal.sync.discovery.persistSchedulingDiscovery
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -195,7 +196,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             }
 
             // Step 4c: Discover and persist calendar-user-address-set
-            // (RFC 6638 §2.4.1). Failures are non-fatal — see A2.0 spec.
+            // (RFC 6638 §2.4.1). Failures are non-fatal.
             persistCalendarUserAddresses(client, principalUrl, account.id, accountRepository, TAG)
 
             // Step 5: Create Calendar entities for each discovered calendar
@@ -235,6 +236,14 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 }
                 createdCalendars.add(calendar)
             }
+
+            // Step 6: Discover scheduling-delivery facts (RFC 6638 §2 / §2.1.1):
+            // the principal's outbox URL + each collection's auto-schedule
+            // capability. Failures are non-fatal.
+            persistSchedulingDiscovery(
+                client, principalUrl, account.id, createdCalendars,
+                accountRepository, calendarRepository, TAG
+            )
 
             Log.i(TAG, "Discovery complete: account=${account.id}, calendars=${createdCalendars.size}")
 
@@ -341,7 +350,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
 
             // Refresh calendar-user-address-set (RFC 6638 §2.4.1) so the user's
             // identity stays current with any aliases added/removed server-side.
-            // Failures are non-fatal — see A2.0 spec.
+            // Failures are non-fatal.
             if (account.principalUrl != null) {
                 persistCalendarUserAddresses(client, account.principalUrl, accountId, accountRepository, TAG)
             }
@@ -417,6 +426,15 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     newCalendar.copy(id = calendarId)
                 }
                 createdCalendars.add(calendar)
+            }
+
+            // Re-probe scheduling-delivery facts (RFC 6638 §2 / §2.1.1) so they
+            // stay current with server-side changes. Failures are non-fatal.
+            if (account.principalUrl != null) {
+                persistSchedulingDiscovery(
+                    client, account.principalUrl, accountId, createdCalendars,
+                    accountRepository, calendarRepository, TAG
+                )
             }
 
             DiscoveryResult.Success(account, createdCalendars)

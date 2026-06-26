@@ -61,6 +61,10 @@
     <string name="action_ok">OK</string>
     <!-- Button: decline a prompt, do it later -->
     <string name="action_not_now">Not Now</string>
+    <!-- Button: grant a permission (fires the system permission dialog) -->
+    <string name="action_allow">Allow</string>
+    <!-- Button: softly decline a permission offer for good -->
+    <string name="action_no_thanks">No thanks</string>
     <string name="action_sign_in">Sign In</string>
     <!-- Button: confirm a picker selection -->
     <string name="action_select">Select</string>
@@ -647,10 +651,6 @@
     <string name="account_detail_cd_show_password">Show password</string>
     <string name="account_detail_cd_hide_password">Hide password</string>
 
-    <!-- Sync failure notification -->
-    <string name="sync_failure_notification_title">Sync issue with %1$s</string>
-    <string name="sync_failure_notification_text">Calendar sync has failed %1$d times</string>
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Rename Account</string>
     <string name="rename_account_label">Account Name</string>
@@ -835,9 +835,8 @@
     <!-- %1$s = email address -->
     <string name="dialog_sign_out_message">You are signed in as %1$s. Signing out will remove synced calendars from this device.</string>
 
-    <!-- ==================== Plural Resources (Phase 1 i18n) ==================== -->
-    <!-- IMPORTANT: Each language needs the correct plural quantity forms per CLDR.
-         See docs/TRANSLATION_GUIDE.md for required forms per language. -->
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- IMPORTANT: Each language needs the correct plural quantity forms per CLDR. -->
 
     <!-- Existing string pair conversions -->
     <plurals name="accounts_count">
@@ -996,6 +995,27 @@
     <string name="attendee_search_hint">Search</string>
     <!-- Empty state when the search query matches no attendee in the sheet. -->
     <string name="attendee_search_no_matches">No matches</string>
+    <!-- Title of the attendee picker sheet (organizer adds/removes invitees). -->
+    <string name="attendee_picker_title">Add attendees</string>
+    <!-- Placeholder on the form\'s Attendees row before anyone is added. The leading group icon names the row, so this doubles as the field label. -->
+    <string name="attendee_pick_add_people">Add attendees</string>
+    <!-- Placeholder in the picker's search field; the user can also type a full email. Kept short so it doesn't wrap. -->
+    <string name="attendee_pick_from_contacts">Name or email</string>
+    <!-- Overflow count after the previewed attendee chips on the event form, e.g. "+3 more". -->
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d more</item>
+        <item quantity="other">+%1$d more</item>
+    </plurals>
+    <!-- Title of the inline card in the picker offering to read contacts for suggestions. -->
+    <string name="attendee_contacts_permission_rationale">Suggest people from your contacts</string>
+    <!-- Shown under a typed string that isn\'t yet a valid email address. -->
+    <string name="attendee_invalid_email">Enter a full email address</string>
+    <!-- Row label that adds the typed address as an attendee, e.g. Add "sam@vendor.com". -->
+    <string name="attendee_add_typed">Add \"%1$s\"</string>
+    <!-- Inline notice when the signed-in account can\'t send invitations. -->
+    <string name="attendee_scheduling_unavailable">Inviting people isn\'t available on this account</string>
+    <!-- Save action relabeled when saving will notify attendees of a scheduling change. -->
+    <string name="action_save_and_notify">Save &amp; notify</string>
     <!-- Section header above the group of attendees who accepted. -->
     <string name="attendee_section_going">Going</string>
     <!-- Section header above the group of attendees who marked tentative. -->
@@ -1234,6 +1254,8 @@
     <string name="sync_notification_expired_title">Sync changes expired</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_expired_content_calendar">%1$s in %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synced %1$d calendar</item>

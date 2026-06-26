@@ -9,7 +9,7 @@ import org.junit.Test
 /**
  * Tests the harness plumbing with synthetic fixtures — no real engines are invoked
  * here. Real engines are tested in IcalDavRRuleAdapterTest (adapter correctness)
- * and the chunk-4 RRuleEngineParityReportTest (full corpus run).
+ * and the RRuleEngineParityReportTest (full corpus run).
  */
 class ParityHarnessInfrastructureTest {
 
@@ -202,7 +202,7 @@ class ParityHarnessInfrastructureTest {
         val icalResult = ICal4jParityEngine.expand(testCase)
         val parity = ParityComparator.compare(libResult, icalResult)
         assertNotNull("parity result non-null", parity)
-        // We don't assert which outcome — this is a plumbing smoke test. The chunk-4
-        // report will surface any actual divergence.
+        // We don't assert which outcome — this is a plumbing smoke test. The
+        // full-corpus parity report will surface any actual divergence.
     }
 }

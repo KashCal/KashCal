@@ -8,7 +8,7 @@ import org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus
  * Pilot run — 10 curated cases (5 Pool A + 5 Pool B) through the harness
  * to check whether the full 85-120 case run will yield actionable data.
  *
- * Per tracker review finding F6: if >80% of divergences are Category B
+ * If >80% of divergences are Category B
  * (RFC ambiguity) with no Category A bugs, the full corpus run will likely
  * produce more stalemate data than actionable findings. The caller should
  * inspect the printed summary before deciding to proceed.
@@ -65,14 +65,14 @@ class RRuleEngineParityPilotTest {
         }
         println()
 
-        // F6 recommendation
+        // Recommendation
         if (totalDivergences == 0) {
             println("RECOMMENDATION: full corpus run will mostly agree — useful to surface Pool C/D edges.")
         } else {
             val pctB = categoryB * 100.0 / totalDivergences
             println("RECOMMENDATION logic: ${totalDivergences} divergence(s); categoryA=$categoryA; categoryB=$categoryB (${"%.0f".format(pctB)}% of divergences)")
             if (categoryA == 0 && pctB > 80.0) {
-                println("RECOMMENDATION: consider documenting stalemate in docs/RRULE_ENGINE_PARITY.md and closing early.")
+                println("RECOMMENDATION: consider documenting the parity stalemate and closing early.")
             } else {
                 println("RECOMMENDATION: proceed to full corpus run — Category A bugs or actionable divergences present.")
             }

@@ -25,24 +25,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
- * T2-fixtures sprint: parameterized integration tests that capture how each
- * supported CalDAV server handles the RSVP write path. Output is the matrix
- * of observed behavior (Schedule-Tag exposure, If-Schedule-Tag-Match
- * enforcement, 412 on stale tags, recurring-RSVP shape, SEQUENCE handling,
- * server-side read-only enforcement). T2 (RSVP write path) plan-review
- * reads the resulting findings doc to design the 412-retry path and
- * `If-Schedule-Tag-Match` wiring against real per-server behavior rather
- * than against the spec alone.
+ * Parameterized integration tests that capture how each supported CalDAV
+ * server handles the RSVP write path. Output is the matrix of observed
+ * behavior (Schedule-Tag exposure, If-Schedule-Tag-Match enforcement, 412
+ * on stale tags, recurring-RSVP shape, SEQUENCE handling, server-side
+ * read-only enforcement). The resulting findings inform the 412-retry path
+ * and `If-Schedule-Tag-Match` wiring, grounding it in real per-server
+ * behavior rather than the spec alone.
  *
  * The production `CalDavClient` interface doesn't yet expose `Schedule-Tag`
  * / `Schedule-Status` response headers or the `If-Schedule-Tag-Match`
  * request header. This test uses a raw OkHttp client to probe those
- * directly; T2's plan decides which subset production needs.
+ * directly, so we can decide which subset production needs.
  *
  * Run: `./gradlew :app:testDebugUnitTest -Pintegration --tests
  * '*MultiServerRsvpFixturesTest*'`. Servers unreachable at runtime skip
- * via `assumeTrue`; minimum-acceptance coverage for T2 plan-review is
- * iCloud + 3 Docker servers.
+ * via `assumeTrue`; minimum coverage is iCloud + 3 Docker servers.
  *
  * PII redaction follows the same pattern as `MultiServerAttendeePersistenceTest`:
  * non-`@example.test` email addresses are masked before any test failure
@@ -220,7 +218,7 @@ class MultiServerRsvpFixturesTest(
     /**
      * Build the standard RSVP fixture: ORGANIZER mailto matches the
      * authenticated account (so iCloud's iSchedule routing doesn't strip
-     * ATTENDEEs — see A2 documented quirk in CALDAV_TEST_SERVERS.md), one
+     * ATTENDEEs — the documented iCloud ATTENDEE-routing quirk), one
      * ATTENDEE matching the auth account with PARTSTAT=NEEDS-ACTION, one
      * external synthetic ATTENDEE.
      *
@@ -364,7 +362,7 @@ END:VCALENDAR
         if (selfAttendeeLine == null) {
             // Documented quirk on iCloud-class servers (iSchedule routing
             // strips self-as-attendee when ORGANIZER mailto matches). Log
-            // and skip — fixture sprint records, doesn't enforce.
+            // and skip — this fixture records behavior, doesn't enforce it.
             println(
                 "[${config.name}] rsvp_partstat_roundtrip: self ATTENDEE row " +
                     "absent on GET (server-side iTIP routing). Documented quirk."
@@ -688,8 +686,9 @@ END:VCALENDAR
 
         // Use a synthetic ORGANIZER (not the auth account) — making the
         // authenticated user an attendee, not the organizer. iCloud may
-        // strip ATTENDEEs via iSchedule routing in this case (documented
-        // A2 quirk); skip the test on iCloud rather than fail.
+        // strip ATTENDEEs via iSchedule routing in this case (the
+        // documented iCloud ATTENDEE-routing quirk); skip the test on
+        // iCloud rather than fail.
         assumeFalse(
             "${config.name} strips ATTENDEEs when ORGANIZER mailto != auth account (iSchedule routing)",
             config.stripsAttendeesOnSyntheticOrganizer

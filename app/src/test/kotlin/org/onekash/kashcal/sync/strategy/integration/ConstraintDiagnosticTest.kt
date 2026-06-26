@@ -14,6 +14,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
@@ -494,6 +495,13 @@ class ConstraintDiagnosticTest {
      * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.migration dedup*"
      */
     @Test
+    @Ignore(
+        "Stale: explores a 'proposed' dedup migration whose UNIQUE(calendar_id, " +
+            "uid, original_instance_time) is now the shipped index, so the " +
+            "duplicate-row setup this test needs can no longer be inserted. The " +
+            "behavior it motivated (blocking duplicate exceptions) is the shipped " +
+            "constraint; real migration coverage lives in the migration test suite."
+    )
     fun `migration dedup handles all duplicate patterns`() = runBlocking {
         println("=== Migration Dedup Robustness Test ===")
         println()

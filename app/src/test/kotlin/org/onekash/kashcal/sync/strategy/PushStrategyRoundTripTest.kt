@@ -137,6 +137,25 @@ class PushStrategyRoundTripTest {
             assertEquals(master.uid, exc.uid)
             assertNull("Exceptions have no RRULE", exc.rrule)
         }
+
+        // Each exception must carry its OWN distinct RECURRENCE-ID (the
+        // instance it overrides). A bug that emitted the same RECURRENCE-ID
+        // for every exception — or dropped/duplicated one — would still pass
+        // the shared-UID/no-RRULE checks above, so assert distinctness and
+        // that each maps back to one of the three originalInstanceTimes.
+        val recurrenceIds = parsedExceptions.map { it.recurrenceId.toString() }
+        assertEquals(
+            "Each exception must have a distinct RECURRENCE-ID",
+            3,
+            recurrenceIds.toSet().size
+        )
+        val expectedInstanceMs = exceptions.map { it.originalInstanceTime!! }.toSet()
+        val parsedInstanceMs = parsedExceptions.map { it.recurrenceId!!.timestamp }.toSet()
+        assertEquals(
+            "Parsed RECURRENCE-IDs must match the three exception instance times",
+            expectedInstanceMs,
+            parsedInstanceMs
+        )
     }
 
     // ==================== UPDATE: Server Event Re-Serialization ====================

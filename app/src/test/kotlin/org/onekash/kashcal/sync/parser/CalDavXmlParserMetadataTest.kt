@@ -3,6 +3,8 @@ package org.onekash.kashcal.sync.parser
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -31,6 +33,11 @@ class CalDavXmlParserMetadataTest {
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.d(any(), any<String>()) } returns 0
         parser = CalDavXmlParser()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     // ========== Happy path ==========

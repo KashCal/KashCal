@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,9 +72,10 @@ class KashCalDataStoreInvariantTest {
 
     @Test
     fun `setDefaultCalendarView accepts all real view keys`() = runTest {
-        // Just exercise the require() — no exception means accepted.
+        // Each real key is accepted (require() doesn't fire) AND persisted.
         for (view in listOf("month", "agenda", "day", "three_days", "week", "month_full", "year")) {
             dataStore.setDefaultCalendarView(view)
+            assertEquals(view, dataStore.getDefaultCalendarView())
         }
     }
 }

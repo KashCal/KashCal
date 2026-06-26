@@ -1657,4 +1657,65 @@ class EventFormSheetTest {
             assertEquals("round-trip failed for $minutes (iso=$iso)", minutes, parseIso8601DurationToMinutes(iso))
         }
     }
+
+    // ========== Attendee row gate ==========
+
+    @Test
+    fun `attendee row editable for a detached exception on a schedulable organizer account`() {
+        // The per-occurrence ("just this one") edit now carries the edited
+        // guest set, so a detached exception's attendee row is editable —
+        // it is no longer gated read-only.
+        assertTrue(canEditAttendees(isReadOnly = false, isSchedulable = true, hasContactQuery = true))
+    }
+
+    @Test
+    fun `attendee row editable for a recurring series master`() {
+        assertTrue(canEditAttendees(isReadOnly = false, isSchedulable = true, hasContactQuery = true))
+    }
+
+    @Test
+    fun `attendee row not editable on a non-schedulable account`() {
+        assertFalse(canEditAttendees(isReadOnly = false, isSchedulable = false, hasContactQuery = true))
+    }
+
+    @Test
+    fun `attendee row not editable for a read-only invitee`() {
+        assertFalse(canEditAttendees(isReadOnly = true, isSchedulable = true, hasContactQuery = true))
+    }
+
+    @Test
+    fun `attendee row not editable without a contact-query callback`() {
+        assertFalse(canEditAttendees(isReadOnly = false, isSchedulable = true, hasContactQuery = false))
+    }
+
+    @Test
+    fun `scheduling-unavailable text stays suppressed for a recurring occurrence edit`() {
+        // Dropping the detached-exception clause from canEditAttendees must NOT
+        // reroute a non-schedulable detached exception into the
+        // "inviting unavailable" education text: that branch keys on
+        // (isEditMode && wasRecurringAtLoad), both true for a recurring
+        // occurrence edit, so it stays suppressed (read-only chip display).
+        assertFalse(
+            showSchedulingUnavailable(
+                isReadOnly = false,
+                isSchedulable = false,
+                hasContactQuery = true,
+                isEditMode = true,
+                wasRecurringAtLoad = true,
+            )
+        )
+    }
+
+    @Test
+    fun `scheduling-unavailable text shows for a new non-schedulable event`() {
+        assertTrue(
+            showSchedulingUnavailable(
+                isReadOnly = false,
+                isSchedulable = false,
+                hasContactQuery = true,
+                isEditMode = false,
+                wasRecurringAtLoad = false,
+            )
+        )
+    }
 }

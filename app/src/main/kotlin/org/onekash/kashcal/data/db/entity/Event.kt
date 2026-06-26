@@ -441,4 +441,23 @@ data class Event(
                syncStatus == SyncStatus.PENDING_UPDATE ||
                syncStatus == SyncStatus.PENDING_DELETE
     }
+
+    /**
+     * Project this master event onto a single occurrence: the master's fields
+     * with the start/end shifted to that occurrence's time and the recurrence
+     * fields cleared (an occurrence is a single instance, not a series).
+     *
+     * Used both to seed the exception a user is about to edit and to form the
+     * pristine baseline a SEQUENCE-bump decision compares against, so the
+     * structural master→exception difference (RRULE present vs absent, first
+     * occurrence's time vs this one's) doesn't masquerade as an edit. The
+     * occurrence's end preserves the master's duration.
+     */
+    fun projectOntoOccurrence(occurrenceStartTs: Long): Event = copy(
+        startTs = occurrenceStartTs,
+        endTs = occurrenceStartTs + (endTs - startTs),
+        rrule = null,
+        exdate = null,
+        rdate = null
+    )
 }

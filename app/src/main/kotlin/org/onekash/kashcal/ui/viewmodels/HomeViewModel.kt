@@ -42,6 +42,7 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.identity.canEditAsOrganizer
+import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -58,6 +59,7 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.toStartEndTs
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
@@ -117,6 +119,7 @@ class HomeViewModel(
     private val networkMonitor: NetworkMonitor,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
+    private val contactEmailReader: org.onekash.kashcal.data.contacts.ContactEmailReader,
     private val context: Context,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     private val currentDayCodeProvider: () -> Int
@@ -133,6 +136,7 @@ class HomeViewModel(
         networkMonitor: NetworkMonitor,
         calendarProviderRepository: CalendarProviderRepository,
         attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
+        contactEmailReader: org.onekash.kashcal.data.contacts.ContactEmailReader,
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ) : this(
@@ -145,6 +149,7 @@ class HomeViewModel(
         networkMonitor,
         calendarProviderRepository,
         attendeeBackfill,
+        contactEmailReader,
         context,
         ioDispatcher,
         { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
@@ -205,6 +210,19 @@ class HomeViewModel(
     /** Persist that the share-card coach mark has been shown. */
     fun markShareCardTooltipShown() {
         viewModelScope.launch { dataStore.setShownShareCardTooltip(true) }
+    }
+
+    /**
+     * Whether the user permanently declined contact suggestions in the
+     * attendee picker. When true, the picker's contacts-permission banner is
+     * never shown. Survives restart.
+     */
+    val contactSuggestionsDeclined: StateFlow<Boolean> = dataStore.contactSuggestionsDeclined
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    /** Persist that the user declined contact suggestions ("No thanks" or a system-dialog denial). */
+    fun declineContactSuggestions() {
+        viewModelScope.launch { dataStore.setContactSuggestionsDeclined(true) }
     }
 
     /**
@@ -2543,6 +2561,90 @@ class HomeViewModel(
     }
 
     /**
+     * One-shot read of an event's existing attendee ENTITIES, for the form's
+     * picker to seed from on edit. Returns Room rows (not the lossy
+     * [AttendeeUiModel] projection) so the picker preserves
+     * role/cutype/rsvp/delegation that would otherwise be stripped on the next
+     * push.
+     */
+    suspend fun getAttendeesForEdit(eventId: Long): List<org.onekash.kashcal.data.db.entity.Attendee> {
+        return withContext(ioDispatcher) {
+            eventReader.getAttendeesForEvent(eventId).first()
+        }
+    }
+
+    /** Debounced contact-email lookup for the attendee picker's type-ahead. */
+    suspend fun queryContactEmails(prefix: String): List<org.onekash.kashcal.data.contacts.ContactEmail> =
+        contactEmailReader.query(prefix)
+
+    /**
+     * Resolve the account for a calendar plus whether it can send invitations.
+     * "Schedulable" means the account has at least one mailto-emittable
+     * address, so an ORGANIZER can be resolved; the picker uses this to gate
+     * editing and avoid creating an ATTENDEE-without-ORGANIZER event.
+     */
+    suspend fun getFormAttendeeContext(calendarId: Long?): FormAttendeeContext {
+        if (calendarId == null) return FormAttendeeContext(account = null, isSchedulable = true)
+        return withContext(ioDispatcher) {
+            val calendar = uiState.value.calendars.firstOrNull { it.id == calendarId }
+            val account = calendar?.accountId?.let { accountRepository.getAccountById(it) }
+            // Null account = a local-only calendar; treat as schedulable (the
+            // coordinator resolves no ORGANIZER but also stores no attendees on
+            // a non-CalDAV calendar, so the picker stays usable). A resolved
+            // account is schedulable only when it has a mailto-emittable address.
+            val schedulable = account == null ||
+                account.effectiveAddresses().any {
+                    org.onekash.kashcal.util.AddressNormalizer.isEmailShaped(it)
+                }
+            FormAttendeeContext(account = account, isSchedulable = schedulable)
+        }
+    }
+
+    /**
+     * Resolve the day code of a device event's start, looked up by CalendarProvider ID.
+     *
+     * Used when an external VIEW intent points at a device event but carries no occurrence
+     * timestamp: we can't open an exact occurrence, so we navigate to the event's start date
+     * instead of silently landing on today. Honors isAllDay so all-day events in negative UTC
+     * offsets resolve to the correct local day.
+     *
+     * @param eventId CalendarProvider event ID
+     * @return Day code in YYYYMMDD format, or null if the event can't be found
+     */
+    suspend fun getDeviceEventDayCode(eventId: Long): Int? {
+        return withContext(ioDispatcher) {
+            val event = calendarProviderRepository.getDeviceEvent(eventId) ?: return@withContext null
+            DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
+        }
+    }
+
+    /**
+     * Resolve a device event for quick view from just its CalendarProvider ID, with no
+     * occurrence timestamp — the case for external VIEW intents that carry only the event ID.
+     *
+     * Picks the occurrence to show:
+     * - Recurring series: the next instance at or after now (read from the Instances view, so
+     *   RRULE/RDATE/EXDATE are honored). The master row's DTSTART is the first — possibly
+     *   long-past — occurrence and must not be used. A fully-ended series yields null.
+     * - Non-recurring event: its own DTSTART (the single instance, past or future).
+     *
+     * @param eventId CalendarProvider event ID
+     * @return The matched DisplayEvent.Device, or null if no occurrence can be resolved
+     */
+    suspend fun getDeviceEventForQuickViewById(eventId: Long): DisplayEvent.Device? {
+        return withContext(ioDispatcher) {
+            val event = calendarProviderRepository.getDeviceEvent(eventId) ?: return@withContext null
+            val occurrenceTs = if (!event.rrule.isNullOrEmpty()) {
+                calendarProviderRepository.getNextOccurrenceStart(eventId, System.currentTimeMillis())
+                    ?: return@withContext null
+            } else {
+                event.startTs
+            }
+            getDeviceEventForQuickView(eventId, occurrenceTs)
+        }
+    }
+
+    /**
      * Get device event for quick view from widget tap.
      *
      * Queries CalendarProvider for instances on the day of occurrenceTs,
@@ -2589,40 +2691,11 @@ class HomeViewModel(
     ): Result<org.onekash.kashcal.data.db.entity.Event> {
         return withContext(ioDispatcher) {
             try {
-                // Calculate timestamps from form state
-                // CRITICAL: All-day events must be stored as UTC midnight for consistency
-                // with iCal/CalDAV parsing. The UI date picker returns local time, so we
-                // convert to UTC for all-day events.
-                val (startTs, endTs) = if (formState.isAllDay) {
-                    // All-day: Convert local date to UTC midnight
-                    val startUtc = DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
-                    val endUtc = DateTimeUtils.localDateToUtcMidnight(formState.endDateMillis)
-                    // For all-day events, endTs should be end of the last day (23:59:59.999 UTC)
-                    startUtc to DateTimeUtils.utcMidnightToEndOfDay(endUtc)
-                } else {
-                    // Timed: Use selected timezone (or device default)
-                    // CRITICAL: The time picker shows hours/minutes in the SELECTED timezone,
-                    // so we must interpret them in that timezone when calculating the UTC timestamp.
-                    val selectedTz = formState.timezone?.let {
-                        java.util.TimeZone.getTimeZone(it)
-                    } ?: java.util.TimeZone.getDefault()
-
-                    val startCalendar = Calendar.getInstance(selectedTz).apply {
-                        timeInMillis = formState.dateMillis
-                        set(Calendar.HOUR_OF_DAY, formState.startHour)
-                        set(Calendar.MINUTE, formState.startMinute)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    val endCalendar = Calendar.getInstance(selectedTz).apply {
-                        timeInMillis = formState.endDateMillis
-                        set(Calendar.HOUR_OF_DAY, formState.endHour)
-                        set(Calendar.MINUTE, formState.endMinute)
-                        set(Calendar.SECOND, 0)
-                        set(Calendar.MILLISECOND, 0)
-                    }
-                    startCalendar.timeInMillis to endCalendar.timeInMillis
-                }
+                // Calculate timestamps from form state. The conversion (all-day
+                // → UTC midnight; timed → selected-timezone wall clock) lives in
+                // EventFormState.toStartEndTs so the edit-notify banner's change
+                // detection uses the exact same math as what gets persisted.
+                val (startTs, endTs) = formState.toStartEndTs()
 
                 // Build reminders list
                 val reminders = buildRemindersList(formState.reminders)
@@ -2630,6 +2703,15 @@ class HomeViewModel(
                 // Get calendar ID (use local if not specified)
                 val calendarId = formState.selectedCalendarId
                     ?: eventCoordinator.getLocalCalendarId()
+
+                // Attendees the user edited in the form. null = the form isn't
+                // managing attendees (leave any existing/pulled rows alone); a
+                // non-null list is the authoritative set to persist. The picker
+                // hands back Room entities directly (it seeds from and mutates
+                // the real rows), so there's no lossy projection to convert —
+                // and an unedited open-and-save passes null even when the event
+                // already has attendees, preserving their wire fields.
+                val attendeesArg = formState.attendees.takeIf { formState.attendeesEdited }
 
                 // Scope-aware route: when the form-save flow handed us an
                 // explicit scope, honor it. THIS_AND_FUTURE is the new
@@ -2646,6 +2728,7 @@ class HomeViewModel(
                     val splitEvent = eventCoordinator.editThisAndFuture(
                         masterEventId = masterEventId,
                         splitTimeMs = formState.editingOccurrenceTs,
+                        attendees = attendeesArg,
                         changes = { master ->
                             master.copy(
                                 title = formState.title.ifBlank { "Untitled" },
@@ -2687,6 +2770,7 @@ class HomeViewModel(
                     eventCoordinator.editSingleOccurrence(
                         masterEventId = masterEventId,
                         occurrenceTimeMs = effectiveOccurrenceTs,
+                        attendees = attendeesArg,
                         changes = { masterEvent ->
                             masterEvent.copy(
                                 title = formState.title.ifBlank { "Untitled" },
@@ -2711,8 +2795,22 @@ class HomeViewModel(
                     )
                 } else if (formState.isEditMode && formState.editingEventId != null) {
                     // Update entire event (or all occurrences for recurring)
-                    val existingEvent = eventCoordinator.getEventById(formState.editingEventId)
+                    val loadedEvent = eventCoordinator.getEventById(formState.editingEventId)
                         ?: return@withContext Result.failure(IllegalStateException("Event not found"))
+
+                    // ALL_EVENTS must rewrite the master series row. If the
+                    // form was opened on a detached exception, climb to its
+                    // master like the THIS_AND_FUTURE / exception branches do
+                    // — otherwise the rrule change lands on the exception row
+                    // instead of the series.
+                    val existingEvent =
+                        if (scope == EditScope.ALL_EVENTS && loadedEvent.originalEventId != null) {
+                            eventCoordinator.getEventById(loadedEvent.originalEventId)
+                                ?: return@withContext Result.failure(IllegalStateException("Master event not found"))
+                        } else {
+                            loadedEvent
+                        }
+                    val targetEventId = existingEvent.id
 
                     // Check if calendar is changing
                     val calendarChanged = existingEvent.calendarId != calendarId
@@ -2724,10 +2822,10 @@ class HomeViewModel(
                     if (calendarChanged) {
                         // Calendar move requires DELETE + CREATE for CalDAV
                         // moveEventToCalendar handles this properly
-                        eventCoordinator.moveEventToCalendar(formState.editingEventId, calendarId)
+                        eventCoordinator.moveEventToCalendar(targetEventId, calendarId)
 
                         // After move, get the updated event and apply other field changes
-                        val movedEvent = eventCoordinator.getEventById(formState.editingEventId)
+                        val movedEvent = eventCoordinator.getEventById(targetEventId)
                             ?: return@withContext Result.failure(IllegalStateException("Event not found after move"))
 
                         val finalEvent = movedEvent.copy(
@@ -2744,7 +2842,7 @@ class HomeViewModel(
                             color = formState.eventColor,
                             updatedAt = System.currentTimeMillis()
                         )
-                        eventCoordinator.updateEvent(finalEvent)
+                        eventCoordinator.updateEvent(finalEvent, attendees = attendeesArg)
                     } else {
                         // Same calendar - just update the event
                         val updatedEvent = existingEvent.copy(
@@ -2762,7 +2860,7 @@ class HomeViewModel(
                             color = formState.eventColor,
                             updatedAt = System.currentTimeMillis()
                         )
-                        eventCoordinator.updateEvent(updatedEvent)
+                        eventCoordinator.updateEvent(updatedEvent, attendees = attendeesArg)
                     }
                 } else {
                     // Create new event
@@ -2788,7 +2886,7 @@ class HomeViewModel(
                         updatedAt = now
                     )
 
-                    eventCoordinator.createEvent(newEvent, calendarId)
+                    eventCoordinator.createEvent(newEvent, calendarId, attendees = attendeesArg)
                 }
 
                 // Refresh the UI after save
@@ -4063,4 +4161,14 @@ class HomeViewModel(
 data class EventAttendeeUiState(
     val models: List<AttendeeUiModel>,
     val isCurrentUserOnList: Boolean
+)
+
+/**
+ * The attendee-editing context for the event form: the resolving account (to
+ * mark "You" and as ORGANIZER source) and whether the account can send
+ * invitations. See [HomeViewModel.getFormAttendeeContext].
+ */
+data class FormAttendeeContext(
+    val account: org.onekash.kashcal.data.db.entity.Account?,
+    val isSchedulable: Boolean
 )

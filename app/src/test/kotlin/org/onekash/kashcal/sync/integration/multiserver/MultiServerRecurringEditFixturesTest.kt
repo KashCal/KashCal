@@ -21,8 +21,8 @@ import java.util.UUID
  * Capture canonical recurring-edit fixtures for each supported CalDAV
  * server. For each (server × edit-mode) the harness creates a master
  * weekly recurring event, performs the edit, fetches the stored body
- * back, and writes a redacted fixture to
- * `docs/fixtures/recurring-edit/<server>/...`.
+ * back, and writes a redacted fixture to a local, gitignored
+ * fixtures directory (recurring-edit/<server>/...).
  *
  * Edit modes captured:
  *   01 — master create + fetch round-trip
@@ -42,8 +42,8 @@ import java.util.UUID
  *     ./gradlew :app:testDebugUnitTest -Pintegration \
  *         --tests '*MultiServerRecurringEditFixturesTest*'
  *
- * Output dir is gitignored (`docs/`). Servers unreachable at runtime
- * skip via `assumeTrue`.
+ * Output dir is a local, gitignored fixtures directory. Servers
+ * unreachable at runtime skip via `assumeTrue`.
  */
 @RunWith(Parameterized::class)
 class MultiServerRecurringEditFixturesTest(

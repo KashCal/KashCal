@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for DeviceCalendarReminderActionReceiver (Phase 4 - Chunk 6).
+ * Unit tests for DeviceCalendarReminderActionReceiver.
  *
  * Tests cover:
  * - Snooze action handling

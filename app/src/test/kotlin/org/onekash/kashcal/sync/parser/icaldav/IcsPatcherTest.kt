@@ -119,6 +119,153 @@ class IcsPatcherTest {
     }
 
     @Test
+    fun `patch preserves an END-relative alarm through a START-relative reminder edit`() {
+        // An event with one START-relative alarm (-PT15M, surfaced in the form) and one
+        // END-relative alarm (5 min before end). The reminders list carries only START
+        // offsets (the pull path does not surface END-relative alarms), so an unrelated
+        // edit (title) must NOT erase the END-relative alarm from the server copy.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:end-relative-edit@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Original Title
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before start
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER;RELATED=END:-PT5M
+            DESCRIPTION:5 min before end
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "end-relative-edit@kashcal.test",
+            title = "Renamed Title",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L,
+            reminders = listOf("-PT15M")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("Renamed Title", patchedEvent.summary)
+        assertTrue(
+            "END-relative alarm must survive a cosmetic edit",
+            patchedEvent.alarms.any { it.triggerRelatedToEnd }
+        )
+        assertTrue(
+            "START-relative reminder must survive too",
+            patchedEvent.alarms.any { !it.triggerRelatedToEnd && it.trigger?.toMinutes() == -15L }
+        )
+    }
+
+    @Test
+    fun `patch preserves an END-relative alarm when there are no displayed reminders`() {
+        // Silent-erasure case: the event's ONLY alarm is END-relative, so the pull path
+        // stored no reminders (reminders == null). A save must NOT wipe it — the
+        // null-reminders branch clears the displayed set but must keep never-shown
+        // END-relative alarms (same rationale as hidden alarms beyond the form's window).
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:end-relative-only@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Meeting
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER;RELATED=END:-PT10M
+            DESCRIPTION:10 min before end
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "end-relative-only@kashcal.test",
+            title = "Meeting",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L,
+            reminders = null
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("END-relative alarm must not be erased", 1, patchedEvent.alarms.size)
+        assertTrue(
+            "preserved alarm must still be END-relative",
+            patchedEvent.alarms.first().triggerRelatedToEnd
+        )
+    }
+
+    @Test
+    fun `patch does not turn a START reminder into an END-relative alarm on a shared offset`() {
+        // Latent reconcile bug: mergeAlarms matched user reminders to original alarms by
+        // trigger VALUE only, ignoring RELATED=END. A START reminder of -15m could consume
+        // an END-relative -15m alarm and be re-emitted as END-relative — firing 15m before
+        // END instead of START. Partitioning END-relative out of the reconciliation fixes it.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:shared-offset@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Meeting
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT30M
+            DESCRIPTION:30 min before start
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER;RELATED=END:-PT15M
+            DESCRIPTION:15 min before end
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // User keeps the -30m start reminder and adds a -15m START reminder.
+        val entity = createTestEvent(
+            uid = "shared-offset@kashcal.test",
+            title = "Meeting",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L,
+            reminders = listOf("-PT30M", "-PT15M")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertTrue(
+            "user's -15m must be a START-relative reminder",
+            patchedEvent.alarms.any { !it.triggerRelatedToEnd && it.trigger?.toMinutes() == -15L }
+        )
+        assertTrue(
+            "original END-relative -15m must survive as END-relative",
+            patchedEvent.alarms.any { it.triggerRelatedToEnd && it.trigger?.toMinutes() == -15L }
+        )
+    }
+
+    @Test
     fun `patch normalizes a non-NONE absolute-trigger alarm to a single relative alarm`() {
         // A real (non-NONE) absolute-trigger VALARM in the displayed window. KashCal's
         // pull path converts absolute triggers to relative offsets (instant - dtStart)
@@ -305,6 +452,191 @@ class IcsPatcherTest {
     }
 
     @Test
+    fun `patch with explicit attendees REPLACES the rawIcal attendee set`() {
+        // Regression for the picker-no-op bug: editing attendees on a
+        // server-synced event (which has rawIcal) must reach the wire. When the
+        // caller passes a non-null attendee set, it is authoritative and
+        // overrides the original ICS's ATTENDEE block.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:edit-attendees@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Meeting
+            ORGANIZER;CN=John Doe:mailto:john@example.com
+            ATTENDEE;CN=Jane;PARTSTAT=ACCEPTED:mailto:jane@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "edit-attendees@kashcal.test",
+            title = "Meeting",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600000,
+        )
+        // User added Carl and removed Jane via the picker — this is the table set.
+        val newAttendees = listOf(
+            Attendee(eventId = 1, address = "mailto:carl@example.com", displayName = "Carl", partstat = "NEEDS-ACTION")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity, newAttendees)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        val emails = patchedEvent.attendees.map { it.email }.toSet()
+        assertEquals("explicit set replaces original", setOf("carl@example.com"), emails)
+        assertFalse("removed attendee must not survive", emails.contains("jane@example.com"))
+    }
+
+    @Test
+    fun `patch with empty attendees clears the rawIcal attendee set`() {
+        // Remove-all-attendees: an explicit empty list clears, distinct from
+        // null (preserve). Confirms the remove-all path reaches the wire.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:clear-attendees@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Meeting
+            ORGANIZER;CN=John:mailto:john@example.com
+            ATTENDEE;CN=Jane;PARTSTAT=ACCEPTED:mailto:jane@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+        // Organized event (the only case where remove-all is meaningful).
+        val entity = createTestEvent(
+            uid = "clear-attendees@kashcal.test", title = "Meeting",
+            startTs = System.currentTimeMillis(), endTs = System.currentTimeMillis() + 3600000,
+            organizerEmail = "john@example.com",
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity, emptyList())
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("empty list clears attendees", 0, patchedEvent.attendees.size)
+    }
+
+    @Test
+    fun `patch emits organizer from event when rawIcal had none and attendees are added`() {
+        // Real-world bug: an event created without invitees synced to the server,
+        // so its stored rawIcal carries NO ORGANIZER. Later the user adds an
+        // attendee; the coordinator stamps Event.organizerEmail. The patch path
+        // must surface that organizer on the wire, otherwise the server has no
+        // ORGANIZER to auto-schedule (RFC 6638 §3) and no invite is delivered.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:no-organizer@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Solo event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "no-organizer@kashcal.test",
+            title = "Solo event",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600000,
+            organizerEmail = "me@example.com",
+            organizerName = "Me Myself",
+        )
+        val added = listOf(
+            Attendee(eventId = 1, address = "mailto:guest@example.com", displayName = "Guest", partstat = "NEEDS-ACTION")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity, added)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("organizer must be emitted from the event", "me@example.com", patchedEvent.organizer?.email)
+        assertEquals("added attendee must reach the wire", setOf("guest@example.com"),
+            patchedEvent.attendees.map { it.email }.toSet())
+    }
+
+    @Test
+    fun `patch does not synthesize an organizer on a cosmetic edit with no attendees`() {
+        // A non-push edit (attendees == null) — e.g. a title change, or the
+        // export/share path — must NOT invent an ORGANIZER from a lingering
+        // organizerEmail. Doing so would leak the user's address into a body
+        // that never carried one (and into shared .ics files).
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:cosmetic@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Personal event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "cosmetic@kashcal.test",
+            title = "Renamed",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600000,
+            organizerEmail = "me@example.com",
+        )
+
+        // attendees == null → preserve path; no ORGANIZER must appear.
+        val patched = IcsPatcher.patch(originalIcs, entity, attendees = null)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertNull("must not synthesize an organizer on a non-push edit", patchedEvent.organizer)
+    }
+
+    @Test
+    fun `patch keeps the original organizer over the event organizer`() {
+        // The server's ORGANIZER is authoritative (correct mailto/urn-uuid/CN
+        // shape); a stamped Event.organizerEmail must not clobber it.
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:has-organizer@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Meeting
+            ORGANIZER;CN=Boss:mailto:boss@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "has-organizer@kashcal.test",
+            title = "Meeting",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600000,
+            organizerEmail = "me@example.com",
+        )
+        val added = listOf(
+            Attendee(eventId = 1, address = "mailto:guest@example.com", displayName = "Guest", partstat = "NEEDS-ACTION")
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity, added)
+        val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
+
+        assertEquals("original organizer wins", "boss@example.com", patchedEvent.organizer?.email)
+    }
+
+    @Test
     fun `patch preserves rawProperties`() {
         val originalIcs = """
             BEGIN:VCALENDAR
@@ -441,7 +773,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patch uses Event entity UID when rawIcal has no UID`() {
-        // Gap 3 push scenario: rawIcal from a non-compliant server has no UID.
+        // Push scenario: rawIcal from a non-compliant server has no UID.
         // ICalParser generates a random UUID on re-parse, but IcsPatcher must
         // override it with the Event entity's UID (stable since first pull).
         val originalIcs = """
@@ -1421,15 +1753,14 @@ class IcsPatcherTest {
         // Should have 3 alarms
         assertEquals("Should have 3 alarms", 3, patchedEvent.alarms.size)
 
-        // Extract triggers in minutes for verification
-        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.toMinutes() }
-
-        // The triggers should now be in sorted order (from entity.reminders)
-        // Note: IcsPatcher merges reminders[i] with originalAlarms[i] by position
-        // So: reminders[0]=-PT15M → originalAlarms[0] (was -P1D), etc.
-        assertEquals("First trigger should be 15 min", -15L, triggers[0])
-        assertEquals("Second trigger should be 1 hour", -60L, triggers[1])
-        assertEquals("Third trigger should be 1 day", -1440L, triggers[2])
+        // Each user reminder is reconciled with the original alarm that has the
+        // SAME trigger (not by position), so each alarm keeps its own ACTION at
+        // its own time. Position-based pairing would scramble actions (the AUDIO
+        // alarm would fire at -15m, etc.).
+        val byTrigger = patchedEvent.alarms.associateBy { it.trigger?.toMinutes() }
+        assertEquals("AUDIO stays at -1 day", AlarmAction.AUDIO, byTrigger[-1440L]?.action)
+        assertEquals("EMAIL stays at -1 hour", AlarmAction.EMAIL, byTrigger[-60L]?.action)
+        assertEquals("DISPLAY stays at -15 min", AlarmAction.DISPLAY, byTrigger[-15L]?.action)
     }
 
     @Test
@@ -1458,14 +1789,13 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Sorted reminders: 15 min comes before 1 day
-        // But we only have 2 in entity (typical case)
+        // Original alarms: AUDIO@-1d, EMAIL@-1h. User reminders: -15m and -1d.
         val entity = createTestEvent(
             uid = "action-preserve@kashcal.test",
             title = "Event",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            reminders = listOf("-PT15M", "-P1D")  // Sorted: 15m before 1d
+            reminders = listOf("-PT15M", "-P1D")
         )
 
         val patched = IcsPatcher.patch(originalIcs, entity)
@@ -1474,17 +1804,15 @@ class IcsPatcherTest {
 
         assertEquals("Should have 2 alarms", 2, patchedEvent.alarms.size)
 
-        // ACTION types come from original alarms by position
-        // reminders[0] (-PT15M) → originalAlarms[0] (AUDIO)
-        // reminders[1] (-P1D) → originalAlarms[1] (EMAIL)
-        val actions = patchedEvent.alarms.map { it.action.name }
-        assertEquals("First alarm should preserve AUDIO action", "AUDIO", actions[0])
-        assertEquals("Second alarm should preserve EMAIL action", "EMAIL", actions[1])
-
-        // But triggers should be from entity.reminders
-        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.toMinutes() }
-        assertEquals("First trigger from sorted reminders", -15L, triggers[0])
-        assertEquals("Second trigger from sorted reminders", -1440L, triggers[1])
+        // Reconciled by TRIGGER, not position: -1d matches the AUDIO alarm and
+        // keeps its ACTION; -15m matches no original alarm (the EMAIL@-1h was
+        // deleted in the form) so it becomes a fresh DISPLAY alarm. Position
+        // pairing would have wrongly stamped the EMAIL action onto -1d.
+        val byTrigger = patchedEvent.alarms.associateBy { it.trigger?.toMinutes() }
+        assertEquals("AUDIO preserved at its own -1 day offset", AlarmAction.AUDIO, byTrigger[-1440L]?.action)
+        assertEquals("new -15m reminder is a fresh DISPLAY alarm", AlarmAction.DISPLAY, byTrigger[-15L]?.action)
+        assertFalse("the unmatched EMAIL alarm (-1h) was not re-stamped onto another time",
+            patchedEvent.alarms.any { it.action == AlarmAction.EMAIL })
     }
 
     // ========== RFC 5545/7986 Extended Properties Tests ==========
@@ -1687,7 +2015,8 @@ class IcsPatcherTest {
         geoLon: Double? = null,
         color: Int? = null,
         url: String? = null,
-        categories: List<String>? = null
+        categories: List<String>? = null,
+        organizerEmail: String? = null
     ): Event {
         return Event(
             id = 100L + (originalInstanceTime % 1000), // Unique ID
@@ -1704,7 +2033,7 @@ class IcsPatcherTest {
             status = status,
             transp = "OPAQUE",
             classification = "PUBLIC",
-            organizerEmail = null,
+            organizerEmail = organizerEmail,
             organizerName = null,
             rrule = null, // Exceptions have no RRULE
             rdate = null,
@@ -1803,7 +2132,7 @@ class IcsPatcherTest {
         )
     }
 
-    // ========== B3 — patchAttendeeReply (RSVP write path) ==========
+    // ========== patchAttendeeReply (RSVP write path) ==========
 
     private val multiAttendeeIcs = """
         BEGIN:VCALENDAR
@@ -1956,7 +2285,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patchAttendeeReply preserves recurring RRULE`() {
-        // T2 ships series-level RSVP only — RRULE on the master must survive.
+        // Series-level RSVP only — RRULE on the master must survive.
         val recurringIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1987,7 +2316,7 @@ class IcsPatcherTest {
         )
     }
 
-    // ==================== Organizer-side ATTENDEE emission (T3.B3) ====================
+    // ==================== Organizer-side ATTENDEE emission ====================
 
     private fun attendee(eventId: Long, address: String, partstat: String = "NEEDS-ACTION") =
         Attendee(eventId = eventId, address = address, partstat = partstat)
@@ -1998,7 +2327,9 @@ class IcsPatcherTest {
             uid = "fresh-attendees@example.test",
             title = "Planning",
             startTs = 1_700_000_000_000L,
-            endTs = 1_700_003_600_000L
+            endTs = 1_700_003_600_000L,
+            // ATTENDEE requires ORGANIZER (RFC 6638 §3.1); a real invite has one.
+            organizerEmail = "host@example.test"
         )
         val ics = IcsPatcher.generateFresh(
             event,
@@ -2033,7 +2364,8 @@ class IcsPatcherTest {
             title = "Weekly Sync",
             startTs = 1_700_000_000_000L,
             endTs = 1_700_003_600_000L,
-            rrule = "FREQ=WEEKLY"
+            rrule = "FREQ=WEEKLY",
+            organizerEmail = "host@example.test"
         )
         val exception = createExceptionEvent(
             masterId = master.id,
@@ -2041,7 +2373,8 @@ class IcsPatcherTest {
             originalInstanceTime = 1_700_086_400_000L,
             title = "Weekly Sync (moved)",
             startTs = 1_700_086_400_000L,
-            endTs = 1_700_090_000_000L
+            endTs = 1_700_090_000_000L,
+            organizerEmail = "host@example.test"
         )
         val masterAttendees = listOf(attendee(master.id, "mailto:alice@example.test", "ACCEPTED"))
         val exceptionAttendees = listOf(
@@ -2063,7 +2396,7 @@ class IcsPatcherTest {
             "master VEVENT must carry its attendee",
             masterVevent.attendees.any { it.email == "alice@example.test" }
         )
-        // This is the bug T3.B3 fixes: exception attendees previously dropped.
+        // This is the bug being fixed: exception attendees previously dropped.
         assertTrue(
             "exception VEVENT must carry carol (previously dropped on push)",
             exceptionVevent.attendees.any { it.email == "carol@example.test" }

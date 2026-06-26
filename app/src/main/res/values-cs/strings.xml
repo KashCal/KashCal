@@ -37,6 +37,8 @@
     <string name="action_not_now">Teď ne</string>
     <string name="action_sign_in">Přihlásit se</string>
     <string name="action_select">Vybrat</string>
+    <string name="action_allow">Povolit</string>
+    <string name="action_no_thanks">Ne, děkuji</string>
     <string name="action_show_password">Zobrazit heslo</string>
     <string name="action_hide_password">Skrýt heslo</string>
     <string name="action_sign_out">Odhlásit se</string>
@@ -441,8 +443,6 @@
     <string name="account_detail_cd_show_password">Zobrazit heslo</string>
     <string name="account_detail_cd_hide_password">Skrýt heslo</string>
 
-    <string name="sync_failure_notification_title">Problém se synchronizací %1$s</string>
-    <string name="sync_failure_notification_text">Synchronizace kalendáře selhala %1$d krát</string>
 
     <string name="rename_account_title">Přejmenovat účet</string>
     <string name="rename_account_label">Název účtu</string>
@@ -868,6 +868,7 @@
     <string name="sync_notification_expired_title">Změny synchronizace vypršely</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s se nepodařilo synchronizovat po 30 dnech. Bude použita verze ze serveru. Vynuťte synchronizaci pro opakování.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s v %2$s se nepodařilo synchronizovat po 30 dnech. Bude použita verze ze serveru. Vynuťte synchronizaci pro opakování.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synchronizován %1$d kalendář</item>
@@ -1160,6 +1161,20 @@
     <string name="attendee_section_pending">Čekající</string>
     <string name="attendee_section_declined">Odmítli</string>
     <string name="attendee_section_delegated">Delegovaní</string>
+    <string name="attendee_picker_title">Přidat účastníky</string>
+    <string name="attendee_pick_add_people">Přidat účastníky</string>
+    <string name="attendee_pick_from_contacts">Jméno nebo e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d další</item>
+        <item quantity="few">+%1$d další</item>
+        <item quantity="many">+%1$d dalšího</item>
+        <item quantity="other">+%1$d dalších</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Navrhovat lidi z vašich kontaktů</string>
+    <string name="attendee_invalid_email">Zadejte úplnou e-mailovou adresu</string>
+    <string name="attendee_add_typed">Přidat \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Zvaní osob není u tohoto účtu dostupné</string>
+    <string name="action_save_and_notify">Uložit a upozornit</string>
     <string name="invitees_summary_you_alone">Ty</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ty · %d pozvaný</item>

@@ -35,6 +35,8 @@
     <string name="action_close">Fermer</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Pas maintenant</string>
+    <string name="action_allow">Autoriser</string>
+    <string name="action_no_thanks">Non merci</string>
     <string name="action_sign_in">Se connecter</string>
     <string name="action_select">Sélectionner</string>
     <string name="action_show_password">Afficher le mot de passe</string>
@@ -468,8 +470,6 @@
     <string name="account_detail_cd_show_password">Afficher le mot de passe</string>
     <string name="account_detail_cd_hide_password">Masquer le mot de passe</string>
 
-    <string name="sync_failure_notification_title">Problème de synchronisation avec %1$s</string>
-    <string name="sync_failure_notification_text">La synchronisation du calendrier a échoué %1$d fois</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Renommer le compte</string>
@@ -880,6 +880,7 @@
     <string name="sync_notification_expired_title">Changements de synchronisation expirés</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s n\'ont pas pu être synchronisés après 30 jours. La version du serveur sera utilisée. Forcer la synchronisation pour réessayer.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s dans %2$s n\'ont pas pu être synchronisés après 30 jours. La version du serveur sera utilisée. Forcer la synchronisation pour réessayer.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d calendrier synchronisé</item>
@@ -1183,6 +1184,18 @@
     <string name="attendee_status_tentative">Provisoire</string>
     <string name="attendee_status_delegated">Délégué</string>
     <string name="attendee_status_pending">En attente</string>
+    <string name="attendee_picker_title">Ajouter des participants</string>
+    <string name="attendee_pick_add_people">Ajouter des participants</string>
+    <string name="attendee_pick_from_contacts">Nom ou e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d autre</item>
+        <item quantity="other">+%1$d autres</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Suggérer des personnes de vos contacts</string>
+    <string name="attendee_invalid_email">Saisissez une adresse e-mail complète</string>
+    <string name="attendee_add_typed">Ajouter \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">L\'invitation de personnes n\'est pas disponible sur ce compte</string>
+    <string name="action_save_and_notify">Enregistrer et notifier</string>
     <string name="attendee_sheet_title">Participants</string>
     <plurals name="attendee_count_invited">
         <item quantity="one">%d invité(e)</item>

@@ -25,7 +25,7 @@ import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
  * to emit the [header] + card at all.
  *
  * Empty-query fast path: when [query] is blank, every registered row is
- * rendered (constraint C1). When the section emits anything, [onEmitted]
+ * rendered. When the section emits anything, [onEmitted]
  * fires once during composition so the parent can track whether *any*
  * section produced UI (drives the empty-state fallback).
  *

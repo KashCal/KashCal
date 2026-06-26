@@ -36,6 +36,8 @@
     <string name="action_close">ปิด</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">ไว้ทีหลัง</string>
+    <string name="action_allow">อนุญาต</string>
+    <string name="action_no_thanks">ไม่เป็นไร</string>
     <string name="action_sign_in">ลงชื่อเข้าใช้</string>
     <string name="action_select">เลือก</string>
     <string name="action_show_password">แสดงรหัสผ่าน</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">แสดงรหัสผ่าน</string>
     <string name="account_detail_cd_hide_password">ซ่อนรหัสผ่าน</string>
 
-    <string name="sync_failure_notification_title">ปัญหาซิงค์กับ %1$s</string>
-    <string name="sync_failure_notification_text">การซิงค์ปฏิทินล้มเหลว %1$d ครั้ง</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">เปลี่ยนชื่อบัญชี</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">การเปลี่ยนแปลงการซิงค์หมดอายุ</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <string name="sync_notification_expired_content_calendar">%1$s ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">ซิงค์แล้ว %1$d ปฏิทิน</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">ผู้เข้าร่วม</string>
     <string name="attendee_you_marker">คุณ</string>
     <string name="attendee_organizer_pill">ผู้จัด</string>
+    <string name="attendee_picker_title">เพิ่มผู้เข้าร่วม</string>
+    <string name="attendee_pick_add_people">เพิ่มผู้เข้าร่วม</string>
+    <string name="attendee_pick_from_contacts">ชื่อหรืออีเมล</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+อีก %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">แนะนำผู้คนจากรายชื่อติดต่อของคุณ</string>
+    <string name="attendee_invalid_email">ป้อนที่อยู่อีเมลแบบเต็ม</string>
+    <string name="attendee_add_typed">เพิ่ม \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">ไม่สามารถเชิญบุคคลในบัญชีนี้ได้</string>
+    <string name="action_save_and_notify">บันทึกและแจ้งเตือน</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d เพิ่มเติม</item>
     </plurals>

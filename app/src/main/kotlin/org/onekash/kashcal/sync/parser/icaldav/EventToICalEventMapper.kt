@@ -13,7 +13,6 @@ import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.toICalEvent
 import org.onekash.kashcal.ui.shared.EventColorPalette
-import java.time.Duration
 import java.time.ZoneId
 
 /**
@@ -39,13 +38,12 @@ object EventToICalEventMapper {
         val zone = resolveZone(event.timezone)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val endTs = exclusiveEndTs(event)
-        // RFC 5545 §3.8.5: recurring events use DTSTART+DURATION (DST-safe
-        // across occurrences), non-recurring use DTSTART+DTEND. Preserve
-        // stored Event.duration when populated; otherwise compute from
-        // endTs-startTs.
-        val duration: Duration? = if (event.isRecurring) {
-            DurationUtils.parse(event.duration) ?: Duration.ofMillis(endTs - event.startTs)
-        } else null
+        // RFC 5545 §3.6.1 permits either DTEND or DURATION (never both) for any
+        // VEVENT. Emit DTEND for every event so all serialize paths agree — the
+        // patch path (IcsPatcher.patchToICalEvent) and the exception overload below
+        // already emit DTEND — and for interop: at least one major server rejects an
+        // EXDATE update on a bounded recurring scheduling object expressed with
+        // DTSTART+DURATION, while DTEND is accepted across servers.
         return ICalEvent(
             uid = event.uid,
             importId = event.importId ?: event.uid,
@@ -53,8 +51,8 @@ object EventToICalEventMapper {
             description = event.description,
             location = event.location,
             dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
-            dtEnd = if (event.isRecurring) null else ICalDateTime.fromTimestamp(endTs, endZone, event.isAllDay),
-            duration = duration,
+            dtEnd = ICalDateTime.fromTimestamp(endTs, endZone, event.isAllDay),
+            duration = null,
             isAllDay = event.isAllDay,
             status = EventStatus.fromString(event.status),
             sequence = event.sequence,
@@ -66,7 +64,7 @@ object EventToICalEventMapper {
             alarms = remindersToAlarms(event.reminders),
             categories = event.categories.orEmpty(),
             organizer = organizerFor(event.organizerEmail, event.organizerName),
-            attendees = attendees.map { it.toICalAttendee() },
+            attendees = attendeesIfOrganized(event.organizerEmail, attendees),
             color = iCalColorFor(event.color),
             dtstamp = ICalDateTime.fromTimestamp(event.dtstamp, null, false),
             lastModified = ICalDateTime.fromTimestamp(event.updatedAt, null, false),
@@ -135,7 +133,7 @@ object EventToICalEventMapper {
             alarms = remindersToAlarms(exception.reminders),
             categories = exception.categories.orEmpty(),
             organizer = organizerFor(exception.organizerEmail, exception.organizerName),
-            attendees = attendees.map { it.toICalAttendee() },
+            attendees = attendeesIfOrganized(exception.organizerEmail, attendees),
             color = iCalColorFor(exception.color),
             dtstamp = ICalDateTime.fromTimestamp(exception.dtstamp, null, false),
             lastModified = ICalDateTime.fromTimestamp(exception.updatedAt, null, false),
@@ -198,9 +196,25 @@ object EventToICalEventMapper {
             ?: String.format(java.util.Locale.ROOT, "#%06X", argb and 0xFFFFFF)
     }
 
-    private fun organizerFor(email: String?, name: String?): Organizer? {
-        if (email == null) return null
+    internal fun organizerFor(email: String?, name: String?): Organizer? {
+        if (email.isNullOrBlank()) return null
         return Organizer(email = email, name = name, sentBy = null)
+    }
+
+    /**
+     * Attendees to emit, enforcing the RFC 6638 §3.1 invariant that ATTENDEE
+     * requires ORGANIZER. A non-mailto-schedulable account (non-email login)
+     * resolves no organizer; emitting ATTENDEE alone produces a PUT body that
+     * conformant servers reject, so drop the attendees rather than ship an
+     * invalid body. The picker's non-schedulable gate stops this from arising
+     * in the UI; this is the data-layer backstop for any other feeder.
+     */
+    private fun attendeesIfOrganized(
+        organizerEmail: String?,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>
+    ): List<org.onekash.icaldav.model.Attendee> {
+        if (organizerEmail.isNullOrBlank()) return emptyList()
+        return attendees.map { it.toICalAttendee() }
     }
 
     /**

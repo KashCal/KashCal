@@ -94,6 +94,16 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
 
+            <!-- Calendar-file shares from other apps (share sheet). Routes the
+                 shared .ics from EXTRA_STREAM into the existing import sheet. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/calendar" />
+                <data android:mimeType="application/ics" />
+                <data android:mimeType="text/x-vcalendar" />
+            </intent-filter>
+
             <!-- Handle .ics file imports (content:// URI) -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />

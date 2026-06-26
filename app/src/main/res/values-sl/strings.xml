@@ -37,6 +37,8 @@
     <string name="action_not_now">Ne zdaj</string>
     <string name="action_sign_in">Prijava</string>
     <string name="action_select">Izberi</string>
+    <string name="action_allow">Dovoli</string>
+    <string name="action_no_thanks">Ne, hvala</string>
     <string name="action_show_password">Prikaži geslo</string>
     <string name="action_hide_password">Skrij geslo</string>
     <string name="action_sign_out">Odjava</string>
@@ -441,8 +443,6 @@
     <string name="account_detail_cd_show_password">Prikaži geslo</string>
     <string name="account_detail_cd_hide_password">Skrij geslo</string>
 
-    <string name="sync_failure_notification_title">Težava s sinhronizacijo %1$s</string>
-    <string name="sync_failure_notification_text">Sinhronizacija koledarja je %1$d-krat neuspešna</string>
 
     <string name="rename_account_title">Preimenuj račun</string>
     <string name="rename_account_label">Ime računa</string>
@@ -868,6 +868,7 @@
     <string name="sync_notification_expired_title">Spremembe sinhronizacije so potekle</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ni bilo mogoče sinhronizirati po 30 dneh. Uporabljena bo različica s strežnika. Vsilite sinhronizacijo za ponovni poskus.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s v %2$s ni bilo mogoče sinhronizirati po 30 dneh. Uporabljena bo različica s strežnika. Vsilite sinhronizacijo za ponovni poskus.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinhroniziran %1$d koledar</item>
@@ -1160,6 +1161,20 @@
     <string name="attendee_section_pending">Čakajoči</string>
     <string name="attendee_section_declined">Zavrnili</string>
     <string name="attendee_section_delegated">Pooblaščeni</string>
+    <string name="attendee_picker_title">Dodaj udeležence</string>
+    <string name="attendee_pick_add_people">Dodaj udeležence</string>
+    <string name="attendee_pick_from_contacts">Ime ali e-pošta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d več</item>
+        <item quantity="two">+%1$d več</item>
+        <item quantity="few">+%1$d več</item>
+        <item quantity="other">+%1$d več</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Predlagaj osebe iz tvojih stikov</string>
+    <string name="attendee_invalid_email">Vnesite celoten e-poštni naslov</string>
+    <string name="attendee_add_typed">Dodaj \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Vabljenje oseb v tem računu ni na voljo</string>
+    <string name="action_save_and_notify">Shrani in obvesti</string>
     <string name="invitees_summary_you_alone">Ti</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ti · %d povabljen</item>

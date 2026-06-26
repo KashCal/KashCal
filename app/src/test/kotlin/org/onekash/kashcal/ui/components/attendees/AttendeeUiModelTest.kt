@@ -104,7 +104,7 @@ class AttendeeUiModelTest {
         assertEquals("alice@example.com", models[0].bareAddress)
     }
 
-    // ===== Organizer detection (D5) =====
+    // ===== Organizer detection =====
 
     @Test
     fun `isOrganizer true when address canonical-matches event organizer`() {
@@ -208,11 +208,11 @@ class AttendeeUiModelTest {
         assertEquals("carol@example.com", sorted[1].bareAddress)
     }
 
-    // ===== F6 fix: You at index 0 when total ≥4 keeps 4 chips visible =====
+    // ===== You at index 0 when total ≥4 keeps 4 chips visible =====
 
     @Test
     fun `sortForCollapsedView with 5 attendees and You at sortOrder 4 keeps You plus 3 wire-first attendees`() {
-        // F6: when "You" would otherwise be hidden, render 4 chips (You + first 3
+        // When "You" would otherwise be hidden, render 4 chips (You + first 3
         // by sortOrder, excluding You). Matches Google Calendar parity.
         val account = acc(
             email = "alice@example.com",
@@ -227,7 +227,7 @@ class AttendeeUiModelTest {
         )
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
-        // F6 contract: collapsed view returns at most 4 entries when You was
+        // Contract: collapsed view returns at most 4 entries when You was
         // hidden in the wire-order top-3, of which index 0 is You.
         assertEquals(4, sorted.size)
         assertEquals("alice@example.com", sorted[0].bareAddress)
@@ -272,7 +272,7 @@ class AttendeeUiModelTest {
         assertEquals("alice@example.com", sorted[0].bareAddress)
     }
 
-    // ===== F5: identity edge cases =====
+    // ===== identity edge cases =====
 
     @Test
     fun `fromRoom with null account marks every attendee isYou false`() {
@@ -292,7 +292,7 @@ class AttendeeUiModelTest {
 
     @Test
     fun `fromRoom with non-email login and empty calendarUserAddresses marks isYou false`() {
-        // F5 edge case 2 — Nextcloud "alice" username, server returned no addresses
+        // Nextcloud "alice" username, server returned no addresses
         val account = acc(email = "alice", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@nextcloud.example"))
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
@@ -302,7 +302,7 @@ class AttendeeUiModelTest {
 
     @Test
     fun `fromRoom uses email fallback when calendarUserAddresses empty but email is email-shaped`() {
-        // Pre-A2.0 accounts didn't have calendarUserAddresses populated; matchesAttendee falls
+        // Older accounts didn't have calendarUserAddresses populated; matchesAttendee falls
         // back to email when email shape parses.
         val account = acc(email = "alice@example.com", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@example.com"))
@@ -310,7 +310,7 @@ class AttendeeUiModelTest {
         assertTrue(models[0].isYou)
     }
 
-    // ===== Bug 1: organizer-self synthesis =====
+    // ===== organizer-self synthesis =====
 
     @Test
     fun `fromRoom synthesizes You+Organizer chip when account matches organizer but not on attendee list`() {
@@ -677,7 +677,7 @@ class AttendeeUiModelTest {
         )
     }
 
-    // F2 — F6 collapsed-view rule still produces 4 chips when synthesis is present.
+    // The collapsed-view rule still produces 4 chips when synthesis is present.
     @Test
     fun `sortForCollapsedView with synthesized organizer plus 4 real attendees keeps 4 chips with You at index 0`() {
         val account = acc(
@@ -699,7 +699,7 @@ class AttendeeUiModelTest {
         // 4 real + 1 synthesized = 5 total
         assertEquals(5, models.size)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
-        // F6 contract: 4 chips in collapsed view
+        // Contract: 4 chips in collapsed view
         assertEquals(4, sorted.size)
         // Index 0 is the synthesized You+Organizer chip
         assertTrue(sorted[0].isYou && sorted[0].isOrganizer)
@@ -712,7 +712,7 @@ class AttendeeUiModelTest {
         assertTrue(sorted.none { it.bareAddress == "eve@example.com" })
     }
 
-    // F5 — multi-alias edge case.
+    // Multi-alias edge case.
     @Test
     fun `fromRoom does NOT synthesize when account has multiple aliases and one alias is on attendee list`() {
         val account = acc(
@@ -740,7 +740,7 @@ class AttendeeUiModelTest {
         assertFalse(you.isOrganizer)
     }
 
-    // R1 — canonical-case test.
+    // Canonical-case test.
     @Test
     fun `synthesized organizer chip canonicalizes uppercase MAILTO and mixed-case email`() {
         val account = acc(

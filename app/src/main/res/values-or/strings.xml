@@ -35,6 +35,8 @@
     <string name="action_close">ବନ୍ଦ କରନ୍ତୁ</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">ଏବେ ନୁହେଁ</string>
+    <string name="action_allow">ଅନୁମତି ଦିଅନ୍ତୁ</string>
+    <string name="action_no_thanks">ନା, ଧନ୍ୟବାଦ</string>
     <string name="action_sign_in">ସାଇନ ଇନ</string>
     <string name="action_select">ବାଛନ୍ତୁ</string>
     <string name="action_show_password">ପାସୱାର୍ଡ ଦେଖାନ୍ତୁ</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">ପାସୱାର୍ଡ ଦେଖାନ୍ତୁ</string>
     <string name="account_detail_cd_hide_password">ପାସୱାର୍ଡ ଲୁଚାନ୍ତୁ</string>
 
-    <string name="sync_failure_notification_title">%1$s ସହ ସିଙ୍କ ସମସ୍ୟା</string>
-    <string name="sync_failure_notification_text">କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ %1$d ଥର ବିଫଳ ହୋଇଛି</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">ଆକାଉଣ୍ଟ ନାମ ବଦଳାନ୍ତୁ</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">ସିଙ୍କ ପରିବର୍ତ୍ତନ ସମୟସୀମା ପାର ହୋଇଛି</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ଦିନ ପରେ %1$s ସିଙ୍କ ହୋଇପାରିଲା ନାହିଁ। ସର୍ଭର ସଂସ୍କରଣ ବ୍ୟବହାର କରାଯିବ। ପୁନଃ ଚେଷ୍ଟା ପାଇଁ ଫୋର୍ସ ସିଙ୍କ କରନ୍ତୁ।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ରେ %1$s 30 ଦିନ ପରେ ସିଙ୍କ ହୋଇପାରିଲା ନାହିଁ। ସର୍ଭର ସଂସ୍କରଣ ବ୍ୟବହାର କରାଯିବ। ପୁନଃ ଚେଷ୍ଟା ପାଇଁ ଫୋର୍ସ ସିଙ୍କ କରନ୍ତୁ।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ ହୋଇଛି</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଛି</string>
     <string name="attendee_card_tentative">ଅନିଶ୍ଚିତ</string>
     <string name="attendee_card_hosting">ଆୟୋଜନ କରୁଛି</string>
+    <string name="attendee_picker_title">ଅଂଶଗ୍ରହଣକାରୀ ଯୋଗ କରନ୍ତୁ</string>
+    <string name="attendee_pick_add_people">ଅଂଶଗ୍ରହଣକାରୀ ଯୋଗ କରନ୍ତୁ</string>
+    <string name="attendee_pick_from_contacts">ନାମ କିମ୍ବା ଇମେଲ୍</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ଅଧିକ</item>
+        <item quantity="other">+%1$d ଅଧିକ</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">ଆପଣଙ୍କ ସମ୍ପର୍କରୁ ଲୋକଙ୍କୁ ପ୍ରସ୍ତାବ ଦିଅନ୍ତୁ</string>
+    <string name="attendee_invalid_email">ଏକ ସମ୍ପୂର୍ଣ୍ଣ ଇମେଲ୍ ଠିକଣା ପ୍ରବେଶ କରନ୍ତୁ</string>
+    <string name="attendee_add_typed">\"%1$s\" ଯୋଗ କରନ୍ତୁ</string>
+    <string name="attendee_scheduling_unavailable">ଏହି ଆକାଉଣ୍ଟରେ ଲୋକଙ୍କୁ ଆମନ୍ତ୍ରଣ କରିବା ଉପଲବ୍ଧ ନାହିଁ</string>
+    <string name="action_save_and_notify">ସେଭ୍ କରନ୍ତୁ ଓ ଜଣାନ୍ତୁ</string>
     <string name="attendee_action_copy">ଇମେଲ କପି କରନ୍ତୁ</string>
     <string name="attendee_action_email">ଇମେଲ ପଠାନ୍ତୁ</string>
     <string name="attendee_group_icon_description">ଲୋକମାନେ</string>

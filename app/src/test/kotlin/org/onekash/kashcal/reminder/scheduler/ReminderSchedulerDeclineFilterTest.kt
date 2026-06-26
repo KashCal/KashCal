@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
+import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
@@ -50,6 +51,7 @@ class ReminderSchedulerDeclineFilterTest {
     private lateinit var attendeesDao: AttendeesDao
     private lateinit var accountsDao: AccountsDao
     private lateinit var calendarsDao: CalendarsDao
+    private lateinit var occurrencesDao: OccurrencesDao
 
     private val now = System.currentTimeMillis()
     private val tomorrow = now + 24L * 60 * 60 * 1000
@@ -66,6 +68,7 @@ class ReminderSchedulerDeclineFilterTest {
         attendeesDao = mockk(relaxed = true)
         accountsDao = mockk(relaxed = true)
         calendarsDao = mockk(relaxed = true)
+        occurrencesDao = mockk(relaxed = true)
     }
 
     private fun newScheduler(): ReminderScheduler = ReminderScheduler(
@@ -75,7 +78,8 @@ class ReminderSchedulerDeclineFilterTest {
         channels = channels,
         attendeesDao = attendeesDao,
         accountsDao = accountsDao,
-        calendarsDao = calendarsDao
+        calendarsDao = calendarsDao,
+        occurrencesDao = occurrencesDao
     )
 
     private fun account(

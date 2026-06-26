@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -186,6 +187,56 @@ class ShareCardComposableTest {
         }
         // Should not crash. Numeral still renders.
         composeTestRule.onNodeWithText("31").assertIsDisplayed()
+    }
+
+    @Test
+    fun normalizeShareAddress_collapses_embedded_newlines_to_single_spaces() {
+        val raw = "Sam's Café\n123 Mission St\nSan Francisco, CA 94110"
+        assertEquals(
+            "Sam's Café 123 Mission St San Francisco, CA 94110",
+            normalizeShareAddress(raw),
+        )
+    }
+
+    @Test
+    fun normalizeShareAddress_collapses_tab_and_multi_space_runs() {
+        val raw = "Suite 200\t\t Main Hall   Building   B"
+        assertEquals("Suite 200 Main Hall Building B", normalizeShareAddress(raw))
+    }
+
+    @Test
+    fun normalizeShareAddress_trims_leading_and_trailing_whitespace() {
+        assertEquals("Moscone Center", normalizeShareAddress("  \n Moscone Center \n "))
+    }
+
+    @Test
+    fun normalizeShareAddress_leaves_clean_single_line_unchanged() {
+        val clean = "Sam's Café, 123 Mission St, San Francisco, CA 94110"
+        assertEquals(clean, normalizeShareAddress(clean))
+    }
+
+    @Test
+    fun multi_line_location_renders_as_single_collapsed_line() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                ShareCardComposable(
+                    title = "Brunch at Sam's",
+                    location = "Sam's Café\n123 Mission St\nSan Francisco, CA 94110",
+                    timeRangeText = "11:30 AM – 1:00 PM",
+                    style = ShareCardStyle.Standard,
+                    dateChip = regularTimedDateChip,
+                    stripe = regularTimedStripe,
+                    stripeLabels = labels12h,
+                    isAllDay = false,
+                    isMultiDay = false,
+                    multiDayRangeText = null,
+                    attribution = "Made with KashCal",
+                )
+            }
+        }
+        composeTestRule
+            .onNodeWithText("Sam's Café 123 Mission St San Francisco, CA 94110")
+            .assertIsDisplayed()
     }
 
     @Test

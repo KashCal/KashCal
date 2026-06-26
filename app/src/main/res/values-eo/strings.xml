@@ -59,6 +59,8 @@
     <string name="action_confirm">Konfirmi</string>
     <string name="action_discard">Forjeti</string>
     <string name="action_dismiss">Forigi</string>
+    <string name="action_allow">Permesi</string>
+    <string name="action_no_thanks">Ne, dankon</string>
     <string name="action_show_all">Montri ĉion</string>
     <string name="action_connect">Konekti</string>
     <string name="action_duplicate">Duobligi</string>
@@ -455,8 +457,6 @@
     <string name="account_detail_cd_show_password">Montri pasvorton</string>
     <string name="account_detail_cd_hide_password">Kaŝi pasvorton</string>
 
-    <string name="sync_failure_notification_title">Sinkroniga problemo kun %1$s</string>
-    <string name="sync_failure_notification_text">Kalendara sinkronigo malsukcesis %1$d fojojn</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Renomi konton</string>
@@ -862,6 +862,7 @@
     <string name="sync_notification_expired_title">Sinkronigaj ŝanĝoj eksvalidiĝis</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ne povis esti sinkronigitaj post 30 tagoj. La servila versio estos uzata. Devigi Sinkronigon por reprovi.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s en %2$s ne povis esti sinkronigitaj post 30 tagoj. La servila versio estos uzata. Devigi Sinkronigon por reprovi.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinkronigita %1$d kalendaro</item>
@@ -1109,6 +1110,18 @@
     <string name="attendee_status_tentative">Provizora</string>
     <string name="attendee_status_delegated">Delegita</string>
     <string name="attendee_status_pending">Atendanta</string>
+    <string name="attendee_picker_title">Aldoni partoprenantojn</string>
+    <string name="attendee_pick_add_people">Aldoni ĉeestantojn</string>
+    <string name="attendee_pick_from_contacts">Nomo aŭ retpoŝto</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d pli</item>
+        <item quantity="other">+%1$d pli</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Sugesti homojn el viaj kontaktoj</string>
+    <string name="attendee_invalid_email">Enigu kompletan retpoŝtan adreson</string>
+    <string name="attendee_add_typed">Aldoni \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Inviti homojn ne disponeblas en ĉi tiu konto</string>
+    <string name="action_save_and_notify">Konservi kaj sciigi</string>
     <string name="inbox_empty_caught_up">Ĉio en ordo</string>
     <string name="inbox_organizer_suffix">(organizanto)</string>
     <string name="menu_invites">Invitoj</string>

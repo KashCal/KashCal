@@ -36,6 +36,8 @@
     <string name="action_close">Isara</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Hindi Ngayon</string>
+    <string name="action_allow">Payagan</string>
+    <string name="action_no_thanks">Hindi, salamat</string>
     <string name="action_sign_in">Mag-sign In</string>
     <string name="action_select">Pumili</string>
     <string name="action_show_password">Ipakita ang password</string>
@@ -451,8 +453,6 @@
     <string name="account_detail_cd_show_password">Ipakita ang password</string>
     <string name="account_detail_cd_hide_password">Itago ang password</string>
 
-    <string name="sync_failure_notification_title">Sync issue sa %1$s</string>
-    <string name="sync_failure_notification_text">Nabigo ang calendar sync nang %1$d beses</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Palitan ang Pangalan ng Account</string>
@@ -828,6 +828,7 @@
     <string name="sync_notification_expired_title">Nag-expire na ang mga pagbabago sa sync</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Hindi ma-sync ang %1$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
+    <string name="sync_notification_expired_content_calendar">Hindi ma-sync ang %1$s sa %2$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Na-sync ang %1$d kalendaryo</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_status_declined">Tinanggihan</string>
     <string name="attendee_status_tentative">Hindi Tiyak</string>
     <string name="attendee_status_delegated">Itinalaga</string>
+    <string name="attendee_picker_title">Magdagdag ng mga dadalo</string>
+    <string name="attendee_pick_add_people">Magdagdag ng mga dadalo</string>
+    <string name="attendee_pick_from_contacts">Pangalan o email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d pa</item>
+        <item quantity="other">+%1$d pa</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Magmungkahi ng mga tao mula sa iyong mga contact</string>
+    <string name="attendee_invalid_email">Maglagay ng buong email address</string>
+    <string name="attendee_add_typed">Idagdag ang \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Hindi available ang pag-imbita ng mga tao sa account na ito</string>
+    <string name="action_save_and_notify">I-save at ipaalam</string>
     <string name="attendee_status_pending">Naghihintay</string>
     <string name="inbox_empty_caught_up">Wala nang nakabinbin</string>
     <string name="inbox_organizer_suffix">(tagapag-organisa)</string>

@@ -17,6 +17,7 @@ import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+import org.onekash.kashcal.sync.client.model.OutboxResponse
 import org.onekash.kashcal.sync.client.model.SyncItem
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.client.model.SyncReport
@@ -362,6 +363,63 @@ class OkHttpCalDavClient : CalDavClient {
 
             executeRequest(request) { responseBody ->
                 CalDavResult.success(quirks.extractCalendarUserAddresses(responseBody))
+            }
+        }
+
+    override suspend fun discoverScheduleOutboxUrl(principalUrl: String): CalDavResult<String?> =
+        withContext(Dispatchers.IO) {
+            val body = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <c:schedule-outbox-URL/>
+                    </d:prop>
+                </d:propfind>
+            """.trimIndent()
+
+            val request = Request.Builder()
+                .url(principalUrl)
+                .method("PROPFIND", body.toRequestBody(XML_MEDIA_TYPE))
+                .header("Depth", "0")
+                .build()
+
+            executeRequest(request) { responseBody ->
+                CalDavResult.success(quirks.extractScheduleOutboxUrl(responseBody))
+            }
+        }
+
+    override suspend fun supportsAutoSchedule(calendarUrl: String): CalDavResult<Boolean> =
+        withContext(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url(calendarUrl)
+                .method("OPTIONS", null)
+                .build()
+
+            try {
+                httpClient.newCall(request).execute().use { response ->
+                    when {
+                        response.isSuccessful -> {
+                            // RFC 6638 §2: the "calendar-auto-schedule" token in
+                            // the DAV response header signals auto-scheduling
+                            // support. Probed on the collection, not the root.
+                            // Servers may split DAV tokens across multiple DAV:
+                            // header lines and place the token on a non-first
+                            // line — join ALL of them (header() returns only one).
+                            val davHeader = response.headers("DAV").joinToString(", ")
+                            CalDavResult.success(
+                                davHeader.contains("calendar-auto-schedule", ignoreCase = true)
+                            )
+                        }
+                        response.code == 401 -> CalDavResult.authError("Invalid credentials")
+                        else -> CalDavResult.error(
+                            response.code,
+                            "OPTIONS failed: ${response.code}"
+                        )
+                    }
+                }
+            } catch (e: IOException) {
+                Log.w(TAG, "supportsAutoSchedule: network error: ${e.message}")
+                CalDavResult.networkError("Cannot reach server: ${e.message}")
             }
         }
 
@@ -1051,6 +1109,58 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
+    override suspend fun postToOutbox(
+        outboxUrl: String,
+        originator: String,
+        recipients: List<String>,
+        icalData: String
+    ): CalDavResult<OutboxResponse> = withContext(Dispatchers.IO) {
+        // The discovered/stored outbox URL may be a server-relative href
+        // (e.g. Zoho returns "/caldav/<id>/outbox/"); OkHttp requires an
+        // absolute URL. Resolve against the account's base host, mirroring the
+        // principal/home discovery resolution.
+        val absoluteOutboxUrl = if (outboxUrl.startsWith("http", ignoreCase = true)) {
+            outboxUrl
+        } else {
+            extractBaseHost(quirks.baseUrl) + (if (outboxUrl.startsWith("/")) outboxUrl else "/$outboxUrl")
+        }
+
+        val requestBuilder = Request.Builder()
+            .url(absoluteOutboxUrl)
+            .post(icalData.toRequestBody(ICAL_MEDIA_TYPE))
+            // RFC 6638 §6 / caldav-sched envelope headers. mailto: is prepended
+            // here so callers pass bare CAL-ADDRESSes.
+            .header("Originator", "mailto:$originator")
+        // One Recipient header per recipient (addHeader, not header, so they
+        // accumulate rather than overwrite).
+        for (recipient in recipients) {
+            requestBuilder.addHeader("Recipient", "mailto:$recipient")
+        }
+        val request = requestBuilder.build()
+
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                when {
+                    // 200 OK / 207 Multi-Status both carry a schedule-response.
+                    response.code == 200 || response.code == 207 -> {
+                        val body = response.bodyWithLimit()
+                        CalDavResult.success(OutboxResponse.parse(body))
+                    }
+                    response.code == 401 -> CalDavResult.authError("Authentication failed")
+                    response.code == 403 -> CalDavResult.error(403, "Outbox POST forbidden")
+                    // Sabre free/busy-only (501), Stalwart invalid-scheduling-message
+                    // (400), etc. — the outbox does not accept event REQUESTs here.
+                    else -> CalDavResult.error(
+                        response.code,
+                        "Outbox POST failed: ${response.code}"
+                    )
+                }
+            }
+        } catch (e: IOException) {
+            CalDavResult.networkError("Network error: ${e.message}")
+        }
+    }
+
     /**
      * Move an event to a different calendar using WebDAV MOVE (RFC 4918).
      *
@@ -1169,8 +1279,10 @@ class OkHttpCalDavClient : CalDavClient {
 
                     return@withContext when {
                         response.isSuccessful -> {
-                            // RFC 4791: CalDAV servers MUST advertise "calendar-access" in DAV header
-                            val davHeader = response.header("DAV").orEmpty()
+                            // RFC 4791: CalDAV servers MUST advertise "calendar-access" in DAV header.
+                            // Join all DAV: lines — servers may split tokens across several
+                            // and header() returns only one (see supportsAutoSchedule).
+                            val davHeader = response.headers("DAV").joinToString(", ")
                             if (!davHeader.contains("calendar-access", ignoreCase = true)) {
                                 Log.w(TAG, "Server does not advertise CalDAV support. DAV header: $davHeader")
                                 CalDavResult.error(

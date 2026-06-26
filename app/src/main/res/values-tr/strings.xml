@@ -35,6 +35,8 @@
     <string name="action_close">Kapat</string>
     <string name="action_ok">Tamam</string>
     <string name="action_not_now">Şimdi Değil</string>
+    <string name="action_allow">İzin Ver</string>
+    <string name="action_no_thanks">Hayır, teşekkürler</string>
     <string name="action_sign_in">Giriş Yap</string>
     <string name="action_select">Seç</string>
     <string name="action_show_password">Parolayı göster</string>
@@ -476,8 +478,6 @@
     <string name="account_detail_cd_show_password">Parolayı göster</string>
     <string name="account_detail_cd_hide_password">Parolayı gizle</string>
 
-    <string name="sync_failure_notification_title">%1$s ile eşitleme sorunu</string>
-    <string name="sync_failure_notification_text">Takvim eşitlemesi %1$d kez başarısız oldu</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Hesabı Yeniden Adlandır</string>
@@ -853,6 +853,7 @@
     <string name="sync_notification_expired_title">Eşitleme değişiklikleri süresi doldu</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s takviminde %1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d takvim eşitlendi</item>
@@ -1127,6 +1128,18 @@
     <string name="attendee_status_accepted">Kabul edildi</string>
     <string name="attendee_status_declined">Reddedildi</string>
     <string name="attendee_status_tentative">Belirsiz</string>
+    <string name="attendee_picker_title">Katılımcı ekle</string>
+    <string name="attendee_pick_add_people">Katılımcı ekle</string>
+    <string name="attendee_pick_from_contacts">Ad veya e-posta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d daha</item>
+        <item quantity="other">+%1$d daha</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Kişilerinizden kişi önerin</string>
+    <string name="attendee_invalid_email">Tam bir e-posta adresi girin</string>
+    <string name="attendee_add_typed">\"%1$s\" ekle</string>
+    <string name="attendee_scheduling_unavailable">Bu hesapta kişi davet etme kullanılamıyor</string>
+    <string name="action_save_and_notify">Kaydet ve bildir</string>
     <string name="attendee_status_delegated">Devredildi</string>
     <string name="attendee_status_pending">Beklemede</string>
     <string name="inbox_empty_caught_up">Hepsi tamam</string>

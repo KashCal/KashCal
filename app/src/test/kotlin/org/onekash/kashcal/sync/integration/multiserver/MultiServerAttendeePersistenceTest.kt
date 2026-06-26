@@ -17,13 +17,15 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
+import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
+import org.onekash.kashcal.util.AddressNormalizer
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.UUID
 
 /**
- * A2 attendee-persistence integration tests parameterized across all
+ * Attendee-persistence integration tests parameterized across all
  * configured CalDAV servers.
  *
  * Verifies the end-to-end pull path with attendees: server emits
@@ -54,8 +56,7 @@ import java.util.UUID
  * - Nextcloud, Baikal: preserve attendees verbatim, no folding observed.
  *
  * Use `stalwartlabs/stalwart:v0.13.4` (NOT `:latest` / 0.16+ which
- * boots into interactive setup-wizard mode). See
- * docs/CALDAV_TEST_SERVERS.md for full provisioning recipe.
+ * boots into interactive setup-wizard mode).
  *
  * The assertions below tolerate these strips and verify only the
  * server→parser→mapper→Room chain works for *whatever* the server
@@ -134,7 +135,7 @@ class MultiServerAttendeePersistenceTest(
     private fun createTestIcsWithAttendees(uid: String, summary: String): String = """
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//KashCal//A2 Attendee Test//EN
+PRODID:-//KashCal//Attendee Test//EN
 BEGIN:VEVENT
 UID:$uid
 DTSTAMP:${icsDateFormat.format(java.util.Date())}
@@ -177,16 +178,16 @@ END:VCALENDAR
     private fun isSyntheticAttendee(line: String): Boolean =
         line.contains("@example.test")
 
-    // ========== A2.1 — server preserves ATTENDEE lines on round-trip ==========
+    // ========== Server preserves ATTENDEE lines on round-trip ==========
 
     @Test
-    fun `a2-1 server preserves ATTENDEE lines on create-and-fetch`() = runBlocking {
+    fun `server preserves ATTENDEE lines on create-and-fetch`() = runBlocking {
         assumeReady()
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        val uid = "a2-attendee-${config.name.lowercase()}-${UUID.randomUUID()}"
-        val ics = createTestIcsWithAttendees(uid, "A2 attendee test on ${config.name}")
+        val uid = "attendee-preserve-${config.name.lowercase()}-${UUID.randomUUID()}"
+        val ics = createTestIcsWithAttendees(uid, "Attendee preserve test on ${config.name}")
 
         val createResult = client!!.createEvent(calendarUrl!!, uid, ics)
         assert(createResult.isSuccess()) {
@@ -250,16 +251,16 @@ END:VCALENDAR
         }
     }
 
-    // ========== A2.2 — mapper translates server response to Room rows ==========
+    // ========== Mapper translates server response to Room rows ==========
 
     @Test
-    fun `a2-2 mapper produces 3 Attendee rows with correct PARTSTAT translation`() = runBlocking {
+    fun `mapper produces 3 Attendee rows with correct PARTSTAT translation`() = runBlocking {
         assumeReady()
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        val uid = "a2-mapper-${config.name.lowercase()}-${UUID.randomUUID()}"
-        val ics = createTestIcsWithAttendees(uid, "A2 mapper test on ${config.name}")
+        val uid = "attendee-mapper-${config.name.lowercase()}-${UUID.randomUUID()}"
+        val ics = createTestIcsWithAttendees(uid, "Attendee mapper test on ${config.name}")
 
         val createResult = client!!.createEvent(calendarUrl!!, uid, ics)
         assert(createResult.isSuccess()) {
@@ -281,7 +282,7 @@ END:VCALENDAR
         val event = cal.events.singleOrNull()
         assert(event != null) { "${config.name}: expected exactly 1 VEVENT in fetched ICS" }
 
-        // Run through ICalEventMapper.toEntity — exercises the A2 translation layer
+        // Run through ICalEventMapper.toEntity — exercises the attendee translation layer
         val mapped = ICalEventMapper.toEntity(
             icalEvent = event!!,
             rawIcal = fetchedIcs,
@@ -306,7 +307,7 @@ END:VCALENDAR
             return@runBlocking
         }
 
-        // Each synthetic address must carry mailto: prefix per A2's mapper
+        // Each synthetic address must carry mailto: prefix per the mapper's
         // convention. This is what we wrote and the mapper keeps it intact.
         synthetic.forEach {
             assert(it.address.startsWith("mailto:")) {
@@ -356,16 +357,16 @@ END:VCALENDAR
         }
     }
 
-    // ========== A2.3 — second pull is idempotent ==========
+    // ========== Second pull is idempotent ==========
 
     @Test
-    fun `a2-3 second fetch produces identical mapped attendee shape (idempotency)`() = runBlocking {
+    fun `second fetch produces identical mapped attendee shape (idempotency)`() = runBlocking {
         assumeReady()
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        val uid = "a2-idempotent-${config.name.lowercase()}-${UUID.randomUUID()}"
-        val ics = createTestIcsWithAttendees(uid, "A2 idempotency test on ${config.name}")
+        val uid = "attendee-idempotent-${config.name.lowercase()}-${UUID.randomUUID()}"
+        val ics = createTestIcsWithAttendees(uid, "Attendee idempotency test on ${config.name}")
 
         val createResult = client!!.createEvent(calendarUrl!!, uid, ics)
         assert(createResult.isSuccess()) { "Failed to create on ${config.name}" }
@@ -405,26 +406,26 @@ END:VCALENDAR
         }
     }
 
-    // ========== T3.B3.9 — organizer outbound write path (KashCal serializer) ==========
+    // ========== Organizer outbound write path (KashCal serializer) ==========
 
     /**
      * Build a KashCal Event + Attendee rows and serialize via the production
      * organizer push path (IcsPatcher.generateFresh, no rawIcal), then create
-     * on the server and re-fetch. Validates T3.B3.1-3 end-to-end: the attendee
+     * on the server and re-fetch. Validates end-to-end that the attendee
      * set KashCal emits round-trips through a real server.
      */
     @Test
-    fun `t3b3-9 organizer push serializes attendees that round-trip`() = runBlocking {
+    fun `organizer push serializes attendees that round-trip`() = runBlocking {
         assumeReady()
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        val uid = "t3b3-organizer-${config.name.lowercase()}-${UUID.randomUUID()}"
+        val uid = "organizer-push-${config.name.lowercase()}-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
         val event = Event(
             uid = uid,
             calendarId = 1L,
-            title = "T3.B3 organizer push on ${config.name}",
+            title = "Organizer push on ${config.name}",
             startTs = now + 86_400_000,
             endTs = now + 86_400_000 + 3_600_000,
             dtstamp = now,
@@ -486,10 +487,10 @@ END:VCALENDAR
      * but parameterized here so it runs in the same gated suite.
      */
     @Test
-    fun `t3b3-9 iTIP message carries no SCHEDULE-AGENT or FORCE-SEND on either line`() {
+    fun `iTIP message carries no SCHEDULE-AGENT or FORCE-SEND on either line`() {
         val now = System.currentTimeMillis()
         val event = Event(
-            uid = "t3b3-itip-${UUID.randomUUID()}",
+            uid = "itip-strip-${UUID.randomUUID()}",
             calendarId = 1L,
             title = "iTIP wire-shape",
             startTs = now + 86_400_000,
@@ -516,6 +517,144 @@ END:VCALENDAR
         }
         assert(!unfolded.contains("SCHEDULE-FORCE-SEND")) {
             "iTIP REQUEST must not echo SCHEDULE-FORCE-SEND:\n${redactPii(unfolded)}"
+        }
+    }
+
+    // ========== Real-organizer cross-account round-trip ==========
+
+    /**
+     * Discover this account's OWN calendar-user-address (the value
+     * EventCoordinator emits as ORGANIZER on locally authored events), or
+     * null when the server doesn't expose one.
+     */
+    private suspend fun discoverOwnOrganizerAddress(): String? {
+        val c = client!!
+        val endpoint = creds!!.davEndpoint
+        val caldavUrl = if (config.usesWellKnownDiscovery) {
+            c.discoverWellKnown(endpoint).getOrNull() ?: endpoint
+        } else endpoint
+        val principal = c.discoverPrincipal(caldavUrl).getOrNull() ?: return null
+        return c.discoverCalendarUserAddresses(principal).getOrNull()?.firstOrNull()
+    }
+
+    /**
+     * A REAL attendee address the user controls, drawn from a DIFFERENT owned
+     * account than the one under test (iCloud→Zoho→mailbox→iCloud rotation), so
+     * any server-side iTIP delivery lands in an owned inbox and exercises real
+     * cross-provider delivery. Optional TEST_ATTENDEE_<PROVIDER> override.
+     * Falls back to the account's own login (self-invite) when no cross
+     * address is available; null when nothing usable resolves.
+     */
+    private fun resolveCrossAccountAttendee(): String? {
+        CalDavTestServerLoader.property("TEST_ATTENDEE_${config.name.uppercase()}")
+            ?.takeIf { it.isNotBlank() }?.let { return it }
+        // Owned email-shaped account logins, by provider name.
+        val owned = mapOf(
+            "iCloud" to CalDavTestServerLoader.property("caldav.username"),
+            "Zoho" to CalDavTestServerLoader.property("ZOHO_USERNAME"),
+            "mailbox" to CalDavTestServerLoader.property("MAILBOX_USERNAME"),
+        ).filterValues { it != null && it.contains("@") }
+        // Rotate to a DIFFERENT owned account than the one under test.
+        val rotation = listOf("iCloud", "Zoho", "mailbox")
+        val idx = rotation.indexOf(config.name)
+        if (idx >= 0) {
+            for (step in 1 until rotation.size) {
+                owned[rotation[(idx + step) % rotation.size]]?.let { return it }
+            }
+        }
+        // Non-rotation server (Docker/Nextcloud): self-invite if email-shaped.
+        return creds?.username?.takeIf { it.contains("@") }
+    }
+
+    @Test
+    fun `real-organizer cross-account event round-trips attendee`() = runBlocking {
+        assumeReady()
+        calendarUrl = discoverCalendar()
+        assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
+
+        val organizer = discoverOwnOrganizerAddress()
+        assumeTrue("${config.name}: no own organizer address discovered", organizer != null)
+        val attendeeAddr = resolveCrossAccountAttendee()
+        assumeTrue("${config.name}: no controlled real attendee address available", attendeeAddr != null)
+
+        val uid = "realorg-roundtrip-${config.name.lowercase()}-${UUID.randomUUID()}"
+        val now = System.currentTimeMillis()
+        // Resolve organizerEmail the SAME WAY production does — via the real
+        // Account.effectiveAddresses() + EventCoordinator.resolveOrganizer rule:
+        // pick the bare, email-shaped address. Feeding the raw discovered value
+        // (which carries a "mailto:" prefix on discovered-address accounts)
+        // through this is what would have caught the double-mailto bug had the
+        // test driven it before.
+        val resolverAccount = org.onekash.kashcal.data.db.entity.Account(
+            id = 1L, provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV,
+            email = AddressNormalizer.stripMailto(organizer!!),
+            calendarUserAddresses = listOf(organizer)
+        )
+        // Mirror production EventCoordinator.resolveOrganizer EXACTLY (same
+        // AddressNormalizer.isEmailShaped predicate) so the test can't pass on
+        // an address production would reject (e.g. a dotless internal host).
+        val resolvedOrganizer = resolverAccount.effectiveAddresses()
+            .firstOrNull { AddressNormalizer.isEmailShaped(it) }
+            ?.let { AddressNormalizer.stripMailto(it) }
+        assumeTrue("${config.name}: organizer address not email-shaped", resolvedOrganizer != null)
+
+        val event = Event(
+            uid = uid,
+            calendarId = 1L,
+            title = "Real-organizer round-trip on ${config.name}",
+            startTs = now + 86_400_000,
+            endTs = now + 86_400_000 + 3_600_000,
+            dtstamp = now,
+            organizerEmail = resolvedOrganizer,
+            organizerName = "Test Organizer",
+            syncStatus = SyncStatus.PENDING_CREATE,
+        )
+        val attendees = listOf(
+            Attendee(eventId = 0, address = "mailto:${AddressNormalizer.stripMailto(attendeeAddr!!)}",
+                displayName = "Cross Attendee", partstat = "NEEDS-ACTION", role = "REQ-PARTICIPANT")
+        )
+
+        val ics = IcsPatcher.generateFresh(event, attendees)
+        // Regression guard for the double-prefix bug: the generator prepends
+        // "mailto:", so organizerEmail must be BARE. A "mailto:mailto:" on the
+        // wire = the bug is back.
+        assert(!ics.contains("mailto:mailto:")) {
+            "double mailto: prefix in serialized ICS — organizer stored non-bare:\n${redactPii(ics)}"
+        }
+        val createResult = client!!.createEvent(calendarUrl!!, uid, ics)
+        assert(createResult.isSuccess()) {
+            "Create failed on ${config.name}: ${(createResult as? CalDavResult.Error)?.message}"
+        }
+        val (url, etag) = createResult.getOrNull()!!
+        trackEvent(url, etag)
+
+        val fetchResult = client!!.fetchEvent(url)
+        assert(fetchResult.isSuccess()) { "Fetch failed on ${config.name}" }
+        val fetchedIcs = fetchResult.getOrNull()!!.icalData
+        val unfolded = fetchedIcs.replace(Regex("""\r?\n[ \t]"""), "")
+        val attendeeLines = unfolded.lines().filter { it.startsWith("ATTENDEE") }
+
+        // Servers with a full RFC 6638 scheduling pipeline may transform a
+        // real-organizer event on store: Zoho rewrites ORGANIZER; iCloud routes
+        // attendees to the inbox; OX/mailbox strips ORGANIZER+ATTENDEE entirely
+        // when it can't reconcile them. These are conformant server policies,
+        // not client defects — the production serialize path emitted a valid
+        // ORGANIZER+ATTENDEE (asserted below pre-push). Tolerate the strip on
+        // servers flagged for it; require round-trip only on servers that inline.
+        assert(ics.contains("ORGANIZER") && ics.contains("ATTENDEE")) {
+            "client must SERIALIZE a real ORGANIZER + ATTENDEE before push:\n${redactPii(ics)}"
+        }
+        if (config.stripsAttendeesOnSyntheticOrganizer) {
+            println("[${config.name}] real-organizer event stored with " +
+                "${attendeeLines.size} ATTENDEE / ORGANIZER ${if (unfolded.contains("ORGANIZER")) "present" else "stripped"} " +
+                "— server-side scheduling policy (documented quirk), not a client defect.")
+        } else {
+            assert(unfolded.contains("ORGANIZER")) {
+                "${config.name}: ORGANIZER must survive round-trip on an inlining server\n${redactPii(unfolded)}"
+            }
+            assert(attendeeLines.isNotEmpty()) {
+                "${config.name}: attendee must round-trip on an inlining server\n${redactPii(unfolded)}"
+            }
         }
     }
 

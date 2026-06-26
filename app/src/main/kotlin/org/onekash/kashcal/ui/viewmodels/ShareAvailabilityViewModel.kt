@@ -75,7 +75,7 @@ class ShareAvailabilityViewModel(
 
     // Init runs the initial DataStore read + first recompute. User-input
     // handlers .join() this so a fast tap doesn't get clobbered by a late
-    // init.copy() (review finding F13).
+    // init.copy().
     private val initJob: Job = viewModelScope.launch {
         loadPersisted()
         recomputeNow()
@@ -99,14 +99,14 @@ class ShareAvailabilityViewModel(
     }
 
     // Tracks the in-flight recompute so a fast user input cancels the stale
-    // computation before launching a fresh one (review finding F4).
+    // computation before launching a fresh one.
     private var recomputeJob: Job? = null
 
     /**
      * Re-read live system inputs (now, locale, 24h preference) and recompute
      * the preview from the latest persisted controls. Sheet reopen calls this
      * because hiltViewModel() returns the activity-scoped instance whose
-     * init only ran once (review finding F3 + F14).
+     * init only ran once.
      */
     fun refresh() {
         viewModelScope.launch {
@@ -145,8 +145,8 @@ class ShareAvailabilityViewModel(
 
     /**
      * In-memory-only update used while a slider is actively dragging; persists
-     * to DataStore on [commitWorkHoursChange] (review finding F8 — avoid disk
-     * I/O on every onValueChange tick).
+     * to DataStore on [commitWorkHoursChange] — avoids disk I/O on every
+     * onValueChange tick.
      */
     fun previewWorkHoursChange(startMin: Int, endMin: Int) {
         if (startMin < 0 || endMin > SHARE_AVAILABILITY_MAX_MINUTES) return
@@ -220,10 +220,9 @@ class ShareAvailabilityViewModel(
         )
 
         // Resolve the effective 24h-or-not from cached app preference + device
-        // setting (so users with TIME_FORMAT=24h on a 12h device get 24h here
-        // — review finding F7). Read is24Hour and locale at format-time so
-        // config changes mid-session are reflected on the next recompute
-        // (review finding F14).
+        // setting (so users with TIME_FORMAT=24h on a 12h device get 24h here).
+        // Read is24Hour and locale at format-time so config changes mid-session
+        // are reflected on the next recompute.
         val effectiveIs24Hour = DateTimeUtils.isUse24Hour(state.timeFormatPref, is24HourProvider())
         val previewText = availabilityFormatter.format(
             blocks = blocks,

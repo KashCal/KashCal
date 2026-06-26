@@ -1211,7 +1211,8 @@ class ICalEventMapperTest {
 
     @Test
     fun `server-supplied CREATED from 2020 is not overwritten with sync clock`() {
-        // Regression guard specifically for the A0.1 bug:
+        // Regression guard for the bug where a server-supplied CREATED was
+        // overwritten with the local sync clock:
         // pre-fix code stomped CREATED with System.currentTimeMillis().
         // Any 2020 timestamp is well below 2020-09-13T12:26:40Z (1_600_000_000_000 ms).
         val ics = """
@@ -1295,5 +1296,124 @@ class ICalEventMapperTest {
 
         assertNotNull("Absolute trigger must not be dropped", entity.reminders)
         assertEquals("-PT1H", entity.reminders!!.first())
+    }
+
+    // ========== ORGANIZER scheduling-parameter mapping (RFC 6638 §7.3) ==========
+
+    @Test
+    fun `maps ORGANIZER SCHEDULE-STATUS into organizerScheduleStatus`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:org-sched-001@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Meeting
+            ORGANIZER;SCHEDULE-STATUS=1.2:mailto:boss@example.test
+            ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:guest@example.test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals("1.2", entity.organizerScheduleStatus)
+    }
+
+    @Test
+    fun `maps ORGANIZER SENT-BY into organizerSentBy`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:org-sentby-001@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Meeting
+            ORGANIZER;SENT-BY="mailto:assistant@example.test":mailto:boss@example.test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals("assistant@example.test", entity.organizerSentBy)
+    }
+
+    @Test
+    fun `multi-value ORGANIZER SCHEDULE-STATUS keeps the leading code`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:org-sched-multi@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Meeting
+            ORGANIZER;SCHEDULE-STATUS="2.0,2.4":mailto:boss@example.test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertEquals("2.0", entity.organizerScheduleStatus)
+    }
+
+    @Test
+    fun `ORGANIZER without SCHEDULE-STATUS leaves organizerScheduleStatus null`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:org-nostatus@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Meeting
+            ORGANIZER:mailto:boss@example.test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertNull(entity.organizerScheduleStatus)
+        assertNull(entity.organizerSentBy)
+    }
+
+    @Test
+    fun `event without ORGANIZER leaves organizer schedule fields null`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:no-org@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Solo event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
+
+        assertNull(entity.organizerScheduleStatus)
+        assertNull(entity.organizerSentBy)
     }
 }

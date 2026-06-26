@@ -3,9 +3,11 @@ package org.onekash.icaldav.scheduling
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.onekash.icaldav.model.AlarmAction
 import org.onekash.icaldav.model.Attendee
 import org.onekash.icaldav.model.AttendeeRole
 import org.onekash.icaldav.model.EventStatus
+import org.onekash.icaldav.model.ICalAlarm
 import org.onekash.icaldav.model.Frequency
 import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
@@ -202,11 +204,32 @@ class ITipBuilderTest {
         }
 
         @Test
-        fun `createCancel preserves SEQUENCE`() {
+        fun `createCancel increments SEQUENCE - RFC 5546 section 2_1_4 and 3_2_5`() {
             val event = createTestEvent(sequence = 10)
 
             val ics = builder.createCancel(event)
-            assertTrue(ics.contains("SEQUENCE:10"))
+            // CANCEL MUST increment SEQUENCE (RFC 5546 §2.1.4, reaffirmed §3.2.5).
+            assertTrue(ics.contains("SEQUENCE:11"), "CANCEL must increment SEQUENCE")
+            assertTrue(!ics.contains("SEQUENCE:10"), "CANCEL must not emit the un-incremented SEQUENCE")
+        }
+
+        @Test
+        fun `createCancel for specific attendees increments SEQUENCE`() {
+            val event = createTestEvent(sequence = 10)
+            val attendeesToCancel = listOf(
+                Attendee(
+                    email = "removed@example.com",
+                    name = "Removed",
+                    partStat = PartStat.DECLINED,
+                    role = AttendeeRole.REQ_PARTICIPANT,
+                    rsvp = false
+                )
+            )
+
+            val ics = builder.createCancel(event, attendeesToCancel)
+            // RFC 5546 §2.1.4: SEQUENCE MUST increment on CANCEL, including the
+            // disinvite (remove-specific-attendees) form.
+            assertTrue(ics.contains("SEQUENCE:11"), "Attendee-disinvite CANCEL must increment SEQUENCE")
         }
 
         @Test
@@ -233,11 +256,25 @@ class ITipBuilderTest {
     @DisplayName("createUpdate Tests")
     inner class CreateUpdateTests {
         @Test
-        fun `createUpdate increments SEQUENCE`() {
+        fun `createUpdate emits SEQUENCE verbatim - bump policy lives in the caller`() {
             val event = createTestEvent(sequence = 5)
 
             val ics = builder.createUpdate(event)
-            assertTrue(ics.contains("SEQUENCE:6"), "Update should increment SEQUENCE")
+            // The serializer must NOT auto-bump. RFC 5546 §2.1.4 bumps only on
+            // substantive change, a decision the single-ICalEvent serializer
+            // cannot make (it has no prior version to diff). The caller advances
+            // SEQUENCE before building the message; the builder emits it as-is.
+            assertTrue(ics.contains("SEQUENCE:5"), "Update must emit SEQUENCE verbatim")
+            assertTrue(!ics.contains("SEQUENCE:6"), "Update must not auto-increment SEQUENCE")
+        }
+
+        @Test
+        fun `createUpdate emits zero SEQUENCE verbatim`() {
+            val event = createTestEvent(sequence = 0)
+
+            val ics = builder.createUpdate(event)
+            assertTrue(ics.contains("SEQUENCE:0"), "Update must emit SEQUENCE:0 verbatim, not 1")
+            assertTrue(!ics.contains("SEQUENCE:1"), "Update must not auto-increment SEQUENCE")
         }
 
         @Test
@@ -327,19 +364,121 @@ class ITipBuilderTest {
     @Nested
     @DisplayName("createRefresh Tests")
     inner class CreateRefreshTests {
+        private val requester = Attendee(
+            email = "requester@example.com",
+            name = "Requester",
+            partStat = PartStat.NEEDS_ACTION,
+            role = AttendeeRole.REQ_PARTICIPANT,
+            rsvp = false
+        )
+
         @Test
         fun `createRefresh sets METHOD REFRESH`() {
             val event = createTestEvent()
-            val attendee = Attendee(
-                email = "requester@example.com",
-                name = "Requester",
-                partStat = PartStat.NEEDS_ACTION,
-                role = AttendeeRole.REQ_PARTICIPANT,
-                rsvp = false
+
+            val ics = builder.createRefresh(event, requester)
+            assertTrue(ics.contains("METHOD:REFRESH"))
+        }
+
+        @Test
+        fun `createRefresh emits only the minimal RFC 5546 section 3_2_6 property set`() {
+            val event = createTestEvent(sequence = 3)
+
+            val ics = builder.createRefresh(event, requester)
+
+            // RFC 5546 §3.2.6: a REFRESH VEVENT carries only UID, DTSTAMP,
+            // ORGANIZER, and the requesting ATTENDEE (RECURRENCE-ID only for an
+            // instance). Everything else has presence 0.
+            assertTrue(ics.contains("UID:test-event-123"), "REFRESH must include UID")
+            assertTrue(ics.contains("DTSTAMP:"), "REFRESH must include DTSTAMP")
+            assertTrue(ics.contains("ORGANIZER") && ics.contains("organizer@example.com"), "REFRESH must include ORGANIZER")
+            assertTrue(ics.contains("ATTENDEE") && ics.contains("requester@example.com"), "REFRESH must include the requesting ATTENDEE")
+
+            val forbidden = listOf(
+                "DTSTART", "DTEND", "DURATION", "SUMMARY", "DESCRIPTION", "LOCATION",
+                "STATUS:", "SEQUENCE", "TRANSP", "RRULE", "EXDATE", "RDATE",
+                "PRIORITY", "CATEGORIES", "COLOR", "URL", "GEO", "CLASS", "BEGIN:VALARM"
+            )
+            forbidden.forEach { prop ->
+                assertTrue(!ics.contains(prop), "REFRESH must NOT contain $prop (RFC 5546 §3.2.6 presence 0)")
+            }
+        }
+
+        @Test
+        fun `createRefresh includes only the requesting attendee`() {
+            val event = createTestEvent() // has attendee1 + attendee2
+
+            val ics = builder.createRefresh(event, requester)
+            val attendeeCount = ics.split("ATTENDEE").size - 1
+            assertEquals(1, attendeeCount, "REFRESH must include only the requesting attendee")
+            assertTrue(ics.contains("requester@example.com"))
+        }
+
+        @Test
+        fun `createRefresh includes RECURRENCE-ID for an instance`() {
+            val recurrenceId = ICalDateTime.parse("20231222T140000Z")
+            val instance = createTestEvent().copy(recurrenceId = recurrenceId)
+
+            val ics = builder.createRefresh(instance, requester)
+            assertTrue(ics.contains("RECURRENCE-ID"), "REFRESH for an instance must include RECURRENCE-ID")
+            assertTrue(ics.contains("20231222T140000Z"), "REFRESH must carry the instance RECURRENCE-ID value")
+        }
+    }
+
+    @Nested
+    @DisplayName("VALARM scope per RFC 5546 section 3_2")
+    inner class ValarmScopeTests {
+        private fun eventWithAlarm(sequence: Int = 0): ICalEvent =
+            createTestEvent(sequence = sequence).copy(
+                alarms = listOf(
+                    ICalAlarm(
+                        action = AlarmAction.DISPLAY,
+                        trigger = java.time.Duration.ofMinutes(-15),
+                        triggerAbsolute = null,
+                        description = "Reminder",
+                        summary = null
+                    )
+                )
             )
 
-            val ics = builder.createRefresh(event, attendee)
-            assertTrue(ics.contains("METHOD:REFRESH"))
+        private val responder = Attendee(
+            email = "responder@example.com",
+            name = "Responder",
+            partStat = PartStat.ACCEPTED,
+            role = AttendeeRole.REQ_PARTICIPANT,
+            rsvp = false
+        )
+
+        @Test
+        fun `REPLY omits VALARM`() {
+            val ics = builder.createReply(eventWithAlarm(), responder)
+            assertTrue(!ics.contains("BEGIN:VALARM"), "REPLY must not contain VALARM (RFC 5546 §3.2.3 presence 0)")
+        }
+
+        @Test
+        fun `CANCEL omits VALARM`() {
+            val ics = builder.createCancel(eventWithAlarm())
+            assertTrue(!ics.contains("BEGIN:VALARM"), "CANCEL must not contain VALARM (RFC 5546 §3.2.5 presence 0)")
+        }
+
+        @Test
+        fun `REQUEST retains VALARM`() {
+            val event = eventWithAlarm()
+            val ics = builder.createRequest(event, event.attendees)
+            assertTrue(ics.contains("BEGIN:VALARM"), "REQUEST permits VALARM (RFC 5546 §3.2.2 presence 0+)")
+        }
+
+        @Test
+        fun `ADD retains VALARM`() {
+            val master = createTestEvent().copy(
+                rrule = RRule(freq = Frequency.WEEKLY, interval = 1)
+            )
+            val instance = eventWithAlarm().copy(
+                recurrenceId = ICalDateTime.parse("20231222T140000Z"),
+                rrule = null
+            )
+            val ics = builder.createAdd(master, instance, emptyList())
+            assertTrue(ics.contains("BEGIN:VALARM"), "ADD permits VALARM (RFC 5546 §3.2.4 presence 0+)")
         }
     }
 
@@ -463,7 +602,7 @@ class ITipBuilderTest {
         }
 
         @Test
-        fun `createAdd preserves master SEQUENCE`() {
+        fun `createAdd increments master SEQUENCE - RFC 5546 section 2_1_4`() {
             val master = createRecurringMasterEvent(sequence = 7)
             val newInstance = createNewInstance(ICalDateTime.parse("20231220T140000Z"))
             val attendees = listOf(
@@ -477,8 +616,21 @@ class ITipBuilderTest {
             )
 
             val ics = builder.createAdd(master, newInstance, attendees)
-            assertTrue(ics.contains("SEQUENCE:7"), "ADD must preserve master SEQUENCE")
+            // RFC 5546 §2.1.4: SEQUENCE MUST increment on ADD.
+            assertTrue(ics.contains("SEQUENCE:8"), "ADD must increment master SEQUENCE")
+            assertTrue(!ics.contains("SEQUENCE:7"), "ADD must not emit the un-incremented SEQUENCE")
             assertTrue(!ics.contains("SEQUENCE:99"), "ADD must NOT use instance's original SEQUENCE")
+        }
+
+        @Test
+        fun `createAdd SEQUENCE is greater than zero - RFC 5546 section 3_2_4`() {
+            val master = createRecurringMasterEvent(sequence = 0)
+            val newInstance = createNewInstance(ICalDateTime.parse("20231220T140000Z"))
+
+            val ics = builder.createAdd(master, newInstance, emptyList())
+            // RFC 5546 §3.2.4: an ADD's SEQUENCE MUST be greater than 0.
+            assertTrue(ics.contains("SEQUENCE:1"), "ADD from master SEQUENCE 0 must emit SEQUENCE:1 (>0)")
+            assertTrue(!ics.contains("SEQUENCE:0"), "ADD must not emit SEQUENCE:0")
         }
 
         @Test
@@ -663,7 +815,8 @@ class ITipBuilderTest {
 
             val parsedEvent = result.events[0]
             assertEquals("recurring-master-123", parsedEvent.uid, "Parsed UID should match master")
-            assertEquals(3, parsedEvent.sequence, "Parsed SEQUENCE should match master")
+            // ADD increments SEQUENCE (RFC 5546 §2.1.4): master 3 -> 4.
+            assertEquals(4, parsedEvent.sequence, "Parsed SEQUENCE should be master + 1")
             assertNotNull(parsedEvent.recurrenceId, "Parsed event should have RECURRENCE-ID")
         }
     }

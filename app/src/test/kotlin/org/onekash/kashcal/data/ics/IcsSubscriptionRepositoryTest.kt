@@ -5,6 +5,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -94,12 +96,41 @@ class IcsSubscriptionRepositoryTest {
     @Before
     fun setup() {
         database = mockk(relaxed = true)
-        icsSubscriptionsDao = mockk(relaxed = true)
-        accountRepository = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
-        eventsDao = mockk(relaxed = true)
+        // Data-bearing collaborators are explicit (not relaxed) so an
+        // unexpected query throws instead of silently returning null/empty.
+        // Defaults reproduce the previous relaxed behavior; per-test stubs
+        // override them.
+        icsSubscriptionsDao = mockk()
+        coEvery { icsSubscriptionsDao.getById(any()) } returns null
+        coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
+        coEvery { icsSubscriptionsDao.getByCalendarId(any()) } returns null
+        coEvery { icsSubscriptionsDao.getEnabled() } returns emptyList()
+        coEvery { icsSubscriptionsDao.urlExists(any()) } returns false
+        coEvery { icsSubscriptionsDao.insert(any()) } returns 0L
+        coEvery { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) } returns Unit
+        coEvery { icsSubscriptionsDao.updateSyncError(any(), any()) } returns Unit
+        coEvery { icsSubscriptionsDao.setEnabled(any(), any()) } returns Unit
+        coEvery { icsSubscriptionsDao.updateSettings(any(), any(), any(), any()) } returns Unit
+        accountRepository = mockk()
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 0L
+        calendarsDao = mockk()
+        coEvery { calendarsDao.getById(any()) } returns null
+        coEvery { calendarsDao.insert(any()) } returns 0L
+        coEvery { calendarsDao.deleteById(any()) } returns Unit
+        coEvery { calendarsDao.updateDisplayName(any(), any()) } returns Unit
+        coEvery { calendarsDao.updateColor(any(), any()) } returns Unit
+        eventsDao = mockk()
+        coEvery { eventsDao.insert(any()) } returns 0L
+        coEvery { eventsDao.update(any()) } returns Unit
+        coEvery { eventsDao.deleteById(any()) } returns Unit
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns emptyList()
+        coEvery { eventsDao.getAllMasterEventsForCalendar(any()) } returns emptyList()
+        coEvery { eventsDao.anyByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns false
         occurrenceGenerator = mockk(relaxed = true)
-        icsFetcher = mockk(relaxed = true)
+        icsFetcher = mockk()
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Error("Unmocked fetch")
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
 
@@ -138,10 +169,11 @@ class IcsSubscriptionRepositoryTest {
         val subscriptions = listOf(testSubscription)
         every { icsSubscriptionsDao.getAll() } returns flowOf(subscriptions)
 
-        val flow = repository.getAllSubscriptions()
+        val result = repository.getAllSubscriptions().first()
 
-        // Verify flow is returned
-        every { icsSubscriptionsDao.getAll() }
+        // The repository surfaces the DAO's flow contents unchanged
+        assertEquals(subscriptions, result)
+        verify { icsSubscriptionsDao.getAll() }
     }
 
     // ==================== getSubscriptionById Tests ====================

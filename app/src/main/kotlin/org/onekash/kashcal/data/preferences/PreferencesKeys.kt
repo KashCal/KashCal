@@ -123,6 +123,9 @@ object PreferencesKeys {
     /** Onboarding sheet dismissed */
     val ONBOARDING_DISMISSED = booleanPreferencesKey("onboarding_dismissed")
 
+    /** User declined contact suggestions in the attendee picker — never re-prompt */
+    val CONTACT_SUGGESTIONS_DECLINED = booleanPreferencesKey("contact_suggestions_declined")
+
     /**
      * Highest versionCode whose What's New entry the user has acknowledged.
      * 0 means "never tracked": fresh installs (and users present before this

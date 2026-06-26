@@ -120,8 +120,16 @@ class CalDavSyncEngine @Inject constructor(
                     pushUpdated = pushResult.eventsUpdated
                     pushDeleted = pushResult.eventsDeleted
 
-                    // Forward per-operation warnings to session
+                    // Forward per-operation warnings to session (soft/retryable).
                     pushResult.pushWarnings.forEach { sessionBuilder.addWarning(it) }
+                    // Forward permanent per-operation failures as ERRORS — the
+                    // change did not reach the server and won't be retried, so it
+                    // must surface as a failure, not a warning. Preserve the HTTP
+                    // code so downstream classification (auth vs server vs not-
+                    // found) survives rather than collapsing to a generic error.
+                    pushResult.pushErrors.forEach {
+                        errors.add(SyncError(phase = SyncPhase.PUSH, code = it.code, message = it.message))
+                    }
 
                     if (pushResult.operationsFailed > 0) {
                         // Some operations failed - try to resolve conflicts

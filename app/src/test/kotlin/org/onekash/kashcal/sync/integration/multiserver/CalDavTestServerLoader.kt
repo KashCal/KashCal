@@ -25,6 +25,10 @@ object CalDavTestServerLoader {
 
     private val propertiesCache: Map<String, String> by lazy { loadAllProperties() }
 
+    /** Raw local.properties lookup for tests that need an arbitrary key
+     *  (e.g. cross-account attendee addresses). Null when absent. */
+    fun property(key: String): String? = propertiesCache[key]
+
     private fun loadAllProperties(): Map<String, String> {
         val props = mutableMapOf<String, String>()
         for (path in possiblePaths) {

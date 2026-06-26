@@ -52,7 +52,18 @@ sealed class CalendarContractAction {
     /** Create event with pre-filled data. From EDIT content://com.android.calendar/events with extras. */
     data class CreateEvent(val data: CalendarIntentData, val invitees: List<String>) : CalendarContractAction()
 
-    /** Open the app normally (fallback for unresolvable paths like /events/{id}). */
+    /**
+     * Open a device calendar event. From VIEW content://com.android.calendar/events/{id}
+     * (transit apps, notification taps, launchers).
+     *
+     * @param eventId CalendarProvider event ID parsed from the URI path.
+     * @param beginTimeMillis The specific occurrence start (EXTRA_EVENT_BEGIN_TIME) when the
+     *   sender supplied a positive value, else null. Non-null routes straight to the
+     *   occurrence quick view; null routes to a navigate-to-the-event's-start-date fallback.
+     */
+    data class OpenDeviceEvent(val eventId: Long, val beginTimeMillis: Long?) : CalendarContractAction()
+
+    /** Open the app normally (fallback for unresolvable paths). */
     data object OpenApp : CalendarContractAction()
 }
 
@@ -142,7 +153,8 @@ object CalendarIntentParser {
      * Handles standard CalendarContract URI patterns:
      * - /time/{millis} → [CalendarContractAction.GoToDate]
      * - /events (EDIT + extras) → [CalendarContractAction.CreateEvent]
-     * - /events/{id}, unknown paths → [CalendarContractAction.OpenApp]
+     * - /events/{id} (VIEW) → [CalendarContractAction.OpenDeviceEvent]
+     * - /events/{id} (EDIT), unknown paths → [CalendarContractAction.OpenApp]
      *
      * Design note: EDIT on /events (no ID) is treated as "create" because there is no
      * event ID to resolve — only extras describing a new event. This is the standard
@@ -184,7 +196,23 @@ object CalendarIntentParser {
                 }
             }
 
-            // All other paths: /events/{id}, /calendars/{id}, /time (no millis), unknown
+            // content://com.android.calendar/events/{id} + ACTION_VIEW → open device event.
+            // EDIT on /events/{id} is intentionally NOT handled here (stays OpenApp) — editing
+            // an existing device event by CalendarProvider ID is out of scope.
+            pathSegments.size == 2 && pathSegments[0] == "events" &&
+                safeIntent.action == Intent.ACTION_VIEW -> {
+                val eventId = pathSegments[1].toLongOrNull()
+                if (eventId != null && eventId > 0) {
+                    val beginTime = safeIntent
+                        .getLongExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, -1)
+                        .takeIf { it > 0 }
+                    CalendarContractAction.OpenDeviceEvent(eventId, beginTime)
+                } else {
+                    CalendarContractAction.OpenApp
+                }
+            }
+
+            // All other paths: EDIT /events/{id}, /calendars/{id}, /time (no millis), unknown
             else -> CalendarContractAction.OpenApp
         }
     }

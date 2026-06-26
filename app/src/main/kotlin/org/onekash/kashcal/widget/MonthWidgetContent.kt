@@ -369,7 +369,7 @@ private fun DayCell(
     }
 }
 
-// ==================== Action Callbacks for US4 Month Navigation ====================
+// ==================== Action Callbacks for Month Navigation ====================
 
 /**
  * Navigate to previous month (decrement offset).

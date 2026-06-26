@@ -323,7 +323,14 @@ fun ShareCardComposable(
                         )
                         Spacer(Modifier.width(7.dp))
                         Text(
-                            text = location,
+                            // Venue+address values arrive multi-part: the
+                            // location picker joins name and address with
+                            // commas, and ICS import turns escaped \N into
+                            // real newlines. Collapse to one logical line so
+                            // the 2-line budget holds address text and wraps
+                            // on commas, instead of being spent on hard
+                            // breaks (which truncated mid-address).
+                            text = normalizeShareAddress(location),
                             style = TextStyle(
                                 color = Palette.brandCream,
                                 fontSize = 14.sp,
@@ -367,6 +374,21 @@ fun ShareCardComposable(
         }
     }
 }
+
+/**
+ * Flatten a location into one logical line for the share card: collapse
+ * every run of whitespace to a single space and trim the ends. A value
+ * that is already a single clean line is returned unchanged. The card's
+ * 2-line ellipsis remains the final safety net for addresses that are long
+ * even after flattening.
+ *
+ * The character class covers ASCII whitespace plus the non-breaking-space
+ * family (U+00A0, figure space U+2007, narrow NBSP U+202F) that `\s` skips
+ * — geocoded addresses, especially European ones, embed those between
+ * street number and name.
+ */
+internal fun normalizeShareAddress(raw: String): String =
+    raw.replace(Regex("[\\s\\u00A0\\u2007\\u202F]+"), " ").trim()
 
 @Composable
 private fun DateChip(text: DateChipText, monthColor: Color) {

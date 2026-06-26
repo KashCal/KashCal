@@ -11,7 +11,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Unit tests for device calendar reminder query logic (Phase 4 - Chunk 2).
+ * Unit tests for device calendar reminder query logic.
  *
  * Tests cover:
  * - Trigger time calculation for timed events

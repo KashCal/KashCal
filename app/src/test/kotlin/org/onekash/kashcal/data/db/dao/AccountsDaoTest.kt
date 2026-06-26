@@ -49,6 +49,24 @@ class AccountsDaoTest : BaseDaoTest() {
     }
 
     @Test
+    fun `schedule_outbox_url defaults to null then round-trips a value`() = runTest {
+        val id = accountsDao.insert(createAccount())
+        assertNull(accountsDao.getById(id)!!.scheduleOutboxUrl)
+
+        accountsDao.updateScheduleOutboxUrl(id, "https://dav/calendars/u/outbox/")
+        assertEquals("https://dav/calendars/u/outbox/", accountsDao.getById(id)!!.scheduleOutboxUrl)
+    }
+
+    @Test
+    fun `updateScheduleOutboxUrl can clear back to null`() = runTest {
+        val id = accountsDao.insert(createAccount())
+        accountsDao.updateScheduleOutboxUrl(id, "https://dav/outbox/")
+
+        accountsDao.updateScheduleOutboxUrl(id, null)
+        assertNull(accountsDao.getById(id)!!.scheduleOutboxUrl)
+    }
+
+    @Test
     fun `insert multiple accounts`() = runTest {
         accountsDao.insert(createAccount(email = "user1@example.com"))
         accountsDao.insert(createAccount(email = "user2@example.com"))

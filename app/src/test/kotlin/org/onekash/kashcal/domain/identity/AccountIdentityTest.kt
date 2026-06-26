@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.identity
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -96,5 +97,32 @@ class AccountIdentityTest {
     fun `email-shape fallback only enables mailto matching, not URN matching`() {
         val a = account(email = "alice@icloud.com", addresses = emptyList())
         assertFalse(a.matchesAttendee("urn:uuid:123456789"))
+    }
+
+    // ---- effectiveAddresses() — the reusable resolver (organizer source) ----
+
+    @Test
+    fun `effectiveAddresses returns the address set verbatim when present`() {
+        val a = account(addresses = listOf("mailto:alice@icloud.com", "urn:uuid:abc", "/123/principal/"))
+        assertEquals(listOf("mailto:alice@icloud.com", "urn:uuid:abc", "/123/principal/"), a.effectiveAddresses())
+    }
+
+    @Test
+    fun `effectiveAddresses falls back to email login when set is empty and login is email-shaped`() {
+        val a = account(email = "alice@icloud.com", addresses = emptyList())
+        assertEquals(listOf("alice@icloud.com"), a.effectiveAddresses())
+    }
+
+    @Test
+    fun `effectiveAddresses is empty when set is empty and login is not email-shaped`() {
+        val a = account(email = "testuser1", addresses = emptyList())
+        assertEquals(emptyList<String>(), a.effectiveAddresses())
+    }
+
+    @Test
+    fun `effectiveAddresses firstOrNull yields the preferred organizer address`() {
+        // Address discovery hoists a mailto to index 0; firstOrNull is the organizer pick.
+        val a = account(addresses = listOf("mailto:alice@icloud.com", "/123/principal/"))
+        assertEquals("mailto:alice@icloud.com", a.effectiveAddresses().firstOrNull())
     }
 }

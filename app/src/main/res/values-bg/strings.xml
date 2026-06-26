@@ -35,6 +35,8 @@
     <string name="action_close">Затвори</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Не сега</string>
+    <string name="action_allow">Разреши</string>
+    <string name="action_no_thanks">Не, благодаря</string>
     <string name="action_sign_in">Вход</string>
     <string name="action_select">Избери</string>
     <string name="action_show_password">Покажи паролата</string>
@@ -476,8 +478,6 @@
     <string name="account_detail_cd_show_password">Покажи паролата</string>
     <string name="account_detail_cd_hide_password">Скрий паролата</string>
 
-    <string name="sync_failure_notification_title">Проблем при синхронизиране с %1$s</string>
-    <string name="sync_failure_notification_text">Синхронизирането на календара е неуспешно %1$d пъти</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Преименувай акаунт</string>
@@ -853,6 +853,7 @@
     <string name="sync_notification_expired_title">Промените за синхронизиране изтекоха</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d календар синхронизиран</item>
@@ -1125,6 +1126,18 @@
     <string name="attendee_status_accepted">Прието</string>
     <string name="attendee_status_declined">Отказан</string>
     <string name="attendee_status_tentative">Условно</string>
+    <string name="attendee_picker_title">Добавяне на участници</string>
+    <string name="attendee_pick_add_people">Добавяне на участници</string>
+    <string name="attendee_pick_from_contacts">Име или имейл</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+още %1$d</item>
+        <item quantity="other">+още %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Предлагай хора от вашите контакти</string>
+    <string name="attendee_invalid_email">Въведете пълен имейл адрес</string>
+    <string name="attendee_add_typed">Добавяне на \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Поканването на хора не е налично за този акаунт</string>
+    <string name="action_save_and_notify">Запазване и известяване</string>
     <string name="attendee_status_delegated">Делегирано</string>
     <string name="attendee_status_pending">Изчакване</string>
     <string name="inbox_empty_caught_up">Всичко е готово</string>

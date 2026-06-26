@@ -3,6 +3,8 @@ package org.onekash.kashcal.sync.parser
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -34,6 +36,11 @@ class CalDavXmlParserTest {
         every { Log.d(any(), any<String>()) } returns 0
 
         parser = CalDavXmlParser()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     private fun loadResource(path: String): String =
@@ -91,6 +98,124 @@ class CalDavXmlParserTest {
     @Test
     fun `extractPrincipalUrl returns null for malformed xml`() {
         assertNull(parser.extractPrincipalUrl("<not-valid-caldav>broken</not-valid-caldav>"))
+    }
+
+    // ========== extractScheduleOutboxUrl (RFC 6638 §2.1.1) ==========
+
+    @Test
+    fun `extractScheduleOutboxUrl parses Nextcloud relative href`() {
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+              <d:response>
+                <d:href>/remote.php/dav/principals/users/admin/</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <cal:schedule-outbox-URL>
+                      <d:href>/remote.php/dav/calendars/admin/outbox/</d:href>
+                    </cal:schedule-outbox-URL>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+        assertEquals("/remote.php/dav/calendars/admin/outbox/", parser.extractScheduleOutboxUrl(xml))
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl parses Zoho absolute href`() {
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+              <D:response>
+                <D:href>/caldav/zz123/user/</D:href>
+                <D:propstat>
+                  <D:prop>
+                    <C:schedule-outbox-URL>
+                      <D:href>https://calendar.zoho.com/caldav/zz123/outbox/</D:href>
+                    </C:schedule-outbox-URL>
+                  </D:prop>
+                  <D:status>HTTP/1.1 200 OK</D:status>
+                </D:propstat>
+              </D:response>
+            </D:multistatus>
+        """.trimIndent()
+        assertEquals("https://calendar.zoho.com/caldav/zz123/outbox/", parser.extractScheduleOutboxUrl(xml))
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl ignores the response self-href and returns the property href`() {
+        // RFC 6638 §2.1.1: the property wraps its OWN href. The response's
+        // self-href (the principal URL) must NOT be mistaken for the outbox.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+              <d:response>
+                <d:href>/dav.php/principals/testuser1/</d:href>
+                <d:propstat>
+                  <d:prop>
+                    <c:schedule-outbox-URL>
+                      <d:href>/dav.php/calendars/testuser1/outbox/</d:href>
+                    </c:schedule-outbox-URL>
+                  </d:prop>
+                  <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+              </d:response>
+            </d:multistatus>
+        """.trimIndent()
+        val result = parser.extractScheduleOutboxUrl(xml)
+        assertEquals("/dav.php/calendars/testuser1/outbox/", result)
+        // Explicitly assert it is NOT the principal self-href.
+        assertTrue(result != "/dav.php/principals/testuser1/")
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl returns null when property is empty (not outbox-enabled)`() {
+        // SOGo: returns the property element but with no href child.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+              <D:response>
+                <D:href>/SOGo/dav/testuser1/</D:href>
+                <D:propstat>
+                  <D:prop>
+                    <C:schedule-outbox-URL/>
+                  </D:prop>
+                  <D:status>HTTP/1.1 200 OK</D:status>
+                </D:propstat>
+              </D:response>
+            </D:multistatus>
+        """.trimIndent()
+        assertNull(parser.extractScheduleOutboxUrl(xml))
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl returns null when property is absent`() {
+        // Radicale: property not advertised at all (404 propstat / missing).
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+              <D:response>
+                <D:href>/testuser1/</D:href>
+                <D:propstat>
+                  <D:prop/>
+                  <D:status>HTTP/1.1 404 Not Found</D:status>
+                </D:propstat>
+              </D:response>
+            </D:multistatus>
+        """.trimIndent()
+        assertNull(parser.extractScheduleOutboxUrl(xml))
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl returns null for empty xml`() {
+        assertNull(parser.extractScheduleOutboxUrl(""))
+    }
+
+    @Test
+    fun `extractScheduleOutboxUrl returns null for malformed xml`() {
+        assertNull(parser.extractScheduleOutboxUrl("<not-valid>broken</not-valid>"))
     }
 
     // ========== extractCalendarHomeUrl ==========

@@ -531,7 +531,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll account exception records failure and continues`() = runTest {
-        // A2: When syncEngine throws for one account, record failure and continue
+        // When syncEngine throws for one account, record failure and continue
         // to next account instead of aborting the entire sync.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -554,7 +554,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll first account exception does not block second account`() = runTest {
-        // A2: Two accounts — first throws, second succeeds. Both should be processed.
+        // Two accounts — first throws, second succeeds. Both should be processed.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val account1 = createTestAccount(id = 1L)
@@ -1031,7 +1031,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork abandons operations exceeding 30-day lifetime and shows notification`() = runTest {
-        // Given - an operation that has exceeded 30-day lifetime
+        // Given - one expired op whose event resolves to a single calendar
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
@@ -1042,6 +1042,8 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
+        coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L)
         coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
@@ -1050,9 +1052,112 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - operation abandoned and user notified
+        // Then - operation abandoned and user notified with the calendar name
         coVerify { pendingOperationsDao.abandonOperation(1L, any(), any()) }
-        verify { notificationManager.showOperationExpiredNotification(1) }
+        verify { notificationManager.showOperationExpiredNotification(1, "Home") }
+    }
+
+    @Test
+    fun `doWork passes null calendar name when expired ops span multiple calendars`() = runTest {
+        // Given - two expired ops resolving to two different calendars
+        val op1 = PendingOperation(id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_CREATE)
+        val op2 = PendingOperation(id = 2L, eventId = 200L, operation = PendingOperation.OPERATION_CREATE)
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(op1, op2)
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
+        coEvery { eventsDao.getById(200L) } returns createTestEvent(id = 200L, calendarId = 8L)
+        coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L)
+        coEvery { calendarRepository.getCalendarById(8L) } returns createTestCalendar(id = 8L)
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false))
+
+        // When
+        worker.doWork()
+
+        // Then - count-only fallback (no single calendar to name)
+        verify { notificationManager.showOperationExpiredNotification(2, null) }
+    }
+
+    @Test
+    fun `doWork names the source calendar for an expired move-related operation`() = runTest {
+        // For MOVE / synced->local DELETE ops the event's calendarId has already
+        // advanced to the move target, while the stuck operation concerns the
+        // source calendar it carries. The notification must name the source.
+        val expiredOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_DELETE,
+            sourceCalendarId = 7L, // stuck DELETE is against calendar 7 (source)
+            lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
+        )
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        // Event row has already moved to the target calendar (8L).
+        coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 8L)
+        coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L).copy(displayName = "Source Cal")
+        coEvery { calendarRepository.getCalendarById(8L) } returns createTestCalendar(id = 8L).copy(displayName = "Target Cal")
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false))
+
+        // When
+        worker.doWork()
+
+        // Then - names the source calendar (7L), not the event's current target (8L)
+        verify { notificationManager.showOperationExpiredNotification(1, "Source Cal") }
+    }
+
+    @Test
+    fun `doWork passes null calendar name when expired op event was deleted`() = runTest {
+        // Given - an expired op whose event no longer exists (ops survive event deletion)
+        val expiredOp = PendingOperation(id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_DELETE)
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { eventsDao.getById(100L) } returns null
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false))
+
+        // When
+        worker.doWork()
+
+        // Then - null event collapses to count-only fallback
+        verify { notificationManager.showOperationExpiredNotification(1, null) }
+    }
+
+    @Test
+    fun `doWork does not re-notify on second sync after operations abandoned`() = runTest {
+        // The core bug: dismissing must stick. Once abandoned, the next sync's
+        // getExpiredOperations returns empty (C1 behavior), so no second notify.
+        val expiredOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_CREATE,
+            lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
+        )
+        // First sync finds it expired; second sync finds nothing (now ABANDONED).
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returnsMany
+            listOf(listOf(expiredOp), emptyList())
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
+        coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L)
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        // When - two sync runs
+        createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false)).doWork()
+        createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false)).doWork()
+
+        // Then - notified exactly once across both runs
+        verify(exactly = 1) { notificationManager.showOperationExpiredNotification(any(), any()) }
     }
 
     @Test
@@ -1266,73 +1371,30 @@ class CalDavSyncWorkerTest {
         }
     }
 
-    // ==================== Per-Account Failure Threshold Tests ====================
+    // ==================== Per-Account Failure Handling Tests ====================
 
     @Test
-    fun `syncAll fires failure threshold notification at exactly 3 consecutive failures`() = runTest {
-        // Given - account with exactly 3 consecutive failures after this sync
+    fun `syncAll records failure but posts no system notification when an account fails repeatedly`() = runTest {
+        // Repeated background sync failures are self-healing and surfaced in-app
+        // (Accounts warning indicator + on-open error banner), so no system
+        // notification is posted for the repeated-failure condition.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
-        val testAccount = createTestAccount().copy(
-            consecutiveSyncFailures = 2 // Will become 3 after recordSyncFailure
-        )
+        val testAccount = createTestAccount()
 
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
             SyncResult.Error(-1, "Server unreachable", true)
 
-        // After recording failure, the account now has 3 consecutive failures
-        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 3)
-        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
-
         // When
         worker.doWork()
 
-        // Then - notification should fire because consecutiveSyncFailures == 3
+        // Then - failure counter still advances (in-app surfaces depend on it),
+        // but the repeated background failure stays silent: no completion or
+        // error notification is posted.
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
-        verify { notificationManager.showSyncFailureThresholdNotification(any(), 3) }
-    }
-
-    @Test
-    fun `syncAll does NOT fire failure threshold notification at 2 failures`() = runTest {
-        // Given - account at 2 failures (below threshold)
-        val inputData = CalDavSyncWorker.createFullSyncInput()
-        val worker = createWorker(inputData)
-        val testAccount = createTestAccount()
-
-        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
-            SyncResult.Error(-1, "Server unreachable", true)
-
-        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 2)
-        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
-
-        // When
-        worker.doWork()
-
-        // Then - threshold notification should NOT fire
-        verify(exactly = 0) { notificationManager.showSyncFailureThresholdNotification(any(), any()) }
-    }
-
-    @Test
-    fun `syncAll does NOT fire failure threshold notification at 4 failures`() = runTest {
-        // Given - account at 4 failures (above threshold, == check means fires only once at exactly 3)
-        val inputData = CalDavSyncWorker.createFullSyncInput()
-        val worker = createWorker(inputData)
-        val testAccount = createTestAccount()
-
-        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
-            SyncResult.Error(-1, "Server unreachable", true)
-
-        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 4)
-        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
-
-        // When
-        worker.doWork()
-
-        // Then - threshold notification should NOT fire (== 3, not >= 3)
-        verify(exactly = 0) { notificationManager.showSyncFailureThresholdNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showCompletionNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showErrorNotification(any<String>(), any<String>()) }
     }
 
     // ==================== syncAll Per-Account Metadata Tests ====================
@@ -1368,11 +1430,11 @@ class CalDavSyncWorkerTest {
         coVerify { accountRepository.recordSyncFailure(2L, any()) }
     }
 
-    // ==================== A2: Adverse Tests — All Accounts Fail ====================
+    // ==================== Adverse Tests — All Accounts Fail ====================
 
     @Test
     fun `syncAll all accounts throw exceptions — returns success with errors`() = runTest {
-        // A2 adverse: When EVERY account throws an exception, syncAll should still
+        // When EVERY account throws an exception, syncAll should still
         // return Result.Success (with error data) — not crash or return Failure.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -1408,7 +1470,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll exception message propagates to error output`() = runTest {
-        // A2: Verify the exception message is captured in the allErrors list
+        // Verify the exception message is captured in the allErrors list
         // so it surfaces in the home banner via PartialSuccess.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -1429,9 +1491,9 @@ class CalDavSyncWorkerTest {
     }
 
     @Test
-    fun `syncAll exception triggers checkSyncFailureThreshold`() = runTest {
-        // A2: After an exception, checkSyncFailureThreshold should be called
-        // to potentially trigger a notification if the account hits 3 consecutive failures.
+    fun `syncAll exception records failure without posting a system notification`() = runTest {
+        // After an exception the failure counter advances (in-app surfaces depend
+        // on it), but no repeated-failure system notification is posted.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1440,20 +1502,17 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
             RuntimeException("Unexpected error")
 
-        // Account now at exactly 3 failures — should trigger notification
-        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 3)
-        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
-
         worker.doWork()
 
-        // Failure recorded AND threshold check triggered
+        // Failure recorded, but the background failure stays silent.
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
-        verify { notificationManager.showSyncFailureThresholdNotification(any(), 3) }
+        verify(exactly = 0) { notificationManager.showCompletionNotification(any(), any()) }
+        verify(exactly = 0) { notificationManager.showErrorNotification(any<String>(), any<String>()) }
     }
 
     @Test
     fun `syncAll three accounts — first and third throw, second succeeds`() = runTest {
-        // A2: Verify isolation with 3 accounts — exceptions don't affect other accounts.
+        // Verify isolation with 3 accounts — exceptions don't affect other accounts.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val account1 = createTestAccount(id = 1L)

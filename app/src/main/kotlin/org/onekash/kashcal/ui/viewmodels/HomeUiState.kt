@@ -390,6 +390,20 @@ sealed class PendingAction {
     ) : PendingAction()
 
     /**
+     * Open a device event from an external VIEW intent that supplied only the event ID (no
+     * occurrence timestamp). The quick-view sheet opens at the resolved occurrence — the next
+     * instance for a recurring series, or DTSTART for a single event. If no occurrence can be
+     * resolved (e.g. a fully-ended series), the calendar navigates to the event's start date,
+     * and only if even that fails is a "not found" snackbar shown. Distinct from
+     * [ShowDeviceEventQuickView], which targets a known occurrence timestamp.
+     *
+     * @param eventId CalendarProvider event ID
+     */
+    data class OpenDeviceEventById(
+        val eventId: Long
+    ) : PendingAction()
+
+    /**
      * Navigate to a specific date (from week widget day tap).
      *
      * @param dayCode Target date in YYYYMMDD format

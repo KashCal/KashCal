@@ -12,11 +12,14 @@ import org.onekash.icaldav.parser.ICalGenerator
  * Builder for iTIP messages (RFC 5546).
  * Provides convenience methods for common scheduling operations.
  *
- * SEQUENCE Handling per RFC 5546:
- * - REQUEST: Increment SEQUENCE only for significant changes (time, recurrence)
- * - REPLY: MUST preserve original SEQUENCE from REQUEST
- * - CANCEL: Uses same SEQUENCE as the event being cancelled
- * - COUNTER: MUST preserve original SEQUENCE from REQUEST
+ * SEQUENCE Handling per RFC 5546 §2.1.4:
+ * - REQUEST (createUpdate): emitted verbatim. The substantive-change predicate
+ *   (RFC 5546 §2.1.4) can only be evaluated by a caller that holds both the old
+ *   and new versions of the event; this single-event serializer cannot, so the
+ *   caller advances SEQUENCE before building the message.
+ * - REPLY / COUNTER / DECLINECOUNTER: MUST preserve the original SEQUENCE.
+ * - CANCEL: MUST increment SEQUENCE (§2.1.4, reaffirmed §3.2.5).
+ * - ADD: MUST increment SEQUENCE and the result MUST be > 0 (§2.1.4, §3.2.4).
  *
  * @param generator ICalGenerator instance for generating ICS content
  */
@@ -69,7 +72,7 @@ class ITipBuilder(
      * Per RFC 5546:
      * - To cancel entire event: set STATUS=CANCELLED
      * - To remove specific attendees: include only those attendees
-     * - SEQUENCE matches the event being cancelled
+     * - SEQUENCE MUST be incremented (§2.1.4, reaffirmed §3.2.5)
      *
      * @param event The event to cancel
      * @param attendeesToCancel If null, cancels entire event; if specified, disinvites those attendees
@@ -79,35 +82,35 @@ class ITipBuilder(
         val cancelEvent = if (attendeesToCancel != null) {
             event.copy(
                 attendees = attendeesToCancel,
-                sequence = event.sequence  // Preserve SEQUENCE
+                sequence = event.sequence + 1  // §2.1.4: MUST increment on CANCEL
             )
         } else {
             event.copy(
                 status = EventStatus.CANCELLED,
-                sequence = event.sequence  // Preserve SEQUENCE
+                sequence = event.sequence + 1  // §2.1.4: MUST increment on CANCEL
             )
         }
         return generator.generate(cancelEvent, ITipMethod.CANCEL, preserveDtstamp = true)
     }
 
     /**
-     * Create an updated REQUEST with incremented SEQUENCE.
+     * Create an updated REQUEST, serializing the event's SEQUENCE verbatim.
      *
-     * Per RFC 5546, SEQUENCE should increment for significant changes:
-     * - DTSTART, DTEND, DURATION changes
-     * - RRULE, RDATE, EXDATE changes
-     * - Status changes (except CANCELLED which uses CANCEL method)
+     * RFC 5546 §2.1.4 requires SEQUENCE to be incremented only for a
+     * substantive change (DTSTART/DTEND/DURATION/DUE/RRULE/RDATE/EXDATE/STATUS),
+     * not for a cosmetic edit (e.g. SUMMARY or LOCATION). That predicate needs
+     * both the old and new versions of the event to evaluate; this builder
+     * receives only one [ICalEvent] and so cannot make the decision. The caller
+     * therefore advances SEQUENCE before invoking this method, and the builder
+     * emits whatever it is handed.
      *
      * DTSTAMP is regenerated for updates (preserveDtstamp = false).
      *
-     * @param event The updated event (SEQUENCE will be incremented)
-     * @return ICS string with METHOD:REQUEST and incremented SEQUENCE
+     * @param event The updated event, with SEQUENCE already set by the caller
+     * @return ICS string with METHOD:REQUEST and the event's SEQUENCE verbatim
      */
     fun createUpdate(event: ICalEvent): String {
-        val updatedEvent = event.copy(
-            sequence = event.sequence + 1  // Increment for update
-        )
-        return generator.generate(updatedEvent, ITipMethod.REQUEST, preserveDtstamp = false)
+        return generator.generate(event, ITipMethod.REQUEST, preserveDtstamp = false)
     }
 
     /**
@@ -116,7 +119,7 @@ class ITipBuilder(
      * Per RFC 5546 Section 3.2.4:
      * - ADD is used to add instances to a recurring event
      * - The RECURRENCE-ID identifies the new instance(s) being added
-     * - SEQUENCE should match the master event
+     * - SEQUENCE MUST be incremented (§2.1.4) and MUST be greater than 0 (§3.2.4)
      * - The new instance must have RECURRENCE-ID set
      *
      * @param masterEvent The master recurring event
@@ -136,7 +139,8 @@ class ITipBuilder(
 
         val addEvent = newInstance.copy(
             uid = masterEvent.uid,                // Preserve master UID
-            sequence = masterEvent.sequence,      // Preserve master SEQUENCE
+            // §2.1.4: MUST increment on ADD; §3.2.4: result MUST be > 0.
+            sequence = maxOf(masterEvent.sequence + 1, 1),
             recurrenceId = newInstance.recurrenceId,  // Required for ADD
             rrule = null,                         // Instance should not have RRULE
             attendees = attendees.map { attendee ->

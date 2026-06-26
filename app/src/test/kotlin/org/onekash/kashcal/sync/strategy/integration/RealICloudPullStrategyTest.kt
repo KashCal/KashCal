@@ -16,6 +16,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -262,15 +263,16 @@ class RealICloudPullStrategyTest {
         val result = pullStrategy.pull(updatedCalendar, forceFullSync = false, client = client)
 
         println("\n=== Pull Result ===")
+        // With the DB ctag matching the server, the pull must not error.
+        // NoChanges is expected; Success is tolerated only because the ctag
+        // can legitimately change between the getCtag and pull calls.
         when (result) {
-            is PullResult.NoChanges -> {
+            is PullResult.NoChanges ->
                 println("Correctly detected no changes")
-                assertTrue(true)
-            }
-            is PullResult.Success -> {
+            is PullResult.Success ->
                 println("Got success (ctag might have changed between calls)")
-            }
-            is PullResult.Error -> println("Error: ${result.message}")
+            is PullResult.Error ->
+                fail("Pull errored when no changes were expected: ${result.message}")
         }
     }
 

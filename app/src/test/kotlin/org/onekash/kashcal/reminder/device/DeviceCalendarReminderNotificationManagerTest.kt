@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for DeviceCalendarReminderNotificationManager (Phase 4 - Chunk 5).
+ * Unit tests for DeviceCalendarReminderNotificationManager.
  *
  * Tests cover:
  * - Notification ID generation (non-collision with Room reminders)

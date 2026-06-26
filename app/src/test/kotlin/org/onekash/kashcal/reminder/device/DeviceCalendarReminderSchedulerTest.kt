@@ -34,7 +34,7 @@ import org.robolectric.shadows.ShadowAlarmManager
 import java.io.File
 
 /**
- * Unit tests for DeviceCalendarReminderScheduler (Phase 4 - Chunk 3).
+ * Unit tests for DeviceCalendarReminderScheduler.
  *
  * Tests cover:
  * - Does nothing when feature disabled
@@ -277,7 +277,7 @@ class DeviceCalendarReminderSchedulerTest {
         assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
     }
 
-    // ========== Cancel on early-return paths (D1) ==========
+    // ========== Cancel on early-return paths ==========
 
     @Test
     fun `scheduleNextReminder cancels existing alarm when feature is disabled`() = runTest {
@@ -388,7 +388,7 @@ class DeviceCalendarReminderSchedulerTest {
         assertEquals(secondTrigger, alarm!!.triggerAtTime)
     }
 
-    // ========== shouldFireReminder (D2) ==========
+    // ========== shouldFireReminder ==========
 
     @Test
     fun `shouldFireReminder returns false when feature disabled`() = runTest {

@@ -111,9 +111,6 @@ class CalDavSyncWorker @AssistedInject constructor(
         // Sync log retention (7 days)
         private const val SYNC_LOG_RETENTION_DAYS = 7
 
-        // Consecutive sync failures before notifying user
-        private const val SYNC_FAILURE_NOTIFICATION_THRESHOLD = 3
-
         /**
          * Create input data for full sync (all accounts).
          */
@@ -244,7 +241,10 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
             if (expiredOps.isNotEmpty()) {
                 Log.w(TAG, "Abandoned ${expiredOps.size} operations exceeding 30-day lifetime")
-                notificationManager.showOperationExpiredNotification(expiredOps.size)
+                notificationManager.showOperationExpiredNotification(
+                    expiredOps.size,
+                    resolveSingleCalendarName(expiredOps)
+                )
             }
 
             // B: Auto-retry failed operations older than 24 hours (excludes expired)
@@ -517,7 +517,6 @@ class CalDavSyncWorker @AssistedInject constructor(
             )
         } catch (e: Exception) {
             accountRepository.recordSyncFailure(accountId, System.currentTimeMillis())
-            try { checkSyncFailureThreshold(accountId) } catch (_: Exception) { }
             throw e
         }
 
@@ -526,35 +525,39 @@ class CalDavSyncWorker @AssistedInject constructor(
         when (result) {
             is SyncResult.Success ->
                 accountRepository.recordSyncSuccess(accountId, now)
-            is SyncResult.PartialSuccess -> {
+            is SyncResult.PartialSuccess ->
                 accountRepository.recordSyncFailure(accountId, now)
-                checkSyncFailureThreshold(accountId)
-            }
-            is SyncResult.AuthError -> {
+            is SyncResult.AuthError ->
                 accountRepository.recordSyncFailure(accountId, now)
-                // Skip threshold notification — showAuthErrorNotification is more specific
-            }
-            is SyncResult.Error -> {
+            is SyncResult.Error ->
                 accountRepository.recordSyncFailure(accountId, now)
-                checkSyncFailureThreshold(accountId)
-            }
         }
 
         return result
     }
 
     /**
-     * Check if an account's consecutive sync failures just hit the notification threshold.
-     * Uses == (not >=) to fire exactly once at the threshold.
+     * Resolve the display name of the single calendar all expired operations
+     * belong to, or null when they span multiple calendars (or the calendar
+     * can't be resolved — e.g. the event was hard-deleted). A null result
+     * drives the count-only notification wording.
+     *
+     * Uses the op's [PendingOperation.sourceCalendarId] when present, falling
+     * back to the event's current calendarId. This mirrors the
+     * COALESCE(source_calendar_id, e.calendar_id) scoping in
+     * [PendingOperationsDao.getConflictOperationsForCalendar]: a MOVE or
+     * synced→local DELETE has already advanced the event row to the move
+     * target, but the stuck operation concerns the source calendar.
      */
-    private suspend fun checkSyncFailureThreshold(accountId: Long) {
-        val account = accountRepository.getAccountById(accountId) ?: return
-        if (account.consecutiveSyncFailures == SYNC_FAILURE_NOTIFICATION_THRESHOLD) {
-            notificationManager.showSyncFailureThresholdNotification(
-                accountName = account.displayName ?: account.provider.displayName,
-                failureCount = account.consecutiveSyncFailures
-            )
+    private suspend fun resolveSingleCalendarName(expiredOps: List<PendingOperation>): String? {
+        val calendarIds = mutableSetOf<Long>()
+        for (op in expiredOps) {
+            val calendarId = op.sourceCalendarId ?: eventsDao.getById(op.eventId)?.calendarId ?: return null
+            calendarIds.add(calendarId)
+            if (calendarIds.size > 1) return null
         }
+        val calendarId = calendarIds.singleOrNull() ?: return null
+        return calendarRepository.getCalendarById(calendarId)?.displayName
     }
 
     /**
@@ -696,7 +699,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                 Log.e(TAG, "syncEngine threw exception for account ${account.email.maskEmail()}", e)
                 val now = System.currentTimeMillis()
                 accountRepository.recordSyncFailure(account.id, now)
-                checkSyncFailureThreshold(account.id)
                 allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                     phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,
                     message = e.message ?: e.javaClass.simpleName
@@ -721,7 +723,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
                 is SyncResult.PartialSuccess -> {
                     accountRepository.recordSyncFailure(account.id, now)
-                    checkSyncFailureThreshold(account.id)
                     totalCalendars += result.calendarsSynced
                     totalPushCreated += result.eventsPushedCreated
                     totalPushUpdated += result.eventsPushedUpdated
@@ -735,7 +736,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
                 is SyncResult.AuthError -> {
                     accountRepository.recordSyncFailure(account.id, now)
-                    checkSyncFailureThreshold(account.id)
                     Log.e(TAG, "Auth error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.AUTH,
@@ -745,7 +745,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
                 is SyncResult.Error -> {
                     accountRepository.recordSyncFailure(account.id, now)
-                    checkSyncFailureThreshold(account.id)
                     Log.e(TAG, "Sync error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,

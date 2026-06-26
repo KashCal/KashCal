@@ -51,7 +51,7 @@ interface CalDavClient {
      * (RFC 6638 §2.4.1). Returns the full set of CAL-ADDRESS forms the
      * server recognizes as this user — `mailto:`, `urn:uuid:`,
      * principal-relative paths, full HTTP principal URIs, in any
-     * combination. Used by A2.0's identity-discovery flow to populate
+     * combination. Used by the identity-discovery flow to populate
      * `Account.calendarUserAddresses`.
      *
      * Failures (HTTP 4xx/5xx, network errors, timeouts) are surfaced as
@@ -64,6 +64,41 @@ interface CalDavClient {
      *         an empty or absent property
      */
     suspend fun discoverCalendarUserAddresses(principalUrl: String): CalDavResult<List<String>>
+
+    /**
+     * Discover the principal's scheduling Outbox URL via PROPFIND
+     * (RFC 6638 §2.1.1 CALDAV:schedule-outbox-URL).
+     *
+     * The outbox is where a client POSTs scheduling messages on servers that
+     * decline to self-schedule. This is discovery only — it does not POST.
+     *
+     * Failures (HTTP 4xx/5xx, network, timeout) are surfaced as
+     * [CalDavResult.Error]; discovery-flow callers treat the error as
+     * non-fatal. A successful probe returns the href, or null when the
+     * property is empty/absent (the principal is not outbox-enabled).
+     *
+     * @param principalUrl Full principal URL
+     * @return The outbox URL, or null when not advertised
+     */
+    suspend fun discoverScheduleOutboxUrl(principalUrl: String): CalDavResult<String?>
+
+    /**
+     * Probe whether a calendar collection supports server-side
+     * auto-scheduling (RFC 6638 §2: the "calendar-auto-schedule" token in the
+     * DAV response header from an OPTIONS request on the collection).
+     *
+     * Must be probed against the collection URL, not the service root — some
+     * servers advertise the token only on the collection.
+     *
+     * Failures are surfaced as [CalDavResult.Error]; discovery-flow callers
+     * treat the error as non-fatal (capability stays unknown). This flag is
+     * advisory only — the authoritative delivery signal is read back at
+     * runtime, not derived from this capability.
+     *
+     * @param calendarUrl Full calendar collection URL
+     * @return true when the collection advertises calendar-auto-schedule
+     */
+    suspend fun supportsAutoSchedule(calendarUrl: String): CalDavResult<Boolean>
 
     /**
      * List all calendars from calendar home.
@@ -249,6 +284,39 @@ interface CalDavClient {
         destinationCalendarUrl: String,
         uid: String
     ): CalDavResult<Pair<String, String>>
+
+    /**
+     * POST an iTIP scheduling message to a principal's scheduling Outbox
+     * (RFC 6638 §6). Used as the client-side delivery fallback when a server
+     * declines to self-schedule (stamps `SCHEDULE-AGENT=CLIENT`) — the app
+     * builds a `METHOD:REQUEST` and POSTs it here so the invitation reaches the
+     * attendee.
+     *
+     * Sends the recipients both ways for interop: as ATTENDEE properties in the
+     * [icalData] body (RFC 6638 §6 normative form) AND as one `Recipient` HTTP
+     * header each (the `caldav-sched` draft form that Apple-lineage and Zoho
+     * servers expect). [originator] and [recipients] are bare CAL-ADDRESSes
+     * (no `mailto:` prefix) — this method prepends `mailto:` on the wire.
+     *
+     * The server answers with a `CALDAV:schedule-response` carrying a
+     * per-recipient `request-status`; the parsed outcome drives the caller's
+     * send-idempotency and class-aware retry. Non-2xx HTTP (e.g. Sabre 501
+     * free/busy-only, Stalwart 400) is surfaced as [CalDavResult.Error]; the
+     * caller treats any failure as non-fatal to the push.
+     *
+     * @param outboxUrl Full scheduling-outbox URL (from account discovery)
+     * @param originator Bare CAL-ADDRESS of the organizer (the account's own
+     *   discovered address; never synthesized from the username)
+     * @param recipients Bare CAL-ADDRESSes of the attendees to deliver to
+     * @param icalData Complete `METHOD:REQUEST` VCALENDAR body
+     * @return Parsed per-recipient outbox response on HTTP 200/207
+     */
+    suspend fun postToOutbox(
+        outboxUrl: String,
+        originator: String,
+        recipients: List<String>,
+        icalData: String
+    ): CalDavResult<org.onekash.kashcal.sync.client.model.OutboxResponse>
 
     // ========== Configuration ==========
 

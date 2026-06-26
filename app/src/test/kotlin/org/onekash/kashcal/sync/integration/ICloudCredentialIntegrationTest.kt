@@ -369,7 +369,7 @@ class ICloudCredentialIntegrationTest {
         }
     }
 
-    // ==================== A2.0: calendar-user-address-set discovery ====================
+    // ==================== calendar-user-address-set discovery ====================
 
     @Test
     fun `iCloud returns calendar-user-address-set with mailto and path-relative entries`() = runTest {
@@ -407,7 +407,7 @@ class ICloudCredentialIntegrationTest {
                         "iCloud should return at least one principal-relative path entry",
                         addresses.any { it.startsWith("/") && !it.startsWith("//") }
                     )
-                    // Pattern-15: do NOT print full addresses to test logs.
+                    // Do NOT print full addresses to test logs (PII).
                     println("iCloud returned ${addresses.size} CUA entries (values redacted)")
                 }
                 is CalDavResult.Error -> {

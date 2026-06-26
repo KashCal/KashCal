@@ -124,5 +124,18 @@ data class Calendar(
      * Null means no default reminder.
      */
     @ColumnInfo(name = "default_reminder")
-    val defaultReminder: String? = null
+    val defaultReminder: String? = null,
+
+    /**
+     * Whether this calendar collection advertises support for server-side
+     * auto-scheduling (RFC 6638 §2 "calendar-auto-schedule" in the DAV
+     * response header from an OPTIONS request on the collection).
+     *
+     * Tri-state: null = unknown (not yet probed, or the probe failed);
+     * false = probed, not advertised; true = probed, advertised. The flag is
+     * advisory only — the authoritative delivery signal is read back at
+     * runtime, not derived from this capability.
+     */
+    @ColumnInfo(name = "auto_schedule_supported")
+    val autoScheduleSupported: Boolean? = null
 )

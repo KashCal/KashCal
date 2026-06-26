@@ -32,7 +32,7 @@ class QuickAddParserTest {
 
     private fun parse(input: String) = QuickAddParser.parse(input, reference)
 
-    // ==================== Full pipeline (US7) ====================
+    // ==================== Full pipeline ====================
 
     @Test
     fun `Coffee with Sarah tomorrow at 3pm`() {
@@ -74,7 +74,7 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(9, 0), result.startTime)
     }
 
-    // ==================== Confidence scoring (US8) ====================
+    // ==================== Confidence scoring ====================
 
     @Test
     fun `date plus time gives HIGH confidence`() {
@@ -384,7 +384,7 @@ class QuickAddParserTest {
         assertTrue(result.isAllDay)
     }
 
-    // ==================== P2: Duration (US10) ====================
+    // ==================== P2: Duration ====================
 
     @Test
     fun `Meeting tomorrow at 2pm for 90 minutes`() {
@@ -417,7 +417,7 @@ class QuickAddParserTest {
         assertNull(result.endTime)
     }
 
-    // ==================== P2: Time ranges (US11) ====================
+    // ==================== P2: Time ranges ====================
 
     @Test
     fun `Meeting 2-3pm`() {
@@ -451,7 +451,7 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(18, 0), result.endTime)
     }
 
-    // ==================== P2: Location (US9) ====================
+    // ==================== P2: Location ====================
 
     @Test
     fun `Coffee at Blue Bottle tomorrow at 3pm`() {
@@ -507,7 +507,7 @@ class QuickAddParserTest {
         assertEquals("The Grand", result.location)
     }
 
-    // ==================== P3: Recurrence (US12) ====================
+    // ==================== P3: Recurrence ====================
 
     @Test
     fun `Team standup every Monday at 10am`() {
@@ -571,7 +571,7 @@ class QuickAddParserTest {
         assertTrue(result.rrule!!.contains("INTERVAL=2"))
     }
 
-    // ==================== P3: Emoji (US13) ====================
+    // ==================== P3: Emoji ====================
 
     @Test
     fun `Coffee with Sarah tomorrow at 3pm has coffee emoji`() {

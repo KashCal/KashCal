@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.notification
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
@@ -166,15 +167,44 @@ class SyncNotificationChannelsTest {
 
     @Test
     fun `cancel removes notification by ID`() {
-        // This test verifies the method doesn't throw
-        // Actual notification verification requires instrumentation tests
-        channels.cancel(SyncNotificationChannels.NOTIFICATION_ID_SYNC_PROGRESS)
+        channels.createChannels()
+        val id = SyncNotificationChannels.NOTIFICATION_ID_SYNC_PROGRESS
+        notificationManager.notify(
+            id,
+            Notification.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_PROGRESS)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("test")
+                .build()
+        )
+        assertTrue(notificationManager.activeNotifications.any { it.id == id })
+
+        channels.cancel(id)
+
+        assertFalse(notificationManager.activeNotifications.any { it.id == id })
     }
 
     @Test
     fun `cancelAll removes all sync notifications`() {
-        // This test verifies the method doesn't throw
+        channels.createChannels()
+        val ids = listOf(
+            SyncNotificationChannels.NOTIFICATION_ID_SYNC_PROGRESS,
+            SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE,
+            SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR
+        )
+        ids.forEach { id ->
+            notificationManager.notify(
+                id,
+                Notification.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("test $id")
+                    .build()
+            )
+        }
+        assertEquals(ids.size, notificationManager.activeNotifications.size)
+
         channels.cancelAll()
+
+        assertEquals(0, notificationManager.activeNotifications.size)
     }
 
     // ==================== Channel ID Constants Tests ====================

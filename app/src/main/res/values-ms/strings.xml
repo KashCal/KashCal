@@ -36,6 +36,8 @@
     <string name="action_close">Tutup</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Bukan Sekarang</string>
+    <string name="action_allow">Benarkan</string>
+    <string name="action_no_thanks">Tidak, terima kasih</string>
     <string name="action_sign_in">Log Masuk</string>
     <string name="action_select">Pilih</string>
     <string name="action_show_password">Tunjuk kata laluan</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">Tunjuk kata laluan</string>
     <string name="account_detail_cd_hide_password">Sembunyikan kata laluan</string>
 
-    <string name="sync_failure_notification_title">Isu segerak dengan %1$s</string>
-    <string name="sync_failure_notification_text">Segerak kalendar telah gagal %1$d kali</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nama Semula Akaun</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">Perubahan segerak telah tamat tempoh</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s dalam %2$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">Disegerakkan %1$d kalendar</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">Peserta</string>
     <string name="attendee_you_marker">Anda</string>
     <string name="attendee_organizer_pill">Penganjur</string>
+    <string name="attendee_picker_title">Tambah peserta</string>
+    <string name="attendee_pick_add_people">Tambah peserta</string>
+    <string name="attendee_pick_from_contacts">Nama atau e-mel</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d lagi</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Cadangkan orang daripada kenalan anda</string>
+    <string name="attendee_invalid_email">Masukkan alamat e-mel yang lengkap</string>
+    <string name="attendee_add_typed">Tambah \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Menjemput orang tidak tersedia pada akaun ini</string>
+    <string name="action_save_and_notify">Simpan &amp; maklum</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d lagi</item>
     </plurals>

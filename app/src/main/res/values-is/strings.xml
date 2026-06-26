@@ -35,6 +35,8 @@
     <string name="action_cancel">Hætta við</string>
     <string name="action_close">Loka</string>
     <string name="action_ok">Í lagi</string>
+    <string name="action_allow">Heimila</string>
+    <string name="action_no_thanks">Nei takk</string>
     <string name="action_not_now">Ekki núna</string>
     <string name="action_sign_in">Skrá inn</string>
     <string name="action_select">Velja</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">Sýna lykilorð</string>
     <string name="account_detail_cd_hide_password">Fela lykilorð</string>
 
-    <string name="sync_failure_notification_title">Samstillingarvandamál með %1$s</string>
-    <string name="sync_failure_notification_text">Samstilling dagatals hefur mistekist %1$d sinnum</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Endurnefna reikning</string>
@@ -814,6 +814,7 @@
     <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar út</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingiðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s í %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingiðu samstillingu til að reyna aftur.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d dagatal samstillt</item>
@@ -1103,6 +1104,18 @@
     <string name="attendee_section_pending">Bíður</string>
     <string name="attendee_section_declined">Hafnað</string>
     <string name="attendee_section_delegated">Áframsent</string>
+    <string name="attendee_picker_title">Bæta við þátttakendum</string>
+    <string name="attendee_pick_add_people">Bæta við þátttakendum</string>
+    <string name="attendee_pick_from_contacts">Nafn eða tölvupóstur</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d til viðbótar</item>
+        <item quantity="other">+%1$d til viðbótar</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Stinga upp á fólki úr tengiliðunum þínum</string>
+    <string name="attendee_invalid_email">Sláðu inn fullt tölvupóstfang</string>
+    <string name="attendee_add_typed">Bæta við \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ekki er hægt að bjóða fólki á þessum reikningi</string>
+    <string name="action_save_and_notify">Vista &amp; tilkynna</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt frágengið</string>
     <string name="inbox_organizer_suffix">(skipuleggjandi)</string>

@@ -89,6 +89,52 @@ class CalDavXmlParser {
     }
 
     /**
+     * Extract the scheduling Outbox URL from a PROPFIND response.
+     *
+     * RFC 6638 §2.1.1 (CALDAV:schedule-outbox-URL): the property wraps a
+     * single DAV:href identifying the principal's scheduling Outbox. Looks for:
+     * `<schedule-outbox-URL><href>...</href></schedule-outbox-URL>`.
+     *
+     * Returns null when the property is empty or absent — per the RFC, that
+     * means the calendar user is not enabled for sending scheduling messages.
+     * The href read is scoped to inside the property element so the response's
+     * own self-href (the principal URL) is never mistaken for the outbox.
+     */
+    fun extractScheduleOutboxUrl(xml: String): String? {
+        if (xml.isBlank()) return null
+        return try {
+            val parser = createParser(xml)
+            var inOutbox = false
+
+            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+                when (parser.eventType) {
+                    XmlPullParser.START_TAG -> {
+                        if (parser.name == "schedule-outbox-URL") {
+                            inOutbox = true
+                        } else if (inOutbox && parser.name == "href") {
+                            parser.next()
+                            if (parser.eventType == XmlPullParser.TEXT) {
+                                val href = parser.text.trim()
+                                if (href.isNotEmpty()) return href
+                            }
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "schedule-outbox-URL") {
+                            inOutbox = false
+                        }
+                    }
+                }
+                parser.next()
+            }
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse schedule-outbox-URL: ${e.message}")
+            null
+        }
+    }
+
+    /**
      * Extract ALL calendar home URLs from PROPFIND response.
      * RFC 4791 Section 6.2.1 allows multiple <href> values inside <calendar-home-set>.
      * Looks for: <calendar-home-set><href>...</href><href>...</href></calendar-home-set>

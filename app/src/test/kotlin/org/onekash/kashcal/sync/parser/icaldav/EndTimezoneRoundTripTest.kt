@@ -15,15 +15,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * A0.2 — Event.endTimezone mapper wire-up.
+ * Event.endTimezone mapper wire-up.
  *
  * Verifies that events with distinct DTSTART and DTEND TZIDs (e.g., flights
  * SFO→JFK) round-trip through KashCal's CalDAV mapper layer correctly:
  * - Inbound: server's distinct DTEND TZID is stored in Event.endTimezone
- * - Inbound: matching TZIDs collapse to endTimezone=null (per doc invariant)
+ * - Inbound: matching TZIDs collapse to endTimezone=null (per the invariant)
  * - Outbound fresh + patch: Event.endTimezone reflected as distinct DTEND TZID
  *
- * CalendarProvider side is out of scope (B5.5). RFC 5545 §3.8.2.2 permits
+ * CalendarProvider side is out of scope. RFC 5545 §3.8.2.2 permits
  * distinct TZIDs on DTSTART vs DTEND.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -39,7 +39,7 @@ class EndTimezoneRoundTripTest {
 
     private fun createEvent(
         uid: String = "a02-test@kashcal.test",
-        title: String = "A0.2 Test",
+        title: String = "End Timezone Test",
         startTs: Long = 1_767_088_800_000L,   // 2025-12-30T14:00:00Z
         endTs: Long = 1_767_106_800_000L,     // 2025-12-30T19:00:00Z
         isAllDay: Boolean = false,
@@ -127,7 +127,7 @@ class EndTimezoneRoundTripTest {
 
         assertEquals("America/New_York", entity.timezone)
         assertNull(
-            "Matching DTEND TZID must normalize to null per Event.kt:127 invariant",
+            "Matching DTEND TZID must normalize to null per the Event invariant",
             entity.endTimezone
         )
     }
@@ -395,7 +395,7 @@ class EndTimezoneRoundTripTest {
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         // Parser may normalize floating DTSTART to UTC; don't assert on entity.timezone.
-        // What A0.2 guarantees is that a distinct DTEND zone survives regardless.
+        // The guarantee here is that a distinct DTEND zone survives regardless.
         assertEquals(
             "Distinct DTEND zone must be preserved when start is floating",
             "America/New_York",

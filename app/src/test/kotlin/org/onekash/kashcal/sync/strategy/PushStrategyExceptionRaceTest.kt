@@ -128,7 +128,8 @@ class PushStrategyExceptionRaceTest {
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = mockk(relaxed = true),
-            attendeesDao = mockk(relaxed = true)
+            attendeesDao = mockk(relaxed = true),
+            pendingCancelsDao = mockk { coEvery { getForEvent(any()) } returns emptyList() }
         )
     }
 

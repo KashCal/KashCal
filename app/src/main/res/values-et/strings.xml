@@ -36,6 +36,8 @@
     <string name="action_close">Sulge</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Mitte praegu</string>
+    <string name="action_allow">Luba</string>
+    <string name="action_no_thanks">Ei, aitäh</string>
     <string name="action_sign_in">Logi sisse</string>
     <string name="action_select">Vali</string>
     <string name="action_show_password">Kuva parool</string>
@@ -465,8 +467,6 @@
     <string name="account_detail_cd_show_password">Kuva parool</string>
     <string name="account_detail_cd_hide_password">Peida parool</string>
 
-    <string name="sync_failure_notification_title">Sünkroonimise probleem kontoga %1$s</string>
-    <string name="sync_failure_notification_text">Kalendri sünkroonimine on ebaõnnestunud %1$d korda</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nimeta konto ümber</string>
@@ -824,6 +824,7 @@
     <string name="sync_notification_conflict_multi">Kohalikud muudatused %1$s kaotati sünkroonimise konfliktide tõttu. Kasutatakse serveri versioone.</string>
     <string name="sync_notification_expired_title">Sünkroonimise muudatused aegusid</string>
     <string name="sync_notification_expired_content">%1$s ei õnnestunud 30 päeva jooksul sünkroonida. Kasutatakse serveri versiooni. Sundsünkroonimine uuesti proovimiseks.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s kalendris %2$s ei õnnestunud 30 päeva jooksul sünkroonida. Kasutatakse serveri versiooni. Sundsünkroonimine uuesti proovimiseks.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sünkroonitud %1$d kalender</item>
         <item quantity="other">Sünkroonitud %1$d kalendrit</item>
@@ -1139,6 +1140,18 @@
     <string name="attendee_section_pending">Ootel</string>
     <string name="attendee_section_declined">Keeldusid</string>
     <string name="attendee_section_delegated">Delegeerisid</string>
+    <string name="attendee_picker_title">Lisa osalejaid</string>
+    <string name="attendee_pick_add_people">Lisa osalejaid</string>
+    <string name="attendee_pick_from_contacts">Nimi või e-post</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d veel</item>
+        <item quantity="other">+%1$d veel</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Soovita inimesi sinu kontaktidest</string>
+    <string name="attendee_invalid_email">Sisesta täielik e-posti aadress</string>
+    <string name="attendee_add_typed">Lisa \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Inimeste kutsumine pole selles kontos saadaval</string>
+    <string name="action_save_and_notify">Salvesta ja teavita</string>
     <plurals name="reminder_in_days">
         <item quantity="one">%1$d päeva pärast</item>
         <item quantity="other">%1$d päeva pärast</item>

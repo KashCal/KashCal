@@ -44,6 +44,10 @@ class DefaultQuirks(
         return xmlParser.extractCalendarUserAddresses(responseBody)
     }
 
+    override fun extractScheduleOutboxUrl(responseBody: String): String? {
+        return xmlParser.extractScheduleOutboxUrl(responseBody)
+    }
+
     override fun extractCalendars(responseBody: String, baseHost: String): List<CalDavQuirks.ParsedCalendar> {
         val calendars = xmlParser.extractCalendars(responseBody)
         return calendars.filter { parsed ->

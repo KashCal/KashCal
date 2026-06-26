@@ -385,6 +385,50 @@ class OccurrencesDaoTest {
         assertEquals(targetTs, occurrence?.startTs)
     }
 
+    @Test
+    fun `getOccurrenceNearTime matches a row drifting within the 60-second tolerance`() = runTest {
+        // A reminder stores the occurrence time captured at scheduling; a later
+        // RRULE re-expansion can shift the row's start_ts by sub-second amounts
+        // (second-boundary truncation). The near-time lookup must still find it,
+        // unlike the exact-match getOccurrenceAtTime.
+        val occurrenceTs = parseDate("2025-01-22 10:00")
+        occurrencesDao.insert(createOccurrence(startTs = occurrenceTs, startDay = 20250122))
+
+        val found = occurrencesDao.getOccurrenceNearTime(eventId, occurrenceTs + 500)
+
+        assertNotNull(found)
+        assertEquals(occurrenceTs, found?.startTs)
+    }
+
+    @Test
+    fun `getOccurrenceNearTime rejects a row drifting beyond the 60-second tolerance`() = runTest {
+        val occurrenceTs = parseDate("2025-01-22 10:00")
+        occurrencesDao.insert(createOccurrence(startTs = occurrenceTs, startDay = 20250122))
+
+        // 90s away — a different instance, not the same slot.
+        val found = occurrencesDao.getOccurrenceNearTime(eventId, occurrenceTs + 90_000)
+
+        assertNull(found)
+    }
+
+    @Test
+    fun `getOccurrenceNearTime returns cancelled rows so the caller can inspect them`() = runTest {
+        // The fire-time guard must see is_cancelled = 1 rows (the cancelled-
+        // exception representation) to suppress them — so this lookup, unlike the
+        // calendar-view queries, does NOT filter out cancelled occurrences.
+        val occurrenceTs = parseDate("2025-01-22 10:00")
+        occurrencesDao.insert(createOccurrence(
+            startTs = occurrenceTs,
+            startDay = 20250122,
+            isCancelled = true
+        ))
+
+        val found = occurrencesDao.getOccurrenceNearTime(eventId, occurrenceTs)
+
+        assertNotNull(found)
+        assertTrue(found!!.isCancelled)
+    }
+
     // ==================== Delete Tests ====================
 
     @Test

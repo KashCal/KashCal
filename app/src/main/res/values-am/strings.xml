@@ -59,6 +59,8 @@
     <string name="action_confirm">አረጋግጥ</string>
     <string name="action_discard">አጥፋ</string>
     <string name="action_dismiss">አሰናብት</string>
+    <string name="action_allow">ፍቀድ</string>
+    <string name="action_no_thanks">አይ፣ አመሰግናለሁ</string>
     <string name="action_show_all">ሁሉንም አሳይ</string>
     <string name="action_connect">አገናኝ</string>
     <string name="action_duplicate">ቅዳ</string>
@@ -469,8 +471,6 @@
     <string name="account_detail_cd_show_password">የይለፍ ቃል አሳይ</string>
     <string name="account_detail_cd_hide_password">የይለፍ ቃል ደብቅ</string>
 
-    <string name="sync_failure_notification_title">ከ%1$s ጋር የማመሳሰል ችግር</string>
-    <string name="sync_failure_notification_text">የቀን መቁጠሪያ ማመሳሰል %1$d ጊዜ አልተሳካም</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">መለያ ሰይም</string>
@@ -844,6 +844,7 @@
     <string name="sync_notification_expired_title">የማመሳሰል ለውጦች ጊዜያቸው አልፏል</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s በ30 ቀናት ውስጥ ሊመሳሰሉ አልቻሉም። የአገልጋይ ስሪት ጥቅም ላይ ይውላል። ዳግም ለመሞከር ግዳጅ ማመሳሰል።</string>
+    <string name="sync_notification_expired_content_calendar">%1$s በ%2$s ውስጥ በ30 ቀናት ውስጥ ሊመሳሰሉ አልቻሉም። የአገልጋይ ስሪት ጥቅም ላይ ይውላል። ዳግም ለመሞከር ግዳጅ ማመሳሰል።</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ቀን መቁጠሪያ ተመሳሰለ</item>
@@ -1120,6 +1121,18 @@
     <string name="attendee_status_tentative">ሊሆን ይችላል</string>
     <string name="attendee_status_delegated">በውክልና ተሰጥቷል</string>
     <string name="attendee_status_pending">በመጠባበቅ ላይ</string>
+    <string name="attendee_picker_title">ተጋባዦችን ያክሉ</string>
+    <string name="attendee_pick_add_people">ተጋባዦችን ያክሉ</string>
+    <string name="attendee_pick_from_contacts">ስም ወይም ኢሜይል</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ተጨማሪ</item>
+        <item quantity="other">+%1$d ተጨማሪ</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">ከእውቂያዎችዎ ሰዎችን ይጠቁሙ</string>
+    <string name="attendee_invalid_email">ሙሉ የኢሜይል አድራሻ ያስገቡ</string>
+    <string name="attendee_add_typed">\"%1$s\"ን ያክሉ</string>
+    <string name="attendee_scheduling_unavailable">ሰዎችን መጋበዝ በዚህ መለያ ላይ አይገኝም</string>
+    <string name="action_save_and_notify">አስቀምጥ &amp; አሳውቅ</string>
     <string name="inbox_empty_caught_up">ሁሉም ተመልክቷል</string>
     <string name="inbox_organizer_suffix">(አዘጋጅ)</string>
     <string name="menu_invites">ግብዣዎች</string>

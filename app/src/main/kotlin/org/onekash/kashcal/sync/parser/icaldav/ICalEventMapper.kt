@@ -106,15 +106,22 @@ object ICalEventMapper {
         // Total alarm count for optimization (when >5, use RawIcsParser)
         val alarmCount = alarmDurations.size
 
-        // Parse EXDATE timestamps to comma-separated string
+        // Flatten EXDATE/RDATE to a comma-separated epoch-ms string. Normalize a
+        // value-type mismatch against the master's own DTSTART first: a DATE-form
+        // EXDATE/RDATE on a TIMED master (RFC 5545 §3.8.5.1 says the value type MUST
+        // match DTSTART, but peer clients break this and most servers preserve it)
+        // would otherwise flatten to UTC midnight. In a negative-offset zone that
+        // instant rolls back to the previous calendar day, so the wrong day is
+        // excluded/added. Promoting it to the master's local time-of-day lands the
+        // stored ms on the intended day. Same core helper as RECURRENCE-ID below.
+        val masterDtStart = icalEvent.dtStart
         val exdate = icalEvent.exdates
-            .map { it.timestamp.toString() }
+            .map { normalizeToMasterValueType(it, masterDtStart).timestamp.toString() }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(",")
 
-        // Parse RDATE timestamps to comma-separated string
         val rdate = icalEvent.rdates
-            .map { it.timestamp.toString() }
+            .map { normalizeToMasterValueType(it, masterDtStart).timestamp.toString() }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(",")
 
@@ -155,6 +162,12 @@ object ICalEventMapper {
             classification = icalEvent.classification?.toICalString() ?: "PUBLIC",
             organizerEmail = icalEvent.organizer?.email,
             organizerName = icalEvent.organizer?.name,
+            // RFC 6638 §7.3 ORGANIZER SCHEDULE-STATUS: the server-written
+            // receipt for an attendee reply delivered back to the organizer.
+            // First code only (multi-value is collapsed like the attendee
+            // mapping at toRoomEntity). SENT-BY (RFC 5545 §3.2.18) rides along.
+            organizerScheduleStatus = icalEvent.organizer?.scheduleStatus?.firstOrNull()?.code,
+            organizerSentBy = icalEvent.organizer?.sentBy,
             rrule = icalEvent.rrule?.toICalString(),
             rdate = rdate,
             exdate = exdate,
@@ -209,8 +222,13 @@ object ICalEventMapper {
      * column accepts X-extensions); `email` becomes `address`; `member`
      * and delegation lists pass through; nullable fields map cleanly.
      *
-     * Asymmetry: the primary `address` field re-prepends `mailto:` because
-     * the icaldav-core parser strips that prefix from `email`. Multi-value
+     * Asymmetry: the primary `address` field re-prepends `mailto:` ONLY for a
+     * mailbox-shaped value, because the icaldav-core parser strips that prefix
+     * from `email`. A non-mailto CAL-ADDRESS (RFC 5545 §3.3.3 permits
+     * `urn:uuid:` and principal hrefs) is stored verbatim — re-prepending
+     * `mailto:` there would yield `mailto:urn:uuid:...` and break display,
+     * matchesAttendee, and avatar canonicalization. This mirrors the
+     * email-shape guard used when the picker builds an Attendee row. Multi-value
      * list columns (`member`, `delegatedFrom`, `delegatedTo`) and `sentBy`
      * stay bare — same convention as how those fields are stored
      * elsewhere in the codebase. T3's outbound emit re-prepends `mailto:`
@@ -226,7 +244,11 @@ object ICalEventMapper {
         sortOrder: Int
     ): Attendee = Attendee(
         eventId = eventId,
-        address = "mailto:$email",
+        address = if (org.onekash.kashcal.util.AddressNormalizer.isEmailShaped(email)) {
+            "mailto:$email"
+        } else {
+            email
+        },
         displayName = name,
         role = role.toICalString(),
         partstat = partStat.toICalString(),
@@ -299,19 +321,44 @@ object ICalEventMapper {
     ): ICalDateTime? {
         if (recurrenceId == null) return null
         if (masterDtStart == null) return recurrenceId
-        if (recurrenceId.isDate == masterDtStart.isDate) return recurrenceId
+        return normalizeToMasterValueType(recurrenceId, masterDtStart)
+    }
+
+    /**
+     * Reconcile a recurrence-related date/time ([value]) against the value
+     * type of the master's DTSTART, returning [value] unchanged when the
+     * types already match. Shared by RECURRENCE-ID normalization (above) and
+     * EXDATE/RDATE flattening (in [toEntity]) — both face the same RFC 5545
+     * value-type mismatch (a DATE form emitted against a timed master, or a
+     * date-time emitted against an all-day master) that peer clients produce
+     * and most CalDAV servers preserve.
+     *
+     * Two cases:
+     * - Master timed, [value] date-form → promote DATE to the master's
+     *   time-of-day in the master's timezone. That's the instant the master's
+     *   RRULE expansion produces for that calendar day; flattening the bare
+     *   UTC-midnight form instead would roll back a day in negative-offset
+     *   zones and exclude/add the wrong occurrence.
+     * - Master all-day, [value] date-time form → demote to DATE, keeping the
+     *   calendar date as observed in [value]'s own zone.
+     */
+    fun normalizeToMasterValueType(
+        value: ICalDateTime,
+        masterDtStart: ICalDateTime,
+    ): ICalDateTime {
+        if (value.isDate == masterDtStart.isDate) return value
 
         return if (masterDtStart.isDate) {
-            // Master is all-day, RECURRENCE-ID is date-time. Demote to DATE.
-            // Keep the calendar date as observed in the RECURRENCE-ID's own zone.
-            val zone = recurrenceId.timezone ?: ZoneId.systemDefault()
+            // Master is all-day, value is date-time. Demote to DATE.
+            // Keep the calendar date as observed in the value's own zone.
+            val zone = value.timezone ?: ZoneId.systemDefault()
             val date = ZonedDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(recurrenceId.timestamp),
+                java.time.Instant.ofEpochMilli(value.timestamp),
                 zone,
             ).toLocalDate()
             ICalDateTime.fromLocalDate(date)
         } else {
-            // Master is timed, RECURRENCE-ID is date-form. Promote DATE to
+            // Master is timed, value is date-form. Promote DATE to
             // master's time-of-day in master's timezone — that's the time
             // the master's RRULE expansion would have produced for this day.
             val masterZone = masterDtStart.timezone ?: ZoneOffset.UTC
@@ -320,11 +367,11 @@ object ICalEventMapper {
                 .toLocalTime()
             // LocalDate.ofInstant requires API 34. ZonedDateTime.ofInstant has been
             // available since API 26 and produces the same result via .toLocalDate().
-            val recurrenceDate = ZonedDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(recurrenceId.timestamp),
+            val valueDate = ZonedDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(value.timestamp),
                 ZoneOffset.UTC, // DATE values are stored as UTC midnight per ICalDateTime
             ).toLocalDate()
-            val zoned = ZonedDateTime.of(recurrenceDate, masterLocalTime, masterZone)
+            val zoned = ZonedDateTime.of(valueDate, masterLocalTime, masterZone)
             ICalDateTime.fromZonedDateTime(zoned, isDate = false)
         }
     }

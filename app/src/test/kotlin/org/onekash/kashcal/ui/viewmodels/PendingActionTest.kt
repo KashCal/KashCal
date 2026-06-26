@@ -214,6 +214,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -233,6 +234,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -252,6 +254,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -271,6 +274,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -290,6 +294,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -316,6 +321,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -342,6 +348,7 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
@@ -405,10 +412,38 @@ class PendingActionTest {
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
             is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
             is PendingAction.QuickAddFromText -> "quick_add_from_text"
         }
 
         assertEquals("quick_add_from_text", result)
+    }
+
+    @Test
+    fun `when expression matches OpenDeviceEventById`() {
+        val action: PendingAction = PendingAction.OpenDeviceEventById(eventId = 42L)
+
+        val result = when (action) {
+            is PendingAction.ShowEventQuickView -> "quick_view"
+            is PendingAction.CreateEvent -> "create"
+            is PendingAction.OpenSearch -> "search"
+            is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
+            is PendingAction.ImportIcsFile -> "import"
+            is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
+            is PendingAction.OpenDeviceEventById -> "device_by_id"
+            is PendingAction.QuickAddFromText -> "quick_add_from_text"
+        }
+
+        assertEquals("device_by_id", result)
+    }
+
+    @Test
+    fun `OpenDeviceEventById stores eventId`() {
+        val action = PendingAction.OpenDeviceEventById(eventId = 99L)
+
+        assertEquals(99L, action.eventId)
     }
 
     // ==================== Source Enum Tests ====================

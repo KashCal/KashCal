@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.parser.migration
 
 /**
- * Utility for loading ICS test resources in Phase 0 tests.
+ * Utility for loading ICS test resources in parser tests.
  */
 object TestDataLoader {
 

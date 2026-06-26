@@ -17,7 +17,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for DeviceCalendarAlarmReceiver (Phase 4 - Chunk 4).
+ * Unit tests for DeviceCalendarAlarmReceiver.
  *
  * Tests cover:
  * - Ignores intents with wrong action
@@ -103,7 +103,7 @@ class DeviceCalendarAlarmReceiverTest {
         assertTrue("Missing optional extras should not crash", true)
     }
 
-    // ========== handleAlarm (D2) ==========
+    // ========== handleAlarm ==========
 
     @Test
     fun `handleAlarm shows notification when shouldFireReminder is true`() = runTest {

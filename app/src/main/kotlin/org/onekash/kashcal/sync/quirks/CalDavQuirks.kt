@@ -46,10 +46,19 @@ interface CalDavQuirks {
      * CAL-ADDRESS forms (mailto, urn:uuid, principal-relative path,
      * full HTTP principal URI). iCloud's `preferred="1"` attribute
      * hoists matching entries to the front of the list. Returns empty
-     * list on any extraction failure — A2.0's discovery flow treats
+     * list on any extraction failure — the discovery flow treats
      * missing/empty as non-fatal.
      */
     fun extractCalendarUserAddresses(responseBody: String): List<String>
+
+    /**
+     * Extract the scheduling Outbox URL from a principal PROPFIND response
+     * (RFC 6638 §2.1.1 CALDAV:schedule-outbox-URL). Returns null when the
+     * property is empty or absent — per the RFC, the calendar user is then
+     * not enabled for sending scheduling messages. The discovery flow treats
+     * null as non-fatal.
+     */
+    fun extractScheduleOutboxUrl(responseBody: String): String?
 
     /**
      * Extract calendar list from calendar-home PROPFIND response.

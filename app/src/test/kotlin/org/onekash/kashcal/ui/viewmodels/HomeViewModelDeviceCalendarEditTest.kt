@@ -22,9 +22,9 @@ import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
  * Tests for HomeViewModel device calendar edit methods.
  *
  * Covers:
- * - Chunk 0: canEditDeviceEvent() pre-edit validation
- * - Chunk 1: getDeviceEventForEdit() loading
- * - Chunk 5: saveDeviceEvent() routing
+ * - canEditDeviceEvent() pre-edit validation
+ * - getDeviceEventForEdit() loading
+ * - saveDeviceEvent() routing
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelDeviceCalendarEditTest {
@@ -44,7 +44,7 @@ class HomeViewModelDeviceCalendarEditTest {
         fakeCalendarProviderRepo.reset()
     }
 
-    // ==================== Chunk 0: canEditDeviceEvent Tests ====================
+    // ==================== canEditDeviceEvent Tests ====================
 
     @Test
     fun `canEditDeviceEvent returns true with calendar name for writable calendar`() = runTest {
@@ -91,7 +91,7 @@ class HomeViewModelDeviceCalendarEditTest {
         assertNull(result.second)
     }
 
-    // ==================== Chunk 1: getDeviceEventForEdit Tests ====================
+    // ==================== getDeviceEventForEdit Tests ====================
 
     @Test
     fun `getDeviceEventForEdit returns event with reminders and calendar info`() = runTest {
@@ -173,7 +173,7 @@ class HomeViewModelDeviceCalendarEditTest {
         assertTrue(result!!.reminders.isEmpty())
     }
 
-    // ==================== Chunk 1: findExceptionEventId Tests ====================
+    // ==================== findExceptionEventId Tests ====================
 
     @Test
     fun `findExceptionEventId returns exception ID when exists`() = runTest {

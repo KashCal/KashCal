@@ -228,12 +228,13 @@ private fun SummaryOnlyBlock(
     modifier: Modifier = Modifier,
 ) {
     val (background, foreground, leadingIcon) = if (!isCurrentUserOnList) {
-        // Off-list: lavender tertiaryContainer + Group icon, mirroring
-        // the older lavender-count chip so users still get the at-a-
-        // glance "you aren't invited" cue.
+        // Off-list: a Group icon + muted text on the plain surface. The
+        // earlier lavender fill read as "selected" on this full-width row;
+        // the icon alone carries the "you aren't invited" cue and matches
+        // the (fill-free) day-card attendee badge.
         Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.onSurfaceVariant,
             true,
         )
     } else {

@@ -37,6 +37,8 @@
     <string name="action_not_now">Teraz nie</string>
     <string name="action_sign_in">Prihlásiť sa</string>
     <string name="action_select">Vybrať</string>
+    <string name="action_allow">Povoliť</string>
+    <string name="action_no_thanks">Nie, ďakujem</string>
     <string name="action_show_password">Zobraziť heslo</string>
     <string name="action_hide_password">Skryť heslo</string>
     <string name="action_sign_out">Odhlásiť sa</string>
@@ -441,8 +443,6 @@
     <string name="account_detail_cd_show_password">Zobraziť heslo</string>
     <string name="account_detail_cd_hide_password">Skryť heslo</string>
 
-    <string name="sync_failure_notification_title">Problém so synchronizáciou %1$s</string>
-    <string name="sync_failure_notification_text">Synchronizácia kalendára zlyhala %1$d krát</string>
 
     <string name="rename_account_title">Premenovať účet</string>
     <string name="rename_account_label">Názov účtu</string>
@@ -868,6 +868,7 @@
     <string name="sync_notification_expired_title">Zmeny synchronizácie vypršali</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s sa nepodarilo synchronizovať po 30 dňoch. Bude použitá verzia zo servera. Vynúťte synchronizáciu pre opakovanie.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s v %2$s sa nepodarilo synchronizovať po 30 dňoch. Bude použitá verzia zo servera. Vynúťte synchronizáciu pre opakovanie.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synchronizovaný %1$d kalendár</item>
@@ -1160,6 +1161,20 @@
     <string name="attendee_section_pending">Čakajúci</string>
     <string name="attendee_section_declined">Odmietli</string>
     <string name="attendee_section_delegated">Delegovaní</string>
+    <string name="attendee_picker_title">Pridať účastníkov</string>
+    <string name="attendee_pick_add_people">Pridať účastníkov</string>
+    <string name="attendee_pick_from_contacts">Meno alebo e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ďalší</item>
+        <item quantity="few">+%1$d ďalší</item>
+        <item quantity="many">+%1$d ďalšieho</item>
+        <item quantity="other">+%1$d ďalších</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Navrhovať ľudí z vašich kontaktov</string>
+    <string name="attendee_invalid_email">Zadajte úplnú e-mailovú adresu</string>
+    <string name="attendee_add_typed">Pridať \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Pozývanie osôb nie je v tomto účte dostupné</string>
+    <string name="action_save_and_notify">Uložiť a upozorniť</string>
     <string name="invitees_summary_you_alone">Ty</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ty · %d pozvaný</item>

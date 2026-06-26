@@ -97,6 +97,10 @@ class CalendarRepositoryImpl @Inject constructor(
         calendarsDao.updateCtag(calendarId, ctag)
     }
 
+    override suspend fun updateAutoScheduleSupported(calendarId: Long, supported: Boolean?) {
+        calendarsDao.updateAutoScheduleSupported(calendarId, supported)
+    }
+
     override suspend fun updateMetadata(
         calendarId: Long,
         color: Int?,

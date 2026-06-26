@@ -137,6 +137,56 @@ class OccurrenceJoinMemoryTest : BaseDaoTest() {
         assertEquals(joinResult[0].event.calendarId, directEvent?.calendarId)
     }
 
+    @Test
+    fun `JOIN projections preserve endTimezone and organizer scheduling fields`() = runTest {
+        val accountId = accountsDao.insert(
+            Account(provider = AccountProvider.CALDAV, email = "user@radicale.local")
+        )
+        val calId = calendarsDao.insert(
+            Calendar(accountId = accountId, caldavUrl = "https://test/cal/",
+                displayName = "Test", color = 0xFF0000FF.toInt())
+        )
+        // A flight-style event (issue #39): start and end in different zones, with an
+        // organizer that has SENT-BY (RFC 5545 §3.2.18) and SCHEDULE-STATUS (RFC 6638 §7.3).
+        val eventId = eventsDao.insert(
+            Event(
+                uid = "tz-organizer@test.com", calendarId = calId, title = "Flight",
+                startTs = now, endTs = now + 3600_000, dtstamp = now,
+                timezone = "America/New_York",
+                endTimezone = "Europe/London",
+                organizerEmail = "boss@example.test",
+                organizerSentBy = "mailto:assistant@example.test",
+                organizerScheduleStatus = "1.2;Delivered",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+        occurrencesDao.insertAll(listOf(
+            Occurrence(
+                eventId = eventId, calendarId = calId,
+                startTs = now, endTs = now + 3600_000,
+                startDay = 20260401, endDay = 20260401
+            )
+        ))
+
+        // All three JOIN projections must carry these fields through (they were silently
+        // dropped to null before the e_end_timezone / e_organizer_sent_by /
+        // e_organizer_schedule_status aliases were added).
+        val rangeEvent = occurrencesDao.getOccurrencesWithEventsInRange(
+            now - 1000, now + 7200_000
+        ).first().single().event
+        val dayEvent = occurrencesDao.getOccurrencesWithEventsForDay(20260401)
+            .first().single().event
+        val insightsEvent = occurrencesDao.getOccurrencesWithEventsForInsights(
+            now - 1000, now + 7200_000
+        ).single().event
+
+        for (event in listOf(rangeEvent, dayEvent, insightsEvent)) {
+            assertEquals("Europe/London", event.endTimezone)
+            assertEquals("mailto:assistant@example.test", event.organizerSentBy)
+            assertEquals("1.2;Delivered", event.organizerScheduleStatus)
+        }
+    }
+
     /** Uses raw SQL to measure what the old query (with e.raw_ical) would have loaded. */
     @Test
     fun `fix eliminates rawIcal payload duplication`() = runTest {

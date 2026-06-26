@@ -1,0 +1,748 @@
+diff --git a/app/src/main/kotlin/org/onekash/kashcal/ui/components/DeviceEventQuickViewSheet.kt b/app/src/main/kotlin/org/onekash/kashcal/ui/components/DeviceEventQuickViewSheet.kt
+index 3e4c2cf5..6daacdf9 100644
+--- a/app/src/main/kotlin/org/onekash/kashcal/ui/components/DeviceEventQuickViewSheet.kt
++++ b/app/src/main/kotlin/org/onekash/kashcal/ui/components/DeviceEventQuickViewSheet.kt
+@@ -61,6 +61,8 @@ import org.onekash.kashcal.util.location.openInMaps
+ import org.onekash.kashcal.util.text.containsUrl
+ import org.onekash.kashcal.util.text.extractUrls
+ import org.onekash.kashcal.util.text.shouldOpenExternally
++import androidx.compose.ui.res.stringResource
++import org.onekash.kashcal.R
+ 
+ /**
+  * Quick view sheet for device calendar events.
+@@ -217,7 +219,7 @@ fun DeviceEventQuickViewSheet(
+                                 Spacer(modifier = Modifier.width(4.dp))
+                                 Icon(
+                                     Icons.AutoMirrored.Filled.Launch,
+-                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
++                                    contentDescription = stringResource(if (hasUrl) R.string.cd_open_link else R.string.cd_open_maps),
+                                     modifier = Modifier.size(14.dp),
+                                     tint = MaterialTheme.colorScheme.primary
+                                 )
+@@ -226,14 +228,15 @@ fun DeviceEventQuickViewSheet(
+ 
+                         // Repeat info
+                         if (displayEvent.hasRrule) {
+-                            val repeatText = remember(displayEvent.rrule) {
++                            val recurringLabel = stringResource(R.string.label_recurring)
++                            val repeatText = remember(displayEvent.rrule, recurringLabel) {
+                                 displayEvent.rrule?.let { rrule ->
+                                     try {
+                                         RruleBuilder.formatForDisplay(rrule)
+                                     } catch (_: Exception) {
+-                                        "Recurring" // Fallback for malformed RRULE
++                                        recurringLabel
+                                     }
+-                                } ?: "Recurring"
++                                } ?: recurringLabel
+                             }
+                             Text(
+                                 text = "\uD83D\uDD01 $repeatText",
+@@ -328,13 +331,13 @@ private fun DeviceEventActionButtons(
+                 onClick = onDuplicate,
+                 modifier = Modifier.weight(1f)
+             ) {
+-                Text("Duplicate")
++                Text(stringResource(R.string.action_duplicate))
+             }
+             FilledTonalButton(
+                 onClick = onShare,
+                 modifier = Modifier.weight(1f)
+             ) {
+-                Text("Share")
++                Text(stringResource(R.string.action_share))
+             }
+         } else {
+             // Writable: show Edit, Delete, More menu
+@@ -351,7 +354,7 @@ private fun DeviceEventActionButtons(
+                         },
+                         modifier = Modifier.weight(1f)
+                     ) {
+-                        Text("Edit")
++                        Text(stringResource(R.string.action_edit))
+                     }
+                 } else {
+                     // Inline edit confirmation for recurring events
+@@ -362,7 +365,7 @@ private fun DeviceEventActionButtons(
+                         },
+                         modifier = Modifier.weight(0.5f)
+                     ) {
+-                        Text("Cancel")
++                        Text(stringResource(R.string.action_cancel))
+                     }
+                     Spacer(modifier = Modifier.width(8.dp))
+                     FilledTonalButton(
+@@ -376,7 +379,7 @@ private fun DeviceEventActionButtons(
+                         },
+                         modifier = Modifier.weight(0.5f)
+                     ) {
+-                        Text("Edit")
++                        Text(stringResource(R.string.action_edit))
+                     }
+                 }
+             }
+@@ -392,7 +395,7 @@ private fun DeviceEventActionButtons(
+                             contentColor = MaterialTheme.colorScheme.onErrorContainer
+                         )
+                     ) {
+-                        Text("Delete")
++                        Text(stringResource(R.string.action_delete))
+                     }
+                 } else {
+                     // Inline delete confirmation
+@@ -403,7 +406,7 @@ private fun DeviceEventActionButtons(
+                         },
+                         modifier = Modifier.weight(0.5f)
+                     ) {
+-                        Text("Cancel")
++                        Text(stringResource(R.string.action_cancel))
+                     }
+                     Spacer(modifier = Modifier.width(8.dp))
+                     FilledTonalButton(
+@@ -425,7 +428,7 @@ private fun DeviceEventActionButtons(
+                             contentColor = MaterialTheme.colorScheme.onErrorContainer
+                         )
+                     ) {
+-                        Text("Delete")
++                        Text(stringResource(R.string.action_delete))
+                     }
+                 }
+             }
+@@ -438,7 +441,7 @@ private fun DeviceEventActionButtons(
+                     ) {
+                         Icon(
+                             Icons.Default.MoreVert,
+-                            contentDescription = "More options"
++                            contentDescription = stringResource(R.string.cd_more_options)
+                         )
+                     }
+ 
+@@ -447,27 +450,27 @@ private fun DeviceEventActionButtons(
+                         onDismissRequest = { showMoreMenu = false }
+                     ) {
+                         DropdownMenuItem(
+-                            text = { Text("Duplicate") },
++                            text = { Text(stringResource(R.string.action_duplicate)) },
+                             onClick = {
+                                 showMoreMenu = false
+                                 onDuplicate()
+                             }
+                         )
+                         DropdownMenuItem(
+-                            text = { Text("Share") },
++                            text = { Text(stringResource(R.string.action_share)) },
+                             onClick = {
+                                 showMoreMenu = false
+                                 onShare()
+                             }
+                         )
+                         DropdownMenuItem(
+-                            text = { Text("Export as .ics") },
++                            text = { Text(stringResource(R.string.action_export_ics)) },
+                             onClick = {
+                                 showMoreMenu = false
+                                 onExportIcs()
+                             },
+                             leadingIcon = {
+-                                Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
++                                Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.cd_export_ics))
+                             }
+                         )
+                     }
+@@ -486,7 +489,7 @@ private fun DeviceEventActionButtons(
+         ) {
+             if (showEditConfirmation) {
+                 Text(
+-                    "Edit recurring event",
++                    stringResource(R.string.dialog_edit_recurring_title),
+                     style = MaterialTheme.typography.labelMedium,
+                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                 )
+@@ -501,7 +504,7 @@ private fun DeviceEventActionButtons(
+                         selected = !editAllOccurrences,
+                         onClick = { editAllOccurrences = false }
+                     )
+-                    Text("This occurrence only")
++                    Text(stringResource(R.string.recurring_just_occurrence))
+                 }
+                 Row(
+                     verticalAlignment = Alignment.CenterVertically,
+@@ -514,13 +517,13 @@ private fun DeviceEventActionButtons(
+                         selected = editAllOccurrences,
+                         onClick = { editAllOccurrences = true }
+                     )
+-                    Text("All occurrences")
++                    Text(stringResource(R.string.recurring_all_occurrences))
+                 }
+             }
+ 
+             if (showDeleteConfirmation) {
+                 Text(
+-                    "Delete recurring event",
++                    stringResource(R.string.dialog_delete_recurring_title),
+                     style = MaterialTheme.typography.labelMedium,
+                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                 )
+@@ -535,7 +538,7 @@ private fun DeviceEventActionButtons(
+                         selected = !deleteAllFuture,
+                         onClick = { deleteAllFuture = false }
+                     )
+-                    Text("This occurrence only")
++                    Text(stringResource(R.string.recurring_just_occurrence))
+                 }
+                 Row(
+                     verticalAlignment = Alignment.CenterVertically,
+@@ -548,7 +551,7 @@ private fun DeviceEventActionButtons(
+                         selected = deleteAllFuture,
+                         onClick = { deleteAllFuture = true }
+                     )
+-                    Text("This and all future")
++                    Text(stringResource(R.string.recurring_this_and_future))
+                 }
+             }
+         }
+@@ -589,7 +592,7 @@ private fun DeviceEventDescriptionSection(
+                     verticalArrangement = Arrangement.spacedBy(4.dp)
+                 ) {
+                     Text(
+-                        text = "Notes",
++                        text = stringResource(R.string.label_notes_section),
+                         style = MaterialTheme.typography.labelMedium,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+diff --git a/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventFormSheet.kt b/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventFormSheet.kt
+index 3e0fd54d..0502f376 100644
+--- a/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventFormSheet.kt
++++ b/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventFormSheet.kt
+@@ -81,6 +81,8 @@ import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
+ import org.onekash.kashcal.ui.components.pickers.DateTimePickerCard
+ import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
+ import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
++import androidx.compose.ui.res.stringResource
++import org.onekash.kashcal.R
+ 
+ private const val TAG = "EventFormSheet"
+ 
+@@ -653,10 +655,10 @@ fun EventFormSheet(
+                 verticalAlignment = Alignment.CenterVertically
+             ) {
+                 TextButton(onClick = { onDismiss() }) {
+-                    Text("Cancel")
++                    Text(stringResource(R.string.action_cancel))
+                 }
+                 Text(
+-                    text = if (state.isEditMode) "Edit Event" else "New Event",
++                    text = if (state.isEditMode) stringResource(R.string.dialog_edit_event) else stringResource(R.string.dialog_new_event),
+                     style = MaterialTheme.typography.titleLarge,
+                     fontWeight = FontWeight.Bold
+                 )
+@@ -670,7 +672,7 @@ fun EventFormSheet(
+                             strokeWidth = 2.dp
+                         )
+                     } else {
+-                        Text("Save", fontWeight = FontWeight.Bold)
++                        Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
+                     }
+                 }
+             }
+@@ -701,7 +703,7 @@ fun EventFormSheet(
+                     OutlinedTextField(
+                         value = state.title,
+                         onValueChange = { state = state.copy(title = it) },
+-                        label = { Text("Event title") },
++                        label = { Text(stringResource(R.string.label_event_title)) },
+                         modifier = Modifier
+                             .fillMaxWidth()
+                             .focusRequester(titleFocusRequester),
+@@ -735,7 +737,7 @@ fun EventFormSheet(
+                         horizontalArrangement = Arrangement.SpaceBetween,
+                         verticalAlignment = Alignment.CenterVertically
+                     ) {
+-                        Text("All-day", style = MaterialTheme.typography.bodyLarge)
++                        Text(stringResource(R.string.label_all_day), style = MaterialTheme.typography.bodyLarge)
+                         Switch(
+                             checked = state.isAllDay,
+                             onCheckedChange = toggleAllDay
+@@ -746,7 +748,7 @@ fun EventFormSheet(
+ 
+                     // Starts card - opens combined date + time picker
+                     DateTimePickerCard(
+-                        label = "Starts",
++                        label = stringResource(R.string.label_starts),
+                         dateMillis = state.dateMillis,
+                         hour = state.startHour,
+                         minute = state.startMinute,
+@@ -760,14 +762,14 @@ fun EventFormSheet(
+ 
+                     // Ends card - opens combined date + time picker
+                     DateTimePickerCard(
+-                        label = "Ends",
++                        label = stringResource(R.string.label_ends),
+                         dateMillis = state.endDateMillis,
+                         hour = state.endHour,
+                         minute = state.endMinute,
+                         isAllDay = state.isAllDay,
+                         onClick = { activeSheet = ActiveDateTimeSheet.END },
+                         isError = hasTimeConflict,
+-                        errorMessage = if (hasTimeConflict) "End time must be after start time" else null,
++                        errorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
+                         timezone = state.timezone,
+                         timePattern = timePattern
+                     )
+@@ -885,8 +887,8 @@ fun EventFormSheet(
+                                     locationExpanded = false
+                                 }
+                             },
+-                            label = { Text("Location") },
+-                            placeholder = { Text("Address, room, or meeting link") },
++                            label = { Text(stringResource(R.string.label_location)) },
++                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
+                             modifier = Modifier
+                                 .fillMaxWidth()
+                                 .menuAnchor(MenuAnchorType.PrimaryEditable),
+@@ -898,7 +900,7 @@ fun EventFormSheet(
+                                         strokeWidth = 2.dp
+                                     )
+                                 } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
+-                                    Icon(Icons.Default.Search, contentDescription = "Search")
++                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+                                 }
+                             }
+                         )
+@@ -930,7 +932,7 @@ fun EventFormSheet(
+                     OutlinedTextField(
+                         value = state.description,
+                         onValueChange = { state = state.copy(description = it) },
+-                        label = { Text("Notes") },
++                        label = { Text(stringResource(R.string.label_notes)) },
+                         modifier = Modifier.fillMaxWidth(),
+                         minLines = 2,
+                         maxLines = 4
+@@ -970,7 +972,7 @@ fun EventFormSheet(
+                                     contentColor = MaterialTheme.colorScheme.error
+                                 )
+                             ) {
+-                                Text("Delete Event")
++                                Text(stringResource(R.string.action_delete_event))
+                             }
+                         } else {
+                             Row(
+@@ -984,7 +986,7 @@ fun EventFormSheet(
+                                         .weight(1f)
+                                         .height(48.dp)
+                                 ) {
+-                                    Text("Cancel")
++                                    Text(stringResource(R.string.action_cancel))
+                                 }
+                                 Button(
+                                     onClick = {
+@@ -1035,7 +1037,7 @@ fun EventFormSheet(
+                                             color = MaterialTheme.colorScheme.onError
+                                         )
+                                     } else {
+-                                        Text("Confirm Delete")
++                                        Text(stringResource(R.string.action_confirm_delete))
+                                     }
+                                 }
+                             }
+@@ -1069,7 +1071,7 @@ fun EventFormSheet(
+                             )
+                         } else {
+                             Text(
+-                                "Save Event",
++                                stringResource(R.string.action_save_event),
+                                 style = MaterialTheme.typography.titleMedium,
+                                 fontWeight = FontWeight.SemiBold
+                             )
+@@ -1083,7 +1085,7 @@ fun EventFormSheet(
+     // Start DateTime sheet - combined date + time picker
+     if (activeSheet == ActiveDateTimeSheet.START) {
+         DateTimeSheet(
+-            label = "Starts",
++            label = stringResource(R.string.label_starts),
+             selectedDateMillis = state.dateMillis,
+             selectedHour = state.startHour,
+             selectedMinute = state.startMinute,
+@@ -1139,7 +1141,7 @@ fun EventFormSheet(
+     // End DateTime sheet - combined date + time picker
+     if (activeSheet == ActiveDateTimeSheet.END) {
+         DateTimeSheet(
+-            label = "Ends",
++            label = stringResource(R.string.label_ends),
+             selectedDateMillis = state.endDateMillis,
+             selectedHour = state.endHour,
+             selectedMinute = state.endMinute,
+diff --git a/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventQuickViewSheet.kt b/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventQuickViewSheet.kt
+index ba97f173..20dc492a 100644
+--- a/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventQuickViewSheet.kt
++++ b/app/src/main/kotlin/org/onekash/kashcal/ui/components/EventQuickViewSheet.kt
+@@ -71,6 +71,8 @@ import org.onekash.kashcal.util.text.extractUrls
+ import org.onekash.kashcal.util.text.formatRemindersForDisplay
+ import org.onekash.kashcal.util.text.isValidUrl
+ import org.onekash.kashcal.util.text.shouldOpenExternally
++import androidx.compose.ui.res.stringResource
++import org.onekash.kashcal.R
+ 
+ /**
+  * Lightweight preview sheet for quick event viewing.
+@@ -244,7 +246,7 @@ fun EventQuickViewSheet(
+                                 Spacer(modifier = Modifier.width(4.dp))
+                                 Icon(
+                                     Icons.AutoMirrored.Filled.Launch,
+-                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
++                                    contentDescription = stringResource(if (hasUrl) R.string.cd_open_link else R.string.cd_open_maps),
+                                     modifier = Modifier.size(14.dp),
+                                     tint = MaterialTheme.colorScheme.primary
+                                 )
+@@ -271,7 +273,7 @@ fun EventQuickViewSheet(
+                                     freq
+                                 }
+                             } else {
+-                                "Recurring"
++                                stringResource(R.string.label_recurring)
+                             }
+                             Text(
+                                 text = "\uD83D\uDD01 $repeatText",
+@@ -328,13 +330,13 @@ fun EventQuickViewSheet(
+                         onClick = onDuplicate,
+                         modifier = Modifier.weight(1f)
+                     ) {
+-                        Text("Duplicate")
++                        Text(stringResource(R.string.action_duplicate))
+                     }
+                     FilledTonalButton(
+                         onClick = onShare,
+                         modifier = Modifier.weight(1f)
+                     ) {
+-                        Text("Share")
++                        Text(stringResource(R.string.action_share))
+                     }
+                 } else {
+                     // Editable calendar: Edit, Delete, More menu
+@@ -352,7 +354,7 @@ fun EventQuickViewSheet(
+                                 },
+                                 modifier = Modifier.weight(1f)
+                             ) {
+-                                Text("Edit")
++                                Text(stringResource(R.string.action_edit))
+                             }
+                         } else {
+                             // Inline edit confirmation for recurring events
+@@ -363,7 +365,7 @@ fun EventQuickViewSheet(
+                                 },
+                                 modifier = Modifier.weight(0.5f)
+                             ) {
+-                                Text("Cancel")
++                                Text(stringResource(R.string.action_cancel))
+                             }
+                             Spacer(modifier = Modifier.width(8.dp))
+                             FilledTonalButton(
+@@ -377,7 +379,7 @@ fun EventQuickViewSheet(
+                                 },
+                                 modifier = Modifier.weight(0.5f)
+                             ) {
+-                                Text("Confirm")
++                                Text(stringResource(R.string.action_confirm))
+                             }
+                         }
+                     }
+@@ -393,7 +395,7 @@ fun EventQuickViewSheet(
+                                     contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                 )
+                             ) {
+-                                Text("Delete")
++                                Text(stringResource(R.string.action_delete))
+                             }
+                         } else {
+                             // Inline delete confirmation
+@@ -404,7 +406,7 @@ fun EventQuickViewSheet(
+                                 },
+                                 modifier = Modifier.weight(0.5f)
+                             ) {
+-                                Text("Cancel")
++                                Text(stringResource(R.string.action_cancel))
+                             }
+                             Spacer(modifier = Modifier.width(8.dp))
+                             FilledTonalButton(
+@@ -426,7 +428,7 @@ fun EventQuickViewSheet(
+                                     contentColor = MaterialTheme.colorScheme.onError
+                                 )
+                             ) {
+-                                Text("Confirm")
++                                Text(stringResource(R.string.action_confirm))
+                             }
+                         }
+                     }
+@@ -439,7 +441,7 @@ fun EventQuickViewSheet(
+                             ) {
+                                 Icon(
+                                     Icons.Default.MoreVert,
+-                                    contentDescription = "More options"
++                                    contentDescription = stringResource(R.string.cd_more_options)
+                                 )
+                             }
+ 
+@@ -448,33 +450,33 @@ fun EventQuickViewSheet(
+                                 onDismissRequest = { showMoreMenu = false }
+                             ) {
+                                 DropdownMenuItem(
+-                                    text = { Text("Duplicate") },
++                                    text = { Text(stringResource(R.string.action_duplicate)) },
+                                     onClick = {
+                                         showMoreMenu = false
+                                         onDuplicate()
+                                     },
+                                     leadingIcon = {
+-                                        Icon(Icons.Default.ContentCopy, contentDescription = "Duplicate")
++                                        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.cd_duplicate))
+                                     }
+                                 )
+                                 DropdownMenuItem(
+-                                    text = { Text("Share") },
++                                    text = { Text(stringResource(R.string.action_share)) },
+                                     onClick = {
+                                         showMoreMenu = false
+                                         onShare()
+                                     },
+                                     leadingIcon = {
+-                                        Icon(Icons.Default.Share, contentDescription = "Share")
++                                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.cd_share))
+                                     }
+                                 )
+                                 DropdownMenuItem(
+-                                    text = { Text("Export as .ics") },
++                                    text = { Text(stringResource(R.string.action_export_ics)) },
+                                     onClick = {
+                                         showMoreMenu = false
+                                         onExportIcs()
+                                     },
+                                     leadingIcon = {
+-                                        Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
++                                        Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.cd_export_ics))
+                                     }
+                                 )
+                             }
+@@ -493,7 +495,7 @@ fun EventQuickViewSheet(
+                         .selectableGroup()
+                 ) {
+                     Text(
+-                        text = "Delete \"${event.title}\"",
++                        text = stringResource(R.string.dialog_delete_title, event.title),
+                         style = MaterialTheme.typography.titleSmall,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+@@ -516,7 +518,7 @@ fun EventQuickViewSheet(
+                             onClick = null
+                         )
+                         Spacer(modifier = Modifier.width(8.dp))
+-                        Text("Just this one")
++                        Text(stringResource(R.string.recurring_just_this))
+                     }
+ 
+                     // This and all future
+@@ -536,7 +538,7 @@ fun EventQuickViewSheet(
+                             onClick = null
+                         )
+                         Spacer(modifier = Modifier.width(8.dp))
+-                        Text("This and all future")
++                        Text(stringResource(R.string.recurring_this_and_future))
+                     }
+                 }
+             }
+@@ -551,7 +553,7 @@ fun EventQuickViewSheet(
+                         .selectableGroup()
+                 ) {
+                     Text(
+-                        text = "Edit \"${event.title}\"",
++                        text = stringResource(R.string.dialog_edit_title, event.title),
+                         style = MaterialTheme.typography.titleSmall,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+@@ -574,7 +576,7 @@ fun EventQuickViewSheet(
+                             onClick = null
+                         )
+                         Spacer(modifier = Modifier.width(8.dp))
+-                        Text("Just this occurrence")
++                        Text(stringResource(R.string.recurring_just_occurrence))
+                     }
+ 
+                     // All occurrences
+@@ -594,7 +596,7 @@ fun EventQuickViewSheet(
+                             onClick = null
+                         )
+                         Spacer(modifier = Modifier.width(8.dp))
+-                        Text("All occurrences")
++                        Text(stringResource(R.string.recurring_all_occurrences))
+                     }
+                 }
+             }
+@@ -715,7 +717,7 @@ private fun ExpandedContentSection(
+                     Spacer(modifier = Modifier.width(4.dp))
+                     Icon(
+                         Icons.AutoMirrored.Filled.Launch,
+-                        contentDescription = "Open link",
++                        contentDescription = stringResource(R.string.cd_open_link),
+                         modifier = Modifier.size(14.dp),
+                         tint = MaterialTheme.colorScheme.primary
+                     )
+@@ -728,7 +730,7 @@ private fun ExpandedContentSection(
+                     verticalArrangement = Arrangement.spacedBy(4.dp)
+                 ) {
+                     Text(
+-                        text = "Notes",
++                        text = stringResource(R.string.label_notes_section),
+                         style = MaterialTheme.typography.labelMedium,
+                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+diff --git a/app/src/main/kotlin/org/onekash/kashcal/ui/screens/HomeScreen.kt b/app/src/main/kotlin/org/onekash/kashcal/ui/screens/HomeScreen.kt
+index 07c79bdc..927fd9e8 100644
+--- a/app/src/main/kotlin/org/onekash/kashcal/ui/screens/HomeScreen.kt
++++ b/app/src/main/kotlin/org/onekash/kashcal/ui/screens/HomeScreen.kt
+@@ -112,6 +112,8 @@ import java.time.Instant
+ import java.time.ZoneId
+ import java.time.format.DateTimeFormatter
+ 
++import androidx.compose.ui.res.stringResource
++import org.onekash.kashcal.R
+ import java.util.*
+ import java.util.Calendar as JavaCalendar
+ 
+@@ -374,7 +376,7 @@ fun HomeScreen(
+                 onClick = onCreateEvent,
+                 containerColor = MaterialTheme.colorScheme.primary
+             ) {
+-                Icon(Icons.Default.Add, contentDescription = "Create event")
++                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_create_event))
+             }
+         },
+         // No bottom bar - week view is now in agenda panel
+@@ -786,11 +788,11 @@ fun HomeScreen(
+         val isDeviceRecurring = pending.displayEvent is DisplayEvent.Device
+         AlertDialog(
+             onDismissRequest = onCancelPendingReschedule,
+-            title = { Text("Edit recurring event") },
+-            text = { Text("This is a recurring event. How would you like to apply this change?") },
++            title = { Text(stringResource(R.string.dialog_edit_recurring_title)) },
++            text = { Text(stringResource(R.string.dialog_edit_recurring_message)) },
+             confirmButton = {
+                 TextButton(onClick = { onConfirmReschedule(EditScope.THIS_EVENT) }) {
+-                    Text("This event")
++                    Text(stringResource(R.string.recurring_this_event))
+                 }
+             },
+             dismissButton = {
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 0dd45328..2185f4f3 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -618,4 +618,109 @@
+         <item quantity="other">%1$d weeks before</item>
+     </plurals>
+ 
++    <!-- ==================== Phase 3a: Extracted UI Strings ==================== -->
++
++    <!-- Form Labels -->
++    <string name="label_starts">Starts</string>
++    <string name="label_ends">Ends</string>
++    <string name="label_notes_section">Notes</string>
++    <string name="label_go_to_month">Go to month</string>
++    <string name="label_contact_birthdays">Contact Birthdays</string>
++
++    <!-- Dialogs -->
++    <string name="dialog_edit_recurring_title">Edit recurring event</string>
++    <string name="dialog_edit_recurring_message">This is a recurring event. How would you like to apply this change?</string>
++
++    <!-- Recurring Event Actions -->
++    <string name="recurring_this_event">This event</string>
++    <string name="recurring_all_events">All events</string>
++
++    <!-- Content Descriptions (Accessibility) -->
++    <string name="cd_open_link">Open link</string>
++    <string name="cd_clear">Clear</string>
++    <string name="cd_offline">Offline</string>
++    <string name="cd_month_year_picker">Month and year picker</string>
++    <string name="cd_calendar_view">Calendar view</string>
++    <string name="cd_active_view">Active view</string>
++    <string name="cd_warning">Warning</string>
++    <string name="cd_remove_alert">Remove alert</string>
++    <string name="cd_refresh_calendars">Refresh calendars</string>
++
++    <!-- Actions -->
++    <string name="action_more_options">More options</string>
++    <string name="action_add_another">Add Another</string>
++    <string name="action_keep_it_that_way">Keep it that way</string>
++
++    <!-- Placeholders -->
++    <string name="placeholder_quick_add">Coffee tomorrow at 3pm</string>
++
++    <!-- Settings -->
++    <string name="settings_device_calendars">Device Calendars</string>
++    <string name="settings_quick_event_add">Quick Event Add</string>
++    <string name="settings_week_numbers">Week Numbers</string>
++    <string name="settings_widget_event_limit">Widget Event Limit</string>
++    <string name="settings_sync_lookback">Sync Lookback</string>
++    <string name="settings_auto_detect_emojis">Auto-detect Emojis</string>
++    <string name="settings_events_per_day">Events per day</string>
++    <string name="settings_contact_anniversaries">Contact Anniversaries</string>
++    <string name="settings_contact_birthdays_description">Show birthdays from your phone contacts as all-day calendar events.</string>
++    <string name="settings_contact_anniversaries_description">Show anniversaries from your phone contacts as all-day calendar events.</string>
++    <!-- %1$s = example time string -->
++    <string name="settings_time_format_example">Example: %1$s</string>
++    <!-- %1$s = resolved locale day name -->
++    <string name="settings_system_default_with_value">System default (%1$s)</string>
++
++    <!-- Status -->
++    <string name="status_already_synced">Already Synced</string>
++    <string name="status_warnings">Warnings</string>
++    <string name="status_privacy_tagline">For you, not your data.</string>
++    <!-- %1$s = version name -->
++    <string name="status_version_label">KashCal v%1$s</string>
++
++    <!-- Drawer -->
++    <string name="drawer_calendars">Calendars</string>
++    <string name="drawer_contacts">Contacts</string>
++    <string name="drawer_device_calendars">Device calendars</string>
++    <string name="drawer_share_feedback">Share feedback</string>
++
++    <!-- Duration Labels (WheelDurationPicker) -->
++    <string name="label_duration_days">days</string>
++    <string name="label_duration_hrs">hrs</string>
++    <string name="label_duration_min">min</string>
++
++    <!-- Recurrence -->
++    <string name="label_recurrence_never">Never</string>
++    <string name="label_recurrence_repeat">Repeat</string>
++    <string name="label_recurrence_ends">Ends</string>
++    <string name="label_recurring">Recurring</string>
++
++    <!-- Dialogs (additional) -->
++    <string name="dialog_new_event">New Event</string>
++    <string name="dialog_edit_event">Edit Event</string>
++    <string name="dialog_delete_recurring_title">Delete recurring event</string>
++
++    <!-- Actions (additional) -->
++    <string name="action_save_event">Save Event</string>
++
++    <!-- Errors (additional) -->
++    <string name="error_end_before_start">End time must be after start time</string>
++
++    <!-- HomeScreen -->
++    <string name="empty_pick_a_day">Pick a day. Seize it.</string>
++    <string name="empty_no_events_day">Nothing to see here; go touch grass?</string>
++    <string name="label_upcoming_events">Upcoming Events</string>
++    <string name="filter_date">Date</string>
++    <string name="cd_open_drawer">Open drawer</string>
++    <string name="cd_close_drawer">Close drawer</string>
++    <string name="cd_previous">Previous</string>
++    <string name="cd_next">Next</string>
++    <string name="label_select_date">Select a date</string>
++    <string name="hint_tap_date_range">Tap same date for single day, or another date for range</string>
++
++    <!-- ViewPicker -->
++    <string name="view_agenda">Agenda</string>
++    <string name="view_month_full">Month (Full)</string>
++    <string name="view_three_days">3 Days</string>
++    <string name="view_year">Year</string>
++
+ </resources>

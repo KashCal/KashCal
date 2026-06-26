@@ -1,0 +1,5 @@
+New: attendees and invitations for CalDAV calendars (beta). Add people to events, RSVP, and invite or uninvite guests on recurring events.
+
+Invitations are sent by your calendar server, so they only go out if it supports scheduling.
+
+Plus sync fixes and other improvements.

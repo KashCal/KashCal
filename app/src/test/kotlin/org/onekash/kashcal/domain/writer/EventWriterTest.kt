@@ -442,6 +442,164 @@ class EventWriterTest {
     }
 
     @Test
+    fun `editSingleOccurrence copies master attendees to the new exception`() = runTest {
+        // A rescheduled occurrence of a recurring meeting must carry the
+        // series' attendees so the bundled exception VEVENT pushes them
+        // (mirrors splitSeries). Without this the override VEVENT has zero
+        // ATTENDEEs and that instance loses its invitee list on the wire.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        val target = occurrences[2]
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Moved", startTs = target.startTs + 3600000, endTs = target.endTs + 3600000
+            ),
+            isLocal = true
+        )
+
+        val exAttendees = database.attendeesDao().getForEventOnce(exception.id)
+        assertEquals("exception inherits master's 2 attendees", 2, exAttendees.size)
+        assertEquals(
+            setOf("mailto:alice@example.test", "mailto:bob@example.test"),
+            exAttendees.map { it.address }.toSet()
+        )
+    }
+
+    @Test
+    fun `editSingleOccurrence persists an edited attendee set to the new exception only`() = runTest {
+        // Per-occurrence add: the user adds a guest to just this occurrence.
+        // The edited set lands on the exception's own rows; the master series
+        // is unchanged.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        // The edited set is the series guest plus a new per-occurrence guest.
+        val edited = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+            Attendee(eventId = 0, address = "mailto:carol@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+        )
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Just this one", startTs = target.startTs, endTs = target.endTs
+            ),
+            isLocal = true,
+            attendees = edited
+        )
+
+        val exAttendees = database.attendeesDao().getForEventOnce(exception.id)
+        assertEquals(
+            setOf("mailto:alice@example.test", "mailto:carol@example.test"),
+            exAttendees.map { it.address }.toSet()
+        )
+        // Master series keeps only its original guest.
+        val masterAttendees = database.attendeesDao().getForEventOnce(master.id)
+        assertEquals(
+            setOf("mailto:alice@example.test"),
+            masterAttendees.map { it.address }.toSet()
+        )
+    }
+
+    @Test
+    fun `editSingleOccurrence with edited attendees replaces a re-edited exception's rows`() = runTest {
+        // Re-editing an occurrence that already has an override: the new
+        // edited set replaces the exception's existing attendee rows.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        // First edit creates the exception, seeded with the master set.
+        eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(title = "First", startTs = target.startTs, endTs = target.endTs),
+            isLocal = true
+        )
+
+        // Second edit adds a per-occurrence guest.
+        val edited = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+            Attendee(eventId = 0, address = "mailto:dave@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+        )
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(title = "Second", startTs = target.startTs, endTs = target.endTs),
+            isLocal = true,
+            attendees = edited
+        )
+
+        val exAttendees = database.attendeesDao().getForEventOnce(exception.id)
+        assertEquals(
+            setOf("mailto:alice@example.test", "mailto:dave@example.test"),
+            exAttendees.map { it.address }.toSet()
+        )
+    }
+
+    @Test
+    fun `editSingleOccurrence with null attendees leaves a re-edited exception's rows untouched`() = runTest {
+        // Characterization of current behavior: a re-edit that doesn't touch
+        // attendees (null) must not clobber the exception's existing rows.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        // First edit creates the exception with a divergent per-occurrence set.
+        eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(title = "First", startTs = target.startTs, endTs = target.endTs),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:erin@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
+            )
+        )
+
+        // Second edit changes only the title (null attendees).
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(title = "Retitled", startTs = target.startTs, endTs = target.endTs),
+            isLocal = true
+        )
+
+        val exAttendees = database.attendeesDao().getForEventOnce(exception.id)
+        assertEquals(
+            "null attendees must preserve the exception's existing divergent set",
+            setOf("mailto:erin@example.test"),
+            exAttendees.map { it.address }.toSet()
+        )
+    }
+
+    @Test
     fun `editSingleOccurrence links occurrence to exception`() = runTest {
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
@@ -594,6 +752,158 @@ class EventWriterTest {
         assertEquals(exception1.uid, exception2.uid)
         assertEquals(master.uid, exception2.uid)
         assertEquals("Modified Twice", exception2.title)
+    }
+
+    // Rescheduling a single occurrence is an organizer timing change, so
+    // the override MUST advance SEQUENCE (RFC 5546 §2.1.4) — matching the
+    // master-edit and this-and-future paths. The baseline is the pristine
+    // occurrence (master projected onto this occurrence's time), so the
+    // structural master→exception difference doesn't masquerade as a change.
+    @Test
+    fun `editSingleOccurrence bumps SEQUENCE when occurrence is rescheduled`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false
+        )
+        assertEquals(0, master.sequence)
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            // Reproduce the coordinator's lambda: derive from master, shift time.
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                startTs = target.startTs + 3_600_000L,
+                endTs = target.endTs + 3_600_000L,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("rescheduled occurrence must bump SEQUENCE", 1, exception.sequence)
+    }
+
+    // A cosmetic-only single-occurrence edit (title) must NOT bump SEQUENCE,
+    // or attendees get re-notified for nothing.
+    @Test
+    fun `editSingleOccurrence does not bump SEQUENCE for title-only change`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            // Same occurrence time, only the title differs.
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                title = "Renamed occurrence",
+                startTs = target.startTs,
+                endTs = target.endTs,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("title-only edit must not bump SEQUENCE", 0, exception.sequence)
+    }
+
+    // Re-editing an already-materialized exception with a fresh timing change
+    // bumps relative to the exception's own SEQUENCE, not the master's.
+    @Test
+    fun `editSingleOccurrence bumps SEQUENCE when re-editing exception with new timing`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        // First edit: title-only, establishes the exception at occurrence time
+        // without bumping (SEQUENCE stays 0).
+        val firstEdit = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                title = "First",
+                startTs = target.startTs,
+                endTs = target.endTs,
+            ),
+            isLocal = false
+        )
+        assertEquals("title-only first edit should not bump", 0, firstEdit.sequence)
+
+        // Second edit of the same occurrence: shift the time.
+        val secondEdit = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                title = "First",
+                startTs = target.startTs + 3_600_000L,
+                endTs = target.endTs + 3_600_000L,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("re-edit timing change must bump exception SEQUENCE", 1, secondEdit.sequence)
+
+        // Third edit, another time shift: the exception's own counter must
+        // keep climbing (1 -> 2), not re-derive from the master's sequence.
+        val thirdEdit = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                title = "First",
+                startTs = target.startTs + 7_200_000L,
+                endTs = target.endTs + 7_200_000L,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("successive re-edits must climb monotonically", 2, thirdEdit.sequence)
+    }
+
+    // Guards the pristine-occurrence projection for all-day masters: a
+    // title-only edit must not bump SEQUENCE even though the projection
+    // recomputes endTs from the master's span and carries isAllDay. If the
+    // projection ever desynced from the modified event on these fields, this
+    // would false-fire and re-notify attendees.
+    @Test
+    fun `editSingleOccurrence does not bump SEQUENCE for title-only change on all-day master`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5", isAllDay = true),
+            isLocal = false
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                title = "Renamed all-day occurrence",
+                startTs = target.startTs,
+                endTs = target.endTs,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("all-day title-only edit must not bump SEQUENCE", 0, exception.sequence)
     }
 
     // ========== Delete Single Occurrence (EXDATE) ==========
@@ -1041,6 +1351,420 @@ class EventWriterTest {
         val addresses = onNewSeries.map { it.address }.toSet()
         assertTrue(addresses.contains("alice.synthetic@example.test"))
         assertTrue(addresses.contains("bob.synthetic@example.test"))
+    }
+
+    @Test
+    fun `splitSeries with explicit attendees writes the supplied set to the new series`() = runTest {
+        // The this-and-future attendee-edit path: the user added a guest, so
+        // the new series must carry the EDITED set, not a verbatim copy of the
+        // master's attendees.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        val edited = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+            Attendee(eventId = 0, address = "mailto:carol@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+        )
+
+        val newSeries = eventWriter.splitSeries(
+            masterEventId = master.id,
+            splitTimeMs = occurrences[4].startTs,
+            modifiedEvent = createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
+            isLocal = true,
+            attendees = edited
+        )
+
+        val onNewSeries = database.attendeesDao().getForEventOnce(newSeries.id).map { it.address }.toSet()
+        assertEquals(
+            "new series carries the edited set including the added guest",
+            setOf("mailto:alice@example.test", "mailto:carol@example.test"),
+            onNewSeries
+        )
+        // The truncated (past) master keeps its original single attendee.
+        val onMaster = database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
+        assertEquals(
+            "past master retains its original attendee set",
+            setOf("mailto:alice@example.test"),
+            onMaster
+        )
+    }
+
+    @Test
+    fun `splitSeries at first occurrence collapses to in-place update and applies supplied attendees`() = runTest {
+        // splitTimeMs <= masterStart collapses to updateMasterInPlace. The
+        // edited attendee set must still land on the master — not be dropped
+        // by the collapse branch.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val edited = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+            Attendee(eventId = 0, address = "mailto:dan@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+        )
+
+        val result = eventWriter.splitSeries(
+            masterEventId = master.id,
+            splitTimeMs = master.startTs, // first occurrence → collapse
+            modifiedEvent = master.copy(title = "Renamed"),
+            isLocal = true,
+            attendees = edited
+        )
+
+        assertEquals("collapse updates the master in place", master.id, result.id)
+        val onMaster = database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
+        assertEquals(
+            "first-occurrence collapse applies the edited set, not a drop",
+            setOf("mailto:alice@example.test", "mailto:dan@example.test"),
+            onMaster
+        )
+    }
+
+    @Test
+    fun `updateEvent all-events attendee change cascades onto existing exception rows`() = runTest {
+        // An ALL_EVENTS attendee edit lands on updateEvent. Existing time-only
+        // exceptions were seeded with the master's OLD attendee list; the new
+        // set must cascade onto them so the whole series stays consistent
+        // (safe in this phase — no exception has a divergent set yet).
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        // Create a time-only exception (seeds master's single attendee).
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = occurrences[2].startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Moved",
+                startTs = occurrences[2].startTs + 3_600_000,
+                endTs = occurrences[2].endTs + 3_600_000
+            ),
+            isLocal = true
+        )
+        assertEquals(1, database.attendeesDao().getForEventOnce(exception.id).size)
+
+        // ALL_EVENTS edit: add a guest to the master.
+        val edited = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+            Attendee(eventId = 0, address = "mailto:erin@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+        )
+        eventWriter.updateEvent(
+            event = database.eventsDao().getById(master.id)!!.copy(title = "Series Renamed"),
+            isLocal = true,
+            attendees = edited
+        )
+
+        val onException = database.attendeesDao().getForEventOnce(exception.id).map { it.address }.toSet()
+        assertEquals(
+            "all-events attendee change cascades onto the existing exception",
+            setOf("mailto:alice@example.test", "mailto:erin@example.test"),
+            onException
+        )
+    }
+
+    @Test
+    fun `updateEvent all-events change does NOT clobber a customized per-occurrence override`() = runTest {
+        // Once a guest is added to ONE occurrence, that override holds a
+        // deliberately-divergent set. A later all-events edit must leave it
+        // alone rather than overwriting the user's per-occurrence customization.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        // Customize one occurrence: add a per-occurrence guest (divergent set).
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = occurrences[2].startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Just this one", startTs = occurrences[2].startTs, endTs = occurrences[2].endTs
+            ),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:carol@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+
+        // ALL_EVENTS edit: add a DIFFERENT guest to the whole series.
+        eventWriter.updateEvent(
+            event = database.eventsDao().getById(master.id)!!.copy(title = "Series Renamed"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:erin@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+
+        val onException = database.attendeesDao().getForEventOnce(exception.id).map { it.address }.toSet()
+        assertEquals(
+            "the customized override keeps its own divergent set",
+            setOf("mailto:alice@example.test", "mailto:carol@example.test"),
+            onException
+        )
+    }
+
+    @Test
+    fun `updateEvent all-events change still cascades onto a seeded override with stamped PARTSTAT`() = runTest {
+        // A seeded (non-customized) override matches the series addresses but
+        // may carry server-stamped PARTSTAT differences. Divergence is judged
+        // by address SET only, so it must still cascade.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
+            )
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = occurrences[2].startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Moved", startTs = occurrences[2].startTs + 3_600_000, endTs = occurrences[2].endTs + 3_600_000
+            ),
+            isLocal = true
+        )
+        // Simulate a server-stamped PARTSTAT on the seeded override (same
+        // address, different status) — must NOT be mistaken for customization.
+        val seededRow = database.attendeesDao().getForEventOnce(exception.id).single()
+        database.attendeesDao().replaceForEvent(
+            exception.id,
+            listOf(seededRow.copy(id = 0, partstat = "ACCEPTED"))
+        )
+
+        eventWriter.updateEvent(
+            event = database.eventsDao().getById(master.id)!!.copy(title = "Series Renamed"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:erin@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+
+        val onException = database.attendeesDao().getForEventOnce(exception.id).map { it.address }.toSet()
+        assertEquals(
+            "a seeded override (matching addresses) still cascades despite stamped PARTSTAT",
+            setOf("mailto:alice@example.test", "mailto:erin@example.test"),
+            onException
+        )
+    }
+
+    @Test
+    fun `updateEvent tombstones a removed synced guest into pending_cancels`() = runTest {
+        // Removing an invited guest must enqueue a CANCEL for them (carrying the
+        // captured delivery context) rather than silently dropping the row.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", scheduleAgent = "CLIENT", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        // Mark it as pushed so the removed guest counts as "synced" (on the wire).
+        database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
+
+        // Save with bob removed (survivor set = alice only).
+        eventWriter.updateEvent(
+            event = database.eventsDao().getById(master.id)!!.copy(title = "Renamed"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", scheduleAgent = "CLIENT", sortOrder = 0)
+            )
+        )
+
+        val cancels = database.pendingCancelsDao().getForEvent(master.id)
+        assertEquals(1, cancels.size)
+        assertEquals("mailto:bob@example.test", cancels[0].address)
+        assertNull("all-events removal has no recurrence scope", cancels[0].recurrenceId)
+        // Survivor set persisted; removed guest gone from attendees.
+        assertEquals(
+            setOf("mailto:alice@example.test"),
+            database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
+        )
+    }
+
+    @Test
+    fun `updateEvent does not tombstone a removed never-synced guest`() = runTest {
+        // A guest added locally and removed before the event ever synced was
+        // never on the wire — no CANCEL is owed.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        // NOT marked created-on-server: caldavUrl stays null (never synced).
+
+        eventWriter.updateEvent(
+            event = database.eventsDao().getById(master.id)!!,
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
+            )
+        )
+
+        assertEquals(
+            "a never-synced removed guest owes no CANCEL",
+            0, database.pendingCancelsDao().getForEvent(master.id).size
+        )
+    }
+
+    @Test
+    fun `updateEvent re-removing the same guest does not duplicate the pending cancel`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
+        val survivors = listOf(
+            Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+        )
+
+        eventWriter.updateEvent(database.eventsDao().getById(master.id)!!, isLocal = false, attendees = survivors)
+        eventWriter.updateEvent(database.eventsDao().getById(master.id)!!, isLocal = false, attendees = survivors)
+
+        assertEquals(1, database.pendingCancelsDao().getForEvent(master.id).size)
+    }
+
+    @Test
+    fun `editSingleOccurrence removal enqueues a per-occurrence CANCEL scoped to the instance`() = runTest {
+        // Removing a guest from just one occurrence cancels them for that
+        // instance only (recurrence_id set); the master series keeps them.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        // Edit just this occurrence, dropping bob (survivors = alice only).
+        eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            modifiedEvent = createBaseEvent().copy(title = "Just this", startTs = target.startTs, endTs = target.endTs),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+
+        val cancels = database.pendingCancelsDao().getForEvent(master.id)
+        assertEquals(1, cancels.size)
+        assertEquals("mailto:bob@example.test", cancels[0].address)
+        assertEquals("per-occurrence cancel is scoped to the instance", target.startTs, cancels[0].recurrenceId)
+        // Master series still has both guests.
+        assertEquals(
+            setOf("mailto:alice@example.test", "mailto:bob@example.test"),
+            database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
+        )
+    }
+
+    @Test
+    fun `editThisAndFuture removal leaves the guest off the new series and enqueues no cancel`() = runTest {
+        // This-and-future via split: the new series is a fresh UID the guest was
+        // never on, so they are simply absent going forward (no explicit CANCEL);
+        // the past series retains them.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
+                Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
+            )
+        )
+        database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
+        val splitTarget = database.occurrencesDao().getForEvent(master.id)[4]
+
+        val newSeries = eventWriter.splitSeries(
+            masterEventId = master.id,
+            splitTimeMs = splitTarget.startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Future", startTs = splitTarget.startTs, endTs = splitTarget.endTs,
+                rrule = "FREQ=DAILY;COUNT=6"
+            ),
+            isLocal = false,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+
+        // New series lacks bob; past series keeps both; no pending cancel.
+        assertEquals(
+            setOf("mailto:alice@example.test"),
+            database.attendeesDao().getForEventOnce(newSeries.id).map { it.address }.toSet()
+        )
+        assertEquals(
+            setOf("mailto:alice@example.test", "mailto:bob@example.test"),
+            database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
+        )
+        assertEquals(0, database.pendingCancelsDao().getForEvent(master.id).size)
+        assertEquals(0, database.pendingCancelsDao().getForEvent(newSeries.id).size)
+    }
+
+    @Test
+    fun `updateEvent on a non-recurring event does not touch exception rows`() = runTest {
+        // The cascade must be gated on recurring-master; a plain non-recurring
+        // attendee edit must not run the exception cascade (no-op, no surprise
+        // writes). Verified by: an unrelated recurring series' exception is
+        // untouched when we update a separate non-recurring event.
+        val recurringMaster = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0)
+            )
+        )
+        val occ = database.occurrencesDao().getForEvent(recurringMaster.id)
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = recurringMaster.id,
+            occurrenceTimeMs = occ[1].startTs,
+            modifiedEvent = createBaseEvent().copy(
+                title = "Moved",
+                startTs = occ[1].startTs + 3_600_000,
+                endTs = occ[1].endTs + 3_600_000
+            ),
+            isLocal = true
+        )
+        val before = database.attendeesDao().getForEventOnce(exception.id).map { it.address }.toSet()
+
+        val nonRecurring = eventWriter.createEvent(createBaseEvent(), isLocal = true)
+        eventWriter.updateEvent(
+            event = nonRecurring.copy(title = "Edited"),
+            isLocal = true,
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:frank@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
+            )
+        )
+
+        val after = database.attendeesDao().getForEventOnce(exception.id).map { it.address }.toSet()
+        assertEquals("unrelated recurring exception is untouched by a non-recurring update", before, after)
     }
 
     @Test
@@ -1722,6 +2446,48 @@ class EventWriterTest {
             draggedDuration,
             newSeries.endTs - newSeries.startTs,
         )
+    }
+
+    // ========== Local attendee write path ==========
+
+    private fun attendee(address: String, partstat: String = "NEEDS-ACTION", sortOrder: Int = 0) =
+        Attendee(eventId = 0, address = address, displayName = address.substringBefore('@'),
+            role = "REQ-PARTICIPANT", partstat = partstat, cutype = "INDIVIDUAL", rsvp = true, sortOrder = sortOrder)
+
+    @Test
+    fun `createEvent persists attendees to the table`() = runTest {
+        val created = eventWriter.createEvent(
+            createBaseEvent(),
+            isLocal = true,
+            attendees = listOf(attendee("alice@example.test", "ACCEPTED", 0), attendee("bob@example.test", "NEEDS-ACTION", 1))
+        )
+        val rows = database.attendeesDao().getForEventOnce(created.id)
+        assertEquals(2, rows.size)
+        assertEquals(setOf("alice@example.test", "bob@example.test"), rows.map { it.address }.toSet())
+    }
+
+    @Test
+    fun `updateEvent with null attendees leaves existing rows untouched`() = runTest {
+        // Mimics a drag-reschedule / non-attendee edit: caller passes no attendees arg.
+        val created = eventWriter.createEvent(
+            createBaseEvent(), isLocal = true,
+            attendees = listOf(attendee("carol@example.test", "ACCEPTED", 0))
+        )
+        // Edit a non-attendee field with NO attendees arg (param defaults null).
+        eventWriter.updateEvent(created.copy(title = "Rescheduled"), isLocal = true)
+        val rows = database.attendeesDao().getForEventOnce(created.id)
+        assertEquals("null attendees must preserve existing rows", 1, rows.size)
+        assertEquals("carol@example.test", rows.first().address)
+    }
+
+    @Test
+    fun `updateEvent with empty attendees clears all rows`() = runTest {
+        val created = eventWriter.createEvent(
+            createBaseEvent(), isLocal = true,
+            attendees = listOf(attendee("dave@example.test", "ACCEPTED", 0))
+        )
+        eventWriter.updateEvent(created.copy(title = "Cleared"), isLocal = true, attendees = emptyList())
+        assertEquals("empty list explicitly clears", 0, database.attendeesDao().getForEventOnce(created.id).size)
     }
 
     // ========== Helper Functions ==========

@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -168,7 +169,8 @@ class ReminderScheduler @Inject constructor(
     private val channels: ReminderNotificationChannels,
     private val attendeesDao: AttendeesDao,
     private val accountsDao: AccountsDao,
-    private val calendarsDao: CalendarsDao
+    private val calendarsDao: CalendarsDao,
+    private val occurrencesDao: OccurrencesDao
 ) {
     companion object {
         private const val TAG = "ReminderScheduler"
@@ -680,6 +682,71 @@ class ReminderScheduler @Inject constructor(
      */
     suspend fun getReminder(reminderId: Long): ScheduledReminder? {
         return scheduledRemindersDao.getById(reminderId)
+    }
+
+    /**
+     * Whether a reminder for the given event should still fire.
+     *
+     * Reminder rows denormalize event data so the alarm receiver can post a
+     * notification without a DB read. That means an armed alarm will fire
+     * "blind" even after its whole event is deleted (row gone) or soft-deleted
+     * (awaiting server deletion). This re-checks the live event state at fire
+     * time so a stale alarm is suppressed instead of notifying.
+     *
+     * Covers every Room-backed event (local, iCloud, CalDAV, ICS, contact
+     * birthdays, anniversaries) since they all live in the events table.
+     *
+     * Scope: this is a whole-event check. A single cancelled occurrence of a
+     * still-live recurring series (e.g. an EXDATE added by a server pull) leaves
+     * the master event live, so this returns true for it; per-occurrence
+     * cancellation is handled separately by cancelReminderForOccurrence.
+     *
+     * @param eventId The event the reminder belongs to
+     * @return false if the event no longer exists or is awaiting deletion
+     */
+    suspend fun shouldFireReminder(eventId: Long): Boolean {
+        val event = eventReader.getEventById(eventId) ?: return false
+        return !event.isPendingDelete
+    }
+
+    /**
+     * Whether a still-live (non-cancelled) occurrence exists at the reminder's
+     * slot.
+     *
+     * This is the occurrence-level companion to [shouldFireReminder]. When an
+     * organizer cancels a single instance of a recurring series — and the cancel
+     * arrives via background CalDAV pull rather than a local delete — the master
+     * event stays live, so [shouldFireReminder] passes, yet the reminder for that
+     * one instance should no longer fire. Two representations both reach here:
+     *  - EXDATE on the master: [org.onekash.kashcal.domain.generator.OccurrenceGenerator]
+     *    regenerates the series' rows without the excluded instant, so no row
+     *    exists at the slot.
+     *  - cancelled exception (or a locally cancelled instance): the row remains
+     *    with `is_cancelled = 1`.
+     *
+     * The lookup key differs by event kind, which is the trap to avoid. A reminder
+     * for a modified instance is keyed under the exception event's id
+     * ([ScheduledReminder.eventId]), but the occurrence row stores `event_id` =
+     * master and `exception_event_id` = exception. So for an exception we resolve
+     * the row by its FK ([OccurrencesDao.getByExceptionEventId]); otherwise we look
+     * up by `(event_id, occurrenceTime)` with the standard 60s tolerance. A naive
+     * `getOccurrenceNearTime(reminder.eventId, …)` would return null for every
+     * exception and wrongly suppress valid reminders.
+     *
+     * Fails closed only when the event itself is gone (already handled upstream by
+     * [shouldFireReminder]); a missing event here returns false defensively.
+     *
+     * @return true if a non-cancelled occurrence backs this reminder; false if the
+     *         instance was cancelled, its row is gone, or the event is missing.
+     */
+    suspend fun hasLiveOccurrenceForReminder(reminder: ScheduledReminder): Boolean {
+        val event = eventReader.getEventById(reminder.eventId) ?: return false
+        val occurrence = if (event.isException) {
+            occurrencesDao.getByExceptionEventId(reminder.eventId)
+        } else {
+            occurrencesDao.getOccurrenceNearTime(reminder.eventId, reminder.occurrenceTime)
+        }
+        return occurrence != null && !occurrence.isCancelled
     }
 
     /**

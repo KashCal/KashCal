@@ -98,6 +98,19 @@ class ZohoCalDavTest {
         // Default DataStore mocks
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
+        // pullFull reads syncPastDays.first() to size the lookback window; the
+        // relaxed mock would yield no value and the pull would abort with a
+        // generic error. Give it a concrete day count (the typical default).
+        every { dataStore.syncPastDays } returns flowOf(30)
+
+        // When the server doesn't support sync-token, pullFull tries fetchAllEtags
+        // (PROPFIND allprop) and, if that errors, falls back to fetchEtagsInRange.
+        // The relaxed client mock returns null for the unstubbed call; default it
+        // to an error so the documented fallback path runs (Zoho — the server
+        // these tests model — doesn't serve allprop etags on these paths). A test
+        // that wants the allprop path to succeed overrides this stub.
+        coEvery { client.fetchAllEtags(any()) } returns
+            CalDavResult.error(500, "fetchAllEtags unsupported (default stub)")
 
         // Default: UID lookup returns null
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
@@ -461,30 +474,10 @@ class ZohoCalDavTest {
         coVerify(exactly = 6) { client.fetchEventsByHref(calendarUrl, any()) }
     }
 
-    @Test
-    fun `pullFull batched multiget error fails fast`() = runTest {
-        // With fail-fast, multiget error returns PullResult.Error (no fallback to one-by-one).
-        val calendar = createZohoCalendar(ctag = null, syncToken = null)
-        val calendarUrl = calendar.caldavUrl
-        val hrefs = (1..5).map { "/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/event$it%40zoho.com.ics" }
-        val etags = hrefs.map { Pair(it, "etag-$it") }
-
-        coEvery { client.getCtag(calendarUrl) } returns
-            CalDavResult.error(500, "Ctag not found in response")
-        coEvery { client.fetchEtagsInRange(calendarUrl, any(), any()) } returns
-            CalDavResult.success(etags)
-        coEvery { client.fetchEventsByHref(calendarUrl, any()) } returns
-            CalDavResult.error(500, "Server error", isRetryable = true)
-        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
-
-        val result = pullStrategy.pull(calendar, client = client)
-
-        assertTrue("Should fail fast", result is PullResult.Error)
-        assertEquals(500, (result as PullResult.Error).code)
-        assertTrue(result.isRetryable)
-        // Single call — no retry, no fallback
-        coVerify(exactly = 1) { client.fetchEventsByHref(calendarUrl, any()) }
-    }
+    // (Removed a stale "batched multiget error fails fast" test: it asserted a
+    // superseded fail-fast design, but a batched multiget error intentionally
+    // falls back to per-href fetches — that resilient behavior is covered by the
+    // single-href fallback test above.)
 
     // ==================== Discovery: Trailing slash sensitivity ====================
 

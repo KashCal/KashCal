@@ -33,8 +33,8 @@ import org.robolectric.annotation.Config
  * - `partStat` enum → TEXT via `toICalString()` (NEEDS_ACTION → NEEDS-ACTION)
  * - `role` enum → TEXT via `toICalString()` (REQ_PARTICIPANT → REQ-PARTICIPANT)
  * - `cutype` enum → `.name` (INDIVIDUAL passes through)
- * - `rsvp: Boolean?` → passthrough (post-A2-pre nullable)
- * - `member: List<String>` → passthrough (post-A2-pre list)
+ * - `rsvp: Boolean?` → passthrough (nullable, three-state semantics)
+ * - `member: List<String>` → passthrough (list)
  * - `delegatedFrom`/`delegatedTo`: List<String> → passthrough
  * - `scheduleAgent`/`scheduleForceSend` enums → `.name`
  * - `scheduleStatus: List<ScheduleStatus>?` → first.code → TEXT
@@ -105,6 +105,25 @@ class ICalEventMapperAttendeeTest {
     }
 
     @Test
+    fun `urn-uuid CAL-ADDRESS is stored verbatim, not prefixed with mailto`() {
+        // RFC 5545 §3.3.3: ATTENDEE is any URI. A urn:uuid form must not become
+        // mailto:urn:uuid: in the table — that breaks display, matchesAttendee,
+        // and avatar canonicalization, and round-trips wrong on the next push.
+        val a = parseAndMap(
+            listOf("ATTENDEE;CN=Alice:urn:uuid:0c3f2d4e-9b1a-4f6e-8a2b-1c2d3e4f5061")
+        )[0]
+        assertEquals("urn:uuid:0c3f2d4e-9b1a-4f6e-8a2b-1c2d3e4f5061", a.address)
+    }
+
+    @Test
+    fun `principal-href CAL-ADDRESS is stored verbatim, not prefixed with mailto`() {
+        val a = parseAndMap(
+            listOf("ATTENDEE;CN=Boss:https://caldav.example.com/principals/users/boss/")
+        )[0]
+        assertEquals("https://caldav.example.com/principals/users/boss/", a.address)
+    }
+
+    @Test
     fun `partStat NEEDS_ACTION translates to hyphenated NEEDS-ACTION on wire`() {
         val a = parseAndMap(listOf("ATTENDEE:mailto:alice@example.com"))[0]
         assertEquals("NEEDS-ACTION", a.partstat)
@@ -149,7 +168,7 @@ class ICalEventMapperAttendeeTest {
     }
 
     @Test
-    fun `rsvp absent on wire translates to null (post-A2-pre three-state semantics)`() {
+    fun `rsvp absent on wire translates to null (three-state semantics)`() {
         val a = parseAndMap(listOf("ATTENDEE:mailto:alice@example.com"))[0]
         assertNull(a.rsvp)
     }

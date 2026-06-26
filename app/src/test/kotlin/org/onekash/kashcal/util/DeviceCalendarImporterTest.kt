@@ -4,102 +4,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
-import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
-import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
 import org.onekash.kashcal.data.db.entity.Event
 
 class DeviceCalendarImporterTest {
 
     private lateinit var fakeRepo: FakeCalendarProviderRepository
-
-    /**
-     * Captures all createEvent parameters for assertion.
-     * Delegates read operations to a no-op stub since only writes are tested.
-     */
-    private class CapturingRepo : CalendarProviderRepository {
-        var callCount = 0
-        var failOnCall: Int = -1 // -1 = never fail
-        private var nextId = 100L
-
-        // Captured params from the last call
-        var calendarId: Long = 0L
-        var title: String = ""
-        var description: String? = null
-        var location: String? = null
-        var startTs: Long = 0L
-        var endTs: Long? = null
-        var isAllDay: Boolean = false
-        var rrule: String? = null
-        var duration: String? = null
-        var timezone: String = ""
-        var reminders: List<Int> = emptyList()
-
-        override suspend fun createEvent(
-            calendarId: Long, title: String, description: String?,
-            location: String?, startTs: Long, endTs: Long?,
-            isAllDay: Boolean, rrule: String?, duration: String?,
-            timezone: String, reminders: List<Int>,
-            availability: Int, eventColor: Int?
-        ): Result<Long> {
-            callCount++
-            if (callCount == failOnCall) {
-                return Result.failure(RuntimeException("Write failed"))
-            }
-            this.calendarId = calendarId
-            this.title = title
-            this.description = description
-            this.location = location
-            this.startTs = startTs
-            this.endTs = endTs
-            this.isAllDay = isAllDay
-            this.rrule = rrule
-            this.duration = duration
-            this.timezone = timezone
-            this.reminders = reminders
-            return Result.success(nextId++)
-        }
-
-        // Stub out unused interface methods
-        override suspend fun getDeviceCalendars(): List<DeviceCalendar> = emptyList()
-        override suspend fun getInstancesForDayRange(startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
-        override suspend fun searchInstances(query: String, startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
-        override suspend fun suggestTitlesByPrefix(prefix: String, sinceMs: Long, untilMs: Long, visibleCalendarIds: Set<Long>, minFreq: Int, limit: Int): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> = emptyList()
-        override suspend fun pruneStaleCalendarIds(dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore) {}
-        override suspend fun ensureCalendarVisible(calendarId: Long) {}
-        override suspend fun updateEvent(eventId: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long?, isAllDay: Boolean, rrule: String?, duration: String?, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Unit> = Result.success(Unit)
-        override suspend fun deleteEvent(eventId: Long): Result<Unit> = Result.success(Unit)
-        override suspend fun createException(calendarId: Long, masterEventId: Long, originalInstanceTime: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long, isAllDay: Boolean, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Long> = Result.success(0L)
-        override suspend fun deleteSingleOccurrence(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
-        override suspend fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
-        override suspend fun editThisAndFuture(
-            masterEventId: Long,
-            fromTimeMs: Long,
-            isAllDay: Boolean,
-            calendarId: Long,
-            title: String,
-            description: String?,
-            location: String?,
-            startTs: Long,
-            endTs: Long?,
-            rrule: String?,
-            duration: String?,
-            timezone: String,
-            reminders: List<Int>,
-            availability: Int,
-            eventColor: Int?,
-        ): Result<Long> = Result.success(0L)
-        override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = Result.success(Unit)
-        override suspend fun getDeviceEvent(eventId: Long) = null
-        override suspend fun getDeviceEventWithExceptions(masterEventId: Long) = null
-        override suspend fun getReminders(eventId: Long): List<Int> = emptyList()
-        override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = emptyMap()
-        override suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Long? = null
-        override suspend fun getMaxReminders(calendarId: Long): Int = 5
-        override suspend fun getNextUpcomingReminder(enabledCalendarIds: Set<Long>, afterMs: Long) = null
-        override suspend fun isEventActive(eventId: Long): Boolean = false
-    }
 
     @Before
     fun setup() {
@@ -168,9 +78,9 @@ class DeviceCalendarImporterTest {
             makeEvent(title = "Event 3")
         )
 
-        val repo = CapturingRepo().apply { failOnCall = 2 }
+        fakeRepo.failCreateOnCall = 2
 
-        val count = importEventsToDeviceCalendar(events, 5L, repo)
+        val count = importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
         assertEquals(2, count)
     }
@@ -181,12 +91,12 @@ class DeviceCalendarImporterTest {
             makeEvent(rrule = "FREQ=WEEKLY;BYDAY=MO", duration = "PT1H")
         )
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(null, repo.endTs)
-        assertEquals("PT1H", repo.duration)
-        assertEquals("FREQ=WEEKLY;BYDAY=MO", repo.rrule)
+        val created = fakeRepo.createdEvents.single()
+        assertEquals(null, created.endTs)
+        assertEquals("PT1H", created.duration)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO", created.rrule)
     }
 
     @Test
@@ -200,21 +110,20 @@ class DeviceCalendarImporterTest {
             )
         )
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals("PT1H30M", repo.duration)
+        assertEquals("PT1H30M", fakeRepo.createdEvents.single().duration)
     }
 
     @Test
     fun `non-recurring event passes endTs and null duration`() = runTest {
         val events = listOf(makeEvent(rrule = null, duration = null))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(1704070800000L, repo.endTs)
-        assertEquals(null, repo.duration)
+        val created = fakeRepo.createdEvents.single()
+        assertEquals(1704070800000L, created.endTs)
+        assertEquals(null, created.duration)
     }
 
     @Test
@@ -223,10 +132,9 @@ class DeviceCalendarImporterTest {
             makeEvent(reminders = listOf("-PT15M", "-PT1H"))
         )
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(listOf(15, 60), repo.reminders)
+        assertEquals(listOf(15, 60), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
@@ -235,10 +143,9 @@ class DeviceCalendarImporterTest {
         // pass user's preference so behavior matches the old contract.
         val events = listOf(makeEvent(reminders = null))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(emptyList<Int>(), repo.reminders)
+        assertEquals(emptyList<Int>(), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
@@ -246,32 +153,30 @@ class DeviceCalendarImporterTest {
         // Caller (a ViewModel) passed the user's configured default in.
         val events = listOf(makeEvent(isAllDay = false, reminders = null))
 
-        val repo = CapturingRepo()
         importEventsToDeviceCalendar(
             events = events,
             calendarId = 5L,
-            repo = repo,
+            repo = fakeRepo,
             defaultTimedReminderMinutes = 15,
             defaultAllDayReminderMinutes = 540
         )
 
-        assertEquals(listOf(15), repo.reminders)
+        assertEquals(listOf(15), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
     fun `all-day event without reminders applies user's default all-day reminder`() = runTest {
         val events = listOf(makeEvent(isAllDay = true, reminders = null))
 
-        val repo = CapturingRepo()
         importEventsToDeviceCalendar(
             events = events,
             calendarId = 5L,
-            repo = repo,
+            repo = fakeRepo,
             defaultTimedReminderMinutes = 15,
             defaultAllDayReminderMinutes = 540
         )
 
-        assertEquals(listOf(540), repo.reminders)
+        assertEquals(listOf(540), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
@@ -280,65 +185,60 @@ class DeviceCalendarImporterTest {
             makeEvent(reminders = listOf("-PT30M", "-PT1H"))
         )
 
-        val repo = CapturingRepo()
         importEventsToDeviceCalendar(
             events = events,
             calendarId = 5L,
-            repo = repo,
+            repo = fakeRepo,
             defaultTimedReminderMinutes = 15,
             defaultAllDayReminderMinutes = 540
         )
 
         // The ICS file's VALARMs win — default is not appended.
-        assertEquals(listOf(30, 60), repo.reminders)
+        assertEquals(listOf(30, 60), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
     fun `event without reminders skips default when user set REMINDER_OFF`() = runTest {
         val events = listOf(makeEvent(reminders = null))
 
-        val repo = CapturingRepo()
         importEventsToDeviceCalendar(
             events = events,
             calendarId = 5L,
-            repo = repo,
+            repo = fakeRepo,
             defaultTimedReminderMinutes =
                 org.onekash.kashcal.data.preferences.KashCalDataStore.REMINDER_OFF,
             defaultAllDayReminderMinutes =
                 org.onekash.kashcal.data.preferences.KashCalDataStore.REMINDER_OFF
         )
 
-        assertEquals(emptyList<Int>(), repo.reminders)
+        assertEquals(emptyList<Int>(), fakeRepo.createdEvents.single().reminders)
     }
 
     @Test
     fun `timezone falls back to system default`() = runTest {
         val events = listOf(makeEvent(timezone = null))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(java.util.TimeZone.getDefault().id, repo.timezone)
+        assertEquals(java.util.TimeZone.getDefault().id, fakeRepo.createdEvents.single().timezone)
     }
 
     @Test
     fun `event timezone is used when present`() = runTest {
         val events = listOf(makeEvent(timezone = "America/New_York"))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals("America/New_York", repo.timezone)
+        assertEquals("America/New_York", fakeRepo.createdEvents.single().timezone)
     }
 
     @Test
     fun `all-day event passes isAllDay true`() = runTest {
         val events = listOf(makeEvent(isAllDay = true))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(true, repo.isAllDay)
+        assertEquals(true, fakeRepo.createdEvents.single().isAllDay)
     }
 
     @Test
@@ -353,10 +253,10 @@ class DeviceCalendarImporterTest {
     fun `blank description and location passed as null`() = runTest {
         val events = listOf(makeEvent(description = "  ", location = ""))
 
-        val repo = CapturingRepo()
-        importEventsToDeviceCalendar(events, 5L, repo)
+        importEventsToDeviceCalendar(events, 5L, fakeRepo)
 
-        assertEquals(null, repo.description)
-        assertEquals(null, repo.location)
+        val created = fakeRepo.createdEvents.single()
+        assertEquals(null, created.description)
+        assertEquals(null, created.location)
     }
 }

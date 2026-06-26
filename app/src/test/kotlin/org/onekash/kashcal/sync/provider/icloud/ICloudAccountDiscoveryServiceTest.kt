@@ -127,6 +127,11 @@ class ICloudAccountDiscoveryServiceTest {
         coEvery { accountRepository.saveCredentials(any(), any()) } returns true
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        // Scheduling-delivery discovery (RFC 6638 §2 / §2.1.1) defaults —
+        // CalDavResult is sealed, so the relaxed mock needs explicit stubs.
+        coEvery { calDavClient.discoverScheduleOutboxUrl(any()) } returns CalDavResult.success(null)
+        coEvery { calDavClient.supportsAutoSchedule(any()) } returns CalDavResult.success(false)
     }
 
     @After
@@ -168,6 +173,23 @@ class ICloudAccountDiscoveryServiceTest {
 
         // Verify calendars were created
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
+    }
+
+    @Test
+    fun `discovery persists scheduling-delivery discovery`() = runTest {
+        coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
+        coEvery { calDavClient.discoverScheduleOutboxUrl(any()) } returns
+            CalDavResult.success("https://caldav.icloud.com/123/calendars/outbox/")
+        coEvery { calDavClient.supportsAutoSchedule(any()) } returns CalDavResult.success(true)
+
+        val service = createService()
+        service.discoverAndCreateAccount(testAppleId, testPassword)
+
+        // Entry-surface guard: removing the wiring must fail here.
+        coVerify { accountRepository.updateScheduleOutboxUrl(1L, "https://caldav.icloud.com/123/calendars/outbox/") }
+        coVerify { calendarRepository.updateAutoScheduleSupported(1L, true) }
     }
 
     @Test

@@ -121,33 +121,51 @@ class KashCalApplication : Application(), Configuration.Provider {
         reminderNotificationChannels.createChannels()
         inviteNotificationChannels.createChannels()
 
-        // Start network monitoring with sync trigger on restore
-        networkMonitor.startMonitoring {
-            Log.d(TAG, "Network restored, triggering sync")
-            syncScheduler.requestImmediateSync()
-        }
+        // Long-lived background registrations (network callbacks, WorkManager
+        // and AlarmManager scheduling, content observers, the account-
+        // registration coroutine) are skipped under unit tests. In Robolectric
+        // these fire real side effects into process-global singletons
+        // (ShadowAccountManager, ShadowAlarmManager, WorkManager) that aren't
+        // reset between test classes sharing a JVM fork, leaking nondeterministic
+        // state into unrelated tests. Device/instrumented runs are unaffected.
+        if (!isUnitTestEnvironment()) {
+            // Start network monitoring with sync trigger on restore
+            networkMonitor.startMonitoring {
+                Log.d(TAG, "Network restored, triggering sync")
+                syncScheduler.requestImmediateSync()
+            }
 
-        // Schedule widget updates (periodic + midnight)
-        widgetUpdateManager.schedulePeriodicUpdates()
-        widgetUpdateManager.scheduleMidnightUpdate()
+            // Schedule widget updates (periodic + midnight)
+            widgetUpdateManager.schedulePeriodicUpdates()
+            widgetUpdateManager.scheduleMidnightUpdate()
 
-        // Initialize contact event observers (birthdays and anniversaries, if enabled)
-        contactEventManager.initialize()
+            // Initialize contact event observers (birthdays and anniversaries, if enabled)
+            contactEventManager.initialize()
 
-        // Initialize device calendar observer (if enabled)
-        calendarProviderManager.initialize()
+            // Initialize device calendar observer (if enabled)
+            calendarProviderManager.initialize()
 
-        // Schedule periodic reminder refresh (catches events entering window)
-        ReminderRefreshWorker.schedule(this)
+            // Schedule periodic reminder refresh (catches events entering window)
+            ReminderRefreshWorker.schedule(this)
 
-        // Register KashCal account for CalendarProvider intent routing (#76).
-        // Runs on IO thread to avoid blocking startup (AccountManager is IPC).
-        applicationScope.launch {
-            SystemAccountRegistrar(this@KashCalApplication).ensureAccount()
+            // Register KashCal account for CalendarProvider intent routing (#76).
+            // Runs on IO thread to avoid blocking startup (AccountManager is IPC).
+            applicationScope.launch {
+                SystemAccountRegistrar(this@KashCalApplication).ensureAccount()
+            }
         }
 
         Log.d(TAG, "KashCal application started")
     }
+
+    /**
+     * True when running under Robolectric/JVM unit tests, where the
+     * application is instantiated to obtain a context but must not start
+     * real background work. Robolectric sets Build.FINGERPRINT to
+     * "robolectric"; device and instrumented builds never do.
+     */
+    private fun isUnitTestEnvironment(): Boolean =
+        "robolectric".equals(android.os.Build.FINGERPRINT, ignoreCase = true)
 
     /**
      * Handle app upgrade by clearing stale WorkManager jobs.

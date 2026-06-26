@@ -59,6 +59,8 @@
     <string name="action_confirm">Dearbhaich</string>
     <string name="action_discard">Tilg air falbh</string>
     <string name="action_dismiss">Leig seachad</string>
+    <string name="action_allow">Ceadaich</string>
+    <string name="action_no_thanks">Chan eil, tapadh leat</string>
     <string name="action_show_all">Seall na h-Uile</string>
     <string name="action_connect">Ceangail</string>
     <string name="action_duplicate">Dùblaich</string>
@@ -478,8 +480,6 @@
     <string name="account_detail_cd_hide_password">Falaich facal-faire</string>
 
     <!-- Sync failure notification -->
-    <string name="sync_failure_notification_title">Duilgheadas sioncronachaidh le %1$s</string>
-    <string name="sync_failure_notification_text">Dh\'fhàillig sioncronachadh mìosachain %1$d tursan</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Ath-ainmich Cunntas</string>
@@ -949,6 +949,7 @@
     <string name="sync_notification_expired_title">Tha atharrachaidhean sioncronachaidh air a dhol à bith</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Cha b\' urrainn %1$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
+    <string name="sync_notification_expired_content_calendar">Cha b\' urrainn %1$s ann an %2$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Chaidh %1$d mhìosachan a shioncronachadh</item>
@@ -1216,6 +1217,20 @@
     <string name="attendee_status_tentative">Sealach</string>
     <string name="attendee_status_delegated">Air a thiomnadh</string>
     <string name="attendee_status_pending">Ri làimh</string>
+    <string name="attendee_picker_title">Cuir luchd-frithealaidh ris</string>
+    <string name="attendee_pick_add_people">Cuir luchd-frithealaidh ris</string>
+    <string name="attendee_pick_from_contacts">Ainm no post-d</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d eile</item>
+        <item quantity="two">+%1$d eile</item>
+        <item quantity="few">+%1$d eile</item>
+        <item quantity="other">+%1$d eile</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Mol daoine on luchd-aithne agad</string>
+    <string name="attendee_invalid_email">Cuir a-steach seòladh puist-d iomlan</string>
+    <string name="attendee_add_typed">Cuir \"%1$s\" ris</string>
+    <string name="attendee_scheduling_unavailable">Chan eil cuireadh a thoirt do dhaoine ri fhaighinn air a\' chunntas seo</string>
+    <string name="action_save_and_notify">Sàbhail is cuir brath</string>
     <string name="inbox_empty_caught_up">Suas ri là</string>
     <string name="inbox_organizer_suffix">(eagraiche)</string>
     <string name="menu_invites">Cuiridhean</string>

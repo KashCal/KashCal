@@ -321,7 +321,7 @@ class EventCoordinatorImmediatePushTest {
         coEvery { eventReader.getEventById(1) } returns masterEvent
         coEvery { eventReader.getCalendarById(1) } returns caldavCalendar
         coEvery { localCalendarInitializer.isLocalCalendar(caldavCalendar) } returns false
-        coEvery { eventWriter.splitSeries(any(), any(), any(), false) } returns newSeriesEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), false, any()) } returns newSeriesEvent
 
         // When
         coordinator.editThisAndFuture(

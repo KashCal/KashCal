@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.viewmodels
 
 import app.cash.turbine.test
 import io.mockk.Ordering
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -2864,11 +2865,15 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
+        // Forget any init-time interactions; we only care about refresh's effect.
+        clearMocks(calendarProviderRepository, answers = false)
+
         // Permission is not granted by default in tests
         viewModel.refreshDeviceCalendars()
         advanceUntilIdle()
 
-        // Should not throw, just do nothing
+        // "Does nothing" = refresh triggers no device-calendar query
+        coVerify(exactly = 0) { calendarProviderRepository.getDeviceCalendars() }
     }
 
     @Test
@@ -2878,10 +2883,14 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
+        // Forget any init-time interactions; we only care about refresh's effect.
+        clearMocks(calendarProviderRepository, answers = false)
+
         viewModel.refreshDeviceCalendars()
         advanceUntilIdle()
 
-        // Should not throw, just do nothing (feature disabled)
+        // Feature disabled -> refresh triggers no device-calendar query
+        coVerify(exactly = 0) { calendarProviderRepository.getDeviceCalendars() }
     }
 
     // Issue #170: MIUI Google calendars install with SYNC_EVENTS=0 so the sync

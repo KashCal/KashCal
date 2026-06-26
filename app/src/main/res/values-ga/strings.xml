@@ -59,6 +59,8 @@
     <string name="action_confirm">Deimhnigh</string>
     <string name="action_discard">Caith Amach</string>
     <string name="action_dismiss">Díláithrigh</string>
+    <string name="action_allow">Ceadaigh</string>
+    <string name="action_no_thanks">Níl, go raibh maith agat</string>
     <string name="action_show_all">Taispeáin Uile</string>
     <string name="action_connect">Ceangail</string>
     <string name="action_duplicate">Dúbligh</string>
@@ -483,8 +485,6 @@
     <string name="account_detail_cd_hide_password">Folaigh focal faire</string>
 
     <!-- Sync failure notification -->
-    <string name="sync_failure_notification_title">Fadhb sioncronúithe le %1$s</string>
-    <string name="sync_failure_notification_text">Theip ar shioncronú féilire %1$d uair</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Athainmnigh Cuntas</string>
@@ -986,6 +986,7 @@
     <string name="sync_notification_expired_title">Tá athruithe sioncrónúithe imithe in éag</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Nír féadtar %1$s a shioncrónú tar éis 30 lá. Úsáidfear leagan an fhreastalaithe. Brúigh Sioncrónú chun atriail.</string>
+    <string name="sync_notification_expired_content_calendar">Nír féadtar %1$s in %2$s a shioncrónú tar éis 30 lá. Úsáidfear leagan an fhreastalaithe. Brúigh Sioncrónú chun atriail.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sioncróníodh %1$d fhéilire</item>
@@ -1263,6 +1264,21 @@
     <string name="attendee_status_tentative">Sealadach</string>
     <string name="attendee_status_delegated">Tarmligthe</string>
     <string name="attendee_status_pending">Ar feitheamh</string>
+    <string name="attendee_picker_title">Cuir freastalaithe leis</string>
+    <string name="attendee_pick_add_people">Cuir freastalaithe leis</string>
+    <string name="attendee_pick_from_contacts">Ainm nó ríomhphost</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d eile</item>
+        <item quantity="two">+%1$d eile</item>
+        <item quantity="few">+%1$d eile</item>
+        <item quantity="many">+%1$d eile</item>
+        <item quantity="other">+%1$d eile</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Mol daoine ó do theagmhálacha</string>
+    <string name="attendee_invalid_email">Cuir isteach seoladh ríomhphoist iomlán</string>
+    <string name="attendee_add_typed">Cuir \"%1$s\" leis</string>
+    <string name="attendee_scheduling_unavailable">Níl cuireadh a thabhairt do dhaoine ar fáil ar an gcuntas seo</string>
+    <string name="action_save_and_notify">Sábháil agus cuir in iúl</string>
     <string name="inbox_empty_caught_up">Gach rud déanta</string>
     <string name="inbox_organizer_suffix">(eagraí)</string>
     <string name="menu_invites">Cuirí</string>

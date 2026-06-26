@@ -24,7 +24,7 @@ data class CalDavServerConfig(
      * When the server's iSchedule pipeline strips ATTENDEE rows on PUT
      * because the supplied ORGANIZER mailto doesn't match the authenticated
      * account. Documented behavior on iCloud / Stalwart / Radicale / Zoho
-     * (see CALDAV_TEST_SERVERS.md scheduling quirk matrix). Tests that need
+     * (per the documented per-server scheduling quirks). Tests that need
      * a synthetic ORGANIZER (different from auth account) must skip on
      * these servers — there's nothing to assert against once attendees are
      * gone.
@@ -134,9 +134,52 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        // Open-Xchange / OX App Suite (hosted). Discovery: PROPFIND on
+        // /caldav/ resolves current-user-principal to /principals/users/<n>,
+        // whose calendar-home-set points back at /caldav/; the real calendar
+        // collection lives at an opaque base64-ish child (e.g. /caldav/<id>/).
+        // OX runs a full RFC 6638 scheduling pipeline (schedule-inbox/outbox
+        // are present), so it can route synthetic-organizer attendees like
+        // iCloud does.
+        val MAILBOX = CalDavServerConfig(
+            name = "Mailbox",
+            serverKey = "MAILBOX_SERVER",
+            usernameKey = "MAILBOX_USERNAME",
+            passwordKey = "MAILBOX_PASSWORD",
+            defaultServerUrl = "https://dav.mailbox.org",
+            davEndpointSuffix = "/caldav/",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true,
+            stripsAttendeesOnSyntheticOrganizer = true
+        )
+
+        // Fastmail (Cyrus-based CalDAV, hosted). Discovery via RFC 6764
+        // well-known; the principal resolves under /dav/. Cyrus runs a full
+        // RFC 6638 scheduling pipeline, so the expectation is implicit-PUT
+        // delivery (stamps SCHEDULE-STATUS) like iCloud — but that is what the
+        // probe fleet measures rather than assumes. App-specific password
+        // required (Fastmail rejects the primary password for CalDAV).
+        val FASTMAIL = CalDavServerConfig(
+            name = "Fastmail",
+            serverKey = "FASTMAIL_SERVER",
+            usernameKey = "FASTMAIL_USERNAME",
+            passwordKey = "FASTMAIL_PASSWORD",
+            defaultServerUrl = "https://caldav.fastmail.com",
+            // Fastmail serves CalDAV under /dav/ (root 404s). The principal
+            // resolves directly via PROPFIND there
+            // (/dav/principals/user/<addr>/), so target /dav/ and skip the
+            // well-known indirection. App-specific password required (the
+            // primary password is rejected for CalDAV).
+            davEndpointSuffix = "/dav/",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true
+        )
+
         fun allServers(): List<CalDavServerConfig> = listOf(
             ICLOUD, STALWART, BAIKAL, BAIKAL_DIGEST, RADICALE, NEXTCLOUD,
-            ZOHO, SOGO
+            ZOHO, SOGO, MAILBOX, FASTMAIL
         )
     }
 }

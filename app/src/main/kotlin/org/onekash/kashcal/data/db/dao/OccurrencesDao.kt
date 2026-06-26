@@ -91,12 +91,13 @@ interface OccurrencesDao {
                e.id AS e_id, e.uid AS e_uid, e.import_id AS e_import_id, e.calendar_id AS e_calendar_id,
                e.title AS e_title, e.description AS e_description, e.location AS e_location,
                e.start_ts AS e_start_ts, e.end_ts AS e_end_ts, e.is_all_day AS e_is_all_day,
-               e.timezone AS e_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
+               e.timezone AS e_timezone, e.end_timezone AS e_end_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
                e.caldav_url AS e_caldav_url, e.etag AS e_etag, e.sync_status AS e_sync_status,
                e.sequence AS e_sequence, e.reminders AS e_reminders, e.alarm_count AS e_alarm_count,
                e.original_event_id AS e_original_event_id, e.original_instance_time AS e_original_instance_time,
                e.status AS e_status, e.transp AS e_transp, e.classification AS e_classification,
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
+               e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
                e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
@@ -127,12 +128,13 @@ interface OccurrencesDao {
                e.id AS e_id, e.uid AS e_uid, e.import_id AS e_import_id, e.calendar_id AS e_calendar_id,
                e.title AS e_title, e.description AS e_description, e.location AS e_location,
                e.start_ts AS e_start_ts, e.end_ts AS e_end_ts, e.is_all_day AS e_is_all_day,
-               e.timezone AS e_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
+               e.timezone AS e_timezone, e.end_timezone AS e_end_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
                e.caldav_url AS e_caldav_url, e.etag AS e_etag, e.sync_status AS e_sync_status,
                e.sequence AS e_sequence, e.reminders AS e_reminders, e.alarm_count AS e_alarm_count,
                e.original_event_id AS e_original_event_id, e.original_instance_time AS e_original_instance_time,
                e.status AS e_status, e.transp AS e_transp, e.classification AS e_classification,
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
+               e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
                e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
@@ -165,12 +167,13 @@ interface OccurrencesDao {
                e.id AS e_id, e.uid AS e_uid, e.import_id AS e_import_id, e.calendar_id AS e_calendar_id,
                e.title AS e_title, e.description AS e_description, e.location AS e_location,
                e.start_ts AS e_start_ts, e.end_ts AS e_end_ts, e.is_all_day AS e_is_all_day,
-               e.timezone AS e_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
+               e.timezone AS e_timezone, e.end_timezone AS e_end_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
                e.caldav_url AS e_caldav_url, e.etag AS e_etag, e.sync_status AS e_sync_status,
                e.sequence AS e_sequence, e.reminders AS e_reminders, e.alarm_count AS e_alarm_count,
                e.original_event_id AS e_original_event_id, e.original_instance_time AS e_original_instance_time,
                e.status AS e_status, e.transp AS e_transp, e.classification AS e_classification,
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
+               e.organizer_sent_by AS e_organizer_sent_by, e.organizer_schedule_status AS e_organizer_schedule_status,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
                e.extra_properties AS e_extra_properties, NULL AS e_raw_ical, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
@@ -315,6 +318,25 @@ interface OccurrencesDao {
      */
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId AND start_ts = :startTs")
     suspend fun getOccurrenceAtTime(eventId: Long, startTs: Long): Occurrence?
+
+    /**
+     * Get the occurrence for an event near a given time, regardless of whether
+     * it is cancelled.
+     *
+     * Unlike [getOccurrenceAtTime] (exact `start_ts` match), this uses the same
+     * 60-second (60000ms) tolerance as [markCancelled]/[linkException] so a
+     * reminder's stored occurrence time still resolves to its row after an RRULE
+     * re-expansion shifts `start_ts` by sub-second amounts. And unlike the
+     * calendar-view queries it does NOT filter `is_cancelled = 0`: the fire-time
+     * guard needs to see a cancelled row in order to suppress its reminder.
+     */
+    @Query("""
+        SELECT * FROM occurrences
+        WHERE event_id = :eventId
+          AND ABS(start_ts - :occurrenceTime) < 60000
+        LIMIT 1
+    """)
+    suspend fun getOccurrenceNearTime(eventId: Long, occurrenceTime: Long): Occurrence?
 
     // ========== Write Operations ==========
 

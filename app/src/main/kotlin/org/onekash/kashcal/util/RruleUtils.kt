@@ -167,6 +167,57 @@ object RruleUtils {
     private val COUNT_REGEX = Regex("COUNT=(\\d+)")
 
     /**
+     * Compare two RRULE strings by meaning rather than by bytes.
+     *
+     * The save-time scope sheet keys "did the user change recurrence?"
+     * off this. A raw string compare misfires when the recurrence
+     * picker re-emits a cosmetically different but semantically
+     * identical rule — reordered parts, key/value case, surrounding
+     * whitespace, a trailing `;`, an `RRULE:` prefix, or reordered
+     * BYxxx list values. Those are not user changes, and treating them
+     * as changes spuriously disables save options.
+     *
+     * Equivalence is cosmetic-only on purpose: it canonicalizes part
+     * order, case, whitespace, and list-value order, but does NOT
+     * equate genuinely different bounds shapes (e.g. COUNT vs UNTIL)
+     * or values — those are real recurrence changes.
+     *
+     * Both-null is equal; null vs non-null is different.
+     */
+    fun rrulesEquivalent(a: String?, b: String?): Boolean {
+        if (a == null || b == null) return a == b
+        return canonicalizeRrule(a) == canonicalizeRrule(b)
+    }
+
+    /**
+     * Reduce an RRULE to a canonical form for equivalence comparison:
+     * strip an optional `RRULE:` prefix and whitespace, uppercase,
+     * drop empty parts (handles trailing `;`), sort the `KEY=VALUE`
+     * parts, and sort comma-separated list values within each part.
+     */
+    private fun canonicalizeRrule(rrule: String): String =
+        rrule.trim()
+            .removePrefix("RRULE:")
+            .removePrefix("rrule:")
+            .uppercase(java.util.Locale.ROOT)
+            .split(';')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { part ->
+                val eq = part.indexOf('=')
+                if (eq < 0) return@map part
+                val key = part.substring(0, eq)
+                val value = part.substring(eq + 1)
+                    .split(',')
+                    .map { it.trim() }
+                    .sorted()
+                    .joinToString(",")
+                "$key=$value"
+            }
+            .sorted()
+            .joinToString(";")
+
+    /**
      * Format timestamp as RRULE UNTIL value.
      *
      * @param timestampMs Timestamp in epoch millis

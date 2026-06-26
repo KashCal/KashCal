@@ -10,6 +10,20 @@ package org.onekash.kashcal.util
  */
 object AddressNormalizer {
 
+    // Lenient RFC 5322 §3.4.1 email shape: local@domain.tld. Rejects bare
+    // logins ("alice"), dotless internal hosts ("user@localhost"), and
+    // non-mailto CAL-ADDRESS forms (urn:uuid:, principal paths). Single source
+    // of truth for "is this a mailto-emittable address" across the organizer
+    // resolution + attendee-entity + integration-test paths.
+    private val EMAIL_SHAPE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+
+    /**
+     * True when [raw] (after any `mailto:` strip) is email-shaped — i.e. safe
+     * to emit as a `mailto:` CAL-ADDRESS. A principal path / urn:uuid / bare
+     * login returns false.
+     */
+    fun isEmailShaped(raw: String): Boolean = EMAIL_SHAPE.matches(stripMailto(raw))
+
     fun canonical(raw: String): String {
         val trimmed = raw.trim()
         return when {

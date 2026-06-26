@@ -60,7 +60,7 @@ object IcsParserService {
                         // feeds) and one-shot file imports (SettingsActivity,
                         // MainActivity). Persistence pipeline accepts Event
                         // today; attendee wire-up requires changing those
-                        // pipelines too. Tracked as A2 follow-up.
+                        // pipelines too. Deferred follow-up.
                         ICalEventMapper.toEntity(
                             icalEvent = icalEvent,
                             rawIcal = null,

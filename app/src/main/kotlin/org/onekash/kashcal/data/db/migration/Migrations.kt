@@ -657,7 +657,7 @@ object Migrations {
      * per RFC 5545 §3.8.4.4 + RFC 4791 §4.1.
      *
      * Includes two-step dedup to clean any existing duplicates before creating
-     * the unique index. See docs/DB_CONSTRAINT_ANALYSIS.md for full analysis.
+     * the unique index.
      */
     val MIGRATION_13_14 = object : Migration(13, 14) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -1111,6 +1111,179 @@ object Migrations {
     }
 
     /**
+     * Migration from version 18 to 19 — scheduling-capability + outbox
+     * discovery columns (RFC 6638 §2 / §2.1.1).
+     *
+     * Schema delta — two additive nullable columns:
+     * - `accounts.schedule_outbox_url` (TEXT, nullable) — the principal's
+     *   CALDAV:schedule-outbox-URL (RFC 6638 §2.1.1), discovered by PROPFIND.
+     *   NULL = not yet discovered or no outbox advertised.
+     * - `calendars.auto_schedule_supported` (INTEGER, nullable) — tri-state
+     *   capability flag from the RFC 6638 §2 "calendar-auto-schedule" OPTIONS
+     *   token on the collection. NULL = unknown / not yet probed, 0 = not
+     *   advertised, 1 = advertised.
+     *
+     * Robustness pattern (mirrors MIGRATION_17_18): explicit transaction wrap,
+     * idempotent `addColumnIfNotExists`, post-migration validation BEFORE
+     * `setTransactionSuccessful()` so a thrown check rolls back rather than
+     * commits a broken schema.
+     *
+     * No pre-migration type-shape check (unlike MIGRATION_17_18): both columns
+     * are brand-new at v19, so the "forked dev DB hand-added the column with
+     * the wrong affinity" case that check guards cannot arise here.
+     *
+     * Both columns are nullable with no DEFAULT, so existing rows take NULL
+     * automatically and the next sync's discovery hook populates them.
+     */
+    val MIGRATION_18_19 = object : Migration(18, 19) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                // Idempotent column adds.
+                addColumnIfNotExists(db, "accounts", "schedule_outbox_url", "TEXT")
+                addColumnIfNotExists(db, "calendars", "auto_schedule_supported", "INTEGER")
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!columnExists(db, "accounts", "schedule_outbox_url")) {
+                        add("accounts.schedule_outbox_url")
+                    }
+                    if (!columnExists(db, "calendars", "auto_schedule_supported")) {
+                        add("calendars.auto_schedule_supported")
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_18_19 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
+     * v19 → v20: client-outbox iTIP send tracking.
+     *
+     * Adds two nullable `attendees` columns supporting the client-side
+     * `METHOD:REQUEST` outbox send (RFC 6638 §6) on servers that decline to
+     * self-schedule:
+     * - `itip_request_sequence` (INTEGER) — the event SEQUENCE at which a
+     *   REQUEST was last POSTed to this attendee; the idempotency marker that
+     *   stops a re-push from re-sending (spamming) the same invitation.
+     * - `itip_request_status` (TEXT) — the raw per-recipient request-status the
+     *   outbox returned (e.g. `2.0;Success`), kept distinct from the
+     *   server-PUT `schedule_status`.
+     *
+     * Both nullable with no DEFAULT — mirrors `notified_at` (MIGRATION_17_18).
+     * Idempotent adds + in-transaction post-validation that rolls back rather
+     * than committing a partial/broken schema (same shape as MIGRATION_18_19).
+     */
+    val MIGRATION_19_20 = object : Migration(19, 20) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                // Idempotent column adds.
+                addColumnIfNotExists(db, "attendees", "itip_request_sequence", "INTEGER")
+                addColumnIfNotExists(db, "attendees", "itip_request_status", "TEXT")
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!columnExists(db, "attendees", "itip_request_sequence")) {
+                        add("attendees.itip_request_sequence")
+                    }
+                    if (!columnExists(db, "attendees", "itip_request_status")) {
+                        add("attendees.itip_request_status")
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_19_20 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
+     * v20 → v21: removed-attendee CANCEL queue.
+     *
+     * Adds the `pending_cancels` table: a guest dropped from an event's
+     * attendee set, awaiting an iTIP CANCEL (RFC 5546 §3.2.2.6). A dedicated
+     * table (not a column on `attendees`) because the removed attendee row is
+     * deleted, and `replaceForEvent` would destroy an attendee-column marker
+     * before its CANCEL could be delivered.
+     *
+     * Idempotent CREATE TABLE / CREATE INDEX (IF NOT EXISTS) + in-transaction
+     * post-validation that rolls back rather than committing a partial schema
+     * (same shape as MIGRATION_18_19/19_20). The CREATE SQL mirrors Room's
+     * generated v21 schema so the migrated DB's identityHash matches the export.
+     */
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `pending_cancels` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`event_id` INTEGER NOT NULL, " +
+                        "`recurrence_id` INTEGER, " +
+                        "`address` TEXT NOT NULL, " +
+                        "`schedule_agent` TEXT, " +
+                        "`schedule_status` TEXT, " +
+                        "`sequence` INTEGER NOT NULL, " +
+                        "`attempt_count` INTEGER NOT NULL DEFAULT 0, " +
+                        "FOREIGN KEY(`event_id`) REFERENCES `events`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_pending_cancels_event_id` " +
+                        "ON `pending_cancels` (`event_id`)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                        "`index_pending_cancels_event_id_recurrence_id_address` " +
+                        "ON `pending_cancels` (`event_id`, `recurrence_id`, `address`)"
+                )
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!tableExists(db, "pending_cancels")) add("pending_cancels (table)")
+                    else {
+                        for (col in listOf(
+                            "event_id", "recurrence_id", "address",
+                            "schedule_agent", "schedule_status", "sequence", "attempt_count"
+                        )) {
+                            if (!columnExists(db, "pending_cancels", col)) {
+                                add("pending_cancels.$col")
+                            }
+                        }
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_20_21 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -1130,6 +1303,9 @@ object Migrations {
         MIGRATION_14_15,
         MIGRATION_15_16,
         MIGRATION_16_17,
-        MIGRATION_17_18
+        MIGRATION_17_18,
+        MIGRATION_18_19,
+        MIGRATION_19_20,
+        MIGRATION_20_21
     )
 }

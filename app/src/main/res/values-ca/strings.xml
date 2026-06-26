@@ -59,6 +59,8 @@
     <string name="action_confirm">Confirmar</string>
     <string name="action_discard">Descartar</string>
     <string name="action_dismiss">Descartar</string>
+    <string name="action_allow">Permet</string>
+    <string name="action_no_thanks">No, gràcies</string>
     <string name="action_show_all">Mostrar tot</string>
     <string name="action_connect">Connectar</string>
     <string name="action_duplicate">Duplicar</string>
@@ -455,8 +457,6 @@
     <string name="account_detail_cd_show_password">Mostrar contrasenya</string>
     <string name="account_detail_cd_hide_password">Amagar contrasenya</string>
 
-    <string name="sync_failure_notification_title">Problema de sincronització amb %1$s</string>
-    <string name="sync_failure_notification_text">La sincronització del calendari ha fallat %1$d vegades</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Canviar nom del compte</string>
@@ -862,6 +862,7 @@
     <string name="sync_notification_expired_title">Els canvis de sincronització han caducat</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s no s\'han pogut sincronitzar després de 30 dies. S\'utilitzarà la versió del servidor. Força sincronització per reintentar.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s a %2$s no s\'han pogut sincronitzar després de 30 dies. S\'utilitzarà la versió del servidor. Força sincronització per reintentar.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">S\'ha sincronitzat %1$d calendari</item>
@@ -1109,6 +1110,18 @@
     <string name="attendee_status_tentative">Provisional</string>
     <string name="attendee_status_delegated">Delegat</string>
     <string name="attendee_status_pending">Pendent</string>
+    <string name="attendee_picker_title">Afegeix assistents</string>
+    <string name="attendee_pick_add_people">Afegeix assistents</string>
+    <string name="attendee_pick_from_contacts">Nom o correu</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d més</item>
+        <item quantity="other">+%1$d més</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Suggereix persones dels teus contactes</string>
+    <string name="attendee_invalid_email">Introdueix una adreça de correu completa</string>
+    <string name="attendee_add_typed">Afegeix \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">No es pot convidar gent en aquest compte</string>
+    <string name="action_save_and_notify">Desa i notifica</string>
     <string name="inbox_empty_caught_up">Tot al dia</string>
     <string name="inbox_organizer_suffix">(organitzador)</string>
     <string name="menu_invites">Invitacions</string>

@@ -38,11 +38,11 @@ import org.onekash.kashcal.sync.strategy.PushStrategy
  * Post-refactor verification tests.
  *
  * These tests verify the repository layer refactor was successful.
- * They should all pass AFTER all phases are complete.
+ * They should all pass once the migration is complete.
  *
  * Test Status Legend:
  * - ✅ IMPLEMENTED: Test is complete and passing
- * - 🔶 PHASE X: Test requires Phase X to be complete first
+ * - 🔶 PENDING: Test requires a later migration step to be complete first
  * - 🔴 INTEGRATION: Requires device/emulator (androidTest)
  *
  * Checklist:
@@ -51,12 +51,12 @@ import org.onekash.kashcal.sync.strategy.PushStrategy
  * - [x] CredentialManager uses account-keyed format (UnifiedCredentialManagerTest)
  * - [x] backup_rules excludes credential files (PreRefactorSnapshotTest)
  * - [x] deleteAccount is transactional (this file)
- * - [x] ICloudAccountDiscoveryService uses AccountRepository (Phase 7 - DONE)
- * - [x] CalDavAccountDiscoveryService uses AccountRepository (Phase 7 - DONE)
- * - [x] EventReader no longer has account methods (Phase 10 - DONE)
- * - [x] AccountSettingsViewModel uses AccountRepository (Phase 10 - DONE)
- * - [x] HomeViewModel uses AccountRepository (Phase 10 - DONE)
- * - [ ] Old credential managers deleted (Phase 12)
+ * - [x] ICloudAccountDiscoveryService uses AccountRepository
+ * - [x] CalDavAccountDiscoveryService uses AccountRepository
+ * - [x] EventReader no longer has account methods
+ * - [x] AccountSettingsViewModel uses AccountRepository
+ * - [x] HomeViewModel uses AccountRepository
+ * - [ ] Old credential managers deleted
  * - [ ] iCloud sync works end-to-end (Integration test)
  */
 class PostRefactorVerificationTest {
@@ -206,7 +206,7 @@ class PostRefactorVerificationTest {
     // ========== ✅ PHASE 7: Discovery Service Migration ==========
 
     /**
-     * Phase 7 COMPLETE: Verify ICloudAccountDiscoveryService delegates to AccountRepository.
+     * Verified: Verify ICloudAccountDiscoveryService delegates to AccountRepository.
      *
      * Implementation:
      * - ICloudAccountDiscoveryService now injects AccountRepository (not AccountsDao)
@@ -240,7 +240,7 @@ class PostRefactorVerificationTest {
     }
 
     /**
-     * Phase 7 COMPLETE: Verify CalDavAccountDiscoveryService delegates to AccountRepository.
+     * Verified: Verify CalDavAccountDiscoveryService delegates to AccountRepository.
      */
     @Test
     fun `PHASE 7 - CalDavAccountDiscoveryService delegates to AccountRepository`() = runBlocking {
@@ -267,7 +267,7 @@ class PostRefactorVerificationTest {
     // ========== ✅ PHASE 8: Sync Layer Migration ==========
 
     /**
-     * Phase 8 COMPLETE: Verify sync layer uses repositories instead of DAOs.
+     * Verified: Verify sync layer uses repositories instead of DAOs.
      *
      * Implementation:
      * - CalDavSyncEngine uses CalendarRepository (removed AccountsDao)
@@ -310,7 +310,7 @@ class PostRefactorVerificationTest {
     // ========== ✅ PHASE 9: Credential Provider Migration ==========
 
     /**
-     * Phase 9 COMPLETE: Verify ICloudCredentialProvider uses unified CredentialManager.
+     * Verified: Verify ICloudCredentialProvider uses unified CredentialManager.
      *
      * Implementation:
      * - ICloudCredentialProvider now injects CredentialManager (not ICloudAuthManager)
@@ -348,7 +348,7 @@ class PostRefactorVerificationTest {
     }
 
     /**
-     * Phase 9 COMPLETE: Verify CalDavCredentialProvider uses unified CredentialManager.
+     * Verified: Verify CalDavCredentialProvider uses unified CredentialManager.
      *
      * Implementation:
      * - CalDavCredentialProvider now injects CredentialManager (not CalDavCredentialManager)
@@ -396,7 +396,7 @@ class PostRefactorVerificationTest {
     // ========== ✅ PHASE 10: EventReader Cleanup ==========
 
     /**
-     * Phase 10 COMPLETE: EventReader no longer exposes account methods.
+     * Verified: EventReader no longer exposes account methods.
      *
      * Removed methods:
      * - getAccountByProviderAndEmail() - moved to AccountRepository
@@ -439,7 +439,7 @@ class PostRefactorVerificationTest {
     // ========== ✅ PHASE 10: ViewModel Migration ==========
 
     /**
-     * Phase 10 COMPLETE: AccountSettingsViewModel uses AccountRepository.
+     * Verified: AccountSettingsViewModel uses AccountRepository.
      *
      * Changed from:
      * - ICloudAuthManager.loadAccount() -> AccountRepository.getAccountsByProvider(ICLOUD)
@@ -475,7 +475,7 @@ class PostRefactorVerificationTest {
     }
 
     /**
-     * Phase 10 COMPLETE: HomeViewModel uses AccountRepository.
+     * Verified: HomeViewModel uses AccountRepository.
      *
      * Changed from:
      * - ICloudAuthManager.loadAccount() -> AccountRepository.getAllAccounts() + filter supportsCalDAV
@@ -513,7 +513,7 @@ class PostRefactorVerificationTest {
     // ========== 🔶 PHASE 12: Old Managers Deleted ==========
 
     /**
-     * After Phase 12: Verify old credential managers are deleted.
+     * Pending: verify old credential managers are deleted (after they are removed).
      *
      * Files that should NOT exist:
      * - ICloudAuthManager.kt
@@ -522,12 +522,12 @@ class PostRefactorVerificationTest {
      */
     @Test
     fun `PHASE 12 - Old credential managers deleted`() {
-        // Placeholder - implement after Phase 12
+        // Placeholder - implement once old credential managers are removed
         //
         // Verification: grep for imports should return nothing
         // grep -r "ICloudAuthManager\|CalDavCredentialManager" --include="*.kt" app/src/main/
 
-        assertTrue("Implement after Phase 12 - verify old files deleted", true)
+        assertTrue("Implement once old credential managers are removed - verify old files deleted", true)
     }
 
     // ========== 🔴 INTEGRATION: End-to-End Sync ==========

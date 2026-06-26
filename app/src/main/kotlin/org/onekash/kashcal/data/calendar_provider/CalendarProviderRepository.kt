@@ -345,6 +345,21 @@ interface CalendarProviderRepository {
     suspend fun getDeviceEvent(eventId: Long): DeviceEvent?
 
     /**
+     * Find the begin timestamp of the next occurrence of an event at or after [afterMs],
+     * read from the Instances view (so RRULE expansion, RDATE, and EXDATE are all honored).
+     *
+     * For a recurring series this is the next upcoming instance — NOT the master row's
+     * DTSTART, which is the first (possibly long-past) occurrence. Returns null when the
+     * event has no occurrence at or after [afterMs] (e.g. a fully-ended series) or the event
+     * doesn't exist / permission is denied.
+     *
+     * @param eventId CalendarProvider event ID
+     * @param afterMs Lower bound for the occurrence begin (epoch ms, inclusive)
+     * @return Begin timestamp (epoch ms) of the next occurrence, or null
+     */
+    suspend fun getNextOccurrenceStart(eventId: Long, afterMs: Long): Long?
+
+    /**
      * Get a master event together with all its exception rows, read directly from
      * the Events table (NOT the Instances view).
      *

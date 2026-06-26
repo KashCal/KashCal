@@ -884,7 +884,7 @@ class MigrationTest {
         }
     }
 
-    // ==================== Migration 16 to 17: P1.9 scheduling schema bundle ====================
+    // ==================== Migration 16 to 17: scheduling schema bundle ====================
 
     /**
      * Walk the v1→v16 migration chain to land us at the v16 starting state for
@@ -1188,7 +1188,7 @@ class MigrationTest {
         migrateUpToV16()
         Migrations.MIGRATION_16_17.migrate(db)
 
-        // Verify P1.9 schema landed on top of full chain
+        // Verify the scheduling schema landed on top of full chain
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
         assertTrue(columnExists("events", "organizer_sent_by"))
         assertTrue(columnExists("events", "organizer_schedule_status"))
@@ -1368,11 +1368,323 @@ class MigrationTest {
         assertTrue(indexExists("index_attendees_event_id"))
     }
 
+    // ==================== Migration 18 to 19: scheduling-capability + outbox discovery ====================
+
+    /** Walk the v1→v18 migration chain to land at the v18 starting state for v19 tests. */
+    private fun migrateUpToV18() {
+        migrateUpToV17()
+        Migrations.MIGRATION_17_18.migrate(db)
+    }
+
+    @Test
+    fun `migration 18 to 19 adds schedule_outbox_url to accounts as nullable TEXT`() {
+        migrateUpToV18()
+
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        assertTrue(columnExists("accounts", "schedule_outbox_url"))
+
+        // Default is NULL when the column is omitted on insert.
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.query("SELECT schedule_outbox_url FROM accounts WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+    }
+
+    @Test
+    fun `migration 18 to 19 adds auto_schedule_supported to calendars as nullable INTEGER`() {
+        migrateUpToV18()
+
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        assertTrue(columnExists("calendars", "auto_schedule_supported"))
+
+        // Default is NULL (tri-state unknown) when omitted on insert.
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.query("SELECT auto_schedule_supported FROM calendars WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+    }
+
+    @Test
+    fun `migration 18 to 19 preserves existing account and calendar rows`() {
+        migrateUpToV18()
+
+        db.execSQL(
+            "INSERT INTO accounts (id, provider, email, created_at, calendar_user_addresses) " +
+                "VALUES (7, 'CALDAV', 'keep@test.com', 999, '[\"mailto:keep@test.com\"]')"
+        )
+        db.execSQL(
+            "INSERT INTO calendars (id, account_id, caldav_url, display_name, color) " +
+                "VALUES (3, 7, 'https://keep/', 'Keep', 42)"
+        )
+
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        // Account row survives, prior columns intact, new column NULL.
+        db.query(
+            "SELECT email, calendar_user_addresses, schedule_outbox_url FROM accounts WHERE id = 7"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("keep@test.com", cursor.getString(0))
+            assertEquals("[\"mailto:keep@test.com\"]", cursor.getString(1))
+            assertTrue(cursor.isNull(2))
+        }
+        // Calendar row survives, prior columns intact, new column NULL.
+        db.query(
+            "SELECT display_name, color, auto_schedule_supported FROM calendars WHERE id = 3"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Keep", cursor.getString(0))
+            assertEquals(42, cursor.getInt(1))
+            assertTrue(cursor.isNull(2))
+        }
+    }
+
+    @Test
+    fun `migration 18 to 19 round-trips tri-state capability values`() {
+        migrateUpToV18()
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL(
+            "INSERT INTO calendars (id, account_id, caldav_url, display_name, color, auto_schedule_supported) " +
+                "VALUES (1, 1, 'https://yes/', 'Yes', 0, 1), " +
+                "(2, 1, 'https://no/', 'No', 0, 0), " +
+                "(3, 1, 'https://unknown/', 'Unknown', 0, NULL)"
+        )
+        db.query("SELECT id, auto_schedule_supported FROM calendars ORDER BY id").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(1)) // true
+            assertTrue(cursor.moveToNext())
+            assertEquals(0, cursor.getInt(1)) // false
+            assertTrue(cursor.moveToNext())
+            assertTrue(cursor.isNull(1)) // unknown
+        }
+    }
+
+    @Test
+    fun `migration 18 to 19 is idempotent`() {
+        migrateUpToV18()
+
+        Migrations.MIGRATION_18_19.migrate(db)
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        assertTrue(columnExists("accounts", "schedule_outbox_url"))
+        assertTrue(columnExists("calendars", "auto_schedule_supported"))
+    }
+
+    // ==================== Full migration chain 1 to 19 ====================
+
+    @Test
+    fun `full migration chain 1 to 19 executes without error`() {
+        migrateUpToV18()
+        Migrations.MIGRATION_18_19.migrate(db)
+
+        assertTrue(columnExists("accounts", "schedule_outbox_url"))
+        assertTrue(columnExists("calendars", "auto_schedule_supported"))
+
+        // Spot-check that earlier-migration columns still exist after chained run.
+        assertTrue(columnExists("accounts", "calendar_user_addresses"))
+        assertTrue(columnExists("pending_operations", "partstat_only"))
+        assertTrue(tableExists("attendees"))
+    }
+
+    // ==================== Migration 19 to 20: client-outbox iTIP send tracking ====================
+
+    /** Walk the v1→v19 migration chain to land at the v19 starting state for v20 tests. */
+    private fun migrateUpToV19() {
+        migrateUpToV18()
+        Migrations.MIGRATION_18_19.migrate(db)
+    }
+
+    private fun migrateUpToV20() {
+        migrateUpToV19()
+        Migrations.MIGRATION_19_20.migrate(db)
+    }
+
+    @Test
+    fun `migration 20 to 21 creates pending_cancels table`() {
+        migrateUpToV20()
+
+        Migrations.MIGRATION_20_21.migrate(db)
+
+        assertTrue(tableExists("pending_cancels"))
+        assertTrue(columnExists("pending_cancels", "event_id"))
+        assertTrue(columnExists("pending_cancels", "recurrence_id"))
+        assertTrue(columnExists("pending_cancels", "address"))
+        assertTrue(columnExists("pending_cancels", "schedule_agent"))
+        assertTrue(columnExists("pending_cancels", "schedule_status"))
+        assertTrue(columnExists("pending_cancels", "sequence"))
+        assertTrue(columnExists("pending_cancels", "attempt_count"))
+    }
+
+    @Test
+    fun `migration 20 to 21 pending_cancels row round-trips`() {
+        migrateUpToV20()
+        Migrations.MIGRATION_20_21.migrate(db)
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'u', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL(
+            "INSERT INTO pending_cancels (event_id, recurrence_id, address, schedule_agent, schedule_status, sequence, attempt_count) " +
+                "VALUES (1, NULL, 'mailto:gone@example.test', 'CLIENT', NULL, 3, 0)"
+        )
+        db.query("SELECT address, sequence, attempt_count FROM pending_cancels WHERE event_id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("mailto:gone@example.test", cursor.getString(0))
+            assertEquals(3, cursor.getInt(1))
+            assertEquals(0, cursor.getInt(2))
+        }
+    }
+
+    @Test
+    fun `migration 20 to 21 is idempotent`() {
+        migrateUpToV20()
+
+        Migrations.MIGRATION_20_21.migrate(db)
+        Migrations.MIGRATION_20_21.migrate(db)
+
+        assertTrue(tableExists("pending_cancels"))
+    }
+
+    @Test
+    fun `migration 20 to 21 cascades pending_cancels on event delete`() {
+        migrateUpToV20()
+        Migrations.MIGRATION_20_21.migrate(db)
+        db.execSQL("PRAGMA foreign_keys = ON")
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (7, 'u7', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL(
+            "INSERT INTO pending_cancels (event_id, recurrence_id, address, schedule_agent, schedule_status, sequence, attempt_count) " +
+                "VALUES (7, NULL, 'mailto:gone@example.test', NULL, NULL, 0, 0)"
+        )
+        db.execSQL("DELETE FROM events WHERE id = 7")
+
+        db.query("SELECT COUNT(*) FROM pending_cancels WHERE event_id = 7").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 19 to 20 adds itip_request_sequence to attendees as nullable INTEGER`() {
+        migrateUpToV19()
+
+        Migrations.MIGRATION_19_20.migrate(db)
+
+        assertTrue(columnExists("attendees", "itip_request_sequence"))
+
+        // Default is NULL (never-sent) when the column is omitted on insert.
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'u', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL("INSERT INTO attendees (id, event_id, address) VALUES (1, 1, 'mailto:g@example.test')")
+        db.query("SELECT itip_request_sequence FROM attendees WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+    }
+
+    @Test
+    fun `migration 19 to 20 adds itip_request_status to attendees as nullable TEXT`() {
+        migrateUpToV19()
+
+        Migrations.MIGRATION_19_20.migrate(db)
+
+        assertTrue(columnExists("attendees", "itip_request_status"))
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'u', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL("INSERT INTO attendees (id, event_id, address) VALUES (1, 1, 'mailto:g@example.test')")
+        db.query("SELECT itip_request_status FROM attendees WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+    }
+
+    @Test
+    fun `migration 19 to 20 preserves existing attendee rows`() {
+        migrateUpToV19()
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'p@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://p/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (99, 'preserve-uid', 1, 'Preserved', 1000, 2000, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL(
+            "INSERT INTO attendees (id, event_id, address, partstat, schedule_agent) " +
+                "VALUES (50, 99, 'mailto:keep@example.test', 'NEEDS-ACTION', 'CLIENT')"
+        )
+
+        Migrations.MIGRATION_19_20.migrate(db)
+
+        // Row survives, prior columns intact, new columns NULL.
+        db.query(
+            "SELECT address, partstat, schedule_agent, itip_request_sequence, itip_request_status " +
+                "FROM attendees WHERE id = 50"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("mailto:keep@example.test", cursor.getString(0))
+            assertEquals("NEEDS-ACTION", cursor.getString(1))
+            assertEquals("CLIENT", cursor.getString(2))
+            assertTrue(cursor.isNull(3))
+            assertTrue(cursor.isNull(4))
+        }
+    }
+
+    @Test
+    fun `migration 19 to 20 is idempotent`() {
+        migrateUpToV19()
+
+        Migrations.MIGRATION_19_20.migrate(db)
+        Migrations.MIGRATION_19_20.migrate(db)
+
+        assertTrue(columnExists("attendees", "itip_request_sequence"))
+        assertTrue(columnExists("attendees", "itip_request_status"))
+    }
+
+    // ==================== Full migration chain 1 to 20 ====================
+
+    @Test
+    fun `full migration chain 1 to 20 executes without error`() {
+        migrateUpToV19()
+        Migrations.MIGRATION_19_20.migrate(db)
+
+        assertTrue(columnExists("attendees", "itip_request_sequence"))
+        assertTrue(columnExists("attendees", "itip_request_status"))
+
+        // Spot-check that earlier-migration columns still exist after chained run.
+        assertTrue(columnExists("accounts", "schedule_outbox_url"))
+        assertTrue(columnExists("attendees", "notified_at"))
+        assertTrue(tableExists("attendees"))
+    }
+
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(16, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(19, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -1411,6 +1723,12 @@ class MigrationTest {
         assertEquals(17, migrations[14].endVersion)
         assertEquals(17, migrations[15].startVersion)
         assertEquals(18, migrations[15].endVersion)
+        assertEquals(18, migrations[16].startVersion)
+        assertEquals(19, migrations[16].endVersion)
+        assertEquals(19, migrations[17].startVersion)
+        assertEquals(20, migrations[17].endVersion)
+        assertEquals(20, migrations[18].startVersion)
+        assertEquals(21, migrations[18].endVersion)
     }
 
     @Test

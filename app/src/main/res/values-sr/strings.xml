@@ -37,6 +37,8 @@
     <string name="action_not_now">Ne sada</string>
     <string name="action_sign_in">Prijavi se</string>
     <string name="action_select">Izaberi</string>
+    <string name="action_allow">Dozvoli</string>
+    <string name="action_no_thanks">Ne, hvala</string>
     <string name="action_show_password">Prikaži lozinku</string>
     <string name="action_hide_password">Sakrij lozinku</string>
     <string name="action_sign_out">Odjavi se</string>
@@ -441,8 +443,6 @@
     <string name="account_detail_cd_show_password">Prikaži lozinku</string>
     <string name="account_detail_cd_hide_password">Sakrij lozinku</string>
 
-    <string name="sync_failure_notification_title">Problem sa sinhronizacijom %1$s</string>
-    <string name="sync_failure_notification_text">Sinhronizacija kalendara neuspešna %1$d puta</string>
 
     <string name="rename_account_title">Preimenuj nalog</string>
     <string name="rename_account_label">Naziv naloga</string>
@@ -837,6 +837,7 @@
     <string name="sync_notification_expired_title">Izmene sinhronizacije istekle</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s nisu mogli biti sinhronizovani posle 30 dana. Koristiće se verzija sa servera. Prinudite sinhronizaciju za ponovni pokušaj.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s u %2$s nisu mogli biti sinhronizovani posle 30 dana. Koristiće se verzija sa servera. Prinudite sinhronizaciju za ponovni pokušaj.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinhronizovan %1$d kalendar</item>
@@ -1117,6 +1118,19 @@
     <string name="attendee_section_pending">Na čekanju</string>
     <string name="attendee_section_declined">Odbili</string>
     <string name="attendee_section_delegated">Delegirani</string>
+    <string name="attendee_picker_title">Dodaj učesnike</string>
+    <string name="attendee_pick_add_people">Dodaj učesnike</string>
+    <string name="attendee_pick_from_contacts">Ime ili e-pošta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d više</item>
+        <item quantity="few">+%1$d više</item>
+        <item quantity="other">+%1$d više</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Predloži osobe iz tvojih kontakata</string>
+    <string name="attendee_invalid_email">Unesite punu adresu e-pošte</string>
+    <string name="attendee_add_typed">Dodaj \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Pozivanje osoba nije dostupno na ovom nalogu</string>
+    <string name="action_save_and_notify">Sačuvaj i obavesti</string>
     <string name="invitees_summary_you_alone">Ti</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">Ti · %d pozvan</item>

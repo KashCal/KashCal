@@ -225,8 +225,8 @@ class AccountSettingsViewModel @Inject constructor(
     val defaultEventDuration: StateFlow<Int> = _defaultEventDuration.asStateFlow()
 
     // Settings search state. Owned exclusively by this ViewModel; sub-screens
-    // never receive a non-empty query (constraint C2). Cleared on navigation
-    // away (US4 — see onCleared override).
+    // never receive a non-empty query. Cleared on navigation away (see the
+    // onCleared override).
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -1593,7 +1593,7 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Committing pending deletion on ViewModel destruction: $pending")
             commitSubscriptionDeletion(pending)
         }
-        // US4: clear search so next ViewModel instance starts with a fresh list.
+        // Clear search so the next ViewModel instance starts with a fresh list.
         onSearchClose()
         super.onCleared()
     }

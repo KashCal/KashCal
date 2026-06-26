@@ -35,6 +35,8 @@
     <string name="action_close">बंद करें</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">अभी नहीं</string>
+    <string name="action_allow">अनुमति दें</string>
+    <string name="action_no_thanks">नहीं, धन्यवाद</string>
     <string name="action_sign_in">साइन इन</string>
     <string name="action_select">चुनें</string>
     <string name="action_show_password">पासवर्ड दिखाएँ</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">पासवर्ड दिखाएँ</string>
     <string name="account_detail_cd_hide_password">पासवर्ड छिपाएँ</string>
 
-    <string name="sync_failure_notification_title">%1$s में सिंक समस्या</string>
-    <string name="sync_failure_notification_text">कैलेंडर सिंक %1$d बार विफल हो चुका है</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">अकाउंट का नाम बदलें</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">सिंक परिवर्तन समाप्त हो गए</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 दिनों के बाद %1$s सिंक नहीं हो सके। सर्वर संस्करण उपयोग किया जाएगा। पुनः प्रयास के लिए फोर्स सिंक करें।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s में %1$s 30 दिनों के बाद सिंक नहीं हो सके। सर्वर संस्करण उपयोग किया जाएगा। पुनः प्रयास के लिए फोर्स सिंक करें।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d कैलेंडर सिंक किया गया</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">अस्वीकृत</string>
     <string name="attendee_card_tentative">अनिश्चित</string>
     <string name="attendee_card_hosting">मेज़बान</string>
+    <string name="attendee_picker_title">प्रतिभागी जोड़ें</string>
+    <string name="attendee_pick_add_people">प्रतिभागी जोड़ें</string>
+    <string name="attendee_pick_from_contacts">नाम या ईमेल</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d और</item>
+        <item quantity="other">+%1$d और</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">अपने संपर्कों से लोगों का सुझाव पाएँ</string>
+    <string name="attendee_invalid_email">पूरा ईमेल पता दर्ज करें</string>
+    <string name="attendee_add_typed">\"%1$s\" जोड़ें</string>
+    <string name="attendee_scheduling_unavailable">इस खाते पर लोगों को आमंत्रित करना उपलब्ध नहीं है</string>
+    <string name="action_save_and_notify">सहेजें और सूचित करें</string>
     <string name="attendee_action_copy">ईमेल कॉपी करें</string>
     <string name="attendee_action_email">ईमेल भेजें</string>
     <string name="attendee_group_icon_description">लोग</string>

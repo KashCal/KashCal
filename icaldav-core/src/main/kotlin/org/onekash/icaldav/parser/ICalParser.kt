@@ -1306,8 +1306,7 @@ class ICalParser(
      * URIs (`https://caldav.example.com/principals/users/foo/`), `urn:uuid:`
      * forms, and pathological `@example.com` / `foo@` shapes.
      */
-    private val mailtoShape =
-        Regex("""^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$""")
+    private val mailtoShape = org.onekash.icaldav.util.CalAddress.mailtoShape
 
     /**
      * Extract a mailto-shaped email from a CAL-ADDRESS property, falling

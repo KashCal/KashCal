@@ -12,7 +12,7 @@ import org.junit.Test
  * real-device behavior depends on `ContentResolver.applyBatch`,
  * which Robolectric can't faithfully simulate; the multi-server and
  * device QA passes cover the wire-level behavior. These tests fix
- * the contract that callers (HomeViewModel chunk 3) depend on.
+ * the contract that callers (HomeViewModel) depend on.
  */
 class EditThisAndFutureContractTest {
 

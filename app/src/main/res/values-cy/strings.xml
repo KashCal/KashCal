@@ -59,6 +59,8 @@
     <string name="action_confirm">Cadarnhau</string>
     <string name="action_discard">Taflu</string>
     <string name="action_dismiss">Diswyddo</string>
+    <string name="action_allow">Caniatáu</string>
+    <string name="action_no_thanks">Dim diolch</string>
     <string name="action_show_all">Dangos Popeth</string>
     <string name="action_connect">Cysylltu</string>
     <string name="action_duplicate">Dyblygu</string>
@@ -488,8 +490,6 @@
     <string name="account_detail_cd_hide_password">Cuddio cyfrinair</string>
 
     <!-- Sync failure notification -->
-    <string name="sync_failure_notification_title">Problem cysoni gyda %1$s</string>
-    <string name="sync_failure_notification_text">Mae cysoni calendr wedi methu %1$d gwaith</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Ailenwi Cyfrif</string>
@@ -1023,6 +1023,7 @@
     <string name="sync_notification_expired_title">Mae newidiadau cysoni wedi dod i ben</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Ni lwyddwyd i gysoni %1$s ar ôl 30 diwrnod. Defnyddir fersiwn y gweinydd. Gorfodwch gysoni i ailgeisio.</string>
+    <string name="sync_notification_expired_content_calendar">Ni lwyddwyd i gysoni %1$s yn %2$s ar ôl 30 diwrnod. Defnyddir fersiwn y gweinydd. Gorfodwch gysoni i ailgeisio.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="zero">Wedi cysoni %1$d calendr</item>
@@ -1310,6 +1311,22 @@
     <string name="attendee_status_tentative">Dros dro</string>
     <string name="attendee_status_delegated">Wedi\'i ddirprwyo</string>
     <string name="attendee_status_pending">Yn aros</string>
+    <string name="attendee_picker_title">Ychwanegu mynychwyr</string>
+    <string name="attendee_pick_add_people">Ychwanegu mynychwyr</string>
+    <string name="attendee_pick_from_contacts">Enw neu e-bost</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="zero">+%1$d arall</item>
+        <item quantity="one">+%1$d arall</item>
+        <item quantity="two">+%1$d arall</item>
+        <item quantity="few">+%1$d arall</item>
+        <item quantity="many">+%1$d arall</item>
+        <item quantity="other">+%1$d arall</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Awgrymu pobl o\'ch cysylltiadau</string>
+    <string name="attendee_invalid_email">Nodwch gyfeiriad e-bost llawn</string>
+    <string name="attendee_add_typed">Ychwanegu \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Nid yw gwahodd pobl ar gael ar y cyfrif hwn</string>
+    <string name="action_save_and_notify">Cadw a hysbysu</string>
     <string name="inbox_empty_caught_up">Popeth wedi\'i ddal</string>
     <string name="inbox_organizer_suffix">(trefnydd)</string>
     <string name="menu_invites">Gwahoddiadau</string>

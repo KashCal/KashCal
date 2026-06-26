@@ -139,6 +139,14 @@ interface CalendarsDao {
     @Query("UPDATE calendars SET ctag = :ctag WHERE id = :id")
     suspend fun updateCtag(id: Long, ctag: String?)
 
+    /**
+     * Update this collection's auto-schedule capability (RFC 6638 §2).
+     * Tri-state: null = unknown/not probed, false = not advertised,
+     * true = advertised. Targeted UPDATE to avoid read-modify-write races.
+     */
+    @Query("UPDATE calendars SET auto_schedule_supported = :supported WHERE id = :id")
+    suspend fun updateAutoScheduleSupported(id: Long, supported: Boolean?)
+
     // ========== Display Settings ==========
 
     /**

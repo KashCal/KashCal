@@ -90,6 +90,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
             "${Instances.SELF_ATTENDEE_STATUS} != ${Attendees.ATTENDEE_STATUS_DECLINED}"
 
         private const val SORT_ORDER = "${Instances.BEGIN} ASC, ${Instances.END} ASC"
+
+        /** Upper bound for the next-occurrence lookup window (~10 years). */
+        private const val TEN_YEARS_MS = 10L * 365L * DateUtils.DAY_IN_MILLIS
     }
 
     override suspend fun getDeviceCalendars(): List<DeviceCalendar> = withContext(Dispatchers.IO) {
@@ -1077,6 +1080,43 @@ class AndroidCalendarProviderRepository @Inject constructor(
             null
         } catch (e: Exception) {
             Log.e(TAG, "Error reading event", e)
+            null
+        }
+    }
+
+    override suspend fun getNextOccurrenceStart(
+        eventId: Long,
+        afterMs: Long
+    ): Long? = withContext(Dispatchers.IO) {
+        try {
+            // Window [afterMs - 1 day, afterMs + ~10y]. The Instances view materializes
+            // RRULE/RDATE and drops EXDATE'd occurrences, so the first row (BEGIN ASC) is the
+            // genuine next occurrence — not the master DTSTART. We pad the lower bound back one
+            // day (as getInstancesForDayRange does) so TODAY's occurrence is still found when
+            // its BEGIN is before `afterMs`: an all-day occurrence's BEGIN is UTC midnight (well
+            // before a mid-day "now"), and a timed occurrence may already have started today.
+            // Without the pad those resolve to next week's instance instead of today's. The
+            // ~10y upper bound keeps the provider from expanding an unbounded series forever.
+            val startMs = afterMs - DateUtils.DAY_IN_MILLIS
+            val endMs = afterMs + TEN_YEARS_MS
+            val builder = Instances.CONTENT_URI.buildUpon()
+            ContentUris.appendId(builder, startMs)
+            ContentUris.appendId(builder, endMs)
+
+            contentResolver.query(
+                builder.build(),
+                arrayOf(Instances.EVENT_ID, Instances.BEGIN),
+                "${Instances.EVENT_ID} = ?",
+                arrayOf(eventId.toString()),
+                "${Instances.BEGIN} ASC"
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getLong(1) else null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied reading next occurrence for event $eventId", e)
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading next occurrence for event $eventId", e)
             null
         }
     }

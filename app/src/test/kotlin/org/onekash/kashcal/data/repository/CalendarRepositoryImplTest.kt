@@ -59,7 +59,26 @@ class CalendarRepositoryImplTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        calendarsDao = mockk(relaxed = true)
+        // Explicit (not relaxed) so an unexpected query throws instead of
+        // silently returning null/empty. Defaults reproduce the previous
+        // relaxed behavior; per-test stubs override them.
+        calendarsDao = mockk()
+        coEvery { calendarsDao.getById(any()) } returns null
+        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
+        coEvery { calendarsDao.getByAccountIdOnce(any()) } returns emptyList()
+        coEvery { calendarsDao.getAllOnce() } returns emptyList()
+        coEvery { calendarsDao.getEnabledCalendars() } returns emptyList()
+        coEvery { calendarsDao.insert(any()) } returns 0L
+        coEvery { calendarsDao.update(any()) } just runs
+        coEvery { calendarsDao.deleteById(any()) } just runs
+        coEvery { calendarsDao.setVisible(any(), any()) } just runs
+        coEvery { calendarsDao.setVisibleForAccount(any(), any()) } just runs
+        coEvery { calendarsDao.updateSyncToken(any(), any(), any()) } just runs
+        coEvery { calendarsDao.updateCtag(any(), any()) } just runs
+        every { calendarsDao.getAll() } returns flowOf(emptyList())
+        every { calendarsDao.getVisibleCalendars() } returns flowOf(emptyList())
+        every { calendarsDao.getByAccountId(any()) } returns flowOf(emptyList())
+        every { calendarsDao.getCalendarCountByProvider(any()) } returns flowOf(0)
         calendarRepository = CalendarRepositoryImpl(calendarsDao)
     }
 

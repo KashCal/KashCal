@@ -502,6 +502,15 @@ interface EventsDao {
     suspend fun updateEtag(id: Long, etag: String?)
 
     /**
+     * Targeted update of the ORGANIZER SCHEDULE-STATUS receipt (RFC 6638 §7.3),
+     * written when a post-PUT read-back captures the server's delivery decision
+     * for an attendee reply. Touches only that column so it can run mid-push
+     * without a read-modify-write of the whole row (same shape as [updateEtag]).
+     */
+    @Query("UPDATE events SET organizer_schedule_status = :status WHERE id = :id")
+    suspend fun updateOrganizerScheduleStatus(id: Long, status: String?)
+
+    /**
      * Mark event as synced with CalDAV URL after successful CREATE.
      * Sets caldav_url, etag, and sync_status = SYNCED.
      */

@@ -59,6 +59,8 @@
     <string name="action_confirm">Bevestig</string>
     <string name="action_discard">Gooi Weg</string>
     <string name="action_dismiss">Maak Toe</string>
+    <string name="action_allow">Laat toe</string>
+    <string name="action_no_thanks">Nee, dankie</string>
     <string name="action_show_all">Wys Alles</string>
     <string name="action_connect">Koppel</string>
     <string name="action_duplicate">Dupliseer</string>
@@ -469,8 +471,6 @@
     <string name="account_detail_cd_show_password">Wys wagwoord</string>
     <string name="account_detail_cd_hide_password">Versteek wagwoord</string>
 
-    <string name="sync_failure_notification_title">Sinkroniseringsprobleem met %1$s</string>
-    <string name="sync_failure_notification_text">Kalendersinkronisering het %1$d keer misluk</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Hernoem Rekening</string>
@@ -844,6 +844,7 @@
     <string name="sync_notification_expired_title">Sinkroniseringsveranderinge het verval</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s in %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender gesinkroniseer</item>
@@ -1118,6 +1119,18 @@
     <string name="attendee_status_tentative">Voorlopig</string>
     <string name="attendee_status_delegated">Gedelegeer</string>
     <string name="attendee_status_pending">Hangende</string>
+    <string name="attendee_picker_title">Voeg genooides by</string>
+    <string name="attendee_pick_add_people">Voeg genooides by</string>
+    <string name="attendee_pick_from_contacts">Naam of e-pos</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d meer</item>
+        <item quantity="other">+%1$d meer</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Stel mense uit jou kontakte voor</string>
+    <string name="attendee_invalid_email">Voer \'n volledige e-posadres in</string>
+    <string name="attendee_add_typed">Voeg \"%1$s\" by</string>
+    <string name="attendee_scheduling_unavailable">Mense nooi is nie op hierdie rekening beskikbaar nie</string>
+    <string name="action_save_and_notify">Stoor &amp; stel in kennis</string>
     <string name="inbox_empty_caught_up">Alles op datum</string>
     <string name="inbox_organizer_suffix">(reëlaar)</string>
     <string name="menu_invites">Uitnodigings</string>

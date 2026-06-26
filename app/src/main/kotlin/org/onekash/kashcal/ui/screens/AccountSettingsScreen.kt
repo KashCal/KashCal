@@ -246,7 +246,7 @@ fun AccountSettingsScreen(
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = "",
-    // Settings search (US1-US5)
+    // Settings search
     isSearchActive: Boolean = false,
     searchQuery: String = "",
     onSearchOpen: () -> Unit = {},

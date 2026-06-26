@@ -57,6 +57,7 @@ class ZohoCalDavIntegrationTest {
     companion object {
         // Credentials
         private var serverUrl: String? = null
+        private var davEndpoint: String? = null
         private var username: String? = null
         private var password: String? = null
 
@@ -91,7 +92,7 @@ class ZohoCalDavIntegrationTest {
         private var batchEventUrls: MutableList<String> = mutableListOf()
         private var batchEventEtags: MutableList<String> = mutableListOf()
 
-        // Cleanup tracker — all event URLs that need cleanup
+        // All event URLs that need cleanup
         private val createdEventUrls = mutableListOf<String>()
 
         private val TS_FORMATTER = DateTimeFormatter
@@ -115,9 +116,13 @@ class ZohoCalDavIntegrationTest {
             serverUrl = "https://$serverUrl"
         }
 
+        // Zoho's CalDAV entry point is /caldav — a PROPFIND on the bare root
+        // returns 501. Discovery and the client must target the DAV endpoint.
+        davEndpoint = serverUrl!!.trimEnd('/') + "/caldav"
+
         val quirks = DefaultQuirks(serverUrl!!)
         client = factory.createClient(
-            Credentials(username = username!!, password = password!!, serverUrl = serverUrl!!),
+            Credentials(username = username!!, password = password!!, serverUrl = davEndpoint!!),
             quirks
         )
     }
@@ -133,7 +138,7 @@ class ZohoCalDavIntegrationTest {
     fun `test01 discover principal`() = runBlocking {
         println("\n===== TEST 01: Discover Principal =====")
 
-        val result = client.discoverPrincipal(serverUrl!!)
+        val result = client.discoverPrincipal(davEndpoint!!)
         assertSuccess("discoverPrincipal", result)
 
         principalUrl = result.getOrNull()!!

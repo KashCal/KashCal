@@ -36,6 +36,8 @@
     <string name="action_close">닫기</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">나중에</string>
+    <string name="action_allow">허용</string>
+    <string name="action_no_thanks">괜찮아요</string>
     <string name="action_sign_in">로그인</string>
     <string name="action_select">선택</string>
     <string name="action_show_password">비밀번호 표시</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">비밀번호 표시</string>
     <string name="account_detail_cd_hide_password">비밀번호 숨기기</string>
 
-    <string name="sync_failure_notification_title">%1$s 동기화 문제</string>
-    <string name="sync_failure_notification_text">캘린더 동기화가 %1$d회 실패했어요</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">계정 이름 변경</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">동기화 변경사항이 만료되었어요</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s을(를) 30일 동안 동기화할 수 없었어요. 서버 버전이 사용돼요. 강제 동기화로 다시 시도해 주세요.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s의 %1$s을(를) 30일 동안 동기화할 수 없었어요. 서버 버전이 사용돼요. 강제 동기화로 다시 시도해 주세요.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">%1$d개 캘린더 동기화됨</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">참석자</string>
     <string name="attendee_you_marker">나</string>
     <string name="attendee_organizer_pill">주최자</string>
+    <string name="attendee_picker_title">참석자 추가</string>
+    <string name="attendee_pick_add_people">참석자 추가</string>
+    <string name="attendee_pick_from_contacts">이름 또는 이메일</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">외 %1$d명</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">연락처에서 추천해요</string>
+    <string name="attendee_invalid_email">전체 이메일 주소를 입력해 주세요</string>
+    <string name="attendee_add_typed">\"%1$s\" 추가</string>
+    <string name="attendee_scheduling_unavailable">이 계정에서는 사람을 초대할 수 없어요</string>
+    <string name="action_save_and_notify">저장 후 알림</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d명 더보기</item>
     </plurals>

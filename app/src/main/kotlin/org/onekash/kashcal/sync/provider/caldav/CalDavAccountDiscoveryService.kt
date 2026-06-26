@@ -18,6 +18,7 @@ import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
+import org.onekash.kashcal.sync.discovery.persistSchedulingDiscovery
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.net.SocketTimeoutException
@@ -269,7 +270,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             // Step 5b: Discover and persist calendar-user-address-set
-            // (RFC 6638 §2.4.1). Failures are non-fatal — see A2.0 spec.
+            // (RFC 6638 §2.4.1). Failures are non-fatal.
             persistCalendarUserAddresses(client, principalUrl, account.id, accountRepository, TAG)
 
             // Step 6: Create Calendar entities for each discovered calendar
@@ -305,6 +306,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 }
                 createdCalendars.add(calendar)
             }
+
+            // Step 7: Discover scheduling-delivery facts (RFC 6638 §2 / §2.1.1):
+            // the principal's outbox URL + each collection's auto-schedule
+            // capability. Failures are non-fatal.
+            persistSchedulingDiscovery(
+                client, principalUrl, account.id, createdCalendars,
+                accountRepository, calendarRepository, TAG
+            )
 
             Log.i(TAG, "Discovery complete: account=${account.id}, calendars=${createdCalendars.size}")
 
@@ -374,7 +383,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
             // Refresh calendar-user-address-set (RFC 6638 §2.4.1) so the
             // user's identity stays current with any aliases added/
-            // removed server-side. Failures are non-fatal — see A2.0 spec.
+            // removed server-side. Failures are non-fatal.
             if (account.principalUrl != null) {
                 persistCalendarUserAddresses(client, account.principalUrl, accountId, accountRepository, TAG)
             }
@@ -443,6 +452,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     newCalendar.copy(id = calendarId)
                 }
                 createdCalendars.add(calendar)
+            }
+
+            // Re-probe scheduling-delivery facts (RFC 6638 §2 / §2.1.1) so they
+            // stay current with server-side changes. Failures are non-fatal.
+            if (account.principalUrl != null) {
+                persistSchedulingDiscovery(
+                    client, account.principalUrl, accountId, createdCalendars,
+                    accountRepository, calendarRepository, TAG
+                )
             }
 
             DiscoveryResult.Success(account, createdCalendars)
@@ -773,7 +791,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             // Step 2b: Discover calendar-user-address-set (RFC 6638 §2.4.1).
-            // Failures non-fatal — see A2.0 spec.
+            // Failures non-fatal.
             val addressClient = calDavClientFactory.createClient(
                 Credentials(username, password, serverUrl, trustInsecure),
                 DefaultQuirks(serverUrl)
@@ -813,6 +831,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 }
                 createdCalendars.add(calendar)
             }
+
+            // Discover scheduling-delivery facts (RFC 6638 §2 / §2.1.1) on the
+            // same client used for address-set discovery. Failures are non-fatal.
+            persistSchedulingDiscovery(
+                addressClient, principalUrl, account.id, createdCalendars,
+                accountRepository, calendarRepository, TAG
+            )
 
             Log.i(TAG, "Account creation complete: account=${account.id}, calendars=${createdCalendars.size}")
 

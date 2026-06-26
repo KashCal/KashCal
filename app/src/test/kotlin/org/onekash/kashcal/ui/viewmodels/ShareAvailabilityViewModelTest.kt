@@ -39,11 +39,11 @@ import java.time.ZoneId
 import java.util.Locale
 
 /**
- * Tests for ShareAvailabilityViewModel — Chunk 4 of the share-availability TDD plan.
+ * Tests for ShareAvailabilityViewModel.
  *
  * Drives the VM through its public surface (no direct calls into FreeBlockFinder
- * or AvailabilityFormatter — those are internal collaborators per the
- * "test user outcomes through the public surface" feedback).
+ * or AvailabilityFormatter — those are internal collaborators; the tests exercise
+ * user-observable outcomes through the public surface).
  *
  * Uses a real DataStore (in-memory via overrideDataStore), real FreeBlockFinder,
  * real AvailabilityFormatter, and a mocked InsightsRepository so canned

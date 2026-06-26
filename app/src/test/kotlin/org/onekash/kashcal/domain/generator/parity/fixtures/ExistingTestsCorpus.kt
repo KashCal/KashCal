@@ -26,7 +26,7 @@ import java.time.ZonedDateTime
  *   - RRuleExpanderRdateTest
  *
  * These cases carry ONLY inputs — no `rfcExpected`. Expected outputs emerge
- * from running both engines in chunk 4; divergences here become classification
+ * from running both engines; divergences here become classification
  * material, not failures.
  */
 object ExistingTestsCorpus {

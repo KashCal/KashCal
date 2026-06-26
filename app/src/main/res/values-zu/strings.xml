@@ -59,6 +59,8 @@
     <string name="action_confirm">Qinisekisa</string>
     <string name="action_discard">Lahla</string>
     <string name="action_dismiss">Chitha</string>
+    <string name="action_allow">Vumela</string>
+    <string name="action_no_thanks">Cha ngiyabonga</string>
     <string name="action_show_all">Bonisa Konke</string>
     <string name="action_connect">Xhuma</string>
     <string name="action_duplicate">Phinda</string>
@@ -469,8 +471,6 @@
     <string name="account_detail_cd_show_password">Bonisa iphasiwedi</string>
     <string name="account_detail_cd_hide_password">Fihla iphasiwedi</string>
 
-    <string name="sync_failure_notification_title">Inkinga yokuvumelanisa ne-%1$s</string>
-    <string name="sync_failure_notification_text">Ukuvumelanisa kwekhalenda kuhluleke izikhathi ezingu-%1$d</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Qamba I-Akhawunti Kabusha</string>
@@ -844,6 +844,7 @@
     <string name="sync_notification_expired_title">Izinguquko zokuvumelanisa ziphelelwe yisikhathi</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s ku-%2$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Ikhalenda elingu-%1$d livumelaniselwe</item>
@@ -1120,6 +1121,18 @@
     <string name="attendee_status_tentative">Kungenzeka</string>
     <string name="attendee_status_delegated">Kuthunyiwe</string>
     <string name="attendee_status_pending">Kulindile</string>
+    <string name="attendee_picker_title">Engeza ababambe iqhaza</string>
+    <string name="attendee_pick_add_people">Engeza ababambe iqhaza</string>
+    <string name="attendee_pick_from_contacts">Igama noma i-imeyili</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d okwengeziwe</item>
+        <item quantity="other">+%1$d okwengeziwe</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Phakamisa abantu koxhumana nabo</string>
+    <string name="attendee_invalid_email">Faka ikheli le-imeyili eligcwele</string>
+    <string name="attendee_add_typed">Engeza \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ukumema abantu akutholakali kule akhawunti</string>
+    <string name="action_save_and_notify">Londoloza &amp; wazise</string>
     <string name="inbox_empty_caught_up">Konke kuphethiwe</string>
     <string name="inbox_organizer_suffix">(umhleli)</string>
     <string name="menu_invites">Izimemo</string>

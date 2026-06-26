@@ -194,6 +194,11 @@ interface PendingOperationsDao {
      * Reset all failed operations (for Force Full Sync).
      * Also resets lifetime_reset_at to give fresh 30-day window (v21.5.3).
      *
+     * Includes ABANDONED operations: this is the recovery path the "sync
+     * expired" notification advertises ("Force Sync to retry"). Re-arming with
+     * a fresh lifetime_reset_at means a just-recovered op is NOT immediately
+     * re-detected as expired by the worker's subsequent expiry check.
+     *
      * @return Number of operations reset
      */
     @Query("""
@@ -205,7 +210,7 @@ interface PendingOperationsDao {
             failed_at = NULL,
             lifetime_reset_at = :now,
             updated_at = :now
-        WHERE status = 'FAILED'
+        WHERE status IN ('FAILED', 'ABANDONED')
     """)
     suspend fun resetAllFailed(now: Long): Int
 
@@ -344,7 +349,12 @@ interface PendingOperationsDao {
 
     /**
      * Abandon an expired operation permanently.
-     * Sets status to FAILED with a reason explaining why.
+     *
+     * Sets status to the terminal ABANDONED (not FAILED): this removes the row
+     * from [getExpiredOperations] (which selects only PENDING/FAILED), so the
+     * "sync expired" notification fires exactly once instead of re-posting on
+     * every subsequent background sync. The row is intentionally kept (not
+     * deleted) so [resetAllFailed] (Force Sync) can recover it.
      *
      * @param id Operation ID to abandon
      * @param reason Human-readable reason for abandonment
@@ -352,7 +362,7 @@ interface PendingOperationsDao {
      */
     @Query("""
         UPDATE pending_operations
-        SET status = 'FAILED',
+        SET status = 'ABANDONED',
             last_error = :reason,
             updated_at = :now
         WHERE id = :id
@@ -364,6 +374,11 @@ interface PendingOperationsDao {
      * Extends the 30-day retry window from this moment.
      *
      * Only refreshes non-FAILED operations (FAILED ops need explicit reset).
+     *
+     * Note: an ABANDONED op would also match (status != 'FAILED'), but this is
+     * harmless — refreshing its clock does NOT re-arm it (status stays
+     * ABANDONED, so it remains excluded from both getReadyOperations and
+     * getExpiredOperations). Re-editing the event queues a fresh op instead.
      *
      * @param eventId Event ID whose operations should be refreshed
      * @param now Current timestamp to set as new lifetime_reset_at

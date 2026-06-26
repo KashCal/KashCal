@@ -80,8 +80,7 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        // Result.success() with output data — just verify it's a success
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
 
         coVerify { repository.forceRefreshAll() }
     }
@@ -98,7 +97,7 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
 
         coVerify { repository.refreshAllDueSubscriptions() }
     }
@@ -115,7 +114,7 @@ class IcsRefreshWorkerTest {
             IcsSubscriptionRepository.SyncResult.Success(IcsSubscriptionRepository.SyncCount(2, 1, 0))
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
 
         coVerify { repository.refreshSubscription(42L) }
     }
@@ -129,7 +128,7 @@ class IcsRefreshWorkerTest {
 
         val result = worker.doWork()
         // Should be failure with error message
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Failure)
     }
 
     // ==================== Result aggregation ====================
@@ -148,7 +147,7 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
     }
 
     @Test
@@ -165,7 +164,7 @@ class IcsRefreshWorkerTest {
 
         val result = worker.doWork()
         // Partial success - still returns success but with error message
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
     }
 
     @Test
@@ -181,7 +180,7 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Failure)
     }
 
     // ==================== Retry logic ====================
@@ -211,7 +210,7 @@ class IcsRefreshWorkerTest {
         coEvery { repository.forceRefreshAll() } throws RuntimeException("Unexpected error")
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Failure)
     }
 
     @Test
@@ -225,8 +224,8 @@ class IcsRefreshWorkerTest {
         coEvery { repository.forceRefreshAll() } throws NullPointerException()
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
         // Result should be failure (not retry) since max attempts exceeded
+        assertTrue(result is ListenableWorker.Result.Failure)
         assertNotEquals(ListenableWorker.Result.retry(), result)
     }
 
@@ -239,7 +238,7 @@ class IcsRefreshWorkerTest {
         coEvery { repository.refreshAllDueSubscriptions() } returns emptyList()
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result)
+        assertTrue(result is ListenableWorker.Result.Success)
 
         coVerify { repository.refreshAllDueSubscriptions() }
     }

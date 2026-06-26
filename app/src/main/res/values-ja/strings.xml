@@ -36,6 +36,8 @@
     <string name="action_close">閉じる</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">後で</string>
+    <string name="action_allow">許可する</string>
+    <string name="action_no_thanks">結構です</string>
     <string name="action_sign_in">サインイン</string>
     <string name="action_select">選択</string>
     <string name="action_show_password">パスワードを表示</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">パスワードを表示</string>
     <string name="account_detail_cd_hide_password">パスワードを隠す</string>
 
-    <string name="sync_failure_notification_title">%1$sの同期に問題があります</string>
-    <string name="sync_failure_notification_text">カレンダーの同期が%1$d回失敗しました</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">アカウント名を変更</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">同期の変更が期限切れです</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
+    <string name="sync_notification_expired_content_calendar">%2$sの%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">%1$d個のカレンダーを同期しました</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">参加者</string>
     <string name="attendee_you_marker">あなた</string>
     <string name="attendee_organizer_pill">主催者</string>
+    <string name="attendee_picker_title">参加者を追加</string>
+    <string name="attendee_pick_add_people">参加者を追加</string>
+    <string name="attendee_pick_from_contacts">名前またはメール</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">他%1$d人</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">連絡先から候補を表示します</string>
+    <string name="attendee_invalid_email">完全なメールアドレスを入力してください</string>
+    <string name="attendee_add_typed">\"%1$s\" を追加</string>
+    <string name="attendee_scheduling_unavailable">このアカウントではユーザーを招待できません</string>
+    <string name="action_save_and_notify">保存して通知</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d 件</item>
     </plurals>

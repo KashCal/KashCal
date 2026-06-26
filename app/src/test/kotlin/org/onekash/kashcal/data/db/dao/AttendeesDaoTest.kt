@@ -170,7 +170,7 @@ class AttendeesDaoTest {
     }
 
     @Test
-    fun `event delete cascades to attendees (FK CASCADE from P1_9)`() = runTest {
+    fun `event delete cascades to attendees (FK CASCADE)`() = runTest {
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -203,7 +203,7 @@ class AttendeesDaoTest {
         assertTrue(rows.zipWithNext().all { (a, b) -> a.sortOrder < b.sortOrder })
     }
 
-    // ========== B6.5 — notified_at merge-preserve (race fix) ==========
+    // ========== notified_at merge-preserve (race fix) ==========
 
     @Test
     fun `replaceForEvent preserves notified_at when prior row was non-NEEDS-ACTION`() = runTest {
@@ -246,7 +246,7 @@ class AttendeesDaoTest {
         // than the original race-fix spec but safer — the notification
         // only re-fires when a prior row didn't exist (truly new attendee
         // on the event). A re-invite of the same address won't re-notify;
-        // that's an acceptable edge-case tradeoff for T2.
+        // that's an acceptable edge-case tradeoff.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -300,5 +300,156 @@ class AttendeesDaoTest {
         attendeesDao.markNotified(before.id, 1_234_000L)
         val after = attendeesDao.getForEventOnce(eventId1).first()
         assertEquals(1_234_000L, after.notifiedAt)
+    }
+
+    // ========== schedule_status / schedule_agent merge-preserve ==========
+    // A server stamps SCHEDULE-STATUS on the stored ATTENDEE (RFC 6638 §7.3),
+    // but the client never echoes it on a subsequent PUT. A cosmetic re-push
+    // whose read-back races an async-stamping server can return the attendee
+    // with no status; without merge-preserve, replaceForEvent would wipe the
+    // captured receipt. RFC 6638 §7.3: a client SHOULD NOT remove a
+    // server-provided parameter — null incoming preserves; non-null overwrites.
+
+    @Test
+    fun `replaceForEvent preserves prior schedule_status when incoming is null`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "5.0"))
+        )
+        // Re-push read-back: same attendee, server returned no SCHEDULE-STATUS.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = null))
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals("5.0", row.scheduleStatus)
+    }
+
+    @Test
+    fun `replaceForEvent preserves prior schedule_agent when incoming is null`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleAgent = "CLIENT"))
+        )
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleAgent = null))
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals("CLIENT", row.scheduleAgent)
+    }
+
+    @Test
+    fun `replaceForEvent lets a non-null incoming schedule_status overwrite the prior`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "1.0"))
+        )
+        // Server later reports successful delivery — authoritative, overwrites.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "2.0"))
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals("2.0", row.scheduleStatus)
+    }
+
+    @Test
+    fun `schedule_status preserve is keyed by canonical address`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "5.0"))
+        )
+        // A different attendee with no status must not inherit a@x.com's receipt.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:a@x.com", 0).copy(scheduleStatus = null),
+                makeAttendee(eventId1, "mailto:b@x.com", 1).copy(scheduleStatus = null)
+            )
+        )
+        val rows = attendeesDao.getForEventOnce(eventId1).associateBy { it.address }
+        assertEquals("5.0", rows["mailto:a@x.com"]?.scheduleStatus)
+        assertEquals(null, rows["mailto:b@x.com"]?.scheduleStatus)
+    }
+
+    // ========== itip_request_sequence / itip_request_status merge-preserve ==========
+    // The client-outbox idempotency marker (itip_request_sequence) records the
+    // SEQUENCE at which a METHOD:REQUEST was sent to an attendee. The read-back
+    // calls replaceForEvent with server-parsed rows that carry no iTIP marker
+    // (the server never echoes it), so without merge-preserve every read-back
+    // cycle would wipe the marker -> the attendee re-classifies ClientMustDeliver
+    // -> a duplicate invite is POSTed every sync. The marker MUST survive the
+    // server-authoritative replace, exactly like notified_at.
+
+    @Test
+    fun `replaceForEvent preserves prior itip_request_sequence when incoming is null`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = 2))
+        )
+        // Read-back after a later (cosmetic) push: server-parsed row has no marker.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = null))
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals(2, row.itipRequestSequence)
+    }
+
+    @Test
+    fun `replaceForEvent preserves prior itip_request_status when incoming is null`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestStatus = "2.0;Success"))
+        )
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestStatus = null))
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals("2.0;Success", row.itipRequestStatus)
+    }
+
+    @Test
+    fun `replaceForEvent lets a non-null incoming itip marker overwrite the prior`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:a@x.com")
+                    .copy(itipRequestSequence = 1, itipRequestStatus = "2.0;Success")
+            )
+        )
+        // A genuinely new send at a higher SEQUENCE writes the marker again.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:a@x.com")
+                    .copy(itipRequestSequence = 3, itipRequestStatus = "3.7;Invalid calendar user")
+            )
+        )
+        val row = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals(3, row.itipRequestSequence)
+        assertEquals("3.7;Invalid calendar user", row.itipRequestStatus)
+    }
+
+    @Test
+    fun `itip marker preserve is keyed by canonical address`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = 2))
+        )
+        // A different (late-added) attendee must NOT inherit a@x.com's marker —
+        // it must stay null so it gets its own first invite.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:a@x.com", 0).copy(itipRequestSequence = null),
+                makeAttendee(eventId1, "mailto:b@x.com", 1).copy(itipRequestSequence = null)
+            )
+        )
+        val rows = attendeesDao.getForEventOnce(eventId1).associateBy { it.address }
+        assertEquals(2, rows["mailto:a@x.com"]?.itipRequestSequence)
+        assertEquals(null, rows["mailto:b@x.com"]?.itipRequestSequence)
     }
 }

@@ -153,7 +153,8 @@ class RealICloudSyncEngineTest {
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             accountRepository = accountRepository,
-            attendeesDao = database.attendeesDao()
+            attendeesDao = database.attendeesDao(),
+            pendingCancelsDao = database.pendingCancelsDao()
         )
 
         val conflictResolver = ConflictResolver(

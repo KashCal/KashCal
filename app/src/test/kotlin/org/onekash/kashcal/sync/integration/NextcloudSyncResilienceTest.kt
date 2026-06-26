@@ -29,7 +29,7 @@ import java.util.Properties
  * Nextcloud sync resilience test.
  *
  * Tests KashCal's CalDAV sync against a Nextcloud instance populated with edge-case
- * events that exercise failure modes identified in docs/NEXTCLOUD_SYNC_ANALYSIS.md:
+ * events that exercise known Nextcloud sync failure modes:
  *
  * - Normal VEVENTs (baseline)
  * - VTODOs mixed in same calendar

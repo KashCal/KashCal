@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
+import org.onekash.kashcal.data.db.dao.PendingCancelsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
@@ -165,6 +166,15 @@ object DatabaseModule {
     @Singleton
     fun providePendingOperationsDao(database: KashCalDatabase): PendingOperationsDao {
         return database.pendingOperationsDao()
+    }
+
+    /**
+     * Provide PendingCancelsDao.
+     */
+    @Provides
+    @Singleton
+    fun providePendingCancelsDao(database: KashCalDatabase): PendingCancelsDao {
+        return database.pendingCancelsDao()
     }
 
     /**

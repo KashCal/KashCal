@@ -14,6 +14,7 @@ import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
+import org.onekash.kashcal.data.db.dao.PendingCancelsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
@@ -24,6 +25,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.EventFts
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.data.db.entity.PendingCancel
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.data.db.entity.SyncLog
@@ -56,11 +58,12 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         EventFts::class,
         IcsSubscription::class,
         Occurrence::class,
+        PendingCancel::class,
         PendingOperation::class,
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 18,
+    version = 21,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -98,6 +101,11 @@ abstract class KashCalDatabase : RoomDatabase() {
      * Access to PendingOperation operations (sync queue).
      */
     abstract fun pendingOperationsDao(): PendingOperationsDao
+
+    /**
+     * Access to PendingCancel operations (removed attendees awaiting iTIP CANCEL).
+     */
+    abstract fun pendingCancelsDao(): PendingCancelsDao
 
     /**
      * Access to SyncLog operations (debugging).

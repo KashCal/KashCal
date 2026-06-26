@@ -36,6 +36,8 @@
     <string name="action_close">Sulje</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Ei nyt</string>
+    <string name="action_allow">Salli</string>
+    <string name="action_no_thanks">Ei kiitos</string>
     <string name="action_sign_in">Kirjaudu sisään</string>
     <string name="action_select">Valitse</string>
     <string name="action_show_password">Näytä salasana</string>
@@ -465,8 +467,6 @@
     <string name="account_detail_cd_show_password">Näytä salasana</string>
     <string name="account_detail_cd_hide_password">Piilota salasana</string>
 
-    <string name="sync_failure_notification_title">Synkronointiongelma tilin %1$s kanssa</string>
-    <string name="sync_failure_notification_text">Kalenterin synkronointi on epäonnistunut %1$d kertaa</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nimeä tili uudelleen</string>
@@ -824,6 +824,7 @@
     <string name="sync_notification_conflict_multi">Paikalliset muutokset %1$s menetettiin synkronointiristiriitojen vuoksi. Käytetään palvelimen versioita.</string>
     <string name="sync_notification_expired_title">Synkronointimuutokset vanhentuivat</string>
     <string name="sync_notification_expired_content">%1$s ei voitu synkronoida 30 päivän kuluessa. Käytetään palvelimen versiota. Pakotettu synkronointi uudelleen yritykseen.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s kalenterissa %2$s ei voitu synkronoida 30 päivän kuluessa. Käytetään palvelimen versiota. Pakotettu synkronointi uudelleen yritykseen.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synkronoitu %1$d kalenteri</item>
         <item quantity="other">Synkronoitu %1$d kalenteria</item>
@@ -1139,6 +1140,18 @@
     <string name="attendee_section_pending">Odottaa</string>
     <string name="attendee_section_declined">Kieltäytyivät</string>
     <string name="attendee_section_delegated">Delegoivat</string>
+    <string name="attendee_picker_title">Lisää osallistujia</string>
+    <string name="attendee_pick_add_people">Lisää osallistujia</string>
+    <string name="attendee_pick_from_contacts">Nimi tai sähköposti</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d muuta</item>
+        <item quantity="other">+%1$d muuta</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Ehdota henkilöitä yhteystiedoistasi</string>
+    <string name="attendee_invalid_email">Anna koko sähköpostiosoite</string>
+    <string name="attendee_add_typed">Lisää \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ihmisten kutsuminen ei ole käytettävissä tällä tilillä</string>
+    <string name="action_save_and_notify">Tallenna ja ilmoita</string>
     <plurals name="reminder_in_days">
         <item quantity="one">%1$d päivän kuluttua</item>
         <item quantity="other">%1$d päivän kuluttua</item>

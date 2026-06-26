@@ -626,7 +626,7 @@ class SettingsActivity : ComponentActivity() {
                             onNavigateToAccounts = { viewModel.onSearchClose(); showAccountsScreen = true },
                             // Navigate to Device Calendars detail screen
                             onNavigateToDeviceCalendars = { viewModel.onSearchClose(); showDeviceCalendarsScreen = true },
-                            // Inline search (US1-US5)
+                            // Inline search
                             isSearchActive = isSearchActive,
                             searchQuery = searchQuery,
                             onSearchOpen = viewModel::onSearchOpen,

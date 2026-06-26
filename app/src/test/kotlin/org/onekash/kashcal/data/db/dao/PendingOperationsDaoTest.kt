@@ -895,4 +895,130 @@ class PendingOperationsDaoTest {
 
         assertEquals(0, resetCount)
     }
+
+    // ==================== Abandon / Expiry Lifecycle Tests ====================
+
+    /**
+     * Helper: insert an operation already past the 30-day lifetime window so it
+     * is detected by getExpiredOperations.
+     */
+    private suspend fun insertExpiredOperation(
+        status: String = PendingOperation.STATUS_PENDING
+    ): Long {
+        val expiredResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
+        return pendingOpsDao.insert(
+            PendingOperation(
+                eventId = testEventId,
+                operation = PendingOperation.OPERATION_CREATE,
+                status = status,
+                lifetimeResetAt = expiredResetAt
+            )
+        )
+    }
+
+    @Test
+    fun `abandonOperation sets status to ABANDONED`() = runTest {
+        val now = System.currentTimeMillis()
+        val id = insertExpiredOperation()
+
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        val op = pendingOpsDao.getById(id)
+        assertEquals(PendingOperation.STATUS_ABANDONED, op?.status)
+        assertEquals("Exceeded 30-day lifetime", op?.lastError)
+    }
+
+    @Test
+    fun `getExpiredOperations excludes already-abandoned operations`() = runTest {
+        // This is the notify-once guarantee: once abandoned, an expired op must
+        // never be re-detected on subsequent syncs (otherwise the notification
+        // re-posts forever after the user dismisses it).
+        val now = System.currentTimeMillis()
+        val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
+        val id = insertExpiredOperation()
+
+        // First sync detects it.
+        val firstPass = pendingOpsDao.getExpiredOperations(cutoff)
+        assertEquals(1, firstPass.size)
+
+        // Worker abandons it.
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        // Next sync must NOT re-detect it.
+        val secondPass = pendingOpsDao.getExpiredOperations(cutoff)
+        assertTrue("Abandoned op must not be re-detected", secondPass.isEmpty())
+    }
+
+    @Test
+    fun `resetAllFailed re-arms ABANDONED operations with fresh lifetime`() = runTest {
+        // Honors the notification's "Force Sync to retry" promise: an abandoned
+        // op must become retryable again with a fresh 30-day window.
+        val now = System.currentTimeMillis()
+        val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
+        val id = insertExpiredOperation()
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        pendingOpsDao.resetAllFailed(now)
+
+        val op = pendingOpsDao.getById(id)
+        assertEquals(PendingOperation.STATUS_PENDING, op?.status)
+        // Fresh lifetime window means it is no longer expired.
+        assertTrue(
+            "Force Sync must give a fresh 30-day window",
+            (op?.lifetimeResetAt ?: 0L) > cutoff
+        )
+        // And it is no longer detected as expired.
+        assertTrue(pendingOpsDao.getExpiredOperations(cutoff).isEmpty())
+    }
+
+    @Test
+    fun `autoResetOldFailed does not resurrect ABANDONED operations`() = runTest {
+        // ABANDONED is terminal except for explicit Force Sync. The 24h auto-reset
+        // must never pull an abandoned op back into the retry loop.
+        val now = System.currentTimeMillis()
+        val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
+        val id = insertExpiredOperation()
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        val resetCount = pendingOpsDao.autoResetOldFailed(
+            failedBefore = now,
+            lifetimeCutoff = cutoff,
+            now = now
+        )
+
+        assertEquals(0, resetCount)
+        assertEquals(PendingOperation.STATUS_ABANDONED, pendingOpsDao.getById(id)?.status)
+    }
+
+    @Test
+    fun `ABANDONED operations are invisible to processing queries`() = runTest {
+        // Regression-lock (review F-rec): ABANDONED is terminal and must not be
+        // picked up for processing nor counted as pending work in the UI badge.
+        val now = System.currentTimeMillis()
+        val id = insertExpiredOperation()
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        assertTrue(
+            "Abandoned op must not be returned for processing",
+            pendingOpsDao.getReadyOperations(now).none { it.id == id }
+        )
+        assertEquals(
+            "Abandoned op must not inflate the pending badge",
+            0,
+            pendingOpsDao.getPendingCount().first()
+        )
+    }
+
+    @Test
+    fun `hasPendingForEvent treats ABANDONED as still present`() = runTest {
+        // Documents the != 'FAILED' semantics (review F2): an event whose only op
+        // is ABANDONED reads as "has pending". Both hasPendingForEvent and
+        // operationExists are test-only today; the live queue path dedups via
+        // STATUS_PENDING, so this flip is harmless. Pinned here so it's a decision.
+        val now = System.currentTimeMillis()
+        val id = insertExpiredOperation()
+        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        assertTrue(pendingOpsDao.hasPendingForEvent(testEventId))
+    }
 }

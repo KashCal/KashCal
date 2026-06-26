@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.notification
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -11,7 +12,9 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -40,6 +43,7 @@ class SyncNotificationManagerTest {
     private lateinit var context: Context
     private lateinit var channels: SyncNotificationChannels
     private lateinit var manager: SyncNotificationManager
+    private lateinit var notificationManager: NotificationManager
 
     @Before
     fun setup() {
@@ -50,10 +54,14 @@ class SyncNotificationManagerTest {
         every { Log.e(any(), any()) } returns 0
 
         context = RuntimeEnvironment.getApplication()
+        notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         channels = SyncNotificationChannels(context)
         channels.createChannels()
         manager = SyncNotificationManager(context, channels)
     }
+
+    private fun activeById(id: Int) =
+        notificationManager.activeNotifications.firstOrNull { it.id == id }
 
     @After
     fun tearDown() {
@@ -159,32 +167,41 @@ class SyncNotificationManagerTest {
             durationMs = 1000
         )
 
-        // When - should not throw
+        // When
         manager.showCompletionNotification(result, showOnlyOnChanges = true)
+
+        // Then - a completion notification is posted
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE))
     }
 
     @Test
     fun `showCompletionNotification with Success skips notification when no changes and showOnlyOnChanges true`() {
-        // Given
+        // Given - a successful sync that changed nothing
         val result = SyncResult.Success(
             calendarsSynced = 2,
             durationMs = 500
         )
 
-        // When - should not throw and should not show notification
+        // When
         manager.showCompletionNotification(result, showOnlyOnChanges = true)
+
+        // Then - nothing is posted
+        assertNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE))
     }
 
     @Test
     fun `showCompletionNotification with Success shows notification when showOnlyOnChanges false`() {
-        // Given
+        // Given - no changes, but the caller opted to always notify
         val result = SyncResult.Success(
             calendarsSynced = 2,
             durationMs = 500
         )
 
-        // When - should not throw
+        // When
         manager.showCompletionNotification(result, showOnlyOnChanges = false)
+
+        // Then - a completion notification is posted despite zero changes
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE))
     }
 
     // ==================== Partial Success Notification Tests ====================
@@ -201,8 +218,11 @@ class SyncNotificationManagerTest {
             )
         )
 
-        // When - should not throw
+        // When
         manager.showCompletionNotification(result)
+
+        // Then - a completion notification is posted
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE))
     }
 
     // ==================== Auth Error Notification Tests ====================
@@ -212,8 +232,13 @@ class SyncNotificationManagerTest {
         // Given
         val result = SyncResult.AuthError(message = "Invalid credentials")
 
-        // When - should not throw
+        // When
         manager.showCompletionNotification(result)
+
+        // Then - posted on the error id at high priority
+        val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR)
+        assertNotNull(posted)
+        assertEquals(Notification.PRIORITY_HIGH, posted!!.notification.priority)
     }
 
     // ==================== Error Notification Tests ====================
@@ -227,14 +252,20 @@ class SyncNotificationManagerTest {
             isRetryable = true
         )
 
-        // When - should not throw
+        // When
         manager.showCompletionNotification(result)
+
+        // Then - posted on the error id
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
     @Test
     fun `showErrorNotification with custom message shows notification`() {
-        // When - should not throw
+        // When
         manager.showErrorNotification("Custom Error", "Something went wrong")
+
+        // Then
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
     // ==================== Cancellation Tests ====================
@@ -298,24 +329,32 @@ class SyncNotificationManagerTest {
 
     @Test
     fun `error notification with null message in SyncResult is handled`() {
-        // When - should not throw
+        // When
         manager.showCompletionNotification(
             SyncResult.Error(code = 500, message = "")
         )
+
+        // Then - still posts an error notification (falls back to default text)
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
     // ==================== Parse Failure Notification Tests (v16.7.0) ====================
 
     @Test
     fun `showParseFailureNotification shows notification when abandonedCount greater than 0`() {
-        // When - should not throw
+        // When
         manager.showParseFailureNotification(calendarName = "Home Calendar", abandonedCount = 3)
+
+        // Then - posted on the error id
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
     @Test
     fun `showParseFailureNotification does not throw with zero abandonedCount`() {
-        // Edge case: should handle gracefully (early return)
+        // Edge case: zero count is an early return — nothing should post
         manager.showParseFailureNotification(calendarName = "Work", abandonedCount = 0)
+
+        assertNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
     @Test
@@ -341,5 +380,55 @@ class SyncNotificationManagerTest {
         // Edge case: very long calendar name should be handled
         val longName = "A".repeat(200)
         manager.showParseFailureNotification(calendarName = longName, abandonedCount = 2)
+    }
+
+    // ==================== Operation Expired Notification Tests ====================
+
+    @Test
+    fun `showOperationExpiredNotification posts on the operation-expired id`() {
+        // When
+        manager.showOperationExpiredNotification(expiredCount = 3, calendarName = null)
+
+        // Then - posted on the dedicated operation-expired id
+        assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED))
+    }
+
+    @Test
+    fun `showOperationExpiredNotification does not post with zero count`() {
+        // Edge case: zero count is an early return — nothing should post
+        manager.showOperationExpiredNotification(expiredCount = 0, calendarName = "Work")
+
+        assertNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED))
+    }
+
+    @Test
+    fun `showOperationExpiredNotification includes calendar name when provided`() {
+        // When a single calendar is known, its name appears in the content
+        manager.showOperationExpiredNotification(expiredCount = 2, calendarName = "Work Calendar")
+
+        val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
+        assertNotNull(posted)
+        val text = posted!!.notification.extras
+            .getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
+        assertTrue(
+            "Calendar name should appear in the notification text: '$text'",
+            text.contains("Work Calendar")
+        )
+    }
+
+    @Test
+    fun `showOperationExpiredNotification omits calendar name when null`() {
+        // Multi-calendar / unknown falls back to count-only wording
+        manager.showOperationExpiredNotification(expiredCount = 4, calendarName = null)
+
+        val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
+        assertNotNull(posted)
+        val text = posted!!.notification.extras
+            .getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
+        // Fallback wording does not name a calendar with the " in <name>" phrasing.
+        assertFalse(
+            "Count-only fallback should not contain ' in ' calendar phrasing: '$text'",
+            text.contains(" in ")
+        )
     }
 }

@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.scheduling
 
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.util.RruleUtils
 
 /**
  * Decides when an organizer's edit must bump the iCalendar SEQUENCE.
@@ -38,7 +39,13 @@ object SequenceBumper {
             old.endTs != new.endTs ||
             old.isAllDay != new.isAllDay ||
             old.duration != new.duration
-        val recurrenceChanged = old.rrule != new.rrule ||
+        // Compare the RRULE by meaning, not bytes: a picker that re-emits
+        // the same rule with reordered parts, different case, or extra
+        // whitespace is not a scheduling change, and bumping SEQUENCE for
+        // it would spuriously re-notify every attendee. RDATE/EXDATE stay
+        // on exact comparison — they are timestamp lists, not RRULEs, and
+        // any real add/remove always changes the string.
+        val recurrenceChanged = !RruleUtils.rrulesEquivalent(old.rrule, new.rrule) ||
             old.rdate != new.rdate ||
             old.exdate != new.exdate
         val cancelled = old.status != STATUS_CANCELLED && new.status == STATUS_CANCELLED

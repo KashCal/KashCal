@@ -9,7 +9,9 @@ import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactEventSyncResult
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -226,7 +228,11 @@ class EventCoordinator @Inject constructor(
      * @param calendarId The calendar to create in (uses local if not specified)
      * @return The created event
      */
-    suspend fun createEvent(event: Event, calendarId: Long? = null): Event {
+    suspend fun createEvent(
+        event: Event,
+        calendarId: Long? = null,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
+    ): Event {
         // Validate time range
         require(event.endTs >= event.startTs) {
             "End time (${event.endTs}) must be >= start time (${event.startTs})"
@@ -240,10 +246,14 @@ class EventCoordinator @Inject constructor(
             "Cannot create event on read-only calendar"
         }
 
-        val eventWithCalendar = event.copy(calendarId = targetCalendarId)
+        val eventWithCalendar = resolveOrganizer(
+            event.copy(calendarId = targetCalendarId),
+            calendar,
+            attendees
+        )
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
 
-        val result = eventWriter.createEvent(eventWithCalendar, isLocal)
+        val result = eventWriter.createEvent(eventWithCalendar, isLocal, attendees)
         triggerImmediatePushIfNeeded(isLocal)
 
         // Schedule reminders for the new event
@@ -256,15 +266,63 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
+     * Set the organizer on a locally authored event that carries attendees.
+     *
+     * The organizer is the account's own preferred calendar-user-address
+     * (RFC 6638 §2.4.1) — a mailto:, urn:uuid:, or principal path, stored
+     * verbatim. We only set it when attendees are present and the event
+     * doesn't already name an organizer (e.g. one preserved from a prior
+     * pull). When the account has no usable address the organizer is left
+     * null rather than synthesized — emitting a bogus organizer would make
+     * the server misroute scheduling.
+     *
+     * No-op when [attendees] is null/empty so non-scheduling edits and
+     * existing callers are untouched. Resolving the organizer does not
+     * change SEQUENCE (the bump predicate ignores organizer).
+     */
+    private suspend fun resolveOrganizer(
+        event: Event,
+        calendar: Calendar?,
+        attendees: List<Attendee>?
+    ): Event {
+        if (attendees.isNullOrEmpty()) return event
+        if (!event.organizerEmail.isNullOrBlank()) return event
+        val accountId = calendar?.accountId ?: return event
+        val account = accountRepository.getAccountById(accountId) ?: return event
+        // Prefer an email-shaped address (discovery hoists a mailto to index 0
+        // when present). Store it BARE — the pull side stores organizer/attendee
+        // addresses bare and the generator re-prepends "mailto:" on emit, so a
+        // verbatim mailto: would double-prefix into "ORGANIZER:mailto:mailto:…".
+        // If no address is email-shaped (e.g. a principal-path / urn:uuid-only
+        // account), leave the organizer null: the generator would mangle a
+        // non-mailto ORGANIZER, and such an account isn't mailto-schedulable.
+        val bare = account.effectiveAddresses()
+            .firstOrNull { org.onekash.kashcal.util.AddressNormalizer.isEmailShaped(it) }
+            ?.let { org.onekash.kashcal.util.AddressNormalizer.stripMailto(it) }
+            ?: return event
+        return event.copy(
+            organizerEmail = bare,
+            organizerName = account.displayName?.ifBlank { null }
+        )
+    }
+
+    /**
      * Create a recurring event.
      *
      * @param event The event with RRULE set
      * @param calendarId The calendar to create in
+     * @param attendees Optional attendee set; forwarded to [createEvent] so a
+     *   recurring invite persists its attendees + resolves the organizer like
+     *   any other event. null leaves the attendee table untouched.
      * @return The created event
      */
-    suspend fun createRecurringEvent(event: Event, calendarId: Long? = null): Event {
+    suspend fun createRecurringEvent(
+        event: Event,
+        calendarId: Long? = null,
+        attendees: List<Attendee>? = null
+    ): Event {
         require(!event.rrule.isNullOrBlank()) { "RRULE must be set for recurring event" }
-        return createEvent(event, calendarId)
+        return createEvent(event, calendarId, attendees)
     }
 
     // ========== Update Operations ==========
@@ -275,7 +333,10 @@ class EventCoordinator @Inject constructor(
      * @param event The event with updated fields
      * @return The updated event
      */
-    suspend fun updateEvent(event: Event): Event {
+    suspend fun updateEvent(
+        event: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null
+    ): Event {
         // Validate time range
         require(event.endTs >= event.startTs) {
             "End time (${event.endTs}) must be >= start time (${event.startTs})"
@@ -283,7 +344,8 @@ class EventCoordinator @Inject constructor(
 
         val calendar = eventReader.getCalendarById(event.calendarId)
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
-        val result = eventWriter.updateEvent(event, isLocal)
+        val eventToWrite = resolveOrganizer(event, calendar, attendees)
+        val result = eventWriter.updateEvent(eventToWrite, isLocal, attendees)
         triggerImmediatePushIfNeeded(isLocal)
 
         // Reschedule reminders after update (time/reminders may have changed)
@@ -307,6 +369,7 @@ class EventCoordinator @Inject constructor(
     suspend fun editSingleOccurrence(
         masterEventId: Long,
         occurrenceTimeMs: Long,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null,
         changes: (Event) -> Event
     ): Event {
         val masterEvent = requireNotNull(eventReader.getEventById(masterEventId)) {
@@ -316,17 +379,17 @@ class EventCoordinator @Inject constructor(
         val calendar = eventReader.getCalendarById(masterEvent.calendarId)
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
 
-        // Apply changes to create exception
-        val modifiedEvent = changes(masterEvent.copy(
-            startTs = occurrenceTimeMs,
-            endTs = occurrenceTimeMs + (masterEvent.endTs - masterEvent.startTs)
-        ))
+        // Apply changes to create exception. Seed from the occurrence
+        // projection (master shifted onto this instance, recurrence cleared)
+        // so the lambda edits a single-instance skeleton, not a series.
+        val modifiedEvent = changes(masterEvent.projectOntoOccurrence(occurrenceTimeMs))
 
         val result = eventWriter.editSingleOccurrence(
             masterEventId = masterEventId,
             occurrenceTimeMs = occurrenceTimeMs,
             modifiedEvent = modifiedEvent,
-            isLocal = isLocal
+            isLocal = isLocal,
+            attendees = attendees
         )
         triggerImmediatePushIfNeeded(isLocal)
 
@@ -355,6 +418,7 @@ class EventCoordinator @Inject constructor(
     suspend fun editThisAndFuture(
         masterEventId: Long,
         splitTimeMs: Long,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee>? = null,
         changes: (Event) -> Event
     ): Event {
         val masterEvent = requireNotNull(eventReader.getEventById(masterEventId)) {
@@ -370,7 +434,8 @@ class EventCoordinator @Inject constructor(
             masterEventId = masterEventId,
             splitTimeMs = splitTimeMs,
             modifiedEvent = modifiedEvent,
-            isLocal = isLocal
+            isLocal = isLocal,
+            attendees = attendees
         )
         triggerImmediatePushIfNeeded(isLocal)
 

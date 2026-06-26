@@ -36,6 +36,8 @@
     <string name="action_close">ပိတ်</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">အခုမဟုတ်သေးပါ</string>
+    <string name="action_allow">ခွင့်ပြုပါ</string>
+    <string name="action_no_thanks">မလိုပါ</string>
     <string name="action_sign_in">ဝင်ရောက်</string>
     <string name="action_select">ရွေးချယ်</string>
     <string name="action_show_password">စကားဝှက်ပြ</string>
@@ -451,8 +453,6 @@
     <string name="account_detail_cd_show_password">စကားဝှက်ပြ</string>
     <string name="account_detail_cd_hide_password">စကားဝှက်ဖျောက်</string>
 
-    <string name="sync_failure_notification_title">%1$s နှင့် ချိန်ကိုက် ပြဿနာ</string>
-    <string name="sync_failure_notification_text">ပြက္ခဒိန် ချိန်ကိုက်မှု %1$d ကြိမ် မအောင်မြင်ခဲ့</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">အကောင့် အမည်ပြောင်း</string>
@@ -796,6 +796,7 @@
     <string name="sync_notification_expired_title">စင့်ခ်ပြောင်းလဲမှုများသက်တမ်းကုန်သွားပါပြီ</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">ပြက္ခဒိန် %1$d ခုစင့်ခ်ပြီး</item>
@@ -1055,6 +1056,17 @@
     <string name="attendee_status_declined">ငြင်းပယ်ခဲ့သည်</string>
     <string name="attendee_status_tentative">မသေချာ</string>
     <string name="attendee_status_delegated">ကိုယ်စားလှယ်အပ်နှင်း</string>
+    <string name="attendee_picker_title">တက်ရောက်သူများ ထည့်ရန်</string>
+    <string name="attendee_pick_add_people">တက်ရောက်သူများ ထည့်ရန်</string>
+    <string name="attendee_pick_from_contacts">အမည် သို့မဟုတ် အီးမေးလ်</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d ဦး</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">သင့်အဆက်အသွယ်များမှ လူများ အကြံပြုပါ</string>
+    <string name="attendee_invalid_email">အီးမေးလ်လိပ်စာ အပြည့်အစုံ ထည့်ပါ</string>
+    <string name="attendee_add_typed">\"%1$s\" ထည့်ရန်</string>
+    <string name="attendee_scheduling_unavailable">ဤအကောင့်တွင် လူများ ဖိတ်ကြားခြင်း မရရှိနိုင်ပါ</string>
+    <string name="action_save_and_notify">သိမ်းပြီး အသိပေးရန်</string>
     <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
     <string name="inbox_empty_caught_up">အားလုံး ပြီးပြီ</string>
     <string name="inbox_organizer_suffix">(စီစဉ်သူ)</string>

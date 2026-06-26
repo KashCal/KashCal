@@ -364,12 +364,19 @@ class SyncNotificationManager @Inject constructor(
      * Alerts user that some local changes couldn't be synced.
      *
      * @param expiredCount Number of operations that were abandoned
+     * @param calendarName Name of the calendar when all expired ops share one;
+     *   null when they span multiple calendars (or the calendar is unknown),
+     *   in which case the count-only wording is used.
      */
-    fun showOperationExpiredNotification(expiredCount: Int) {
+    fun showOperationExpiredNotification(expiredCount: Int, calendarName: String?) {
         if (expiredCount <= 0) return
 
         val eventText = context.resources.getQuantityString(R.plurals.event_count, expiredCount, expiredCount)
-        val content = context.getString(R.string.sync_notification_expired_content, eventText)
+        val content = if (calendarName != null) {
+            context.getString(R.string.sync_notification_expired_content_calendar, eventText, calendarName)
+        } else {
+            context.getString(R.string.sync_notification_expired_content, eventText)
+        }
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
@@ -383,27 +390,6 @@ class SyncNotificationManager @Inject constructor(
             .build()
 
         notify(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED, notification)
-    }
-
-    /**
-     * Show notification when sync has failed repeatedly for an account.
-     * Fires once at the threshold (not on every subsequent failure).
-     *
-     * @param accountName Display name of the account
-     * @param failureCount Number of consecutive failures
-     */
-    fun showSyncFailureThresholdNotification(accountName: String, failureCount: Int) {
-        val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(context.getString(R.string.sync_failure_notification_title, accountName))
-            .setContentText(context.getString(R.string.sync_failure_notification_text, failureCount))
-            .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setCategory(NotificationCompat.CATEGORY_ERROR)
-            .setContentIntent(createOpenAppIntent())
-            .build()
-
-        notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_FAILURE_THRESHOLD, notification)
     }
 
     /**

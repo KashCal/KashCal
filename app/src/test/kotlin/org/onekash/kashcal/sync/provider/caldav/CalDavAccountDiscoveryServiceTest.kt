@@ -200,6 +200,27 @@ class CalDavAccountDiscoveryServiceTest {
     }
 
     @Test
+    fun `discoverAndCreateAccount persists scheduling-delivery discovery`() = runTest {
+        setupSuccessfulDiscovery()
+
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        // Entry-surface guard: removing the wiring from discoverAndCreateAccount
+        // must fail here (relaxed repo mocks won't catch an absent call).
+        coVerify { accountRepository.updateScheduleOutboxUrl(1L, "https://nextcloud.example.com/dav/calendars/user/outbox/") }
+        coVerify { calendarRepository.updateAutoScheduleSupported(1L, true) }
+    }
+
+    @Test
     fun `discoverAndCreateAccount updates existing account`() = runTest {
         setupSuccessfulDiscovery()
 
@@ -525,6 +546,8 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        coEvery { mockClient.discoverScheduleOutboxUrl(any()) } returns CalDavResult.Success(null)
+        coEvery { mockClient.supportsAutoSchedule(any()) } returns CalDavResult.Success(false)
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
                 CalDavCalendar(
@@ -551,6 +574,42 @@ class CalDavAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Success)
         // Birthday calendars are not filtered — consistent with discoverAndCreateAccount and discoverCalendars
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
+    }
+
+    @Test
+    fun `refreshCalendars re-probes scheduling-delivery discovery`() = runTest {
+        val account = createAccount(1L)
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 9L
+        coEvery { mockClient.discoverScheduleOutboxUrl(any()) } returns
+            CalDavResult.Success("https://server/calendars/user/outbox/")
+        coEvery { mockClient.supportsAutoSchedule(any()) } returns CalDavResult.Success(true)
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal/personal/",
+                    url = "https://server/cal/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        discoveryService.refreshCalendars(1L)
+
+        // Entry-surface guard for the refresh hook.
+        coVerify { accountRepository.updateScheduleOutboxUrl(1L, "https://server/calendars/user/outbox/") }
+        coVerify { calendarRepository.updateAutoScheduleSupported(9L, true) }
     }
 
     @Test
@@ -1568,6 +1627,12 @@ class CalDavAccountDiscoveryServiceTest {
                 )
             )
         )
+        // Scheduling-delivery discovery (RFC 6638 §2 / §2.1.1). CalDavResult is
+        // a sealed type, so the relaxed mock can't synthesize a usable default —
+        // stub explicitly.
+        coEvery { mockClient.discoverScheduleOutboxUrl(any()) } returns
+            CalDavResult.Success("$serverUrl/dav/calendars/user/outbox/")
+        coEvery { mockClient.supportsAutoSchedule(any()) } returns CalDavResult.Success(true)
     }
 
     private fun createAccount(

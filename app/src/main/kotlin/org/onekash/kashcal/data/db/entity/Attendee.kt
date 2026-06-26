@@ -166,5 +166,41 @@ data class Attendee(
      * re-fire a duplicate notification.
      */
     @ColumnInfo(name = "notified_at")
-    val notifiedAt: Long? = null
+    val notifiedAt: Long? = null,
+
+    /**
+     * The event SEQUENCE at which a client-side `METHOD:REQUEST` was last
+     * successfully POSTed to this attendee's scheduling outbox (RFC 6638 §6).
+     * NULL = no client-side REQUEST has been sent to this attendee yet.
+     *
+     * The idempotency marker for the client-outbox send path: a REQUEST is
+     * (re-)sent only when this is NULL (never sent, including a late-added
+     * invitee) or strictly less than the event's current SEQUENCE (a genuine
+     * reschedule per RFC 5546 §3.2.2.1). A same-SEQUENCE re-push does NOT
+     * re-send (RFC 5546 §3.2.2.2 — same SEQUENCE is an update, not a
+     * reschedule), which prevents duplicate-invite spam on every sync cycle.
+     * On a permanent send failure the marker is also advanced (to stop the
+     * loop); recovery then rides a later SEQUENCE bump or address correction.
+     *
+     * Internal send-dedup state, NOT an RFC wire-protocol field — preserved
+     * across the server-authoritative replace in [AttendeesDao.replaceForEvent]
+     * the same way `notified_at` is.
+     */
+    @ColumnInfo(name = "itip_request_sequence")
+    val itipRequestSequence: Int? = null,
+
+    /**
+     * The raw per-recipient request-status the scheduling outbox returned for
+     * the last client-side `METHOD:REQUEST` to this attendee (RFC 6638 §10.4,
+     * e.g. `2.0;Success`, `3.7;Invalid calendar user`). NULL = no client-side
+     * send recorded.
+     *
+     * Kept distinct from [scheduleStatus] (the server-stamped delivery receipt
+     * from the implicit PUT, RFC 6638 §7.3): the delivery-routing classifier
+     * reads `schedule_status`/`schedule_agent`, so the client-POST outcome must
+     * never overwrite that input. Persisted now for a future delivery badge;
+     * the send path only branches on its leading status digit.
+     */
+    @ColumnInfo(name = "itip_request_status")
+    val itipRequestStatus: String? = null
 )

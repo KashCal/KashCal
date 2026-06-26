@@ -265,7 +265,7 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper originalInstanceTime null produces null-token importId (pre-existing behavior)`() {
-        // Per tracker note: preserve IcsPatcher.kt:274 behavior exactly. Do not 'fix' as part of this chunk.
+        // Preserve the existing null-token importId behavior exactly — not a bug to 'fix' here.
         val master = baseEvent(uid = "master-def")
         val exception = baseEvent(importId = null, originalInstanceTime = null)
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
@@ -280,12 +280,12 @@ class EventToICalEventMapperTest {
         assertEquals("explicit:RECID:7", ical.importId)
     }
 
-    // ========== Exception mapper attendees (B3 — fixes A2 deferral §3.2) ==========
+    // ========== Exception mapper attendees ==========
 
     @Test
-    fun `exception mapper attendees default empty preserves pre-B3 callers`() {
+    fun `exception mapper attendees default empty preserves existing callers`() {
         // No `attendees =` argument: default-empty keeps IcsExporter and any
-        // existing call sites compiling and behaving as before.
+        // existing call sites compiling and behaving as they did before.
         val master = baseEvent(uid = "m-default")
         val exception = baseEvent(originalInstanceTime = 1709740800000L)
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
@@ -297,11 +297,18 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper emits passed-through attendees`() {
-        // B3 fix for the §3.2 attendee-loss bug: when callers pass attendees,
+        // Fix for the attendee-loss bug: when callers pass attendees,
         // they must reach the emitted ICalEvent so per-exception attendee
         // lists survive recurring-event push.
-        val master = baseEvent(uid = "m-with-attendees")
-        val exception = baseEvent(originalInstanceTime = 1709740800000L)
+        // A real schedulable exception inherits the master's resolved
+        // ORGANIZER (EventWriter builds it from modifiedEvent.copy), so the
+        // fixture carries one — emitting ATTENDEE without ORGANIZER violates
+        // RFC 6638 §3.1 and is now blocked by the generator guard.
+        val master = baseEvent(uid = "m-with-attendees", organizerEmail = "host@example.test")
+        val exception = baseEvent(
+            originalInstanceTime = 1709740800000L,
+            organizerEmail = "host@example.test"
+        )
         val attendees = listOf(
             org.onekash.kashcal.data.db.entity.Attendee(
                 id = 1L,
@@ -336,8 +343,11 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper preserves attendee sort order`() {
-        val master = baseEvent(uid = "m-sort")
-        val exception = baseEvent(originalInstanceTime = 1709740800000L)
+        val master = baseEvent(uid = "m-sort", organizerEmail = "host@example.test")
+        val exception = baseEvent(
+            originalInstanceTime = 1709740800000L,
+            organizerEmail = "host@example.test"
+        )
         // Pass in reverse sortOrder; emitter must respect order, not list position.
         val attendees = listOf(
             org.onekash.kashcal.data.db.entity.Attendee(
@@ -356,10 +366,67 @@ class EventToICalEventMapperTest {
     }
 
     @Test
-    fun `non-exception mapper attendees default empty preserves pre-B3 callers`() {
+    fun `non-exception mapper attendees default empty preserves existing callers`() {
         // The single-arg overload also gets a defaulted attendees parameter.
         val event = baseEvent(uid = "single")
         val ical = EventToICalEventMapper.toICalEvent(event)
+        assertTrue(ical.attendees.isEmpty())
+    }
+
+    // ===== ATTENDEE requires ORGANIZER (RFC 6638 §3.1) =====
+
+    @Test
+    fun `standalone mapper drops attendees when organizer is null`() {
+        // A non-mailto-schedulable account (non-email login) resolves no
+        // ORGANIZER. Emitting ATTENDEE without ORGANIZER violates RFC 6638 §3.1
+        // and conformant servers reject the PUT — so the guard drops them.
+        val event = baseEvent(uid = "no-org", organizerEmail = null)
+        val attendees = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:alice@example.test",
+                partstat = "NEEDS-ACTION", role = "REQ-PARTICIPANT", sortOrder = 0
+            ),
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:bob@example.test",
+                partstat = "NEEDS-ACTION", role = "REQ-PARTICIPANT", sortOrder = 1
+            )
+        )
+        val ical = EventToICalEventMapper.toICalEvent(event, attendees)
+        assertNull(ical.organizer)
+        assertTrue(ical.attendees.isEmpty())
+    }
+
+    @Test
+    fun `standalone mapper emits attendees when organizer present`() {
+        // Regression guard for the happy path: organizer set -> attendees flow.
+        val event = baseEvent(uid = "has-org", organizerEmail = "host@example.test")
+        val attendees = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:alice@example.test",
+                partstat = "NEEDS-ACTION", role = "REQ-PARTICIPANT", sortOrder = 0
+            ),
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:bob@example.test",
+                partstat = "NEEDS-ACTION", role = "REQ-PARTICIPANT", sortOrder = 1
+            )
+        )
+        val ical = EventToICalEventMapper.toICalEvent(event, attendees)
+        assertNotNull(ical.organizer)
+        assertEquals(2, ical.attendees.size)
+    }
+
+    @Test
+    fun `exception mapper drops attendees when organizer is null`() {
+        val master = baseEvent(uid = "m-no-org", organizerEmail = null)
+        val exception = baseEvent(originalInstanceTime = 1709740800000L, organizerEmail = null)
+        val attendees = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:alice@example.test",
+                partstat = "ACCEPTED", role = "REQ-PARTICIPANT", sortOrder = 0
+            )
+        )
+        val ical = EventToICalEventMapper.toICalEvent(master, exception, attendees)
+        assertNull(ical.organizer)
         assertTrue(ical.attendees.isEmpty())
     }
 }

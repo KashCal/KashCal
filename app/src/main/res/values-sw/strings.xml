@@ -35,6 +35,8 @@
     <string name="action_close">Funga</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Si Sasa</string>
+    <string name="action_allow">Ruhusu</string>
+    <string name="action_no_thanks">Hapana, asante</string>
     <string name="action_sign_in">Ingia</string>
     <string name="action_select">Chagua</string>
     <string name="action_show_password">Onyesha nenosiri</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">Onyesha nenosiri</string>
     <string name="account_detail_cd_hide_password">Ficha nenosiri</string>
 
-    <string name="sync_failure_notification_title">Tatizo la kusawazisha na %1$s</string>
-    <string name="sync_failure_notification_text">Kusawazisha kalenda kumeshindikana mara %1$d</string>
 
     <string name="rename_account_title">Badilisha Jina la Akaunti</string>
     <string name="rename_account_label">Jina la Akaunti</string>
@@ -798,6 +798,7 @@
     <string name="sync_notification_expired_title">Mabadiliko ya usawazishaji yameisha muda</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s hayakuweza kusawazishwa baada ya siku 30. Toleo la seva litatumika. Fanya Force Sync kujaribu tena.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s katika %2$s hayakuweza kusawazishwa baada ya siku 30. Toleo la seva litatumika. Fanya Force Sync kujaribu tena.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Imesawazisha kalenda %1$d</item>
@@ -1070,6 +1071,18 @@
     <string name="attendee_status_declined">Imekataliwa</string>
     <string name="attendee_status_tentative">Bado Haijaamuliwa</string>
     <string name="attendee_status_delegated">Imekabidhiwa</string>
+    <string name="attendee_picker_title">Ongeza washiriki</string>
+    <string name="attendee_pick_add_people">Ongeza washiriki</string>
+    <string name="attendee_pick_from_contacts">Jina au barua pepe</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d zaidi</item>
+        <item quantity="other">+%1$d zaidi</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Pendekeza watu kutoka kwa anwani zako</string>
+    <string name="attendee_invalid_email">Ingiza anwani kamili ya barua pepe</string>
+    <string name="attendee_add_typed">Ongeza \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Kualika watu hakupatikani kwenye akaunti hii</string>
+    <string name="action_save_and_notify">Hifadhi na uarifu</string>
     <string name="attendee_status_pending">Inasubiri</string>
     <string name="inbox_empty_caught_up">Yote yameshughulikiwa</string>
     <string name="inbox_organizer_suffix">(mratibu)</string>

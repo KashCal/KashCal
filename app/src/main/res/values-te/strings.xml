@@ -35,6 +35,8 @@
     <string name="action_close">మూసివేయి</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">ఇప్పుడు కాదు</string>
+    <string name="action_allow">అనుమతించు</string>
+    <string name="action_no_thanks">వద్దు, ధన్యవాదాలు</string>
     <string name="action_sign_in">సైన్ ఇన్</string>
     <string name="action_select">ఎంచుకో</string>
     <string name="action_show_password">పాస్‌వర్డ్ చూపించు</string>
@@ -475,8 +477,6 @@
     <string name="account_detail_cd_show_password">పాస్‌వర్డ్ చూపించు</string>
     <string name="account_detail_cd_hide_password">పాస్‌వర్డ్ దాచు</string>
 
-    <string name="sync_failure_notification_title">%1$s తో సింక్ సమస్య</string>
-    <string name="sync_failure_notification_text">క్యాలెండర్ సింక్ %1$d సార్లు విఫలమైంది</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">ఖాతా పేరు మార్చు</string>
@@ -856,6 +856,7 @@
     <string name="sync_notification_expired_title">సింక్ మార్పులు గడువు తీరింది</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 రోజుల తర్వాత %1$s సింక్ కాలేదు. సర్వర్ వెర్షన్ ఉపయోగించబడుతుంది. మళ్ళీ ప్రయత్నించడానికి ఫోర్స్ సింక్ చేయండి.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s లోని %1$s 30 రోజుల తర్వాత సింక్ కాలేదు. సర్వర్ వెర్షన్ ఉపయోగించబడుతుంది. మళ్ళీ ప్రయత్నించడానికి ఫోర్స్ సింక్ చేయండి.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d క్యాలెండర్ సింక్ చేయబడింది</item>
@@ -1098,6 +1099,18 @@
     <string name="attendee_card_declined">తిరస్కరించబడింది</string>
     <string name="attendee_card_tentative">అనిశ్చితం</string>
     <string name="attendee_card_hosting">నిర్వహిస్తున్నాను</string>
+    <string name="attendee_picker_title">హాజరైనవారిని జోడించండి</string>
+    <string name="attendee_pick_add_people">హాజరయ్యేవారిని జోడించండి</string>
+    <string name="attendee_pick_from_contacts">పేరు లేదా ఇమెయిల్</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d మరిన్ని</item>
+        <item quantity="other">+%1$d మరిన్ని</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">మీ పరిచయాల నుండి వ్యక్తులను సూచించు</string>
+    <string name="attendee_invalid_email">పూర్తి ఇమెయిల్ చిరునామాను నమోదు చేయండి</string>
+    <string name="attendee_add_typed">\"%1$s\"ను జోడించండి</string>
+    <string name="attendee_scheduling_unavailable">ఈ ఖాతాలో వ్యక్తులను ఆహ్వానించడం అందుబాటులో లేదు</string>
+    <string name="action_save_and_notify">సేవ్ చేసి తెలియజేయండి</string>
     <string name="attendee_action_copy">ఇమెయిల్ కాపీ చేయి</string>
     <string name="attendee_action_email">ఇమెయిల్ పంపండి</string>
     <string name="attendee_group_icon_description">వ్యక్తులు</string>

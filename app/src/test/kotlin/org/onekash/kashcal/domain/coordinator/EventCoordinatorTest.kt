@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -16,6 +17,7 @@ import org.junit.Test
 import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -291,6 +293,21 @@ class EventCoordinatorTest {
         assertEquals(recurringEvent, result)
     }
 
+    @Test
+    fun `createRecurringEvent forwards attendees to the writer`() = runTest {
+        val attSlot = slot<List<Attendee>>()
+        coEvery { eventWriter.createEvent(any(), any(), capture(attSlot)) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        coordinator.createRecurringEvent(
+            recurringEvent.copy(id = 0L, calendarId = iCloudCalendarId),
+            iCloudCalendarId,
+            attendees = listOf(attendee("bob@example.test"))
+        )
+
+        assertEquals(listOf("bob@example.test"), attSlot.captured.map { it.address })
+    }
+
     // ==================== Update Event Tests ====================
 
     @Test
@@ -422,7 +439,7 @@ class EventCoordinatorTest {
             uid = "split-series@kashcal.test"
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } returns newSeries
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
 
         val result = coordinator.editThisAndFuture(
             masterEventId = recurringEvent.id,
@@ -431,8 +448,30 @@ class EventCoordinatorTest {
         )
 
         assertNotNull(result)
-        coVerify { eventWriter.splitSeries(recurringEvent.id, splitTime, any(), false) }
+        coVerify { eventWriter.splitSeries(recurringEvent.id, splitTime, any(), false, any()) }
         verify { syncScheduler.requestExpeditedSync(forceFullSync = false) }
+    }
+
+    @Test
+    fun `editThisAndFuture forwards the edited attendee set to splitSeries`() = runTest {
+        val splitTime = 1704672000000L
+        val newSeries = recurringEvent.copy(id = 203L, startTs = splitTime, uid = "split-att@kashcal.test")
+        val edited = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 0, address = "mailto:newguest@example.test", partstat = "NEEDS-ACTION", sortOrder = 0
+            )
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
+
+        coordinator.editThisAndFuture(
+            masterEventId = recurringEvent.id,
+            splitTimeMs = splitTime,
+            attendees = edited,
+            changes = { it.copy(title = "New Title") }
+        )
+
+        coVerify { eventWriter.splitSeries(recurringEvent.id, splitTime, any(), any(), edited) }
     }
 
     // ==================== Delete Event Tests ====================
@@ -944,7 +983,7 @@ class EventCoordinatorTest {
             endDay = 20240108
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } returns newSeries
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
         coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
@@ -974,7 +1013,7 @@ class EventCoordinatorTest {
             endDay = 20240108
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } returns newSeries
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
         coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
@@ -997,7 +1036,7 @@ class EventCoordinatorTest {
         // is intact and its scheduled reminders should still fire.
         val splitTime = 1704672000000L
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
-        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } throws
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } throws
                 IllegalStateException("simulated split failure")
 
         try {
@@ -1343,7 +1382,7 @@ class EventCoordinatorTest {
         coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
     }
 
-    // ==================== B3 — RSVP write path ==========================
+    // ==================== RSVP write path ==========================
 
     private val rsvpAccount = Account(
         id = 7L,
@@ -1436,7 +1475,7 @@ class EventCoordinatorTest {
         verify(exactly = 0) { syncScheduler.requestExpeditedSync(any()) }
     }
 
-    // ---- C3: reminder hooks on RSVP write ----
+    // ---- reminder hooks on RSVP write ----
 
     @Test
     fun `replyRsvp DECLINED cancels alarms`() = runTest {
@@ -1555,5 +1594,103 @@ class EventCoordinatorTest {
         assertTrue(ok)
         // Non-local calendar → expedited sync still triggered.
         verify { syncScheduler.requestExpeditedSync(false) }
+    }
+
+    // ========== attendee forwarding + ORGANIZER resolution ==========
+
+    private fun attendee(addr: String) =
+        Attendee(eventId = 0, address = addr, displayName = addr.substringBefore('@'), partstat = "NEEDS-ACTION")
+
+    @Test
+    fun `createEvent forwards attendees and resolves organizer from account address-set`() = runTest {
+        val eventSlot = slot<Event>()
+        val attSlot = slot<List<Attendee>>()
+        coEvery { eventWriter.createEvent(capture(eventSlot), any(), capture(attSlot)) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { accountRepository.getAccountById(2L) } returns Account(
+            id = 2L, provider = AccountProvider.ICLOUD, email = "alice@icloud.com",
+            calendarUserAddresses = listOf("mailto:alice@icloud.com", "/123/principal/")
+        )
+
+        coordinator.createEvent(
+            testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null),
+            iCloudCalendarId,
+            attendees = listOf(attendee("bob@example.test"))
+        )
+
+        // Stored BARE (no mailto: prefix) — the generator re-prepends mailto:
+        // on emit; a verbatim mailto: here would double-prefix on the wire.
+        assertEquals("alice@icloud.com", eventSlot.captured.organizerEmail)
+        assertFalse(eventSlot.captured.organizerEmail!!.startsWith("mailto:"))
+        assertEquals(listOf("bob@example.test"), attSlot.captured.map { it.address })
+    }
+
+    @Test
+    fun `createEvent with no attendees does not force an organizer`() = runTest {
+        val eventSlot = slot<Event>()
+        coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        coordinator.createEvent(testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null), iCloudCalendarId)
+
+        assertEquals(null, eventSlot.captured.organizerEmail)
+    }
+
+    @Test
+    fun `organizer degrades to null when account has no usable address`() = runTest {
+        val eventSlot = slot<Event>()
+        coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { accountRepository.getAccountById(2L) } returns Account(
+            id = 2L, provider = AccountProvider.CALDAV, email = "nextcloud-login", // not email-shaped
+            calendarUserAddresses = emptyList()
+        )
+
+        coordinator.createEvent(
+            testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null),
+            iCloudCalendarId,
+            attendees = listOf(attendee("bob@example.test"))
+        )
+
+        assertEquals(null, eventSlot.captured.organizerEmail)
+    }
+
+    @Test
+    fun `organizer degrades to null when address-set is principal-path only`() = runTest {
+        // e.g. Radicale/Nextcloud-without-email: a non-mailto ORGANIZER would be
+        // mangled by the generator's mailto: prefix, so we emit none.
+        val eventSlot = slot<Event>()
+        coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { accountRepository.getAccountById(2L) } returns Account(
+            id = 2L, provider = AccountProvider.CALDAV, email = "alice",
+            calendarUserAddresses = listOf("/123/principal/", "urn:uuid:abc")
+        )
+
+        coordinator.createEvent(
+            testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null),
+            iCloudCalendarId,
+            attendees = listOf(attendee("bob@example.test"))
+        )
+
+        assertEquals(null, eventSlot.captured.organizerEmail)
+    }
+
+    @Test
+    fun `setting organizer on update does not bump SEQUENCE`() = runTest {
+        // SequenceBumper compares timing/recurrence/STATUS only, not
+        // organizerEmail — resolving the organizer must not re-notify attendees.
+        val eventSlot = slot<Event>()
+        coEvery { eventWriter.updateEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
+        coEvery { accountRepository.getAccountById(2L) } returns Account(
+            id = 2L, provider = AccountProvider.ICLOUD, email = "alice@icloud.com",
+            calendarUserAddresses = listOf("mailto:alice@icloud.com")
+        )
+
+        val existing = testEvent.copy(calendarId = iCloudCalendarId, sequence = 4, organizerEmail = null)
+        coordinator.updateEvent(existing, attendees = listOf(attendee("bob@example.test")))
+
+        assertEquals("organizer resolved (bare)", "alice@icloud.com", eventSlot.captured.organizerEmail)
+        assertEquals("sequence unchanged by organizer-set", 4, eventSlot.captured.sequence)
     }
 }

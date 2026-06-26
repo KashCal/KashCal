@@ -2,6 +2,7 @@ package org.onekash.kashcal.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
@@ -206,13 +207,13 @@ class TimezoneAdversarialTest {
     // ==================== Invalid Timezone Tests ====================
 
     @Test
-    fun `invalid timezone ID falls back gracefully`() {
+    fun `invalid timezone ID throws ZoneRulesException`() {
         try {
-            val zone = ZoneId.of("Invalid/Timezone")
-            // If we get here, the zone was somehow valid
+            ZoneId.of("Invalid/Timezone")
+            fail("Expected ZoneRulesException for an unknown zone ID")
         } catch (e: ZoneRulesException) {
-            // Expected - invalid zone throws
-            assertTrue(true)
+            // Expected - invalid zone throws; message names the bad region
+            assertTrue(e.message?.contains("Invalid/Timezone") == true)
         }
     }
 
@@ -336,13 +337,13 @@ class TimezoneAdversarialTest {
     @Test
     fun `timestamps near leap second boundaries`() {
         // Java time API doesn't support leap seconds directly
-        // but we should not crash on any timestamp
+        // but we should not crash on any timestamp, and the conversion
+        // must round-trip the epoch-millis we put in.
         val maxTimestamp = Long.MAX_VALUE / 2 // Reasonable max
         val minTimestamp = 0L
 
-        // Should not throw
-        Instant.ofEpochMilli(minTimestamp)
-        Instant.ofEpochMilli(maxTimestamp)
+        assertEquals(minTimestamp, Instant.ofEpochMilli(minTimestamp).toEpochMilli())
+        assertEquals(maxTimestamp, Instant.ofEpochMilli(maxTimestamp).toEpochMilli())
     }
 
     // ==================== Multi-Day Event Timezone Tests ====================

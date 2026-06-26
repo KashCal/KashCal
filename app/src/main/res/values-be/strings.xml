@@ -35,6 +35,8 @@
     <string name="action_close">Закрыць</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Не зараз</string>
+    <string name="action_allow">Дазволіць</string>
+    <string name="action_no_thanks">Не, дзякуй</string>
     <string name="action_sign_in">Увайсці</string>
     <string name="action_select">Выбраць</string>
     <string name="action_show_password">Паказаць пароль</string>
@@ -460,8 +462,6 @@
     <string name="account_detail_cd_show_password">Паказаць пароль</string>
     <string name="account_detail_cd_hide_password">Схаваць пароль</string>
 
-    <string name="sync_failure_notification_title">Праблема сінхранізацыі з %1$s</string>
-    <string name="sync_failure_notification_text">Сінхранізацыя не ўдалася %1$d разоў</string>
 
     <string name="rename_account_title">Перайменаваць уліковы запіс</string>
     <string name="rename_account_label">Назва ўліковага запісу</string>
@@ -863,6 +863,7 @@
     <string name="sync_notification_conflict_multi">Лакальныя змены %1$s страчаны з-за канфліктаў сінхранізацыі. Будуць выкарыстаны версіі сервера.</string>
     <string name="sync_notification_expired_title">Змены сінхранізацыі пратэрмінаваны</string>
     <string name="sync_notification_expired_content">%1$s не ўдалося сінхранізаваць за 30 дзён. Будзе выкарыстана версія сервера. Прымусовая сінхранізацыя для паўтору.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s у %2$s не ўдалося сінхранізаваць за 30 дзён. Будзе выкарыстана версія сервера. Прымусовая сінхранізацыя для паўтору.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Сінхранізавана %1$d каляндар</item>
         <item quantity="few">Сінхранізавана %1$d каляндары</item>
@@ -1207,6 +1208,20 @@
     <string name="attendee_section_pending">Чакаюць</string>
     <string name="attendee_section_declined">Адмовіліся</string>
     <string name="attendee_section_delegated">Дэлегавалі</string>
+    <string name="attendee_picker_title">Дадаць удзельнікаў</string>
+    <string name="attendee_pick_add_people">Дадаць удзельнікаў</string>
+    <string name="attendee_pick_from_contacts">Імя або эл. пошта</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d яшчэ</item>
+        <item quantity="few">+%1$d яшчэ</item>
+        <item quantity="many">+%1$d яшчэ</item>
+        <item quantity="other">+%1$d яшчэ</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Прапаноўваць людзей з кантактаў</string>
+    <string name="attendee_invalid_email">Увядзіце поўны адрас e-mail</string>
+    <string name="attendee_add_typed">Дадаць \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Запрашэнне людзей недаступнае ў гэтым уліковым запісе</string>
+    <string name="action_save_and_notify">Захаваць і паведаміць</string>
     <plurals name="reminder_in_days">
         <item quantity="one">Праз %1$d дзень</item>
         <item quantity="few">Праз %1$d дні</item>

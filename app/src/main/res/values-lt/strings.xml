@@ -35,6 +35,8 @@
     <string name="action_close">Uždaryti</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Ne dabar</string>
+    <string name="action_allow">Leisti</string>
+    <string name="action_no_thanks">Ne, ačiū</string>
     <string name="action_sign_in">Prisijungti</string>
     <string name="action_select">Pasirinkti</string>
     <string name="action_show_password">Rodyti slaptažodį</string>
@@ -460,8 +462,6 @@
     <string name="account_detail_cd_show_password">Rodyti slaptažodį</string>
     <string name="account_detail_cd_hide_password">Slėpti slaptažodį</string>
 
-    <string name="sync_failure_notification_title">Sinchronizavimo problema su %1$s</string>
-    <string name="sync_failure_notification_text">Sinchronizavimas nepavyko %1$d kartų</string>
 
     <string name="rename_account_title">Pervadinti paskyrą</string>
     <string name="rename_account_label">Paskyros pavadinimas</string>
@@ -864,6 +864,7 @@
     <string name="sync_notification_conflict_multi">Vietiniai pakeitimai %1$s prarasti dėl sinchronizacijos konfliktų. Bus naudojamos serverio versijos.</string>
     <string name="sync_notification_expired_title">Sinchronizacijos pakeitimai nebegalioja</string>
     <string name="sync_notification_expired_content">%1$s nepavyko sinchronizuoti per 30 dienų. Bus naudojama serverio versija. Priverstinė sinchronizacija, kad bandytumėte dar kartą.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s kalendoriuje %2$s nepavyko sinchronizuoti per 30 dienų. Bus naudojama serverio versija. Priverstinė sinchronizacija, kad bandytumėte dar kartą.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinchronizuotas %1$d kalendorius</item>
         <item quantity="few">Sinchronizuoti %1$d kalendoriai</item>
@@ -1211,6 +1212,20 @@
     <string name="attendee_section_pending">Laukiantys</string>
     <string name="attendee_section_declined">Atsisakė</string>
     <string name="attendee_section_delegated">Delegavo</string>
+    <string name="attendee_picker_title">Pridėti dalyvių</string>
+    <string name="attendee_pick_add_people">Pridėti dalyvių</string>
+    <string name="attendee_pick_from_contacts">Vardas arba el. paštas</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d daugiau</item>
+        <item quantity="few">+%1$d daugiau</item>
+        <item quantity="many">+%1$d daugiau</item>
+        <item quantity="other">+%1$d daugiau</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Siūlyti žmones iš kontaktų</string>
+    <string name="attendee_invalid_email">Įveskite visą el. pašto adresą</string>
+    <string name="attendee_add_typed">Pridėti \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Žmonių kvietimas šioje paskyroje negalimas</string>
+    <string name="action_save_and_notify">Įrašyti ir pranešti</string>
     <plurals name="reminder_in_days">
         <item quantity="one">Po %1$d dienos</item>
         <item quantity="few">Po %1$d dienų</item>

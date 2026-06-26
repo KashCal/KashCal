@@ -9,7 +9,8 @@ import org.onekash.kashcal.R
  *
  * To announce a release: append a [ReleaseNote] for that release's
  * versionCode here, add the matching string + (optional) string-array
- * resources, and run /translate. Releases without an entry stay silent.
+ * resources, and generate the translations for them. Releases without an
+ * entry stay silent.
  *
  * Entries can be in any order; [WhatsNewGate] sorts by versionCode.
  */

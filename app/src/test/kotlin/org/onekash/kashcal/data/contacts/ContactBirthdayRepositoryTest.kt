@@ -94,9 +94,23 @@ class ContactBirthdayRepositoryTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        accountRepository = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
-        eventsDao = mockk(relaxed = true)
+        // Data-bearing collaborators are explicit (not relaxed) so an
+        // unexpected query throws instead of silently returning null/empty.
+        // Defaults reproduce the previous relaxed behavior; per-test stubs
+        // override them.
+        accountRepository = mockk()
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 0L
+        coEvery { accountRepository.deleteAccount(any()) } just Runs
+        calendarsDao = mockk()
+        coEvery { calendarsDao.getByAccountIdOnce(any()) } returns emptyList()
+        coEvery { calendarsDao.getById(any()) } returns null
+        coEvery { calendarsDao.insert(any()) } returns 20L
+        coEvery { calendarsDao.updateColor(any(), any()) } just Runs
+        eventsDao = mockk()
+        coEvery { eventsDao.getAllMasterEventsForCalendar(any()) } returns emptyList()
+        coEvery { eventsDao.deleteById(any()) } just Runs
+        coEvery { eventsDao.update(any()) } just Runs
         occurrenceGenerator = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)

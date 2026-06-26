@@ -89,18 +89,74 @@ class MigrationHashValidationTest {
     }
 
     /**
+     * Validates that the post-migration schema after running
+     * `MIGRATION_18_19` against a fresh v18 database matches Room's expected
+     * v19 identityHash exactly — i.e. the two new nullable columns
+     * (`accounts.schedule_outbox_url`, `calendars.auto_schedule_supported`)
+     * match `app/schemas/.../19.json` in name, affinity, and nullability.
+     */
+    @Test
+    fun `MIGRATION_18_19 produces a schema whose identityHash matches Room's v19 export`() {
+        helper.createDatabase(TEST_DB, 18).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            19,
+            true,
+            Migrations.MIGRATION_18_19
+        ).close()
+    }
+
+    /**
+     * Validates that running `MIGRATION_19_20` against a fresh v19 database
+     * matches Room's expected v20 identityHash exactly — i.e. the two new
+     * nullable `attendees` columns (`itip_request_sequence`,
+     * `itip_request_status`) match `app/schemas/.../20.json` in name,
+     * affinity, and nullability.
+     */
+    @Test
+    fun `MIGRATION_19_20 produces a schema whose identityHash matches Room's v20 export`() {
+        helper.createDatabase(TEST_DB, 19).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            20,
+            true,
+            Migrations.MIGRATION_19_20
+        ).close()
+    }
+
+    /**
+     * Validates that running `MIGRATION_20_21` against a fresh v20 database
+     * matches Room's expected v21 identityHash exactly — i.e. the hand-written
+     * `CREATE TABLE pending_cancels` matches `app/schemas/.../21.json` in
+     * column names, affinities, nullability, and foreign keys.
+     */
+    @Test
+    fun `MIGRATION_20_21 produces a schema whose identityHash matches Room's v21 export`() {
+        helper.createDatabase(TEST_DB, 20).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            21,
+            true,
+            Migrations.MIGRATION_20_21
+        ).close()
+    }
+
+    /**
      * Same validation but starting from a `v1` database — verifies the
      * full migration chain produces a hash-equivalent schema all the way
-     * up to v17. Belt-and-braces against any earlier-migration drift that
+     * up to v21. Belt-and-braces against any earlier-migration drift that
      * only matters once subsequent versions stack on top.
      */
     @Test
-    fun `full migration chain v1 to v17 produces schema whose identityHash matches Room's export`() {
+    fun `full migration chain v1 to v21 produces schema whose identityHash matches Room's export`() {
         helper.createDatabase(TEST_DB, 1).close()
 
         helper.runMigrationsAndValidate(
             TEST_DB,
-            17,
+            20,
             true,
             Migrations.MIGRATION_1_2,
             Migrations.MIGRATION_2_3,
@@ -118,7 +174,11 @@ class MigrationHashValidationTest {
             Migrations.MIGRATION_13_14,
             Migrations.MIGRATION_14_15,
             Migrations.MIGRATION_15_16,
-            Migrations.MIGRATION_16_17
+            Migrations.MIGRATION_16_17,
+            Migrations.MIGRATION_17_18,
+            Migrations.MIGRATION_18_19,
+            Migrations.MIGRATION_19_20,
+            Migrations.MIGRATION_20_21
         ).close()
     }
 

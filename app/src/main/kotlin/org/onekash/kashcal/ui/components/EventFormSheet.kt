@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -78,6 +80,7 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.mapper.toFormState
 import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
@@ -131,6 +134,15 @@ internal fun shouldShowTitleSuggestions(
 }
 
 /**
+ * Whether an optional event field (location, notes) should render. Editable
+ * mode always shows it (the empty row carries an "Add …" affordance); the
+ * read-only attendee viewer hides a blank field so a guest isn't shown an
+ * "Add" prompt for something they can't edit.
+ */
+internal fun shouldShowReadOnlyOptionalField(value: String, isReadOnly: Boolean): Boolean =
+    !isReadOnly || value.isNotBlank()
+
+/**
  * True when [current] differs from [initial] regardless of input order.
  * Drives the Save-enabled predicate in the read-only attendee form path
  * (Save flips on as soon as the user changes their reminder set).
@@ -141,6 +153,40 @@ internal fun shouldShowTitleSuggestions(
  */
 internal fun remindersChanged(initial: List<Int>, current: List<Int>): Boolean =
     initial.sorted() != current.sorted()
+
+/**
+ * Whether the editable (add-only) attendee row should render — a tappable
+ * Attendees row that opens the picker. Shown for new events, non-recurring
+ * edits, recurring SERIES edits, AND single-occurrence edits including a
+ * detached exception (every save scope now carries the edited guest set to
+ * its write path). Suppressed when the user can't organize: a read-only
+ * (invitee) event or a non-schedulable account, or when contact querying
+ * isn't wired.
+ *
+ * @param hasContactQuery whether an onQueryContacts callback is available.
+ */
+internal fun canEditAttendees(
+    isReadOnly: Boolean,
+    isSchedulable: Boolean,
+    hasContactQuery: Boolean,
+): Boolean = !isReadOnly && isSchedulable && hasContactQuery
+
+/**
+ * Whether the "inviting unavailable" education text should render instead of
+ * an attendee row. Shown only for the new / non-recurring flows that
+ * historically showed it; a recurring edit (master or occurrence) on a
+ * non-schedulable account falls through to the read-only chip display (or
+ * nothing) rather than the unavailable text, matching its prior behaviour.
+ *
+ * @param hasContactQuery whether an onQueryContacts callback is available.
+ */
+internal fun showSchedulingUnavailable(
+    isReadOnly: Boolean,
+    isSchedulable: Boolean,
+    hasContactQuery: Boolean,
+    isEditMode: Boolean,
+    wasRecurringAtLoad: Boolean,
+): Boolean = !isReadOnly && !isSchedulable && hasContactQuery && !(isEditMode && wasRecurringAtLoad)
 
 /**
  * Migrate reminders when toggling all-day.
@@ -200,8 +246,50 @@ data class EventFormState(
     // Edit mode
     val editingEventId: Long? = null,
     val isEditMode: Boolean = false,
-    val editingOccurrenceTs: Long? = null
+    val editingOccurrenceTs: Long? = null,
+
+    // Attendees the user is editing in the form (organizer flow). Holds Room
+    // ENTITIES, not the lossy AttendeeUiModel — seeding from the real rows on
+    // edit preserves role/cutype/rsvp/delegation that the UI projection drops.
+    // The picker mutates this set; [attendeesEdited] records whether the user
+    // actually changed it, so an unedited open-and-save passes null to the
+    // domain layer (leave the table untouched) rather than a rebuilt list.
+    val attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
+    val attendeesEdited: Boolean = false
 )
+
+/**
+ * Compute the stored (startTs, endTs) this form state would persist. All-day
+ * events store UTC midnight (start) / end-of-day UTC (end); timed events
+ * interpret the picker's wall-clock in the selected timezone (or device
+ * default). Single source of truth shared by the save path and the
+ * edit-notify banner so the banner's change detection matches what saves.
+ */
+fun EventFormState.toStartEndTs(): Pair<Long, Long> {
+    return if (isAllDay) {
+        val startUtc = DateTimeUtils.localDateToUtcMidnight(dateMillis)
+        val endUtc = DateTimeUtils.localDateToUtcMidnight(endDateMillis)
+        startUtc to DateTimeUtils.utcMidnightToEndOfDay(endUtc)
+    } else {
+        val tz = timezone?.let { java.util.TimeZone.getTimeZone(it) }
+            ?: java.util.TimeZone.getDefault()
+        val startCal = JavaCalendar.getInstance(tz).apply {
+            timeInMillis = dateMillis
+            set(JavaCalendar.HOUR_OF_DAY, startHour)
+            set(JavaCalendar.MINUTE, startMinute)
+            set(JavaCalendar.SECOND, 0)
+            set(JavaCalendar.MILLISECOND, 0)
+        }
+        val endCal = JavaCalendar.getInstance(tz).apply {
+            timeInMillis = endDateMillis
+            set(JavaCalendar.HOUR_OF_DAY, endHour)
+            set(JavaCalendar.MINUTE, endMinute)
+            set(JavaCalendar.SECOND, 0)
+            set(JavaCalendar.MILLISECOND, 0)
+        }
+        startCal.timeInMillis to endCal.timeInMillis
+    }
+}
 
 // Reminder constants and helpers are in ui/shared/FormConstants.kt
 
@@ -323,6 +411,13 @@ fun EventFormSheet(
     scopeSaveFailedTick: Int = 0,
     onDelete: (suspend (eventId: Long, occurrenceTs: Long?) -> Result<Unit>)? = null,
     onLoadEvent: (suspend (Long) -> Event?)? = null,
+    /**
+     * Load the event's existing attendee ENTITIES for the picker to seed
+     * from. Returns Room rows (not the lossy UI projection) so the picker
+     * preserves role/cutype/rsvp/delegation on edit. Null disables seeding
+     * (e.g. device-calendar events, which have no CalDAV attendee table).
+     */
+    onLoadAttendees: (suspend (Long) -> List<org.onekash.kashcal.data.db.entity.Attendee>)? = null,
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 1440,
     defaultEventDuration: Int = 30,
@@ -359,7 +454,41 @@ fun EventFormSheet(
      * locally and reschedules AlarmManager — no server PUT. When null,
      * the read-only Save button stays disabled.
      */
-    onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null
+    onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null,
+    /**
+     * The event's account, used to mark "You" in the picker and to gate the
+     * editable picker on whether the account can send invitations
+     * ([isSchedulable]). Null for new local events with no resolved account.
+     */
+    attendeeAccount: org.onekash.kashcal.data.db.entity.Account? = null,
+    /**
+     * True when the account has a mailto-emittable address (an ORGANIZER can
+     * be resolved). When false the picker surfaces an inline "inviting isn't
+     * available" notice instead of an editable list, so the UI never creates
+     * an ATTENDEE-without-ORGANIZER event (RFC 6638 §3.1).
+     */
+    isSchedulable: Boolean = true,
+    /**
+     * Fired when the user changes the target calendar while the form is open,
+     * so the host can re-resolve [attendeeAccount]/[isSchedulable] for the new
+     * calendar's account. Without it the attendee context would stay pinned to
+     * the calendar the sheet opened with (stale "You"/schedulable state).
+     */
+    onCalendarSelected: ((Long) -> Unit)? = null,
+    /** Debounced contact-email lookup for the picker's type-ahead. */
+    onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
+    /**
+     * Request READ_CONTACTS. Receives the picker's current rationale-flip
+     * sampling and reports the resulting [ContactsPermissionState]. Null
+     * leaves the picker in manual-entry-only mode.
+     */
+    contactsPermissionState: org.onekash.kashcal.ui.permission.ContactsPermissionState =
+        org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested,
+    onRequestContactsPermission: (() -> Unit)? = null,
+    /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
+    contactsDeclined: Boolean = false,
+    /** Persist a permanent decline of contact suggestions ("No thanks"). */
+    onDeclineContacts: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -428,10 +557,24 @@ fun EventFormSheet(
      */
     var loadedIsAllDay by remember { mutableStateOf(false) }
 
+    /**
+     * The event as loaded, snapshotted for the edit-notify predicate. Compared
+     * against a candidate built from the current form fields to decide whether
+     * saving will notify attendees (drives the inline banner + Save relabel).
+     */
+    var loadedEvent by remember { mutableStateOf<Event?>(null) }
+    // Canonical addresses of the attendees present at load — the baseline for
+    // detecting removals (uninvites) this session.
+    var loadedAttendeeAddresses by remember { mutableStateOf<Set<String>>(emptySet()) }
+
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
     var showColorPicker by remember { mutableStateOf(false) }
     var showAttendeeSheet by remember { mutableStateOf(false) }
+    var showAttendeePicker by remember { mutableStateOf(false) }
+    // Tracks an in-session "Not now" dismissal of the picker's permission
+    // banner so it doesn't reappear within the same picker open.
+    var contactsBannerDismissed by remember { mutableStateOf(false) }
 
     val borderlessFieldColors = OutlinedTextFieldDefaults.colors(
         unfocusedBorderColor = Color.Transparent,
@@ -673,6 +816,21 @@ fun EventFormSheet(
                 loadedMasterStartTs = event.startTs
                 loadedIsDetachedException = event.originalEventId != null
                 loadedIsAllDay = event.isAllDay
+                loadedEvent = event
+                // Seed the picker from the event's existing attendee ENTITIES
+                // (not the lossy UI projection) so editing preserves their wire
+                // fields. attendeesEdited stays false: an open-and-save with no
+                // picker change still passes null to the domain layer.
+                if (onLoadAttendees != null) {
+                    val loaded = onLoadAttendees(eventId)
+                    newState = newState.copy(attendees = loaded)
+                    // Snapshot the originally-invited addresses so a later
+                    // removal can be detected (and the dropped guests counted
+                    // for the uninvite banner) via a canonical-address diff.
+                    loadedAttendeeAddresses = loaded.map {
+                        org.onekash.kashcal.util.AddressNormalizer.canonical(it.address)
+                    }.toSet()
+                }
             }
         } else {
             // Create mode - set default end time based on duration setting
@@ -886,6 +1044,54 @@ fun EventFormSheet(
         }
     }
 
+    // Edit-notify: saving a scheduling-significant change (time, recurrence,
+    // cancellation) on an event with attendees will email them an updated
+    // invite. Surface that consequence inline before the tap — the predicate
+    // delegates to SequenceBumper so the banner matches the wire behaviour.
+    //
+    // attendeeCount is the set that WILL be saved: the picker-edited
+    // state.attendees once the user has touched it (attendeesEdited), else the
+    // persisted display projection. Using the live edited set is essential —
+    // adding the first attendee + changing the time in one session must surface
+    // the banner, and removing everyone must hide it.
+    val notifyAttendeeCount = if (state.attendeesEdited) state.attendees.size else attendees.size
+    // Guests dropped from the originally-loaded set this session — each owes a
+    // CANCEL on save. Computed by canonical-address diff so the uninvite banner
+    // counts the removed guests (not the surviving set, which may be empty).
+    val removedAttendeeCount = remember(state.attendees, state.attendeesEdited, loadedAttendeeAddresses) {
+        if (!state.attendeesEdited) 0 else {
+            val current = state.attendees.map {
+                org.onekash.kashcal.util.AddressNormalizer.canonical(it.address)
+            }.toSet()
+            loadedAttendeeAddresses.count { it !in current }
+        }
+    }
+    val willNotifyAttendees by remember(state, loadedEvent, notifyAttendeeCount, removedAttendeeCount) {
+        derivedStateOf {
+            val original = loadedEvent ?: return@derivedStateOf false
+            val (candStart, candEnd) = state.toStartEndTs()
+            val candidate = original.copy(
+                startTs = candStart,
+                endTs = candEnd,
+                isAllDay = state.isAllDay,
+                rrule = state.rrule,
+                status = original.status,
+            )
+            org.onekash.kashcal.domain.scheduling.shouldNotifyAttendees(
+                old = original,
+                new = candidate,
+                attendeeCount = notifyAttendeeCount,
+                // An add sends the new guest a REQUEST; a removal sends the
+                // dropped guest a CANCEL. attendeesEdited is the same flag the
+                // save path uses to decide the authoritative set; the removal
+                // flag relaxes the empty-set gate so uninviting the last guest
+                // still surfaces.
+                attendeeSetChanged = state.attendeesEdited,
+                attendeeRemoved = removedAttendeeCount > 0,
+            )
+        }
+    }
+
     // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
     // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
     // tracks the finger, then reverse-animates back when the transition is rejected.
@@ -970,7 +1176,11 @@ fun EventFormSheet(
                         )
                     } else {
                         Text(
-                            text = stringResource(R.string.action_save),
+                            text = if (willNotifyAttendees) {
+                                stringResource(R.string.action_save_and_notify)
+                            } else {
+                                stringResource(R.string.action_save)
+                            },
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false
@@ -1011,6 +1221,17 @@ fun EventFormSheet(
                     var titleSearchJob by remember { mutableStateOf<Job?>(null) }
                     val dropdownOpen = titleSuggestions.isNotEmpty()
 
+                    if (isReadOnly) {
+                        // Attendee viewer: plain readable text, not a dimmed,
+                        // clip-prone disabled field with autocomplete chrome.
+                        Text(
+                            text = state.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                        )
+                    } else {
                     ExposedDropdownMenuBox(
                         expanded = dropdownOpen,
                         onExpandedChange = { if (!it) titleSuggestions = emptyList() },
@@ -1018,7 +1239,13 @@ fun EventFormSheet(
                     ) {
                         OutlinedTextField(
                             value = state.title,
-                            onValueChange = { newValue ->
+                            onValueChange = { raw ->
+                                // maxLines=2 wraps long titles, but with
+                                // singleLine gone the Enter key would insert a
+                                // literal newline — strip it so a title stays a
+                                // single logical line (and never needs escaping
+                                // on the wire).
+                                val newValue = raw.replace("\n", "")
                                 state = state.copy(title = newValue)
                                 titleSearchJob?.cancel()
                                 val shouldQuery = shouldShowTitleSuggestions(
@@ -1040,7 +1267,10 @@ fun EventFormSheet(
                                 .focusRequester(titleFocusRequester)
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
-                            singleLine = true,
+                            // Wrap a long title to a second line (matching the
+                            // quick-view title) instead of scrolling it off the
+                            // start on one line. There is no title length cap.
+                            maxLines = 2,
                             enabled = !isReadOnly,
                             textStyle = MaterialTheme.typography.headlineSmall,
                             colors = borderlessFieldColors
@@ -1061,6 +1291,7 @@ fun EventFormSheet(
                                 )
                             }
                         }
+                    }
                     }
 
                     HorizontalDivider()
@@ -1182,6 +1413,11 @@ fun EventFormSheet(
                                 selectedCalendarColor = color,
                                 isDeviceCalendar = isDevice
                             )
+                            // Re-resolve the attendee/organizer context for the
+                            // newly chosen calendar's account (schedulable gate
+                            // + "You" detection must not stay pinned to the
+                            // calendar the sheet opened with).
+                            onCalendarSelected?.invoke(id)
                             expandedPicker = null
                         }
                     )
@@ -1276,10 +1512,18 @@ fun EventFormSheet(
                     var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
                     var locationSearchJob by remember { mutableStateOf<Job?>(null) }
 
+                    if (shouldShowReadOnlyOptionalField(state.location, isReadOnly)) {
                     EventFormRow(
                         icon = Icons.Default.LocationOn,
                         iconContentDescription = stringResource(R.string.label_location)
                     ) {
+                        if (isReadOnly) {
+                            Text(
+                                text = state.location,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
                         ExposedDropdownMenuBox(
                             expanded = locationExpanded && locationSuggestions.isNotEmpty(),
                             onExpandedChange = { locationExpanded = it },
@@ -1287,7 +1531,11 @@ fun EventFormSheet(
                         ) {
                             OutlinedTextField(
                                 value = state.location,
-                                onValueChange = { newValue ->
+                                onValueChange = { raw ->
+                                    // Strip newlines: with singleLine gone the
+                                    // Enter key would otherwise insert one, and
+                                    // a location is a single logical line.
+                                    val newValue = raw.replace("\n", "")
                                     state = state.copy(location = newValue)
                                     locationSearchJob?.cancel()
                                     if (locationSuggestionService != null &&
@@ -1310,7 +1558,9 @@ fun EventFormSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-                                singleLine = true,
+                                // Wrap a long address to a second line instead of
+                                // scrolling it off the start on one line.
+                                maxLines = 2,
                                 enabled = !isReadOnly,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.Transparent,
@@ -1350,12 +1600,22 @@ fun EventFormSheet(
                                 }
                             }
                         }
+                        }
+                    }
                     }
 
+                    if (shouldShowReadOnlyOptionalField(state.description, isReadOnly)) {
                     EventFormRow(
                         icon = Icons.AutoMirrored.Filled.Notes,
                         iconContentDescription = stringResource(R.string.label_notes)
                     ) {
+                        if (isReadOnly) {
+                            Text(
+                                text = state.description,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
                         OutlinedTextField(
                             value = state.description,
                             onValueChange = { state = state.copy(description = it) },
@@ -1371,9 +1631,52 @@ fun EventFormSheet(
                                 focusedContainerColor = Color.Transparent
                             )
                         )
+                        }
+                    }
                     }
 
-                    if (attendees.isNotEmpty()) {
+                    // Editable organizer flow: an always-present, tappable
+                    // Attendees row that opens the picker. Available for new
+                    // events, non-recurring edits, recurring SERIES edits, and
+                    // single-occurrence edits (a detached exception included) —
+                    // every save scope carries the edited guest set to its
+                    // write path. Not-organizer (isReadOnly) and non-schedulable
+                    // accounts keep the read-only display.
+                    val canEditAttendees = canEditAttendees(
+                        isReadOnly = isReadOnly,
+                        isSchedulable = isSchedulable,
+                        hasContactQuery = onQueryContacts != null,
+                    )
+                    val showSchedulingUnavailable = showSchedulingUnavailable(
+                        isReadOnly = isReadOnly,
+                        isSchedulable = isSchedulable,
+                        hasContactQuery = onQueryContacts != null,
+                        isEditMode = state.isEditMode,
+                        wasRecurringAtLoad = wasRecurringAtLoad,
+                    )
+                    if (canEditAttendees) {
+                        EventFormRow(
+                            icon = Icons.Default.Group,
+                            iconContentDescription = stringResource(R.string.label_attendees)
+                        ) {
+                            EditableAttendeesRow(
+                                attendees = state.attendees,
+                                account = attendeeAccount,
+                                onClick = { showAttendeePicker = true },
+                            )
+                        }
+                    } else if (showSchedulingUnavailable) {
+                        EventFormRow(
+                            icon = Icons.Default.Group,
+                            iconContentDescription = stringResource(R.string.label_attendees)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.attendee_scheduling_unavailable),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else if (attendees.isNotEmpty()) {
                         EventFormRow(
                             icon = Icons.Default.Group,
                             iconContentDescription = stringResource(R.string.label_attendees)
@@ -1423,6 +1726,26 @@ fun EventFormSheet(
                         org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
                             attendees = attendees,
                             onDismiss = { showAttendeeSheet = false },
+                        )
+                    }
+
+                    if (showAttendeePicker && onQueryContacts != null) {
+                        org.onekash.kashcal.ui.components.attendees.AttendeePickerSheet(
+                            seed = state.attendees,
+                            account = attendeeAccount,
+                            permissionState = contactsPermissionState,
+                            // Persisted decline OR this-session ✕ both hide the banner.
+                            bannerDismissed = contactsDeclined || contactsBannerDismissed,
+                            onQueryContacts = onQueryContacts,
+                            onRequestPermission = { onRequestContactsPermission?.invoke() },
+                            onDeclineContacts = { onDeclineContacts?.invoke() },
+                            onDismissPermissionBanner = { contactsBannerDismissed = true },
+                            // Auto-commit: each add/remove writes straight back to
+                            // the form (back/scrim just closes — nothing to confirm).
+                            onSelectionChanged = { merged ->
+                                state = state.copy(attendees = merged, attendeesEdited = true)
+                            },
+                            onDismiss = { showAttendeePicker = false },
                         )
                     }
 
@@ -1607,7 +1930,11 @@ fun EventFormSheet(
                             )
                         } else {
                             Text(
-                                stringResource(R.string.action_save_event),
+                                text = if (willNotifyAttendees) {
+                                    stringResource(R.string.action_save_and_notify)
+                                } else {
+                                    stringResource(R.string.action_save_event)
+                                },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -1842,4 +2169,75 @@ private fun convertTimezone(
     }
     return Triple(midnightCal.timeInMillis, newCal.get(JavaCalendar.HOUR_OF_DAY), newCal.get(JavaCalendar.MINUTE))
 }
+
+/**
+ * The editable Attendees row body for the organizer flow. Always tappable
+ * (opens the picker); shows the current invitees as compact chips, or an
+ * "Add people" placeholder when empty. Holds [Attendee] entities so its
+ * label/colour derive from the same canonical address the picker edits.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun EditableAttendeesRow(
+    attendees: List<org.onekash.kashcal.data.db.entity.Attendee>,
+    account: org.onekash.kashcal.data.db.entity.Account?,
+    onClick: () -> Unit,
+) {
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        // No "Attendees" text label — the leading 👥 icon already names the
+        // row (kept as its contentDescription), matching the label-less
+        // location/time rows. Empty state reads "Add attendees".
+        if (attendees.isEmpty()) {
+            Text(
+                text = stringResource(R.string.attendee_pick_add_people),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            // Preview a few chips (You pinned first) and collapse the rest to
+            // "+N more" so a large invite list doesn't sprawl down the form —
+            // tapping the row opens the picker where every name is listed.
+            val ordered = remember(attendees, account) {
+                val (you, others) = attendees.partition { account?.matchesAttendee(it.address) == true }
+                you + others
+            }
+            val visible = ordered.take(ATTENDEE_PREVIEW_LIMIT)
+            val overflow = ordered.size - visible.size
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                visible.forEach { att ->
+                    val label = att.displayName?.takeIf { it.isNotBlank() }
+                        ?: org.onekash.kashcal.util.AddressNormalizer.stripMailto(att.address)
+                    val isYou = account?.matchesAttendee(att.address) == true
+                    org.onekash.kashcal.ui.components.attendees.AttendeePickChip(
+                        label = if (isYou) stringResource(R.string.attendee_you_marker) else label,
+                        address = att.address,
+                        initialsSource = label,
+                    )
+                }
+                if (overflow > 0) {
+                    Text(
+                        text = androidx.compose.ui.res.pluralStringResource(
+                            R.plurals.attendee_overflow_count, overflow, overflow
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.align(Alignment.CenterVertically).padding(start = 2.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Max attendee chips previewed on the form's Attendees row before collapsing to "+N more". */
+private const val ATTENDEE_PREVIEW_LIMIT = 3
 

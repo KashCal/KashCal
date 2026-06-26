@@ -35,6 +35,8 @@
     <string name="action_close">ਬੰਦ ਕਰੋ</string>
     <string name="action_ok">ਠੀਕ ਹੈ</string>
     <string name="action_not_now">ਹੁਣੇ ਨਹੀਂ</string>
+    <string name="action_allow">ਆਗਿਆ ਦਿਓ</string>
+    <string name="action_no_thanks">ਨਹੀਂ, ਧੰਨਵਾਦ</string>
     <string name="action_sign_in">ਸਾਈਨ ਇਨ</string>
     <string name="action_select">ਚੁਣੋ</string>
     <string name="action_show_password">ਪਾਸਵਰਡ ਦਿਖਾਓ</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">ਪਾਸਵਰਡ ਦਿਖਾਓ</string>
     <string name="account_detail_cd_hide_password">ਪਾਸਵਰਡ ਲੁਕਾਓ</string>
 
-    <string name="sync_failure_notification_title">%1$s ਨਾਲ ਸਿੰਕ ਸਮੱਸਿਆ</string>
-    <string name="sync_failure_notification_text">ਕੈਲੰਡਰ ਸਿੰਕ %1$d ਵਾਰ ਅਸਫ਼ਲ ਹੋਇਆ</string>
 
     <string name="rename_account_title">ਖਾਤਾ ਨਾਮ ਬਦਲੋ</string>
     <string name="rename_account_label">ਖਾਤਾ ਨਾਮ</string>
@@ -798,6 +798,7 @@
     <string name="sync_notification_expired_title">ਸਿੰਕ ਤਬਦੀਲੀਆਂ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਇਆ</item>
@@ -1073,6 +1074,18 @@
     <string name="attendee_status_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
     <string name="attendee_status_tentative">ਅਨਿਸ਼ਚਿਤ</string>
     <string name="attendee_status_delegated">ਸੌਂਪਿਆ ਗਿਆ</string>
+    <string name="attendee_picker_title">ਹਾਜ਼ਰੀਨ ਸ਼ਾਮਲ ਕਰੋ</string>
+    <string name="attendee_pick_add_people">ਹਾਜ਼ਰੀਨ ਸ਼ਾਮਲ ਕਰੋ</string>
+    <string name="attendee_pick_from_contacts">ਨਾਮ ਜਾਂ ਈਮੇਲ</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d ਹੋਰ</item>
+        <item quantity="other">+%1$d ਹੋਰ</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">ਤੁਹਾਡੇ ਸੰਪਰਕਾਂ ਤੋਂ ਲੋਕ ਸੁਝਾਓ</string>
+    <string name="attendee_invalid_email">ਪੂਰਾ ਈਮੇਲ ਪਤਾ ਦਾਖਲ ਕਰੋ</string>
+    <string name="attendee_add_typed">\"%1$s\" ਸ਼ਾਮਲ ਕਰੋ</string>
+    <string name="attendee_scheduling_unavailable">ਇਸ ਖਾਤੇ \'ਤੇ ਲੋਕਾਂ ਨੂੰ ਸੱਦਾ ਦੇਣਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ</string>
+    <string name="action_save_and_notify">ਸੰਭਾਲੋ ਅਤੇ ਸੂਚਿਤ ਕਰੋ</string>
     <string name="attendee_status_pending">ਉਡੀਕ ਵਿੱਚ</string>
     <string name="inbox_empty_caught_up">ਸਭ ਨਿਪਟਾ ਲਿਆ</string>
     <string name="inbox_organizer_suffix">(ਪ੍ਰਬੰਧਕ)</string>

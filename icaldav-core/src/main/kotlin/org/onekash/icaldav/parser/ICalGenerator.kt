@@ -16,6 +16,7 @@ import org.onekash.icaldav.model.ITipMethod
 import org.onekash.icaldav.model.ImageDisplay
 import org.onekash.icaldav.model.Organizer
 import org.onekash.icaldav.model.Transparency
+import org.onekash.icaldav.util.CalAddress
 import org.onekash.icaldav.util.DurationUtils
 import java.time.Instant
 import java.time.ZoneOffset
@@ -172,9 +173,15 @@ class ICalGenerator(
             // RFC 6638 §7.1/§7.2: a METHOD line means this is a scheduling
             // message, so SCHEDULE-AGENT / SCHEDULE-FORCE-SEND must be stripped
             // from ORGANIZER and ATTENDEE. Plain storage PUTs (no METHOD) keep them.
+            // This is derived from the raw METHOD string, not the parsed enum, so
+            // an unrecognized/extension METHOD still counts as a scheduling message.
             val isSchedulingMessage = calendar.method != null
+            // The parsed iTIP method drives per-method property constraints
+            // (RFC 5546 §3.2): the minimal REFRESH set and the VALARM presence
+            // rules. Null for storage PUTs and for unrecognized METHOD strings.
+            val itipMethod = calendar.method?.let { ITipMethod.fromString(it) }
 
-            calendar.events.forEach { appendVEvent(it, preserveDtstamp, isSchedulingMessage) }
+            calendar.events.forEach { appendVEvent(it, preserveDtstamp, isSchedulingMessage, itipMethod) }
             calendar.todos.forEach { appendVTodo(it, preserveDtstamp, isSchedulingMessage) }
             calendar.journals.forEach { appendVJournal(it, preserveDtstamp, isSchedulingMessage) }
 
@@ -185,7 +192,8 @@ class ICalGenerator(
     private fun StringBuilder.appendVEvent(
         event: ICalEvent,
         preserveDtstamp: Boolean = false,
-        isSchedulingMessage: Boolean = false
+        isSchedulingMessage: Boolean = false,
+        itipMethod: ITipMethod? = null
     ) {
         crlfLine("BEGIN:VEVENT")
 
@@ -197,6 +205,20 @@ class ICalGenerator(
             crlfLine("DTSTAMP:${event.dtstamp.toICalString()}")
         } else {
             crlfLine("DTSTAMP:${formatDtStamp()}")
+        }
+
+        // RFC 5546 §3.2.6: a METHOD:REFRESH VEVENT is a minimal request from an
+        // attendee for the latest version. Only UID, DTSTAMP, ORGANIZER, the
+        // requesting ATTENDEE (and RECURRENCE-ID for an instance) are permitted;
+        // every other property has presence 0. ICalEvent's non-null DTSTART /
+        // STATUS / SEQUENCE would otherwise be emitted unconditionally below, so
+        // REFRESH is handled as a dedicated minimal path.
+        if (itipMethod == ITipMethod.REFRESH) {
+            event.recurrenceId?.let { recid -> appendDateTimeProperty("RECURRENCE-ID", recid) }
+            event.organizer?.let { org -> crlfLine(formatOrganizer(org, isSchedulingMessage)) }
+            event.attendees.forEach { att -> crlfLine(formatAttendee(att, isSchedulingMessage)) }
+            crlfLine("END:VEVENT")
+            return
         }
 
         // DTSTART with timezone
@@ -317,9 +339,14 @@ class ICalGenerator(
             crlfLine(formatAttendee(att, isSchedulingMessage))
         }
 
-        // VALARMs
-        event.alarms.forEach { alarm ->
-            appendVAlarm(alarm)
+        // VALARMs. RFC 5546 §3.2.3 (REPLY) and §3.2.5 (CANCEL) set VALARM
+        // presence to 0; REQUEST/ADD/PUBLISH permit it (0+). Skip alarms only on
+        // the two methods that forbid them so the organizer's reminders are not
+        // leaked into a reply or cancellation.
+        if (itipMethod != ITipMethod.REPLY && itipMethod != ITipMethod.CANCEL) {
+            event.alarms.forEach { alarm ->
+                appendVAlarm(alarm)
+            }
         }
 
         // Created/Last-Modified
@@ -543,7 +570,7 @@ class ICalGenerator(
         // Note: SCHEDULE-STATUS is server-generated, typically not output on requests
 
         val paramStr = if (params.isNotEmpty()) ";${params.joinToString(";")}" else ""
-        return "ORGANIZER$paramStr:mailto:${organizer.email}"
+        return "ORGANIZER$paramStr:${CalAddress.format(organizer.email)}"
     }
 
     /**
@@ -599,7 +626,7 @@ class ICalGenerator(
         // Note: SCHEDULE-STATUS is server-generated, typically not output on requests
 
         val paramStr = if (params.isNotEmpty()) ";${params.joinToString(";")}" else ""
-        return "ATTENDEE$paramStr:mailto:${attendee.email}"
+        return "ATTENDEE$paramStr:${CalAddress.format(attendee.email)}"
     }
 
     // ============ RFC 7986 Property Generation ============
@@ -950,7 +977,7 @@ class ICalGenerator(
                 organizer.name?.let { orgParams.add("CN=$it") }
                 organizer.sentBy?.let { orgParams.add("SENT-BY=\"mailto:$it\"") }
                 val orgParamStr = if (orgParams.isNotEmpty()) ";${orgParams.joinToString(";")}" else ""
-                crlfLine("ORGANIZER$orgParamStr:mailto:${organizer.email}")
+                crlfLine("ORGANIZER$orgParamStr:${CalAddress.format(organizer.email)}")
 
                 // Attendees
                 attendees.forEach { att ->
@@ -958,7 +985,7 @@ class ICalGenerator(
                     att.name?.let { attParams.add("CN=$it") }
                     attParams.add("PARTSTAT=${att.partStat.toICalString()}")
                     val attParamStr = if (attParams.isNotEmpty()) ";${attParams.joinToString(";")}" else ""
-                    crlfLine("ATTENDEE$attParamStr:mailto:${att.email}")
+                    crlfLine("ATTENDEE$attParamStr:${CalAddress.format(att.email)}")
                 }
 
                 crlfLine("END:VFREEBUSY")

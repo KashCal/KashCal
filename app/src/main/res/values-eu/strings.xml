@@ -59,6 +59,8 @@
     <string name="action_confirm">Berretsi</string>
     <string name="action_discard">Baztertu</string>
     <string name="action_dismiss">Baztertu</string>
+    <string name="action_allow">Eman</string>
+    <string name="action_no_thanks">Ez, eskerrik asko</string>
     <string name="action_show_all">Dena erakutsi</string>
     <string name="action_connect">Konektatu</string>
     <string name="action_duplicate">Bikoiztu</string>
@@ -455,8 +457,6 @@
     <string name="account_detail_cd_show_password">Pasahitza erakutsi</string>
     <string name="account_detail_cd_hide_password">Pasahitza ezkutatu</string>
 
-    <string name="sync_failure_notification_title">Sinkronizazio-arazoa %1$s(e)kin</string>
-    <string name="sync_failure_notification_text">Egutegiaren sinkronizazioak %1$d aldiz huts egin du</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Kontuaren izena aldatu</string>
@@ -862,6 +862,7 @@
     <string name="sync_notification_expired_title">Sinkronizazio-aldaketak iraungi dira</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s egutegiko %1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d egutegi sinkronizatu da</item>
@@ -1109,6 +1110,18 @@
     <string name="attendee_status_tentative">Behin-behinekoa</string>
     <string name="attendee_status_delegated">Eskuordetua</string>
     <string name="attendee_status_pending">Zain</string>
+    <string name="attendee_picker_title">Gehitu parte-hartzaileak</string>
+    <string name="attendee_pick_add_people">Gehitu parte-hartzaileak</string>
+    <string name="attendee_pick_from_contacts">Izena edo e-posta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d gehiago</item>
+        <item quantity="other">+%1$d gehiago</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Iradoki jendea zure kontaktuetatik</string>
+    <string name="attendee_invalid_email">Idatzi helbide elektroniko oso bat</string>
+    <string name="attendee_add_typed">Gehitu \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ezin da jenderik gonbidatu kontu honetan</string>
+    <string name="action_save_and_notify">Gorde eta jakinarazi</string>
     <string name="inbox_empty_caught_up">Dena egunean</string>
     <string name="inbox_organizer_suffix">(antolatzailea)</string>
     <string name="menu_invites">Gonbidapenak</string>

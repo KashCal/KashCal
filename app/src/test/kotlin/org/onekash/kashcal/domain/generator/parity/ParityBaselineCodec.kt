@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
  * per engine). Format chosen for readable `git diff`s — engine version bumps
  * show as per-case hunks.
  *
- * Schema (per tracker review finding F5):
+ * Schema:
  *   {
  *     "engine": "lib-recur",
  *     "cases": [

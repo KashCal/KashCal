@@ -35,6 +35,8 @@
     <string name="action_close">Închide</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Nu acum</string>
+    <string name="action_allow">Permite</string>
+    <string name="action_no_thanks">Nu, mulțumesc</string>
     <string name="action_sign_in">Conectare</string>
     <string name="action_select">Selectează</string>
     <string name="action_show_password">Arată parola</string>
@@ -482,8 +484,6 @@
     <string name="account_detail_cd_show_password">Arată parola</string>
     <string name="account_detail_cd_hide_password">Ascunde parola</string>
 
-    <string name="sync_failure_notification_title">Problemă sincronizare cu %1$s</string>
-    <string name="sync_failure_notification_text">Sincronizarea calendarului a eșuat de %1$d ori</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Redenumește contul</string>
@@ -891,6 +891,7 @@
     <string name="sync_notification_expired_title">Modificările de sincronizare au expirat</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s nu au putut fi sincronizate după 30 de zile. Se va folosi versiunea serverului. Sincronizare forțată pentru a reîncerca.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s din %2$s nu au putut fi sincronizate după 30 de zile. Se va folosi versiunea serverului. Sincronizare forțată pentru a reîncerca.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d calendar sincronizat</item>
@@ -1174,6 +1175,19 @@
     <string name="attendee_status_accepted">Acceptat</string>
     <string name="attendee_status_declined">Refuzat</string>
     <string name="attendee_status_tentative">Provizoriu</string>
+    <string name="attendee_picker_title">Adaugă participanți</string>
+    <string name="attendee_pick_add_people">Adaugă participanți</string>
+    <string name="attendee_pick_from_contacts">Nume sau e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+încă %1$d</item>
+        <item quantity="few">+încă %1$d</item>
+        <item quantity="other">+încă %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Sugerează persoane din contacte</string>
+    <string name="attendee_invalid_email">Introdu o adresă de e-mail completă</string>
+    <string name="attendee_add_typed">Adaugă \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Invitarea persoanelor nu este disponibilă pe acest cont</string>
+    <string name="action_save_and_notify">Salvează și notifică</string>
     <string name="attendee_status_delegated">Delegat</string>
     <string name="attendee_status_pending">În așteptare</string>
     <string name="inbox_empty_caught_up">Totul la zi</string>

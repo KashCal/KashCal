@@ -15,6 +15,10 @@ import org.onekash.kashcal.error.CalendarError
  */
 class FakeCalendarProviderRepository : CalendarProviderRepository {
 
+    private companion object {
+        const val ONE_DAY_MS = 24L * 60L * 60L * 1000L
+    }
+
     var calendars: List<DeviceCalendar> = emptyList()
     var instances: List<DeviceCalendarInstance> = emptyList()
     var shouldThrowSecurityException: Boolean = false
@@ -22,6 +26,15 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     // Write operation configuration
     var writeFailure: CalendarError.DeviceCalendar? = null
     var createdEventId: Long = 100L
+
+    /**
+     * 1-based index of a createEvent call that should fail with a generic
+     * write error, leaving earlier/later calls to succeed. -1 disables it.
+     * Use this to exercise "one event in a batch fails, the rest continue"
+     * without failing every write the way [writeFailure] does.
+     */
+    var failCreateOnCall: Int = -1
+    private var createCallCount = 0
 
     // Operation tracking
     val createdEvents = mutableListOf<CreatedEvent>()
@@ -50,7 +63,18 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     data class CreatedEvent(
         val calendarId: Long,
         val title: String,
-        val resultId: Long
+        val resultId: Long,
+        val description: String? = null,
+        val location: String? = null,
+        val startTs: Long = 0L,
+        val endTs: Long? = null,
+        val isAllDay: Boolean = false,
+        val rrule: String? = null,
+        val duration: String? = null,
+        val timezone: String = "",
+        val reminders: List<Int> = emptyList(),
+        val availability: Int = 0,
+        val eventColor: Int? = null,
     )
 
     data class DeviceTitleRow(
@@ -201,7 +225,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         ensureCalendarVisibleCalls.add(calendarId)
     }
 
-    // ==================== Write Operations (Phase 3) ====================
+    // ==================== Write Operations ====================
 
     override suspend fun createEvent(
         calendarId: Long,
@@ -218,13 +242,34 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         availability: Int,
         eventColor: Int?
     ): Result<Long> {
+        createCallCount++
+        if (createCallCount == failCreateOnCall) {
+            return Result.failure(RuntimeException("Write failed"))
+        }
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
         val eventId = createdEventId++
-        createdEvents.add(CreatedEvent(calendarId, title, eventId))
+        createdEvents.add(
+            CreatedEvent(
+                calendarId = calendarId,
+                title = title,
+                resultId = eventId,
+                description = description,
+                location = location,
+                startTs = startTs,
+                endTs = endTs,
+                isAllDay = isAllDay,
+                rrule = rrule,
+                duration = duration,
+                timezone = timezone,
+                reminders = reminders,
+                availability = availability,
+                eventColor = eventColor,
+            )
+        )
         return Result.success(eventId)
     }
 
@@ -379,6 +424,17 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return deviceEvents[eventId]
     }
 
+    override suspend fun getNextOccurrenceStart(eventId: Long, afterMs: Long): Long? {
+        if (shouldThrowSecurityException) return null
+        // Mirror the real impl's lower-bound pad (afterMs - 1 day) so today's all-day or
+        // already-started occurrence is still surfaced. See AndroidCalendarProviderRepository.
+        val lowerBound = afterMs - ONE_DAY_MS
+        return instances
+            .filter { it.eventId == eventId && it.startTs >= lowerBound }
+            .minByOrNull { it.startTs }
+            ?.startTs
+    }
+
     override suspend fun isEventActive(eventId: Long): Boolean {
         if (shouldThrowSecurityException) return false
         return eventId in activeEventIds
@@ -420,7 +476,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return exceptionEvents[masterEventId to normalizedTime]
     }
 
-    // ==================== Reminder Operations (Phase 4) ====================
+    // ==================== Reminder Operations ====================
 
     /** Pre-configured upcoming reminder to return, or null */
     var nextUpcomingReminder: UpcomingDeviceReminder? = null
@@ -448,6 +504,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         instances = emptyList()
         shouldThrowSecurityException = false
         writeFailure = null
+        failCreateOnCall = -1
+        createCallCount = 0
         createdEventId = 100L
         createdEvents.clear()
         updatedEventIds.clear()

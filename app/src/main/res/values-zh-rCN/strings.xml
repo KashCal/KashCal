@@ -36,6 +36,8 @@
     <string name="action_close">关闭</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">以后再说</string>
+    <string name="action_allow">允许</string>
+    <string name="action_no_thanks">不用了</string>
     <string name="action_sign_in">登录</string>
     <string name="action_select">选择</string>
     <string name="action_show_password">显示密码</string>
@@ -412,8 +414,6 @@
     <string name="account_detail_cd_show_password">显示密码</string>
     <string name="account_detail_cd_hide_password">隐藏密码</string>
 
-    <string name="sync_failure_notification_title">%1$s 同步问题</string>
-    <string name="sync_failure_notification_text">日历同步已失败 %1$d 次</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">重命名账户</string>
@@ -758,6 +758,7 @@
     <string name="sync_notification_expired_title">同步更改已过期</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s在30天后仍无法同步。将使用服务器版本。请尝试强制同步。</string>
+    <string name="sync_notification_expired_content_calendar">%2$s中的%1$s在30天后仍无法同步。将使用服务器版本。请尝试强制同步。</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">已同步%1$d个日历</item>
@@ -1000,6 +1001,17 @@
     <string name="label_attendees">参与者</string>
     <string name="attendee_you_marker">我</string>
     <string name="attendee_organizer_pill">组织者</string>
+    <string name="attendee_picker_title">添加参与者</string>
+    <string name="attendee_pick_add_people">添加参与者</string>
+    <string name="attendee_pick_from_contacts">姓名或电子邮件</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d人</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">从通讯录推荐联系人</string>
+    <string name="attendee_invalid_email">请输入完整的邮箱地址</string>
+    <string name="attendee_add_typed">添加\"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">此账户无法邀请成员</string>
+    <string name="action_save_and_notify">保存并通知</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d 个</item>
     </plurals>

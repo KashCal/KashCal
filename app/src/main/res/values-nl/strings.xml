@@ -35,6 +35,8 @@
     <string name="action_cancel">Annuleren</string>
     <string name="action_close">Sluiten</string>
     <string name="action_ok">OK</string>
+    <string name="action_allow">Toestaan</string>
+    <string name="action_no_thanks">Nee, bedankt</string>
     <string name="action_not_now">Niet nu</string>
     <string name="action_sign_in">Inloggen</string>
     <string name="action_select">Selecteren</string>
@@ -436,8 +438,6 @@
     <string name="account_detail_cd_show_password">Wachtwoord tonen</string>
     <string name="account_detail_cd_hide_password">Wachtwoord verbergen</string>
 
-    <string name="sync_failure_notification_title">Synchronisatieprobleem met %1$s</string>
-    <string name="sync_failure_notification_text">Agendasynchronisatie is %1$d keer mislukt</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Account hernoemen</string>
@@ -814,6 +814,7 @@
     <string name="sync_notification_expired_title">Synchronisatiewijzigingen verlopen</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s konden niet worden gesynchroniseerd na 30 dagen. De serverversie wordt gebruikt. Forceer synchronisatie om opnieuw te proberen.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s in %2$s konden niet worden gesynchroniseerd na 30 dagen. De serverversie wordt gebruikt. Forceer synchronisatie om opnieuw te proberen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d agenda gesynchroniseerd</item>
@@ -1101,6 +1102,18 @@
     <string name="attendee_section_pending">In afwachting</string>
     <string name="attendee_section_declined">Geweigerd</string>
     <string name="attendee_section_delegated">Gedelegeerd</string>
+    <string name="attendee_picker_title">Deelnemers toevoegen</string>
+    <string name="attendee_pick_add_people">Deelnemers toevoegen</string>
+    <string name="attendee_pick_from_contacts">Naam of e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d meer</item>
+        <item quantity="other">+%1$d meer</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Mensen uit je contacten voorstellen</string>
+    <string name="attendee_invalid_email">Voer een volledig e-mailadres in</string>
+    <string name="attendee_add_typed">\"%1$s\" toevoegen</string>
+    <string name="attendee_scheduling_unavailable">Personen uitnodigen is niet beschikbaar voor dit account</string>
+    <string name="action_save_and_notify">Opslaan &amp; melden</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alles bijgewerkt</string>
     <string name="inbox_organizer_suffix">(organisator)</string>

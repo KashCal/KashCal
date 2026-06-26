@@ -17,8 +17,7 @@ import org.onekash.kashcal.R
  * Renders nothing when [models] is empty.
  *
  * - Hosting (organizer): 👑 N · Hosting
- * - Off-list: 👥 N (lavender, count only — same tertiaryContainer as
- *   the other off-list surfaces)
+ * - Off-list: 👥 N (count only, no status label)
  * - On-list: 👥 N · {Going|Pending|Declined|Tentative}
  */
 @Composable

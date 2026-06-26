@@ -15,7 +15,7 @@ import java.time.LocalTime
 import java.util.Locale
 
 /**
- * Tests for AvailabilityFormatter — Chunk 3 of the share-availability TDD plan.
+ * Tests for AvailabilityFormatter.
  *
  * Pure formatter; uses Robolectric only for context.getString string-resource lookup.
  */

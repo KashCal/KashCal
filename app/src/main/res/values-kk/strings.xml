@@ -59,6 +59,8 @@
     <string name="action_confirm">Растау</string>
     <string name="action_discard">Қабылдамау</string>
     <string name="action_dismiss">Жабу</string>
+    <string name="action_allow">Рұқсат ету</string>
+    <string name="action_no_thanks">Жоқ, рақмет</string>
     <string name="action_show_all">Барлығын көрсету</string>
     <string name="action_connect">Қосылу</string>
     <string name="action_duplicate">Көшірмелеу</string>
@@ -469,8 +471,6 @@
     <string name="account_detail_cd_show_password">Құпия сөзді көрсету</string>
     <string name="account_detail_cd_hide_password">Құпия сөзді жасыру</string>
 
-    <string name="sync_failure_notification_title">%1$s синхрондау мәселесі</string>
-    <string name="sync_failure_notification_text">Күнтізбе синхрондауы %1$d рет сәтсіз болды</string>
 
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Есептік жазба атын өзгерту</string>
@@ -844,6 +844,7 @@
     <string name="sync_notification_expired_title">Синхрондау өзгерістерінің мерзімі аяқталды</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s күнтізбесіндегі %1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d күнтізбе синхрондалды</item>
@@ -1121,6 +1122,18 @@
     <string name="attendee_status_tentative">Шамамен</string>
     <string name="attendee_status_delegated">Тапсырылды</string>
     <string name="attendee_status_pending">Күтілуде</string>
+    <string name="attendee_picker_title">Қатысушыларды қосу</string>
+    <string name="attendee_pick_add_people">Қатысушыларды қосу</string>
+    <string name="attendee_pick_from_contacts">Аты немесе электрондық пошта</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d тағы</item>
+        <item quantity="other">+%1$d тағы</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Контактілеріңізден адамдарды ұсыну</string>
+    <string name="attendee_invalid_email">Толық электрондық пошта мекенжайын енгізіңіз</string>
+    <string name="attendee_add_typed">\"%1$s\" қосу</string>
+    <string name="attendee_scheduling_unavailable">Бұл тіркелгіде адамдарды шақыру қолжетімсіз</string>
+    <string name="action_save_and_notify">Сақтау &amp; хабарлау</string>
     <string name="inbox_empty_caught_up">Барлығы өңделді</string>
     <string name="inbox_organizer_suffix">(ұйымдастырушы)</string>
     <string name="menu_invites">Шақырулар</string>

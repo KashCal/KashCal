@@ -18,8 +18,8 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.viewmodels.ShareAvailabilityUiState
 
 /**
- * Compose UI tests for ShareAvailabilitySheet — Chunk 6 of the share-availability
- * TDD plan. Drives the stateless variant (ShareAvailabilitySheetContent) so we
+ * Compose UI tests for ShareAvailabilitySheet. Drives the stateless variant
+ * (ShareAvailabilitySheetContent) so we
  * don't need a real ViewModel or ModalBottomSheet host in the test harness.
  */
 @RunWith(AndroidJUnit4::class)

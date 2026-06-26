@@ -1,6 +1,8 @@
 package org.onekash.kashcal.util
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -52,5 +54,49 @@ class AddressNormalizerTest {
     @Test
     fun `unrecognized form is trimmed and returned`() {
         assertEquals("unknown-form", AddressNormalizer.canonical("  unknown-form  "))
+    }
+
+    // ===== isEmailShaped — gates mailto-emittable ORGANIZER/ATTENDEE addresses =====
+
+    @Test
+    fun `isEmailShaped accepts a plain email`() {
+        assertTrue(AddressNormalizer.isEmailShaped("alice@example.com"))
+    }
+
+    @Test
+    fun `isEmailShaped accepts a mailto-prefixed email (strips first)`() {
+        assertTrue(AddressNormalizer.isEmailShaped("mailto:alice@example.com"))
+        assertTrue(AddressNormalizer.isEmailShaped("MAILTO:Alice@Example.COM"))
+    }
+
+    @Test
+    fun `isEmailShaped accepts plus-addressing and subdomains`() {
+        assertTrue(AddressNormalizer.isEmailShaped("user+tag@mail.example.co.uk"))
+    }
+
+    @Test
+    fun `isEmailShaped rejects a dotless internal host`() {
+        // The exact gap the review flagged: user@localhost / testuser1@radicale
+        // must NOT be emitted as a mailto ORGANIZER (no TLD dot).
+        assertFalse(AddressNormalizer.isEmailShaped("user@localhost"))
+        assertFalse(AddressNormalizer.isEmailShaped("testuser1@radicale"))
+    }
+
+    @Test
+    fun `isEmailShaped rejects bare login`() {
+        assertFalse(AddressNormalizer.isEmailShaped("alice"))
+    }
+
+    @Test
+    fun `isEmailShaped rejects urn and principal-path forms`() {
+        assertFalse(AddressNormalizer.isEmailShaped("urn:uuid:123456789"))
+        assertFalse(AddressNormalizer.isEmailShaped("/123/principal/"))
+    }
+
+    @Test
+    fun `isEmailShaped rejects empty and whitespace and bare prefix`() {
+        assertFalse(AddressNormalizer.isEmailShaped(""))
+        assertFalse(AddressNormalizer.isEmailShaped("   "))
+        assertFalse(AddressNormalizer.isEmailShaped("mailto:"))
     }
 }
