@@ -87,6 +87,14 @@ object PreferencesKeys {
     /** Event title autocomplete from past events (default true). */
     val TITLE_SUGGESTIONS_ENABLED = booleanPreferencesKey("title_suggestions_enabled")
 
+    // ========== Privacy ==========
+
+    /**
+     * App lock enabled — require device biometric / screen-lock to reveal the UI
+     * on reopen (default false). Veils visibility only; not a secret, stored plain.
+     */
+    val APP_LOCK_ENABLED = booleanPreferencesKey("app_lock_enabled")
+
     // ========== Display Settings ==========
 
     /** Show auto-detected emojis in event titles */

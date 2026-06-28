@@ -146,6 +146,18 @@
     <string name="settings_section_notifications">දැනුම්දීම්</string>
     <string name="settings_section_sync">සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
+    <string name="settings_section_privacy">පෞද්ගලිකත්වය</string>
+    <string name="app_lock_label">යෙදුම් අගුල</string>
+    <string name="app_lock_subtitle_off">KashCal විවෘත කිරීමට අගුළු හැරීම අවශ්‍ය කරන්න</string>
+    <string name="app_lock_subtitle_on">ඇඟිලි සලකුණ, මුහුණ හෝ තිර අගුලෙන් අගුළු හරින්න</string>
+    <string name="app_lock_veil_locked">අගුළු දමා ඇත</string>
+    <string name="app_lock_veil_unlock">අගුළු හරින්න</string>
+    <string name="app_lock_veil_footnote">ඇඟිලි සලකුණ, මුහුණ හෝ තිර අගුල</string>
+    <string name="app_lock_prompt_title">ඔබේ සිදුවීම් බැලීමට අගුළු හරින්න</string>
+    <string name="app_lock_enroll_message">යෙදුම් අගුල භාවිතා කිරීමට පද්ධති සැකසුම් තුළ ඇඟිලි සලකුණක්, මුහුණක් හෝ තිර අගුලක් සකසන්න.</string>
+    <string name="app_lock_unsupported_message">මෙම උපාංගයට යෙදුම් අගුල භාවිතා කළ නොහැක.</string>
+    <string name="app_lock_enabled_message">යෙදුම් අගුල සක්‍රියයි. ඔබ ඊළඟ වර KashCal විවෘත කරන විට එය ඔබෙන් සත්‍යාපනය කරන ලෙස ඉල්ලයි.</string>
+    <string name="app_lock_disable_prompt_title">යෙදුම් අගුල අක්‍රිය කිරීමට අගුළු හරින්න</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">සැකසුම් උපස්ථ කරන්න</string>
@@ -1085,6 +1097,7 @@
     <string name="attendee_invalid_email">සම්පූර්ණ ඊමේල් ලිපිනයක් ඇතුළත් කරන්න</string>
     <string name="attendee_add_typed">\"%1$s\" එක් කරන්න</string>
     <string name="attendee_scheduling_unavailable">මෙම ගිණුමේ පුද්ගලයින් ආරාධනා කිරීම ලබා ගත නොහැක</string>
+    <string name="device_attendee_local_no_delivery">මෙම දින දර්ශනයට ආරාධනා යැවිය නොහැක. අමුත්තන් සුරැකේ නමුත් දැනුම් දෙනු නොලැබේ.</string>
     <string name="action_save_and_notify">සුරකින්න සහ දැනුම් දෙන්න</string>
     <string name="attendee_status_pending">පොරොත්තුවේ</string>
     <string name="inbox_empty_caught_up">සියල්ල අවසන්</string>

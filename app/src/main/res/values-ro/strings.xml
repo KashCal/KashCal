@@ -173,6 +173,20 @@
     <string name="settings_section_notifications">Notificări</string>
     <string name="settings_section_sync">Sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
+    <string name="settings_section_privacy">Confidențialitate</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Blocare aplicație</string>
+    <string name="app_lock_subtitle_off">Solicită deblocarea pentru a deschide KashCal</string>
+    <string name="app_lock_subtitle_on">Deblochează cu amprentă, față sau blocarea ecranului</string>
+    <string name="app_lock_veil_locked">Blocat</string>
+    <string name="app_lock_veil_unlock">Deblochează</string>
+    <string name="app_lock_veil_footnote">Amprentă, față sau blocarea ecranului</string>
+    <string name="app_lock_prompt_title">Deblochează pentru a-ți vedea evenimentele</string>
+    <string name="app_lock_enroll_message">Configurează o amprentă, o față sau o blocare a ecranului în setările sistemului pentru a folosi Blocarea aplicației.</string>
+    <string name="app_lock_unsupported_message">Acest dispozitiv nu poate folosi Blocarea aplicației.</string>
+    <string name="app_lock_enabled_message">Blocarea aplicației este activă. KashCal îți va cere autentificarea data viitoare când o deschizi.</string>
+    <string name="app_lock_disable_prompt_title">Deblochează pentru a dezactiva Blocarea aplicației</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Salvează setările</string>
@@ -1187,6 +1201,7 @@
     <string name="attendee_invalid_email">Introdu o adresă de e-mail completă</string>
     <string name="attendee_add_typed">Adaugă \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Invitarea persoanelor nu este disponibilă pe acest cont</string>
+    <string name="device_attendee_local_no_delivery">Acest calendar nu poate trimite invitații. Invitații sunt salvați, dar nu vor fi notificați.</string>
     <string name="action_save_and_notify">Salvează și notifică</string>
     <string name="attendee_status_delegated">Delegat</string>
     <string name="attendee_status_pending">În așteptare</string>

@@ -124,6 +124,20 @@
     <string name="settings_section_notifications">Notifikationer</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Sikkerhedskopi &amp; gendannelse</string>
+    <string name="settings_section_privacy">Privatliv</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">App-lås</string>
+    <string name="app_lock_subtitle_off">Kræv oplåsning for at åbne KashCal</string>
+    <string name="app_lock_subtitle_on">Lås op med fingeraftryk, ansigt eller skærmlås</string>
+    <string name="app_lock_veil_locked">Låst</string>
+    <string name="app_lock_veil_unlock">Lås op</string>
+    <string name="app_lock_veil_footnote">Fingeraftryk, ansigt eller skærmlås</string>
+    <string name="app_lock_prompt_title">Lås op for at se dine begivenheder</string>
+    <string name="app_lock_enroll_message">Opsæt et fingeraftryk, ansigt eller en skærmlås i systemindstillingerne for at bruge App-lås.</string>
+    <string name="app_lock_unsupported_message">Denne enhed kan ikke bruge App-lås.</string>
+    <string name="app_lock_enabled_message">App-lås er slået til. KashCal beder dig om at godkende næste gang, du åbner appen.</string>
+    <string name="app_lock_disable_prompt_title">Lås op for at slå App-lås fra</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Sikkerhedskopiér indstillinger</string>
@@ -1113,6 +1127,7 @@
     <string name="attendee_invalid_email">Indtast en fuldstændig e-mailadresse</string>
     <string name="attendee_add_typed">Tilføj \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Det er ikke muligt at invitere personer på denne konto</string>
+    <string name="device_attendee_local_no_delivery">Denne kalender kan ikke sende invitationer. Gæster gemmes, men får ingen besked.</string>
     <string name="action_save_and_notify">Gem &amp; underret</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alt er ajour</string>

@@ -143,6 +143,18 @@
     <string name="settings_section_notifications">Oznámenia</string>
     <string name="settings_section_sync">Synchronizácia</string>
     <string name="settings_section_data">Záloha a obnova</string>
+    <string name="settings_section_privacy">Súkromie</string>
+    <string name="app_lock_label">Zámka aplikácie</string>
+    <string name="app_lock_subtitle_off">Vyžadovať odomknutie na otvorenie KashCal</string>
+    <string name="app_lock_subtitle_on">Odomknite odtlačkom prsta, tvárou alebo zámkou obrazovky</string>
+    <string name="app_lock_veil_locked">Uzamknuté</string>
+    <string name="app_lock_veil_unlock">Odomknúť</string>
+    <string name="app_lock_veil_footnote">Odtlačok prsta, tvár alebo zámka obrazovky</string>
+    <string name="app_lock_prompt_title">Odomknite na zobrazenie svojich udalostí</string>
+    <string name="app_lock_enroll_message">Nastavte v systémových nastaveniach odtlačok prsta, tvár alebo zámku obrazovky, aby ste mohli použiť zámku aplikácie.</string>
+    <string name="app_lock_unsupported_message">Toto zariadenie nemôže použiť zámku aplikácie.</string>
+    <string name="app_lock_enabled_message">Zámka aplikácie zapnutá. KashCal vás pri ďalšom otvorení požiada o overenie.</string>
+    <string name="app_lock_disable_prompt_title">Odomknite na vypnutie zámky aplikácie</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Zálohovať nastavenia</string>
@@ -1174,6 +1186,7 @@
     <string name="attendee_invalid_email">Zadajte úplnú e-mailovú adresu</string>
     <string name="attendee_add_typed">Pridať \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Pozývanie osôb nie je v tomto účte dostupné</string>
+    <string name="device_attendee_local_no_delivery">Tento kalendár nemôže odosielať pozvánky. Hostia sa uložia, ale nebudú upozornení.</string>
     <string name="action_save_and_notify">Uložiť a upozorniť</string>
     <string name="invitees_summary_you_alone">Ty</string>
     <plurals name="invitees_summary_you_organizing">

@@ -172,6 +172,20 @@
     <string name="settings_section_notifications">Jakinarazpenak</string>
     <string name="settings_section_sync">Sinkronizazioa</string>
     <string name="settings_section_data">Babeskopia eta leheneratzea</string>
+    <string name="settings_section_privacy">Pribatutasuna</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Aplikazioaren blokeoa</string>
+    <string name="app_lock_subtitle_off">Desblokeatzea eskatu KashCal irekitzeko</string>
+    <string name="app_lock_subtitle_on">Desblokeatu hatz-markarekin, aurpegiarekin edo pantaila-blokeoarekin</string>
+    <string name="app_lock_veil_locked">Blokeatuta</string>
+    <string name="app_lock_veil_unlock">Desblokeatu</string>
+    <string name="app_lock_veil_footnote">Hatz-marka, aurpegia edo pantaila-blokeoa</string>
+    <string name="app_lock_prompt_title">Desblokeatu zure gertaerak ikusteko</string>
+    <string name="app_lock_enroll_message">Konfiguratu hatz-marka, aurpegia edo pantaila-blokeoa sistemaren ezarpenetan aplikazioaren blokeoa erabiltzeko.</string>
+    <string name="app_lock_unsupported_message">Gailu honek ezin du aplikazioaren blokeoa erabili.</string>
+    <string name="app_lock_enabled_message">Aplikazioaren blokeoa aktibatuta. KashCal-ek autentifikatzeko eskatuko dizu hurrengoan irekitzean.</string>
+    <string name="app_lock_disable_prompt_title">Desblokeatu aplikazioaren blokeoa desaktibatzeko</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1121,6 +1135,7 @@
     <string name="attendee_invalid_email">Idatzi helbide elektroniko oso bat</string>
     <string name="attendee_add_typed">Gehitu \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Ezin da jenderik gonbidatu kontu honetan</string>
+    <string name="device_attendee_local_no_delivery">Egutegi honek ezin du gonbidapenik bidali. Gonbidatuak gordetzen dira, baina ez zaie jakinaraziko.</string>
     <string name="action_save_and_notify">Gorde eta jakinarazi</string>
     <string name="inbox_empty_caught_up">Dena egunean</string>
     <string name="inbox_organizer_suffix">(antolatzailea)</string>

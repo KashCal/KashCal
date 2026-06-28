@@ -1,0 +1,2 @@
+• Scheduling on device calendars: add people, RSVP, and add or remove guests on events in Google, Outlook, and other accounts
+• App lock: keep your calendar private behind your fingerprint, face, or screen lock

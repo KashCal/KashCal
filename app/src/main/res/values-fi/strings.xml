@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Ilmoitukset</string>
     <string name="settings_section_sync">Synkronointi</string>
     <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
+    <string name="settings_section_privacy">Yksityisyys</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Sovelluslukko</string>
+    <string name="app_lock_subtitle_off">Vaadi avaaminen KashCalin avaamiseksi</string>
+    <string name="app_lock_subtitle_on">Avaa sormenjäljellä, kasvoilla tai näytön lukituksella</string>
+    <string name="app_lock_veil_locked">Lukittu</string>
+    <string name="app_lock_veil_unlock">Avaa lukitus</string>
+    <string name="app_lock_veil_footnote">Sormenjälki, kasvot tai näytön lukitus</string>
+    <string name="app_lock_prompt_title">Avaa lukitus nähdäksesi tapahtumasi</string>
+    <string name="app_lock_enroll_message">Määritä sormenjälki, kasvot tai näytön lukitus järjestelmäasetuksissa käyttääksesi sovelluslukkoa.</string>
+    <string name="app_lock_unsupported_message">Tämä laite ei voi käyttää sovelluslukkoa.</string>
+    <string name="app_lock_enabled_message">Sovelluslukko on käytössä. KashCal pyytää sinua tunnistautumaan, kun avaat sen seuraavan kerran.</string>
+    <string name="app_lock_disable_prompt_title">Avaa lukitus poistaaksesi sovelluslukon käytöstä</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1151,6 +1165,7 @@
     <string name="attendee_invalid_email">Anna koko sähköpostiosoite</string>
     <string name="attendee_add_typed">Lisää \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Ihmisten kutsuminen ei ole käytettävissä tällä tilillä</string>
+    <string name="device_attendee_local_no_delivery">Tämä kalenteri ei voi lähettää kutsuja. Vieraat tallennetaan, mutta heille ei ilmoiteta.</string>
     <string name="action_save_and_notify">Tallenna ja ilmoita</string>
     <plurals name="reminder_in_days">
         <item quantity="one">%1$d päivän kuluttua</item>

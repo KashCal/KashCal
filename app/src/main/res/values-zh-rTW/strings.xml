@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同步</string>
     <string name="settings_section_data">備份與還原</string>
+    <string name="settings_section_privacy">隱私</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">應用程式鎖</string>
+    <string name="app_lock_subtitle_off">開啟 KashCal 需要解鎖</string>
+    <string name="app_lock_subtitle_on">使用指紋、臉部或螢幕鎖解鎖</string>
+    <string name="app_lock_veil_locked">已鎖定</string>
+    <string name="app_lock_veil_unlock">解鎖</string>
+    <string name="app_lock_veil_footnote">指紋、臉部或螢幕鎖</string>
+    <string name="app_lock_prompt_title">解鎖以查看你的活動</string>
+    <string name="app_lock_enroll_message">請在系統設定中設定指紋、臉部或螢幕鎖，以使用應用程式鎖。</string>
+    <string name="app_lock_unsupported_message">此裝置無法使用應用程式鎖。</string>
+    <string name="app_lock_enabled_message">應用程式鎖已開啟。下次開啟 KashCal 時會要求你驗證身分。</string>
+    <string name="app_lock_disable_prompt_title">解鎖以關閉應用程式鎖</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">使用 Apple 行事曆？</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">請輸入完整的電子郵件地址</string>
     <string name="attendee_add_typed">新增\"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">此帳戶無法邀請成員</string>
+    <string name="device_attendee_local_no_delivery">此行事曆無法傳送邀請。來賓會被儲存，但不會收到通知。</string>
     <string name="action_save_and_notify">儲存並通知</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d 個</item>

@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">Pemberitahuan</string>
     <string name="settings_section_sync">Segerak</string>
     <string name="settings_section_data">Sandaran &amp; Pemulihan</string>
+    <string name="settings_section_privacy">Privasi</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Kunci apl</string>
+    <string name="app_lock_subtitle_off">Perlu buka kunci untuk membuka KashCal</string>
+    <string name="app_lock_subtitle_on">Buka kunci dengan cap jari, wajah atau kunci skrin</string>
+    <string name="app_lock_veil_locked">Berkunci</string>
+    <string name="app_lock_veil_unlock">Buka kunci</string>
+    <string name="app_lock_veil_footnote">Cap jari, wajah atau kunci skrin</string>
+    <string name="app_lock_prompt_title">Buka kunci untuk melihat acara anda</string>
+    <string name="app_lock_enroll_message">Sediakan cap jari, wajah atau kunci skrin dalam tetapan sistem untuk menggunakan Kunci apl.</string>
+    <string name="app_lock_unsupported_message">Peranti ini tidak boleh menggunakan Kunci apl.</string>
+    <string name="app_lock_enabled_message">Kunci apl dihidupkan. KashCal akan meminta anda mengesahkan pada kali seterusnya anda membukanya.</string>
+    <string name="app_lock_disable_prompt_title">Buka kunci untuk mematikan Kunci apl</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Guna Apple Calendar?</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">Masukkan alamat e-mel yang lengkap</string>
     <string name="attendee_add_typed">Tambah \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Menjemput orang tidak tersedia pada akaun ini</string>
+    <string name="device_attendee_local_no_delivery">Kalendar ini tidak boleh menghantar jemputan. Tetamu disimpan tetapi tidak dimaklumkan.</string>
     <string name="action_save_and_notify">Simpan &amp; maklum</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d lagi</item>

@@ -146,6 +146,18 @@
     <string name="settings_section_notifications">सूचनाहरू</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">ब्याकअप &amp; रिस्टोर</string>
+    <string name="settings_section_privacy">गोपनीयता</string>
+    <string name="app_lock_label">एप लक</string>
+    <string name="app_lock_subtitle_off">KashCal खोल्न अनलक आवश्यक बनाउनुहोस्</string>
+    <string name="app_lock_subtitle_on">फिंगरप्रिन्ट, अनुहार वा स्क्रिन लकले अनलक गर्नुहोस्</string>
+    <string name="app_lock_veil_locked">लक गरिएको</string>
+    <string name="app_lock_veil_unlock">अनलक गर्नुहोस्</string>
+    <string name="app_lock_veil_footnote">फिंगरप्रिन्ट, अनुहार वा स्क्रिन लक</string>
+    <string name="app_lock_prompt_title">आफ्ना कार्यक्रमहरू हेर्न अनलक गर्नुहोस्</string>
+    <string name="app_lock_enroll_message">एप लक प्रयोग गर्न प्रणाली सेटिङमा फिंगरप्रिन्ट, अनुहार वा स्क्रिन लक सेटअप गर्नुहोस्।</string>
+    <string name="app_lock_unsupported_message">यो यन्त्रले एप लक प्रयोग गर्न सक्दैन।</string>
+    <string name="app_lock_enabled_message">एप लक सक्रिय छ। तपाईंले अर्को पटक KashCal खोल्दा यसले प्रमाणीकरण गर्न सोध्नेछ।</string>
+    <string name="app_lock_disable_prompt_title">एप लक बन्द गर्न अनलक गर्नुहोस्</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">सेटिङ ब्याकअप गर्नुहोस्</string>
@@ -1085,6 +1097,7 @@
     <string name="attendee_invalid_email">पूरा इमेल ठेगाना प्रविष्ट गर्नुहोस्</string>
     <string name="attendee_add_typed">\"%1$s\" थप्नुहोस्</string>
     <string name="attendee_scheduling_unavailable">यो खातामा मानिसहरू निम्तो दिन उपलब्ध छैन</string>
+    <string name="device_attendee_local_no_delivery">यो पात्रोले निम्तो पठाउन सक्दैन। पाहुनाहरू सुरक्षित गरिन्छन् तर सूचित गरिने छैन।</string>
     <string name="action_save_and_notify">सुरक्षित गर्नुहोस् र सूचित गर्नुहोस्</string>
     <string name="attendee_status_pending">पर्खाइमा</string>
     <string name="inbox_empty_caught_up">सबै सम्पन्न</string>

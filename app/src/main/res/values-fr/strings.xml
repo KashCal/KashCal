@@ -170,6 +170,29 @@
     <string name="settings_section_notifications">Notifications</string>
     <string name="settings_section_sync">Synchronisation</string>
     <string name="settings_section_data">Sauvegarde &amp; restauration</string>
+    <string name="settings_section_privacy">Confidentialité</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <!-- Settings toggle. Keep "KashCal" untranslated. -->
+    <string name="app_lock_label">Verrouillage de l\'app</string>
+    <!-- Subtitle when the lock is off: states what the toggle does. -->
+    <string name="app_lock_subtitle_off">Exiger un déverrouillage pour ouvrir KashCal</string>
+    <!-- Subtitle when the lock is on: names the unlock methods. -->
+    <string name="app_lock_subtitle_on">Déverrouiller avec l\'empreinte, le visage ou le verrouillage d\'écran</string>
+    <!-- Branded lock screen (veil) shown over the app while locked. -->
+    <string name="app_lock_veil_locked">Verrouillée</string>
+    <string name="app_lock_veil_unlock">Déverrouiller</string>
+    <string name="app_lock_veil_footnote">Empreinte, visage ou verrouillage d\'écran</string>
+    <!-- System biometric prompt title (required by the OS). Short; no app name. -->
+    <string name="app_lock_prompt_title">Déverrouiller pour voir vos événements</string>
+    <!-- Shown when the user enables the lock but has no biometric or screen lock set up. -->
+    <string name="app_lock_enroll_message">Configurez une empreinte, le visage ou un verrouillage d\'écran dans les paramètres système pour utiliser le verrouillage de l\'app.</string>
+    <!-- Shown when the device has no hardware/software capable of authenticating. -->
+    <string name="app_lock_unsupported_message">Cet appareil ne peut pas utiliser le verrouillage de l\'app.</string>
+
+    <string name="app_lock_enabled_message">Verrouillage de l\'app activé. KashCal vous demandera de vous authentifier à la prochaine ouverture.</string>
+
+    <string name="app_lock_disable_prompt_title">Déverrouiller pour désactiver le verrouillage de l\'app</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Calendrier Apple ?</string>
@@ -1195,6 +1218,7 @@
     <string name="attendee_invalid_email">Saisissez une adresse e-mail complète</string>
     <string name="attendee_add_typed">Ajouter \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">L\'invitation de personnes n\'est pas disponible sur ce compte</string>
+    <string name="device_attendee_local_no_delivery">Ce calendrier ne peut pas envoyer d\'invitations. Les invités sont enregistrés, mais ne seront pas notifiés.</string>
     <string name="action_save_and_notify">Enregistrer et notifier</string>
     <string name="attendee_sheet_title">Participants</string>
     <plurals name="attendee_count_invited">

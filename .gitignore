@@ -95,3 +95,6 @@ scripts/
 # Locally-downloaded RFC text for spec-audit reproducibility (not shipped)
 rfcs/
 releases/*.apk
+
+# Local stash patch dumps (WIP snapshots, never shipped)
+.stash-archive/

@@ -147,6 +147,18 @@
     <string name="settings_section_notifications">Notifikasi</string>
     <string name="settings_section_sync">Sinkronisasi</string>
     <string name="settings_section_data">Cadangkan &amp; Pulihkan</string>
+    <string name="settings_section_privacy">Privasi</string>
+    <string name="app_lock_label">Kunci aplikasi</string>
+    <string name="app_lock_subtitle_off">Wajibkan buka kunci untuk membuka KashCal</string>
+    <string name="app_lock_subtitle_on">Buka kunci dengan sidik jari, wajah, atau kunci layar</string>
+    <string name="app_lock_veil_locked">Terkunci</string>
+    <string name="app_lock_veil_unlock">Buka kunci</string>
+    <string name="app_lock_veil_footnote">Sidik jari, wajah, atau kunci layar</string>
+    <string name="app_lock_prompt_title">Buka kunci untuk melihat acara Anda</string>
+    <string name="app_lock_enroll_message">Atur sidik jari, wajah, atau kunci layar di pengaturan sistem untuk menggunakan Kunci aplikasi.</string>
+    <string name="app_lock_unsupported_message">Perangkat ini tidak dapat menggunakan Kunci aplikasi.</string>
+    <string name="app_lock_enabled_message">Kunci aplikasi aktif. KashCal akan meminta Anda mengautentikasi saat berikutnya Anda membukanya.</string>
+    <string name="app_lock_disable_prompt_title">Buka kunci untuk menonaktifkan Kunci aplikasi</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Cadangkan pengaturan</string>
@@ -1066,6 +1078,7 @@
     <string name="attendee_invalid_email">Masukkan alamat email lengkap</string>
     <string name="attendee_add_typed">Tambah \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Mengundang orang tidak tersedia di akun ini</string>
+    <string name="device_attendee_local_no_delivery">Kalender ini tidak dapat mengirim undangan. Tamu disimpan tetapi tidak akan diberi tahu.</string>
     <string name="action_save_and_notify">Simpan &amp; beri tahu</string>
     <string name="attendee_status_pending">Menunggu</string>
     <string name="inbox_empty_caught_up">Semua sudah ditangani</string>

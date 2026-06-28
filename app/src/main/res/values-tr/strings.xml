@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Bildirimler</string>
     <string name="settings_section_sync">Eşitleme</string>
     <string name="settings_section_data">Yedekle ve Geri Yükle</string>
+    <string name="settings_section_privacy">Gizlilik</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Uygulama kilidi</string>
+    <string name="app_lock_subtitle_off">KashCal\'i açmak için kilit açma gereksin</string>
+    <string name="app_lock_subtitle_on">Parmak izi, yüz veya ekran kilidiyle aç</string>
+    <string name="app_lock_veil_locked">Kilitli</string>
+    <string name="app_lock_veil_unlock">Kilidi aç</string>
+    <string name="app_lock_veil_footnote">Parmak izi, yüz veya ekran kilidi</string>
+    <string name="app_lock_prompt_title">Etkinliklerinizi görmek için kilidi açın</string>
+    <string name="app_lock_enroll_message">Uygulama kilidini kullanmak için sistem ayarlarında bir parmak izi, yüz veya ekran kilidi ayarlayın.</string>
+    <string name="app_lock_unsupported_message">Bu cihaz Uygulama kilidini kullanamaz.</string>
+    <string name="app_lock_enabled_message">Uygulama kilidi açık. KashCal, bir sonraki açılışınızda kimlik doğrulaması isteyecek.</string>
+    <string name="app_lock_disable_prompt_title">Uygulama kilidini kapatmak için kilidi açın</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Ayarları yedekle</string>
@@ -1139,6 +1153,7 @@
     <string name="attendee_invalid_email">Tam bir e-posta adresi girin</string>
     <string name="attendee_add_typed">\"%1$s\" ekle</string>
     <string name="attendee_scheduling_unavailable">Bu hesapta kişi davet etme kullanılamıyor</string>
+    <string name="device_attendee_local_no_delivery">Bu takvim davetiye gönderemez. Konuklar kaydedilir ancak bilgilendirilmez.</string>
     <string name="action_save_and_notify">Kaydet ve bildir</string>
     <string name="attendee_status_delegated">Devredildi</string>
     <string name="attendee_status_pending">Beklemede</string>

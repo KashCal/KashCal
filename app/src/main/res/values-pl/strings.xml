@@ -143,6 +143,18 @@
     <string name="settings_section_notifications">Powiadomienia</string>
     <string name="settings_section_sync">Synchronizacja</string>
     <string name="settings_section_data">Kopia zapasowa i przywracanie</string>
+    <string name="settings_section_privacy">Prywatność</string>
+    <string name="app_lock_label">Blokada aplikacji</string>
+    <string name="app_lock_subtitle_off">Wymagaj odblokowania, aby otworzyć KashCal</string>
+    <string name="app_lock_subtitle_on">Odblokuj odciskiem palca, twarzą lub blokadą ekranu</string>
+    <string name="app_lock_veil_locked">Zablokowano</string>
+    <string name="app_lock_veil_unlock">Odblokuj</string>
+    <string name="app_lock_veil_footnote">Odcisk palca, twarz lub blokada ekranu</string>
+    <string name="app_lock_prompt_title">Odblokuj, aby zobaczyć swoje wydarzenia</string>
+    <string name="app_lock_enroll_message">Skonfiguruj odcisk palca, twarz lub blokadę ekranu w ustawieniach systemu, aby używać blokady aplikacji.</string>
+    <string name="app_lock_unsupported_message">To urządzenie nie obsługuje blokady aplikacji.</string>
+    <string name="app_lock_enabled_message">Blokada aplikacji włączona. KashCal poprosi o uwierzytelnienie przy następnym otwarciu.</string>
+    <string name="app_lock_disable_prompt_title">Odblokuj, aby wyłączyć blokadę aplikacji</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Utwórz kopię zapasową ustawień</string>
@@ -1205,6 +1217,7 @@
     <string name="attendee_invalid_email">Wpisz pełny adres e-mail</string>
     <string name="attendee_add_typed">Dodaj \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Zapraszanie osób nie jest dostępne na tym koncie</string>
+    <string name="device_attendee_local_no_delivery">Ten kalendarz nie może wysyłać zaproszeń. Goście zostaną zapisani, ale nie otrzymają powiadomienia.</string>
     <string name="action_save_and_notify">Zapisz i powiadom</string>
     <string name="invitees_summary_you_alone">Ty</string>
     <plurals name="invitees_summary_you_organizing">

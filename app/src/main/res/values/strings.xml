@@ -209,6 +209,29 @@
     <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
+    <string name="settings_section_privacy">Privacy</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <!-- Settings toggle. Keep "KashCal" untranslated. -->
+    <string name="app_lock_label">App lock</string>
+    <!-- Subtitle when the lock is off: states what the toggle does. -->
+    <string name="app_lock_subtitle_off">Require unlock to open KashCal</string>
+    <!-- Subtitle when the lock is on: names the unlock methods. -->
+    <string name="app_lock_subtitle_on">Unlock with fingerprint, face, or screen lock</string>
+    <!-- Branded lock screen (veil) shown over the app while locked. -->
+    <string name="app_lock_veil_locked">Locked</string>
+    <string name="app_lock_veil_unlock">Unlock</string>
+    <string name="app_lock_veil_footnote">Fingerprint, face, or screen lock</string>
+    <!-- System biometric prompt title (required by the OS). Short; no app name. -->
+    <string name="app_lock_prompt_title">Unlock to see your events</string>
+    <!-- Shown when the user enables the lock but has no biometric or screen lock set up. -->
+    <string name="app_lock_enroll_message">Set up a fingerprint, face, or screen lock in system settings to use App lock.</string>
+    <!-- Shown when the device has no hardware/software capable of authenticating. -->
+    <string name="app_lock_unsupported_message">This device can\'t use App lock.</string>
+    <!-- Inline confirmation after enabling the lock. Keep "KashCal" untranslated. -->
+    <string name="app_lock_enabled_message">App lock on. KashCal will ask you to authenticate next time you open it.</string>
+    <!-- System biometric prompt title shown when turning the lock OFF (required by the OS). Short; no app name. -->
+    <string name="app_lock_disable_prompt_title">Unlock to turn off App lock</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <!-- Row labels in the Backup &amp; Restore section. Keep "KashCal" and "JSON" untranslated. -->
@@ -1014,6 +1037,8 @@
     <string name="attendee_add_typed">Add \"%1$s\"</string>
     <!-- Inline notice when the signed-in account can\'t send invitations. -->
     <string name="attendee_scheduling_unavailable">Inviting people isn\'t available on this account</string>
+    <!-- Inline notice on a local device calendar: guests can be added but no invitation is sent. -->
+    <string name="device_attendee_local_no_delivery">This calendar can\'t send invitations. Guests are saved but won\'t be notified.</string>
     <!-- Save action relabeled when saving will notify attendees of a scheduling change. -->
     <string name="action_save_and_notify">Save &amp; notify</string>
     <!-- Section header above the group of attendees who accepted. -->

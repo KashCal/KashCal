@@ -146,6 +146,18 @@
     <string name="settings_section_notifications">ਸੂਚਨਾਵਾਂ</string>
     <string name="settings_section_sync">ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
+    <string name="settings_section_privacy">ਪਰਦੇਦਾਰੀ</string>
+    <string name="app_lock_label">ਐਪ ਲਾਕ</string>
+    <string name="app_lock_subtitle_off">KashCal ਖੋਲ੍ਹਣ ਲਈ ਅਣਲਾਕ ਲਾਜ਼ਮੀ ਕਰੋ</string>
+    <string name="app_lock_subtitle_on">ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰੇ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ ਨਾਲ ਅਣਲਾਕ ਕਰੋ</string>
+    <string name="app_lock_veil_locked">ਲਾਕ ਕੀਤਾ</string>
+    <string name="app_lock_veil_unlock">ਅਣਲਾਕ ਕਰੋ</string>
+    <string name="app_lock_veil_footnote">ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰਾ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ</string>
+    <string name="app_lock_prompt_title">ਆਪਣੇ ਸਮਾਗਮ ਵੇਖਣ ਲਈ ਅਣਲਾਕ ਕਰੋ</string>
+    <string name="app_lock_enroll_message">ਐਪ ਲਾਕ ਵਰਤਣ ਲਈ ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰਾ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ ਸੈੱਟਅੱਪ ਕਰੋ।</string>
+    <string name="app_lock_unsupported_message">ਇਹ ਡੀਵਾਈਸ ਐਪ ਲਾਕ ਨਹੀਂ ਵਰਤ ਸਕਦਾ।</string>
+    <string name="app_lock_enabled_message">ਐਪ ਲਾਕ ਚਾਲੂ ਹੈ। ਅਗਲੀ ਵਾਰ ਜਦੋਂ ਤੁਸੀਂ KashCal ਖੋਲ੍ਹੋਗੇ ਤਾਂ ਇਹ ਤੁਹਾਨੂੰ ਪ੍ਰਮਾਣਿਤ ਕਰਨ ਲਈ ਕਹੇਗਾ।</string>
+    <string name="app_lock_disable_prompt_title">ਐਪ ਲਾਕ ਬੰਦ ਕਰਨ ਲਈ ਅਣਲਾਕ ਕਰੋ</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">ਸੈਟਿੰਗਾਂ ਦਾ ਬੈਕਅੱਪ ਲਓ</string>
@@ -1085,6 +1097,7 @@
     <string name="attendee_invalid_email">ਪੂਰਾ ਈਮੇਲ ਪਤਾ ਦਾਖਲ ਕਰੋ</string>
     <string name="attendee_add_typed">\"%1$s\" ਸ਼ਾਮਲ ਕਰੋ</string>
     <string name="attendee_scheduling_unavailable">ਇਸ ਖਾਤੇ \'ਤੇ ਲੋਕਾਂ ਨੂੰ ਸੱਦਾ ਦੇਣਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ</string>
+    <string name="device_attendee_local_no_delivery">ਇਹ ਕੈਲੰਡਰ ਸੱਦੇ ਨਹੀਂ ਭੇਜ ਸਕਦਾ। ਮਹਿਮਾਨ ਸੰਭਾਲੇ ਜਾਂਦੇ ਹਨ ਪਰ ਸੂਚਿਤ ਨਹੀਂ ਕੀਤੇ ਜਾਣਗੇ।</string>
     <string name="action_save_and_notify">ਸੰਭਾਲੋ ਅਤੇ ਸੂਚਿਤ ਕਰੋ</string>
     <string name="attendee_status_pending">ਉਡੀਕ ਵਿੱਚ</string>
     <string name="inbox_empty_caught_up">ਸਭ ਨਿਪਟਾ ਲਿਆ</string>

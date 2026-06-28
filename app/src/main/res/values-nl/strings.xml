@@ -124,6 +124,20 @@
     <string name="settings_section_notifications">Meldingen</string>
     <string name="settings_section_sync">Synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
+    <string name="settings_section_privacy">Privacy</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">App-vergrendeling</string>
+    <string name="app_lock_subtitle_off">Ontgrendelen vereist om KashCal te openen</string>
+    <string name="app_lock_subtitle_on">Ontgrendelen met vingerafdruk, gezicht of schermvergrendeling</string>
+    <string name="app_lock_veil_locked">Vergrendeld</string>
+    <string name="app_lock_veil_unlock">Ontgrendelen</string>
+    <string name="app_lock_veil_footnote">Vingerafdruk, gezicht of schermvergrendeling</string>
+    <string name="app_lock_prompt_title">Ontgrendel om je afspraken te zien</string>
+    <string name="app_lock_enroll_message">Stel in de systeeminstellingen een vingerafdruk, gezicht of schermvergrendeling in om App-vergrendeling te gebruiken.</string>
+    <string name="app_lock_unsupported_message">Dit apparaat kan App-vergrendeling niet gebruiken.</string>
+    <string name="app_lock_enabled_message">App-vergrendeling staat aan. KashCal vraagt je de volgende keer om te verifiëren wanneer je de app opent.</string>
+    <string name="app_lock_disable_prompt_title">Ontgrendel om App-vergrendeling uit te zetten</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Instellingen back-uppen</string>
@@ -1113,6 +1127,7 @@
     <string name="attendee_invalid_email">Voer een volledig e-mailadres in</string>
     <string name="attendee_add_typed">\"%1$s\" toevoegen</string>
     <string name="attendee_scheduling_unavailable">Personen uitnodigen is niet beschikbaar voor dit account</string>
+    <string name="device_attendee_local_no_delivery">Deze agenda kan geen uitnodigingen versturen. Gasten worden opgeslagen, maar niet op de hoogte gebracht.</string>
     <string name="action_save_and_notify">Opslaan &amp; melden</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alles bijgewerkt</string>

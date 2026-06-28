@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.viewmodels
 
 import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
+import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 
 /**
  * Data class for device event edit loading.
@@ -20,5 +21,11 @@ data class DeviceEventEditData(
     /** Calendar color for form picker. */
     val calendarColor: Int?,
     /** Whether the calendar allows write operations. */
-    val isWritable: Boolean
+    val isWritable: Boolean,
+    /**
+     * Existing guests on the event (read-only chip row in the form). Empty
+     * when the event has no attendee rows. The "you"/organizer identity is
+     * resolved from the calendar's `OWNER_ACCOUNT`.
+     */
+    val attendees: List<AttendeeUiModel> = emptyList()
 )

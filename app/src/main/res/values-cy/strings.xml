@@ -192,6 +192,20 @@
     <string name="settings_section_notifications">Hysbysiadau</string>
     <string name="settings_section_sync">Cysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
+    <string name="settings_section_privacy">Preifatrwydd</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Clo\'r ap</string>
+    <string name="app_lock_subtitle_off">Mynnu datgloi i agor KashCal</string>
+    <string name="app_lock_subtitle_on">Datgloi ag olion bysedd, wyneb neu glo sgrin</string>
+    <string name="app_lock_veil_locked">Ar glo</string>
+    <string name="app_lock_veil_unlock">Datgloi</string>
+    <string name="app_lock_veil_footnote">Olion bysedd, wyneb neu glo sgrin</string>
+    <string name="app_lock_prompt_title">Datglowch i weld eich digwyddiadau</string>
+    <string name="app_lock_enroll_message">Gosodwch olion bysedd, wyneb neu glo sgrin yng ngosodiadau\'r system i ddefnyddio clo\'r ap.</string>
+    <string name="app_lock_unsupported_message">Ni all y ddyfais hon ddefnyddio clo\'r ap.</string>
+    <string name="app_lock_enabled_message">Clo\'r ap ymlaen. Bydd KashCal yn gofyn i chi ddilysu y tro nesaf y byddwch yn ei agor.</string>
+    <string name="app_lock_disable_prompt_title">Datglowch i ddiffodd clo\'r ap</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Calendr Apple?</string>
@@ -1326,6 +1340,7 @@
     <string name="attendee_invalid_email">Nodwch gyfeiriad e-bost llawn</string>
     <string name="attendee_add_typed">Ychwanegu \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Nid yw gwahodd pobl ar gael ar y cyfrif hwn</string>
+    <string name="device_attendee_local_no_delivery">Ni all y calendr hwn anfon gwahoddiadau. Caiff gwesteion eu cadw, ond ni roddir gwybod iddynt.</string>
     <string name="action_save_and_notify">Cadw a hysbysu</string>
     <string name="inbox_empty_caught_up">Popeth wedi\'i ddal</string>
     <string name="inbox_organizer_suffix">(trefnydd)</string>

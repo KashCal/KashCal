@@ -186,4 +186,38 @@ class EventFormSheetCalendarResolutionTest {
         assertNull(result.color)
         assertFalse(result.isDevice)
     }
+
+    // ========== isDevice flag invariant ==========
+    //
+    // The isDevice flag is the single switch that routes a save to the Room
+    // (scheduling/iTIP) path vs. the device (CalendarProvider) path. A flag
+    // inversion would send device attendees into the CalDAV scheduling stack
+    // (or vice versa), so pin the invariant: resolving a Room selection is
+    // never isDevice=true, and resolving a Device selection is never
+    // isDevice=false (when the calendar exists).
+
+    @Test
+    fun `every resolvable Room selection is not flagged as device`() {
+        val rooms = listOf(makeCalendar(1L), makeCalendar(2L), makeCalendar(3L))
+        val deviceGroup = makeDeviceCalendarGroup(makeDeviceCalendar(10L), makeDeviceCalendar(11L))
+
+        rooms.forEach { cal ->
+            val result = resolveDefaultCalendar(DefaultCalendar.Room(cal.id), rooms, listOf(deviceGroup))
+            assertEquals(cal.id, result.id)
+            assertFalse("Room calendar ${cal.id} must resolve isDevice=false", result.isDevice)
+        }
+    }
+
+    @Test
+    fun `every resolvable Device selection is flagged as device`() {
+        val rooms = listOf(makeCalendar(1L), makeCalendar(2L))
+        val deviceCals = listOf(makeDeviceCalendar(10L), makeDeviceCalendar(11L), makeDeviceCalendar(12L))
+        val deviceGroup = makeDeviceCalendarGroup(*deviceCals.toTypedArray())
+
+        deviceCals.forEach { cal ->
+            val result = resolveDefaultCalendar(DefaultCalendar.Device(cal.id), rooms, listOf(deviceGroup))
+            assertEquals(cal.id, result.id)
+            assertTrue("Device calendar ${cal.id} must resolve isDevice=true", result.isDevice)
+        }
+    }
 }

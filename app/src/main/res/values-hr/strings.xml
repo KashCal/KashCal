@@ -143,6 +143,18 @@
     <string name="settings_section_notifications">Obavijesti</string>
     <string name="settings_section_sync">Sinkronizacija</string>
     <string name="settings_section_data">Sigurnosna kopija i vraćanje</string>
+    <string name="settings_section_privacy">Privatnost</string>
+    <string name="app_lock_label">Zaključavanje aplikacije</string>
+    <string name="app_lock_subtitle_off">Zahtijevaj otključavanje za otvaranje aplikacije KashCal</string>
+    <string name="app_lock_subtitle_on">Otključaj otiskom prsta, licem ili zaključavanjem zaslona</string>
+    <string name="app_lock_veil_locked">Zaključano</string>
+    <string name="app_lock_veil_unlock">Otključaj</string>
+    <string name="app_lock_veil_footnote">Otisak prsta, lice ili zaključavanje zaslona</string>
+    <string name="app_lock_prompt_title">Otključaj za prikaz svojih događaja</string>
+    <string name="app_lock_enroll_message">Postavite otisak prsta, lice ili zaključavanje zaslona u postavkama sustava kako biste koristili zaključavanje aplikacije.</string>
+    <string name="app_lock_unsupported_message">Ovaj uređaj ne može koristiti zaključavanje aplikacije.</string>
+    <string name="app_lock_enabled_message">Zaključavanje aplikacije uključeno. KashCal će zatražiti autentifikaciju pri sljedećem otvaranju.</string>
+    <string name="app_lock_disable_prompt_title">Otključaj za isključivanje zaključavanja aplikacije</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Napravi sigurnosnu kopiju postavki</string>
@@ -1130,6 +1142,7 @@
     <string name="attendee_invalid_email">Unesite punu adresu e-pošte</string>
     <string name="attendee_add_typed">Dodaj \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Pozivanje osoba nije dostupno na ovom računu</string>
+    <string name="device_attendee_local_no_delivery">Ovaj kalendar ne može slati pozivnice. Gosti se spremaju, ali neće biti obaviješteni.</string>
     <string name="action_save_and_notify">Spremi i obavijesti</string>
     <string name="invitees_summary_you_alone">Ti</string>
     <plurals name="invitees_summary_you_organizing">

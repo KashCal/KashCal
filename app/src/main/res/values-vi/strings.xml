@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">Thông báo</string>
     <string name="settings_section_sync">Đồng bộ</string>
     <string name="settings_section_data">Sao lưu &amp; khôi phục</string>
+    <string name="settings_section_privacy">Quyền riêng tư</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Khóa ứng dụng</string>
+    <string name="app_lock_subtitle_off">Yêu cầu mở khóa để mở KashCal</string>
+    <string name="app_lock_subtitle_on">Mở khóa bằng vân tay, khuôn mặt hoặc khóa màn hình</string>
+    <string name="app_lock_veil_locked">Đã khóa</string>
+    <string name="app_lock_veil_unlock">Mở khóa</string>
+    <string name="app_lock_veil_footnote">Vân tay, khuôn mặt hoặc khóa màn hình</string>
+    <string name="app_lock_prompt_title">Mở khóa để xem sự kiện của bạn</string>
+    <string name="app_lock_enroll_message">Thiết lập vân tay, khuôn mặt hoặc khóa màn hình trong cài đặt hệ thống để dùng Khóa ứng dụng.</string>
+    <string name="app_lock_unsupported_message">Thiết bị này không thể dùng Khóa ứng dụng.</string>
+    <string name="app_lock_enabled_message">Đã bật Khóa ứng dụng. KashCal sẽ yêu cầu bạn xác thực vào lần mở tiếp theo.</string>
+    <string name="app_lock_disable_prompt_title">Mở khóa để tắt Khóa ứng dụng</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Dùng Apple Calendar?</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">Nhập địa chỉ email đầy đủ</string>
     <string name="attendee_add_typed">Thêm \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Không thể mời người khác trên tài khoản này</string>
+    <string name="device_attendee_local_no_delivery">Lịch này không thể gửi lời mời. Khách sẽ được lưu nhưng không được thông báo.</string>
     <string name="action_save_and_notify">Lưu &amp; thông báo</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d nữa</item>

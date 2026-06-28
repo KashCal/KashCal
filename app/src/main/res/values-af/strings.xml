@@ -166,6 +166,21 @@
     <string name="settings_section_notifications">Kennisgewings</string>
     <string name="settings_section_sync">Sinkronisering</string>
     <string name="settings_section_data">Rugsteun &amp; Herstel</string>
+    <string name="settings_section_privacy">Privaatheid</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Toeslot</string>
+    <string name="app_lock_subtitle_off">Vereis ontsluiting om KashCal oop te maak</string>
+    <string name="app_lock_subtitle_on">Ontsluit met vingerafdruk, gesig of skermslot</string>
+    <string name="app_lock_veil_locked">Gesluit</string>
+    <string name="app_lock_veil_unlock">Ontsluit</string>
+    <string name="app_lock_veil_footnote">Vingerafdruk, gesig of skermslot</string>
+    <string name="app_lock_prompt_title">Ontsluit om jou gebeurtenisse te sien</string>
+    <string name="app_lock_enroll_message">Stel \'n vingerafdruk, gesig of skermslot in stelselinstellings op om Toeslot te gebruik.</string>
+    <string name="app_lock_unsupported_message">Hierdie toestel kan nie Toeslot gebruik nie.</string>
+    <string name="app_lock_enabled_message">Toeslot is aan. KashCal sal jou vra om te verifieer wanneer jy dit volgende keer oopmaak.</string>
+    <string name="app_lock_disable_prompt_title">Ontsluit om Toeslot af te skakel</string>
+
     <string name="backup_settings_label">Rugsteuninstellings</string>
     <string name="backup_settings_subtitle">Stoor KashCal-konfigurasie na \'n JSON-lêer</string>
     <string name="restore_settings_label">Herstel instellings</string>
@@ -1130,6 +1145,7 @@
     <string name="attendee_invalid_email">Voer \'n volledige e-posadres in</string>
     <string name="attendee_add_typed">Voeg \"%1$s\" by</string>
     <string name="attendee_scheduling_unavailable">Mense nooi is nie op hierdie rekening beskikbaar nie</string>
+    <string name="device_attendee_local_no_delivery">Hierdie kalender kan nie uitnodigings stuur nie. Gaste word gestoor, maar sal nie in kennis gestel word nie.</string>
     <string name="action_save_and_notify">Stoor &amp; stel in kennis</string>
     <string name="inbox_empty_caught_up">Alles op datum</string>
     <string name="inbox_organizer_suffix">(reëlaar)</string>

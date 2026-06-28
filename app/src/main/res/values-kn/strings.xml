@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">ಅಧಿಸೂಚನೆಗಳು</string>
     <string name="settings_section_sync">ಸಿಂಕ್</string>
     <string name="settings_section_data">ಬ್ಯಾಕಪ್ ಮತ್ತು ಮರುಸ್ಥಾಪನೆ</string>
+    <string name="settings_section_privacy">ಗೌಪ್ಯತೆ</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">ಆ್ಯಪ್ ಲಾಕ್</string>
+    <string name="app_lock_subtitle_off">KashCal ತೆರೆಯಲು ಅನ್‌ಲಾಕ್ ಕಡ್ಡಾಯಗೊಳಿಸಿ</string>
+    <string name="app_lock_subtitle_on">ಬೆರಳಚ್ಚು, ಮುಖ ಅಥವಾ ಸ್ಕ್ರೀನ್ ಲಾಕ್‌ನೊಂದಿಗೆ ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="app_lock_veil_locked">ಲಾಕ್ ಆಗಿದೆ</string>
+    <string name="app_lock_veil_unlock">ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="app_lock_veil_footnote">ಬೆರಳಚ್ಚು, ಮುಖ ಅಥವಾ ಸ್ಕ್ರೀನ್ ಲಾಕ್</string>
+    <string name="app_lock_prompt_title">ನಿಮ್ಮ ಈವೆಂಟ್‌ಗಳನ್ನು ನೋಡಲು ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="app_lock_enroll_message">ಆ್ಯಪ್ ಲಾಕ್ ಬಳಸಲು ಸಿಸ್ಟಂ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಬೆರಳಚ್ಚು, ಮುಖ ಅಥವಾ ಸ್ಕ್ರೀನ್ ಲಾಕ್ ಹೊಂದಿಸಿ.</string>
+    <string name="app_lock_unsupported_message">ಈ ಸಾಧನವು ಆ್ಯಪ್ ಲಾಕ್ ಬಳಸಲಾಗದು.</string>
+    <string name="app_lock_enabled_message">ಆ್ಯಪ್ ಲಾಕ್ ಆನ್ ಆಗಿದೆ. ಮುಂದಿನ ಬಾರಿ ತೆರೆದಾಗ KashCal ನಿಮ್ಮನ್ನು ದೃಢೀಕರಿಸುವಂತೆ ಕೇಳುತ್ತದೆ.</string>
+    <string name="app_lock_disable_prompt_title">ಆ್ಯಪ್ ಲಾಕ್ ಆಫ್ ಮಾಡಲು ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಬ್ಯಾಕಪ್ ಮಾಡಿ</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">ಪೂರ್ಣ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ನಮೂದಿಸಿ</string>
     <string name="attendee_add_typed">\"%1$s\" ಸೇರಿಸಿ</string>
     <string name="attendee_scheduling_unavailable">ಈ ಖಾತೆಯಲ್ಲಿ ಜನರನ್ನು ಆಹ್ವಾನಿಸುವುದು ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="device_attendee_local_no_delivery">ಈ ಕ್ಯಾಲೆಂಡರ್ ಆಹ್ವಾನಗಳನ್ನು ಕಳುಹಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ಅತಿಥಿಗಳನ್ನು ಉಳಿಸಲಾಗುತ್ತದೆ ಆದರೆ ಅವರಿಗೆ ತಿಳಿಸಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="action_save_and_notify">ಉಳಿಸಿ ಮತ್ತು ತಿಳಿಸಿ</string>
     <string name="attendee_action_copy">ಇಮೇಲ್ ನಕಲಿಸಿ</string>
     <string name="attendee_action_email">ಇಮೇಲ್ ಕಳುಹಿಸಿ</string>

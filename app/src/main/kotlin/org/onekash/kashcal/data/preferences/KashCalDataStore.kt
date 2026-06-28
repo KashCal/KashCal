@@ -327,6 +327,19 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.TITLE_SUGGESTIONS_ENABLED, enabled)
     }
 
+    // ========== Privacy ==========
+
+    /**
+     * App lock enabled — require device biometric / screen-lock on reopen.
+     * Default: false (off).
+     */
+    val appLockEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.APP_LOCK_ENABLED, false)
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.APP_LOCK_ENABLED, enabled)
+    }
+
     // ========== Display Settings ==========
 
     /**

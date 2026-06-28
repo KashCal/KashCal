@@ -142,9 +142,6 @@ abstract class KashCalDatabase : RoomDatabase() {
          */
         const val DATABASE_NAME = "kashcal.db"
 
-        @Volatile
-        private var INSTANCE: KashCalDatabase? = null
-
         /**
          * Database callback to create triggers for master event duplicate prevention.
          * Uses triggers instead of partial unique index (Room doesn't validate triggers).
@@ -190,33 +187,6 @@ abstract class KashCalDatabase : RoomDatabase() {
                     );
                 END
             """.trimIndent())
-        }
-
-        /**
-         * Get database instance for non-DI contexts (e.g., widgets).
-         *
-         * This uses a singleton pattern to ensure only one database instance exists.
-         * For DI-managed components, prefer injecting the database directly.
-         *
-         * @param context Application context
-         * @return Singleton database instance
-         */
-        fun getInstance(context: android.content.Context): KashCalDatabase {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: buildDatabase(context).also { INSTANCE = it }
-            }
-        }
-
-        private fun buildDatabase(context: android.content.Context): KashCalDatabase {
-            return androidx.room.Room.databaseBuilder(
-                context.applicationContext,
-                KashCalDatabase::class.java,
-                DATABASE_NAME
-            )
-                .enableMultiInstanceInvalidation()
-                .addMigrations(*org.onekash.kashcal.data.db.migration.Migrations.ALL_MIGRATIONS)
-                .addCallback(databaseCallback)
-                .build()
         }
     }
 }

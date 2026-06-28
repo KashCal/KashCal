@@ -39,6 +39,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     // Operation tracking
     val createdEvents = mutableListOf<CreatedEvent>()
     val updatedEventIds = mutableListOf<Long>()
+    val updatedEvents = mutableListOf<UpdatedEvent>()
     val deletedEventIds = mutableListOf<Long>()
     val createdExceptions = mutableListOf<CreatedException>()
     val deletedOccurrences = mutableListOf<DeletedOccurrence>()
@@ -49,6 +50,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     // Read operation data
     var deviceEvents: MutableMap<Long, DeviceEvent> = mutableMapOf()
     var eventReminders: MutableMap<Long, List<Int>> = mutableMapOf()
+    var deviceAttendees: MutableMap<Long, List<DeviceAttendee>> = mutableMapOf()
     var maxReminders: Int = 5
 
     /**
@@ -75,6 +77,13 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val reminders: List<Int> = emptyList(),
         val availability: Int = 0,
         val eventColor: Int? = null,
+        val attendees: List<DeviceAttendee>? = null,
+    )
+
+    /** Records an updateEvent call with the attendee set the caller passed. */
+    data class UpdatedEvent(
+        val eventId: Long,
+        val attendees: List<DeviceAttendee>? = null,
     )
 
     data class DeviceTitleRow(
@@ -121,6 +130,11 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     override suspend fun getDeviceCalendars(): List<DeviceCalendar> {
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
         return calendars
+    }
+
+    override suspend fun getDeviceCalendar(id: Long): DeviceCalendar? {
+        if (shouldThrowSecurityException) return null
+        return calendars.firstOrNull { it.id == id }
     }
 
     override suspend fun getInstancesForDayRange(
@@ -240,7 +254,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         timezone: String,
         reminders: List<Int>,
         availability: Int,
-        eventColor: Int?
+        eventColor: Int?,
+        attendees: List<DeviceAttendee>?
     ): Result<Long> {
         createCallCount++
         if (createCallCount == failCreateOnCall) {
@@ -268,6 +283,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
                 reminders = reminders,
                 availability = availability,
                 eventColor = eventColor,
+                attendees = attendees,
             )
         )
         return Result.success(eventId)
@@ -286,7 +302,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         timezone: String,
         reminders: List<Int>,
         availability: Int,
-        eventColor: Int?
+        eventColor: Int?,
+        attendees: List<DeviceAttendee>?
     ): Result<Unit> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
@@ -294,6 +311,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         }
 
         updatedEventIds.add(eventId)
+        updatedEvents.add(UpdatedEvent(eventId = eventId, attendees = attendees))
         return Result.success(Unit)
     }
 
@@ -451,6 +469,28 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return master to exceptions
     }
 
+    override suspend fun getAttendees(eventId: Long): List<DeviceAttendee> {
+        if (shouldThrowSecurityException) return emptyList()
+        return deviceAttendees[eventId] ?: emptyList()
+    }
+
+    /** Records each updateSelfAttendeeStatus call for assertions. */
+    data class SelfRsvpUpdate(val eventId: Long, val attendeeId: Long, val status: Int)
+    val selfRsvpUpdates = mutableListOf<SelfRsvpUpdate>()
+
+    override suspend fun updateSelfAttendeeStatus(
+        eventId: Long,
+        attendeeId: Long,
+        status: Int
+    ): Result<Unit> {
+        writeFailure?.let { return Result.failure(it.toException()) }
+        if (shouldThrowSecurityException) {
+            return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
+        }
+        selfRsvpUpdates.add(SelfRsvpUpdate(eventId, attendeeId, status))
+        return Result.success(Unit)
+    }
+
     override suspend fun getReminders(eventId: Long): List<Int> {
         if (shouldThrowSecurityException) return emptyList()
         return eventReminders[eventId] ?: emptyList()
@@ -509,6 +549,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         createdEventId = 100L
         createdEvents.clear()
         updatedEventIds.clear()
+        updatedEvents.clear()
         deletedEventIds.clear()
         createdExceptions.clear()
         deletedOccurrences.clear()
@@ -516,8 +557,10 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         movedEvents.clear()
         deviceEvents.clear()
         eventReminders.clear()
+        deviceAttendees.clear()
         activeEventIds.clear()
         exceptionEvents.clear()
+        selfRsvpUpdates.clear()
         nextUpcomingReminder = null
         maxReminders = 5
         ensureCalendarVisibleCalls.clear()

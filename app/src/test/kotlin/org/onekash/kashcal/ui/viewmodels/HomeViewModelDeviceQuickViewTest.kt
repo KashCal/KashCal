@@ -487,6 +487,80 @@ class HomeViewModelDeviceQuickViewTest {
         assertNull("Ended recurring series should yield null (caller falls back to date nav)", result)
     }
 
+    // ==================== getDeviceEventAttendeeState ====================
+
+    @Test
+    fun `getDeviceEventAttendeeState returns empty when event has no attendees`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.getDeviceEventAttendeeState(eventId = 42L, calendarId = 1L)
+        advanceUntilIdle()
+
+        assertEquals(0, state.models.size)
+        org.junit.Assert.assertFalse(state.isCurrentUserOnList)
+    }
+
+    @Test
+    fun `getDeviceEventAttendeeState maps attendees and marks owner as on-list`() = runTest {
+        fakeCalendarProviderRepository.calendars = listOf(
+            org.onekash.kashcal.data.calendar_provider.DeviceCalendar(
+                id = 1L,
+                displayName = "Work",
+                color = 0,
+                accountName = "me@example.com",
+                accountType = "com.google",
+                visible = true,
+                accessLevel = 700,
+                ownerAccount = "me@example.com",
+            )
+        )
+        fakeCalendarProviderRepository.deviceAttendees[42L] = listOf(
+            org.onekash.kashcal.data.calendar_provider.DeviceAttendee(
+                id = 1L, name = "Me", email = "me@example.com",
+                relationship = android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER,
+                status = android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED,
+            ),
+            org.onekash.kashcal.data.calendar_provider.DeviceAttendee(
+                id = 2L, name = "Bob", email = "bob@example.com",
+                relationship = android.provider.CalendarContract.Attendees.RELATIONSHIP_ATTENDEE,
+                status = android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_NONE,
+            ),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.getDeviceEventAttendeeState(eventId = 42L, calendarId = 1L)
+        advanceUntilIdle()
+
+        // Organizer-flag mapping is asserted under Robolectric in
+        // AttendeeUiModelFromDeviceTest; this plain-JVM VM test covers the
+        // plumbing (count + owner→on-list by email match, both constant-free).
+        assertEquals(2, state.models.size)
+        org.junit.Assert.assertTrue("Owner should be on the list", state.isCurrentUserOnList)
+    }
+
+    @Test
+    fun `getDeviceEventAttendeeState with null calendarId marks no one as on-list`() = runTest {
+        fakeCalendarProviderRepository.deviceAttendees[42L] = listOf(
+            org.onekash.kashcal.data.calendar_provider.DeviceAttendee(
+                id = 1L, name = "Bob", email = "bob@example.com",
+                relationship = android.provider.CalendarContract.Attendees.RELATIONSHIP_ATTENDEE,
+                status = android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_NONE,
+            ),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val state = viewModel.getDeviceEventAttendeeState(eventId = 42L, calendarId = null)
+        advanceUntilIdle()
+
+        assertEquals(1, state.models.size)
+        org.junit.Assert.assertFalse(state.isCurrentUserOnList)
+    }
+
     private fun makeDeviceEvent(
         id: Long,
         startTs: Long,

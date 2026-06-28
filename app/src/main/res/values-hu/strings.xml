@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Értesítések</string>
     <string name="settings_section_sync">Szinkronizálás</string>
     <string name="settings_section_data">Mentés és visszaállítás</string>
+    <string name="settings_section_privacy">Adatvédelem</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Alkalmazászár</string>
+    <string name="app_lock_subtitle_off">Feloldás szükséges a KashCal megnyitásához</string>
+    <string name="app_lock_subtitle_on">Feloldás ujjlenyomattal, arccal vagy képernyőzárral</string>
+    <string name="app_lock_veil_locked">Zárolva</string>
+    <string name="app_lock_veil_unlock">Feloldás</string>
+    <string name="app_lock_veil_footnote">Ujjlenyomat, arc vagy képernyőzár</string>
+    <string name="app_lock_prompt_title">Oldja fel az események megtekintéséhez</string>
+    <string name="app_lock_enroll_message">Az alkalmazászár használatához állítson be ujjlenyomatot, arcot vagy képernyőzárat a rendszerbeállításokban.</string>
+    <string name="app_lock_unsupported_message">Ez az eszköz nem tudja használni az alkalmazászárat.</string>
+    <string name="app_lock_enabled_message">Az alkalmazászár bekapcsolva. A KashCal a következő megnyitáskor hitelesítést fog kérni.</string>
+    <string name="app_lock_disable_prompt_title">Oldja fel az alkalmazászár kikapcsolásához</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Beállítások mentése</string>
@@ -1139,6 +1153,7 @@
     <string name="attendee_invalid_email">Adjon meg egy teljes e-mail-címet</string>
     <string name="attendee_add_typed">\"%1$s\" hozzáadása</string>
     <string name="attendee_scheduling_unavailable">Az emberek meghívása nem érhető el ezen a fiókon</string>
+    <string name="device_attendee_local_no_delivery">Ez a naptár nem tud meghívókat küldeni. A vendégek mentve lesznek, de nem kapnak értesítést.</string>
     <string name="action_save_and_notify">Mentés és értesítés</string>
     <string name="attendee_status_delegated">Átruházva</string>
     <string name="attendee_status_pending">Függő</string>

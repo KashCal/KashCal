@@ -180,12 +180,16 @@ android {
                 // See: https://github.com/corretto/corretto-17/issues
                 it.jvmArgs("-XX:TieredStopAtLevel=1", "-XX:ReservedCodeCacheSize=512m")
                 it.maxHeapSize = "1g"
-                it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 
                 // Exclude integration tests (real servers) by default.
                 // Run with: ./gradlew testDebugUnitTest -Pintegration
                 if (!project.hasProperty("integration")) {
                     it.exclude("**/integration/**")
+                    it.maxParallelForks =
+                        (Runtime.getRuntime().availableProcessors() - 2).coerceAtLeast(1)
+                } else {
+                    it.maxParallelForks =
+                        (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
                 }
             }
         }
@@ -203,6 +207,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+
+    // Biometric / device-credential auth for the optional app lock
+    implementation(libs.androidx.biometric)
 
     // Compose
     implementation(platform(libs.androidx.compose.bom))

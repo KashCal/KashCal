@@ -172,6 +172,20 @@
     <string name="settings_section_notifications">Paziņojumi</string>
     <string name="settings_section_sync">Sinhronizācija</string>
     <string name="settings_section_data">Dublēšana un atjaunošana</string>
+    <string name="settings_section_privacy">Konfidencialitāte</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Lietotnes bloķēšana</string>
+    <string name="app_lock_subtitle_off">Pieprasīt atbloķēšanu, lai atvērtu KashCal</string>
+    <string name="app_lock_subtitle_on">Atbloķēt ar pirksta nospiedumu, seju vai ekrāna bloķēšanu</string>
+    <string name="app_lock_veil_locked">Bloķēts</string>
+    <string name="app_lock_veil_unlock">Atbloķēt</string>
+    <string name="app_lock_veil_footnote">Pirksta nospiedums, seja vai ekrāna bloķēšana</string>
+    <string name="app_lock_prompt_title">Atbloķējiet, lai redzētu savus notikumus</string>
+    <string name="app_lock_enroll_message">Sistēmas iestatījumos iestatiet pirksta nospiedumu, seju vai ekrāna bloķēšanu, lai izmantotu lietotnes bloķēšanu.</string>
+    <string name="app_lock_unsupported_message">Šī ierīce nevar izmantot lietotnes bloķēšanu.</string>
+    <string name="app_lock_enabled_message">Lietotnes bloķēšana ir ieslēgta. KashCal lūgs jums autentificēties nākamajā atvēršanas reizē.</string>
+    <string name="app_lock_disable_prompt_title">Atbloķējiet, lai izslēgtu lietotnes bloķēšanu</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1204,6 +1218,7 @@
     <string name="attendee_invalid_email">Ievadiet pilnu e-pasta adresi</string>
     <string name="attendee_add_typed">Pievienot \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Cilvēku uzaicināšana šajā kontā nav pieejama</string>
+    <string name="device_attendee_local_no_delivery">Šis kalendārs nevar nosūtīt ielūgumus. Viesi tiek saglabāti, bet netiek paziņoti.</string>
     <string name="action_save_and_notify">Saglabāt un paziņot</string>
     <plurals name="reminder_in_days">
         <item quantity="zero">Pēc %1$d dienām</item>

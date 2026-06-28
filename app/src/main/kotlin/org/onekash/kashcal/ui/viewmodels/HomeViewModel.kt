@@ -61,6 +61,7 @@ import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.toStartEndTs
 import org.onekash.kashcal.ui.components.SyncBannerState
+import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
@@ -2619,6 +2620,74 @@ class HomeViewModel(
     }
 
     /**
+     * Resolve a device event's guest list for the quick-view / form chip
+     * surfaces. Reads the `Attendees` rows on demand (never via the bulk grid
+     * query) and resolves the calendar's `OWNER_ACCOUNT` as the "you" /
+     * organizer identity, then maps via the pure [deviceAttendeeUiState].
+     *
+     * Returns an empty state (no chips, not-on-list) when the event has no
+     * attendee rows or the read is denied — so the quick-view shows no guest
+     * section rather than an empty one.
+     *
+     * @param eventId the resolved CalendarProvider event id (master or
+     *   exception) whose guest list to load
+     * @param calendarId the event's calendar id, used to resolve the owner
+     *   email; null skips owner resolution (no one marked "you")
+     */
+    suspend fun getDeviceEventAttendeeState(eventId: Long, calendarId: Long?): EventAttendeeUiState {
+        return withContext(ioDispatcher) {
+            val attendees = calendarProviderRepository.getAttendees(eventId)
+            if (attendees.isEmpty()) return@withContext EventAttendeeUiState(emptyList(), false)
+            val ownerEmail = calendarId?.let { id ->
+                calendarProviderRepository.getDeviceCalendar(id)
+                    ?.ownerAccount
+                    ?.takeUnless { it.isBlank() }
+            }
+            deviceAttendeeUiState(attendees, ownerEmail)
+        }
+    }
+
+    /**
+     * Write the current user's RSVP on a device event. Re-reads the attendee
+     * rows, finds the user's own row by canonically matching the calendar's
+     * owner email, and updates ONLY that row (by its provider `_ID`) — no other
+     * guest's status is touched. No-ops when the user has no self row
+     * (organizer-only, or simply not on the list) since there's nothing to
+     * update. On a LOCAL calendar the row is written but nothing is delivered.
+     *
+     * @param eventId the device event id
+     * @param calendarId the event's calendar id (resolves the owner "you" email)
+     * @param status the user's chosen response
+     */
+    suspend fun replyDeviceRsvp(eventId: Long, calendarId: Long, status: AttendeeStatus): Result<Unit> {
+        return withContext(ioDispatcher) {
+            val ownerEmail = calendarProviderRepository.getDeviceCalendar(calendarId)
+                ?.ownerAccount
+                ?.takeUnless { it.isBlank() }
+                ?: return@withContext Result.success(Unit)
+            val canonicalOwner =
+                org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(ownerEmail)
+            val selfRow = calendarProviderRepository.getAttendees(eventId)
+                .firstOrNull { a ->
+                    !a.email.isNullOrBlank() &&
+                        org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(a.email) == canonicalOwner
+                }
+                ?: return@withContext Result.success(Unit) // No self row → nothing to update.
+            calendarProviderRepository.updateSelfAttendeeStatus(
+                eventId = eventId,
+                attendeeId = selfRow.id,
+                status = status.toDeviceStatus(),
+            ).also { result ->
+                result.onSuccess { reloadCurrentView() }
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to update device RSVP", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+            }
+        }
+    }
+
+    /**
      * Resolve a device event for quick view from just its CalendarProvider ID, with no
      * occurrence timestamp — the case for external VIEW intents that carry only the event ID.
      *
@@ -3705,13 +3774,18 @@ class HomeViewModel(
             val calendars = calendarProviderRepository.getDeviceCalendars()
             val calendar = calendars.find { it.id == event.calendarId } ?: return@withContext null
             val reminders = calendarProviderRepository.getReminders(effectiveEventId)
+            val attendees = AttendeeUiModel.fromDevice(
+                calendarProviderRepository.getAttendees(effectiveEventId),
+                ownerEmail = calendar.ownerAccount.takeUnless { it.isBlank() },
+            )
 
             DeviceEventEditData(
                 event = event,
                 reminders = reminders,
                 calendarName = calendar.displayName,
                 calendarColor = calendar.color,
-                isWritable = calendar.isWritable
+                isWritable = calendar.isWritable,
+                attendees = attendees,
             )
         }
     }
@@ -3774,6 +3848,16 @@ class HomeViewModel(
             val reminders = buildDeviceReminders(formState.reminders)
 
             val timezone = formState.timezone ?: java.util.TimeZone.getDefault().id
+
+            // Guests the user edited, bridged to provider-shaped rows. null
+            // when the form isn't managing attendees (open-and-save, or a
+            // non-schedulable read-only path) so existing rows are left alone.
+            // Threaded ONLY through the create + whole-event update branches
+            // below: per-occurrence and this-and-future guest edits are out of
+            // scope (the provider doesn't store per-occurrence guest divergence
+            // we'd be writing), so those branches deliberately don't carry it.
+            val deviceAttendeesArg =
+                if (formState.attendeesEdited) pickerAttendeesToDevice(formState.attendees) else null
 
             // THIS_AND_FUTURE on a recurring device event splits the
             // series via the new repository method. The form was
@@ -3875,7 +3959,8 @@ class HomeViewModel(
                         timezone = timezone,
                         reminders = reminders,
                         availability = transpToAvailability(formState.transp),
-                        eventColor = formState.eventColor
+                        eventColor = formState.eventColor,
+                        attendees = deviceAttendeesArg
                     ).map { eventId }
                 }
 
@@ -3894,7 +3979,8 @@ class HomeViewModel(
                         timezone = timezone,
                         reminders = reminders,
                         availability = transpToAvailability(formState.transp),
-                        eventColor = formState.eventColor
+                        eventColor = formState.eventColor,
+                        attendees = deviceAttendeesArg
                     )
                 }
             }.also { result ->
@@ -4162,6 +4248,75 @@ data class EventAttendeeUiState(
     val models: List<AttendeeUiModel>,
     val isCurrentUserOnList: Boolean
 )
+
+/**
+ * Pure projection of a device event's [DeviceAttendee] rows + the calendar's
+ * owner email into the chip-surface [EventAttendeeUiState].
+ *
+ * Separated from the ViewModel's IO (getAttendees + getDeviceCalendars) so the
+ * branch logic is unit-testable without a live ContentResolver, mirroring the
+ * Room path's [AttendeeUiModel.fromRoom] boundary. "On list" is true when the
+ * owner email canonically matches one of the mapped attendees (the device
+ * notion of "you").
+ */
+fun deviceAttendeeUiState(
+    attendees: List<org.onekash.kashcal.data.calendar_provider.DeviceAttendee>,
+    ownerEmail: String?,
+): EventAttendeeUiState {
+    val models = AttendeeUiModel.fromDevice(attendees, ownerEmail)
+    return EventAttendeeUiState(
+        models = models,
+        isCurrentUserOnList = models.any { it.isYou },
+    )
+}
+
+/**
+ * Bridge the attendee picker's Room [org.onekash.kashcal.data.db.entity.Attendee]
+ * entities into provider-shaped
+ * [org.onekash.kashcal.data.calendar_provider.DeviceAttendee] guest rows at the
+ * device save boundary.
+ *
+ * This is the seam that keeps the device write path disjoint from the
+ * Room/iTIP path: the device repository must never see the Room entity's wire
+ * fields (scheduleAgent, scheduleStatus, sequence …), which are meaningless to
+ * `CalendarContract.Attendees`. Each row becomes a `RELATIONSHIP_ATTENDEE`
+ * guest with `ATTENDEE_STATUS_NONE`; the owner/organizer row is added by the
+ * repository, not here. Picker rows whose address isn't email-shaped
+ * (urn:uuid, principal paths) are dropped — the provider can't store them.
+ */
+fun pickerAttendeesToDevice(
+    attendees: List<org.onekash.kashcal.data.db.entity.Attendee>
+): List<org.onekash.kashcal.data.calendar_provider.DeviceAttendee> =
+    attendees.mapNotNull { a ->
+        val bare = org.onekash.kashcal.util.AddressNormalizer.stripMailto(a.address)
+        if (!org.onekash.kashcal.util.AddressNormalizer.isEmailShaped(bare)) return@mapNotNull null
+        org.onekash.kashcal.data.calendar_provider.DeviceAttendee(
+            id = 0L,
+            name = a.displayName,
+            email = bare,
+            relationship = android.provider.CalendarContract.Attendees.RELATIONSHIP_ATTENDEE,
+            status = android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_NONE,
+        )
+    }
+
+/**
+ * Seed the attendee picker for a device event from its existing guest list,
+ * so an edit diffs against the real set. Excludes the organizer chip (the
+ * repository owns the owner row; it isn't a removable guest). Produces Room
+ * [org.onekash.kashcal.data.db.entity.Attendee] entities because that's what
+ * the shared picker operates on — but only the address/displayName are
+ * meaningful; the device save re-bridges them via [pickerAttendeesToDevice].
+ */
+fun deviceGuestsToPickerSeed(
+    guests: List<AttendeeUiModel>
+): List<org.onekash.kashcal.data.db.entity.Attendee> =
+    guests.filterNot { it.isOrganizer }.map { g ->
+        org.onekash.kashcal.data.db.entity.Attendee(
+            eventId = 0L,
+            address = g.bareAddress,
+            displayName = g.displayName,
+        )
+    }
 
 /**
  * The attendee-editing context for the event form: the resolving account (to

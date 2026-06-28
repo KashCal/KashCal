@@ -172,6 +172,20 @@
     <string name="settings_section_notifications">Sciigoj</string>
     <string name="settings_section_sync">Sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
+    <string name="settings_section_privacy">Privateco</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Aplikaĵa ŝloso</string>
+    <string name="app_lock_subtitle_off">Postuli malŝloson por malfermi KashCal</string>
+    <string name="app_lock_subtitle_on">Malŝlosi per fingrospuro, vizaĝo aŭ ekranŝloso</string>
+    <string name="app_lock_veil_locked">Ŝlosita</string>
+    <string name="app_lock_veil_unlock">Malŝlosi</string>
+    <string name="app_lock_veil_footnote">Fingrospuro, vizaĝo aŭ ekranŝloso</string>
+    <string name="app_lock_prompt_title">Malŝlosu por vidi viajn eventojn</string>
+    <string name="app_lock_enroll_message">Agordu fingrospuron, vizaĝon aŭ ekranŝloson en la sistemaj agordoj por uzi la aplikaĵan ŝloson.</string>
+    <string name="app_lock_unsupported_message">Ĉi tiu aparato ne povas uzi la aplikaĵan ŝloson.</string>
+    <string name="app_lock_enabled_message">Aplikaĵa ŝloso ŝaltita. KashCal petos ke vi aŭtentigu venontfoje kiam vi malfermos ĝin.</string>
+    <string name="app_lock_disable_prompt_title">Malŝlosu por malŝalti la aplikaĵan ŝloson</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1121,6 +1135,7 @@
     <string name="attendee_invalid_email">Enigu kompletan retpoŝtan adreson</string>
     <string name="attendee_add_typed">Aldoni \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Inviti homojn ne disponeblas en ĉi tiu konto</string>
+    <string name="device_attendee_local_no_delivery">Ĉi tiu kalendaro ne povas sendi invitojn. Gastoj estas konservitaj, sed ne estos sciigitaj.</string>
     <string name="action_save_and_notify">Konservi kaj sciigi</string>
     <string name="inbox_empty_caught_up">Ĉio en ordo</string>
     <string name="inbox_organizer_suffix">(organizanto)</string>

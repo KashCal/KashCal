@@ -90,6 +90,12 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
  *   one-shot coach mark on the Share icon. Caller persists dismissal.
  * @param onShareCardTooltipDismissed Invoked when the tooltip should be
  *   marked as displayed (after first show or first tap on the Share icon).
+ * @param attendees Existing guests on the event (empty = no guest section).
+ * @param isCurrentUserOnList Whether the calendar owner is among [attendees].
+ *   When true (and the user isn't the organizer) on a writable calendar, the
+ *   RSVP Going/Maybe/Not-going cards are offered and tapping fires [onRsvp].
+ * @param onRsvp Fired with the chosen response when the user changes their own
+ *   RSVP. No-op affordance when the user has no self row.
  * @param timeFormat Time format preference: "system", "12h", or "24h"
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,6 +105,9 @@ fun DeviceEventQuickViewSheet(
     showEventEmojis: Boolean = true,
     hasWritePermission: Boolean = false,
     isWritableCalendar: Boolean = false,
+    attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
+    isCurrentUserOnList: Boolean = false,
+    onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     onDismiss: () -> Unit,
     onEdit: () -> Unit = {},
     onEditOccurrence: () -> Unit = {},
@@ -113,6 +122,7 @@ fun DeviceEventQuickViewSheet(
 ) {
     val canWrite = hasWritePermission && isWritableCalendar
     val isRecurring = displayEvent.isPartOfRecurringSeries
+    var showAttendeeSheet by remember { mutableStateOf(false) }
     val hasExpandableContent = remember(displayEvent.description, displayEvent.reminders) {
         displayEvent.description.isNotBlank() || displayEvent.reminders.isNotEmpty()
     }
@@ -275,6 +285,28 @@ fun DeviceEventQuickViewSheet(
                 }
             }
 
+            // Guest list (read-only). RSVP is suppressed here — device-event
+            // self-response editing is wired separately; this surfaces the
+            // existing guests so the device sheet matches the Room sheet's
+            // visibility. No section when there are no guests.
+            if (attendees.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                // Offer the RSVP cards only when the user has a self row on a
+                // writable calendar. InviteesBlock internally hides them for
+                // the organizer and when the user isn't on the list, so a
+                // no-self-row / not-on-list event shows no affordance.
+                org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                    attendees = attendees,
+                    isCurrentUserOnList = isCurrentUserOnList,
+                    isCurrentUserOrganizer = attendees.any { it.isYou && it.isOrganizer },
+                    onRsvp = onRsvp,
+                    onDrillIntoAttendees = { showAttendeeSheet = true },
+                    suppressRsvp = !canWrite,
+                    alwaysExpanded = false,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+
             // Description and reminders section
             if (hasExpandableContent) {
                 DeviceEventDescriptionSection(
@@ -298,6 +330,13 @@ fun DeviceEventQuickViewSheet(
                 onExportIcs = onExportIcs
             )
         }
+    }
+
+    if (showAttendeeSheet) {
+        org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
+            attendees = attendees,
+            onDismiss = { showAttendeeSheet = false },
+        )
     }
 }
 

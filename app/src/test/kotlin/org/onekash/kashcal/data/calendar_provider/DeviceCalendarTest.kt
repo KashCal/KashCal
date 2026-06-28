@@ -31,6 +31,16 @@ class DeviceCalendarTest {
         accessLevel = accessLevel
     )
 
+    private fun calendarOfType(accountType: String) = DeviceCalendar(
+        id = 1L,
+        displayName = "Test",
+        color = 0xFF0000.toInt(),
+        accountName = "test@example.com",
+        accountType = accountType,
+        visible = true,
+        accessLevel = 700
+    )
+
     // ========== isWritable Tests ==========
 
     @Test
@@ -86,5 +96,30 @@ class DeviceCalendarTest {
     @Test
     fun `boundary - access level 500 is writable`() {
         assertTrue(calendar(accessLevel = 500).isWritable)
+    }
+
+    // ========== canDeliverInvites Tests ==========
+    // A device calendar can deliver invitations only when its account has a
+    // sync adapter — i.e. the account type is NOT the provider's LOCAL type.
+
+    @Test
+    fun `LOCAL account cannot deliver invites`() {
+        // CalendarContract.ACCOUNT_TYPE_LOCAL is the literal "LOCAL".
+        assertFalse(calendarOfType("LOCAL").canDeliverInvites)
+    }
+
+    @Test
+    fun `LOCAL account is matched case-insensitively`() {
+        assertFalse(calendarOfType("local").canDeliverInvites)
+    }
+
+    @Test
+    fun `Google account can deliver invites`() {
+        assertTrue(calendarOfType("com.google").canDeliverInvites)
+    }
+
+    @Test
+    fun `Exchange account can deliver invites`() {
+        assertTrue(calendarOfType("com.android.exchange").canDeliverInvites)
     }
 }

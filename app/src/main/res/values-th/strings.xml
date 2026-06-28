@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">การแจ้งเตือน</string>
     <string name="settings_section_sync">ซิงค์</string>
     <string name="settings_section_data">สำรองและกู้คืน</string>
+    <string name="settings_section_privacy">ความเป็นส่วนตัว</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">ล็อกแอป</string>
+    <string name="app_lock_subtitle_off">ต้องปลดล็อกเพื่อเปิด KashCal</string>
+    <string name="app_lock_subtitle_on">ปลดล็อกด้วยลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ</string>
+    <string name="app_lock_veil_locked">ล็อกอยู่</string>
+    <string name="app_lock_veil_unlock">ปลดล็อก</string>
+    <string name="app_lock_veil_footnote">ลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ</string>
+    <string name="app_lock_prompt_title">ปลดล็อกเพื่อดูกิจกรรมของคุณ</string>
+    <string name="app_lock_enroll_message">ตั้งค่าลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอในการตั้งค่าระบบเพื่อใช้การล็อกแอป</string>
+    <string name="app_lock_unsupported_message">อุปกรณ์นี้ไม่สามารถใช้การล็อกแอปได้</string>
+    <string name="app_lock_enabled_message">เปิดการล็อกแอปแล้ว KashCal จะขอให้คุณยืนยันตัวตนในครั้งถัดไปที่คุณเปิดแอป</string>
+    <string name="app_lock_disable_prompt_title">ปลดล็อกเพื่อปิดการล็อกแอป</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">ใช้ Apple Calendar อยู่?</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">ป้อนที่อยู่อีเมลแบบเต็ม</string>
     <string name="attendee_add_typed">เพิ่ม \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">ไม่สามารถเชิญบุคคลในบัญชีนี้ได้</string>
+    <string name="device_attendee_local_no_delivery">ปฏิทินนี้ส่งคำเชิญไม่ได้ ระบบจะบันทึกผู้เข้าร่วมแต่จะไม่แจ้งเตือนพวกเขา</string>
     <string name="action_save_and_notify">บันทึกและแจ้งเตือน</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d เพิ่มเติม</item>

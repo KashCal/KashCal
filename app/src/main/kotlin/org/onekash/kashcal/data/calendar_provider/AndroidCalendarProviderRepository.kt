@@ -37,6 +37,35 @@ class AndroidCalendarProviderRepository @Inject constructor(
     companion object {
         private const val TAG = "CalProviderRepo"
 
+        /**
+         * Calendars projection shared by [getDeviceCalendars] and the
+         * single-row [getDeviceCalendar]. Order is load-bearing —
+         * [mapToDeviceCalendar] reads by index.
+         */
+        private val CALENDARS_PROJECTION = arrayOf(
+            Calendars._ID,                   // 0
+            Calendars.CALENDAR_DISPLAY_NAME, // 1
+            Calendars.CALENDAR_COLOR,        // 2
+            Calendars.ACCOUNT_NAME,          // 3
+            Calendars.ACCOUNT_TYPE,          // 4
+            Calendars.VISIBLE,               // 5
+            Calendars.CALENDAR_ACCESS_LEVEL, // 6
+            Calendars.OWNER_ACCOUNT          // 7
+        )
+
+        /**
+         * Canonical attendee read projection. Order is load-bearing —
+         * [mapToDeviceAttendee] reads by index. `internal` so the projection
+         * drift guard test can assert these five columns in this order.
+         */
+        internal val ATTENDEES_PROJECTION = arrayOf(
+            Attendees._ID,                   // 0
+            Attendees.ATTENDEE_NAME,         // 1
+            Attendees.ATTENDEE_EMAIL,        // 2
+            Attendees.ATTENDEE_RELATIONSHIP, // 3
+            Attendees.ATTENDEE_STATUS        // 4
+        )
+
         private val INSTANCES_PROJECTION = arrayOf(
             Instances._ID,              // 0
             Instances.EVENT_ID,         // 1
@@ -99,30 +128,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
         try {
             contentResolver.query(
                 CalendarContract.Calendars.CONTENT_URI,
-                arrayOf(
-                    CalendarContract.Calendars._ID,
-                    CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
-                    CalendarContract.Calendars.CALENDAR_COLOR,
-                    CalendarContract.Calendars.ACCOUNT_NAME,
-                    CalendarContract.Calendars.ACCOUNT_TYPE,
-                    CalendarContract.Calendars.VISIBLE,
-                    CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL
-                ),
+                CALENDARS_PROJECTION,
                 null, null, null
             )?.use { cursor ->
                 val results = mutableListOf<DeviceCalendar>()
                 while (cursor.moveToNext()) {
-                    results.add(
-                        DeviceCalendar(
-                            id = cursor.getLong(0),
-                            displayName = cursor.getString(1).orEmpty(),
-                            color = cursor.getInt(2),
-                            accountName = cursor.getString(3).orEmpty(),
-                            accountType = cursor.getString(4).orEmpty(),
-                            visible = cursor.getInt(5) == 1,
-                            accessLevel = cursor.getInt(6)
-                        )
-                    )
+                    results.add(mapToDeviceCalendar(cursor))
                 }
                 results
             }.orEmpty()
@@ -131,6 +142,32 @@ class AndroidCalendarProviderRepository @Inject constructor(
             emptyList()
         }
     }
+
+    override suspend fun getDeviceCalendar(id: Long): DeviceCalendar? = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                ContentUris.withAppendedId(CalendarContract.Calendars.CONTENT_URI, id),
+                CALENDARS_PROJECTION,
+                null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) mapToDeviceCalendar(cursor) else null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Calendar permission revoked", e)
+            null
+        }
+    }
+
+    private fun mapToDeviceCalendar(cursor: android.database.Cursor) = DeviceCalendar(
+        id = cursor.getLong(0),
+        displayName = cursor.getString(1).orEmpty(),
+        color = cursor.getInt(2),
+        accountName = cursor.getString(3).orEmpty(),
+        accountType = cursor.getString(4).orEmpty(),
+        visible = cursor.getInt(5) == 1,
+        accessLevel = cursor.getInt(6),
+        ownerAccount = cursor.getString(7).orEmpty()
+    )
 
     override suspend fun getInstancesForDayRange(
         startDayCode: Int,
@@ -470,15 +507,23 @@ class AndroidCalendarProviderRepository @Inject constructor(
         timezone: String,
         reminders: List<Int>,
         availability: Int,
-        eventColor: Int?
+        eventColor: Int?,
+        attendees: List<DeviceAttendee>?
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
+            val guests = attendees.orEmpty()
             val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone)
             values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
             values.put(CalendarContract.Events.AVAILABILITY, availability)
             eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
+            // Mark the event as carrying a guest list only when it actually has
+            // guests. Without this the sync adapter treats the event as
+            // attendee-free and never delivers invitations.
+            if (guests.isNotEmpty()) {
+                values.put(CalendarContract.Events.HAS_ATTENDEE_DATA, 1)
+            }
 
-            // Use batch operation for atomicity (event + reminders)
+            // Use batch operation for atomicity (event + reminders + attendees)
             val ops = ArrayList<android.content.ContentProviderOperation>()
 
             // Insert event
@@ -497,6 +542,34 @@ class AndroidCalendarProviderRepository @Inject constructor(
                         .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
                         .build()
                 )
+            }
+
+            // Attendee rows (only when the event has guests). The owner row
+            // makes the organizer visible on the guest list; guest rows are the
+            // invitees. All reference the freshly-inserted event by
+            // back-reference, like the reminders above.
+            if (guests.isNotEmpty()) {
+                val ownerEmail = ownerEmailForCalendar(calendarId)
+                // Owner row only when needed (valid organizer address, not a
+                // machine address, no existing organizer — here always none on
+                // create); guests exclude the owner so it isn't written twice.
+                if (ownerRowNeeded(existing = emptyList(), desired = guests, ownerEmail = ownerEmail)) {
+                    ops.add(
+                        android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
+                            .withValueBackReference(Attendees.EVENT_ID, 0)
+                            .withValues(buildOwnerAttendeeValues(ownerEmail!!.trim()))
+                            .build()
+                    )
+                }
+                for (guest in guestsExcludingOwner(guests, ownerEmail)) {
+                    if (guest.email.isNullOrBlank()) continue
+                    ops.add(
+                        android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
+                            .withValueBackReference(Attendees.EVENT_ID, 0)
+                            .withValues(buildGuestAttendeeValues(guest))
+                            .build()
+                    )
+                }
             }
 
             val results = contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
@@ -527,7 +600,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
         timezone: String,
         reminders: List<Int>,
         availability: Int,
-        eventColor: Int?
+        eventColor: Int?,
+        attendees: List<DeviceAttendee>?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val isException = rrule == null && isExceptionEvent(eventId)
@@ -535,6 +609,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
             values.put(CalendarContract.Events.AVAILABILITY, availability)
             eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
                 ?: values.putNull(CalendarContract.Events.EVENT_COLOR)
+            // Mark attendee data present when the edit introduces guests on an
+            // event that had none. Never flip it back off: an event that has
+            // ever carried a guest list keeps the flag (matches the provider's
+            // own behaviour and avoids confusing sync adapters).
+            if (!attendees.isNullOrEmpty()) {
+                values.put(CalendarContract.Events.HAS_ATTENDEE_DATA, 1)
+            }
 
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
@@ -556,6 +637,14 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
                 }
                 contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
+            }
+
+            // Apply the guest add/remove diff. Null means the caller isn't
+            // managing attendees — leave every existing row (and its synced
+            // status) untouched. Non-null is the authoritative set: insert only
+            // genuinely new guests, delete only genuinely removed ones.
+            if (attendees != null) {
+                applyAttendeeDiff(eventId, attendees)
             }
 
             Log.d(TAG, "Updated device event: id=$eventId")
@@ -1151,6 +1240,189 @@ class AndroidCalendarProviderRepository @Inject constructor(
         master to exceptions
     }
 
+    override suspend fun getAttendees(eventId: Long): List<DeviceAttendee> = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                Attendees.CONTENT_URI,
+                ATTENDEES_PROJECTION,
+                "${Attendees.EVENT_ID} = ?",
+                arrayOf(eventId.toString()),
+                null
+            )?.use { cursor ->
+                val results = mutableListOf<DeviceAttendee>()
+                while (cursor.moveToNext()) {
+                    results.add(mapToDeviceAttendee(cursor))
+                }
+                results
+            }.orEmpty()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied reading attendees for event $eventId", e)
+            emptyList()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error reading attendees for event $eventId", e)
+            emptyList()
+        }
+    }
+
+    private fun mapToDeviceAttendee(cursor: android.database.Cursor): DeviceAttendee = DeviceAttendee(
+        id = cursor.getLong(0),
+        name = cursor.getString(1),
+        email = cursor.getString(2),
+        relationship = cursor.getInt(3),
+        status = cursor.getInt(4)
+    )
+
+    /**
+     * Read a calendar's `OWNER_ACCOUNT` (the organizer/"you" email) by id.
+     * Returns null when the row is missing or permission is denied.
+     */
+    private fun ownerEmailForCalendar(calendarId: Long): String? {
+        return try {
+            contentResolver.query(
+                ContentUris.withAppendedId(Calendars.CONTENT_URI, calendarId),
+                arrayOf(Calendars.OWNER_ACCOUNT),
+                null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0)?.takeUnless { it.isBlank() } else null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "ownerEmailForCalendar($calendarId): permission denied", e)
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "ownerEmailForCalendar($calendarId): query failed", e)
+            null
+        }
+    }
+
+    /**
+     * Apply the guest add/remove [computeAttendeeDiff] to an existing event:
+     * delete only the removed guests' rows (by `_ID`) and insert only the new
+     * ones. Unchanged guests are never touched, so their pulled-down
+     * `ATTENDEE_STATUS` survives.
+     *
+     * The owner is excluded from the guest set (it's the dedicated ORGANIZER
+     * row, not a guest), and an owner row is added when the event gains its
+     * first guests and doesn't already carry an organizer — so adding a guest
+     * to a previously-solo event writes the organizer too, matching create.
+     *
+     * Deletes + inserts go through a single `applyBatch` so a mid-diff failure
+     * leaves the guest list as it was rather than half-applied (matches the
+     * atomicity of the create path).
+     */
+    private fun applyAttendeeDiff(eventId: Long, desired: List<DeviceAttendee>) {
+        val existing = readAttendeesBlocking(eventId)
+        val ownerEmail = calendarIdForEvent(eventId)?.let { ownerEmailForCalendar(it) }
+        val desiredGuests = guestsExcludingOwner(desired, ownerEmail)
+        val diff = computeAttendeeDiff(existing, desiredGuests)
+        val addOwnerRow = ownerRowNeeded(existing = existing, desired = desiredGuests, ownerEmail = ownerEmail)
+        if (diff.toDelete.isEmpty() && diff.toInsert.isEmpty() && !addOwnerRow) return
+
+        val ops = ArrayList<android.content.ContentProviderOperation>()
+        for (removed in diff.toDelete) {
+            ops.add(
+                android.content.ContentProviderOperation.newDelete(
+                    ContentUris.withAppendedId(Attendees.CONTENT_URI, removed.id)
+                ).build()
+            )
+        }
+        if (addOwnerRow) {
+            val values = buildOwnerAttendeeValues(ownerEmail!!.trim()).apply {
+                put(Attendees.EVENT_ID, eventId)
+            }
+            ops.add(
+                android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
+                    .withValues(values)
+                    .build()
+            )
+        }
+        for (added in diff.toInsert) {
+            if (added.email.isNullOrBlank()) continue
+            val values = buildGuestAttendeeValues(added).apply {
+                put(Attendees.EVENT_ID, eventId)
+            }
+            ops.add(
+                android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
+                    .withValues(values)
+                    .build()
+            )
+        }
+        contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
+    }
+
+    /**
+     * Read the `CALENDAR_ID` of an event row, or null when missing / denied.
+     * Used by [applyAttendeeDiff] to resolve the owner email for the owner row.
+     */
+    private fun calendarIdForEvent(eventId: Long): Long? {
+        return try {
+            contentResolver.query(
+                ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+                arrayOf(CalendarContract.Events.CALENDAR_ID),
+                null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "calendarIdForEvent($eventId) failed", e)
+            null
+        }
+    }
+
+    /**
+     * Synchronous attendee read used by [applyAttendeeDiff] (already on the IO
+     * dispatcher inside the write). Mirrors [getAttendees] but without a fresh
+     * `withContext`. Returns empty on permission error.
+     */
+    private fun readAttendeesBlocking(eventId: Long): List<DeviceAttendee> {
+        return try {
+            contentResolver.query(
+                Attendees.CONTENT_URI,
+                ATTENDEES_PROJECTION,
+                "${Attendees.EVENT_ID} = ?",
+                arrayOf(eventId.toString()),
+                null
+            )?.use { cursor ->
+                val results = mutableListOf<DeviceAttendee>()
+                while (cursor.moveToNext()) {
+                    results.add(mapToDeviceAttendee(cursor))
+                }
+                results
+            }.orEmpty()
+        } catch (e: Exception) {
+            Log.w(TAG, "readAttendeesBlocking($eventId) failed", e)
+            emptyList()
+        }
+    }
+
+    override suspend fun updateSelfAttendeeStatus(
+        eventId: Long,
+        attendeeId: Long,
+        status: Int
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val values = android.content.ContentValues().apply {
+                put(Attendees.ATTENDEE_STATUS, status)
+            }
+            // Update by the row's own _ID so only the user's row changes — no
+            // EVENT_ID-wide update that could touch other guests.
+            val rows = contentResolver.update(
+                ContentUris.withAppendedId(Attendees.CONTENT_URI, attendeeId),
+                values, null, null
+            )
+            if (rows == 0) {
+                return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
+            }
+            Log.d(TAG, "Updated self RSVP: event=$eventId, attendee=$attendeeId, status=$status")
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied updating self RSVP for event $eventId", e)
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating self RSVP for event $eventId", e)
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
     override suspend fun getReminders(eventId: Long): List<Int> = withContext(Dispatchers.IO) {
         try {
             contentResolver.query(
@@ -1557,15 +1829,178 @@ internal fun buildCalendarVisibleValues(): android.content.ContentValues {
 }
 
 /**
+ * True when an account type identifies a LOCAL device calendar — one with no
+ * sync adapter. Both the requestSync skip and the device "can't send
+ * invitations" notice key off this single comparison, so neither can drift
+ * from the other.
+ */
+internal fun isLocalAccountType(accountType: String): Boolean =
+    accountType.equals(android.provider.CalendarContract.ACCOUNT_TYPE_LOCAL, ignoreCase = true)
+
+/**
  * Whether `requestSync` should be skipped for this account.
  *
  * Skips LOCAL accounts since they have no sync adapter to receive the request.
  * Callers must ensure `account.name` and `account.type` are non-blank;
  * `readCalendarAccount` guards this.
  */
-internal fun shouldSkipRequestSync(account: android.accounts.Account): Boolean {
-    return account.type.equals(android.provider.CalendarContract.ACCOUNT_TYPE_LOCAL, ignoreCase = true)
+internal fun shouldSkipRequestSync(account: android.accounts.Account): Boolean =
+    isLocalAccountType(account.type)
+
+/**
+ * The add/remove delta for a device-event guest edit. Only guest rows the
+ * user actually added ([toInsert]) or removed ([toDelete]) appear here; an
+ * unchanged guest is in neither set, so its provider row — and the
+ * pulled-down `ATTENDEE_STATUS` on it — survives the edit untouched.
+ */
+internal data class AttendeeDiff(
+    val toInsert: List<DeviceAttendee>,
+    val toDelete: List<DeviceAttendee>,
+)
+
+/**
+ * Canonicalize a device-provider attendee email for compare-time equality:
+ * strip any leading `mailto:` and lowercase. Matches the canonicalization the
+ * read-side UI mapper uses so an unedited open-and-save produces no churn.
+ */
+internal fun canonicalAttendeeEmail(raw: String): String =
+    org.onekash.kashcal.util.AddressNormalizer.canonical(
+        "mailto:" + org.onekash.kashcal.util.AddressNormalizer.stripMailto(raw)
+    )
+
+/**
+ * Compute the guest add/remove delta between the rows currently on the event
+ * ([existing]) and the set the user wants ([desired]), keyed on canonical
+ * email. A guest present on both sides is left alone (preserves its synced
+ * status); only genuinely new guests are inserted and only genuinely removed
+ * guests are deleted.
+ *
+ * The owner/organizer row is excluded from the delete side: it's managed
+ * separately (written once when guests first appear) and must never be removed
+ * by a guest edit. Rows with a blank/null email can't be keyed, so they
+ * participate in neither set.
+ */
+internal fun computeAttendeeDiff(
+    existing: List<DeviceAttendee>,
+    desired: List<DeviceAttendee>,
+): AttendeeDiff {
+    fun key(a: DeviceAttendee): String? =
+        a.email?.takeUnless { it.isBlank() }?.let { canonicalAttendeeEmail(it) }
+
+    val existingGuests = existing.filter {
+        it.relationship != android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER
+    }
+    val existingKeys = existingGuests.mapNotNull { key(it) }.toSet()
+    val desiredKeys = desired.mapNotNull { key(it) }.toSet()
+
+    val toDelete = existingGuests.filter { g -> key(g)?.let { it !in desiredKeys } ?: false }
+    val toInsert = desired.filter { d -> key(d)?.let { it !in existingKeys } ?: false }
+    return AttendeeDiff(toInsert = toInsert, toDelete = toDelete)
 }
+
+/**
+ * Whether [email] is a real address we should write as the event's ORGANIZER.
+ *
+ * Excludes blank/null and machine-generated group addresses (which end with
+ * `calendar.google.com` — e.g. a shared Google calendar's
+ * `…@group.calendar.google.com` `OWNER_ACCOUNT`). Surfacing such an address as
+ * the organizer is meaningless, so the owner row is skipped for them.
+ */
+internal fun isValidOrganizerEmail(email: String?): Boolean {
+    val trimmed = email?.trim().orEmpty()
+    if (trimmed.isEmpty()) return false
+    return !trimmed.endsWith("calendar.google.com", ignoreCase = true)
+}
+
+/**
+ * The guest rows to write, with the calendar owner removed. The owner is
+ * represented by the dedicated ORGANIZER row, so a guest entry that resolves to
+ * the same canonical address would create a duplicate — drop it.
+ *
+ * Only excludes the owner when it's a valid organizer address ([isValidOrganizerEmail]):
+ * if no owner row will be written (blank or machine-generated address), there's
+ * no duplicate to avoid, so the matching guest is kept rather than silently lost.
+ */
+internal fun guestsExcludingOwner(
+    desired: List<DeviceAttendee>,
+    ownerEmail: String?,
+): List<DeviceAttendee> {
+    if (!isValidOrganizerEmail(ownerEmail)) return desired
+    val canonicalOwner = canonicalAttendeeEmail(ownerEmail!!)
+    return desired.filter { g ->
+        g.email?.takeUnless { it.isBlank() }?.let { canonicalAttendeeEmail(it) != canonicalOwner } ?: true
+    }
+}
+
+/**
+ * Whether a dedicated owner/organizer row should be written for this save.
+ *
+ * True only when: the event will have guests ([desired] non-empty), the owner
+ * email is a real organizer address ([isValidOrganizerEmail]), and an organizer
+ * row isn't already present on the event ([existing]). The last condition makes
+ * this correct on the update path too — a previously-solo event gaining a guest
+ * gets an owner row, but an event that already carries the organizer doesn't get
+ * a duplicate.
+ */
+internal fun ownerRowNeeded(
+    existing: List<DeviceAttendee>,
+    desired: List<DeviceAttendee>,
+    ownerEmail: String?,
+): Boolean {
+    if (desired.isEmpty()) return false
+    if (!isValidOrganizerEmail(ownerEmail)) return false
+    val alreadyHasOrganizer = existing.any {
+        it.relationship == android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER
+    }
+    return !alreadyHasOrganizer
+}
+
+/**
+ * ContentValues for the owner/organizer attendee row. Written only when an
+ * event has guests: the host appears as a `RELATIONSHIP_ORGANIZER` /
+ * `STATUS_ACCEPTED` row so the guest list reads correctly.
+ */
+internal fun buildOwnerAttendeeValues(ownerEmail: String): android.content.ContentValues =
+    android.content.ContentValues().apply {
+        put(android.provider.CalendarContract.Attendees.ATTENDEE_EMAIL, ownerEmail)
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_RELATIONSHIP,
+            android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER
+        )
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_TYPE,
+            android.provider.CalendarContract.Attendees.TYPE_REQUIRED
+        )
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS,
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED
+        )
+    }
+
+/**
+ * ContentValues for a guest attendee row: `RELATIONSHIP_ATTENDEE`,
+ * `TYPE_REQUIRED`, `STATUS_NONE` (no response yet). A null display name is
+ * omitted rather than written as null.
+ */
+internal fun buildGuestAttendeeValues(attendee: DeviceAttendee): android.content.ContentValues =
+    android.content.ContentValues().apply {
+        attendee.name?.let {
+            put(android.provider.CalendarContract.Attendees.ATTENDEE_NAME, it)
+        }
+        put(android.provider.CalendarContract.Attendees.ATTENDEE_EMAIL, attendee.email)
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_RELATIONSHIP,
+            android.provider.CalendarContract.Attendees.RELATIONSHIP_ATTENDEE
+        )
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_TYPE,
+            android.provider.CalendarContract.Attendees.TYPE_REQUIRED
+        )
+        put(
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS,
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_NONE
+        )
+    }
 
 /**
  * Build ContentValues for CalendarProvider Events table.

@@ -1820,6 +1820,37 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `appLockEnabled surfaces the datastore value`() = runTest {
+        every { dataStore.appLockEnabled } returns kotlinx.coroutines.flow.flowOf(true)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.appLockEnabled.value)
+    }
+
+    @Test
+    fun `setAppLockEnabled true persists the flag`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setAppLockEnabled(true)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAppLockEnabled(true) }
+    }
+
+    @Test
+    fun `setAppLockEnabled false persists the flag (disabling never routes to enrollment)`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setAppLockEnabled(false)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAppLockEnabled(false) }
+    }
+
+    @Test
     fun `setTimeFormat calls dataStore with format string`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

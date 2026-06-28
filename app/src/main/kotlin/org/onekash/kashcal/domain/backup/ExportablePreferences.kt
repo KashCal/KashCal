@@ -117,6 +117,9 @@ object ExportablePreferences {
         PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN.name,
         // Permission-banner dismissal — tied to this device's contacts permission, not portable
         PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name,
+        // App lock — device-local privacy policy tied to this device's enrolled
+        // biometric / screen lock; each device decides its own, not portable
+        PreferencesKeys.APP_LOCK_ENABLED.name,
         // Device calendar selection IDs — not portable across installs
         PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS.name,
         PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS.name,

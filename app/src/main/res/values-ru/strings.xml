@@ -177,6 +177,20 @@
     <string name="settings_section_notifications">Уведомления</string>
     <string name="settings_section_sync">Синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
+    <string name="settings_section_privacy">Конфиденциальность</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Блокировка приложения</string>
+    <string name="app_lock_subtitle_off">Запрашивать разблокировку для открытия KashCal</string>
+    <string name="app_lock_subtitle_on">Разблокировка отпечатком, лицом или блокировкой экрана</string>
+    <string name="app_lock_veil_locked">Заблокировано</string>
+    <string name="app_lock_veil_unlock">Разблокировать</string>
+    <string name="app_lock_veil_footnote">Отпечаток, лицо или блокировка экрана</string>
+    <string name="app_lock_prompt_title">Разблокируйте, чтобы увидеть свои события</string>
+    <string name="app_lock_enroll_message">Настройте отпечаток, лицо или блокировку экрана в системных настройках, чтобы использовать блокировку приложения.</string>
+    <string name="app_lock_unsupported_message">Это устройство не поддерживает блокировку приложения.</string>
+    <string name="app_lock_enabled_message">Блокировка приложения включена. KashCal попросит пройти аутентификацию при следующем открытии.</string>
+    <string name="app_lock_disable_prompt_title">Разблокируйте, чтобы отключить блокировку приложения</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Календарь Apple?</string>
@@ -1253,6 +1267,7 @@
     <string name="attendee_invalid_email">Введи полный адрес e-mail</string>
     <string name="attendee_add_typed">Добавить \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Приглашение людей недоступно в этой учётной записи</string>
+    <string name="device_attendee_local_no_delivery">Этот календарь не может отправлять приглашения. Гости сохранены, но не получат уведомлений.</string>
     <string name="action_save_and_notify">Сохранить и уведомить</string>
     <plurals name="reminder_in_days">
         <item quantity="one">Через %1$d день</item>

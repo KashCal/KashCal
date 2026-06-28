@@ -166,6 +166,21 @@
     <string name="settings_section_notifications">ማሳወቂያዎች</string>
     <string name="settings_section_sync">ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
+    <string name="settings_section_privacy">ግላዊነት</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">የመተግበሪያ መቆለፊያ</string>
+    <string name="app_lock_subtitle_off">KashCalን ለመክፈት መክፈት ያስፈልጋል</string>
+    <string name="app_lock_subtitle_on">በጣት አሻራ፣ በፊት ወይም በማያ ገጽ መቆለፊያ ይክፈቱ</string>
+    <string name="app_lock_veil_locked">ተቆልፏል</string>
+    <string name="app_lock_veil_unlock">ክፈት</string>
+    <string name="app_lock_veil_footnote">የጣት አሻራ፣ ፊት ወይም የማያ ገጽ መቆለፊያ</string>
+    <string name="app_lock_prompt_title">ዝግጅቶችዎን ለማየት ይክፈቱ</string>
+    <string name="app_lock_enroll_message">የመተግበሪያ መቆለፊያን ለመጠቀም በስርዓት ቅንብሮች ውስጥ የጣት አሻራ፣ ፊት ወይም የማያ ገጽ መቆለፊያ ያዋቅሩ።</string>
+    <string name="app_lock_unsupported_message">ይህ መሣሪያ የመተግበሪያ መቆለፊያን መጠቀም አይችልም።</string>
+    <string name="app_lock_enabled_message">የመተግበሪያ መቆለፊያ በርቷል። በሚቀጥለው ጊዜ KashCalን ሲከፍቱ እንዲያረጋግጡ ይጠይቅዎታል።</string>
+    <string name="app_lock_disable_prompt_title">የመተግበሪያ መቆለፊያን ለማጥፋት ይክፈቱ</string>
+
     <string name="backup_settings_label">ቅንብሮችን ምትኬ አስቀምጥ</string>
     <string name="backup_settings_subtitle">የKashCal ውቅርን ወደ JSON ፋይል አስቀምጥ</string>
     <string name="restore_settings_label">ቅንብሮችን መልስ</string>
@@ -1132,6 +1147,7 @@
     <string name="attendee_invalid_email">ሙሉ የኢሜይል አድራሻ ያስገቡ</string>
     <string name="attendee_add_typed">\"%1$s\"ን ያክሉ</string>
     <string name="attendee_scheduling_unavailable">ሰዎችን መጋበዝ በዚህ መለያ ላይ አይገኝም</string>
+    <string name="device_attendee_local_no_delivery">ይህ የቀን መቁጠሪያ ግብዣዎችን መላክ አይችልም። እንግዶች ይቀመጣሉ ግን አይነገራቸውም።</string>
     <string name="action_save_and_notify">አስቀምጥ &amp; አሳውቅ</string>
     <string name="inbox_empty_caught_up">ሁሉም ተመልክቷል</string>
     <string name="inbox_organizer_suffix">(አዘጋጅ)</string>

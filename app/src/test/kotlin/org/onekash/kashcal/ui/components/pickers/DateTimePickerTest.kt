@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar as JavaCalendar
 
 /**
  * Unit tests for DateTimePicker component helper functions.
@@ -70,5 +71,59 @@ class DateTimePickerTest {
         assertTrue(ActiveDateTimeSheet.values().contains(ActiveDateTimeSheet.NONE))
         assertTrue(ActiveDateTimeSheet.values().contains(ActiveDateTimeSheet.START))
         assertTrue(ActiveDateTimeSheet.values().contains(ActiveDateTimeSheet.END))
+    }
+
+    // ==================== dayCellStyle Tests ====================
+
+    @Test
+    fun `dayCellStyle is PLAIN for an ordinary day`() {
+        assertEquals(DayCellStyle.PLAIN, dayCellStyle(isToday = false, isSelected = false))
+    }
+
+    @Test
+    fun `dayCellStyle is TODAY when today is not the selected day`() {
+        // The reported gap: selecting another date must NOT strip today's marker.
+        assertEquals(DayCellStyle.TODAY, dayCellStyle(isToday = true, isSelected = false))
+    }
+
+    @Test
+    fun `dayCellStyle is SELECTED for a selected day that is not today`() {
+        assertEquals(DayCellStyle.SELECTED, dayCellStyle(isToday = false, isSelected = true))
+    }
+
+    @Test
+    fun `dayCellStyle selected fill wins when today is also selected`() {
+        // Filled selection makes the cell unmistakable, so the today ring is dropped.
+        assertEquals(DayCellStyle.SELECTED, dayCellStyle(isToday = true, isSelected = true))
+    }
+
+    // ==================== isSameCalendarDay Tests ====================
+
+    private fun dayMillis(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =
+        JavaCalendar.getInstance().apply {
+            set(year, month, day, hour, minute, 0)
+            set(JavaCalendar.MILLISECOND, 0)
+        }.timeInMillis
+
+    @Test
+    fun `isSameCalendarDay is true for two instants on the same day`() {
+        val a = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 0, 1) }
+        val b = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 23, 59) }
+        assertTrue(isSameCalendarDay(a, b))
+    }
+
+    @Test
+    fun `isSameCalendarDay is false across midnight`() {
+        // Today sampled at 11:59 PM must NOT match tomorrow's cell.
+        val lateToday = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 23, 59) }
+        val tomorrow = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 27, 0, 0) }
+        assertFalse(isSameCalendarDay(lateToday, tomorrow))
+    }
+
+    @Test
+    fun `isSameCalendarDay is false for same day-of-year in different years`() {
+        val a = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.MARCH, 1) }
+        val b = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2025, JavaCalendar.MARCH, 1) }
+        assertFalse(isSameCalendarDay(a, b))
     }
 }

@@ -232,6 +232,39 @@ class KashCalDataStoreTest {
         }
     }
 
+    @Test
+    fun `appLockEnabled defaults to false and round-trips`() = runTest {
+        dataStore.appLockEnabled.test {
+            // Off by default
+            assertEquals(false, awaitItem())
+
+            dataStore.setAppLockEnabled(true)
+            assertEquals(true, awaitItem())
+
+            dataStore.setAppLockEnabled(false)
+            assertEquals(false, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `appLockEnabled does NOT emit duplicate values`() = runTest {
+        dataStore.appLockEnabled.test {
+            assertEquals(false, awaitItem())
+
+            // Same value - should NOT emit
+            dataStore.setAppLockEnabled(false)
+
+            // Different value - SHOULD emit
+            dataStore.setAppLockEnabled(true)
+            assertEquals(true, awaitItem())
+
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     // ==================== Int Preference Tests ====================
 
     @Test

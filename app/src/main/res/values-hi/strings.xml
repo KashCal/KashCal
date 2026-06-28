@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">सूचनाएँ</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">बैकअप और रीस्टोर</string>
+    <string name="settings_section_privacy">गोपनीयता</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">ऐप लॉक</string>
+    <string name="app_lock_subtitle_off">KashCal खोलने के लिए अनलॉक आवश्यक करें</string>
+    <string name="app_lock_subtitle_on">फ़िंगरप्रिंट, चेहरे या स्क्रीन लॉक से अनलॉक करें</string>
+    <string name="app_lock_veil_locked">लॉक है</string>
+    <string name="app_lock_veil_unlock">अनलॉक करें</string>
+    <string name="app_lock_veil_footnote">फ़िंगरप्रिंट, चेहरा या स्क्रीन लॉक</string>
+    <string name="app_lock_prompt_title">अपने इवेंट देखने के लिए अनलॉक करें</string>
+    <string name="app_lock_enroll_message">ऐप लॉक का उपयोग करने के लिए सिस्टम सेटिंग्स में फ़िंगरप्रिंट, चेहरा या स्क्रीन लॉक सेट करें।</string>
+    <string name="app_lock_unsupported_message">यह डिवाइस ऐप लॉक का उपयोग नहीं कर सकता।</string>
+    <string name="app_lock_enabled_message">ऐप लॉक चालू है। अगली बार खोलने पर KashCal आपसे प्रमाणीकरण करने को कहेगा।</string>
+    <string name="app_lock_disable_prompt_title">ऐप लॉक बंद करने के लिए अनलॉक करें</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">सेटिंग्स का बैकअप लें</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">पूरा ईमेल पता दर्ज करें</string>
     <string name="attendee_add_typed">\"%1$s\" जोड़ें</string>
     <string name="attendee_scheduling_unavailable">इस खाते पर लोगों को आमंत्रित करना उपलब्ध नहीं है</string>
+    <string name="device_attendee_local_no_delivery">यह कैलेंडर आमंत्रण नहीं भेज सकता। अतिथि सहेजे जाते हैं लेकिन उन्हें सूचित नहीं किया जाएगा।</string>
     <string name="action_save_and_notify">सहेजें और सूचित करें</string>
     <string name="attendee_action_copy">ईमेल कॉपी करें</string>
     <string name="attendee_action_email">ईमेल भेजें</string>

@@ -312,6 +312,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _titleSuggestionsEnabled = MutableStateFlow(true)
     val titleSuggestionsEnabled: StateFlow<Boolean> = _titleSuggestionsEnabled.asStateFlow()
 
+    private val _appLockEnabled = MutableStateFlow(false)
+    val appLockEnabled: StateFlow<Boolean> = _appLockEnabled.asStateFlow()
+
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
 
@@ -668,6 +671,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.appLockEnabled.collect { enabled ->
+                _appLockEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
             dataStore.titleSuggestionsEnabled.collect { enabled ->
                 _titleSuggestionsEnabled.value = enabled
             }
@@ -705,6 +713,17 @@ class AccountSettingsViewModel @Inject constructor(
     fun setQuickAddEnabled(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setQuickAddEnabled(enabled)
+        }
+    }
+
+    /**
+     * Persist the app-lock flag. The capability / enrollment check (and any
+     * routing to the system enrollment flow) happens at the call site, which
+     * has the Android context — the ViewModel only stores the resolved value.
+     */
+    fun setAppLockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setAppLockEnabled(enabled)
         }
     }
 

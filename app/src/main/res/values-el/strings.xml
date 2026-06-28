@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Ειδοποιήσεις</string>
     <string name="settings_section_sync">Συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
+    <string name="settings_section_privacy">Απόρρητο</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Κλείδωμα εφαρμογής</string>
+    <string name="app_lock_subtitle_off">Απαίτηση ξεκλειδώματος για άνοιγμα του KashCal</string>
+    <string name="app_lock_subtitle_on">Ξεκλείδωμα με δακτυλικό αποτύπωμα, πρόσωπο ή κλείδωμα οθόνης</string>
+    <string name="app_lock_veil_locked">Κλειδωμένο</string>
+    <string name="app_lock_veil_unlock">Ξεκλείδωμα</string>
+    <string name="app_lock_veil_footnote">Δακτυλικό αποτύπωμα, πρόσωπο ή κλείδωμα οθόνης</string>
+    <string name="app_lock_prompt_title">Ξεκλειδώστε για να δείτε τα συμβάντα σας</string>
+    <string name="app_lock_enroll_message">Ρυθμίστε ένα δακτυλικό αποτύπωμα, πρόσωπο ή κλείδωμα οθόνης στις ρυθμίσεις συστήματος για να χρησιμοποιήσετε το Κλείδωμα εφαρμογής.</string>
+    <string name="app_lock_unsupported_message">Αυτή η συσκευή δεν μπορεί να χρησιμοποιήσει το Κλείδωμα εφαρμογής.</string>
+    <string name="app_lock_enabled_message">Το Κλείδωμα εφαρμογής είναι ενεργό. Το KashCal θα σας ζητήσει ταυτοποίηση την επόμενη φορά που θα το ανοίξετε.</string>
+    <string name="app_lock_disable_prompt_title">Ξεκλειδώστε για απενεργοποίηση του Κλειδώματος εφαρμογής</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Δημιουργία αντιγράφου ρυθμίσεων</string>
@@ -1139,6 +1153,7 @@
     <string name="attendee_invalid_email">Εισαγάγετε μια πλήρη διεύθυνση email</string>
     <string name="attendee_add_typed">Προσθήκη \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Η πρόσκληση ατόμων δεν είναι διαθέσιμη σε αυτόν τον λογαριασμό</string>
+    <string name="device_attendee_local_no_delivery">Αυτό το ημερολόγιο δεν μπορεί να στείλει προσκλήσεις. Οι προσκεκλημένοι αποθηκεύονται αλλά δεν θα ειδοποιηθούν.</string>
     <string name="action_save_and_notify">Αποθήκευση και ειδοποίηση</string>
     <string name="attendee_status_delegated">Εκχωρήθηκε</string>
     <string name="attendee_status_pending">Εκκρεμές</string>

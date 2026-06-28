@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">அறிவிப்புகள்</string>
     <string name="settings_section_sync">ஒத்திசைவு</string>
     <string name="settings_section_data">காப்புப்பிரதி மற்றும் மீட்டெடுப்பு</string>
+    <string name="settings_section_privacy">தனியுரிமை</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">ஆப் பூட்டு</string>
+    <string name="app_lock_subtitle_off">KashCal-ஐத் திறக்க திறத்தலைக் கட்டாயமாக்கு</string>
+    <string name="app_lock_subtitle_on">கைரேகை, முகம் அல்லது திரைப் பூட்டால் திறக்கவும்</string>
+    <string name="app_lock_veil_locked">பூட்டப்பட்டது</string>
+    <string name="app_lock_veil_unlock">திறக்கவும்</string>
+    <string name="app_lock_veil_footnote">கைரேகை, முகம் அல்லது திரைப் பூட்டு</string>
+    <string name="app_lock_prompt_title">உங்கள் நிகழ்வுகளைப் பார்க்க திறக்கவும்</string>
+    <string name="app_lock_enroll_message">ஆப் பூட்டைப் பயன்படுத்த கணினி அமைப்புகளில் கைரேகை, முகம் அல்லது திரைப் பூட்டை அமைக்கவும்.</string>
+    <string name="app_lock_unsupported_message">இந்தச் சாதனம் ஆப் பூட்டைப் பயன்படுத்த முடியாது.</string>
+    <string name="app_lock_enabled_message">ஆப் பூட்டு இயக்கப்பட்டது. அடுத்த முறை திறக்கும்போது KashCal உங்களை அங்கீகரிக்கச் சொல்லும்.</string>
+    <string name="app_lock_disable_prompt_title">ஆப் பூட்டை அணைக்க திறக்கவும்</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">அமைப்புகளைக் காப்புப்பிரதி எடு</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">முழு மின்னஞ்சல் முகவரியை உள்ளிடவும்</string>
     <string name="attendee_add_typed">\"%1$s\" ஐச் சேர்க்கவும்</string>
     <string name="attendee_scheduling_unavailable">இந்தக் கணக்கில் நபர்களை அழைப்பது கிடைக்கவில்லை</string>
+    <string name="device_attendee_local_no_delivery">இந்த நாட்காட்டியால் அழைப்புகளை அனுப்ப முடியாது. விருந்தினர்கள் சேமிக்கப்படுவார்கள் ஆனால் அவர்களுக்குத் தெரிவிக்கப்படாது.</string>
     <string name="action_save_and_notify">சேமித்து அறிவிக்கவும்</string>
     <string name="attendee_action_copy">மின்னஞ்சலை நகலெடு</string>
     <string name="attendee_action_email">மின்னஞ்சல் அனுப்பு</string>

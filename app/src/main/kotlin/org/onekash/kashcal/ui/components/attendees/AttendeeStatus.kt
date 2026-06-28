@@ -34,12 +34,39 @@ enum class AttendeeStatus(@StringRes val labelResId: Int) {
         Delegated, NeedsAction -> null
     }
 
+    /**
+     * Inverse of [fromDeviceStatus]: the Android
+     * `CalendarContract.Attendees.ATTENDEE_STATUS_*` int for this status, used
+     * when writing an RSVP back to the provider. The provider has no DELEGATED
+     * state, so [Delegated] (not an RSVP target) maps to NONE alongside
+     * [NeedsAction].
+     */
+    fun toDeviceStatus(): Int = when (this) {
+        Accepted -> android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED
+        Declined -> android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED
+        Tentative -> android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_TENTATIVE
+        Delegated, NeedsAction -> android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_NONE
+    }
+
     companion object {
         fun fromPartstat(partstat: String?): AttendeeStatus = when (partstat?.uppercase()) {
             "ACCEPTED" -> Accepted
             "DECLINED" -> Declined
             "TENTATIVE" -> Tentative
             "DELEGATED" -> Delegated
+            else -> NeedsAction
+        }
+
+        /**
+         * Map an Android `CalendarContract.Attendees.ATTENDEE_STATUS_*` int to
+         * the UI status. The provider has no DELEGATED state; INVITED and NONE
+         * both mean "no response yet" → [NeedsAction]. Any unknown value also
+         * falls back to [NeedsAction].
+         */
+        fun fromDeviceStatus(status: Int): AttendeeStatus = when (status) {
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED -> Accepted
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED -> Declined
+            android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_TENTATIVE -> Tentative
             else -> NeedsAction
         }
     }

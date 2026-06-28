@@ -124,6 +124,20 @@
     <string name="settings_section_notifications">Tilkynningar</string>
     <string name="settings_section_sync">Samstilling</string>
     <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
+    <string name="settings_section_privacy">Persónuvernd</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Forritslæsing</string>
+    <string name="app_lock_subtitle_off">Krefjast aflæsingar til að opna KashCal</string>
+    <string name="app_lock_subtitle_on">Aflæstu með fingrafari, andliti eða skjálæsingu</string>
+    <string name="app_lock_veil_locked">Læst</string>
+    <string name="app_lock_veil_unlock">Aflæsa</string>
+    <string name="app_lock_veil_footnote">Fingrafar, andlit eða skjálæsing</string>
+    <string name="app_lock_prompt_title">Aflæstu til að sjá viðburðina þína</string>
+    <string name="app_lock_enroll_message">Settu upp fingrafar, andlit eða skjálæsingu í kerfisstillingum til að nota Forritslæsingu.</string>
+    <string name="app_lock_unsupported_message">Þetta tæki getur ekki notað Forritslæsingu.</string>
+    <string name="app_lock_enabled_message">Forritslæsing er virk. KashCal biður þig um að auðkenna þig næst þegar þú opnar forritið.</string>
+    <string name="app_lock_disable_prompt_title">Aflæstu til að slökkva á Forritslæsingu</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Taka öryggisafrit af stillingum</string>
@@ -1115,6 +1129,7 @@
     <string name="attendee_invalid_email">Sláðu inn fullt tölvupóstfang</string>
     <string name="attendee_add_typed">Bæta við \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Ekki er hægt að bjóða fólki á þessum reikningi</string>
+    <string name="device_attendee_local_no_delivery">Þetta dagatal getur ekki sent boð. Gestir eru vistaðir en fá enga tilkynningu.</string>
     <string name="action_save_and_notify">Vista &amp; tilkynna</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt frágengið</string>

@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同期</string>
     <string name="settings_section_data">バックアップと復元</string>
+    <string name="settings_section_privacy">プライバシー</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">アプリロック</string>
+    <string name="app_lock_subtitle_off">KashCalを開くにはロック解除が必要です</string>
+    <string name="app_lock_subtitle_on">指紋、顔、または画面ロックで解除します</string>
+    <string name="app_lock_veil_locked">ロック中</string>
+    <string name="app_lock_veil_unlock">ロック解除</string>
+    <string name="app_lock_veil_footnote">指紋、顔、または画面ロック</string>
+    <string name="app_lock_prompt_title">ロックを解除して予定を表示</string>
+    <string name="app_lock_enroll_message">アプリロックを使用するには、システム設定で指紋、顔、または画面ロックを設定してください。</string>
+    <string name="app_lock_unsupported_message">このデバイスではアプリロックを使用できません。</string>
+    <string name="app_lock_enabled_message">アプリロックがオンになりました。次回KashCalを開くときに認証を求められます。</string>
+    <string name="app_lock_disable_prompt_title">ロックを解除してアプリロックをオフにする</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Appleカレンダーをお使いですか？</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">完全なメールアドレスを入力してください</string>
     <string name="attendee_add_typed">\"%1$s\" を追加</string>
     <string name="attendee_scheduling_unavailable">このアカウントではユーザーを招待できません</string>
+    <string name="device_attendee_local_no_delivery">このカレンダーは招待状を送信できません。ゲストは保存されますが通知されません。</string>
     <string name="action_save_and_notify">保存して通知</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d 件</item>

@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.WheelTimePicker
 import org.onekash.kashcal.util.DateTimeUtils
@@ -479,6 +480,14 @@ fun InlineDatePickerContent(
     onShowMonthYearPickerChange: ((Boolean) -> Unit)? = null
 ) {
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
+    // Re-sample "today" whenever the screen resumes so the marker can't go stale
+    // when the picker stays open across midnight or the app is backgrounded.
+    var todayRefreshKey by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        todayRefreshKey++
+        onPauseOrDispose { }
+    }
+    val today = remember(todayRefreshKey) { JavaCalendar.getInstance() }
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
     val monthYearFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
@@ -655,6 +664,8 @@ fun InlineDatePickerContent(
                                         val isSelected = selectedCal.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
                                             selectedCal.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
                                             selectedCal.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
+                                        val isToday = isSameCalendarDay(today, dayCal)
+                                        val cellStyle = dayCellStyle(isToday = isToday, isSelected = isSelected)
 
                                         Box(
                                             modifier = Modifier
@@ -663,8 +674,11 @@ fun InlineDatePickerContent(
                                                 .padding(2.dp)
                                                 .clip(CircleShape)
                                                 .background(
-                                                    if (isSelected) MaterialTheme.colorScheme.inverseSurface
-                                                    else Color.Transparent
+                                                    when (cellStyle) {
+                                                        DayCellStyle.SELECTED -> MaterialTheme.colorScheme.inverseSurface
+                                                        DayCellStyle.TODAY -> MaterialTheme.colorScheme.primaryContainer
+                                                        DayCellStyle.PLAIN -> Color.Transparent
+                                                    }
                                                 )
                                                 .clickable {
                                                     val selectedTime = dayCal.clone() as JavaCalendar
@@ -678,9 +692,12 @@ fun InlineDatePickerContent(
                                             Text(
                                                 text = dayIndex.toString(),
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
-                                                else MaterialTheme.colorScheme.onSurface,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                color = when (cellStyle) {
+                                                    DayCellStyle.SELECTED -> MaterialTheme.colorScheme.inverseOnSurface
+                                                    DayCellStyle.TODAY -> MaterialTheme.colorScheme.onPrimaryContainer
+                                                    DayCellStyle.PLAIN -> MaterialTheme.colorScheme.onSurface
+                                                },
+                                                fontWeight = if (cellStyle == DayCellStyle.PLAIN) FontWeight.Normal else FontWeight.Bold
                                             )
                                         }
                                     } else {
@@ -697,6 +714,37 @@ fun InlineDatePickerContent(
 }
 
 // ==================== Helper Functions ====================
+
+/**
+ * Visual state of a single day cell in the calendar grid.
+ *
+ * Today and the selected day are independent states that can land on the same
+ * cell. When they do, the SELECTED treatment wins (its fill already makes the
+ * cell unmistakable). Otherwise today keeps its own fill, so it stays visible
+ * whenever a different date is selected.
+ */
+enum class DayCellStyle {
+    PLAIN,
+    TODAY,
+    SELECTED
+}
+
+/**
+ * Resolve a day cell's visual state. Selection takes precedence over today.
+ */
+fun dayCellStyle(isToday: Boolean, isSelected: Boolean): DayCellStyle = when {
+    isSelected -> DayCellStyle.SELECTED
+    isToday -> DayCellStyle.TODAY
+    else -> DayCellStyle.PLAIN
+}
+
+/**
+ * True when two calendars fall on the same civil day (year + day-of-year), so a
+ * "today" instant sampled at 11:59 PM does not match tomorrow's grid cell.
+ */
+fun isSameCalendarDay(a: JavaCalendar, b: JavaCalendar): Boolean =
+    a.get(JavaCalendar.YEAR) == b.get(JavaCalendar.YEAR) &&
+        a.get(JavaCalendar.DAY_OF_YEAR) == b.get(JavaCalendar.DAY_OF_YEAR)
 
 /**
  * Check if time range crosses midnight (requires +1 badge on end date).

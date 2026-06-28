@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">বিজ্ঞপ্তি</string>
     <string name="settings_section_sync">সিংক</string>
     <string name="settings_section_data">ব্যাকআপ ও রিস্টোর</string>
+    <string name="settings_section_privacy">গোপনীয়তা</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">অ্যাপ লক</string>
+    <string name="app_lock_subtitle_off">KashCal খুলতে আনলক করা আবশ্যক করুন</string>
+    <string name="app_lock_subtitle_on">ফিঙ্গারপ্রিন্ট, মুখ বা স্ক্রিন লক দিয়ে আনলক করুন</string>
+    <string name="app_lock_veil_locked">লক করা আছে</string>
+    <string name="app_lock_veil_unlock">আনলক করুন</string>
+    <string name="app_lock_veil_footnote">ফিঙ্গারপ্রিন্ট, মুখ বা স্ক্রিন লক</string>
+    <string name="app_lock_prompt_title">আপনার ইভেন্ট দেখতে আনলক করুন</string>
+    <string name="app_lock_enroll_message">অ্যাপ লক ব্যবহার করতে সিস্টেম সেটিংসে একটি ফিঙ্গারপ্রিন্ট, মুখ বা স্ক্রিন লক সেট আপ করুন।</string>
+    <string name="app_lock_unsupported_message">এই ডিভাইসটি অ্যাপ লক ব্যবহার করতে পারে না।</string>
+    <string name="app_lock_enabled_message">অ্যাপ লক চালু আছে। পরের বার খোলার সময় KashCal আপনাকে প্রমাণীকরণ করতে বলবে।</string>
+    <string name="app_lock_disable_prompt_title">অ্যাপ লক বন্ধ করতে আনলক করুন</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">সেটিংস ব্যাকআপ করুন</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">একটি সম্পূর্ণ ইমেল ঠিকানা লিখুন</string>
     <string name="attendee_add_typed">\"%1$s\" যোগ করুন</string>
     <string name="attendee_scheduling_unavailable">এই অ্যাকাউন্টে লোকদের আমন্ত্রণ জানানো উপলব্ধ নয়</string>
+    <string name="device_attendee_local_no_delivery">এই ক্যালেন্ডার আমন্ত্রণ পাঠাতে পারে না। অতিথিদের সংরক্ষণ করা হয় তবে তাদের জানানো হবে না।</string>
     <string name="action_save_and_notify">সংরক্ষণ করুন ও জানান</string>
     <string name="attendee_action_copy">ইমেল কপি করুন</string>
     <string name="attendee_action_email">ইমেল পাঠান</string>

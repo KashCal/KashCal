@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Известия</string>
     <string name="settings_section_sync">Синхронизиране</string>
     <string name="settings_section_data">Архивиране и възстановяване</string>
+    <string name="settings_section_privacy">Поверителност</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Заключване на приложението</string>
+    <string name="app_lock_subtitle_off">Изисквай отключване за отваряне на KashCal</string>
+    <string name="app_lock_subtitle_on">Отключвай с пръстов отпечатък, лице или заключен екран</string>
+    <string name="app_lock_veil_locked">Заключено</string>
+    <string name="app_lock_veil_unlock">Отключи</string>
+    <string name="app_lock_veil_footnote">Пръстов отпечатък, лице или заключен екран</string>
+    <string name="app_lock_prompt_title">Отключете, за да видите събитията си</string>
+    <string name="app_lock_enroll_message">Настройте пръстов отпечатък, лице или заключен екран в системните настройки, за да използвате Заключването на приложението.</string>
+    <string name="app_lock_unsupported_message">Това устройство не може да използва Заключването на приложението.</string>
+    <string name="app_lock_enabled_message">Заключването на приложението е включено. KashCal ще поиска удостоверяване следващия път, когато го отворите.</string>
+    <string name="app_lock_disable_prompt_title">Отключете, за да изключите Заключването на приложението</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Архивирай настройките</string>
@@ -1137,6 +1151,7 @@
     <string name="attendee_invalid_email">Въведете пълен имейл адрес</string>
     <string name="attendee_add_typed">Добавяне на \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Поканването на хора не е налично за този акаунт</string>
+    <string name="device_attendee_local_no_delivery">Този календар не може да изпраща покани. Гостите се запазват, но няма да бъдат уведомени.</string>
     <string name="action_save_and_notify">Запазване и известяване</string>
     <string name="attendee_status_delegated">Делегирано</string>
     <string name="attendee_status_pending">Изчакване</string>

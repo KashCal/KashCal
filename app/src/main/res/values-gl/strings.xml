@@ -172,6 +172,20 @@
     <string name="settings_section_notifications">Notificacións</string>
     <string name="settings_section_sync">Sincronización</string>
     <string name="settings_section_data">Copia de seguridade e restauración</string>
+    <string name="settings_section_privacy">Privacidade</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Bloqueo da aplicación</string>
+    <string name="app_lock_subtitle_off">Requirir desbloqueo para abrir KashCal</string>
+    <string name="app_lock_subtitle_on">Desbloquear coa pegada dixital, a cara ou o bloqueo de pantalla</string>
+    <string name="app_lock_veil_locked">Bloqueado</string>
+    <string name="app_lock_veil_unlock">Desbloquear</string>
+    <string name="app_lock_veil_footnote">Pegada dixital, cara ou bloqueo de pantalla</string>
+    <string name="app_lock_prompt_title">Desbloquea para ver os teus eventos</string>
+    <string name="app_lock_enroll_message">Configura unha pegada dixital, a cara ou o bloqueo de pantalla nos axustes do sistema para usar o bloqueo da aplicación.</string>
+    <string name="app_lock_unsupported_message">Este dispositivo non pode usar o bloqueo da aplicación.</string>
+    <string name="app_lock_enabled_message">Bloqueo da aplicación activado. KashCal pediráche que te autentiques a próxima vez que a abras.</string>
+    <string name="app_lock_disable_prompt_title">Desbloquea para desactivar o bloqueo da aplicación</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1121,6 +1135,7 @@
     <string name="attendee_invalid_email">Introduce un enderezo de correo completo</string>
     <string name="attendee_add_typed">Engadir \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Non se pode convidar xente nesta conta</string>
+    <string name="device_attendee_local_no_delivery">Este calendario non pode enviar convites. Os convidados gárdanse, pero non se lles notificará.</string>
     <string name="action_save_and_notify">Gardar e notificar</string>
     <string name="inbox_empty_caught_up">Todo ao día</string>
     <string name="inbox_organizer_suffix">(organizador)</string>

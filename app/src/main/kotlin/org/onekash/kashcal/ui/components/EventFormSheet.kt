@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Group
@@ -567,6 +568,19 @@ fun EventFormSheet(
     // detecting removals (uninvites) this session.
     var loadedAttendeeAddresses by remember { mutableStateOf<Set<String>>(emptySet()) }
 
+    // Guests loaded for a device-calendar event (read-only display). The Room
+    // `attendees` param doesn't populate for device events (it's keyed on a
+    // Room event id), so the device edit path carries them here. Editing the
+    // device guest list is a separate write path; this is display-only.
+    var deviceAttendees by remember {
+        mutableStateOf<List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>>(emptyList())
+    }
+    // Whether the loaded device event's calendar allows writes — gates whether
+    // the guest list is editable (vs read-only) for an existing device event.
+    var deviceEventWritable by remember { mutableStateOf(false) }
+    // In-session dismissal of the LOCAL-calendar "no invitation sent" notice.
+    var deviceNoticeDismissed by remember { mutableStateOf(false) }
+
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
     var showColorPicker by remember { mutableStateOf(false) }
@@ -732,6 +746,16 @@ fun EventFormSheet(
                 loadedMasterStartTs = editData.event.startTs
                 loadedIsDetachedException = editData.event.originalId != null
                 loadedIsAllDay = editData.event.isAllDay
+                deviceAttendees = editData.attendees
+                deviceEventWritable = editData.isWritable
+                // Seed the picker from the device event's existing guests
+                // (organizer excluded — the repository owns that row) so a
+                // whole-event guest edit diffs against the real set. Stays
+                // unedited (attendeesEdited=false) until the user touches it,
+                // so an open-and-save passes null and leaves rows untouched.
+                newState = newState.copy(
+                    attendees = org.onekash.kashcal.ui.viewmodels.deviceGuestsToPickerSeed(editData.attendees)
+                )
             } else {
                 // Event not found (deleted externally)
                 newState = newState.copy(
@@ -1642,28 +1666,105 @@ fun EventFormSheet(
                     // every save scope carries the edited guest set to its
                     // write path. Not-organizer (isReadOnly) and non-schedulable
                     // accounts keep the read-only display.
-                    val canEditAttendees = canEditAttendees(
+                    val isDeviceEvent = deviceEventId != null
+                    // A device event's guest list is editable on a whole-event
+                    // edit of a writable calendar (not a single-occurrence /
+                    // this-and-future edit — the provider doesn't store
+                    // per-occurrence guest divergence, so those stay read-only).
+                    val isDeviceOccurrenceEdit =
+                        state.editingOccurrenceTs != null || loadedIsDetachedException
+                    val canEditDeviceAttendees = isDeviceEvent &&
+                        deviceEventWritable &&
+                        !isDeviceOccurrenceEdit &&
+                        onQueryContacts != null
+                    // Selected device calendar's delivery capability — drives the
+                    // LOCAL-account inline notice (editing is still allowed).
+                    val deviceCanDeliverInvites = deviceCalendarGroups
+                        .asSequence()
+                        .flatMap { it.pickerCalendars.asSequence() }
+                        .filterIsInstance<PickerCalendar.Device>()
+                        .firstOrNull { it.calendar.id == state.selectedCalendarId }
+                        ?.calendar
+                        ?.canDeliverInvites
+                        ?: true
+                    // The LOCAL "no invitation sent" notice shows whenever the
+                    // user is editing guests on a device calendar that can't
+                    // deliver. Computed once so both editable branches (existing
+                    // device event, and new event on a device calendar) gate it
+                    // identically.
+                    val showDeviceLocalNotice = (isDeviceEvent || state.isDeviceCalendar) &&
+                        !deviceCanDeliverInvites &&
+                        state.attendees.isNotEmpty() &&
+                        !deviceNoticeDismissed
+                    val canEditAttendees = !isDeviceEvent && canEditAttendees(
                         isReadOnly = isReadOnly,
                         isSchedulable = isSchedulable,
                         hasContactQuery = onQueryContacts != null,
                     )
-                    val showSchedulingUnavailable = showSchedulingUnavailable(
+                    val showSchedulingUnavailable = !isDeviceEvent && showSchedulingUnavailable(
                         isReadOnly = isReadOnly,
                         isSchedulable = isSchedulable,
                         hasContactQuery = onQueryContacts != null,
                         isEditMode = state.isEditMode,
                         wasRecurringAtLoad = wasRecurringAtLoad,
                     )
-                    if (canEditAttendees) {
+                    if (canEditDeviceAttendees) {
+                        // Editable device guest list. The picker mutates
+                        // state.attendees (Room entities); saveDeviceEvent
+                        // bridges them to provider rows. On a LOCAL calendar
+                        // editing is still offered, with an inline notice that
+                        // no invitation will be sent.
                         EventFormRow(
                             icon = Icons.Default.Group,
                             iconContentDescription = stringResource(R.string.label_attendees)
                         ) {
-                            EditableAttendeesRow(
-                                attendees = state.attendees,
-                                account = attendeeAccount,
-                                onClick = { showAttendeePicker = true },
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                EditableAttendeesRow(
+                                    attendees = state.attendees,
+                                    account = attendeeAccount,
+                                    onClick = { showAttendeePicker = true },
+                                )
+                                if (showDeviceLocalNotice) {
+                                    DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
+                                }
+                            }
+                        }
+                    } else if (isDeviceEvent && deviceAttendees.isNotEmpty()) {
+                        // Device-calendar guest list, read-only (occurrence edit
+                        // or non-writable calendar). Surface the existing guests
+                        // so the form matches the device quick-view's visibility.
+                        EventFormRow(
+                            icon = Icons.Default.Group,
+                            iconContentDescription = stringResource(R.string.label_attendees)
+                        ) {
+                            org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                                attendees = deviceAttendees,
+                                isCurrentUserOnList = deviceAttendees.any { it.isYou },
+                                isCurrentUserOrganizer = deviceAttendees.any { it.isYou && it.isOrganizer },
+                                onRsvp = {},
+                                onDrillIntoAttendees = { showAttendeeSheet = true },
+                                suppressRsvp = true,
+                                alwaysExpanded = false,
+                                modifier = Modifier.fillMaxWidth(),
                             )
+                        }
+                    } else if (canEditAttendees) {
+                        EventFormRow(
+                            icon = Icons.Default.Group,
+                            iconContentDescription = stringResource(R.string.label_attendees)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                EditableAttendeesRow(
+                                    attendees = state.attendees,
+                                    account = attendeeAccount,
+                                    onClick = { showAttendeePicker = true },
+                                )
+                                // New event on a LOCAL device calendar: editing
+                                // is allowed but nothing is delivered.
+                                if (showDeviceLocalNotice) {
+                                    DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
+                                }
+                            }
                         }
                     } else if (showSchedulingUnavailable) {
                         EventFormRow(
@@ -1724,7 +1825,7 @@ fun EventFormSheet(
 
                     if (showAttendeeSheet) {
                         org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
-                            attendees = attendees,
+                            attendees = if (deviceEventId != null) deviceAttendees else attendees,
                             onDismiss = { showAttendeeSheet = false },
                         )
                     }
@@ -2168,6 +2269,36 @@ private fun convertTimezone(
         set(JavaCalendar.MILLISECOND, 0)
     }
     return Triple(midnightCal.timeInMillis, newCal.get(JavaCalendar.HOUR_OF_DAY), newCal.get(JavaCalendar.MINUTE))
+}
+
+/**
+ * Dismissible inline notice shown under the device attendee row when the
+ * target calendar is on a LOCAL account (no sync adapter): guests are saved
+ * but no invitation is delivered. Inline and dismissible per the app's
+ * inline-over-modal UX — the guest-editing affordance above stays usable
+ * whether the notice shows or is dismissed.
+ */
+@Composable
+private fun DeviceLocalNoDeliveryNotice(onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.device_attendee_local_no_delivery),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onDismiss) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = stringResource(R.string.action_dismiss),
+            )
+        }
+    }
 }
 
 /**

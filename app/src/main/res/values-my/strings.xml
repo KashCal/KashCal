@@ -147,6 +147,18 @@
     <string name="settings_section_notifications">အကြောင်းကြားချက်များ</string>
     <string name="settings_section_sync">ချိန်ကိုက်</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
+    <string name="settings_section_privacy">ကိုယ်ရေးကိုယ်တာ</string>
+    <string name="app_lock_label">အက်ပ်လော့ခ်</string>
+    <string name="app_lock_subtitle_off">KashCal ဖွင့်ရန် လော့ခ်ဖွင့်ခြင်း လိုအပ်စေပါ</string>
+    <string name="app_lock_subtitle_on">လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ်ဖြင့် ဖွင့်ပါ</string>
+    <string name="app_lock_veil_locked">လော့ခ်ချထားသည်</string>
+    <string name="app_lock_veil_unlock">လော့ခ်ဖွင့်ရန်</string>
+    <string name="app_lock_veil_footnote">လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ်</string>
+    <string name="app_lock_prompt_title">သင့်အစီအစဉ်များကို ကြည့်ရန် လော့ခ်ဖွင့်ပါ</string>
+    <string name="app_lock_enroll_message">အက်ပ်လော့ခ်ကို သုံးရန် စနစ်ဆက်တင်များတွင် လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ် တစ်ခု သတ်မှတ်ပါ။</string>
+    <string name="app_lock_unsupported_message">ဤစက်ပစ္စည်းသည် အက်ပ်လော့ခ်ကို သုံးမရပါ။</string>
+    <string name="app_lock_enabled_message">အက်ပ်လော့ခ် ဖွင့်ထားသည်။ နောက်တစ်ကြိမ် ဖွင့်သည့်အခါ KashCal က သင့်အား အထောက်အထားစိစစ်ရန် တောင်းဆိုပါမည်။</string>
+    <string name="app_lock_disable_prompt_title">အက်ပ်လော့ခ်ကို ပိတ်ရန် လော့ခ်ဖွင့်ပါ</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">ဆက်တင်များ အရန်ကူးပါ</string>
@@ -1066,6 +1078,7 @@
     <string name="attendee_invalid_email">အီးမေးလ်လိပ်စာ အပြည့်အစုံ ထည့်ပါ</string>
     <string name="attendee_add_typed">\"%1$s\" ထည့်ရန်</string>
     <string name="attendee_scheduling_unavailable">ဤအကောင့်တွင် လူများ ဖိတ်ကြားခြင်း မရရှိနိုင်ပါ</string>
+    <string name="device_attendee_local_no_delivery">ဤပြက္ခဒိန်သည် ဖိတ်စာများ ပေးပို့၍မရပါ။ ဧည့်သည်များကို သိမ်းဆည်းထားသော်လည်း အကြောင်းကြားမည် မဟုတ်ပါ။</string>
     <string name="action_save_and_notify">သိမ်းပြီး အသိပေးရန်</string>
     <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
     <string name="inbox_empty_caught_up">အားလုံး ပြီးပြီ</string>

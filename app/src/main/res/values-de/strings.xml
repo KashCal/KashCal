@@ -124,6 +124,20 @@
     <string name="settings_section_notifications">Benachrichtigungen</string>
     <string name="settings_section_sync">Synchronisierung</string>
     <string name="settings_section_data">Sichern &amp; Wiederherstellen</string>
+    <string name="settings_section_privacy">Datenschutz</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">App-Sperre</string>
+    <string name="app_lock_subtitle_off">Entsperren nötig, um KashCal zu öffnen</string>
+    <string name="app_lock_subtitle_on">Mit Fingerabdruck, Gesicht oder Bildschirmsperre entsperren</string>
+    <string name="app_lock_veil_locked">Gesperrt</string>
+    <string name="app_lock_veil_unlock">Entsperren</string>
+    <string name="app_lock_veil_footnote">Fingerabdruck, Gesicht oder Bildschirmsperre</string>
+    <string name="app_lock_prompt_title">Entsperre, um deine Termine zu sehen</string>
+    <string name="app_lock_enroll_message">Richte in den Systemeinstellungen einen Fingerabdruck, eine Gesichtserkennung oder eine Bildschirmsperre ein, um die App-Sperre zu nutzen.</string>
+    <string name="app_lock_unsupported_message">Dieses Gerät kann die App-Sperre nicht nutzen.</string>
+    <string name="app_lock_enabled_message">App-Sperre aktiviert. KashCal fragt dich beim nächsten Öffnen nach deiner Authentifizierung.</string>
+    <string name="app_lock_disable_prompt_title">Entsperre, um die App-Sperre auszuschalten</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Einstellungen sichern</string>
@@ -1113,6 +1127,7 @@
     <string name="attendee_invalid_email">Gib eine vollständige E-Mail-Adresse ein</string>
     <string name="attendee_add_typed">\"%1$s\" hinzufügen</string>
     <string name="attendee_scheduling_unavailable">Personen einzuladen ist mit diesem Konto nicht möglich</string>
+    <string name="device_attendee_local_no_delivery">Dieser Kalender kann keine Einladungen senden. Gäste werden gespeichert, aber nicht benachrichtigt.</string>
     <string name="action_save_and_notify">Speichern &amp; benachrichtigen</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alles erledigt</string>

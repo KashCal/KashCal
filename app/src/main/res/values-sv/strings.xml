@@ -124,6 +124,20 @@
     <string name="settings_section_notifications">Aviseringar</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Säkerhetskopiering &amp; återställning</string>
+    <string name="settings_section_privacy">Integritet</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Applås</string>
+    <string name="app_lock_subtitle_off">Kräv upplåsning för att öppna KashCal</string>
+    <string name="app_lock_subtitle_on">Lås upp med fingeravtryck, ansikte eller skärmlås</string>
+    <string name="app_lock_veil_locked">Låst</string>
+    <string name="app_lock_veil_unlock">Lås upp</string>
+    <string name="app_lock_veil_footnote">Fingeravtryck, ansikte eller skärmlås</string>
+    <string name="app_lock_prompt_title">Lås upp för att se dina händelser</string>
+    <string name="app_lock_enroll_message">Ställ in ett fingeravtryck, ansikte eller skärmlås i systeminställningarna för att använda Applås.</string>
+    <string name="app_lock_unsupported_message">Den här enheten kan inte använda Applås.</string>
+    <string name="app_lock_enabled_message">Applås är på. KashCal ber dig att autentisera nästa gång du öppnar appen.</string>
+    <string name="app_lock_disable_prompt_title">Lås upp för att stänga av Applås</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Säkerhetskopiera inställningar</string>
@@ -1113,6 +1127,7 @@
     <string name="attendee_invalid_email">Ange en fullständig e-postadress</string>
     <string name="attendee_add_typed">Lägg till \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Det går inte att bjuda in personer på det här kontot</string>
+    <string name="device_attendee_local_no_delivery">Den här kalendern kan inte skicka inbjudningar. Gäster sparas men meddelas inte.</string>
     <string name="action_save_and_notify">Spara &amp; meddela</string>
     <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt är ikapp</string>

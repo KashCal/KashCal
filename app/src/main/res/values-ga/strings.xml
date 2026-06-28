@@ -187,6 +187,20 @@
     <string name="settings_section_notifications">Fógraí</string>
     <string name="settings_section_sync">Sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
+    <string name="settings_section_privacy">Príobháideachas</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Glas aip</string>
+    <string name="app_lock_subtitle_off">Éiligh díghlasáil chun KashCal a oscailt</string>
+    <string name="app_lock_subtitle_on">Díghlasáil le méarlorg, aghaidh nó glas scáileáin</string>
+    <string name="app_lock_veil_locked">Faoi ghlas</string>
+    <string name="app_lock_veil_unlock">Díghlasáil</string>
+    <string name="app_lock_veil_footnote">Méarlorg, aghaidh nó glas scáileáin</string>
+    <string name="app_lock_prompt_title">Díghlasáil chun d\'imeachtaí a fheiceáil</string>
+    <string name="app_lock_enroll_message">Socraigh méarlorg, aghaidh nó glas scáileáin i socruithe an chórais chun an glas aip a úsáid.</string>
+    <string name="app_lock_unsupported_message">Ní féidir leis an ngléas seo an glas aip a úsáid.</string>
+    <string name="app_lock_enabled_message">Glas aip ar siúl. Iarrfaidh KashCal ort fíordheimhniú a dhéanamh an chéad uair eile a osclóidh tú é.</string>
+    <string name="app_lock_disable_prompt_title">Díghlasáil chun an glas aip a mhúchadh</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Féilire Apple?</string>
@@ -1278,6 +1292,7 @@
     <string name="attendee_invalid_email">Cuir isteach seoladh ríomhphoist iomlán</string>
     <string name="attendee_add_typed">Cuir \"%1$s\" leis</string>
     <string name="attendee_scheduling_unavailable">Níl cuireadh a thabhairt do dhaoine ar fáil ar an gcuntas seo</string>
+    <string name="device_attendee_local_no_delivery">Ní féidir leis an bhféilire seo cuirí a sheoladh. Sábháiltear na haíonna, ach ní chuirfear ar an eolas iad.</string>
     <string name="action_save_and_notify">Sábháil agus cuir in iúl</string>
     <string name="inbox_empty_caught_up">Gach rud déanta</string>
     <string name="inbox_organizer_suffix">(eagraí)</string>

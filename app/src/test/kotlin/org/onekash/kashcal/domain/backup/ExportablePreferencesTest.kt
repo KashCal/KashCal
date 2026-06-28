@@ -17,8 +17,20 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 21 key names`() {
-        assertEquals(21, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 22 key names`() {
+        assertEquals(22, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    }
+
+    @Test
+    fun `APP_LOCK_ENABLED is excluded because it is device-local privacy state`() {
+        assertTrue(
+            "APP_LOCK_ENABLED must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.APP_LOCK_ENABLED.name),
+        )
+        assertFalse(
+            "APP_LOCK_ENABLED must not be in the allow-list",
+            ExportablePreferences.KEYS.map { it.name }.contains(PreferencesKeys.APP_LOCK_ENABLED.name),
+        )
     }
 
     @Test

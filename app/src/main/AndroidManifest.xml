@@ -42,6 +42,9 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
+    <!-- Optional app lock: authenticate with biometric or device credential -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <!--
         Declare touchscreen as optional for Chromebook/tablet compatibility.
         Without this, app is filtered out of Play Store for non-touch devices.

@@ -148,6 +148,7 @@ import org.onekash.kashcal.ui.screens.insights.InsightsScreen
 import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.MonthPagerUtils
+import org.onekash.kashcal.ui.util.rememberDayPagerSyncCoordinator
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.EditScope
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
@@ -1431,12 +1432,22 @@ private fun ColumnScope.DayEventsPager(
 
     val coroutineScope = rememberCoroutineScope()
 
+    // Breaks the settle↔selectedDate feedback loop (issue #267): only a settle
+    // that concluded a real user swipe may push back up to selectedDate. A
+    // programmatic scroll (grid tap, Today, cold-start) emits no drag, so its
+    // settle is suppressed and rapid taps can't oscillate.
+    val syncCoordinator = rememberDayPagerSyncCoordinator(dayPagerState.interactionSource)
+
     // SYNC 1: Day pager settled → Update selectedDate + navigate month if boundary crossed
     LaunchedEffect(dayPagerState.settledPage) {
         val newDateMs = DayPagerUtils.pageToDateMs(dayPagerState.settledPage, todayMs)
 
-        // Update selectedDate if changed
-        if (newDateMs != uiState.selectedDate) {
+        // Consume the user-drag intent on every settle (no carry-over to a later
+        // programmatic settle), then update selectedDate only for user-driven
+        // settles; suppressing the echo of a programmatic scroll is what stops
+        // rapid taps from oscillating (#267).
+        val isUserSettle = syncCoordinator.shouldPropagateSettle()
+        if (newDateMs != uiState.selectedDate && isUserSettle) {
             onDateSelected(newDateMs)
         }
 

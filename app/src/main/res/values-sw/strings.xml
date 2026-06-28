@@ -146,6 +146,18 @@
     <string name="settings_section_notifications">Arifa</string>
     <string name="settings_section_sync">Kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
+    <string name="settings_section_privacy">Faragha</string>
+    <string name="app_lock_label">Kufuli ya programu</string>
+    <string name="app_lock_subtitle_off">Hitaji kufungua ili kufungua KashCal</string>
+    <string name="app_lock_subtitle_on">Fungua kwa alama ya kidole, uso, au kufuli ya skrini</string>
+    <string name="app_lock_veil_locked">Imefungwa</string>
+    <string name="app_lock_veil_unlock">Fungua</string>
+    <string name="app_lock_veil_footnote">Alama ya kidole, uso, au kufuli ya skrini</string>
+    <string name="app_lock_prompt_title">Fungua ili kuona matukio yako</string>
+    <string name="app_lock_enroll_message">Weka alama ya kidole, uso, au kufuli ya skrini katika mipangilio ya mfumo ili kutumia Kufuli ya programu.</string>
+    <string name="app_lock_unsupported_message">Kifaa hiki hakiwezi kutumia Kufuli ya programu.</string>
+    <string name="app_lock_enabled_message">Kufuli ya programu imewashwa. KashCal itakuomba uthibitishe utambulisho wakati ujao utakapoifungua.</string>
+    <string name="app_lock_disable_prompt_title">Fungua ili kuzima Kufuli ya programu</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Hifadhi nakala ya mipangilio</string>
@@ -1082,6 +1094,7 @@
     <string name="attendee_invalid_email">Ingiza anwani kamili ya barua pepe</string>
     <string name="attendee_add_typed">Ongeza \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Kualika watu hakupatikani kwenye akaunti hii</string>
+    <string name="device_attendee_local_no_delivery">Kalenda hii haiwezi kutuma mialiko. Wageni huhifadhiwa lakini hawataarifiwi.</string>
     <string name="action_save_and_notify">Hifadhi na uarifu</string>
     <string name="attendee_status_pending">Inasubiri</string>
     <string name="inbox_empty_caught_up">Yote yameshughulikiwa</string>

@@ -167,6 +167,20 @@
     <string name="settings_section_notifications">Teavitused</string>
     <string name="settings_section_sync">Sünkroonimine</string>
     <string name="settings_section_data">Varundus ja taastamine</string>
+    <string name="settings_section_privacy">Privaatsus</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Rakenduse lukk</string>
+    <string name="app_lock_subtitle_off">Nõua KashCali avamiseks avamist</string>
+    <string name="app_lock_subtitle_on">Ava sõrmejälje, näo või ekraaniluku abil</string>
+    <string name="app_lock_veil_locked">Lukus</string>
+    <string name="app_lock_veil_unlock">Ava</string>
+    <string name="app_lock_veil_footnote">Sõrmejälg, nägu või ekraanilukk</string>
+    <string name="app_lock_prompt_title">Ava, et näha oma sündmusi</string>
+    <string name="app_lock_enroll_message">Rakenduse luku kasutamiseks seadista süsteemi seadetes sõrmejälg, nägu või ekraanilukk.</string>
+    <string name="app_lock_unsupported_message">See seade ei saa rakenduse lukku kasutada.</string>
+    <string name="app_lock_enabled_message">Rakenduse lukk on sees. KashCal palub sul järgmisel avamisel autentida.</string>
+    <string name="app_lock_disable_prompt_title">Ava, et rakenduse lukk välja lülitada</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1151,6 +1165,7 @@
     <string name="attendee_invalid_email">Sisesta täielik e-posti aadress</string>
     <string name="attendee_add_typed">Lisa \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Inimeste kutsumine pole selles kontos saadaval</string>
+    <string name="device_attendee_local_no_delivery">See kalender ei saa kutseid saata. Külalised salvestatakse, kuid neid ei teavitata.</string>
     <string name="action_save_and_notify">Salvesta ja teavita</string>
     <plurals name="reminder_in_days">
         <item quantity="one">%1$d päeva pärast</item>

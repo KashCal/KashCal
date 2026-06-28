@@ -166,6 +166,21 @@
     <string name="settings_section_notifications">Notifications</string>
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
+    <string name="settings_section_privacy">Privacy</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">App lock</string>
+    <string name="app_lock_subtitle_off">Require unlock to open KashCal</string>
+    <string name="app_lock_subtitle_on">Unlock with fingerprint, face, or screen lock</string>
+    <string name="app_lock_veil_locked">Locked</string>
+    <string name="app_lock_veil_unlock">Unlock</string>
+    <string name="app_lock_veil_footnote">Fingerprint, face, or screen lock</string>
+    <string name="app_lock_prompt_title">Unlock to see your events</string>
+    <string name="app_lock_enroll_message">Set up a fingerprint, face, or screen lock in system settings to use App lock.</string>
+    <string name="app_lock_unsupported_message">This device can\'t use App lock.</string>
+    <string name="app_lock_enabled_message">App lock on. KashCal will ask you to authenticate next time you open it.</string>
+    <string name="app_lock_disable_prompt_title">Unlock to turn off App lock</string>
+
     <string name="backup_settings_label">Back up settings</string>
     <string name="backup_settings_subtitle">Save KashCal configuration to a JSON file</string>
     <string name="restore_settings_label">Restore settings</string>
@@ -1128,6 +1143,7 @@
     <string name="attendee_invalid_email">Enter a full email address</string>
     <string name="attendee_add_typed">Add \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Inviting people isn\'t available on this account</string>
+    <string name="device_attendee_local_no_delivery">This calendar can\'t send invitations. Guests are saved but won\'t be notified.</string>
     <string name="action_save_and_notify">Save &amp; notify</string>
     <string name="inbox_empty_caught_up">All caught up</string>
     <string name="inbox_organizer_suffix">(organiser)</string>

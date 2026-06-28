@@ -166,6 +166,21 @@
     <string name="settings_section_notifications">Хабарландырулар</string>
     <string name="settings_section_sync">Синхрондау</string>
     <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
+    <string name="settings_section_privacy">Құпиялылық</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Қолданба құлпы</string>
+    <string name="app_lock_subtitle_off">KashCal ашу үшін құлыпты ашу қажет</string>
+    <string name="app_lock_subtitle_on">Саусақ ізімен, бетпен немесе экран құлпымен ашыңыз</string>
+    <string name="app_lock_veil_locked">Құлыпталған</string>
+    <string name="app_lock_veil_unlock">Ашу</string>
+    <string name="app_lock_veil_footnote">Саусақ ізі, бет немесе экран құлпы</string>
+    <string name="app_lock_prompt_title">Оқиғаларды көру үшін құлыпты ашыңыз</string>
+    <string name="app_lock_enroll_message">Қолданба құлпын пайдалану үшін жүйе параметрлерінде саусақ ізін, бетті немесе экран құлпын орнатыңыз.</string>
+    <string name="app_lock_unsupported_message">Бұл құрылғы Қолданба құлпын пайдалана алмайды.</string>
+    <string name="app_lock_enabled_message">Қолданба құлпы қосулы. KashCal оны келесі жолы ашқанда сізден аутентификациядан өтуді сұрайды.</string>
+    <string name="app_lock_disable_prompt_title">Қолданба құлпын өшіру үшін құлыпты ашыңыз</string>
+
     <string name="backup_settings_label">Параметрлердің сақтық көшірмесі</string>
     <string name="backup_settings_subtitle">KashCal конфигурациясын JSON файлына сақтау</string>
     <string name="restore_settings_label">Параметрлерді қалпына келтіру</string>
@@ -1133,6 +1148,7 @@
     <string name="attendee_invalid_email">Толық электрондық пошта мекенжайын енгізіңіз</string>
     <string name="attendee_add_typed">\"%1$s\" қосу</string>
     <string name="attendee_scheduling_unavailable">Бұл тіркелгіде адамдарды шақыру қолжетімсіз</string>
+    <string name="device_attendee_local_no_delivery">Бұл күнтізбе шақыру жібере алмайды. Қонақтар сақталады, бірақ оларға хабарланбайды.</string>
     <string name="action_save_and_notify">Сақтау &amp; хабарлау</string>
     <string name="inbox_empty_caught_up">Барлығы өңделді</string>
     <string name="inbox_organizer_suffix">(ұйымдастырушы)</string>

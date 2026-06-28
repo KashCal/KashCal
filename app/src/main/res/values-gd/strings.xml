@@ -182,6 +182,20 @@
     <string name="settings_section_notifications">Brathan</string>
     <string name="settings_section_sync">Sioncronachadh</string>
     <string name="settings_section_data">Lethbhreac-glèidhidh is aiseag</string>
+    <string name="settings_section_privacy">Prìobhaideachd</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Glas na h-aplacaid</string>
+    <string name="app_lock_subtitle_off">Iarr fosgladh gus KashCal fhosgladh</string>
+    <string name="app_lock_subtitle_on">Fosgail le meur-lorg, aodann no glas-sgrìn</string>
+    <string name="app_lock_veil_locked">Glaiste</string>
+    <string name="app_lock_veil_unlock">Fosgail</string>
+    <string name="app_lock_veil_footnote">Meur-lorg, aodann no glas-sgrìn</string>
+    <string name="app_lock_prompt_title">Fosgail gus na tachartasan agad fhaicinn</string>
+    <string name="app_lock_enroll_message">Suidhich meur-lorg, aodann no glas-sgrìn ann an roghainnean an t-siostaim gus glas na h-aplacaid a chleachdadh.</string>
+    <string name="app_lock_unsupported_message">Chan urrainn dhan uidheam seo glas na h-aplacaid a chleachdadh.</string>
+    <string name="app_lock_enabled_message">Tha glas na h-aplacaid air. Iarraidh KashCal ort dearbhadh a dhèanamh an ath-thuras a dh\'fhosglas tu e.</string>
+    <string name="app_lock_disable_prompt_title">Fosgail gus glas na h-aplacaid a chur dheth</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Mìosachan Apple?</string>
@@ -1230,6 +1244,7 @@
     <string name="attendee_invalid_email">Cuir a-steach seòladh puist-d iomlan</string>
     <string name="attendee_add_typed">Cuir \"%1$s\" ris</string>
     <string name="attendee_scheduling_unavailable">Chan eil cuireadh a thoirt do dhaoine ri fhaighinn air a\' chunntas seo</string>
+    <string name="device_attendee_local_no_delivery">Chan urrainn dhan mhìosachan seo cuiridhean a chur. Thèid na h-aoighean a shàbhaladh, ach cha tèid brath a chur thuca.</string>
     <string name="action_save_and_notify">Sàbhail is cuir brath</string>
     <string name="inbox_empty_caught_up">Suas ri là</string>
     <string name="inbox_organizer_suffix">(eagraiche)</string>

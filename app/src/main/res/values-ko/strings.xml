@@ -123,6 +123,20 @@
     <string name="settings_section_notifications">알림</string>
     <string name="settings_section_sync">동기화</string>
     <string name="settings_section_data">백업 &amp; 복원</string>
+    <string name="settings_section_privacy">개인정보 보호</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">앱 잠금</string>
+    <string name="app_lock_subtitle_off">KashCal을 열려면 잠금 해제가 필요해요</string>
+    <string name="app_lock_subtitle_on">지문, 얼굴 또는 화면 잠금으로 잠금을 해제해요</string>
+    <string name="app_lock_veil_locked">잠김</string>
+    <string name="app_lock_veil_unlock">잠금 해제</string>
+    <string name="app_lock_veil_footnote">지문, 얼굴 또는 화면 잠금</string>
+    <string name="app_lock_prompt_title">잠금을 해제해 일정을 확인하세요</string>
+    <string name="app_lock_enroll_message">앱 잠금을 사용하려면 시스템 설정에서 지문, 얼굴 또는 화면 잠금을 설정하세요.</string>
+    <string name="app_lock_unsupported_message">이 기기에서는 앱 잠금을 사용할 수 없어요.</string>
+    <string name="app_lock_enabled_message">앱 잠금이 켜졌어요. 다음에 KashCal을 열 때 인증을 요청해요.</string>
+    <string name="app_lock_disable_prompt_title">잠금을 해제해 앱 잠금 끄기</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple 캘린더 사용하세요?</string>
@@ -1011,6 +1025,7 @@
     <string name="attendee_invalid_email">전체 이메일 주소를 입력해 주세요</string>
     <string name="attendee_add_typed">\"%1$s\" 추가</string>
     <string name="attendee_scheduling_unavailable">이 계정에서는 사람을 초대할 수 없어요</string>
+    <string name="device_attendee_local_no_delivery">이 캘린더는 초대장을 보낼 수 없어요. 게스트는 저장되지만 알림은 가지 않아요.</string>
     <string name="action_save_and_notify">저장 후 알림</string>
     <plurals name="attendee_show_n_more">
         <item quantity="other">+%d명 더보기</item>

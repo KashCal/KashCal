@@ -172,6 +172,20 @@
     <string name="settings_section_notifications">Notificacions</string>
     <string name="settings_section_sync">Sincronització</string>
     <string name="settings_section_data">Còpia de seguretat i restauració</string>
+    <string name="settings_section_privacy">Privadesa</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Bloqueig de l\'aplicació</string>
+    <string name="app_lock_subtitle_off">Cal desbloquejar per obrir KashCal</string>
+    <string name="app_lock_subtitle_on">Desbloqueja amb empremta, cara o bloqueig de pantalla</string>
+    <string name="app_lock_veil_locked">Bloquejat</string>
+    <string name="app_lock_veil_unlock">Desbloqueja</string>
+    <string name="app_lock_veil_footnote">Empremta, cara o bloqueig de pantalla</string>
+    <string name="app_lock_prompt_title">Desbloqueja per veure els teus esdeveniments</string>
+    <string name="app_lock_enroll_message">Configura una empremta, la cara o el bloqueig de pantalla als ajustos del sistema per fer servir el bloqueig de l\'aplicació.</string>
+    <string name="app_lock_unsupported_message">Aquest dispositiu no pot fer servir el bloqueig de l\'aplicació.</string>
+    <string name="app_lock_enabled_message">Bloqueig de l\'aplicació activat. KashCal et demanarà que t\'autentiquis la pròxima vegada que l\'obris.</string>
+    <string name="app_lock_disable_prompt_title">Desbloqueja per desactivar el bloqueig de l\'aplicació</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -1121,6 +1135,7 @@
     <string name="attendee_invalid_email">Introdueix una adreça de correu completa</string>
     <string name="attendee_add_typed">Afegeix \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">No es pot convidar gent en aquest compte</string>
+    <string name="device_attendee_local_no_delivery">Aquest calendari no pot enviar invitacions. Els convidats es desen, però no se\'ls notificarà.</string>
     <string name="action_save_and_notify">Desa i notifica</string>
     <string name="inbox_empty_caught_up">Tot al dia</string>
     <string name="inbox_organizer_suffix">(organitzador)</string>

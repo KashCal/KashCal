@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">ବିଜ୍ଞପ୍ତି</string>
     <string name="settings_section_sync">ସିଙ୍କ</string>
     <string name="settings_section_data">ବ୍ୟାକଅପ ଏବଂ ପୁନରୁଦ୍ଧାର</string>
+    <string name="settings_section_privacy">ଗୋପନୀୟତା</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">ଆପ ଲକ</string>
+    <string name="app_lock_subtitle_off">KashCal ଖୋଲିବାକୁ ଅନଲକ ଆବଶ୍ୟକ କରନ୍ତୁ</string>
+    <string name="app_lock_subtitle_on">ଆଙ୍ଗୁଠି ଚିହ୍ନ, ମୁହଁ କିମ୍ବା ସ୍କ୍ରିନ ଲକ ସହିତ ଅନଲକ କରନ୍ତୁ</string>
+    <string name="app_lock_veil_locked">ଲକ ଅଛି</string>
+    <string name="app_lock_veil_unlock">ଅନଲକ କରନ୍ତୁ</string>
+    <string name="app_lock_veil_footnote">ଆଙ୍ଗୁଠି ଚିହ୍ନ, ମୁହଁ କିମ୍ବା ସ୍କ୍ରିନ ଲକ</string>
+    <string name="app_lock_prompt_title">ଆପଣଙ୍କ ଇଭେଣ୍ଟ ଦେଖିବାକୁ ଅନଲକ କରନ୍ତୁ</string>
+    <string name="app_lock_enroll_message">ଆପ ଲକ ବ୍ୟବହାର କରିବାକୁ ସିଷ୍ଟମ ସେଟିଂସରେ ଆଙ୍ଗୁଠି ଚିହ୍ନ, ମୁହଁ କିମ୍ବା ସ୍କ୍ରିନ ଲକ ସେଟ ଅପ କରନ୍ତୁ।</string>
+    <string name="app_lock_unsupported_message">ଏହି ଡିଭାଇସ ଆପ ଲକ ବ୍ୟବହାର କରିପାରିବ ନାହିଁ।</string>
+    <string name="app_lock_enabled_message">ଆପ ଲକ ଅନ ଅଛି। ପରବର୍ତ୍ତୀ ଥର ଖୋଲିବା ସମୟରେ KashCal ଆପଣଙ୍କୁ ପ୍ରମାଣୀକରଣ କରିବାକୁ କହିବ।</string>
+    <string name="app_lock_disable_prompt_title">ଆପ ଲକ ବନ୍ଦ କରିବାକୁ ଅନଲକ କରନ୍ତୁ</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">ସେଟିଂସ ବ୍ୟାକଅପ କରନ୍ତୁ</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">ଏକ ସମ୍ପୂର୍ଣ୍ଣ ଇମେଲ୍ ଠିକଣା ପ୍ରବେଶ କରନ୍ତୁ</string>
     <string name="attendee_add_typed">\"%1$s\" ଯୋଗ କରନ୍ତୁ</string>
     <string name="attendee_scheduling_unavailable">ଏହି ଆକାଉଣ୍ଟରେ ଲୋକଙ୍କୁ ଆମନ୍ତ୍ରଣ କରିବା ଉପଲବ୍ଧ ନାହିଁ</string>
+    <string name="device_attendee_local_no_delivery">ଏହି କ୍ୟାଲେଣ୍ଡର ଆମନ୍ତ୍ରଣ ପଠାଇ ପାରିବ ନାହିଁ। ଅତିଥିମାନେ ସେଭ୍ ହୁଅନ୍ତି କିନ୍ତୁ ସେମାନଙ୍କୁ ଜଣାଯିବ ନାହିଁ।</string>
     <string name="action_save_and_notify">ସେଭ୍ କରନ୍ତୁ ଓ ଜଣାନ୍ତୁ</string>
     <string name="attendee_action_copy">ଇମେଲ କପି କରନ୍ତୁ</string>
     <string name="attendee_action_email">ଇମେଲ ପଠାନ୍ତୁ</string>

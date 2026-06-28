@@ -143,6 +143,18 @@
     <string name="settings_section_notifications">Obvestila</string>
     <string name="settings_section_sync">Sinhronizacija</string>
     <string name="settings_section_data">Varnostna kopija in obnovitev</string>
+    <string name="settings_section_privacy">Zasebnost</string>
+    <string name="app_lock_label">Zaklep aplikacije</string>
+    <string name="app_lock_subtitle_off">Zahtevaj odklepanje za odpiranje aplikacije KashCal</string>
+    <string name="app_lock_subtitle_on">Odklenite s prstnim odtisom, obrazom ali zaklepom zaslona</string>
+    <string name="app_lock_veil_locked">Zaklenjeno</string>
+    <string name="app_lock_veil_unlock">Odkleni</string>
+    <string name="app_lock_veil_footnote">Prstni odtis, obraz ali zaklep zaslona</string>
+    <string name="app_lock_prompt_title">Odklenite za ogled svojih dogodkov</string>
+    <string name="app_lock_enroll_message">V sistemskih nastavitvah nastavite prstni odtis, obraz ali zaklep zaslona za uporabo zaklepa aplikacije.</string>
+    <string name="app_lock_unsupported_message">Ta naprava ne more uporabljati zaklepa aplikacije.</string>
+    <string name="app_lock_enabled_message">Zaklep aplikacije vklopljen. KashCal vas bo ob naslednjem odpiranju pozval k preverjanju pristnosti.</string>
+    <string name="app_lock_disable_prompt_title">Odklenite za izklop zaklepa aplikacije</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Ustvari varnostno kopijo nastavitev</string>
@@ -1174,6 +1186,7 @@
     <string name="attendee_invalid_email">Vnesite celoten e-poštni naslov</string>
     <string name="attendee_add_typed">Dodaj \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Vabljenje oseb v tem računu ni na voljo</string>
+    <string name="device_attendee_local_no_delivery">Ta koledar ne more pošiljati vabil. Gostje se shranijo, vendar ne bodo obveščeni.</string>
     <string name="action_save_and_notify">Shrani in obvesti</string>
     <string name="invitees_summary_you_alone">Ti</string>
     <plurals name="invitees_summary_you_organizing">

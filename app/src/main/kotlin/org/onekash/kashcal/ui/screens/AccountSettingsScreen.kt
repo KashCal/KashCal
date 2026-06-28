@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
@@ -74,6 +75,7 @@ import org.onekash.kashcal.ui.screens.settings.SearchEmissionTracker
 import org.onekash.kashcal.ui.screens.settings.SearchEmptyState
 import org.onekash.kashcal.ui.screens.settings.SearchableSection
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
+import org.onekash.kashcal.ui.screens.settings.SettingsToggleRow
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
@@ -207,6 +209,9 @@ fun AccountSettingsScreen(
     // Settings backup/restore
     onBackupSettings: () -> Unit = {},
     onRestoreSettings: () -> Unit = {},
+    // Privacy / app lock
+    appLockEnabled: Boolean = false,
+    onToggleAppLock: (Boolean) -> Unit = {},
     // Navigation to detail screens
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
@@ -335,6 +340,8 @@ fun AccountSettingsScreen(
                     onExportCalendar = onExportCalendar,
                     onBackupSettings = onBackupSettings,
                     onRestoreSettings = onRestoreSettings,
+                    appLockEnabled = appLockEnabled,
+                    onToggleAppLock = onToggleAppLock,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
                     onNavigateToBirthdaysAnniversaries = onNavigateToBirthdaysAnniversaries,
                     onNavigateToDeviceCalendars = onNavigateToDeviceCalendars,
@@ -473,6 +480,8 @@ private fun FlatSettingsContent(
     onExportCalendar: (Long) -> Unit,
     onBackupSettings: () -> Unit,
     onRestoreSettings: () -> Unit,
+    appLockEnabled: Boolean,
+    onToggleAppLock: (Boolean) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
     onNavigateToBirthdaysAnniversaries: () -> Unit,
     onNavigateToDeviceCalendars: () -> Unit,
@@ -895,6 +904,33 @@ private fun FlatSettingsContent(
                     label = stringResource(R.string.restore_settings_label),
                     subtitle = stringResource(R.string.restore_settings_subtitle),
                     onClick = onRestoreSettings,
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+        }
+
+        // ==================== Privacy Section ====================
+        SearchableSection(
+            query = searchQuery,
+            header = stringResource(R.string.settings_section_privacy),
+            onEmitted = emittedTracker::onEmitted,
+        ) {
+            // Subtitle when on names the unlock methods; when off it states what
+            // the toggle does. Toggling on routes through the host (capability /
+            // enrollment check) before the flag is actually set.
+            val appLockSubtitle = if (appLockEnabled) {
+                stringResource(R.string.app_lock_subtitle_on)
+            } else {
+                stringResource(R.string.app_lock_subtitle_off)
+            }
+            row(label = stringResource(R.string.app_lock_label), subtitle = appLockSubtitle, id = "app-lock") {
+                SettingsToggleRow(
+                    icon = Icons.Default.Lock,
+                    label = stringResource(R.string.app_lock_label),
+                    subtitle = appLockSubtitle,
+                    checked = appLockEnabled,
+                    onCheckedChange = onToggleAppLock,
                     showDivider = false,
                     searchQuery = searchQuery
                 )

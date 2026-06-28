@@ -143,6 +143,18 @@
     <string name="settings_section_notifications">Oznámení</string>
     <string name="settings_section_sync">Synchronizace</string>
     <string name="settings_section_data">Záloha a obnova</string>
+    <string name="settings_section_privacy">Soukromí</string>
+    <string name="app_lock_label">Zámek aplikace</string>
+    <string name="app_lock_subtitle_off">Vyžadovat odemknutí pro otevření KashCal</string>
+    <string name="app_lock_subtitle_on">Odemkněte otiskem prstu, obličejem nebo zámkem obrazovky</string>
+    <string name="app_lock_veil_locked">Uzamčeno</string>
+    <string name="app_lock_veil_unlock">Odemknout</string>
+    <string name="app_lock_veil_footnote">Otisk prstu, obličej nebo zámek obrazovky</string>
+    <string name="app_lock_prompt_title">Odemkněte pro zobrazení svých událostí</string>
+    <string name="app_lock_enroll_message">Nastavte v systémových nastaveních otisk prstu, obličej nebo zámek obrazovky, abyste mohli použít zámek aplikace.</string>
+    <string name="app_lock_unsupported_message">Toto zařízení nemůže použít zámek aplikace.</string>
+    <string name="app_lock_enabled_message">Zámek aplikace zapnut. KashCal vás při příštím otevření požádá o ověření.</string>
+    <string name="app_lock_disable_prompt_title">Odemkněte pro vypnutí zámku aplikace</string>
 
     <!-- ==================== Backup &amp; Restore ==================== -->
     <string name="backup_settings_label">Zálohovat nastavení</string>
@@ -1174,6 +1186,7 @@
     <string name="attendee_invalid_email">Zadejte úplnou e-mailovou adresu</string>
     <string name="attendee_add_typed">Přidat \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Zvaní osob není u tohoto účtu dostupné</string>
+    <string name="device_attendee_local_no_delivery">Tento kalendář nemůže odesílat pozvánky. Hosté se uloží, ale nebudou upozorněni.</string>
     <string name="action_save_and_notify">Uložit a upozornit</string>
     <string name="invitees_summary_you_alone">Ty</string>
     <plurals name="invitees_summary_you_organizing">

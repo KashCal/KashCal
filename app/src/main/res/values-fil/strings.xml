@@ -147,6 +147,18 @@
     <string name="settings_section_notifications">Mga Notification</string>
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
+    <string name="settings_section_privacy">Privacy</string>
+    <string name="app_lock_label">Lock ng app</string>
+    <string name="app_lock_subtitle_off">Hilingin ang pag-unlock para buksan ang KashCal</string>
+    <string name="app_lock_subtitle_on">I-unlock gamit ang fingerprint, mukha, o screen lock</string>
+    <string name="app_lock_veil_locked">Naka-lock</string>
+    <string name="app_lock_veil_unlock">I-unlock</string>
+    <string name="app_lock_veil_footnote">Fingerprint, mukha, o screen lock</string>
+    <string name="app_lock_prompt_title">Mag-unlock para makita ang iyong mga event</string>
+    <string name="app_lock_enroll_message">Mag-set up ng fingerprint, mukha, o screen lock sa mga setting ng system para gamitin ang Lock ng app.</string>
+    <string name="app_lock_unsupported_message">Hindi magagamit ng device na ito ang Lock ng app.</string>
+    <string name="app_lock_enabled_message">Naka-on ang Lock ng app. Hihilingin sa iyo ng KashCal na mag-authenticate sa susunod na pagbubukas mo nito.</string>
+    <string name="app_lock_disable_prompt_title">Mag-unlock para i-off ang Lock ng app</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">I-backup ang mga setting</string>
@@ -1110,6 +1122,7 @@
     <string name="attendee_invalid_email">Maglagay ng buong email address</string>
     <string name="attendee_add_typed">Idagdag ang \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Hindi available ang pag-imbita ng mga tao sa account na ito</string>
+    <string name="device_attendee_local_no_delivery">Hindi makakapagpadala ng imbitasyon ang kalendaryong ito. Naka-save ang mga bisita ngunit hindi aabisuhan.</string>
     <string name="action_save_and_notify">I-save at ipaalam</string>
     <string name="attendee_status_pending">Naghihintay</string>
     <string name="inbox_empty_caught_up">Wala nang nakabinbin</string>

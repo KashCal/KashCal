@@ -164,6 +164,20 @@
     <string name="settings_section_notifications">నోటిఫికేషన్‌లు</string>
     <string name="settings_section_sync">సింక్</string>
     <string name="settings_section_data">బ్యాకప్ &amp; రీస్టోర్</string>
+    <string name="settings_section_privacy">గోప్యత</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">యాప్ లాక్</string>
+    <string name="app_lock_subtitle_off">KashCal తెరవడానికి అన్‌లాక్ తప్పనిసరి చేయండి</string>
+    <string name="app_lock_subtitle_on">వేలిముద్ర, ముఖం లేదా స్క్రీన్ లాక్‌తో అన్‌లాక్ చేయండి</string>
+    <string name="app_lock_veil_locked">లాక్ చేయబడింది</string>
+    <string name="app_lock_veil_unlock">అన్‌లాక్ చేయండి</string>
+    <string name="app_lock_veil_footnote">వేలిముద్ర, ముఖం లేదా స్క్రీన్ లాక్</string>
+    <string name="app_lock_prompt_title">మీ ఈవెంట్‌లను చూడటానికి అన్‌లాక్ చేయండి</string>
+    <string name="app_lock_enroll_message">యాప్ లాక్ ఉపయోగించడానికి సిస్టమ్ సెట్టింగ్‌లలో వేలిముద్ర, ముఖం లేదా స్క్రీన్ లాక్‌ను సెటప్ చేయండి.</string>
+    <string name="app_lock_unsupported_message">ఈ పరికరం యాప్ లాక్‌ను ఉపయోగించలేదు.</string>
+    <string name="app_lock_enabled_message">యాప్ లాక్ ఆన్ చేయబడింది. తదుపరిసారి తెరిచినప్పుడు KashCal మిమ్మల్ని ప్రామాణీకరించమని అడుగుతుంది.</string>
+    <string name="app_lock_disable_prompt_title">యాప్ లాక్‌ను ఆఫ్ చేయడానికి అన్‌లాక్ చేయండి</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">సెట్టింగ్‌లను బ్యాకప్ చేయి</string>
@@ -1110,6 +1124,7 @@
     <string name="attendee_invalid_email">పూర్తి ఇమెయిల్ చిరునామాను నమోదు చేయండి</string>
     <string name="attendee_add_typed">\"%1$s\"ను జోడించండి</string>
     <string name="attendee_scheduling_unavailable">ఈ ఖాతాలో వ్యక్తులను ఆహ్వానించడం అందుబాటులో లేదు</string>
+    <string name="device_attendee_local_no_delivery">ఈ క్యాలెండర్ ఆహ్వానాలను పంపలేదు. అతిథులు సేవ్ చేయబడతారు కానీ వారికి తెలియజేయబడదు.</string>
     <string name="action_save_and_notify">సేవ్ చేసి తెలియజేయండి</string>
     <string name="attendee_action_copy">ఇమెయిల్ కాపీ చేయి</string>
     <string name="attendee_action_email">ఇమెయిల్ పంపండి</string>

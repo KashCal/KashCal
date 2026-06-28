@@ -3,15 +3,22 @@ package org.onekash.kashcal
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
+import android.view.WindowManager
 import androidx.core.app.ActivityCompat
 import android.text.format.DateFormat
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
@@ -29,7 +36,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.domain.share.singleOccurrenceForShare
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
@@ -59,8 +68,10 @@ import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
+import org.onekash.kashcal.ui.lock.AppLockVeil
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
+import org.onekash.kashcal.ui.viewmodels.AppLockViewModel
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
@@ -83,10 +94,13 @@ import javax.inject.Inject
 private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
+    private val appLockViewModel: AppLockViewModel by viewModels()
     private var isFirstResume = true
+    // Guards against stacking two biometric sheets (auto-fire + manual Unlock).
+    private var isUnlockPromptShowing = false
     // Skip sync when returning from internal activities (currently only SettingsActivity)
     // Note: Share/Export choosers are NOT internal - user leaves app, sync on return is appropriate
     private var returningFromInternalActivity = false
@@ -116,6 +130,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
         enableEdgeToEdge()
+
+        // Resolve the app-lock flag synchronously BEFORE first composition so the
+        // veil is in place on the very first frame — no flash of calendar content.
+        // A single cached boolean read; deliberately kept to one key (DataStore
+        // caches after the first read, so rotation re-creates don't re-hit disk).
+        val appLockEnabledAtStart = runBlocking { userPreferencesRepository.appLockEnabled.first() }
+        appLockViewModel.onActivityCreated(enabled = appLockEnabledAtStart)
 
         // Handle webcal:// deep link if present
         handleIncomingIntent(intent)
@@ -271,6 +292,24 @@ class MainActivity : ComponentActivity() {
                 // Device event quick view sheet state
                 var showDeviceQuickViewSheet by remember { mutableStateOf(false) }
                 var deviceQuickViewEvent by remember { mutableStateOf<DisplayEvent.Device?>(null) }
+                // Guests for the active device quick-view event. Loaded on
+                // demand (separate Attendees query, never the bulk grid read)
+                // whenever the active event changes; resets to empty between
+                // events so a guest list never bleeds across sheets.
+                var deviceQuickViewAttendees by remember {
+                    mutableStateOf<org.onekash.kashcal.ui.viewmodels.EventAttendeeUiState?>(null)
+                }
+                LaunchedEffect(deviceQuickViewEvent?.instance?.eventId) {
+                    val event = deviceQuickViewEvent
+                    deviceQuickViewAttendees = if (event == null) {
+                        null
+                    } else {
+                        homeViewModel.getDeviceEventAttendeeState(
+                            eventId = event.instance.eventId,
+                            calendarId = event.instance.calendarId,
+                        )
+                    }
+                }
 
                 // Drawer state
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -1043,6 +1082,25 @@ class MainActivity : ComponentActivity() {
                         showEventEmojis = uiState.showEventEmojis,
                         hasWritePermission = hasWriteCalendarPermission,
                         isWritableCalendar = !deviceQuickViewEvent!!.isReadOnly,
+                        attendees = deviceQuickViewAttendees?.models ?: emptyList(),
+                        isCurrentUserOnList = deviceQuickViewAttendees?.isCurrentUserOnList ?: false,
+                        onRsvp = { status ->
+                            val event = deviceQuickViewEvent
+                            if (event != null) {
+                                coroutineScope.launch {
+                                    homeViewModel.replyDeviceRsvp(
+                                        eventId = event.instance.eventId,
+                                        calendarId = event.instance.calendarId,
+                                        status = status,
+                                    )
+                                    // Refresh the chip row so the new status shows.
+                                    deviceQuickViewAttendees = homeViewModel.getDeviceEventAttendeeState(
+                                        eventId = event.instance.eventId,
+                                        calendarId = event.instance.calendarId,
+                                    )
+                                }
+                            }
+                        },
                         onDismiss = {
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
@@ -1572,8 +1630,76 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+
+                // App lock veil — composed LAST so it draws above all content;
+                // the calendar is never visible while locked. Auto-fires the
+                // biometric prompt on appearing and toggles FLAG_SECURE so the
+                // recents thumbnail is hidden only while locked.
+                val isLocked by appLockViewModel.lockState.collectAsStateWithLifecycle()
+                LaunchedEffect(isLocked) {
+                    if (isLocked) {
+                        window.setFlags(
+                            WindowManager.LayoutParams.FLAG_SECURE,
+                            WindowManager.LayoutParams.FLAG_SECURE,
+                        )
+                        promptForUnlock()
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
+                if (isLocked) {
+                    AppLockVeil(onUnlock = { promptForUnlock() })
+                }
             }
         }
+    }
+
+    /**
+     * Fire the system biometric / device-credential prompt. Guarded so the
+     * auto-fire (veil appearing) and a manual Unlock tap can't stack two sheets.
+     *
+     * Recovery: if the user removed all device credentials after enabling the
+     * lock, the prompt would be unsatisfiable — so if nothing is enrolled we
+     * unlock instead of trapping the user behind a veil that can never clear
+     * (the device itself is now unsecured; there is nothing left to protect).
+     */
+    private fun promptForUnlock() {
+        if (isUnlockPromptShowing) return
+
+        val authenticators = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+        if (BiometricManager.from(this).canAuthenticate(authenticators) ==
+            BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
+        ) {
+            Log.w(TAG, "No credential enrolled at prompt time; unlocking to avoid lock-out")
+            appLockViewModel.onUnlockSucceeded()
+            return
+        }
+
+        isUnlockPromptShowing = true
+        val prompt = BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    isUnlockPromptShowing = false
+                    appLockViewModel.onUnlockSucceeded()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    // Cancel / negative / any error: stay locked. The veil's
+                    // always-present Unlock button re-fires this prompt.
+                    isUnlockPromptShowing = false
+                    appLockViewModel.onUnlockError()
+                }
+            },
+        )
+        // DEVICE_CREDENTIAL is allowed, so setNegativeButtonText must NOT be set
+        // (build() would throw). setTitle is required; the instruction lives there.
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.app_lock_prompt_title))
+            .setAllowedAuthenticators(authenticators)
+            .build()
+        prompt.authenticate(info)
     }
 
     /**
@@ -1588,6 +1714,29 @@ class MainActivity : ComponentActivity() {
             Log.e(TAG, "Failed to launch internal activity", e)
             returningFromInternalActivity = false  // Reset - don't skip sync incorrectly
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // onStart runs before onResume (which resets returningFromInternalActivity),
+        // so the internal-nav signal is still valid here. Suppressing the re-lock
+        // on internal-nav returns means a user who just enabled the lock in
+        // Settings — or who lingered on the system enrollment screen past the
+        // grace window — isn't immediately challenged on return.
+        //
+        // The enabled flag comes from the ViewModel's cached StateFlow (already
+        // collected from DataStore) rather than a blocking read — onStart is a
+        // hot path that fires on every foreground.
+        appLockViewModel.onForeground(
+            enabled = appLockViewModel.appLockEnabled.value,
+            nowElapsed = SystemClock.elapsedRealtime(),
+            suppressRelock = returningFromInternalActivity,
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        appLockViewModel.onBackground(SystemClock.elapsedRealtime())
     }
 
     override fun onResume() {

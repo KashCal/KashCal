@@ -176,6 +176,20 @@
     <string name="settings_section_notifications">Апавяшчэнні</string>
     <string name="settings_section_sync">Сінхранізацыя</string>
     <string name="settings_section_data">Рэзервовае капіяванне і аднаўленне</string>
+    <string name="settings_section_privacy">Прыватнасць</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Блакіроўка праграмы</string>
+    <string name="app_lock_subtitle_off">Патрабаваць разблакіроўку для адкрыцця KashCal</string>
+    <string name="app_lock_subtitle_on">Разблакіроўка адбіткам, тварам або блакіроўкай экрана</string>
+    <string name="app_lock_veil_locked">Заблакіравана</string>
+    <string name="app_lock_veil_unlock">Разблакіраваць</string>
+    <string name="app_lock_veil_footnote">Адбітак, твар або блакіроўка экрана</string>
+    <string name="app_lock_prompt_title">Разблакіруйце, каб убачыць свае падзеі</string>
+    <string name="app_lock_enroll_message">Наладзьце адбітак, твар або блакіроўку экрана ў сістэмных наладах, каб карыстацца блакіроўкай праграмы.</string>
+    <string name="app_lock_unsupported_message">Гэта прылада не падтрымлівае блакіроўку праграмы.</string>
+    <string name="app_lock_enabled_message">Блакіроўка праграмы ўключана. KashCal папросіць прайсці аўтэнтыфікацыю пры наступным адкрыцці.</string>
+    <string name="app_lock_disable_prompt_title">Разблакіруйце, каб адключыць блакіроўку праграмы</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Каляндар Apple?</string>
@@ -1221,6 +1235,7 @@
     <string name="attendee_invalid_email">Увядзіце поўны адрас e-mail</string>
     <string name="attendee_add_typed">Дадаць \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Запрашэнне людзей недаступнае ў гэтым уліковым запісе</string>
+    <string name="device_attendee_local_no_delivery">Гэты каляндар не можа дасылаць запрашэнні. Госці захаваныя, але не атрымаюць апавяшчэнняў.</string>
     <string name="action_save_and_notify">Захаваць і паведаміць</string>
     <plurals name="reminder_in_days">
         <item quantity="one">Праз %1$d дзень</item>

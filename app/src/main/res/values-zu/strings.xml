@@ -166,6 +166,21 @@
     <string name="settings_section_notifications">Izaziso</string>
     <string name="settings_section_sync">Vumelanisa</string>
     <string name="settings_section_data">Isipele &amp; Ukubuyisela</string>
+    <string name="settings_section_privacy">Ubumfihlo</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <string name="app_lock_label">Ukukhiya uhlelo lokusebenza</string>
+    <string name="app_lock_subtitle_off">Dinga ukuvula ukuze uvule i-KashCal</string>
+    <string name="app_lock_subtitle_on">Vula ngezigxivizo zeminwe, ngobuso noma ngokukhiya isikrini</string>
+    <string name="app_lock_veil_locked">Kukhiyiwe</string>
+    <string name="app_lock_veil_unlock">Vula</string>
+    <string name="app_lock_veil_footnote">Izigxivizo zeminwe, ubuso noma ukukhiya isikrini</string>
+    <string name="app_lock_prompt_title">Vula ukuze ubone izehlakalo zakho</string>
+    <string name="app_lock_enroll_message">Setha izigxivizo zeminwe, ubuso noma ukukhiya isikrini kuzilungiselelo zesistimu ukuze usebenzise Ukukhiya uhlelo lokusebenza.</string>
+    <string name="app_lock_unsupported_message">Le divayisi ayikwazi ukusebenzisa Ukukhiya uhlelo lokusebenza.</string>
+    <string name="app_lock_enabled_message">Ukukhiya uhlelo lokusebenza kuvuliwe. I-KashCal izokucela ukuthi uqinisekise ngokulandelayo lapho uvula.</string>
+    <string name="app_lock_disable_prompt_title">Vula ukuze uvale Ukukhiya uhlelo lokusebenza</string>
+
     <string name="backup_settings_label">Yenza isipele sezilungiselelo</string>
     <string name="backup_settings_subtitle">Gcina ukumiswa kwe-KashCal efayeleni le-JSON</string>
     <string name="restore_settings_label">Buyisela izilungiselelo</string>
@@ -1132,6 +1147,7 @@
     <string name="attendee_invalid_email">Faka ikheli le-imeyili eligcwele</string>
     <string name="attendee_add_typed">Engeza \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Ukumema abantu akutholakali kule akhawunti</string>
+    <string name="device_attendee_local_no_delivery">Le khalenda ayikwazi ukuthumela izimemo. Izivakashi ziyalondolozwa kodwa ngeke zaziswe.</string>
     <string name="action_save_and_notify">Londoloza &amp; wazise</string>
     <string name="inbox_empty_caught_up">Konke kuphethiwe</string>
     <string name="inbox_organizer_suffix">(umhleli)</string>

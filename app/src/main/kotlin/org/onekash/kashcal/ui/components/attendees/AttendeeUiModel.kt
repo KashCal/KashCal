@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.attendees
 
 import androidx.compose.runtime.Immutable
+import org.onekash.kashcal.data.calendar_provider.DeviceAttendee
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.domain.identity.matchesAttendee
@@ -101,6 +102,53 @@ data class AttendeeUiModel(
             }
             return mapped
         }
+
+        /**
+         * Build the UI model list from CalendarProvider `Attendees` rows.
+         *
+         * Unlike [fromRoom], the device provider stores ORGANIZER as an
+         * ordinary attendee row flagged `RELATIONSHIP_ORGANIZER`, so there is
+         * no separate ORGANIZER property to reconcile and no synthesized chip:
+         * one provider row maps to exactly one model. Status comes from the
+         * provider int (not a PARTSTAT string), and "you" is decided by
+         * canonical-matching the calendar's owner email (`OWNER_ACCOUNT`)
+         * rather than a CalDAV account's mailto addresses.
+         *
+         * @param attendees rows in provider order (index becomes [sortOrder])
+         * @param ownerEmail the device calendar's `OWNER_ACCOUNT`; null when
+         *   unknown, in which case every model has [isYou] = false.
+         */
+        fun fromDevice(
+            attendees: List<DeviceAttendee>,
+            ownerEmail: String?,
+        ): List<AttendeeUiModel> {
+            val canonicalOwner = ownerEmail?.takeUnless { it.isBlank() }
+                ?.let { canonicalDeviceEmail(it) }
+            return attendees.mapIndexed { index, attendee ->
+                val email = attendee.email.orEmpty()
+                val canonical = if (email.isBlank()) "" else canonicalDeviceEmail(email)
+                AttendeeUiModel(
+                    displayName = displayNameFor(attendee.name, canonical),
+                    bareAddress = canonical,
+                    status = AttendeeStatus.fromDeviceStatus(attendee.status),
+                    isYou = canonicalOwner != null && canonical == canonicalOwner,
+                    isOrganizer = attendee.relationship ==
+                        android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER,
+                    sortOrder = index,
+                )
+            }
+        }
+
+        /**
+         * Canonicalize a device-provider email (`ATTENDEE_EMAIL` /
+         * `OWNER_ACCOUNT`) for compare-time equality. Delegates to the
+         * data-layer
+         * [org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail]
+         * so the read-side identity match and the write-side guest diff share
+         * one canonicalization rule and can't drift.
+         */
+        private fun canonicalDeviceEmail(raw: String): String =
+            org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(raw)
 
         private fun synthesizedOrganizerChip(
             canonicalOrganizer: String,

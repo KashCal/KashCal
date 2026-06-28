@@ -168,6 +168,19 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setDefaultEventDuration(minutes)
     }
 
+    // ========== Privacy ==========
+
+    /**
+     * App lock enabled — require device biometric / screen-lock on reopen.
+     * Default false.
+     */
+    val appLockEnabled: Flow<Boolean>
+        get() = dataStore.appLockEnabled
+
+    suspend fun setAppLockEnabled(enabled: Boolean) {
+        dataStore.setAppLockEnabled(enabled)
+    }
+
     // ========== Onboarding ==========
 
     /**

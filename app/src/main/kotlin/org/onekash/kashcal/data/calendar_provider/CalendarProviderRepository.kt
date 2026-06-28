@@ -17,6 +17,14 @@ interface CalendarProviderRepository {
     suspend fun getDeviceCalendars(): List<DeviceCalendar>
 
     /**
+     * Get a single device calendar by id (WHERE _ID = ?), or null if it
+     * doesn't exist or permission is denied. Used for owner-email and
+     * delivery-capability lookups that need exactly one calendar, avoiding a
+     * full [getDeviceCalendars] scan.
+     */
+    suspend fun getDeviceCalendar(id: Long): DeviceCalendar?
+
+    /**
      * Get calendar instances (pre-expanded occurrences) for a day range.
      *
      * @param startDayCode Start day in YYYYMMDD format (inclusive)
@@ -144,6 +152,10 @@ interface CalendarProviderRepository {
      * @param duration RFC 5545 duration string for recurring events (nullable)
      * @param timezone Event timezone ID (e.g., "America/New_York")
      * @param reminders List of reminder minutes before event
+     * @param attendees Guests to write as `Attendees` rows, or null when the
+     *   caller isn't managing attendees (no rows written — the device default).
+     *   When non-empty, an owner/organizer row and `HAS_ATTENDEE_DATA=1` are
+     *   written too.
      * @return Result containing created event ID or CalendarError.DeviceCalendar
      */
     suspend fun createEvent(
@@ -159,7 +171,8 @@ interface CalendarProviderRepository {
         timezone: String,
         reminders: List<Int>,
         availability: Int = 0,
-        eventColor: Int? = null
+        eventColor: Int? = null,
+        attendees: List<DeviceAttendee>? = null
     ): Result<Long>
 
     /**
@@ -178,6 +191,12 @@ interface CalendarProviderRepository {
      * @param duration RFC 5545 duration string for recurring events (nullable)
      * @param timezone Event timezone ID
      * @param reminders List of reminder minutes before event
+     * @param attendees Authoritative guest set, or null when the caller isn't
+     *   managing attendees (existing rows left entirely alone). When non-null
+     *   it's applied as an add/remove diff against the event's existing
+     *   `Attendees` rows: only added guests are inserted and only removed
+     *   guests are deleted, so untouched guests keep their synced status. A
+     *   non-null empty list removes all guests.
      * @return Result.success or CalendarError.DeviceCalendar
      */
     suspend fun updateEvent(
@@ -193,7 +212,8 @@ interface CalendarProviderRepository {
         timezone: String,
         reminders: List<Int>,
         availability: Int = 0,
-        eventColor: Int? = null
+        eventColor: Int? = null,
+        attendees: List<DeviceAttendee>? = null
     ): Result<Unit>
 
     /**
@@ -376,6 +396,40 @@ interface CalendarProviderRepository {
      *         permission revoked / provider error
      */
     suspend fun getDeviceEventWithExceptions(masterEventId: Long): Pair<DeviceEvent, List<DeviceEvent>>?
+
+    /**
+     * Get the attendees (guests) of an event from the `Attendees` table.
+     *
+     * On-demand single-event read used by the quick-view / edit form — NOT
+     * projected into the bulk Instances query that backs the calendar grid
+     * (avoids an N+1 per grid row). Returns an empty list when the event has
+     * no attendee rows, has no attendee data, or the read is denied.
+     *
+     * @param eventId Event ID
+     * @return Attendee rows in provider order, or empty
+     */
+    suspend fun getAttendees(eventId: Long): List<DeviceAttendee>
+
+    /**
+     * Update the current user's own RSVP status on a device event by updating
+     * exactly one `Attendees` row (the one with [attendeeId] = `Attendees._ID`).
+     * No other attendee rows are inserted, deleted, or modified — so a guest's
+     * synced status is never clobbered by the user's own reply.
+     *
+     * On a LOCAL account the row is written but no reply is delivered (no sync
+     * adapter); KashCal does not promise the organizer is notified.
+     *
+     * @param eventId the event the attendee belongs to (for logging/scoping)
+     * @param attendeeId the `Attendees._ID` of the user's own row
+     * @param status the new status as a provider `ATTENDEE_STATUS_*` int
+     * @return Result.success when the row was updated; failure on permission
+     *   revoke or provider error
+     */
+    suspend fun updateSelfAttendeeStatus(
+        eventId: Long,
+        attendeeId: Long,
+        status: Int
+    ): Result<Unit>
 
     /**
      * Get reminders for an event.

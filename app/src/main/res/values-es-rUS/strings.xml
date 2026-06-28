@@ -170,6 +170,29 @@
     <string name="settings_section_notifications">Notificaciones</string>
     <string name="settings_section_sync">Sincronización</string>
     <string name="settings_section_data">Respaldo y restauración</string>
+    <string name="settings_section_privacy">Privacidad</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <!-- Settings toggle. Keep "KashCal" untranslated. -->
+    <string name="app_lock_label">Bloqueo de la app</string>
+    <!-- Subtitle when the lock is off: states what the toggle does. -->
+    <string name="app_lock_subtitle_off">Requerir desbloqueo para abrir KashCal</string>
+    <!-- Subtitle when the lock is on: names the unlock methods. -->
+    <string name="app_lock_subtitle_on">Desbloquear con huella, rostro o bloqueo de pantalla</string>
+    <!-- Branded lock screen (veil) shown over the app while locked. -->
+    <string name="app_lock_veil_locked">Bloqueada</string>
+    <string name="app_lock_veil_unlock">Desbloquear</string>
+    <string name="app_lock_veil_footnote">Huella, rostro o bloqueo de pantalla</string>
+    <!-- System biometric prompt title (required by the OS). Short; no app name. -->
+    <string name="app_lock_prompt_title">Desbloquea para ver tus eventos</string>
+    <!-- Shown when the user enables the lock but has no biometric or screen lock set up. -->
+    <string name="app_lock_enroll_message">Configura una huella, el rostro o un bloqueo de pantalla en los ajustes del sistema para usar el bloqueo de la app.</string>
+    <!-- Shown when the device has no hardware/software capable of authenticating. -->
+    <string name="app_lock_unsupported_message">Este dispositivo no puede usar el bloqueo de la app.</string>
+
+    <string name="app_lock_enabled_message">Bloqueo de la app activado. KashCal te pedirá autenticarte la próxima vez que la abras.</string>
+
+    <string name="app_lock_disable_prompt_title">Desbloquea para desactivar el bloqueo de la app</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">¿Calendario de Apple?</string>
@@ -1195,6 +1218,7 @@
     <string name="attendee_invalid_email">Ingresa una dirección de correo completa</string>
     <string name="attendee_add_typed">Agregar \"%1$s\"</string>
     <string name="attendee_scheduling_unavailable">Invitar personas no está disponible en esta cuenta</string>
+    <string name="device_attendee_local_no_delivery">Este calendario no puede enviar invitaciones. Los invitados se guardan, pero no se les notificará.</string>
     <string name="action_save_and_notify">Guardar y notificar</string>
     <string name="attendee_sheet_title">Asistentes</string>
     <plurals name="attendee_count_invited">
