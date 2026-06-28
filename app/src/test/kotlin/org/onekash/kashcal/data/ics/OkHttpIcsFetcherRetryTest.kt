@@ -192,6 +192,31 @@ class OkHttpIcsFetcherRetryTest {
     }
 
     @Test
+    fun `oversize body reports 'too large' and does NOT retry`() = runTest {
+        // A Content-Length far above the 50MB reader limit trips the cheap
+        // header check before any bytes are buffered. The locally-detected
+        // oversize case should mirror the server-reported 413 wording, not
+        // surface a generic "Network error".
+        mockServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("BEGIN:VCALENDAR")
+                // Override AFTER setBody, which would otherwise recompute it.
+                .setHeader("Content-Length", (60L * 1024 * 1024).toString())
+        )
+
+        val result = fetcher.fetch(subscription)
+
+        assertTrue("Should return error", result is IcsFetcher.FetchResult.Error)
+        assertEquals(
+            "Should use the 'too large' wording, not a network error",
+            "Calendar too large",
+            (result as IcsFetcher.FetchResult.Error).message
+        )
+        assertEquals("Should only make 1 request (no retry)", 1, mockServer.requestCount)
+    }
+
+    @Test
     fun `does NOT retry on invalid ICS content`() = runTest {
         // Return invalid ICS (not a VCALENDAR)
         mockServer.enqueue(MockResponse()

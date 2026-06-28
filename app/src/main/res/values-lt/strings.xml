@@ -652,6 +652,7 @@
         <item quantity="other">%1$d įvykių</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Atidaryti kalendorių</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">dar %1$d diena</item>
         <item quantity="few">dar %1$d dienos</item>

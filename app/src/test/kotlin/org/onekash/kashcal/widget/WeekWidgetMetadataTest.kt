@@ -37,8 +37,10 @@ class WeekWidgetMetadataTest {
     }
 
     @Test
-    fun `minResizeHeight is 180dp`() {
-        assertContainsAttr("minResizeHeight", "180dp")
+    fun `minResizeHeight is 120dp`() {
+        // Floor sits below the 250dp default so users can shrink this
+        // scrolling LazyColumn widget; the list simply shows fewer rows.
+        assertContainsAttr("minResizeHeight", "120dp")
     }
 
     @Test

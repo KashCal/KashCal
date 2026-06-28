@@ -27,8 +27,8 @@ class MonthWidgetMetadataTest {
     }
 
     @Test
-    fun `minHeight is 280dp`() {
-        assertContainsAttr("minHeight", "280dp")
+    fun `minHeight is 304dp`() {
+        assertContainsAttr("minHeight", "304dp")
     }
 
     @Test
@@ -37,8 +37,29 @@ class MonthWidgetMetadataTest {
     }
 
     @Test
-    fun `minResizeHeight is 240dp`() {
-        assertContainsAttr("minResizeHeight", "240dp")
+    fun `minResizeHeight is 264dp`() {
+        assertContainsAttr("minResizeHeight", "264dp")
+    }
+
+    /**
+     * The month grid is a non-scrolling Column of fixed-height cells, so it
+     * crops if the declared resize floor can't even hold all six week-rows.
+     * Assert the grid alone fits within minResizeHeight. This is a necessary
+     * condition (the header and day-of-week row consume further space on top),
+     * and it ties the cell-height constant to the descriptor so a future
+     * cell-height increase that outgrows the floor fails here instead of
+     * silently cropping on-device.
+     */
+    @Test
+    fun `six week-rows fit within minResizeHeight`() {
+        val gridHeight = MONTH_GRID_WEEK_ROWS * MONTH_DAY_CELL_HEIGHT_DP
+        val minResize = readDpAttr("minResizeHeight")
+        assertTrue(
+            "Month grid needs ${gridHeight}dp for $MONTH_GRID_WEEK_ROWS rows of " +
+                "${MONTH_DAY_CELL_HEIGHT_DP}dp but minResizeHeight is only ${minResize}dp; " +
+                "the bottom week-row will crop. Raise minResizeHeight or shrink the cell.",
+            gridHeight <= minResize
+        )
     }
 
     @Test
@@ -88,5 +109,12 @@ class MonthWidgetMetadataTest {
             "Expected $needle in month_widget_info.xml",
             xmlText.contains(needle)
         )
+    }
+
+    /** Parse the integer dp value of an `android:<name>="Ndp"` attribute. */
+    private fun readDpAttr(name: String): Int {
+        val match = Regex("android:$name=\"(\\d+)dp\"").find(xmlText)
+            ?: error("No android:$name dp attribute in month_widget_info.xml")
+        return match.groupValues[1].toInt()
     }
 }

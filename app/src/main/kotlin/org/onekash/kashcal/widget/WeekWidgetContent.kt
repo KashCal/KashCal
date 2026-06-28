@@ -1,9 +1,7 @@
 package org.onekash.kashcal.widget
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
@@ -15,7 +13,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.background
-import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -156,7 +153,7 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
                 text = formatWeekHeaderRange(firstDay, lastDay),
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
-                    fontSize = 15.sp,
+                    fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -205,7 +202,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
             text = formatDayHeaderText(dayCode),
             style = TextStyle(
                 color = colors.text.provider(),
-                fontSize = 13.sp,
+                fontSize = WidgetTypography.contentTitle,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium
             )
         )
@@ -215,7 +212,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
                 text = LocalContext.current.getString(R.string.label_today),
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
-                    fontSize = 11.sp,
+                    fontSize = WidgetTypography.label,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -226,7 +223,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
                 text = LocalContext.current.resources.getQuantityString(R.plurals.widget_event_count_plural, eventCount, eventCount),
                 style = TextStyle(
                     color = WidgetTheme.secondaryText,
-                    fontSize = 11.sp
+                    fontSize = WidgetTypography.label
                 )
             )
         }
@@ -255,7 +252,7 @@ private fun EmptyDayRow(dayCode: Int) {
             text = LocalContext.current.getString(R.string.widget_no_events),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
-                fontSize = 12.sp
+                fontSize = WidgetTypography.secondary
             )
         )
     }
@@ -269,7 +266,6 @@ private fun CompactEventRow(
     timePattern: String
 ) {
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
-    val calendarColor = Color(event.calendarColor)
 
     Row(
         modifier = GlanceModifier
@@ -287,12 +283,7 @@ private fun CompactEventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = GlanceModifier
-                .size(6.dp)
-                .cornerRadius(3.dp)
-                .background(ColorProvider(day = calendarColor, night = calendarColor))
-        ) {}
+        CalendarColorBar(event.calendarColor)
 
         Spacer(modifier = GlanceModifier.width(8.dp))
 
@@ -301,10 +292,10 @@ private fun CompactEventRow(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayText),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
-                fontSize = 11.sp,
+                fontSize = WidgetTypography.secondary,
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
-            modifier = GlanceModifier.width(48.dp)
+            modifier = GlanceModifier.width(54.dp)
         )
 
         Spacer(modifier = GlanceModifier.width(4.dp))
@@ -313,7 +304,8 @@ private fun CompactEventRow(
             text = displayTitle,
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = 12.sp,
+                fontSize = WidgetTypography.contentTitle,
+                fontWeight = FontWeight.Medium,
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
@@ -343,7 +335,7 @@ private fun OverflowRow(dayCode: Int, count: Int) {
             text = LocalContext.current.getString(R.string.status_more_events, count),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
-                fontSize = 11.sp
+                fontSize = WidgetTypography.secondary
             )
         )
     }

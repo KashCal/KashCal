@@ -661,6 +661,7 @@
         <item quantity="other">%1$d esemény</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Naptár megnyitása</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">még %1$d nap</item>
         <item quantity="other">még %1$d nap</item>

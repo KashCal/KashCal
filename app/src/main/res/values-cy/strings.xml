@@ -708,6 +708,7 @@
         <item quantity="other">%1$d digwyddiad</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Agor y calendr</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="zero">%1$d diwrnod arall</item>
         <item quantity="one">%1$d diwrnod arall</item>

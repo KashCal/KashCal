@@ -17,6 +17,7 @@ class UpcomingWidgetFormatTest {
     private lateinit var originalLocale: Locale
     private val todayLabel = "Today"
     private val tomorrowLabel = "Tomorrow"
+    private val withDateTemplate = "%1\$s (%2\$s)"
 
     @Before
     fun setUp() {
@@ -30,27 +31,46 @@ class UpcomingWidgetFormatTest {
     }
 
     @Test
-    fun `formatUpcomingDayHeader returns todayLabel when dayCode equals todayDayCode`() {
+    fun `formatUpcomingDayHeader appends date in brackets after today label`() {
+        // 20260428 is Tuesday. Today/Tomorrow headers now carry the date so
+        // they are as informative as the Week widget's headers (issue #253).
         val result = formatUpcomingDayHeader(
+            dayCode = 20260428,
+            todayDayCode = 20260428,
+            tomorrowDayCode = tomorrowDayCodeOf(20260428),
+            todayLabel = todayLabel,
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
+        )
+        assertEquals("Today (Tue, Apr 28)", result)
+    }
+
+    @Test
+    fun `formatUpcomingDayHeader without template returns plain relative label`() {
+        // Back-compat: callers that omit the template (e.g. the invitation card)
+        // get the bare "Today"/"Tomorrow" label, unchanged.
+        val today = formatUpcomingDayHeader(
             dayCode = 20260428,
             todayDayCode = 20260428,
             tomorrowDayCode = tomorrowDayCodeOf(20260428),
             todayLabel = todayLabel,
             tomorrowLabel = tomorrowLabel
         )
-        assertEquals(todayLabel, result)
+        assertEquals(todayLabel, today)
     }
 
     @Test
-    fun `formatUpcomingDayHeader returns tomorrowLabel when dayCode is LocalDate_plusDays 1`() {
+    fun `formatUpcomingDayHeader appends date in brackets after tomorrow label`() {
+        // 20260429 is Wednesday.
         val result = formatUpcomingDayHeader(
             dayCode = 20260429,
             todayDayCode = 20260428,
             tomorrowDayCode = tomorrowDayCodeOf(20260428),
             todayLabel = todayLabel,
-            tomorrowLabel = tomorrowLabel
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
         )
-        assertEquals(tomorrowLabel, result)
+        assertEquals("Tomorrow (Wed, Apr 29)", result)
     }
 
     @Test
@@ -66,27 +86,31 @@ class UpcomingWidgetFormatTest {
     }
 
     @Test
-    fun `formatUpcomingDayHeader returns tomorrowLabel when tomorrow crosses month boundary`() {
+    fun `formatUpcomingDayHeader returns tomorrow with date when tomorrow crosses month boundary`() {
+        // 20260501 is Friday.
         val result = formatUpcomingDayHeader(
             dayCode = 20260501,
             todayDayCode = 20260430,
             tomorrowDayCode = tomorrowDayCodeOf(20260430),
             todayLabel = todayLabel,
-            tomorrowLabel = tomorrowLabel
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
         )
-        assertEquals(tomorrowLabel, result)
+        assertEquals("Tomorrow (Fri, May 1)", result)
     }
 
     @Test
-    fun `formatUpcomingDayHeader returns tomorrowLabel when tomorrow crosses year boundary`() {
+    fun `formatUpcomingDayHeader returns tomorrow with date when tomorrow crosses year boundary`() {
+        // 20270101 is Friday.
         val result = formatUpcomingDayHeader(
             dayCode = 20270101,
             todayDayCode = 20261231,
             tomorrowDayCode = tomorrowDayCodeOf(20261231),
             todayLabel = todayLabel,
-            tomorrowLabel = tomorrowLabel
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
         )
-        assertEquals(tomorrowLabel, result)
+        assertEquals("Tomorrow (Fri, Jan 1)", result)
     }
 
     @Test
@@ -97,7 +121,8 @@ class UpcomingWidgetFormatTest {
             todayDayCode = 20260428,
             tomorrowDayCode = tomorrowDayCodeOf(20260428),
             todayLabel = todayLabel,
-            tomorrowLabel = tomorrowLabel
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
         )
         assertEquals("Fri, May 1", result)
     }
@@ -111,7 +136,8 @@ class UpcomingWidgetFormatTest {
             todayDayCode = 20260428,
             tomorrowDayCode = tomorrowDayCodeOf(20260428),
             todayLabel = todayLabel,
-            tomorrowLabel = tomorrowLabel
+            tomorrowLabel = tomorrowLabel,
+            withDateTemplate = withDateTemplate
         )
         assertEquals("Wed, May 27", result)
     }
@@ -120,8 +146,8 @@ class UpcomingWidgetFormatTest {
     fun `formatUpcomingDayHeader is unambiguous across months`() {
         // Two days in different months must render differently.
         val tomorrow = tomorrowDayCodeOf(20260428)
-        val apr30 = formatUpcomingDayHeader(20260430, 20260428, tomorrow, todayLabel, tomorrowLabel)
-        val may30 = formatUpcomingDayHeader(20260530, 20260428, tomorrow, todayLabel, tomorrowLabel)
+        val apr30 = formatUpcomingDayHeader(20260430, 20260428, tomorrow, todayLabel, tomorrowLabel, withDateTemplate)
+        val may30 = formatUpcomingDayHeader(20260530, 20260428, tomorrow, todayLabel, tomorrowLabel, withDateTemplate)
         assertNotEquals(apr30, may30)
     }
 }

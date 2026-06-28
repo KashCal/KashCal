@@ -2,9 +2,7 @@ package org.onekash.kashcal.widget
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
@@ -17,7 +15,6 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.background
-import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -188,9 +185,18 @@ internal fun tomorrowDayCodeOf(todayDayCode: Int): Int {
  * Format a day-header label for the upcoming widget.
  *
  * Returns:
- * - `todayLabel` when [dayCode] equals [todayDayCode]
- * - `tomorrowLabel` when [dayCode] equals [tomorrowDayCode]
+ * - `todayLabel` with the date appended in brackets when [dayCode] equals
+ *   [todayDayCode] (e.g., "Today (Tue, Apr 28)")
+ * - `tomorrowLabel` with the date in brackets when [dayCode] equals
+ *   [tomorrowDayCode] (e.g., "Tomorrow (Wed, Apr 29)")
  * - Otherwise, a locale-aware "EEE, MMM d" formatting (e.g., "Fri, May 1").
+ *
+ * When [withDateTemplate] (the localizable "%1$s (%2$s)" template) is provided,
+ * the date is appended in brackets so the Today/Tomorrow headers are as
+ * informative as the Week widget's headers (issue #253). When it is null the
+ * plain relative label is returned — preserving the behavior other callers
+ * (e.g. the in-app invitation card) rely on. Injected so this function stays
+ * Context-free.
  *
  * [tomorrowDayCode] is a parameter (not recomputed internally) so that callers
  * rendering many headers per frame can compute it once and pass it in.
@@ -204,16 +210,27 @@ internal fun formatUpcomingDayHeader(
     todayDayCode: Int,
     tomorrowDayCode: Int,
     todayLabel: String,
-    tomorrowLabel: String
+    tomorrowLabel: String,
+    withDateTemplate: String? = null
 ): String {
-    if (dayCode == todayDayCode) return todayLabel
-    if (dayCode == tomorrowDayCode) return tomorrowLabel
+    val relativeLabel = when (dayCode) {
+        todayDayCode -> todayLabel
+        tomorrowDayCode -> tomorrowLabel
+        else -> null
+    }
     val date = DayPagerUtils.dayCodeToLocalDate(dayCode)
     val formatter = DateTimeFormatter.ofPattern(
         DateTimeUtils.localizedPattern("EEEMMMd"),
         Locale.getDefault()
     )
-    return date.format(formatter)
+    val formattedDate = date.format(formatter)
+
+    if (relativeLabel == null) return formattedDate
+    return if (withDateTemplate != null) {
+        String.format(withDateTemplate, relativeLabel, formattedDate)
+    } else {
+        relativeLabel
+    }
 }
 
 /**
@@ -307,7 +324,7 @@ private fun UpcomingWidgetHeader() {
                 text = context.getString(R.string.upcoming_widget_name),
                 style = TextStyle(
                     color = WidgetTheme.primaryText,
-                    fontSize = 15.sp,
+                    fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -343,6 +360,7 @@ private fun UpcomingItemsList(
     val context = LocalContext.current
     val todayLabel = context.getString(R.string.label_today)
     val tomorrowLabel = context.getString(R.string.label_tomorrow)
+    val withDateTemplate = context.getString(R.string.upcoming_widget_day_with_date)
     val allDayLabel = context.getString(R.string.label_all_day)
     val tomorrowDayCode = remember(todayDayCode) { tomorrowDayCodeOf(todayDayCode) }
 
@@ -356,6 +374,7 @@ private fun UpcomingItemsList(
                         tomorrowDayCode = tomorrowDayCode,
                         todayLabel = todayLabel,
                         tomorrowLabel = tomorrowLabel,
+                        withDateTemplate = withDateTemplate,
                         eventCount = item.eventCount
                     )
                 }
@@ -397,7 +416,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
             text = moreDaysText,
             style = TextStyle(
                 color = WidgetTheme.rowTintText,
-                fontSize = 12.sp,
+                fontSize = WidgetTypography.secondary,
                 fontWeight = FontWeight.Medium
             )
         )
@@ -406,7 +425,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
             text = openLabel,
             style = TextStyle(
                 color = WidgetTheme.rowTintText,
-                fontSize = 12.sp
+                fontSize = WidgetTypography.secondary
             )
         )
     }
@@ -419,6 +438,7 @@ private fun UpcomingDayHeader(
     tomorrowDayCode: Int,
     todayLabel: String,
     tomorrowLabel: String,
+    withDateTemplate: String,
     eventCount: Int
 ) {
     val context = LocalContext.current
@@ -441,14 +461,20 @@ private fun UpcomingDayHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = formatUpcomingDayHeader(dayCode, todayDayCode, tomorrowDayCode, todayLabel, tomorrowLabel),
+            text = formatUpcomingDayHeader(
+                dayCode, todayDayCode, tomorrowDayCode, todayLabel, tomorrowLabel, withDateTemplate
+            ),
             style = TextStyle(
                 color = colors.text.provider(),
-                fontSize = 13.sp,
+                fontSize = WidgetTypography.contentTitle,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium
-            )
+            ),
+            maxLines = 1,
+            // Take remaining space and ellipsize so the bracketed date never
+            // pushes the event count off a narrow widget.
+            modifier = GlanceModifier.defaultWeight()
         )
-        Spacer(modifier = GlanceModifier.defaultWeight())
+        Spacer(modifier = GlanceModifier.width(8.dp))
         Text(
             text = context.resources.getQuantityString(
                 R.plurals.widget_event_count_plural,
@@ -457,7 +483,7 @@ private fun UpcomingDayHeader(
             ),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
-                fontSize = 11.sp
+                fontSize = WidgetTypography.label
             )
         )
     }
@@ -472,7 +498,6 @@ private fun UpcomingEventRow(
     allDayLabel: String
 ) {
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
-    val calendarColor = Color(event.calendarColor)
 
     Row(
         modifier = GlanceModifier
@@ -490,11 +515,13 @@ private fun UpcomingEventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        CalendarColorBar(event.calendarColor)
+        Spacer(modifier = GlanceModifier.width(8.dp))
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayLabel),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
-                fontSize = 12.sp
+                fontSize = WidgetTypography.secondary
             ),
             modifier = GlanceModifier.width(58.dp)
         )
@@ -503,19 +530,12 @@ private fun UpcomingEventRow(
             text = displayTitle,
             style = TextStyle(
                 color = WidgetTheme.primaryText,
-                fontSize = 14.sp
+                fontSize = WidgetTypography.contentTitle,
+                fontWeight = FontWeight.Medium
             ),
             maxLines = 1,
             modifier = GlanceModifier.defaultWeight()
         )
-        Spacer(modifier = GlanceModifier.width(8.dp))
-        Box(
-            modifier = GlanceModifier
-                .size(8.dp)
-                .cornerRadius(4.dp)
-                .background(ColorProvider(day = calendarColor, night = calendarColor)),
-            contentAlignment = Alignment.Center
-        ) {}
     }
 }
 
@@ -540,7 +560,7 @@ private fun UpcomingEmptyState() {
             text = context.getString(R.string.widget_no_upcoming_events),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
-                fontSize = 14.sp
+                fontSize = WidgetTypography.contentTitle
             )
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
@@ -548,7 +568,7 @@ private fun UpcomingEmptyState() {
             text = context.getString(R.string.widget_add_event),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
-                fontSize = 14.sp
+                fontSize = WidgetTypography.contentTitle
             )
         )
     }
@@ -618,7 +638,7 @@ private fun UpcomingStatePlaceholder(
                 text = context.getString(textRes),
                 style = TextStyle(
                     color = WidgetTheme.secondaryText,
-                    fontSize = 14.sp
+                    fontSize = WidgetTypography.contentTitle
                 )
             )
         }

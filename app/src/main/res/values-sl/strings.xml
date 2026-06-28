@@ -634,6 +634,7 @@
         <item quantity="other">%1$d dogodkov</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Odpri koledar</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">še %1$d dan</item>
         <item quantity="two">še %1$d dneva</item>

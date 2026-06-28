@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -47,6 +46,12 @@ import java.time.Month
 import java.util.Calendar
 import java.util.Locale
 import java.time.format.TextStyle as JavaTextStyle
+
+/** Fixed height of a single month-grid day cell, in dp. */
+internal const val MONTH_DAY_CELL_HEIGHT_DP = 40
+
+/** Number of week rows the month grid always renders (fixed 6x7 grid). */
+internal const val MONTH_GRID_WEEK_ROWS = 6
 
 /**
  * Format month header text for the widget.
@@ -157,7 +162,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
                 text = "\u2039",
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
-                    fontSize = 22.sp,
+                    fontSize = WidgetTypography.navGlyph,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -186,7 +191,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
                 text = headerText,
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
-                    fontSize = 15.sp,
+                    fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -207,7 +212,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
                 text = "\u203A",
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
-                    fontSize = 22.sp,
+                    fontSize = WidgetTypography.navGlyph,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -255,7 +260,7 @@ private fun DayOfWeekRow(firstDayOfWeek: Int) {
                     text = name,
                     style = TextStyle(
                         color = WidgetTheme.secondaryText,
-                        fontSize = 10.sp,
+                        fontSize = WidgetTypography.label,
                         fontWeight = FontWeight.Medium
                     )
                 )
@@ -284,7 +289,7 @@ private fun DayCell(
     if (isAdjacentMonth) {
         Box(
             modifier = modifier
-                .height(36.dp)
+                .height(MONTH_DAY_CELL_HEIGHT_DP.dp)
                 .clickable(
                     actionStartActivity<MainActivity>(
                         parameters = actionParametersOf(
@@ -300,7 +305,7 @@ private fun DayCell(
                 text = "${cell.dayOfMonth}",
                 style = TextStyle(
                     color = WidgetTheme.adjacentMonthText,
-                    fontSize = 12.sp
+                    fontSize = WidgetTypography.contentTitle
                 )
             )
         }
@@ -317,7 +322,7 @@ private fun DayCell(
 
     Box(
         modifier = modifier
-            .height(36.dp)
+            .height(MONTH_DAY_CELL_HEIGHT_DP.dp)
             .then(bgModifier)
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -343,8 +348,11 @@ private fun DayCell(
                 text = "${cell.dayOfMonth}",
                 style = TextStyle(
                     color = textColor,
-                    fontSize = 12.sp,
-                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
+                    fontSize = WidgetTypography.contentTitle,
+                    // Medium (vs Normal) gives the numbers more presence against
+                    // the dynamic Material You surface, which renders softer than
+                    // a fixed high-contrast palette. Today stays Bold.
+                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium
                 )
             )
 

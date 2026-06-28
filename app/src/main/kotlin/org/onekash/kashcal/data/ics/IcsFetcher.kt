@@ -7,6 +7,8 @@ import okhttp3.Request
 import okhttp3.Response
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.network.AiaCertificateChainCompleter
+import org.onekash.kashcal.network.ResponseTooLargeException
+import org.onekash.kashcal.network.readBoundedBody
 import java.io.EOFException
 import java.io.IOException
 import java.net.ConnectException
@@ -184,8 +186,15 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             }
 
             response.isSuccessful -> {
-                val content = response.body?.string()
-                if (content.isNullOrBlank()) {
+                val content = try {
+                    response.readBoundedBody()
+                } catch (e: ResponseTooLargeException) {
+                    // Locally-detected oversize body — mirror the server-reported
+                    // 413 branch's wording rather than a generic network error.
+                    Log.w(TAG, "ICS feed too large: ${e.message}")
+                    return IcsFetcher.FetchResult.Error("Calendar too large")
+                }
+                if (content.isBlank()) {
                     IcsFetcher.FetchResult.Error("Empty response from server")
                 } else if (!IcsParserService.isValidIcs(content)) {
                     IcsFetcher.FetchResult.Error("Invalid ICS format")

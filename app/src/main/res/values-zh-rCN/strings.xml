@@ -589,6 +589,7 @@
         <item quantity="other">%1$d 个事件</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">打开日历</string>
+    <string name="upcoming_widget_day_with_date">%1$s（%2$s）</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">还有 %1$d 天</item>
     </plurals>

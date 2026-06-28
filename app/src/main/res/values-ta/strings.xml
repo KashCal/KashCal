@@ -661,6 +661,7 @@
         <item quantity="other">%1$d நிகழ்வுகள்</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">நாட்காட்டியைத் திற</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">மேலும் %1$d நாள்</item>
         <item quantity="other">மேலும் %1$d நாட்கள்</item>

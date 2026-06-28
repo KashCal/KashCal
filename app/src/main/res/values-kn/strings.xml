@@ -661,6 +661,7 @@
         <item quantity="other">%1$d ಈವೆಂಟ್‌ಗಳು</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">ಕ್ಯಾಲೆಂಡರ್ ತೆರೆಯಿರಿ</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">ಇನ್ನೂ %1$d ದಿನ</item>
         <item quantity="other">ಇನ್ನೂ %1$d ದಿನಗಳು</item>

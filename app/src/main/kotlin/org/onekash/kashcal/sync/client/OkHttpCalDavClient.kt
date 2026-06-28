@@ -13,6 +13,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
+import org.onekash.kashcal.network.readBoundedBody
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.model.CalDavResult
@@ -95,32 +96,6 @@ class OkHttpCalDavClient : CalDavClient {
         private const val MAX_IDLE_CONNECTIONS = 5
         private const val KEEP_ALIVE_DURATION_MINUTES = 5L
 
-        // Response body size limit (10MB) - prevents OOM on malicious/malformed responses
-        private const val MAX_RESPONSE_SIZE_BYTES = 10L * 1024 * 1024
-
-    }
-
-    /**
-     * Read response body with size limit to prevent OOM.
-     * Uses .use {} to ensure body is always closed.
-     */
-    private fun Response.bodyWithLimit(): String {
-        val body = this.body ?: return ""
-        return body.use { b ->
-            val source = b.source()
-            val contentLength = b.contentLength()
-            // contentLength is -1 when unknown (chunked/streaming) - falls through to buffer check
-            if (contentLength > MAX_RESPONSE_SIZE_BYTES) {
-                Log.w(TAG, "Response rejected: Content-Length $contentLength exceeds limit")
-                throw IOException("Response too large: Content-Length $contentLength exceeds ${MAX_RESPONSE_SIZE_BYTES / 1024 / 1024}MB")
-            }
-            source.request(MAX_RESPONSE_SIZE_BYTES + 1)
-            if (source.buffer.size > MAX_RESPONSE_SIZE_BYTES) {
-                Log.w(TAG, "Response rejected: buffered ${source.buffer.size} bytes exceeds limit")
-                throw IOException("Response too large: buffered ${source.buffer.size} bytes exceeds ${MAX_RESPONSE_SIZE_BYTES / 1024 / 1024}MB")
-            }
-            source.buffer.readUtf8()
-        }
     }
 
     private val username: String = ""
@@ -604,7 +579,7 @@ class OkHttpCalDavClient : CalDavClient {
 
         try {
             val response = httpClient.newCall(request).execute()
-            val responseBody = response.bodyWithLimit()
+            val responseBody = response.readBoundedBody()
             val responseCode = response.code
 
             // RFC 6578 Section 3.6: 507 means server truncated results
@@ -842,7 +817,7 @@ class OkHttpCalDavClient : CalDavClient {
 
             try {
                 val response = httpClient.newCall(request).execute()
-                val responseBody = response.bodyWithLimit()
+                val responseBody = response.readBoundedBody()
 
                 when {
                     response.isSuccessful -> {
@@ -888,7 +863,7 @@ class OkHttpCalDavClient : CalDavClient {
 
             try {
                 val response = httpClient.newCall(request).execute()
-                val responseBody = response.bodyWithLimit()
+                val responseBody = response.readBoundedBody()
 
                 when {
                     response.isSuccessful -> {
@@ -904,7 +879,7 @@ class OkHttpCalDavClient : CalDavClient {
                     response.code == 401 -> CalDavResult.authError("Authentication failed")
                     else -> {
                         // PROPFIND failed (e.g., Zoho returns 501). Try single-href multiget.
-                        response.close()  // Defensive — body already consumed by bodyWithLimit()
+                        response.close()  // Defensive — body already consumed by readBoundedBody()
                         Log.w(TAG, "fetchEtag: PROPFIND failed (${response.code}) for $eventUrl, trying multiget")
                         val calendarUrl = eventUrl.substringBeforeLast("/") + "/"
                         val multigetEtag = fetchEtagViaMultiget(calendarUrl, eventUrl)
@@ -969,7 +944,7 @@ class OkHttpCalDavClient : CalDavClient {
         return try {
             val response = httpClient.newCall(request).execute()
             if (response.isSuccessful) {
-                val responseBody = response.bodyWithLimit()
+                val responseBody = response.readBoundedBody()
                 val etag = extractEtagFromPropfind(responseBody)
                 Log.d(TAG, "fetchEtagViaMultiget: Got ETag '$etag' for $eventUrl")
                 etag
@@ -1143,7 +1118,7 @@ class OkHttpCalDavClient : CalDavClient {
                 when {
                     // 200 OK / 207 Multi-Status both carry a schedule-response.
                     response.code == 200 || response.code == 207 -> {
-                        val body = response.bodyWithLimit()
+                        val body = response.readBoundedBody()
                         CalDavResult.success(OutboxResponse.parse(body))
                     }
                     response.code == 401 -> CalDavResult.authError("Authentication failed")
@@ -1344,7 +1319,7 @@ class OkHttpCalDavClient : CalDavClient {
         repeat(MAX_RETRIES) { attempt ->
             try {
                 val response = httpClient.newCall(request).execute()
-                val responseBody = response.bodyWithLimit()
+                val responseBody = response.readBoundedBody()
 
                 val result = processResponse(response, responseBody, parser)
 

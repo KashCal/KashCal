@@ -589,6 +589,7 @@
         <item quantity="other">일정 %1$d개</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">캘린더 열기</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">%1$d일 더</item>
     </plurals>

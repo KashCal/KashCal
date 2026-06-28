@@ -651,6 +651,7 @@
         <item quantity="other">%1$d падзей</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Адкрыць каляндар</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">яшчэ %1$d дзень</item>
         <item quantity="few">яшчэ %1$d дні</item>

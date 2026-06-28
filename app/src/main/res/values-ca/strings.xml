@@ -639,6 +639,7 @@
         <item quantity="other">%1$d esdeveniments</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Obre el calendari</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d dia més</item>
         <item quantity="other">%1$d dies més</item>

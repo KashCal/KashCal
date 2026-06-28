@@ -13,6 +13,7 @@
     <string name="date_widget_description">Muestra la fecha de hoy como un ícono de app</string>
     <string name="upcoming_widget_name">Próximos</string>
     <string name="upcoming_widget_description">Muestra los eventos de los próximos 10 días, omitiendo los días vacíos</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Cargando próximos eventos…</string>
     <string name="widget_error_load_events">No se pudieron cargar los eventos, toca para abrir</string>
     <string name="widget_no_events_today">Sin eventos hoy</string>

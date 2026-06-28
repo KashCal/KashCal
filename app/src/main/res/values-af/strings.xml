@@ -653,6 +653,7 @@
         <item quantity="other">%1$d gebeurtenisse</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Maak kalender oop</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d dag meer</item>
         <item quantity="other">%1$d dae meer</item>

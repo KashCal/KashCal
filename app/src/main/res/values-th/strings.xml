@@ -589,6 +589,7 @@
         <item quantity="other">%1$d กิจกรรม</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">เปิดปฏิทิน</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">อีก %1$d วัน</item>
     </plurals>

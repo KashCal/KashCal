@@ -2,7 +2,6 @@ package org.onekash.kashcal.widget
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
@@ -73,7 +72,7 @@ fun DateWidgetContent() {
                     text = dayName,
                     style = TextStyle(
                         color = WidgetTheme.secondaryText,
-                        fontSize = 10.sp,
+                        fontSize = WidgetTypography.label,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
@@ -84,7 +83,7 @@ fun DateWidgetContent() {
                     text = dateNumber,
                     style = TextStyle(
                         color = WidgetTheme.primaryText,
-                        fontSize = 22.sp,
+                        fontSize = WidgetTypography.dateNumber,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )

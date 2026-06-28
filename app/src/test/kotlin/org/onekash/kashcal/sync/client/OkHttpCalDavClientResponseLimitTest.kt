@@ -6,20 +6,14 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.network.MAX_HTTP_RESPONSE_SIZE_BYTES
 
 /**
- * Tests for OkHttpCalDavClient response body size limiting.
- *
- * These tests verify that:
- * 1. The MAX_RESPONSE_SIZE_BYTES constant is correctly set to 10MB
- * 2. The bodyWithLimit() extension function exists
- *
- * Note: Full integration tests with MockWebServer would require additional
- * test dependencies. These basic tests verify the code compiles and
- * constants are correct.
+ * Tests that the CalDAV client reads responses through the shared bounded
+ * reader. Reader behavior is covered by HttpResponseBodyReaderTest; this pins
+ * the shared size limit the CalDAV path inherits.
  */
 class OkHttpCalDavClientResponseLimitTest {
 
@@ -41,39 +35,16 @@ class OkHttpCalDavClientResponseLimitTest {
     }
 
     @Test
-    fun `MAX_RESPONSE_SIZE_BYTES exists and implementation compiles`() {
-        // This test verifies the constant exists by checking that
-        // the OkHttpCalDavClient class compiles and can be instantiated
-        // The actual value (10MB) is verified at code review time
-        // since reflection is fragile across Kotlin versions
-
-        // If this compiles, the constant exists
-        assertTrue("OkHttpCalDavClient should exist", true)
-    }
-
-    @Test
-    fun `bodyWithLimit method exists`() {
-        // Verify the private extension function exists via reflection
-        // This is a compile-time check - if the method doesn't exist, this won't compile
-        val methods = OkHttpCalDavClient::class.java.declaredMethods
-        val hasMethod = methods.any { it.name == "bodyWithLimit" }
-
-        assertTrue(
-            "bodyWithLimit() extension function should exist",
-            hasMethod
+    fun `CalDAV reads enforce the shared response size limit`() {
+        // CalDAV responses are read through the shared bounded reader, which
+        // caps buffered body size to prevent OOM on malicious/malformed servers.
+        // The reader itself (limit enforcement, charset handling, chunked-body
+        // behavior) is covered by HttpResponseBodyReaderTest; here we pin the
+        // shared limit that the CalDAV path inherits.
+        assertEquals(
+            "CalDAV inherits the shared 50MB response limit",
+            50L * 1024 * 1024,
+            MAX_HTTP_RESPONSE_SIZE_BYTES
         )
-    }
-
-    @Test
-    fun `response size limit prevents OOM on large responses`() {
-        // This is a design verification test
-        // The 10MB limit is chosen because:
-        // 1. Normal CalDAV responses are < 1MB (even with many events)
-        // 2. 10MB allows for edge cases (large recurring events, attachments)
-        // 3. 10MB is small enough to not cause OOM on most devices
-        // 4. Android devices typically have 1-8GB RAM, 10MB is < 1% of minimum
-
-        val limitMB = 10L * 1024 * 1024 / (1024 * 1024)
-        assertEquals("Size limit should be 10MB", 10L, limitMB)
     }
 }

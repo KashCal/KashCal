@@ -36,7 +36,7 @@ kotlinxSerializationJson = "1.11.0"
 libRecur = "0.17.1"
 
 # HTTP Client
-okhttp = "4.12.0"
+okhttp = "5.4.0"
 
 # DataStore & Security
 datastore = "1.2.1"

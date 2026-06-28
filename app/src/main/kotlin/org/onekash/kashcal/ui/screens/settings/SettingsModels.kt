@@ -8,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.network.AiaCertificateChainCompleter
+import org.onekash.kashcal.network.readBoundedBody
 import org.onekash.kashcal.ui.util.UiMessage
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -177,8 +178,8 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
             return@withContext FetchCalendarState.Error("HTTP ${response.code}: ${response.message}")
         }
 
-        val content = response.body?.string()
-        if (content.isNullOrBlank()) {
+        val content = response.readBoundedBody()
+        if (content.isBlank()) {
             return@withContext FetchCalendarState.Error("Empty response")
         }
 

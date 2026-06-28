@@ -679,6 +679,7 @@
         <item quantity="other">%1$d событий</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Открыть календарь</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">ещё %1$d день</item>
         <item quantity="few">ещё %1$d дня</item>

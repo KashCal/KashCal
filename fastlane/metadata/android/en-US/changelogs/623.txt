@@ -1,0 +1,1 @@
+Bigger, more readable widget text, calendar color moved to the left, and the Upcoming widget now shows dates next to Today and Tomorrow.

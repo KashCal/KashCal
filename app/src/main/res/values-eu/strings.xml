@@ -639,6 +639,7 @@
         <item quantity="other">%1$d gertaera</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">Ireki egutegia</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">egun %1$d gehiago</item>
         <item quantity="other">%1$d egun gehiago</item>

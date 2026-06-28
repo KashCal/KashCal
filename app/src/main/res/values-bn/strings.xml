@@ -661,6 +661,7 @@
         <item quantity="other">%1$d ইভেন্ট</item>
     </plurals>
     <string name="upcoming_widget_open_calendar">ক্যালেন্ডার খুলুন</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">আরও %1$d দিন</item>
         <item quantity="other">আরও %1$d দিন</item>

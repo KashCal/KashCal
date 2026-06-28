@@ -15,6 +15,8 @@
     <string name="date_widget_description">Shows today\'s date like an app icon</string>
     <string name="upcoming_widget_name">Upcoming</string>
     <string name="upcoming_widget_description">Shows the next 10 days of events, skipping empty days</string>
+    <!-- Day header showing a relative label with its date, e.g. "Today (Tue, Apr 28)". %1$s = Today/Tomorrow, %2$s = formatted date -->
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Loading upcoming events…</string>
     <string name="widget_error_load_events">Couldn\'t load events, tap to open</string>
     <!-- Widget content -->

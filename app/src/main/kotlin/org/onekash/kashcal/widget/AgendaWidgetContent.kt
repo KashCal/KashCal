@@ -1,9 +1,7 @@
 package org.onekash.kashcal.widget
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
@@ -16,7 +14,6 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
-import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -112,7 +109,7 @@ private fun WidgetHeader(date: String) {
                 text = date,
                 style = TextStyle(
                     color = WidgetTheme.primaryText,
-                    fontSize = 15.sp,
+                    fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -202,12 +199,17 @@ private fun EventRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val context = LocalContext.current
+        // Leading calendar-color pill
+        CalendarColorBar(event.calendarColor)
+
+        Spacer(modifier = GlanceModifier.width(8.dp))
+
         // Time column
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, context.getString(R.string.label_all_day)),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
-                fontSize = 12.sp,
+                fontSize = WidgetTypography.secondary,
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
             modifier = GlanceModifier.width(58.dp)
@@ -220,26 +222,13 @@ private fun EventRow(
             text = displayTitle,
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = 14.sp,
+                fontSize = WidgetTypography.contentTitle,
+                fontWeight = FontWeight.Medium,
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
             modifier = GlanceModifier.defaultWeight()
         )
-
-        Spacer(modifier = GlanceModifier.width(8.dp))
-
-        // Calendar color dot
-        val calendarColor = Color(event.calendarColor)
-        Box(
-            modifier = GlanceModifier
-                .size(8.dp)
-                .cornerRadius(4.dp)
-                .background(ColorProvider(day = calendarColor, night = calendarColor)),
-            contentAlignment = Alignment.Center
-        ) {
-            // Empty box, just showing the color
-        }
     }
 }
 
@@ -267,7 +256,7 @@ private fun EmptyState() {
             text = LocalContext.current.getString(R.string.widget_no_events_today),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
-                fontSize = 14.sp
+                fontSize = WidgetTypography.contentTitle
             )
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
@@ -275,7 +264,7 @@ private fun EmptyState() {
             text = LocalContext.current.getString(R.string.widget_add_event),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
-                fontSize = 14.sp
+                fontSize = WidgetTypography.contentTitle
             )
         )
     }
@@ -304,7 +293,7 @@ private fun OverflowIndicator(count: Int) {
             text = LocalContext.current.resources.getQuantityString(R.plurals.more_items, count, count),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
-                fontSize = 12.sp
+                fontSize = WidgetTypography.secondary
             )
         )
     }
