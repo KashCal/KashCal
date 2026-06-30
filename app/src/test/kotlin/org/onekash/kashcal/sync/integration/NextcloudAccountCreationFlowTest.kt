@@ -168,7 +168,7 @@ class NextcloudAccountCreationFlowTest {
 
     private fun createMockAccountRepository(): AccountRepository {
         return io.mockk.mockk {
-            // getAccountByProviderAndEmail - find existing account
+            // getAccountByProviderAndEmail - find existing account (2-param, legacy)
             every {
                 runBlocking { getAccountByProviderAndEmail(any(), any()) }
             } answers {
@@ -176,6 +176,24 @@ class NextcloudAccountCreationFlowTest {
                 val email = secondArg<String>()
                 val found = accountsInDb.find { it.provider == provider && it.email == email }
                 println("  [DB] getAccountByProviderAndEmail($provider, $email) -> ${found?.id ?: "null"}")
+                found
+            }
+
+            // getAccountByProviderEmailAndHomeSetUrl - the 3-param lookup the
+            // production create/update flow actually calls (same username on
+            // different servers stays distinct via homeSetUrl). Must be stubbed
+            // against the same in-memory DB or the flow can't tell create from
+            // update.
+            every {
+                runBlocking { getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) }
+            } answers {
+                val provider = firstArg<AccountProvider>()
+                val email = secondArg<String>()
+                val homeSetUrl = thirdArg<String>()
+                val found = accountsInDb.find {
+                    it.provider == provider && it.email == email && it.homeSetUrl == homeSetUrl
+                }
+                println("  [DB] getAccountByProviderEmailAndHomeSetUrl($provider, $email, $homeSetUrl) -> ${found?.id ?: "null"}")
                 found
             }
 

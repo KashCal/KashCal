@@ -27,6 +27,17 @@ class CalDavXmlParser {
         private const val TAG = "CalDavXmlParser"
 
         /**
+         * WebDAV privilege element local-names that confer the right to write
+         * calendar-object content. DAV:all aggregates DAV:write aggregates
+         * DAV:write-content (RFC 3744 §3.11/§3.12), and a server may advertise
+         * any of these aggregation levels, so all three count as writable.
+         * DAV:write-properties / DAV:bind / DAV:unbind are deliberately excluded:
+         * they don't grant content writes, so a calendar offering only those
+         * stays read-only.
+         */
+        private val WRITE_PRIVILEGE_ELEMENTS = setOf("all", "write", "write-content")
+
+        /**
          * Decode the 5 standard XML entities.
          *
          * XmlPullParser.next() should decode these automatically, but Android's
@@ -307,7 +318,7 @@ class CalDavXmlParser {
                                 inPrivilegeSet = true
                                 sawPrivilegeSet = true
                             }
-                            "write", "write-content" -> {
+                            in WRITE_PRIVILEGE_ELEMENTS -> {
                                 if (inPrivilegeSet) hasWritePrivilege = true
                             }
                             "read-only" -> hasReadOnlyElement = true
@@ -434,7 +445,7 @@ class CalDavXmlParser {
                             }
                             "current-user-privilege-set" -> inPrivilegeSet = true
                             "calendar" -> if (inResourceType) isCalendar = true
-                            "write", "write-content" -> if (inPrivilegeSet) hasWritePrivilege = true
+                            in WRITE_PRIVILEGE_ELEMENTS -> if (inPrivilegeSet) hasWritePrivilege = true
                             "read-only" -> isReadOnly = true
                             "supported-calendar-component-set" -> inSupportedComponentSet = true
                             "comp" -> {

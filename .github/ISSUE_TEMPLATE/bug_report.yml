@@ -2,6 +2,19 @@ name: Bug Report
 description: Report a bug or unexpected behavior in KashCal
 labels: ["bug"]
 body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      description: A quick check saves everyone time.
+      options:
+        - label: I've read [Troubleshooting](https://kashcal.onekash.org/docs/help/troubleshooting) and the [FAQ](https://kashcal.onekash.org/docs/help/faq)
+          required: true
+        - label: I've searched [existing issues](https://github.com/KashCal/KashCal/issues)
+          required: true
+        - label: I'm on the latest version of KashCal
+          required: true
+
   - type: textarea
     id: bug-description
     attributes:

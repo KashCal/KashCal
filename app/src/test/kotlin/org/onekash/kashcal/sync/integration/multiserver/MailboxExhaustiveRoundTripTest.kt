@@ -139,18 +139,21 @@ class MailboxExhaustiveRoundTripTest {
         }
 
         // Sanity: our serializer must at least emit the UID + summary we asked for.
-        assert(ics.contains("UID:")) { "[${event.title}] serializer produced no UID:\n$ics" }
+        assert(ics.contains("UID:")) {
+            "[${event.title}] serializer produced no UID:\n" + redactPii(ics)
+        }
 
         val createResult = client!!.createEvent(calendarUrl!!, event.uid, ics)
         assert(createResult.isSuccess()) {
             "[${event.title}] PUT failed: " +
-                "${(createResult as? CalDavResult.Error)?.message}\n--- ICS we sent ---\n$ics"
+                redactPii("${(createResult as? CalDavResult.Error)?.message}\n--- ICS we sent ---\n$ics")
         }
         val (url, etag) = createResult.getOrNull()!!
 
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) {
-            "[${event.title}] GET failed: ${(fetchResult as? CalDavResult.Error)?.message}"
+            "[${event.title}] GET failed: " +
+                redactPii("${(fetchResult as? CalDavResult.Error)?.message}")
         }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
 
@@ -158,11 +161,11 @@ class MailboxExhaustiveRoundTripTest {
         val parseResult = parser.parse(fetchedIcs)
         assert(parseResult is ParseResult.Success) {
             "[${event.title}] PULL PARSE FAILED on server-stored body: $parseResult\n" +
-                "--- server returned ---\n$fetchedIcs"
+                "--- server returned ---\n" + redactPii(fetchedIcs)
         }
         val cal = (parseResult as ParseResult.Success).value
         assert(cal.events.isNotEmpty()) {
-            "[${event.title}] parser produced zero VEVENTs from:\n$fetchedIcs"
+            "[${event.title}] parser produced zero VEVENTs from:\n" + redactPii(fetchedIcs)
         }
 
         // Map the master (the non-exception VEVENT, i.e. no RECURRENCE-ID).
@@ -192,6 +195,19 @@ class MailboxExhaustiveRoundTripTest {
     }
 
     private fun uid(slug: String) = "kc-exhaustive-$slug-${UUID.randomUUID()}"
+
+    /**
+     * Defense-in-depth: OX rewrites ORGANIZER to the authenticated account on
+     * PUT, so any server-returned body interpolated into a failure message
+     * could carry a real address into junit-xml / CI logs. Mask everything that
+     * isn't a synthetic `@example.test` fixture address before it surfaces.
+     */
+    private fun redactPii(text: String): String {
+        val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
+        return emailRegex.replace(text) { m ->
+            if (m.value.endsWith("@example.test")) m.value else "<redacted>@<redacted>"
+        }
+    }
 
     // ---------------------------------------------------------------- basics
 

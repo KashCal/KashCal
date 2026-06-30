@@ -162,6 +162,11 @@ class RealIncrementalSyncE2ETest {
     }
 
     private fun loadCredentials() {
+        // Read the SPECIFIC iCloud keys. A previous fuzzy substring matcher
+        // (any key containing "username"/"password") silently picked up the
+        // LAST such key in local.properties — which, once other servers were
+        // added, became another provider's credentials and made these iCloud
+        // tests skip on a discovery failure. Match the documented keys exactly.
         val possiblePaths = listOf(
             "local.properties",
             "../local.properties",
@@ -171,16 +176,10 @@ class RealIncrementalSyncE2ETest {
         for (path in possiblePaths) {
             val propsFile = File(path)
             if (propsFile.exists()) {
-                propsFile.readLines().forEach { line ->
-                    val parts = line.split("=").map { it.trim() }
-                    if (parts.size == 2) {
-                        when {
-                            parts[0].contains("username", ignoreCase = true) -> username = parts[1]
-                            parts[0].contains("password", ignoreCase = true) &&
-                                !parts[0].contains("keystore", ignoreCase = true) -> password = parts[1]
-                        }
-                    }
-                }
+                val props = java.util.Properties()
+                propsFile.inputStream().use { props.load(it) }
+                username = props.getProperty("caldav.username")
+                password = props.getProperty("caldav.app_password")
                 if (username != null && password != null) break
             }
         }

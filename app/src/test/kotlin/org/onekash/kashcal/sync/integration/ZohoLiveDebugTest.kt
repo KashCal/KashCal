@@ -47,6 +47,24 @@ class ZohoLiveDebugTest {
         )
     }
 
+    /**
+     * Run discovery (principal -> home -> calendars) and return the first
+     * calendar URL, or skip the test (via assumeTrue) if any step yields no
+     * result. Zoho is a shared, rate-limited live account, so a rapid burst of
+     * discovery calls across these diagnostic tests can transiently return
+     * empty; that is an environmental skip, not a failure. Mirrors the
+     * reachability-gate contract the multiserver suite uses.
+     */
+    private suspend fun discoverFirstCalendarUrlOrSkip(): String {
+        val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()
+        assumeTrue("Zoho: could not discover principal (transient)", principalUrl != null)
+        val homeUrl = client.discoverCalendarHome(principalUrl!!).getOrNull()?.firstOrNull()
+        assumeTrue("Zoho: could not discover calendar home (transient)", homeUrl != null)
+        val calendars = client.listCalendars(homeUrl!!).getOrNull()
+        assumeTrue("Zoho: no calendars found (transient)", calendars != null && calendars.isNotEmpty())
+        return calendars!![0].url
+    }
+
     @Test
     fun `trace full Zoho discovery and pull flow`() = runBlocking {
         println("\n=== Step 1: Discover principal ===")
@@ -189,12 +207,8 @@ class ZohoLiveDebugTest {
         println("\n=== Multiget Batch Size Experiment ===")
 
         // Discovery
-        val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
-        val calendars = client.listCalendars(homeUrl).getOrNull()!!
-        assumeTrue("No calendars found", calendars.isNotEmpty())
-        val calendarUrl = calendars[0].url
-        println("Calendar: ${calendars[0].displayName} at $calendarUrl")
+        val calendarUrl = discoverFirstCalendarUrlOrSkip()
+        println("Calendar at $calendarUrl")
 
         // Get etags
         val now = System.currentTimeMillis()
@@ -292,12 +306,8 @@ class ZohoLiveDebugTest {
         println("\n=== Push Cycle: CREATE → UPDATE → DELETE ===")
 
         // Discovery
-        val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
-        val calendars = client.listCalendars(homeUrl).getOrNull()!!
-        assumeTrue("No calendars found", calendars.isNotEmpty())
-        val calendarUrl = calendars[0].url
-        println("Calendar: ${calendars[0].displayName} at $calendarUrl")
+        val calendarUrl = discoverFirstCalendarUrlOrSkip()
+        println("Calendar at $calendarUrl")
 
         val testUid = "kashcal-push-test-${System.currentTimeMillis()}@zoho.com"
         val icalCreate = """
@@ -451,12 +461,8 @@ class ZohoLiveDebugTest {
         println("\n=== Empty ETag Update Flow ===")
 
         // Discovery
-        val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
-        val calendars = client.listCalendars(homeUrl).getOrNull()!!
-        assumeTrue("No calendars found", calendars.isNotEmpty())
-        val calendarUrl = calendars[0].url
-        println("Calendar: ${calendars[0].displayName} at $calendarUrl")
+        val calendarUrl = discoverFirstCalendarUrlOrSkip()
+        println("Calendar at $calendarUrl")
 
         val testUid = "kashcal-etag-test-${System.currentTimeMillis()}@zoho.com"
         val icalV1 = """

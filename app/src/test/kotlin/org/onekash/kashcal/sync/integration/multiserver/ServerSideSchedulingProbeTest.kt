@@ -131,6 +131,10 @@ class ServerSideSchedulingProbeTest(
             // bare, email-less container.)
             "Nextcloud" to Disposition.SERVER_SCHEDULES,
             "Zoho" to Disposition.CLIENT_MUST_DELIVER,
+            // Xandikos exposes an empty calendar-user-address-set and the test
+            // login is not email-shaped, so the app emits no ORGANIZER — same
+            // bucket as the other bare, email-less container (Radicale).
+            "Xandikos" to Disposition.NO_ORGANIZER,
             "SOGo" to Disposition.NEEDS_CLIENT_ITIP,
             "Mailbox" to Disposition.NEEDS_CLIENT_ITIP,
             // Fastmail (Cyrus): plain PUT stamps SCHEDULE-STATUS=1.1 on the

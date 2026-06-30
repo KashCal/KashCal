@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<ns0:multistatus xmlns:ns0="DAV:" xmlns:ns1="http://calendarserver.org/ns/" xmlns:ns2="http://apple.com/ns/ical/" xmlns:ns3="urn:ietf:params:xml:ns:caldav">
+  <ns0:response>
+    <ns0:href>/user/calendars/</ns0:href>
+    <ns0:propstat>
+      <ns0:status>HTTP/1.1 200 OK</ns0:status>
+      <ns0:prop>
+        <ns0:displayname>calendars</ns0:displayname>
+        <ns0:resourcetype>
+          <ns0:collection/>
+        </ns0:resourcetype>
+        <ns1:getctag>4b825dc642cb6eb9a060e54bf8d69288fbee4904</ns1:getctag>
+        <ns0:current-user-privilege-set>
+          <ns0:privilege>
+            <ns0:all/>
+          </ns0:privilege>
+        </ns0:current-user-privilege-set>
+      </ns0:prop>
+    </ns0:propstat>
+    <ns0:propstat>
+      <ns0:status>HTTP/1.1 404 Not Found</ns0:status>
+      <ns0:prop>
+        <ns2:calendar-color/>
+        <ns3:supported-calendar-component-set/>
+      </ns0:prop>
+    </ns0:propstat>
+  </ns0:response>
+  <ns0:response>
+    <ns0:href>/user/calendars/calendar/</ns0:href>
+    <ns0:propstat>
+      <ns0:status>HTTP/1.1 200 OK</ns0:status>
+      <ns0:prop>
+        <ns0:displayname>calendar</ns0:displayname>
+        <ns0:resourcetype>
+          <ns0:collection/>
+          <ns3:calendar/>
+        </ns0:resourcetype>
+        <ns1:getctag>ae4423fea231573dd53ab2567fdc26cd3f98a7ca</ns1:getctag>
+        <ns0:current-user-privilege-set>
+          <ns0:privilege>
+            <ns0:all/>
+          </ns0:privilege>
+        </ns0:current-user-privilege-set>
+        <ns3:supported-calendar-component-set>
+          <ns3:comp name="VEVENT"/>
+          <ns3:comp name="VTODO"/>
+          <ns3:comp name="VJOURNAL"/>
+          <ns3:comp name="VFREEBUSY"/>
+          <ns3:comp name="VAVAILABILITY"/>
+        </ns3:supported-calendar-component-set>
+      </ns0:prop>
+    </ns0:propstat>
+    <ns0:propstat>
+      <ns0:status>HTTP/1.1 404 Not Found</ns0:status>
+      <ns0:prop>
+        <ns2:calendar-color/>
+      </ns0:prop>
+    </ns0:propstat>
+  </ns0:response>
+</ns0:multistatus>

@@ -98,3 +98,6 @@ releases/*.apk
 
 # Local stash patch dumps (WIP snapshots, never shipped)
 .stash-archive/
+
+# Local fuzzing workspace (Jazzer harnesses + binaries, never shipped)
+fuzz/

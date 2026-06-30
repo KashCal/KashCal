@@ -177,9 +177,25 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        // Xandikos (lightweight Python CalDAV/CardDAV server). Runs locally with
+        // no auth (any credentials accepted, like Radicale). Principal discovery
+        // resolves from the root; the calendar home is /user/calendars/. Notable
+        // for advertising the RFC 3744 <all> aggregate privilege rather than leaf
+        // <write>/<write-content> — the regression guard for issue #281.
+        val XANDIKOS = CalDavServerConfig(
+            name = "Xandikos",
+            serverKey = "XANDIKOS_SERVER",
+            usernameKey = "XANDIKOS_USERNAME",
+            passwordKey = "XANDIKOS_PASSWORD",
+            defaultServerUrl = "http://localhost:8999",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = false,
+            supportsCtag = true
+        )
+
         fun allServers(): List<CalDavServerConfig> = listOf(
             ICLOUD, STALWART, BAIKAL, BAIKAL_DIGEST, RADICALE, NEXTCLOUD,
-            ZOHO, SOGO, MAILBOX, FASTMAIL
+            ZOHO, SOGO, MAILBOX, FASTMAIL, XANDIKOS
         )
     }
 }

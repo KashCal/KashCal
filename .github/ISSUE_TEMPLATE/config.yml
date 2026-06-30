@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentation
-    url: https://github.com/KashCal/KashCal#readme
-    about: Check the README for setup instructions and features
+  - name: 📖 Troubleshooting & FAQ
+    url: https://kashcal.onekash.org/docs/help
+    about: Most questions are answered here. Please check before filing.
+  - name: 🧭 Before you file a bug
+    url: https://kashcal.onekash.org/docs/help/report-a-bug
+    about: What to include so a bug can actually be fixed.
+  - name: 💡 Requesting a feature
+    url: https://kashcal.onekash.org/docs/help/request-a-feature
+    about: How to suggest an idea, and what's already planned.

@@ -523,7 +523,11 @@ private fun UpcomingEventRow(
                 color = WidgetTheme.secondaryText,
                 fontSize = WidgetTypography.secondary
             ),
-            modifier = GlanceModifier.width(58.dp)
+            maxLines = 1,
+            // Holds the widest 8-char 12-hour time ("10:00 am" / "12:30 pm") at
+            // the secondary font with a full character of margin. Calibrated
+            // from observed clipping: 58dp held 7 chars but clipped the 8th.
+            modifier = GlanceModifier.width(72.dp)
         )
         Spacer(modifier = GlanceModifier.width(8.dp))
         Text(

@@ -102,8 +102,12 @@ object CalDavTestServerLoader {
             connection.readTimeout = 2000
             connection.instanceFollowRedirects = false
             val code = connection.responseCode
-            // Accept: 200-299 (OK), 301/302/307/308 (redirect), 401 (auth required)
-            code in 200..399 || code == 401
+            // A reachable server is one that answered at all. Besides 2xx/3xx,
+            // accept auth/authorization/not-found challenges that live servers
+            // return at the probed path: 401 (auth required), 403 (e.g. iCloud
+            // root), 404 (e.g. Fastmail root). Anything that throws (no socket,
+            // DNS failure, timeout) falls through to false below.
+            code in 200..399 || code == 401 || code == 403 || code == 404
         } catch (_: Exception) {
             false
         }

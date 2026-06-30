@@ -6,6 +6,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -362,6 +363,86 @@ class CalDavXmlParserTest {
 
         // Calendar with resourcetype in 404 propstat should NOT be included
         assertEquals(0, calendars.size)
+    }
+
+    @Test
+    fun `extractCalendars treats DAV all aggregate privilege as writable`() {
+        // Real Xandikos response: the calendar grants the RFC 3744 <all>
+        // aggregate privilege rather than the leaf <write>/<write-content>.
+        // RFC 3744 §3.11 + §3.12: DAV:all contains DAV:write contains
+        // DAV:write-content, so the calendar must be writable, not read-only.
+        val xml = loadResource("caldav/xandikos/03_calendar_list.xml")
+        val calendars = parser.extractCalendars(xml)
+
+        val calendar = calendars.find { it.displayName == "calendar" }
+        assertNotNull("Should extract the Xandikos calendar collection", calendar)
+        assertFalse(
+            "Calendar granting <all> must be writable (DAV:all aggregates DAV:write)",
+            calendar!!.isReadOnly
+        )
+        assertEquals("/user/calendars/calendar/", calendar.href)
+        assertTrue("Should advertise VEVENT", calendar.supportedComponents.contains("VEVENT"))
+    }
+
+    @Test
+    fun `extractCalendars treats explicit DAV all privilege element as writable`() {
+        // Minimal synthetic case isolating the <all> mapping from fixture noise.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                <d:response>
+                    <d:href>/cal/all-priv/</d:href>
+                    <d:propstat>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                        <d:prop>
+                            <d:displayname>All Priv</d:displayname>
+                            <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+                            <d:current-user-privilege-set>
+                                <d:privilege><d:all/></d:privilege>
+                            </d:current-user-privilege-set>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val calendars = parser.extractCalendars(xml)
+        assertEquals(1, calendars.size)
+        assertFalse("<all> confers write", calendars[0].isReadOnly)
+    }
+
+    @Test
+    fun `extractCalendars treats write-properties only as read-only`() {
+        // Guard against over-broadening the fix: a calendar granting only
+        // read + write-properties (dead-property writes, not content) must
+        // stay read-only. This is the shape real read-only shared calendars
+        // return (Nextcloud contact_birthdays, Mailbox shared).
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                <d:response>
+                    <d:href>/cal/shared/</d:href>
+                    <d:propstat>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                        <d:prop>
+                            <d:displayname>Shared</d:displayname>
+                            <d:resourcetype><d:collection/><c:calendar/></d:resourcetype>
+                            <d:current-user-privilege-set>
+                                <d:privilege><d:read/></d:privilege>
+                                <d:privilege><d:write-properties/></d:privilege>
+                            </d:current-user-privilege-set>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val calendars = parser.extractCalendars(xml)
+        assertEquals(1, calendars.size)
+        assertTrue(
+            "read + write-properties (no content write) must remain read-only",
+            calendars[0].isReadOnly
+        )
     }
 
     @Test

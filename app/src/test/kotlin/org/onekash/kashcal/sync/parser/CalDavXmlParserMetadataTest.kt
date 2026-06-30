@@ -221,6 +221,28 @@ class CalDavXmlParserMetadataTest {
     }
 
     @Test
+    fun `privilege-set with all aggregate privilege yields isReadOnly false`() {
+        // RFC 3744 §3.11/§3.12: DAV:all aggregates DAV:write aggregates
+        // DAV:write-content. Xandikos reports <all> rather than leaf privileges.
+        val xml = ctagPlusPrivileges(
+            "<d:privilege><d:all/></d:privilege>"
+        )
+        assertEquals(false, parser.extractCalendarMetadata(xml)?.isReadOnly)
+    }
+
+    @Test
+    fun `privilege-set with read and write-properties only yields isReadOnly true`() {
+        // write-properties modifies dead properties, not content — not writable.
+        val xml = ctagPlusPrivileges(
+            """
+                <d:privilege><d:read/></d:privilege>
+                <d:privilege><d:write-properties/></d:privilege>
+            """.trimIndent()
+        )
+        assertEquals(true, parser.extractCalendarMetadata(xml)?.isReadOnly)
+    }
+
+    @Test
     fun `privilege-set without write element yields isReadOnly true`() {
         val xml = ctagPlusPrivileges(
             "<d:privilege><d:read/></d:privilege>"

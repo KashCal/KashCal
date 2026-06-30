@@ -3,6 +3,16 @@ description: Suggest an idea for KashCal
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you suggest
+      options:
+        - label: I've checked [Known limitations](https://kashcal.onekash.org/docs/help/known-limitations) in case it's a deliberate choice
+          required: true
+        - label: I've searched [existing issues](https://github.com/KashCal/KashCal/issues) for the same idea
+          required: true
+
   - type: textarea
     id: problem
     attributes:

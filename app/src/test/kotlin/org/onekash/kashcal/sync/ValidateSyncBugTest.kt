@@ -77,6 +77,10 @@ class ValidateSyncBugTest {
     }
 
     private fun loadCredentials() {
+        // Read the SPECIFIC iCloud keys. A previous fuzzy substring matcher
+        // silently picked up the LAST username/password key in local.properties,
+        // which became another provider's credentials once more servers were
+        // added — making this iCloud test skip on a discovery failure.
         val possiblePaths = listOf(
             "local.properties",
             "../local.properties",
@@ -86,16 +90,10 @@ class ValidateSyncBugTest {
         for (path in possiblePaths) {
             val propsFile = File(path)
             if (propsFile.exists()) {
-                propsFile.readLines().forEach { line ->
-                    val parts = line.split("=").map { it.trim() }
-                    if (parts.size == 2) {
-                        when {
-                            parts[0].contains("username", ignoreCase = true) -> username = parts[1]
-                            parts[0].contains("password", ignoreCase = true) &&
-                                !parts[0].contains("keystore", ignoreCase = true) -> password = parts[1]
-                        }
-                    }
-                }
+                val props = java.util.Properties()
+                propsFile.inputStream().use { props.load(it) }
+                username = props.getProperty("caldav.username")
+                password = props.getProperty("caldav.app_password")
                 if (username != null && password != null) break
             }
         }

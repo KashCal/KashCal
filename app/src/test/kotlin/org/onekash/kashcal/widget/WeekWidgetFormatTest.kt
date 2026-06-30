@@ -128,4 +128,30 @@ class WeekWidgetFormatTest {
         val event = makeEvent(startTs = startTs, endTs = startTs + 36 * 3600_000, startDay = 20260417)
         assertEquals("\u25B8", formatWidgetEventTime(event, 20260418, "h:mma", "All day"))
     }
+
+    // ============ single-line contract (time column renders with maxLines=1) ============
+    // The widget time column is a fixed-width Text rendered single-line. These
+    // guard the invariant the layout depends on: the label is always a compact,
+    // newline-free token, so timed values, the continuation marker, and the
+    // all-day label all occupy exactly one line in the column.
+
+    @Test
+    fun `formatWidgetEventTime never contains a newline`() {
+        val zone = ZoneId.systemDefault()
+        // Widest 12-hour case: 12:30 PM with a space before the meridiem.
+        val noonish = LocalDateTime.of(2026, 4, 18, 12, 30)
+            .atZone(zone).toInstant().toEpochMilli()
+        val timed = makeEvent(startTs = noonish, endTs = noonish + 3600_000, startDay = 20260418)
+        val allDay = makeEvent(isAllDay = true, startDay = 20260418)
+
+        val samples = listOf(
+            formatWidgetEventTime(timed, 20260418, "h:mm a", "All day"),   // "12:30 pm"
+            formatWidgetEventTime(timed, 20260418, "HH:mm", "All day"),    // "12:30" (24h)
+            formatWidgetEventTime(timed, 20260419, "h:mm a", "All day"),   // continuation marker
+            formatWidgetEventTime(allDay, 20260418, "h:mm a", "All day"),  // "All day"
+        )
+        samples.forEach { label ->
+            assertEquals("time label must be single-line: '$label'", false, label.contains('\n'))
+        }
+    }
 }
