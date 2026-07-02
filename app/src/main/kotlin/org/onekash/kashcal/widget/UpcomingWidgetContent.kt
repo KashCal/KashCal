@@ -295,7 +295,7 @@ private fun UpcomingWidgetHeader() {
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
             .padding(
-                start = 12.dp,
+                start = WIDGET_HORIZONTAL_MARGIN_DP.dp,
                 top = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
                 bottom = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
                 end = 0.dp
@@ -408,7 +408,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.rowTintBackground)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 8.dp)
             .clickable(actionStartActivity<MainActivity>(parameters = footerActionParameters())),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -449,7 +449,7 @@ private fun UpcomingDayHeader(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(colors.background.provider())
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 6.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -502,7 +502,7 @@ private fun UpcomingEventRow(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -516,7 +516,7 @@ private fun UpcomingEventRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         CalendarColorBar(event.calendarColor)
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayLabel),
             style = TextStyle(
@@ -524,12 +524,9 @@ private fun UpcomingEventRow(
                 fontSize = WidgetTypography.secondary
             ),
             maxLines = 1,
-            // Holds the widest 8-char 12-hour time ("10:00 am" / "12:30 pm") at
-            // the secondary font with a full character of margin. Calibrated
-            // from observed clipping: 58dp held 7 chars but clipped the 8th.
-            modifier = GlanceModifier.width(72.dp)
+            modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
         )
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.width(TIME_TO_TITLE_GAP_DP.dp))
         Text(
             text = displayTitle,
             style = TextStyle(

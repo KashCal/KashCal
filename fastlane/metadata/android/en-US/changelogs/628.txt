@@ -1,0 +1,2 @@
+• Widgets got a loving pixel-level tune-up: slimmer rows, more day per glance
+• 12-hour times stop getting chopped off

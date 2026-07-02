@@ -134,7 +134,7 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
+            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -187,7 +187,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(colors.background.provider())
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 6.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -237,7 +237,7 @@ private fun EmptyDayRow(dayCode: Int) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 8.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -270,7 +270,7 @@ private fun CompactEventRow(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -285,7 +285,7 @@ private fun CompactEventRow(
     ) {
         CalendarColorBar(event.calendarColor)
 
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
 
         val allDayText = LocalContext.current.getString(R.string.label_all_day)
         Text(
@@ -296,13 +296,10 @@ private fun CompactEventRow(
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
-            // Holds the widest 8-char 12-hour time ("10:00 am" / "12:30 pm") at
-            // the secondary font with a full character of margin. Calibrated
-            // from observed clipping: 58dp held 7 chars but clipped the 8th.
-            modifier = GlanceModifier.width(72.dp)
+            modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
         )
 
-        Spacer(modifier = GlanceModifier.width(4.dp))
+        Spacer(modifier = GlanceModifier.width(TIME_TO_TITLE_GAP_DP.dp))
 
         Text(
             text = displayTitle,
@@ -323,7 +320,7 @@ private fun OverflowRow(dayCode: Int, count: Int) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 4.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(

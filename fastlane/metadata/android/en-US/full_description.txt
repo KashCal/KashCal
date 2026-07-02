@@ -1,28 +1,36 @@
-Your calendars are everywhere. Family on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on the phone calendar. KashCal pulls them into one app.
+Your calendars are everywhere. Family on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on the phone calendar. KashCal pulls them into one app on Android.
 
-• iCloud: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
+Learn more at https://kashcal.onekash.org
 
-• Quick Add: type "Coffee with Kash tomorrow 3pm" and the event is created. Handles dates, times, recurrence, and locations.
+• iCloud: switched to Android but your family is still on Apple? Sync iCloud calendars directly. No bridge, no workaround.
 
-• Insights: See where your time goes. Busiest days, back-to-back streaks, free blocks, and more. All computed on-device.
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, mailbox.org, Stalwart, SOGo, and more. Native two-way sync, no middleware. Your phone's Google and Outlook calendars show up too.
 
-• Widgets: Check your schedule without opening the app. Agenda, date, week, and month.
+• Six views: month, agenda, day, 3-day, week, and year. Pinch to zoom the timeline, drag an event to reschedule it.
 
-• CalDAV: Nextcloud, Radicale, Fastmail, Baikal, and others. Native sync, no middleware.
+• Quick Add: type "Coffee with Kash tomorrow 3pm" and the event is made. Understands dates, times, recurrence, and locations.
 
-• Device calendar: See events from your phone's built-in calendar alongside everything else.
+• Scheduling: invite people, send meeting invitations, and RSVP to invites others send you.
 
-• ICS subscriptions: Subscribe to any ICS calendar URL. Public holidays, school terms, sports seasons.
+• Insights: see where your time goes. Busiest days, back-to-back streaks, free blocks. Computed on-device.
 
-• Birthdays & anniversaries: Pulls from your contacts automatically.
+• Widgets: keep your day on the home screen without opening the app. Agenda, date, week, month, and upcoming.
 
-• Local: Don't need sync? Works fully offline out of the box.
+• ICS subscriptions: follow any calendar feed. Public holidays, school terms, sports seasons.
+
+• Birthdays & anniversaries: pulled from your contacts automatically.
+
+• Per-event colors: from a curated palette or a full color wheel, so your week reads at a glance.
+
+• Works fully offline out of the box.
 
 Private by default
 
-No analytics. No telemetry. No KashCal account. Your data stays on your device.
+No analytics. No telemetry. No KashCal account. We have no servers, so there is nothing to collect.
 
-• Encrypted credentials
-• Fort Knox Mode: other apps can't read your events
+• Credentials encrypted with the Android Keystore
+• App lock: hide your events behind your fingerprint, face, or screen lock
+
+Open source under Apache-2.0. https://kashcal.onekash.org
 
 Free as in speech. Also free as in beer.

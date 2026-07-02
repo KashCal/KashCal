@@ -83,7 +83,7 @@ private fun WidgetHeader(date: String) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
+            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left region: taps go to today
@@ -185,7 +185,7 @@ private fun EventRow(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -202,9 +202,9 @@ private fun EventRow(
         // Leading calendar-color pill
         CalendarColorBar(event.calendarColor)
 
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
 
-        // Time column
+        // Time column — width tracks the resolved 12h/24h format
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, context.getString(R.string.label_all_day)),
             style = TextStyle(
@@ -213,13 +213,10 @@ private fun EventRow(
                 textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
-            // Holds the widest 8-char 12-hour time ("10:00 am" / "12:30 pm") at
-            // the secondary font with a full character of margin. Calibrated
-            // from observed clipping: 58dp held 7 chars but clipped the 8th.
-            modifier = GlanceModifier.width(72.dp)
+            modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
         )
 
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.width(TIME_TO_TITLE_GAP_DP.dp))
 
         // Title (fills remaining space)
         Text(
@@ -283,7 +280,7 @@ private fun OverflowIndicator(count: Int) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = 6.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(

@@ -1,19 +1,26 @@
 name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
+  # Manual trigger builds the APK and uploads it as a run artifact only — it does
+  # NOT create a release (that happens on tag push). Use it to obtain a build
+  # without releasing. Re-push the tag to (re)create a release with the APK.
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g., v21.1.6)'
-        required: false
 
 permissions:
   contents: write
 
 jobs:
   build-release:
+    # Public repo only. The private repo attaches its own locally-built APK when
+    # the release is created, so it neither needs nor wants a CI rebuild (a
+    # private tag push triggers this workflow but the job is skipped here). The
+    # public APK must be built by CI from the public commit hash (reproducibility).
+    # NOTE: if the public repo is ever renamed, update this string or the public
+    # build silently stops (job skipped on every tag, no error).
+    if: github.repository == 'KashCal/KashCal'
     runs-on: ubuntu-latest
 
     steps:
@@ -60,10 +67,37 @@ jobs:
         mv app/build/outputs/apk/release/app-release.apk \
            app/build/outputs/apk/release/KashCal-${{ steps.version.outputs.version }}-release.apk
 
-    - name: Upload APK to Release
-      if: github.event_name == 'release'
+    - name: Extract release notes from CHANGELOG
+      id: notes
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        # Slice the body under "## [<version>]" up to the next "## " heading
+        # (or EOF), then trim leading/trailing blank lines.
+        if [ -f CHANGELOG.md ]; then
+          awk -v v="## [$VERSION]" '
+            index($0, v) == 1       { f = 1; next }
+            f && (/^## / || /^<!--/) { exit }
+            f' CHANGELOG.md \
+            | sed -e '/./,$!d' | tac | sed -e '/./,$!d' | tac > release_notes.md
+        fi
+        if [ -s release_notes.md ]; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+          echo "No CHANGELOG.md section for $VERSION; falling back to auto-generated notes."
+        fi
+
+    - name: Create release with APK attached
+      if: github.event_name == 'push'
       uses: softprops/action-gh-release@v2
       with:
+        # Create the release WITH the asset in one call so there is no
+        # empty-release window for immutable-releases to seal before the
+        # APK is attached.
+        tag_name: ${{ github.ref_name }}
+        name: ${{ github.ref_name }}
+        body_path: ${{ steps.notes.outputs.found == 'true' && 'release_notes.md' || '' }}
+        generate_release_notes: ${{ steps.notes.outputs.found != 'true' }}
         files: app/build/outputs/apk/release/KashCal-${{ steps.version.outputs.version }}-release.apk
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

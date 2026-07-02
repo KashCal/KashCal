@@ -76,7 +76,6 @@ KashCal-*.apk.idsig
 # Development documentation (internal, not for public repo)
 AGENTS.md
 ARCHITECTURE.md
-CHANGELOG.md
 CLAUDE.md
 
 # Claude Code local state
