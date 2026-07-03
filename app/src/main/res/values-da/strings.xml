@@ -308,6 +308,9 @@
     <string name="cd_select_option">Vælg mulighed</string>
     <string name="cd_select_label">Vælg %1$s</string>
     <string name="cd_wheel_picker">Hjulvælger med %1$d muligheder</string>
+    <string name="cd_time_entry_keyboard">Indtast præcist klokkeslæt</string>
+    <string name="time_entry_dialog_title">Indtast klokkeslæt</string>
+    <string name="time_entry_tap_to_edit">Tryk for at redigere</string>
     <string name="cd_version_info">KashCal version %1$s. Tryk længe for debug-muligheder.</string>
     <string name="cd_color_slider">Farveskyder, aktuelt %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grader</string>

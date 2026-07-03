@@ -325,6 +325,9 @@
     <string name="cd_select_option">Izaberi opciju</string>
     <string name="cd_select_label">Izaberi %1$s</string>
     <string name="cd_wheel_picker">Točkić za izbor sa %1$d opcija</string>
+    <string name="cd_time_entry_keyboard">Unesite tačno vreme</string>
+    <string name="time_entry_dialog_title">Unesite vreme</string>
+    <string name="time_entry_tap_to_edit">Dodirnite za izmenu</string>
     <string name="cd_version_info">KashCal verzija %1$s. Dugi pritisak za opcije otklanjanja grešaka.</string>
     <string name="cd_color_slider">Klizač boja, trenutno %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stepeni</string>

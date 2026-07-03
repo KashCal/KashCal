@@ -343,6 +343,9 @@
     <string name="cd_select_option">አማራጭ ምረጥ</string>
     <string name="cd_select_label">%1$s ምረጥ</string>
     <string name="cd_wheel_picker">%1$d አማራጮች ያሉት ጎማ መምረጫ</string>
+    <string name="cd_time_entry_keyboard">ትክክለኛውን ሰዓት ያስገቡ</string>
+    <string name="time_entry_dialog_title">ሰዓት ያስገቡ</string>
+    <string name="time_entry_tap_to_edit">ለማስተካከል ይንኩ</string>
     <string name="cd_version_info">KashCal ስሪት %1$s። ለማረም አማራጮች ረዘም አድርገው ይጫኑ።</string>
     <string name="cd_color_slider">የቀለም ተንሸራታች፣ አሁን %1$s</string>
     <string name="cd_color_slider_state">%1$s፣ %2$d ዲግሪ</string>

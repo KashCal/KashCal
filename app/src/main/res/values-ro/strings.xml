@@ -351,6 +351,9 @@
     <string name="cd_select_option">Selectează opțiune</string>
     <string name="cd_select_label">Selectează %1$s</string>
     <string name="cd_wheel_picker">Selector rotativ cu %1$d opțiuni</string>
+    <string name="cd_time_entry_keyboard">Introdu ora exactă</string>
+    <string name="time_entry_dialog_title">Introdu ora</string>
+    <string name="time_entry_tap_to_edit">Atinge pentru editare</string>
     <string name="cd_version_info">KashCal versiunea %1$s. Apasă lung pentru opțiuni de depanare.</string>
     <string name="cd_color_slider">Cursor culoare, acum %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grade</string>

@@ -359,6 +359,9 @@
     <string name="cd_select_option">Dewis opsiwn</string>
     <string name="cd_select_label">Dewis %1$s</string>
     <string name="cd_wheel_picker">Dewisydd olwyn gyda %1$d opsiwn</string>
+    <string name="cd_time_entry_keyboard">Nodi\'r union amser</string>
+    <string name="time_entry_dialog_title">Nodi amser</string>
+    <string name="time_entry_tap_to_edit">Tapiwch i olygu</string>
     <string name="cd_version_info">KashCal fersiwn %1$s. Pwyswch yn hir am opsiynau dadfygio.</string>
     <string name="cd_color_slider">Llithrydd lliw, %1$s ar hyn o bryd</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradd</string>

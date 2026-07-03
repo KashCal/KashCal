@@ -348,6 +348,9 @@
     <string name="cd_select_option">ఎంపిక ఎంచుకో</string>
     <string name="cd_select_label">%1$s ఎంచుకో</string>
     <string name="cd_wheel_picker">%1$d ఎంపికలతో వీల్ పికర్</string>
+    <string name="cd_time_entry_keyboard">ఖచ్చితమైన సమయాన్ని నమోదు చేయండి</string>
+    <string name="time_entry_dialog_title">సమయాన్ని నమోదు చేయండి</string>
+    <string name="time_entry_tap_to_edit">సవరించడానికి నొక్కండి</string>
     <string name="cd_version_info">KashCal సంస్కరణ %1$s. డీబగ్ ఎంపికల కోసం ఎక్కువసేపు నొక్కండి.</string>
     <string name="cd_color_slider">రంగు స్లైడర్, ప్రస్తుతం %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d డిగ్రీలు</string>

@@ -285,6 +285,9 @@
     <string name="cd_select_option">オプションを選択</string>
     <string name="cd_select_label">%1$sを選択</string>
     <string name="cd_wheel_picker">%1$d個のオプションのホイールピッカー</string>
+    <string name="cd_time_entry_keyboard">正確な時刻を入力する</string>
+    <string name="time_entry_dialog_title">時刻を入力</string>
+    <string name="time_entry_tap_to_edit">タップして編集</string>
     <string name="cd_version_info">KashCal バージョン%1$s。長押しでデバッグオプションを表示。</string>
     <string name="cd_color_slider">カラースライダー、現在%1$s</string>
     <string name="cd_color_slider_state">%1$s、%2$d度</string>

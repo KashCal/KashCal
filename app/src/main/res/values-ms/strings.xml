@@ -285,6 +285,9 @@
     <string name="cd_select_option">Pilih pilihan</string>
     <string name="cd_select_label">Pilih %1$s</string>
     <string name="cd_wheel_picker">Pemilih roda dengan %1$d pilihan</string>
+    <string name="cd_time_entry_keyboard">Masukkan masa tepat</string>
+    <string name="time_entry_dialog_title">Masukkan masa</string>
+    <string name="time_entry_tap_to_edit">Ketik untuk edit</string>
     <string name="cd_version_info">KashCal versi %1$s. Tekan lama untuk pilihan nyahpepijat.</string>
     <string name="cd_color_slider">Peluncur warna, kini %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d darjah</string>

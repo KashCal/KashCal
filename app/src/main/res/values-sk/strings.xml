@@ -325,6 +325,9 @@
     <string name="cd_select_option">Vybrať možnosť</string>
     <string name="cd_select_label">Vybrať %1$s</string>
     <string name="cd_wheel_picker">Koliesko výberu s %1$d možnosťami</string>
+    <string name="cd_time_entry_keyboard">Zadať presný čas</string>
+    <string name="time_entry_dialog_title">Zadať čas</string>
+    <string name="time_entry_tap_to_edit">Ťuknutím upravíte</string>
     <string name="cd_version_info">KashCal verzia %1$s. Dlhým stlačením otvoríte ladiace možnosti.</string>
     <string name="cd_color_slider">Posuvník farby, aktuálne %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stupňov</string>

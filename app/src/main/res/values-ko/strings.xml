@@ -285,6 +285,9 @@
     <string name="cd_select_option">옵션 선택</string>
     <string name="cd_select_label">%1$s 선택</string>
     <string name="cd_wheel_picker">%1$d개 옵션의 휠 피커</string>
+    <string name="cd_time_entry_keyboard">정확한 시간 입력하기</string>
+    <string name="time_entry_dialog_title">시간 입력</string>
+    <string name="time_entry_tap_to_edit">탭하여 편집하기</string>
     <string name="cd_version_info">KashCal 버전 %1$s. 길게 눌러 디버그 옵션 표시.</string>
     <string name="cd_color_slider">색상 슬라이더, 현재 %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d도</string>

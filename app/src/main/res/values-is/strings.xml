@@ -308,6 +308,9 @@
     <string name="cd_select_option">Velja valkost</string>
     <string name="cd_select_label">Velja %1$s</string>
     <string name="cd_wheel_picker">Hjólveljari með %1$d valkostum</string>
+    <string name="cd_time_entry_keyboard">Slá inn nákvæman tíma</string>
+    <string name="time_entry_dialog_title">Slá inn tíma</string>
+    <string name="time_entry_tap_to_edit">Ýttu til að breyta</string>
     <string name="cd_version_info">KashCal útgáfa %1$s. Haltu lengi inni fyrir villuleitarvalkosti.</string>
     <string name="cd_color_slider">Litasleði, núna %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gráður</string>

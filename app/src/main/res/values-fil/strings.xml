@@ -322,6 +322,9 @@
     <string name="cd_select_option">Pumili ng opsyon</string>
     <string name="cd_select_label">Piliin ang %1$s</string>
     <string name="cd_wheel_picker">Wheel picker na may %1$d opsyon</string>
+    <string name="cd_time_entry_keyboard">Ilagay ang eksaktong oras</string>
+    <string name="time_entry_dialog_title">Ilagay ang oras</string>
+    <string name="time_entry_tap_to_edit">I-tap para i-edit</string>
     <string name="cd_version_info">KashCal bersyon %1$s. Pindutin nang matagal para sa mga debug option.</string>
     <string name="cd_color_slider">Color slider, kasalukuyang %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d degrees</string>

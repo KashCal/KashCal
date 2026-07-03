@@ -322,6 +322,9 @@
     <string name="cd_select_option">ရွေးစရာ ရွေးချယ်</string>
     <string name="cd_select_label">%1$s ရွေးချယ်</string>
     <string name="cd_wheel_picker">ရွေးစရာ %1$d ခုပါ ဘီးရွေးချယ်ကိရိယာ</string>
+    <string name="cd_time_entry_keyboard">အချိန်အတိအကျ ထည့်ပါ</string>
+    <string name="time_entry_dialog_title">အချိန် ထည့်ပါ</string>
+    <string name="time_entry_tap_to_edit">ပြင်ရန် တို့ပါ</string>
     <string name="cd_version_info">KashCal ဗားရှင်း %1$s။ ဒီဘတ်ရွေးစရာများအတွက် ကြာကြာ နှိပ်ပါ။</string>
     <string name="cd_color_slider">အရောင်ဆလိုက်ဒါ၊ လက်ရှိ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ဒီဂရီ</string>

@@ -349,6 +349,9 @@
     <string name="cd_select_option">Tagh roghainn</string>
     <string name="cd_select_label">Tagh %1$s</string>
     <string name="cd_wheel_picker">Roghadair cuibhle le %1$d roghainn</string>
+    <string name="cd_time_entry_keyboard">Cuir a-steach an t-àm mionaideach</string>
+    <string name="time_entry_dialog_title">Cuir a-steach an t-àm</string>
+    <string name="time_entry_tap_to_edit">Thoir gnogag gus deasachadh</string>
     <string name="cd_version_info">KashCal tionndadh %1$s. Brùth fada airson roghainnean dì-bhugachaidh.</string>
     <string name="cd_color_slider">Sleamhnaiche dath, %1$s an-dràsta</string>
     <string name="cd_color_slider_state">%1$s, %2$d ceum</string>

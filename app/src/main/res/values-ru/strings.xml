@@ -341,6 +341,9 @@
     <string name="cd_select_option">Выбрать вариант</string>
     <string name="cd_select_label">Выбрать %1$s</string>
     <string name="cd_wheel_picker">Колёсико выбора, вариантов: %1$d</string>
+    <string name="cd_time_entry_keyboard">Ввести точное время</string>
+    <string name="time_entry_dialog_title">Ввод времени</string>
+    <string name="time_entry_tap_to_edit">Нажми, чтобы изменить</string>
     <string name="cd_version_info">KashCal версия %1$s. Долгое нажатие для отладки.</string>
     <string name="cd_color_slider">Ползунок цвета, сейчас %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градусов</string>

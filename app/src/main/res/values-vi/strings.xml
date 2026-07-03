@@ -285,6 +285,9 @@
     <string name="cd_select_option">Chọn tùy chọn</string>
     <string name="cd_select_label">Chọn %1$s</string>
     <string name="cd_wheel_picker">Bộ chọn cuộn với %1$d tùy chọn</string>
+    <string name="cd_time_entry_keyboard">Nhập thời gian chính xác</string>
+    <string name="time_entry_dialog_title">Nhập thời gian</string>
+    <string name="time_entry_tap_to_edit">Nhấn để chỉnh sửa</string>
     <string name="cd_version_info">KashCal phiên bản %1$s. Nhấn giữ để mở tùy chọn gỡ lỗi.</string>
     <string name="cd_color_slider">Thanh trượt màu, hiện tại %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d độ</string>

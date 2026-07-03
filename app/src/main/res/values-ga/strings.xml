@@ -354,6 +354,9 @@
     <string name="cd_select_option">Roghnaigh rogha</string>
     <string name="cd_select_label">Roghnaigh %1$s</string>
     <string name="cd_wheel_picker">Roghnóir rotha le %1$d rogha</string>
+    <string name="cd_time_entry_keyboard">Cuir isteach an t-am beacht</string>
+    <string name="time_entry_dialog_title">Cuir isteach an t-am</string>
+    <string name="time_entry_tap_to_edit">Tapáil le heagrú</string>
     <string name="cd_version_info">KashCal leagan %1$s. Brúigh go fada le haghaidh roghanna dífhabhtaithe.</string>
     <string name="cd_color_slider">Sleamhnán datha, %1$s faoi láthair</string>
     <string name="cd_color_slider_state">%1$s, %2$d céim</string>

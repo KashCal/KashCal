@@ -37,29 +37,11 @@
 # ----------------------------------------------------------------------------
 # Jetpack Compose
 # ----------------------------------------------------------------------------
-
-# Compose compiler generates lambdas that must not be obfuscated
--keep class androidx.compose.** { *; }
--keepclassmembers class androidx.compose.** { *; }
-
-# Keep Composable functions (lambdas)
--keepclassmembers class * {
-    @androidx.compose.runtime.Composable <methods>;
-}
-
-# Keep Compose state classes
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.ui.** { *; }
--keep class androidx.compose.material3.** { *; }
--keep class androidx.compose.foundation.** { *; }
--keep class androidx.compose.animation.** { *; }
+# Compose libraries ship their own consumer ProGuard rules (kept lambdas,
+# stability annotations, runtime internals). Let R8 optimize the rest.
 
 # Compose UI tooling (debug only, but keep to avoid warnings)
 -dontwarn androidx.compose.ui.tooling.**
-
-# Keep stability annotations
--keep @interface androidx.compose.runtime.Stable
--keep @interface androidx.compose.runtime.Immutable
 
 # ----------------------------------------------------------------------------
 # Room Database
@@ -146,13 +128,9 @@
 -dontwarn javax.annotation.**
 -dontwarn org.conscrypt.**
 
-# Keep OkHttp platform classes
+# Keep OkHttp platform classes. OkHttp/Okio ship consumer rules; only the
+# reflectively-loaded public-suffix DB name needs pinning here.
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
-
-# OkHttp Logging Interceptor
--keep class okhttp3.logging.** { *; }
 
 # ----------------------------------------------------------------------------
 # ical4j (RFC 5545 iCalendar parsing) - NUCLEAR OPTION
@@ -249,17 +227,15 @@
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
 
-# Keep WorkManager configuration
--keep class androidx.work.** { *; }
-
-# KashCal workers
+# WorkManager ships consumer rules; keep only our worker entry points, which
+# WorkManager instantiates reflectively by class name.
 -keep class org.onekash.kashcal.sync.worker.** { *; }
 
 # ----------------------------------------------------------------------------
 # DataStore Preferences
 # ----------------------------------------------------------------------------
-
--keep class androidx.datastore.** { *; }
+# DataStore ships consumer rules; keep only the generated protobuf message
+# fields it accesses reflectively.
 -keepclassmembers class * extends androidx.datastore.preferences.protobuf.GeneratedMessageLite {
     <fields>;
 }
@@ -271,7 +247,11 @@
 # Security Crypto (EncryptedSharedPreferences)
 # ----------------------------------------------------------------------------
 
+# security-crypto is Tink-backed and resolves key managers reflectively
+# (ServiceLoader / Class.forName), so R8 must not shrink or rename it. Keep it
+# whole until a device-verified credential round-trip proves what can be freed.
 -keep class androidx.security.crypto.** { *; }
+-keep class com.google.crypto.tink.** { *; }
 -dontwarn com.google.crypto.tink.**
 
 # KashCal Auth
@@ -282,12 +262,6 @@
 
 # KashCal Credential management (v22.0.0)
 -keep class org.onekash.kashcal.data.credential.** { *; }
-
-# ----------------------------------------------------------------------------
-# Kotlinx Immutable Collections
-# ----------------------------------------------------------------------------
-
--keep class kotlinx.collections.immutable.** { *; }
 
 # ----------------------------------------------------------------------------
 # KashCal Application Classes
@@ -355,7 +329,8 @@
 # Glance Widgets (HIGH PRIORITY)
 # ----------------------------------------------------------------------------
 
--keep class androidx.glance.** { *; }
+# Glance ships consumer rules; keep our widget + receiver subclasses, which the
+# platform instantiates reflectively from the manifest.
 -keep class * extends androidx.glance.appwidget.GlanceAppWidget { *; }
 -keep class * extends androidx.glance.appwidget.GlanceAppWidgetReceiver { *; }
 -keep class org.onekash.kashcal.widget.** { *; }

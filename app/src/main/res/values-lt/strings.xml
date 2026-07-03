@@ -340,6 +340,9 @@
     <string name="cd_select_option">Pasirinkti parinktį</string>
     <string name="cd_select_label">Pasirinkti %1$s</string>
     <string name="cd_wheel_picker">Pasirinkimo ratukas, parinkčių: %1$d</string>
+    <string name="cd_time_entry_keyboard">Įvesti tikslų laiką</string>
+    <string name="time_entry_dialog_title">Įvesti laiką</string>
+    <string name="time_entry_tap_to_edit">Bakstelėkite, kad redaguotumėte</string>
     <string name="cd_version_info">KashCal versija %1$s. Ilgas paspaudimas derinimo parinkčių.</string>
     <string name="cd_color_slider">Spalvos slankiklis, dabartinė %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d laipsniai</string>

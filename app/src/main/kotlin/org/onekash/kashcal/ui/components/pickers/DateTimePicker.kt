@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +25,9 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -36,7 +39,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -436,20 +441,90 @@ fun DateTimeSheet(
             if (!isAllDay) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                WheelTimePicker(
-                    selectedHour = localHour,
-                    selectedMinute = localMinute,
-                    onTimeSelected = { h, m ->
-                        localHour = h
-                        localMinute = m
-                    },
-                    use24Hour = use24Hour,
-                    visibleItems = 5,
-                    itemHeight = 32.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                )
+                // The keyboard icon opens an exact-time dialog (text entry). It floats above
+                // the soft keyboard, unlike an inline field which the keyboard would cover.
+                var showTimeDialog by remember { mutableStateOf(false) }
+                val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
+
+                // No fixed height: the wheel renders at its intrinsic size (as it did before
+                // the exact-time entry was added), and the Box wraps it so the overlaid icon
+                // aligns to the wheel's own top-right corner, just below the divider.
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (isOnWheelGrid(localMinute)) {
+                        // Common case: the 5-minute wheel can represent this time exactly.
+                        WheelTimePicker(
+                            selectedHour = localHour,
+                            selectedMinute = localMinute,
+                            onTimeSelected = { h, m ->
+                                // Ignore late fling emissions once the dialog is open, so a
+                                // settling wheel can't change the buffer behind the dialog.
+                                if (!showTimeDialog) {
+                                    localHour = h
+                                    localMinute = m
+                                }
+                            },
+                            use24Hour = use24Hour,
+                            visibleItems = 5,
+                            itemHeight = 32.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
+                        )
+                    } else {
+                        // Off-grid minute (e.g. 9:47): the wheel can't show it without
+                        // snapping to a 5-minute step, so display the exact time as tappable
+                        // text that opens the dialog instead of mounting the wheel.
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp) // match the wheel's intrinsic height (5 x 32dp)
+                                .clickable { showTimeDialog = true },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = DateTimeUtils.formatTime(localHour, localMinute, timePattern),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = stringResource(R.string.time_entry_tap_to_edit),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Overlaid in the top-end corner so the wheel keeps full width. It covers
+                    // only a faded, non-selected wheel edge (the center selection is unaffected).
+                    // Nudged up/right to hug the divider and the sheet edge.
+                    IconButton(
+                        onClick = { showTimeDialog = true },
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 4.dp, y = (-8).dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Keyboard,
+                            contentDescription = stringResource(R.string.cd_time_entry_keyboard)
+                        )
+                    }
+                }
+
+                if (showTimeDialog) {
+                    ExactTimeDialog(
+                        initialHour = localHour,
+                        initialMinute = localMinute,
+                        use24Hour = use24Hour,
+                        onConfirm = { h, m ->
+                            localHour = h
+                            localMinute = m
+                            showTimeDialog = false
+                        },
+                        onDismiss = { showTimeDialog = false }
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -736,6 +811,56 @@ fun dayCellStyle(isToday: Boolean, isSelected: Boolean): DayCellStyle = when {
     isSelected -> DayCellStyle.SELECTED
     isToday -> DayCellStyle.TODAY
     else -> DayCellStyle.PLAIN
+}
+
+/**
+ * The wheel only offers minutes in 5-minute steps, so it can represent a minute
+ * exactly only when it is a multiple of five. Off-grid minutes (e.g. 9:47, entered
+ * via the exact-time dialog) route to a tappable text display instead of the wheel.
+ */
+fun isOnWheelGrid(minute: Int): Boolean = minute % 5 == 0
+
+/**
+ * Exact-time entry dialog: a centered text-input picker (hour/minute fields, plus
+ * AM/PM in 12-hour mode) with no clock dial. Because it is a centered dialog rather
+ * than inline sheet content, it floats above the soft keyboard instead of being
+ * covered by it. Accepts any minute, so a value like 9:47 round-trips exactly.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExactTimeDialog(
+    initialHour: Int,
+    initialMinute: Int,
+    use24Hour: Boolean,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // TimePickerState.hour is always 0-23; is24Hour only affects display (two fields
+    // vs three with AM/PM), so no manual 12<->24 conversion is needed.
+    val timeState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = use24Hour
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = { onConfirm(timeState.hour, timeState.minute) }) {
+                Text(stringResource(R.string.action_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+        title = { Text(stringResource(R.string.time_entry_dialog_title)) },
+        text = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                TimeInput(state = timeState)
+            }
+        }
+    )
 }
 
 /**

@@ -336,6 +336,9 @@
     <string name="cd_select_option">Izvēlēties iespēju</string>
     <string name="cd_select_label">Izvēlēties %1$s</string>
     <string name="cd_wheel_picker">Ritenīša izvēle ar %1$d iespējām</string>
+    <string name="cd_time_entry_keyboard">Ievadīt precīzu laiku</string>
+    <string name="time_entry_dialog_title">Ievadīt laiku</string>
+    <string name="time_entry_tap_to_edit">Pieskarieties, lai rediģētu</string>
     <string name="cd_version_info">KashCal versija %1$s. Ilgi turiet, lai atvērtu atkļūdošanas iespējas.</string>
     <string name="cd_color_slider">Krāsu slīdnis, pašlaik %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grādi</string>

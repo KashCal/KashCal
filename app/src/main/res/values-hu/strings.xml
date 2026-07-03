@@ -345,6 +345,9 @@
     <string name="cd_select_option">Lehetőség kiválasztása</string>
     <string name="cd_select_label">%1$s kiválasztása</string>
     <string name="cd_wheel_picker">Görgős választó %1$d lehetőséggel</string>
+    <string name="cd_time_entry_keyboard">Pontos idő megadása</string>
+    <string name="time_entry_dialog_title">Idő megadása</string>
+    <string name="time_entry_tap_to_edit">Koppints a szerkesztéshez</string>
     <string name="cd_version_info">KashCal verzió %1$s. Hosszú nyomás a hibakeresési lehetőségekért.</string>
     <string name="cd_color_slider">Színcsúszka, jelenleg %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d fok</string>

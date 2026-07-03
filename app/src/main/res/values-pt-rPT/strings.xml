@@ -343,6 +343,9 @@
     <string name="cd_select_option">Selecionar opção</string>
     <string name="cd_select_label">Selecionar %1$s</string>
     <string name="cd_wheel_picker">Seletor giratório com %1$d opções</string>
+    <string name="cd_time_entry_keyboard">Introduzir hora exata</string>
+    <string name="time_entry_dialog_title">Introduzir hora</string>
+    <string name="time_entry_tap_to_edit">Toque para editar</string>
     <string name="cd_version_info">KashCal versão %1$s. Manter premido para opções de depuração.</string>
     <string name="cd_color_slider">Seletor de cor, atualmente %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graus</string>

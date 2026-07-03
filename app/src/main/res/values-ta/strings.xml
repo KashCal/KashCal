@@ -348,6 +348,9 @@
     <string name="cd_select_option">விருப்பத்தைத் தேர்வுசெய்</string>
     <string name="cd_select_label">%1$s தேர்வுசெய்</string>
     <string name="cd_wheel_picker">%1$d விருப்பங்களுடன் சக்கரத் தேர்வி</string>
+    <string name="cd_time_entry_keyboard">சரியான நேரத்தை உள்ளிடவும்</string>
+    <string name="time_entry_dialog_title">நேரத்தை உள்ளிடவும்</string>
+    <string name="time_entry_tap_to_edit">திருத்த தட்டவும்</string>
     <string name="cd_version_info">KashCal பதிப்பு %1$s. பிழைத்திருத்த விருப்பங்களுக்கு நீண்ட நேரம் அழுத்தவும்.</string>
     <string name="cd_color_slider">நிற நழுவி, தற்போது %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d பாகை</string>

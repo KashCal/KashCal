@@ -343,6 +343,9 @@
     <string name="cd_select_option">Khetha inketho</string>
     <string name="cd_select_label">Khetha %1$s</string>
     <string name="cd_wheel_picker">Isondo sokukhetha esinezinketho ezingu-%1$d</string>
+    <string name="cd_time_entry_keyboard">Faka isikhathi esiqondile</string>
+    <string name="time_entry_dialog_title">Faka isikhathi</string>
+    <string name="time_entry_tap_to_edit">Thepha ukuze uhlele</string>
     <string name="cd_version_info">KashCal inguqulo %1$s. Cindezela isikhathi eside ukuze uthole izinketho zokulungisa.</string>
     <string name="cd_color_slider">Isishelelisi sombala, okwamanje %1$s</string>
     <string name="cd_color_slider_state">%1$s, amadigri angu-%2$d</string>

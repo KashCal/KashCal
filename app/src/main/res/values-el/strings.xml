@@ -345,6 +345,9 @@
     <string name="cd_select_option">Επιλογή</string>
     <string name="cd_select_label">Επιλογή %1$s</string>
     <string name="cd_wheel_picker">Τροχός επιλογής με %1$d επιλογές</string>
+    <string name="cd_time_entry_keyboard">Εισαγωγή ακριβούς ώρας</string>
+    <string name="time_entry_dialog_title">Εισαγωγή ώρας</string>
+    <string name="time_entry_tap_to_edit">Πατήστε για επεξεργασία</string>
     <string name="cd_version_info">KashCal έκδοση %1$s. Πατήστε παρατεταμένα για επιλογές εντοπισμού σφαλμάτων.</string>
     <string name="cd_color_slider">Ρυθμιστικό χρώματος, τρέχον %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d μοίρες</string>

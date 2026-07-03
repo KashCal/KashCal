@@ -348,6 +348,9 @@
     <string name="cd_select_option">ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക</string>
     <string name="cd_select_label">%1$s തിരഞ്ഞെടുക്കുക</string>
     <string name="cd_wheel_picker">%1$d ഓപ്ഷനുകളുള്ള വീൽ പിക്കർ</string>
+    <string name="cd_time_entry_keyboard">കൃത്യമായ സമയം നൽകുക</string>
+    <string name="time_entry_dialog_title">സമയം നൽകുക</string>
+    <string name="time_entry_tap_to_edit">എഡിറ്റ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക</string>
     <string name="cd_version_info">KashCal പതിപ്പ് %1$s. ഡീബഗ് ഓപ്ഷനുകൾക്ക് ദീർഘനേരം അമർത്തുക.</string>
     <string name="cd_color_slider">നിറ സ്ലൈഡർ, ഇപ്പോൾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ഡിഗ്രി</string>

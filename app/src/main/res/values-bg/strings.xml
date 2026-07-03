@@ -345,6 +345,9 @@
     <string name="cd_select_option">Избери опция</string>
     <string name="cd_select_label">Избери %1$s</string>
     <string name="cd_wheel_picker">Ролков избирач с %1$d опции</string>
+    <string name="cd_time_entry_keyboard">Въведете точен час</string>
+    <string name="time_entry_dialog_title">Въведете час</string>
+    <string name="time_entry_tap_to_edit">Докоснете за редактиране</string>
     <string name="cd_version_info">KashCal версия %1$s. Дълго натискане за опции за отстраняване на грешки.</string>
     <string name="cd_color_slider">Плъзгач за цвят, текущо %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градуса</string>

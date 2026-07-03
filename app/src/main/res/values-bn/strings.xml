@@ -348,6 +348,9 @@
     <string name="cd_select_option">বিকল্প নির্বাচন করুন</string>
     <string name="cd_select_label">%1$s নির্বাচন করুন</string>
     <string name="cd_wheel_picker">%1$d বিকল্পের হুইল পিকার</string>
+    <string name="cd_time_entry_keyboard">সঠিক সময় লিখুন</string>
+    <string name="time_entry_dialog_title">সময় লিখুন</string>
+    <string name="time_entry_tap_to_edit">সম্পাদনা করতে ট্যাপ করুন</string>
     <string name="cd_version_info">KashCal সংস্করণ %1$s। ডিবাগ বিকল্পের জন্য দীর্ঘক্ষণ চাপুন।</string>
     <string name="cd_color_slider">রঙ স্লাইডার, বর্তমানে %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ডিগ্রি</string>

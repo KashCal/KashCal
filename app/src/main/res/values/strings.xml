@@ -471,6 +471,9 @@
     <string name="cd_select_label">Select %1$s</string>
     <!-- %1$d = number of options -->
     <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
+    <string name="cd_time_entry_keyboard">Enter exact time</string>
+    <string name="time_entry_dialog_title">Enter time</string>
+    <string name="time_entry_tap_to_edit">Tap to edit</string>
     <!-- %1$s = version name -->
     <string name="cd_version_info">KashCal version %1$s. Long press for debug options.</string>
     <!-- %1$s = color name (e.g., "Red", "Blue") -->

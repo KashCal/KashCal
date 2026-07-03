@@ -328,6 +328,9 @@
     <string name="cd_select_option">Elekti elekton</string>
     <string name="cd_select_label">Elekti %1$s</string>
     <string name="cd_wheel_picker">Rada elektilo kun %1$d elektoj</string>
+    <string name="cd_time_entry_keyboard">Entajpu precizan horon</string>
+    <string name="time_entry_dialog_title">Entajpu horon</string>
+    <string name="time_entry_tap_to_edit">Tuŝetu por redakti</string>
     <string name="cd_version_info">KashCal versio %1$s. Longe premu por sencimigaj elektoj.</string>
     <string name="cd_color_slider">Kolora glitilo, nune %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradoj</string>

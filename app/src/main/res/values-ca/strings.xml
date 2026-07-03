@@ -328,6 +328,9 @@
     <string name="cd_select_option">Seleccionar opció</string>
     <string name="cd_select_label">Seleccionar %1$s</string>
     <string name="cd_wheel_picker">Selector rotatiu amb %1$d opcions</string>
+    <string name="cd_time_entry_keyboard">Introdueix l\'hora exacta</string>
+    <string name="time_entry_dialog_title">Introdueix l\'hora</string>
+    <string name="time_entry_tap_to_edit">Toca per editar</string>
     <string name="cd_version_info">KashCal versió %1$s. Premeu llargament per a opcions de depuració.</string>
     <string name="cd_color_slider">Control lliscant de color, actualment %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graus</string>

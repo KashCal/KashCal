@@ -285,6 +285,9 @@
     <string name="cd_select_option">เลือกตัวเลือก</string>
     <string name="cd_select_label">เลือก%1$s</string>
     <string name="cd_wheel_picker">ตัวเลือกแบบวงล้อ %1$d ตัวเลือก</string>
+    <string name="cd_time_entry_keyboard">ป้อนเวลาที่แน่นอน</string>
+    <string name="time_entry_dialog_title">ป้อนเวลา</string>
+    <string name="time_entry_tap_to_edit">แตะเพื่อแก้ไข</string>
     <string name="cd_version_info">KashCal เวอร์ชัน %1$s กดค้างเพื่อดูตัวเลือกดีบัก</string>
     <string name="cd_color_slider">แถบเลื่อนสี ปัจจุบัน %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d องศา</string>

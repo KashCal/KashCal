@@ -331,6 +331,9 @@
     <string name="cd_select_option">Vali valik</string>
     <string name="cd_select_label">Vali %1$s</string>
     <string name="cd_wheel_picker">Rullikvalija %1$d valikuga</string>
+    <string name="cd_time_entry_keyboard">Sisesta täpne aeg</string>
+    <string name="time_entry_dialog_title">Sisesta aeg</string>
+    <string name="time_entry_tap_to_edit">Puuduta muutmiseks</string>
     <string name="cd_version_info">KashCal versioon %1$s. Pikk vajutus silumisvalikute jaoks.</string>
     <string name="cd_color_slider">Värvi liugur, praegu %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d kraadi</string>

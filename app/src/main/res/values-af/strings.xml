@@ -343,6 +343,9 @@
     <string name="cd_select_option">Kies opsie</string>
     <string name="cd_select_label">Kies %1$s</string>
     <string name="cd_wheel_picker">Wielkieser met %1$d opsies</string>
+    <string name="cd_time_entry_keyboard">Voer presiese tyd in</string>
+    <string name="time_entry_dialog_title">Voer tyd in</string>
+    <string name="time_entry_tap_to_edit">Tik om te wysig</string>
     <string name="cd_version_info">KashCal weergawe %1$s. Hou lank in vir ontfoutopsies.</string>
     <string name="cd_color_slider">Kleurskuifbalk, tans %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grade</string>

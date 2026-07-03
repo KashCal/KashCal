@@ -97,6 +97,35 @@ class DateTimePickerTest {
         assertEquals(DayCellStyle.SELECTED, dayCellStyle(isToday = true, isSelected = true))
     }
 
+    // ==================== isOnWheelGrid Tests ====================
+    // isOnWheelGrid is the gate for the inline time area: an on-grid minute shows
+    // the 5-minute wheel, an off-grid minute (e.g. 9:47 typed via the exact-time
+    // dialog) shows tappable text instead, because mounting the wheel would snap
+    // the minute to the nearest 5-minute step and clobber the stored value.
+
+    @Test
+    fun `isOnWheelGrid is true for every multiple of five`() {
+        for (m in 0..55 step 5) {
+            assertTrue("minute $m should be on-grid", isOnWheelGrid(m))
+        }
+    }
+
+    @Test
+    fun `isOnWheelGrid is false for off-grid minutes`() {
+        assertFalse(isOnWheelGrid(1))
+        assertFalse(isOnWheelGrid(47))
+        assertFalse(isOnWheelGrid(59))
+    }
+
+    @Test
+    fun `isOnWheelGrid rejects every non-multiple-of-five across the hour`() {
+        // The wheel can render exactly 12 positions (0,5,...,55); everything else
+        // must route to the exact-time text/dialog path.
+        for (m in 0..59) {
+            assertEquals("minute $m", m % 5 == 0, isOnWheelGrid(m))
+        }
+    }
+
     // ==================== isSameCalendarDay Tests ====================
 
     private fun dayMillis(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =

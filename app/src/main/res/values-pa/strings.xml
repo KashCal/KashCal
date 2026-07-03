@@ -321,6 +321,9 @@
     <string name="cd_select_option">ਵਿਕਲਪ ਚੁਣੋ</string>
     <string name="cd_select_label">%1$s ਚੁਣੋ</string>
     <string name="cd_wheel_picker">%1$d ਵਿਕਲਪਾਂ ਵਾਲਾ ਵ੍ਹੀਲ ਪਿਕਰ</string>
+    <string name="cd_time_entry_keyboard">ਸਹੀ ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
+    <string name="time_entry_dialog_title">ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
+    <string name="time_entry_tap_to_edit">ਸੋਧਣ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="cd_version_info">KashCal ਸੰਸਕਰਣ %1$s। ਡੀਬੱਗ ਵਿਕਲਪਾਂ ਲਈ ਲੰਬਾ ਦਬਾਓ।</string>
     <string name="cd_color_slider">ਰੰਗ ਸਲਾਈਡਰ, ਮੌਜੂਦਾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ਡਿਗਰੀ</string>

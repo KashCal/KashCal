@@ -285,6 +285,9 @@
     <string name="cd_select_option">選擇選項</string>
     <string name="cd_select_label">選擇%1$s</string>
     <string name="cd_wheel_picker">有 %1$d 個選項的滾輪選取器</string>
+    <string name="cd_time_entry_keyboard">輸入精確時間</string>
+    <string name="time_entry_dialog_title">輸入時間</string>
+    <string name="time_entry_tap_to_edit">輕觸以編輯</string>
     <string name="cd_version_info">KashCal 版本 %1$s。長按開啟偵錯選項。</string>
     <string name="cd_color_slider">顏色滑桿，目前為 %1$s</string>
     <string name="cd_color_slider_state">%1$s，%2$d 度</string>

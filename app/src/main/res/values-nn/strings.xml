@@ -308,6 +308,9 @@
     <string name="cd_select_option">Vel alternativ</string>
     <string name="cd_select_label">Vel %1$s</string>
     <string name="cd_wheel_picker">Hjulveljar med %1$d alternativ</string>
+    <string name="cd_time_entry_keyboard">Skriv inn nøyaktig tid</string>
+    <string name="time_entry_dialog_title">Skriv inn tid</string>
+    <string name="time_entry_tap_to_edit">Trykk for å redigere</string>
     <string name="cd_version_info">KashCal versjon %1$s. Trykk lenge for feilsøkingsalternativ.</string>
     <string name="cd_color_slider">Fargeskyder, no %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradar</string>

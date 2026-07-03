@@ -331,6 +331,9 @@
     <string name="cd_select_option">Valitse vaihtoehto</string>
     <string name="cd_select_label">Valitse %1$s</string>
     <string name="cd_wheel_picker">Pyöritettävä valitsin, %1$d vaihtoehtoa</string>
+    <string name="cd_time_entry_keyboard">Syötä tarkka aika</string>
+    <string name="time_entry_dialog_title">Syötä aika</string>
+    <string name="time_entry_tap_to_edit">Muokkaa napauttamalla</string>
     <string name="cd_version_info">KashCal versio %1$s. Paina pitkään virheenkorjausvaihtoehtoja varten.</string>
     <string name="cd_color_slider">Väriliukusäädin, tällä hetkellä %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d astetta</string>
