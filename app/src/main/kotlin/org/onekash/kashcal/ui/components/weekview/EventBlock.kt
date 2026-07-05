@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -32,6 +34,7 @@ import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
+import org.onekash.kashcal.ui.components.eventStateDescription
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 
 @Composable
@@ -88,10 +91,21 @@ fun EventBlock(
         tapModifier
     }
 
+    val stateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
     Box(
         modifier = modifier
             .height(height)
-            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe))
+            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled))
+            // The tap is wired via pointerInput (below) which, unlike clickable,
+            // sets no semantics and no merge boundary — so mergeDescendants is
+            // needed for the state label to attach to the block's spoken title.
+            .then(
+                if (stateLabel != null) {
+                    Modifier.semantics(mergeDescendants = true) { stateDescription = stateLabel }
+                } else {
+                    Modifier
+                }
+            )
             .clip(RoundedCornerShape(4.dp))
             .then(
                 if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
@@ -111,7 +125,7 @@ fun EventBlock(
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
-                textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
+                textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
                 maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
@@ -124,7 +138,7 @@ fun EventBlock(
                     text = eventTimeLabel(displayEvent, timePattern),
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.7f),
-                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -175,9 +189,11 @@ fun CompactEventBlock(
     val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
     val timeLabel = eventTimeLabel(displayEvent, timePattern)
 
+    val compactStateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
     Box(
         modifier = modifier
-            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe))
+            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled))
+            .then(if (compactStateLabel != null) Modifier.semantics { stateDescription = compactStateLabel } else Modifier)
             .clip(RoundedCornerShape(4.dp))
             .then(
                 if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
@@ -191,7 +207,7 @@ fun CompactEventBlock(
             text = "$formattedTitle - $timeLabel",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
-            textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
+            textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

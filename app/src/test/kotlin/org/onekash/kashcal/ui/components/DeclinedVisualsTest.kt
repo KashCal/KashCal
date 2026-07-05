@@ -37,4 +37,23 @@ class DeclinedVisualsTest {
         assertEquals(0.5f, declinedCardAlpha(isPast = true, isDeclined = true))
         assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = true))
     }
+
+    @Test
+    fun `cancelled only returns half alpha and LineThrough`() {
+        assertEquals(0.5f, declinedCardAlpha(isPast = false, isDeclined = false, isCancelled = true))
+        assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = false, isCancelled = true))
+    }
+
+    @Test
+    fun `all three flags cap at half alpha not lower`() {
+        assertEquals(0.5f, declinedCardAlpha(isPast = true, isDeclined = true, isCancelled = true))
+        assertEquals(TextDecoration.LineThrough, declinedTitleDecoration(isDeclined = true, isCancelled = true))
+    }
+
+    @Test
+    fun `cancelled defaults keep existing callers unchanged`() {
+        // isCancelled defaults to false, so pre-existing two/one-arg calls are unaffected.
+        assertEquals(1.0f, declinedCardAlpha(isPast = false, isDeclined = false))
+        assertNull(declinedTitleDecoration(isDeclined = false))
+    }
 }

@@ -455,8 +455,16 @@ class EventFormSheetComposeTest {
 }
 
 /**
- * Content-only composable for testing (without ModalBottomSheet wrapper).
- * This allows testing the form content without dealing with sheet dismiss behavior.
+ * A stand-in that mimics the form's structure. The tests in this class render
+ * THIS composable, not the production form — so they exercise the stand-in's
+ * layout and this file's hoisted-state plumbing, not the real fields.
+ *
+ * The production body is now available as [org.onekash.kashcal.ui.components.EventFormContent]
+ * (wrapper-free, rendered by ComponentAccessibilityTest). Migrating these tests
+ * to render it directly turns them into real UI coverage; that migration needs
+ * a device in the loop because EventFormContent is stateful (it owns its form
+ * state and loads via LaunchedEffect), so the assertions and their timing must
+ * be verified against the real render rather than swapped mechanically.
  */
 @Composable
 private fun EventFormSheetContent(
@@ -465,10 +473,7 @@ private fun EventFormSheetContent(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    // This would need to be extracted from EventFormSheet or mocked
-    // For now, we test with the actual EventFormSheet using show/hide logic
-
-    // Simplified test content that mimics the real form structure
+    // Simplified stand-in content that mimics the real form structure
     androidx.compose.foundation.layout.Column(
         modifier = androidx.compose.ui.Modifier
             .fillMaxWidth()

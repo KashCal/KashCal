@@ -32,6 +32,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -76,7 +79,17 @@ fun SwipeableSubscriptionItem(
     )
     val hasError = subscription.hasError()
 
+    // Swipe-to-delete is gesture-only; expose the same action to Switch Access
+    // and TalkBack (which can't perform the swipe) as a custom action.
+    val deleteLabel = stringResource(R.string.cd_delete)
+    val deleteActions = subscription.id?.let { id ->
+        listOf(CustomAccessibilityAction(deleteLabel) { onDelete(id); true })
+    }
+
     SwipeToDismissBox(
+        modifier = deleteActions?.let {
+            Modifier.semantics { customActions = it }
+        } ?: Modifier,
         state = dismissState,
         backgroundContent = {
             Box(

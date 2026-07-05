@@ -536,7 +536,7 @@
     <string name="drawer_contacts">連絡先</string>
     <string name="drawer_device_calendars">デバイスカレンダー</string>
     <string name="drawer_account_offline">オフライン</string>
-    <string name="drawer_share_feedback">フィードバックを送る</string>
+    <string name="drawer_share_feedback">ヘルプとドキュメント</string>
 
     <string name="event_title_fallback">予定</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">クリア</string>
     <string name="cd_offline">オフライン</string>
+    <string name="cd_loading_events">予定を読み込み中</string>
     <string name="cd_open_drawer">ドロワーを開く</string>
     <string name="cd_close_drawer">ドロワーを閉じる</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">予定を追加</string>
     <string name="cd_widget_day_cell">%1$s、%2$s</string>
     <string name="cd_widget_no_events">予定なし</string>
+    <string name="cd_widget_event_cancelled">%1$s、%2$s、中止</string>
     <string name="channel_event_reminders">予定のリマインダー</string>
     <string name="channel_event_reminders_desc">今後のカレンダー予定の通知</string>
     <string name="channel_sync_progress">同期の進行状況</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">カスタム</string>
     <string name="cd_event_color">予定の色</string>
     <string name="cd_checkmark">選択済み</string>
+    <string name="cd_event_state_cancelled">キャンセル済み</string>
+    <string name="cd_event_state_declined">辞退済み</string>
+    <string name="cd_event_state_past">過去の予定</string>
+    <string name="cd_event_untitled">無題の予定</string>
     <string name="label_device_timezone">デバイスのタイムゾーン</string>
     <string name="color_saddlebrown">サドルブラウン</string>    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
     <string name="color_gold">ゴールド</string>

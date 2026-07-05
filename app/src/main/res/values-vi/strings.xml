@@ -536,7 +536,7 @@
     <string name="drawer_contacts">Danh bạ</string>
     <string name="drawer_device_calendars">Lịch thiết bị</string>
     <string name="drawer_account_offline">Ngoại tuyến</string>
-    <string name="drawer_share_feedback">Gửi phản hồi</string>
+    <string name="drawer_share_feedback">Trợ giúp &amp; tài liệu</string>
 
     <string name="event_title_fallback">Sự kiện</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">Xóa</string>
     <string name="cd_offline">Ngoại tuyến</string>
+    <string name="cd_loading_events">Đang tải sự kiện</string>
     <string name="cd_open_drawer">Mở ngăn kéo</string>
     <string name="cd_close_drawer">Đóng ngăn kéo</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">Thêm sự kiện</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">không có sự kiện</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, đã hủy</string>
     <string name="channel_event_reminders">Nhắc nhở sự kiện</string>
     <string name="channel_event_reminders_desc">Thông báo cho các sự kiện lịch sắp tới</string>
     <string name="channel_sync_progress">Tiến trình đồng bộ</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">Tùy chỉnh</string>
     <string name="cd_event_color">Màu sự kiện</string>
     <string name="cd_checkmark">Đã chọn</string>
+    <string name="cd_event_state_cancelled">Đã hủy</string>
+    <string name="cd_event_state_declined">Đã từ chối</string>
+    <string name="cd_event_state_past">Sự kiện đã qua</string>
+    <string name="cd_event_untitled">Sự kiện không có tiêu đề</string>
     <string name="label_device_timezone">Múi giờ thiết bị</string>
     <string name="color_saddlebrown">Nâu yên ngựa</string>    <string name="color_tomato">Đỏ cà chua</string>    <string name="color_darkorange">Cam đậm</string>
     <string name="color_gold">Vàng kim</string>

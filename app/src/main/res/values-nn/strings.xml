@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Kontaktar</string>
     <string name="drawer_device_calendars">Einingskalendrar</string>
     <string name="drawer_account_offline">Fråkopla</string>
-    <string name="drawer_share_feedback">Del tilbakemelding</string>
+    <string name="drawer_share_feedback">Hjelp &amp; docs</string>
     <string name="event_title_fallback">Hending</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Tøm</string>
     <string name="cd_offline">Fråkopla</string>
+    <string name="cd_loading_events">Lastar inn hendingar</string>
     <string name="cd_open_drawer">Opne meny</string>
     <string name="cd_close_drawer">Lukk meny</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Legg til hending</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, avlyst</string>
     <string name="cd_widget_no_events">ingen hendingar</string>
     <string name="channel_event_reminders">Hendingspåminningar</string>
     <string name="channel_event_reminders_desc">Varsel for komande kalenderhendingar</string>
@@ -1058,6 +1060,10 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Eigendefinert</string>
     <string name="cd_event_color">Hendingsfarge</string>
+    <string name="cd_event_state_cancelled">avlyst</string>
+    <string name="cd_event_state_declined">avslått</string>
+    <string name="cd_event_state_past">tidlegare hending</string>
+    <string name="cd_event_untitled">Hending utan tittel</string>
     <string name="color_saddlebrown">Salbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørk oransje</string>
     <string name="color_gold">Gull</string>

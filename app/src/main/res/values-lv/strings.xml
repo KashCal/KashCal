@@ -594,7 +594,7 @@
     <string name="drawer_contacts">Kontakti</string>
     <string name="drawer_device_calendars">Ierīces kalendāri</string>
     <string name="drawer_account_offline">Bezsaistē</string>
-    <string name="drawer_share_feedback">Dalīties ar atsauksmēm</string>
+    <string name="drawer_share_feedback">Palīdzība un dokumenti</string>
 
     <string name="event_title_fallback">Notikums</string>
 
@@ -795,6 +795,11 @@
 
     <string name="cd_clear">Notīrīt</string>
     <string name="cd_offline">Bezsaistē</string>
+    <string name="cd_event_state_cancelled">atcelts</string>
+    <string name="cd_event_state_declined">noraidīts</string>
+    <string name="cd_event_state_past">pagājis notikums</string>
+    <string name="cd_event_untitled">Notikums bez nosaukuma</string>
+    <string name="cd_loading_events">Notiek notikumu ielāde</string>
     <string name="cd_open_drawer">Atvērt izvēlni</string>
     <string name="cd_close_drawer">Aizvērt izvēlni</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -984,6 +989,7 @@
     <string name="cd_widget_add_event">Pievienot notikumu</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">nav notikumu</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, atcelts</string>
     <string name="channel_event_reminders">Notikumu atgādinājumi</string>
     <string name="channel_event_reminders_desc">Paziņojumi par gaidāmajiem kalendāra notikumiem</string>
     <string name="channel_sync_progress">Sinhronizācijas progress</string>

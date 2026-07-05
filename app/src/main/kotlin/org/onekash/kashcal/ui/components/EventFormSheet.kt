@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -53,6 +54,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,7 +73,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -370,13 +379,221 @@ fun EventFormSheet(
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
     /**
-     * Defer the save to the host so a save-time scope sheet can ask
-     * the user how the change should apply across a recurring series.
-     * When set and the form is in edit mode for a recurring event,
-     * tapping Save fires this instead of [onSave]; the form sheet
-     * stays visible behind the dimmed scope sheet so Cancel can
-     * return to it. Null disables the deferral (legacy behavior).
+     * Defer save to the host so a save-time scope sheet can ask the
+     * user how the change should apply across the recurring series.
+     *
+     * Carries metadata captured at form-load time:
+     * - `originalRrule` — the master's rrule before per-occurrence
+     *   stripping (used to detect rrule changes).
+     * - `masterStartTs` — the master's true startTs, anchors the
+     *   first-occurrence rule.
+     * - `isDetachedException` — whether the loaded event row is itself
+     *   an exception (originalEventId != null).
+     * - `isRecurringDevice` — whether this is a device-calendar event,
+     *   so the host knows which save path to invoke.
+     *
+     * Null disables the deferral (legacy direct-save behavior).
      */
+    onRequestRecurringSave: ((
+        formState: EventFormState,
+        occurrenceTs: Long,
+        originalRrule: String?,
+        masterStartTs: Long,
+        isDetachedException: Boolean,
+        isRecurringDevice: Boolean,
+        loadedIsAllDay: Boolean,
+    ) -> Unit)? = null,
+    /**
+     * Tick that increments whenever a deferred save fails or the user
+     * cancels from the scope sheet. The form observes this via
+     * `LaunchedEffect` to clear its `isSaving = true` flag (which is
+     * set when the deferral fires) so the Save button re-enables for
+     * retry.
+     */
+    scopeSaveFailedTick: Int = 0,
+    onDelete: (suspend (eventId: Long, occurrenceTs: Long?) -> Result<Unit>)? = null,
+    onLoadEvent: (suspend (Long) -> Event?)? = null,
+    /**
+     * Load the event's existing attendee ENTITIES for the picker to seed
+     * from. Returns Room rows (not the lossy UI projection) so the picker
+     * preserves role/cutype/rsvp/delegation on edit. Null disables seeding
+     * (e.g. device-calendar events, which have no CalDAV attendee table).
+     */
+    onLoadAttendees: (suspend (Long) -> List<org.onekash.kashcal.data.db.entity.Attendee>)? = null,
+    defaultReminderTimed: Int = 15,
+    defaultReminderAllDay: Int = 1440,
+    defaultEventDuration: Int = 30,
+    onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
+    locationSuggestionService: LocationSuggestionService? = null,
+    onSuggestTitles: (suspend (String) -> List<org.onekash.kashcal.data.db.dao.TitleSuggestion>)? = null,
+    timeFormat: String = "system",
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    // Device calendar edit support
+    deviceEventId: Long? = null,
+    deviceOccurrenceTs: Long? = null,
+    onLoadDeviceEvent: (suspend (Long) -> org.onekash.kashcal.ui.viewmodels.DeviceEventEditData?)? = null,
+    onSaveDeviceEvent: (suspend (EventFormState) -> Result<Long>)? = null,
+    onDeleteDeviceEvent: (suspend (EventFormState) -> Result<Unit>)? = null,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
+    isCurrentUserOnList: Boolean = false,
+    /**
+     * When true, the form renders in read-only mode: a banner with
+     * inline RSVP chips appears at the top, and substantive fields are
+     * not editable. Reminders remain editable per RFC 5545 §3.6.6
+     * (per-attendee VALARMs); the user can change their own alarms
+     * even though they can't edit organizer-owned fields.
+     *
+     * Client-enforced — some CalDAV servers silently accept attendee
+     * substantive edits, so server enforcement is unreliable.
+     */
+    isReadOnly: Boolean = false,
+    /** Invoked when the user taps a chip inside the read-only banner. */
+    onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
+    /**
+     * Save callback for the read-only attendee path. Receives the
+     * (possibly empty) reminder set in minutes. The callback writes
+     * locally and reschedules AlarmManager — no server PUT. When null,
+     * the read-only Save button stays disabled.
+     */
+    onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null,
+    /**
+     * The event's account, used to mark "You" in the picker and to gate the
+     * editable picker on whether the account can send invitations
+     * ([isSchedulable]). Null for new local events with no resolved account.
+     */
+    attendeeAccount: org.onekash.kashcal.data.db.entity.Account? = null,
+    /**
+     * True when the account has a mailto-emittable address (an ORGANIZER can
+     * be resolved). When false the picker surfaces an inline "inviting isn't
+     * available" notice instead of an editable list, so the UI never creates
+     * an ATTENDEE-without-ORGANIZER event (RFC 6638 §3.1).
+     */
+    isSchedulable: Boolean = true,
+    /**
+     * Fired when the user changes the target calendar while the form is open,
+     * so the host can re-resolve [attendeeAccount]/[isSchedulable] for the new
+     * calendar's account. Without it the attendee context would stay pinned to
+     * the calendar the sheet opened with (stale "You"/schedulable state).
+     */
+    onCalendarSelected: ((Long) -> Unit)? = null,
+    /** Debounced contact-email lookup for the picker's type-ahead. */
+    onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
+    /**
+     * Request READ_CONTACTS. Receives the picker's current rationale-flip
+     * sampling and reports the resulting [ContactsPermissionState]. Null
+     * leaves the picker in manual-entry-only mode.
+     */
+    contactsPermissionState: org.onekash.kashcal.ui.permission.ContactsPermissionState =
+        org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested,
+    onRequestContactsPermission: (() -> Unit)? = null,
+    /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
+    contactsDeclined: Boolean = false,
+    /** Persist a permanent decline of contact suggestions ("No thanks"). */
+    onDeclineContacts: (() -> Unit)? = null
+) {
+    // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
+    // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
+    // tracks the finger, then reverse-animates back when the transition is rejected.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Pin the sheet height so IME open/close doesn't re-trigger ModalBottomSheet's
+    // height animation (fillMaxHeight(fraction) recomputes against the IME-shrunk
+    // window, producing a visible up-then-down hop on every focus/picker transition).
+    // The configuration-keyed remember ensures rotation still resizes correctly.
+    val configuration = LocalConfiguration.current
+    val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
+        (configuration.screenHeightDp * 0.95f).dp
+    }
+
+    // Mirror isSaving up to the shell so the modal's dismiss guard can read it
+    // without holding the full form state (which lives in EventFormContent).
+    var isSaving by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = { if (!isSaving) onDismiss() },
+        sheetState = sheetState,
+        dragHandle = {},
+        sheetGesturesEnabled = false
+    ) {
+        EventFormContent(
+            modifier = Modifier.height(sheetHeight),
+            onSavingChange = { isSaving = it },
+            eventId = eventId,
+            initialStartTs = initialStartTs,
+            occurrenceTs = occurrenceTs,
+            duplicateFrom = duplicateFrom,
+            calendarIntentData = calendarIntentData,
+            calendarIntentInvitees = calendarIntentInvitees,
+            calendars = calendars,
+            calendarGroups = calendarGroups,
+            defaultCalendar = defaultCalendar,
+            onDismiss = onDismiss,
+            onSave = onSave,
+            onRequestRecurringSave = onRequestRecurringSave,
+            scopeSaveFailedTick = scopeSaveFailedTick,
+            onDelete = onDelete,
+            onLoadEvent = onLoadEvent,
+            onLoadAttendees = onLoadAttendees,
+            defaultReminderTimed = defaultReminderTimed,
+            defaultReminderAllDay = defaultReminderAllDay,
+            defaultEventDuration = defaultEventDuration,
+            onRequestNotificationPermission = onRequestNotificationPermission,
+            locationSuggestionService = locationSuggestionService,
+            onSuggestTitles = onSuggestTitles,
+            timeFormat = timeFormat,
+            firstDayOfWeek = firstDayOfWeek,
+            deviceEventId = deviceEventId,
+            deviceOccurrenceTs = deviceOccurrenceTs,
+            onLoadDeviceEvent = onLoadDeviceEvent,
+            onSaveDeviceEvent = onSaveDeviceEvent,
+            onDeleteDeviceEvent = onDeleteDeviceEvent,
+            deviceCalendarGroups = deviceCalendarGroups,
+            attendees = attendees,
+            isCurrentUserOnList = isCurrentUserOnList,
+            isReadOnly = isReadOnly,
+            onRsvp = onRsvp,
+            onSaveAttendeeReminders = onSaveAttendeeReminders,
+            attendeeAccount = attendeeAccount,
+            isSchedulable = isSchedulable,
+            onCalendarSelected = onCalendarSelected,
+            onQueryContacts = onQueryContacts,
+            contactsPermissionState = contactsPermissionState,
+            onRequestContactsPermission = onRequestContactsPermission,
+            contactsDeclined = contactsDeclined,
+            onDeclineContacts = onDeclineContacts,
+        )
+    }
+}
+
+/**
+ * Content of [EventFormSheet], extracted so it can be rendered and tested
+ * without the ModalBottomSheet wrapper (whose animation timing makes UI tests
+ * flaky). The sheet chrome (sheet state, pinned height, dismiss guard) stays in
+ * [EventFormSheet]; everything else — form state, load/save logic, and the
+ * field UI — lives here.
+ *
+ * @param onSavingChange reports the in-flight save flag up to the host, so the
+ *   host can block dismissal/teardown mid-save without owning the form state.
+ *   Required (no default): a host that drops it can tear the form down mid-write,
+ *   so every caller must decide how to guard dismissal.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EventFormContent(
+    onSavingChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    eventId: Long? = null,
+    initialStartTs: Long? = null,
+    occurrenceTs: Long? = null,
+    duplicateFrom: Event? = null,
+    calendarIntentData: CalendarIntentData? = null,
+    calendarIntentInvitees: List<String> = emptyList(),
+    calendars: List<Calendar>,
+    calendarGroups: List<CalendarGroup>,
+    defaultCalendar: DefaultCalendar?,
+    onDismiss: () -> Unit,
+    onSave: suspend (EventFormState) -> Result<Event>,
     /**
      * Defer save to the host so a save-time scope sheet can ask the
      * user how the change should apply across the recurring series.
@@ -1116,20 +1333,6 @@ fun EventFormSheet(
         }
     }
 
-    // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
-    // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
-    // tracks the finger, then reverse-animates back when the transition is rejected.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Pin the sheet height so IME open/close doesn't re-trigger ModalBottomSheet's
-    // height animation (fillMaxHeight(fraction) recomputes against the IME-shrunk
-    // window, producing a visible up-then-down hop on every focus/picker transition).
-    // The configuration-keyed remember ensures rotation still resizes correctly.
-    val configuration = LocalConfiguration.current
-    val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
-        (configuration.screenHeightDp * 0.95f).dp
-    }
-
     // Save predicate splits by mode. In read-only (attendee) mode the
     // user can only edit reminders, so Save gates on the reminder-set
     // having actually changed. In normal mode the existing full-form
@@ -1143,173 +1346,492 @@ fun EventFormSheet(
         state.title.isNotBlank() && !state.isSaving && !hasTimeConflict
     }
 
-    ModalBottomSheet(
-        onDismissRequest = { if (!state.isSaving) onDismiss() },
-        sheetState = sheetState,
-        dragHandle = {},
-        sheetGesturesEnabled = false
+    // Propagate the save flag to the wrapper for its dismiss guard. SideEffect
+    // (not LaunchedEffect) so the wrapper's mirror is updated synchronously at
+    // commit, before any later input frame: a dismiss tap arriving after a save
+    // starts then sees the up-to-date flag rather than a value lagging by a
+    // coroutine dispatch.
+    SideEffect { onSavingChange(state.isSaving) }
+
+    val paneTitleText = if (state.isEditMode) {
+        stringResource(R.string.dialog_edit_event_title)
+    } else {
+        stringResource(R.string.dialog_new_event_title)
+    }
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            // Announce the form (New event / Edit event) when the sheet opens.
+            .semantics { paneTitle = paneTitleText }
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(sheetHeight)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            TextButton(onClick = { onDismiss() }) {
+                Text(
+                    text = stringResource(R.string.action_cancel),
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+            Text(
+                text = if (state.isEditMode) stringResource(R.string.dialog_edit_event_title) else stringResource(R.string.dialog_new_event_title),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1f)
+                    .padding(horizontal = 8.dp)
+                    .semantics { heading() },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            val primaryColor = MaterialTheme.colorScheme.primary
+            val calColor = remember(state.selectedCalendarColor, primaryColor) {
+                state.selectedCalendarColor?.let { Color(it) } ?: primaryColor
+            }
+            val contrastColor = remember(calColor) { contrastForegroundOn(calColor) }
+            Button(
+                onClick = { performSave() },
+                enabled = saveEnabled,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = calColor,
+                    contentColor = contrastColor
+                ),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                TextButton(onClick = { onDismiss() }) {
+                if (state.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = contrastColor
+                    )
+                } else {
                     Text(
-                        text = stringResource(R.string.action_cancel),
+                        text = if (willNotifyAttendees) {
+                            stringResource(R.string.action_save_and_notify)
+                        } else {
+                            stringResource(R.string.action_save)
+                        },
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         softWrap = false
                     )
                 }
-                Text(
-                    text = if (state.isEditMode) stringResource(R.string.dialog_edit_event_title) else stringResource(R.string.dialog_new_event_title),
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val primaryColor = MaterialTheme.colorScheme.primary
-                val calColor = remember(state.selectedCalendarColor, primaryColor) {
-                    state.selectedCalendarColor?.let { Color(it) } ?: primaryColor
-                }
-                val contrastColor = remember(calColor) { contrastForegroundOn(calColor) }
-                Button(
-                    onClick = { performSave() },
-                    enabled = saveEnabled,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = calColor,
-                        contentColor = contrastColor
-                    ),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    if (state.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = contrastColor
-                        )
-                    } else {
-                        Text(
-                            text = if (willNotifyAttendees) {
-                                stringResource(R.string.action_save_and_notify)
-                            } else {
-                                stringResource(R.string.action_save)
-                            },
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            softWrap = false
-                        )
+            }
+        }
+
+        HorizontalDivider()
+
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            // Scrollable content
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp)
+            ) {
+                // titleInitial captures the pre-filled value once after load so
+                // edit mode doesn't flash a dropdown before the user types.
+                var titleInitial by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(state.isLoading, state.title) {
+                    if (!state.isLoading && titleInitial == null) {
+                        titleInitial = state.title
                     }
                 }
-            }
+                var titleSuggestions by remember { mutableStateOf<List<org.onekash.kashcal.data.db.dao.TitleSuggestion>>(emptyList()) }
+                var titleSearchJob by remember { mutableStateOf<Job?>(null) }
+                val dropdownOpen = titleSuggestions.isNotEmpty()
 
-            HorizontalDivider()
+                if (isReadOnly) {
+                    // Attendee viewer: plain readable text, not a dimmed,
+                    // clip-prone disabled field with autocomplete chrome.
+                    Text(
+                        text = state.title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                } else {
+                ExposedDropdownMenuBox(
+                    expanded = dropdownOpen,
+                    onExpandedChange = { if (!it) titleSuggestions = emptyList() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = state.title,
+                        onValueChange = { raw ->
+                            // maxLines=2 wraps long titles, but with
+                            // singleLine gone the Enter key would insert a
+                            // literal newline — strip it so a title stays a
+                            // single logical line (and never needs escaping
+                            // on the wire).
+                            val newValue = raw.replace("\n", "")
+                            state = state.copy(title = newValue)
+                            titleSearchJob?.cancel()
+                            val shouldQuery = shouldShowTitleSuggestions(
+                                currentText = newValue,
+                                initialText = titleInitial.orEmpty()
+                            )
+                            if (shouldQuery && onSuggestTitles != null) {
+                                titleSearchJob = coroutineScope.launch {
+                                    delay(TITLE_SUGGEST_DEBOUNCE_MS)
+                                    titleSuggestions = onSuggestTitles(newValue)
+                                }
+                            } else {
+                                titleSuggestions = emptyList()
+                            }
+                        },
+                        placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(titleFocusRequester)
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        // Wrap a long title to a second line (matching the
+                        // quick-view title) instead of scrolling it off the
+                        // start on one line. There is no title length cap.
+                        maxLines = 2,
+                        enabled = !isReadOnly,
+                        textStyle = MaterialTheme.typography.headlineSmall,
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences
+                        ),
+                        colors = borderlessFieldColors
+                    )
 
-            if (state.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                // Scrollable content
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(scrollState)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    // titleInitial captures the pre-filled value once after load so
-                    // edit mode doesn't flash a dropdown before the user types.
-                    var titleInitial by remember { mutableStateOf<String?>(null) }
-                    LaunchedEffect(state.isLoading, state.title) {
-                        if (!state.isLoading && titleInitial == null) {
-                            titleInitial = state.title
+                    ExposedDropdownMenu(
+                        expanded = dropdownOpen,
+                        onDismissRequest = { titleSuggestions = emptyList() }
+                    ) {
+                        titleSuggestions.forEach { suggestion ->
+                            DropdownMenuItem(
+                                text = { Text(suggestion.title) },
+                                onClick = {
+                                    state = state.copy(title = suggestion.title)
+                                    titleSuggestions = emptyList()
+                                },
+                                modifier = Modifier.height(48.dp)
+                            )
                         }
                     }
-                    var titleSuggestions by remember { mutableStateOf<List<org.onekash.kashcal.data.db.dao.TitleSuggestion>>(emptyList()) }
-                    var titleSearchJob by remember { mutableStateOf<Job?>(null) }
-                    val dropdownOpen = titleSuggestions.isNotEmpty()
+                }
+                }
 
-                    if (isReadOnly) {
-                        // Attendee viewer: plain readable text, not a dimmed,
-                        // clip-prone disabled field with autocomplete chrome.
+                HorizontalDivider()
+
+
+                val toggleAllDay = { newIsAllDay: Boolean ->
+                    val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
+                    val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
+                    val migratedReminders = migrateRemindersForAllDayToggle(state.reminders, currentDefault, newDefault)
+                    val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
+                    val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
+                    state = state.copy(
+                        isAllDay = newIsAllDay,
+                        dateMillis = normalizedDate,
+                        endDateMillis = normalizedEndDate,
+                        reminders = migratedReminders
+                    )
+                }
+
+                DateTimeDisplayRow(
+                    startDateMillis = state.dateMillis,
+                    startHour = state.startHour,
+                    startMinute = state.startMinute,
+                    endDateMillis = state.endDateMillis,
+                    endHour = state.endHour,
+                    endMinute = state.endMinute,
+                    isAllDay = state.isAllDay,
+                    onAllDayToggle = if (isReadOnly) ({ }) else toggleAllDay,
+                    onStartClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.START },
+                    onEndClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.END },
+                    isEndError = hasTimeConflict,
+                    endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
+                    timezone = state.timezone,
+                    timePattern = timePattern
+                )
+
+                if (!state.isAllDay) {
+                    var showTimezoneSheet by remember { mutableStateOf(false) }
+                    val tzId = state.timezone
+                    val effectiveTzId = tzId ?: remember { TimezoneUtils.getDeviceTimezone() }
+                    val tzAbbrev = remember(effectiveTzId) { TimezoneUtils.getAbbreviation(effectiveTzId) }
+                    val tzDisplayName = remember(effectiveTzId) {
+                        TimezoneUtils.getTimezoneInfo(effectiveTzId)?.displayName
+                            ?: effectiveTzId.substringAfterLast('/').replace('_', ' ')
+                    }
+                    val timezoneLabel = "$tzDisplayName ($tzAbbrev)"
+
+                    EventFormRow(
+                        icon = Icons.Default.Public,
+                        iconContentDescription = stringResource(R.string.label_timezone),
+                        showExpandIcon = true,
+                        onToggle = { if (!isReadOnly) showTimezoneSheet = true }
+                    ) {
                         Text(
-                            text = state.title,
-                            style = MaterialTheme.typography.headlineSmall,
+                            timezoneLabel,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (tzId == null)
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            else
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    if (showTimezoneSheet) {
+                        TimezonePickerSheet(
+                            selectedTimezone = state.timezone,
+                            onTimezoneSelected = { newTimezone ->
+                                val oldTz = state.timezone?.let { java.util.TimeZone.getTimeZone(it) }
+                                    ?: java.util.TimeZone.getDefault()
+                                val newTz = newTimezone?.let { java.util.TimeZone.getTimeZone(it) }
+                                    ?: java.util.TimeZone.getDefault()
+
+                                val (newStartDate, newStartH, newStartM) = convertTimezone(
+                                    oldTz, newTz, state.dateMillis, state.startHour, state.startMinute
+                                )
+                                val (newEndDate, newEndH, newEndM) = convertTimezone(
+                                    oldTz, newTz, state.endDateMillis, state.endHour, state.endMinute
+                                )
+                                state = state.copy(
+                                    timezone = newTimezone,
+                                    dateMillis = newStartDate,
+                                    startHour = newStartH,
+                                    startMinute = newStartM,
+                                    endDateMillis = newEndDate,
+                                    endHour = newEndH,
+                                    endMinute = newEndM
+                                )
+                                showTimezoneSheet = false
+                            },
+                            onDismiss = { showTimezoneSheet = false }
+                        )
+                    }
+                }
+
+                HorizontalDivider()
+
+                CalendarPickerRow(
+                    selectedCalendarId = state.selectedCalendarId,
+                    selectedCalendarName = state.selectedCalendarName,
+                    selectedCalendarColor = state.selectedCalendarColor,
+                    calendarGroups = if (state.isEditMode && state.isDeviceCalendar) {
+                        emptyList()
+                    } else {
+                        state.calendarGroups
+                    },
+                    deviceCalendarGroups = if (state.isEditMode && !state.isDeviceCalendar) {
+                        emptyList()
+                    } else {
+                        state.deviceCalendarGroups
+                    },
+                    isSelectedDeviceCalendar = state.isDeviceCalendar,
+                    isExpanded = expandedPicker == "calendar",
+                    enabled = !isReadOnly && !(state.isEditMode && state.editingOccurrenceTs != null),
+                    onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
+                    onSelect = { id, name, color, isDevice ->
+                        state = state.copy(
+                            selectedCalendarId = id,
+                            selectedCalendarName = name,
+                            selectedCalendarColor = color,
+                            isDeviceCalendar = isDevice
+                        )
+                        // Re-resolve the attendee/organizer context for the
+                        // newly chosen calendar's account (schedulable gate
+                        // + "You" detection must not stay pinned to the
+                        // calendar the sheet opened with).
+                        onCalendarSelected?.invoke(id)
+                        expandedPicker = null
+                    }
+                )
+
+                EventFormRow(
+                    icon = Icons.Default.Palette,
+                    iconContentDescription = stringResource(R.string.label_event_color),
+                    onToggle = { if (!isReadOnly) showColorPicker = true }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        val fallbackArgb = MaterialTheme.colorScheme.primary.toArgb()
+                        val dotColor = state.eventColor
+                            ?: state.selectedCalendarColor
+                            ?: fallbackArgb
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(Color(dotColor))
+                        )
+                        Text(
+                            stringResource(
+                                if (state.eventColor == null) R.string.label_event_color
+                                else EventColorPalette.stringResIdForColor(state.eventColor)
+                            ),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                ReminderPickerRow(
+                    reminders = state.reminders,
+                    isAllDay = state.isAllDay,
+                    use24Hour = use24Hour,
+                    isExpanded = expandedPicker == "reminders",
+                    onToggle = { expandedPicker = if (expandedPicker == "reminders") null else "reminders" },
+                    onRemindersChange = { newReminders ->
+                        state = state.copy(reminders = newReminders)
+                    },
+                    truncatedReminderCount = state.truncatedReminderCount
+                )
+
+                RecurrencePickerRow(
+                    selectedRrule = state.rrule,
+                    startDateMillis = state.dateMillis,
+                    isExpanded = expandedPicker == "repeat",
+                    onToggle = { if (!isReadOnly) expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
+                    onSelect = { rrule ->
+                        state = state.copy(rrule = rrule)
+                    },
+                    firstDayOfWeek = firstDayOfWeek
+                )
+
+                EventFormRow(
+                    icon = Icons.Default.EventAvailable,
+                    iconContentDescription = stringResource(R.string.label_availability)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterChip(
+                            selected = state.transp == "OPAQUE",
+                            onClick = { if (!isReadOnly) state = state.copy(transp = "OPAQUE") },
+                            enabled = !isReadOnly,
+                            label = { Text(stringResource(R.string.label_busy)) }
+                        )
+                        FilterChip(
+                            selected = state.transp == "TRANSPARENT",
+                            onClick = { if (!isReadOnly) state = state.copy(transp = "TRANSPARENT") },
+                            enabled = !isReadOnly,
+                            label = { Text(stringResource(R.string.label_free)) }
+                        )
+                    }
+                }
+
+                HorizontalDivider()
+
+
+                var locationExpanded by remember { mutableStateOf(false) }
+                var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
+                var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
+                var locationSearchJob by remember { mutableStateOf<Job?>(null) }
+
+                if (shouldShowReadOnlyOptionalField(state.location, isReadOnly)) {
+                EventFormRow(
+                    icon = Icons.Default.LocationOn,
+                    iconContentDescription = stringResource(R.string.label_location)
+                ) {
+                    if (isReadOnly) {
+                        Text(
+                            text = state.location,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
                     ExposedDropdownMenuBox(
-                        expanded = dropdownOpen,
-                        onExpandedChange = { if (!it) titleSuggestions = emptyList() },
+                        expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                        onExpandedChange = { locationExpanded = it },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
-                            value = state.title,
+                            value = state.location,
                             onValueChange = { raw ->
-                                // maxLines=2 wraps long titles, but with
-                                // singleLine gone the Enter key would insert a
-                                // literal newline — strip it so a title stays a
-                                // single logical line (and never needs escaping
-                                // on the wire).
+                                // Strip newlines: with singleLine gone the
+                                // Enter key would otherwise insert one, and
+                                // a location is a single logical line.
                                 val newValue = raw.replace("\n", "")
-                                state = state.copy(title = newValue)
-                                titleSearchJob?.cancel()
-                                val shouldQuery = shouldShowTitleSuggestions(
-                                    currentText = newValue,
-                                    initialText = titleInitial.orEmpty()
-                                )
-                                if (shouldQuery && onSuggestTitles != null) {
-                                    titleSearchJob = coroutineScope.launch {
-                                        delay(TITLE_SUGGEST_DEBOUNCE_MS)
-                                        titleSuggestions = onSuggestTitles(newValue)
+                                state = state.copy(location = newValue)
+                                locationSearchJob?.cancel()
+                                if (locationSuggestionService != null &&
+                                    newValue.length >= 5 &&
+                                    newValue.any { it.isLetter() }
+                                ) {
+                                    locationSearchJob = coroutineScope.launch {
+                                        delay(300)
+                                        isLoadingLocationSuggestions = true
+                                        locationSuggestions = locationSuggestionService.getSuggestions(newValue)
+                                        isLoadingLocationSuggestions = false
+                                        locationExpanded = locationSuggestions.isNotEmpty()
                                     }
                                 } else {
-                                    titleSuggestions = emptyList()
+                                    locationSuggestions = emptyList()
+                                    locationExpanded = false
                                 }
                             },
-                            placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
+                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .focusRequester(titleFocusRequester)
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            // Wrap a long title to a second line (matching the
-                            // quick-view title) instead of scrolling it off the
-                            // start on one line. There is no title length cap.
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                            // Wrap a long address to a second line instead of
+                            // scrolling it off the start on one line.
                             maxLines = 2,
                             enabled = !isReadOnly,
-                            textStyle = MaterialTheme.typography.headlineSmall,
-                            colors = borderlessFieldColors
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedContainerColor = Color.Transparent
+                            ),
+                            trailingIcon = {
+                                if (isLoadingLocationSuggestions) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
+                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+                                }
+                            }
                         )
 
                         ExposedDropdownMenu(
-                            expanded = dropdownOpen,
-                            onDismissRequest = { titleSuggestions = emptyList() }
+                            expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                            onDismissRequest = { locationExpanded = false }
                         ) {
-                            titleSuggestions.forEach { suggestion ->
+                            locationSuggestions.forEach { suggestion ->
                                 DropdownMenuItem(
-                                    text = { Text(suggestion.title) },
+                                    text = { Text(suggestion.displayName) },
                                     onClick = {
-                                        state = state.copy(title = suggestion.title)
-                                        titleSuggestions = emptyList()
+                                        state = state.copy(location = suggestion.displayName)
+                                        locationExpanded = false
+                                        locationSuggestions = emptyList()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Place, contentDescription = null)
                                     },
                                     modifier = Modifier.height(48.dp)
                                 )
@@ -1317,734 +1839,436 @@ fun EventFormSheet(
                         }
                     }
                     }
-
-                    HorizontalDivider()
-
-
-                    val toggleAllDay = { newIsAllDay: Boolean ->
-                        val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
-                        val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
-                        val migratedReminders = migrateRemindersForAllDayToggle(state.reminders, currentDefault, newDefault)
-                        val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
-                        val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
-                        state = state.copy(
-                            isAllDay = newIsAllDay,
-                            dateMillis = normalizedDate,
-                            endDateMillis = normalizedEndDate,
-                            reminders = migratedReminders
-                        )
-                    }
-
-                    DateTimeDisplayRow(
-                        startDateMillis = state.dateMillis,
-                        startHour = state.startHour,
-                        startMinute = state.startMinute,
-                        endDateMillis = state.endDateMillis,
-                        endHour = state.endHour,
-                        endMinute = state.endMinute,
-                        isAllDay = state.isAllDay,
-                        onAllDayToggle = if (isReadOnly) ({ }) else toggleAllDay,
-                        onStartClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.START },
-                        onEndClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.END },
-                        isEndError = hasTimeConflict,
-                        endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
-                        timezone = state.timezone,
-                        timePattern = timePattern
-                    )
-
-                    if (!state.isAllDay) {
-                        var showTimezoneSheet by remember { mutableStateOf(false) }
-                        val tzId = state.timezone
-                        val effectiveTzId = tzId ?: remember { TimezoneUtils.getDeviceTimezone() }
-                        val tzAbbrev = remember(effectiveTzId) { TimezoneUtils.getAbbreviation(effectiveTzId) }
-                        val tzDisplayName = remember(effectiveTzId) {
-                            TimezoneUtils.getTimezoneInfo(effectiveTzId)?.displayName
-                                ?: effectiveTzId.substringAfterLast('/').replace('_', ' ')
-                        }
-                        val timezoneLabel = "$tzDisplayName ($tzAbbrev)"
-
-                        EventFormRow(
-                            icon = Icons.Default.Public,
-                            iconContentDescription = stringResource(R.string.label_timezone),
-                            showExpandIcon = true,
-                            onToggle = { if (!isReadOnly) showTimezoneSheet = true }
-                        ) {
-                            Text(
-                                timezoneLabel,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = if (tzId == null)
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                else
-                                    MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-
-                        if (showTimezoneSheet) {
-                            TimezonePickerSheet(
-                                selectedTimezone = state.timezone,
-                                onTimezoneSelected = { newTimezone ->
-                                    val oldTz = state.timezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                        ?: java.util.TimeZone.getDefault()
-                                    val newTz = newTimezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                        ?: java.util.TimeZone.getDefault()
-
-                                    val (newStartDate, newStartH, newStartM) = convertTimezone(
-                                        oldTz, newTz, state.dateMillis, state.startHour, state.startMinute
-                                    )
-                                    val (newEndDate, newEndH, newEndM) = convertTimezone(
-                                        oldTz, newTz, state.endDateMillis, state.endHour, state.endMinute
-                                    )
-                                    state = state.copy(
-                                        timezone = newTimezone,
-                                        dateMillis = newStartDate,
-                                        startHour = newStartH,
-                                        startMinute = newStartM,
-                                        endDateMillis = newEndDate,
-                                        endHour = newEndH,
-                                        endMinute = newEndM
-                                    )
-                                    showTimezoneSheet = false
-                                },
-                                onDismiss = { showTimezoneSheet = false }
-                            )
-                        }
-                    }
-
-                    HorizontalDivider()
-
-                    CalendarPickerRow(
-                        selectedCalendarId = state.selectedCalendarId,
-                        selectedCalendarName = state.selectedCalendarName,
-                        selectedCalendarColor = state.selectedCalendarColor,
-                        calendarGroups = if (state.isEditMode && state.isDeviceCalendar) {
-                            emptyList()
-                        } else {
-                            state.calendarGroups
-                        },
-                        deviceCalendarGroups = if (state.isEditMode && !state.isDeviceCalendar) {
-                            emptyList()
-                        } else {
-                            state.deviceCalendarGroups
-                        },
-                        isSelectedDeviceCalendar = state.isDeviceCalendar,
-                        isExpanded = expandedPicker == "calendar",
-                        enabled = !isReadOnly && !(state.isEditMode && state.editingOccurrenceTs != null),
-                        onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
-                        onSelect = { id, name, color, isDevice ->
-                            state = state.copy(
-                                selectedCalendarId = id,
-                                selectedCalendarName = name,
-                                selectedCalendarColor = color,
-                                isDeviceCalendar = isDevice
-                            )
-                            // Re-resolve the attendee/organizer context for the
-                            // newly chosen calendar's account (schedulable gate
-                            // + "You" detection must not stay pinned to the
-                            // calendar the sheet opened with).
-                            onCalendarSelected?.invoke(id)
-                            expandedPicker = null
-                        }
-                    )
-
-                    EventFormRow(
-                        icon = Icons.Default.Palette,
-                        iconContentDescription = stringResource(R.string.label_event_color),
-                        onToggle = { if (!isReadOnly) showColorPicker = true }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            val fallbackArgb = MaterialTheme.colorScheme.primary.toArgb()
-                            val dotColor = state.eventColor
-                                ?: state.selectedCalendarColor
-                                ?: fallbackArgb
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(dotColor))
-                            )
-                            Text(
-                                stringResource(
-                                    if (state.eventColor == null) R.string.label_event_color
-                                    else EventColorPalette.stringResIdForColor(state.eventColor)
-                                ),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    ReminderPickerRow(
-                        reminders = state.reminders,
-                        isAllDay = state.isAllDay,
-                        use24Hour = use24Hour,
-                        isExpanded = expandedPicker == "reminders",
-                        onToggle = { expandedPicker = if (expandedPicker == "reminders") null else "reminders" },
-                        onRemindersChange = { newReminders ->
-                            state = state.copy(reminders = newReminders)
-                        },
-                        truncatedReminderCount = state.truncatedReminderCount
-                    )
-
-                    RecurrencePickerRow(
-                        selectedRrule = state.rrule,
-                        startDateMillis = state.dateMillis,
-                        isExpanded = expandedPicker == "repeat",
-                        onToggle = { if (!isReadOnly) expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
-                        onSelect = { rrule ->
-                            state = state.copy(rrule = rrule)
-                        },
-                        firstDayOfWeek = firstDayOfWeek
-                    )
-
-                    EventFormRow(
-                        icon = Icons.Default.EventAvailable,
-                        iconContentDescription = stringResource(R.string.label_availability)
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            FilterChip(
-                                selected = state.transp == "OPAQUE",
-                                onClick = { if (!isReadOnly) state = state.copy(transp = "OPAQUE") },
-                                enabled = !isReadOnly,
-                                label = { Text(stringResource(R.string.label_busy)) }
-                            )
-                            FilterChip(
-                                selected = state.transp == "TRANSPARENT",
-                                onClick = { if (!isReadOnly) state = state.copy(transp = "TRANSPARENT") },
-                                enabled = !isReadOnly,
-                                label = { Text(stringResource(R.string.label_free)) }
-                            )
-                        }
-                    }
-
-                    HorizontalDivider()
-
-
-                    var locationExpanded by remember { mutableStateOf(false) }
-                    var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
-                    var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
-                    var locationSearchJob by remember { mutableStateOf<Job?>(null) }
-
-                    if (shouldShowReadOnlyOptionalField(state.location, isReadOnly)) {
-                    EventFormRow(
-                        icon = Icons.Default.LocationOn,
-                        iconContentDescription = stringResource(R.string.label_location)
-                    ) {
-                        if (isReadOnly) {
-                            Text(
-                                text = state.location,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } else {
-                        ExposedDropdownMenuBox(
-                            expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                            onExpandedChange = { locationExpanded = it },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = state.location,
-                                onValueChange = { raw ->
-                                    // Strip newlines: with singleLine gone the
-                                    // Enter key would otherwise insert one, and
-                                    // a location is a single logical line.
-                                    val newValue = raw.replace("\n", "")
-                                    state = state.copy(location = newValue)
-                                    locationSearchJob?.cancel()
-                                    if (locationSuggestionService != null &&
-                                        newValue.length >= 5 &&
-                                        newValue.any { it.isLetter() }
-                                    ) {
-                                        locationSearchJob = coroutineScope.launch {
-                                            delay(300)
-                                            isLoadingLocationSuggestions = true
-                                            locationSuggestions = locationSuggestionService.getSuggestions(newValue)
-                                            isLoadingLocationSuggestions = false
-                                            locationExpanded = locationSuggestions.isNotEmpty()
-                                        }
-                                    } else {
-                                        locationSuggestions = emptyList()
-                                        locationExpanded = false
-                                    }
-                                },
-                                placeholder = { Text(stringResource(R.string.label_location_hint)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-                                // Wrap a long address to a second line instead of
-                                // scrolling it off the start on one line.
-                                maxLines = 2,
-                                enabled = !isReadOnly,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedBorderColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedContainerColor = Color.Transparent
-                                ),
-                                trailingIcon = {
-                                    if (isLoadingLocationSuggestions) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            strokeWidth = 2.dp
-                                        )
-                                    } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
-                                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
-                                    }
-                                }
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                                onDismissRequest = { locationExpanded = false }
-                            ) {
-                                locationSuggestions.forEach { suggestion ->
-                                    DropdownMenuItem(
-                                        text = { Text(suggestion.displayName) },
-                                        onClick = {
-                                            state = state.copy(location = suggestion.displayName)
-                                            locationExpanded = false
-                                            locationSuggestions = emptyList()
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Default.Place, contentDescription = null)
-                                        },
-                                        modifier = Modifier.height(48.dp)
-                                    )
-                                }
-                            }
-                        }
-                        }
-                    }
-                    }
-
-                    if (shouldShowReadOnlyOptionalField(state.description, isReadOnly)) {
-                    EventFormRow(
-                        icon = Icons.AutoMirrored.Filled.Notes,
-                        iconContentDescription = stringResource(R.string.label_notes)
-                    ) {
-                        if (isReadOnly) {
-                            Text(
-                                text = state.description,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } else {
-                        OutlinedTextField(
-                            value = state.description,
-                            onValueChange = { state = state.copy(description = it) },
-                            placeholder = { Text(stringResource(R.string.label_notes)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 2,
-                            maxLines = 4,
-                            enabled = !isReadOnly,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = Color.Transparent,
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedContainerColor = Color.Transparent
-                            )
-                        )
-                        }
-                    }
-                    }
-
-                    // Editable organizer flow: an always-present, tappable
-                    // Attendees row that opens the picker. Available for new
-                    // events, non-recurring edits, recurring SERIES edits, and
-                    // single-occurrence edits (a detached exception included) —
-                    // every save scope carries the edited guest set to its
-                    // write path. Not-organizer (isReadOnly) and non-schedulable
-                    // accounts keep the read-only display.
-                    val isDeviceEvent = deviceEventId != null
-                    // A device event's guest list is editable on a whole-event
-                    // edit of a writable calendar (not a single-occurrence /
-                    // this-and-future edit — the provider doesn't store
-                    // per-occurrence guest divergence, so those stay read-only).
-                    val isDeviceOccurrenceEdit =
-                        state.editingOccurrenceTs != null || loadedIsDetachedException
-                    val canEditDeviceAttendees = isDeviceEvent &&
-                        deviceEventWritable &&
-                        !isDeviceOccurrenceEdit &&
-                        onQueryContacts != null
-                    // Selected device calendar's delivery capability — drives the
-                    // LOCAL-account inline notice (editing is still allowed).
-                    val deviceCanDeliverInvites = deviceCalendarGroups
-                        .asSequence()
-                        .flatMap { it.pickerCalendars.asSequence() }
-                        .filterIsInstance<PickerCalendar.Device>()
-                        .firstOrNull { it.calendar.id == state.selectedCalendarId }
-                        ?.calendar
-                        ?.canDeliverInvites
-                        ?: true
-                    // The LOCAL "no invitation sent" notice shows whenever the
-                    // user is editing guests on a device calendar that can't
-                    // deliver. Computed once so both editable branches (existing
-                    // device event, and new event on a device calendar) gate it
-                    // identically.
-                    val showDeviceLocalNotice = (isDeviceEvent || state.isDeviceCalendar) &&
-                        !deviceCanDeliverInvites &&
-                        state.attendees.isNotEmpty() &&
-                        !deviceNoticeDismissed
-                    val canEditAttendees = !isDeviceEvent && canEditAttendees(
-                        isReadOnly = isReadOnly,
-                        isSchedulable = isSchedulable,
-                        hasContactQuery = onQueryContacts != null,
-                    )
-                    val showSchedulingUnavailable = !isDeviceEvent && showSchedulingUnavailable(
-                        isReadOnly = isReadOnly,
-                        isSchedulable = isSchedulable,
-                        hasContactQuery = onQueryContacts != null,
-                        isEditMode = state.isEditMode,
-                        wasRecurringAtLoad = wasRecurringAtLoad,
-                    )
-                    if (canEditDeviceAttendees) {
-                        // Editable device guest list. The picker mutates
-                        // state.attendees (Room entities); saveDeviceEvent
-                        // bridges them to provider rows. On a LOCAL calendar
-                        // editing is still offered, with an inline notice that
-                        // no invitation will be sent.
-                        EventFormRow(
-                            icon = Icons.Default.Group,
-                            iconContentDescription = stringResource(R.string.label_attendees)
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                EditableAttendeesRow(
-                                    attendees = state.attendees,
-                                    account = attendeeAccount,
-                                    onClick = { showAttendeePicker = true },
-                                )
-                                if (showDeviceLocalNotice) {
-                                    DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
-                                }
-                            }
-                        }
-                    } else if (isDeviceEvent && deviceAttendees.isNotEmpty()) {
-                        // Device-calendar guest list, read-only (occurrence edit
-                        // or non-writable calendar). Surface the existing guests
-                        // so the form matches the device quick-view's visibility.
-                        EventFormRow(
-                            icon = Icons.Default.Group,
-                            iconContentDescription = stringResource(R.string.label_attendees)
-                        ) {
-                            org.onekash.kashcal.ui.components.attendees.InviteesBlock(
-                                attendees = deviceAttendees,
-                                isCurrentUserOnList = deviceAttendees.any { it.isYou },
-                                isCurrentUserOrganizer = deviceAttendees.any { it.isYou && it.isOrganizer },
-                                onRsvp = {},
-                                onDrillIntoAttendees = { showAttendeeSheet = true },
-                                suppressRsvp = true,
-                                alwaysExpanded = false,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    } else if (canEditAttendees) {
-                        EventFormRow(
-                            icon = Icons.Default.Group,
-                            iconContentDescription = stringResource(R.string.label_attendees)
-                        ) {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                EditableAttendeesRow(
-                                    attendees = state.attendees,
-                                    account = attendeeAccount,
-                                    onClick = { showAttendeePicker = true },
-                                )
-                                // New event on a LOCAL device calendar: editing
-                                // is allowed but nothing is delivered.
-                                if (showDeviceLocalNotice) {
-                                    DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
-                                }
-                            }
-                        }
-                    } else if (showSchedulingUnavailable) {
-                        EventFormRow(
-                            icon = Icons.Default.Group,
-                            iconContentDescription = stringResource(R.string.label_attendees)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.attendee_scheduling_unavailable),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    } else if (attendees.isNotEmpty()) {
-                        EventFormRow(
-                            icon = Icons.Default.Group,
-                            iconContentDescription = stringResource(R.string.label_attendees)
-                        ) {
-                            val you = attendees.firstOrNull { it.isYou }
-                            // RSVP write path mutates only the loaded entity:
-                            // - master (state.rrule != null) → series-wide
-                            // - detached exception (loadedIsDetachedException) →
-                            //   per-occurrence; the disclosure would lie
-                            // - non-recurring → not applicable
-                            val rsvpAppliesToSeries =
-                                state.rrule != null && !loadedIsDetachedException
-                            val seriesDisclosure = if (
-                                isReadOnly &&
-                                org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
-                                    currentUserPartstat = you?.status,
-                                    isOrganizer = you?.isOrganizer == true,
-                                    isRecurring = rsvpAppliesToSeries,
-                                )
-                            ) stringResource(R.string.rsvp_series_disclosure) else null
-
-                            // Editable form: the user changes attendance by
-                            // editing the event itself, so the RSVP cards
-                            // are unnecessary noise. Suppress them — but
-                            // do NOT label the user as the organizer (they
-                            // may be editing a delegated calendar where
-                            // they're an attendee), since that flows into
-                            // the summary line phrasing.
-                            val suppressRsvp = !isReadOnly
-                            val actualIsOrganizer = you?.isOrganizer == true
-
-                            org.onekash.kashcal.ui.components.attendees.InviteesBlock(
-                                attendees = attendees,
-                                isCurrentUserOnList = isCurrentUserOnList,
-                                isCurrentUserOrganizer = actualIsOrganizer,
-                                onRsvp = onRsvp,
-                                onDrillIntoAttendees = { showAttendeeSheet = true },
-                                suppressRsvp = suppressRsvp,
-                                seriesDisclosure = seriesDisclosure,
-                                alwaysExpanded = isReadOnly,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    }
-
-                    if (showAttendeeSheet) {
-                        org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
-                            attendees = if (deviceEventId != null) deviceAttendees else attendees,
-                            onDismiss = { showAttendeeSheet = false },
-                        )
-                    }
-
-                    if (showAttendeePicker && onQueryContacts != null) {
-                        org.onekash.kashcal.ui.components.attendees.AttendeePickerSheet(
-                            seed = state.attendees,
-                            account = attendeeAccount,
-                            permissionState = contactsPermissionState,
-                            // Persisted decline OR this-session ✕ both hide the banner.
-                            bannerDismissed = contactsDeclined || contactsBannerDismissed,
-                            onQueryContacts = onQueryContacts,
-                            onRequestPermission = { onRequestContactsPermission?.invoke() },
-                            onDeclineContacts = { onDeclineContacts?.invoke() },
-                            onDismissPermissionBanner = { contactsBannerDismissed = true },
-                            // Auto-commit: each add/remove writes straight back to
-                            // the form (back/scrim just closes — nothing to confirm).
-                            onSelectionChanged = { merged ->
-                                state = state.copy(attendees = merged, attendeesEdited = true)
-                            },
-                            onDismiss = { showAttendeePicker = false },
-                        )
-                    }
-
-                    if (showColorPicker) {
-                        EventColorSheet(
-                            selectedArgb = state.eventColor,
-                            calendarDefaultArgb = state.selectedCalendarColor ?: MaterialTheme.colorScheme.primary.toArgb(),
-                            onColorSelected = { color ->
-                                state = state.copy(eventColor = color)
-                                showColorPicker = false
-                            },
-                            onDismiss = { showColorPicker = false }
-                        )
-                    }
-
-                    // Error message
-                    if (state.error != null) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
-                        ) {
-                            Text(
-                                text = state.error.orEmpty(),
-                                modifier = Modifier.padding(16.dp),
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        }
-                    }
-
-                    HorizontalDivider()
-
-
-                    val canDeleteRoom = eventId != null && onDelete != null
-                    val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
-                    if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
-                        // Commits the actual delete via the host's
-                        // callback. Used by both the inline-confirmation
-                        // path (non-recurring) and the direct path
-                        // (recurring — the host's scope sheet IS the
-                        // confirmation, so an extra inline tap would be
-                        // redundant friction).
-                        val commitDelete: () -> Unit = {
-                            coroutineScope.launch {
-                                state = state.copy(isSaving = true)
-                                try {
-                                    val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
-                                        onDeleteDeviceEvent!!(state)
-                                    } else if (canDeleteRoom && eventId != null) {
-                                        onDelete!!(eventId, state.editingOccurrenceTs)
-                                    } else {
-                                        Result.failure(IllegalStateException("No delete handler"))
-                                    }
-                                    result.fold(
-                                        onSuccess = { onDismiss() },
-                                        onFailure = { e ->
-                                            Log.e(TAG, "Error deleting event", e)
-                                            state = state.copy(
-                                                isSaving = false,
-                                                error = "Failed to delete: ${e.message}"
-                                            )
-                                            showDeleteConfirmation = false
-                                        }
-                                    )
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error deleting event", e)
-                                    state = state.copy(
-                                        isSaving = false,
-                                        error = "Failed to delete: ${e.message}"
-                                    )
-                                    showDeleteConfirmation = false
-                                }
-                            }
-                        }
-                        if (!showDeleteConfirmation) {
-                            EventFormRow(
-                                icon = Icons.Default.DeleteOutline,
-                                iconTint = MaterialTheme.colorScheme.error,
-                                iconContentDescription = stringResource(R.string.action_delete_event),
-                                onToggle = {
-                                    if (wasRecurringAtLoad && !loadedIsDetachedException) {
-                                        // Recurring master only: the host's
-                                        // scope sheet picks THIS_EVENT /
-                                        // THIS_AND_FUTURE / ALL_EVENTS and
-                                        // that deliberate pick is the
-                                        // confirmation. Exception events
-                                        // skip the scope sheet and route
-                                        // straight to single-occurrence
-                                        // delete, so they still need the
-                                        // inline two-tap guard.
-                                        commitDelete()
-                                    } else {
-                                        showDeleteConfirmation = true
-                                    }
-                                },
-                                enabled = !state.isSaving
-                            ) {
-                                Text(
-                                    stringResource(R.string.action_delete_event),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { showDeleteConfirmation = false },
-                                    enabled = !state.isSaving,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp)
-                                ) {
-                                    Text(stringResource(R.string.action_cancel))
-                                }
-                                Button(
-                                    onClick = { commitDelete() },
-                                    enabled = !state.isSaving,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.error
-                                    )
-                                ) {
-                                    if (state.isSaving) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(20.dp),
-                                            strokeWidth = 2.dp,
-                                            color = MaterialTheme.colorScheme.onError
-                                        )
-                                    } else {
-                                        Text(stringResource(R.string.action_confirm_delete))
-                                    }
-                                }
-                            }
-                        }
-                        HorizontalDivider()
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
+                }
                 }
 
-                // Sticky bottom save button
-                HorizontalDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.Center
+                if (shouldShowReadOnlyOptionalField(state.description, isReadOnly)) {
+                EventFormRow(
+                    icon = Icons.AutoMirrored.Filled.Notes,
+                    iconContentDescription = stringResource(R.string.label_notes)
                 ) {
-                    val stickyPrimary = MaterialTheme.colorScheme.primary
-                    val stickyCalColor = remember(state.selectedCalendarColor, stickyPrimary) {
-                        state.selectedCalendarColor?.let { Color(it) } ?: stickyPrimary
+                    if (isReadOnly) {
+                        Text(
+                            text = state.description,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                    OutlinedTextField(
+                        value = state.description,
+                        onValueChange = { state = state.copy(description = it) },
+                        placeholder = { Text(stringResource(R.string.label_notes)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2,
+                        maxLines = 4,
+                        enabled = !isReadOnly,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent
+                        )
+                    )
                     }
-                    val stickyContrastColor = remember(stickyCalColor) { contrastForegroundOn(stickyCalColor) }
-                    Button(
-                        onClick = { performSave() },
-                        enabled = saveEnabled,
+                }
+                }
+
+                // Editable organizer flow: an always-present, tappable
+                // Attendees row that opens the picker. Available for new
+                // events, non-recurring edits, recurring SERIES edits, and
+                // single-occurrence edits (a detached exception included) —
+                // every save scope carries the edited guest set to its
+                // write path. Not-organizer (isReadOnly) and non-schedulable
+                // accounts keep the read-only display.
+                val isDeviceEvent = deviceEventId != null
+                // A device event's guest list is editable on a whole-event
+                // edit of a writable calendar (not a single-occurrence /
+                // this-and-future edit — the provider doesn't store
+                // per-occurrence guest divergence, so those stay read-only).
+                val isDeviceOccurrenceEdit =
+                    state.editingOccurrenceTs != null || loadedIsDetachedException
+                val canEditDeviceAttendees = isDeviceEvent &&
+                    deviceEventWritable &&
+                    !isDeviceOccurrenceEdit &&
+                    onQueryContacts != null
+                // Selected device calendar's delivery capability — drives the
+                // LOCAL-account inline notice (editing is still allowed).
+                val deviceCanDeliverInvites = deviceCalendarGroups
+                    .asSequence()
+                    .flatMap { it.pickerCalendars.asSequence() }
+                    .filterIsInstance<PickerCalendar.Device>()
+                    .firstOrNull { it.calendar.id == state.selectedCalendarId }
+                    ?.calendar
+                    ?.canDeliverInvites
+                    ?: true
+                // The LOCAL "no invitation sent" notice shows whenever the
+                // user is editing guests on a device calendar that can't
+                // deliver. Computed once so both editable branches (existing
+                // device event, and new event on a device calendar) gate it
+                // identically.
+                val showDeviceLocalNotice = (isDeviceEvent || state.isDeviceCalendar) &&
+                    !deviceCanDeliverInvites &&
+                    state.attendees.isNotEmpty() &&
+                    !deviceNoticeDismissed
+                val canEditAttendees = !isDeviceEvent && canEditAttendees(
+                    isReadOnly = isReadOnly,
+                    isSchedulable = isSchedulable,
+                    hasContactQuery = onQueryContacts != null,
+                )
+                val showSchedulingUnavailable = !isDeviceEvent && showSchedulingUnavailable(
+                    isReadOnly = isReadOnly,
+                    isSchedulable = isSchedulable,
+                    hasContactQuery = onQueryContacts != null,
+                    isEditMode = state.isEditMode,
+                    wasRecurringAtLoad = wasRecurringAtLoad,
+                )
+                if (canEditDeviceAttendees) {
+                    // Editable device guest list. The picker mutates
+                    // state.attendees (Room entities); saveDeviceEvent
+                    // bridges them to provider rows. On a LOCAL calendar
+                    // editing is still offered, with an inline notice that
+                    // no invitation will be sent.
+                    EventFormRow(
+                        icon = Icons.Default.Group,
+                        iconContentDescription = stringResource(R.string.label_attendees)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            EditableAttendeesRow(
+                                attendees = state.attendees,
+                                account = attendeeAccount,
+                                onClick = { showAttendeePicker = true },
+                            )
+                            if (showDeviceLocalNotice) {
+                                DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
+                            }
+                        }
+                    }
+                } else if (isDeviceEvent && deviceAttendees.isNotEmpty()) {
+                    // Device-calendar guest list, read-only (occurrence edit
+                    // or non-writable calendar). Surface the existing guests
+                    // so the form matches the device quick-view's visibility.
+                    EventFormRow(
+                        icon = Icons.Default.Group,
+                        iconContentDescription = stringResource(R.string.label_attendees)
+                    ) {
+                        org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                            attendees = deviceAttendees,
+                            isCurrentUserOnList = deviceAttendees.any { it.isYou },
+                            isCurrentUserOrganizer = deviceAttendees.any { it.isYou && it.isOrganizer },
+                            onRsvp = {},
+                            onDrillIntoAttendees = { showAttendeeSheet = true },
+                            suppressRsvp = true,
+                            alwaysExpanded = false,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                } else if (canEditAttendees) {
+                    EventFormRow(
+                        icon = Icons.Default.Group,
+                        iconContentDescription = stringResource(R.string.label_attendees)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            EditableAttendeesRow(
+                                attendees = state.attendees,
+                                account = attendeeAccount,
+                                onClick = { showAttendeePicker = true },
+                            )
+                            // New event on a LOCAL device calendar: editing
+                            // is allowed but nothing is delivered.
+                            if (showDeviceLocalNotice) {
+                                DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
+                            }
+                        }
+                    }
+                } else if (showSchedulingUnavailable) {
+                    EventFormRow(
+                        icon = Icons.Default.Group,
+                        iconContentDescription = stringResource(R.string.label_attendees)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.attendee_scheduling_unavailable),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                } else if (attendees.isNotEmpty()) {
+                    EventFormRow(
+                        icon = Icons.Default.Group,
+                        iconContentDescription = stringResource(R.string.label_attendees)
+                    ) {
+                        val you = attendees.firstOrNull { it.isYou }
+                        // RSVP write path mutates only the loaded entity:
+                        // - master (state.rrule != null) → series-wide
+                        // - detached exception (loadedIsDetachedException) →
+                        //   per-occurrence; the disclosure would lie
+                        // - non-recurring → not applicable
+                        val rsvpAppliesToSeries =
+                            state.rrule != null && !loadedIsDetachedException
+                        val seriesDisclosure = if (
+                            isReadOnly &&
+                            org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                                currentUserPartstat = you?.status,
+                                isOrganizer = you?.isOrganizer == true,
+                                isRecurring = rsvpAppliesToSeries,
+                            )
+                        ) stringResource(R.string.rsvp_series_disclosure) else null
+
+                        // Editable form: the user changes attendance by
+                        // editing the event itself, so the RSVP cards
+                        // are unnecessary noise. Suppress them — but
+                        // do NOT label the user as the organizer (they
+                        // may be editing a delegated calendar where
+                        // they're an attendee), since that flows into
+                        // the summary line phrasing.
+                        val suppressRsvp = !isReadOnly
+                        val actualIsOrganizer = you?.isOrganizer == true
+
+                        org.onekash.kashcal.ui.components.attendees.InviteesBlock(
+                            attendees = attendees,
+                            isCurrentUserOnList = isCurrentUserOnList,
+                            isCurrentUserOrganizer = actualIsOrganizer,
+                            onRsvp = onRsvp,
+                            onDrillIntoAttendees = { showAttendeeSheet = true },
+                            suppressRsvp = suppressRsvp,
+                            seriesDisclosure = seriesDisclosure,
+                            alwaysExpanded = isReadOnly,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                if (showAttendeeSheet) {
+                    org.onekash.kashcal.ui.components.attendees.AttendeeListSheet(
+                        attendees = if (deviceEventId != null) deviceAttendees else attendees,
+                        onDismiss = { showAttendeeSheet = false },
+                    )
+                }
+
+                if (showAttendeePicker && onQueryContacts != null) {
+                    org.onekash.kashcal.ui.components.attendees.AttendeePickerSheet(
+                        seed = state.attendees,
+                        account = attendeeAccount,
+                        permissionState = contactsPermissionState,
+                        // Persisted decline OR this-session ✕ both hide the banner.
+                        bannerDismissed = contactsDeclined || contactsBannerDismissed,
+                        onQueryContacts = onQueryContacts,
+                        onRequestPermission = { onRequestContactsPermission?.invoke() },
+                        onDeclineContacts = { onDeclineContacts?.invoke() },
+                        onDismissPermissionBanner = { contactsBannerDismissed = true },
+                        // Auto-commit: each add/remove writes straight back to
+                        // the form (back/scrim just closes — nothing to confirm).
+                        onSelectionChanged = { merged ->
+                            state = state.copy(attendees = merged, attendeesEdited = true)
+                        },
+                        onDismiss = { showAttendeePicker = false },
+                    )
+                }
+
+                if (showColorPicker) {
+                    EventColorSheet(
+                        selectedArgb = state.eventColor,
+                        calendarDefaultArgb = state.selectedCalendarColor ?: MaterialTheme.colorScheme.primary.toArgb(),
+                        onColorSelected = { color ->
+                            state = state.copy(eventColor = color)
+                            showColorPicker = false
+                        },
+                        onDismiss = { showColorPicker = false }
+                    )
+                }
+
+                // Error message
+                if (state.error != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val errorText = state.error.orEmpty()
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = stickyCalColor,
-                            contentColor = stickyContrastColor
+                            .padding(horizontal = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
                         )
                     ) {
-                        if (state.isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp,
-                                color = stickyContrastColor
-                            )
-                        } else {
-                            Text(
-                                text = if (willNotifyAttendees) {
-                                    stringResource(R.string.action_save_and_notify)
-                                } else {
-                                    stringResource(R.string.action_save_event)
+                        Text(
+                            text = errorText,
+                            // A save/validation error blocks the user's action, so
+                            // interrupt TalkBack to announce it immediately, and mark
+                            // it as an error. On the Text (which carries the label),
+                            // not the Card, since the Card doesn't merge its child.
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .semantics {
+                                    liveRegion = LiveRegionMode.Assertive
+                                    error(errorText)
                                 },
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+
+                HorizontalDivider()
+
+
+                val canDeleteRoom = eventId != null && onDelete != null
+                val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
+                if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
+                    // Commits the actual delete via the host's
+                    // callback. Used by both the inline-confirmation
+                    // path (non-recurring) and the direct path
+                    // (recurring — the host's scope sheet IS the
+                    // confirmation, so an extra inline tap would be
+                    // redundant friction).
+                    val commitDelete: () -> Unit = {
+                        coroutineScope.launch {
+                            state = state.copy(isSaving = true)
+                            try {
+                                val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
+                                    onDeleteDeviceEvent!!(state)
+                                } else if (canDeleteRoom && eventId != null) {
+                                    onDelete!!(eventId, state.editingOccurrenceTs)
+                                } else {
+                                    Result.failure(IllegalStateException("No delete handler"))
+                                }
+                                result.fold(
+                                    onSuccess = { onDismiss() },
+                                    onFailure = { e ->
+                                        Log.e(TAG, "Error deleting event", e)
+                                        state = state.copy(
+                                            isSaving = false,
+                                            error = "Failed to delete: ${e.message}"
+                                        )
+                                        showDeleteConfirmation = false
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error deleting event", e)
+                                state = state.copy(
+                                    isSaving = false,
+                                    error = "Failed to delete: ${e.message}"
+                                )
+                                showDeleteConfirmation = false
+                            }
+                        }
+                    }
+                    if (!showDeleteConfirmation) {
+                        EventFormRow(
+                            icon = Icons.Default.DeleteOutline,
+                            iconTint = MaterialTheme.colorScheme.error,
+                            iconContentDescription = stringResource(R.string.action_delete_event),
+                            onToggle = {
+                                if (wasRecurringAtLoad && !loadedIsDetachedException) {
+                                    // Recurring master only: the host's
+                                    // scope sheet picks THIS_EVENT /
+                                    // THIS_AND_FUTURE / ALL_EVENTS and
+                                    // that deliberate pick is the
+                                    // confirmation. Exception events
+                                    // skip the scope sheet and route
+                                    // straight to single-occurrence
+                                    // delete, so they still need the
+                                    // inline two-tap guard.
+                                    commitDelete()
+                                } else {
+                                    showDeleteConfirmation = true
+                                }
+                            },
+                            enabled = !state.isSaving
+                        ) {
+                            Text(
+                                stringResource(R.string.action_delete_event),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showDeleteConfirmation = false },
+                                enabled = !state.isSaving,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                            ) {
+                                Text(stringResource(R.string.action_cancel))
+                            }
+                            Button(
+                                onClick = { commitDelete() },
+                                enabled = !state.isSaving,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                if (state.isSaving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onError
+                                    )
+                                } else {
+                                    Text(stringResource(R.string.action_confirm_delete))
+                                }
+                            }
+                        }
+                    }
+                    HorizontalDivider()
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            // Sticky bottom save button
+            HorizontalDivider()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                val stickyPrimary = MaterialTheme.colorScheme.primary
+                val stickyCalColor = remember(state.selectedCalendarColor, stickyPrimary) {
+                    state.selectedCalendarColor?.let { Color(it) } ?: stickyPrimary
+                }
+                val stickyContrastColor = remember(stickyCalColor) { contrastForegroundOn(stickyCalColor) }
+                Button(
+                    onClick = { performSave() },
+                    enabled = saveEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = stickyCalColor,
+                        contentColor = stickyContrastColor
+                    )
+                ) {
+                    if (state.isSaving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                            color = stickyContrastColor
+                        )
+                    } else {
+                        Text(
+                            text = if (willNotifyAttendees) {
+                                stringResource(R.string.action_save_and_notify)
+                            } else {
+                                stringResource(R.string.action_save_event)
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
         }
     }
+
 
     // Start DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.START) {
@@ -2143,6 +2367,7 @@ fun EventFormSheet(
         )
     }
 }
+
 
 // ExpandablePickerCard moved to ui/components/pickers/ExpandablePickerCard.kt
 // CalendarPickerRow lives in ui/components/pickers/CalendarPicker.kt

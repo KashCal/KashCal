@@ -1,0 +1,6 @@
+• Accessibility: full screen-reader (TalkBack) support: headings, spoken status, event state read aloud
+• Cancelled events are now crossed off (#276)
+• Set KashCal's language from Android system settings (Android 13+, 67 languages)
+• Delete a subscription with an accessibility action, not just a swipe
+• Rotating the device no longer discards the event you're editing (#286)
+• Event titles auto-capitalize the first letter (#285)

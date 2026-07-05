@@ -30,6 +30,8 @@
     <!-- %1$s = "month day", %2$s = event count text (from plurals or cd_widget_no_events) -->
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">no events</string>
+    <!-- Accessibility label for a cancelled event row in a widget: "<time>, <title>, cancelled" -->
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, cancelled</string>
 
     <!-- Notification channel names/descriptions (shown in Android Settings) -->
     <string name="channel_event_reminders">Event Reminders</string>
@@ -828,7 +830,7 @@
     <string name="drawer_device_calendars">Device calendars</string>
     <!-- Account header in drawer for events that aren't synced to any server -->
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Share feedback</string>
+    <string name="drawer_share_feedback">Help &amp; docs</string>
 
     <!-- Fallback title shown when an event has no title (e.g., re-snoozed reminder where the title was lost). -->
     <string name="event_title_fallback">Event</string>
@@ -1117,6 +1119,13 @@
     <!-- Content Descriptions (HomeScreen / ViewPicker / YearOverlay) -->
     <string name="cd_clear">Clear</string>
     <string name="cd_offline">Offline</string>
+    <!-- Event state announced to screen readers (otherwise shown only by dimming/strikethrough) -->
+    <string name="cd_event_state_cancelled">cancelled</string>
+    <string name="cd_event_state_declined">declined</string>
+    <string name="cd_event_state_past">past event</string>
+    <string name="cd_loading_events">Loading events</string>
+    <!-- Screen-reader fallback name for the event detail sheet when the event has no title -->
+    <string name="cd_event_untitled">Untitled event</string>
     <string name="cd_open_drawer">Open drawer</string>
     <string name="cd_close_drawer">Close drawer</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->

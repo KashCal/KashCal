@@ -15,6 +15,8 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -39,14 +41,24 @@ import java.time.LocalDate
 @Composable
 fun DateWidgetContent() {
     val locale = LocalContext.current.resources.configuration.locales[0]
-    val labels = WidgetDateFormatter.buildDateWidgetLabels(LocalDate.now(), locale)
+    val today = LocalDate.now()
+    val labels = WidgetDateFormatter.buildDateWidgetLabels(today, locale)
     val dayName = labels.dayName
     val dateNumber = labels.dateNumber
+
+    // The visible day-name/date-number split reads as two disconnected fragments
+    // to TalkBack; give the whole widget one full localized date label instead.
+    val fullDateLabel = today.format(
+        java.time.format.DateTimeFormatter
+            .ofLocalizedDate(java.time.format.FormatStyle.FULL)
+            .withLocale(locale)
+    )
 
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .padding(4.dp)
+            .semantics { contentDescription = fullDateLabel }
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(

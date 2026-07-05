@@ -536,7 +536,7 @@
     <string name="drawer_contacts">聯絡人</string>
     <string name="drawer_device_calendars">裝置行事曆</string>
     <string name="drawer_account_offline">離線</string>
-    <string name="drawer_share_feedback">分享意見</string>
+    <string name="drawer_share_feedback">說明與文件</string>
 
     <string name="event_title_fallback">事件</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">清除</string>
     <string name="cd_offline">離線</string>
+    <string name="cd_loading_events">正在載入事件</string>
     <string name="cd_open_drawer">開啟抽屜</string>
     <string name="cd_close_drawer">關閉抽屜</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">新增事件</string>
     <string name="cd_widget_day_cell">%1$s，%2$s</string>
     <string name="cd_widget_no_events">無事件</string>
+    <string name="cd_widget_event_cancelled">%1$s，%2$s，已取消</string>
     <string name="channel_event_reminders">事件提醒</string>
     <string name="channel_event_reminders_desc">即將到來的行事曆事件通知</string>
     <string name="channel_sync_progress">同步進度</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">自訂</string>
     <string name="cd_event_color">行程顏色</string>
     <string name="cd_checkmark">已選取</string>
+    <string name="cd_event_state_cancelled">已取消</string>
+    <string name="cd_event_state_declined">已拒絕</string>
+    <string name="cd_event_state_past">已過去的行程</string>
+    <string name="cd_event_untitled">無標題行程</string>
     <string name="label_device_timezone">裝置時區</string>
     <string name="color_saddlebrown">馬鞍棕</string>    <string name="color_tomato">番茄紅</string>    <string name="color_darkorange">深橙</string>
     <string name="color_gold">金色</string>

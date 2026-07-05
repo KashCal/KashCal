@@ -497,6 +497,10 @@
     <string name="cd_next_month">ਅਗਲਾ ਮਹੀਨਾ</string>
     <string name="cd_month_year_picker">ਮਹੀਨਾ ਅਤੇ ਸਾਲ ਚੋਣਕਾਰ</string>
     <string name="cd_remove_alert">ਚੇਤਾਵਨੀ ਹਟਾਓ</string>
+    <string name="cd_event_state_cancelled">ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
+    <string name="cd_event_state_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
+    <string name="cd_event_state_past">ਬੀਤਿਆ ਸਮਾਗਮ</string>
+    <string name="cd_event_untitled">ਬਿਨਾਂ ਸਿਰਲੇਖ ਸਮਾਗਮ</string>
     <string name="cd_warning">ਚੇਤਾਵਨੀ</string>
     <string name="cd_refresh_calendars">ਕੈਲੰਡਰ ਰਿਫ਼ਰੈਸ਼</string>
     <string name="cd_timezone_tap_to_change">ਟਾਈਮਜ਼ੋਨ: %1$s, ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ</string>
@@ -547,7 +551,7 @@
     <string name="drawer_contacts">ਸੰਪਰਕ</string>
     <string name="drawer_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="drawer_account_offline">ਆਫ਼ਲਾਈਨ</string>
-    <string name="drawer_share_feedback">ਫ਼ੀਡਬੈਕ ਸਾਂਝਾ ਕਰੋ</string>
+    <string name="drawer_share_feedback">ਮਦਦ ਅਤੇ ਦਸਤਾਵੇਜ਼</string>
 
     <string name="event_title_fallback">ਘਟਨਾ</string>
 
@@ -712,6 +716,7 @@
 
     <string name="cd_clear">ਸਾਫ਼</string>
     <string name="cd_offline">ਆਫ਼ਲਾਈਨ</string>
+    <string name="cd_loading_events">ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ</string>
     <string name="cd_open_drawer">ਡ੍ਰਾਅਰ ਖੋਲ੍ਹੋ</string>
     <string name="cd_close_drawer">ਡ੍ਰਾਅਰ ਬੰਦ ਕਰੋ</string>
     <string name="cd_open_rail">ਮੀਨੂ ਖੋਲ੍ਹੋ</string>
@@ -935,6 +940,7 @@
     <string name="cd_widget_add_event">ਘਟਨਾ ਜੋੜੋ</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">ਘਟਨਾ ਯਾਦ-ਦਹਾਨੀਆਂ</string>

@@ -311,6 +311,10 @@
     <string name="cd_close">Fermi</string>
     <string name="cd_search">Serĉi</string>
     <string name="cd_create_event">Krei eventon</string>
+    <string name="cd_event_state_cancelled">nuligita</string>
+    <string name="cd_event_state_declined">malakceptita</string>
+    <string name="cd_event_state_past">pasinta evento</string>
+    <string name="cd_event_untitled">Sentitola evento</string>
     <string name="cd_today">Hodiaŭ</string>
     <string name="cd_delete">Forigi</string>
     <string name="cd_refresh">Aktualigi</string>
@@ -578,7 +582,7 @@
     <string name="drawer_contacts">Kontaktoj</string>
     <string name="drawer_device_calendars">Aparataj kalendaroj</string>
     <string name="drawer_account_offline">Eksterrete</string>
-    <string name="drawer_share_feedback">Kunhavigi reagojn</string>
+    <string name="drawer_share_feedback">Helpo kaj dokumentoj</string>
     <string name="event_title_fallback">Evento</string>
 
     <!-- App Info / About -->
@@ -746,6 +750,7 @@
 
     <string name="cd_clear">Forviŝi</string>
     <string name="cd_offline">Eksterrete</string>
+    <string name="cd_loading_events">Ŝargado de eventoj</string>
     <string name="cd_open_drawer">Malfermi tirkeston</string>
     <string name="cd_close_drawer">Fermi tirkeston</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -994,6 +999,7 @@
     <string name="cd_widget_add_event">Aldoni eventon</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sen eventoj</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, nuligita</string>
     <string name="channel_event_reminders">Eventaj memorigoj</string>
     <string name="channel_event_reminders_desc">Sciigoj por venontaj kalendaraj eventoj</string>
     <string name="channel_sync_progress">Sinkroniga progreso</string>

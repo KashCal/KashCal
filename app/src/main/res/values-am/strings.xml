@@ -591,7 +591,7 @@
     <string name="drawer_contacts">እውቂያዎች</string>
     <string name="drawer_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="drawer_account_offline">ከመስመር ውጭ</string>
-    <string name="drawer_share_feedback">አስተያየት አጋራ</string>
+    <string name="drawer_share_feedback">እገዛ &amp; ሰነዶች</string>
 
     <string name="event_title_fallback">ክስተት</string>
 
@@ -760,6 +760,7 @@
 
     <string name="cd_clear">አጽዳ</string>
     <string name="cd_offline">ከመስመር ውጭ</string>
+    <string name="cd_loading_events">ክስተቶችን በመጫን ላይ</string>
     <string name="cd_open_drawer">መሳቢያ ክፈት</string>
     <string name="cd_close_drawer">መሳቢያ ዝጋ</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -979,6 +980,7 @@
     <string name="cd_widget_add_event">ክስተት ጨምር</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ምንም ክስተቶች የሉም</string>
+    <string name="cd_widget_event_cancelled">%1$s፣ %2$s፣ ተሰርዟል</string>
     <string name="channel_event_reminders">የክስተት አስታዋሾች</string>
     <string name="channel_event_reminders_desc">ለመጪ የቀን መቁጠሪያ ክስተቶች ማሳወቂያዎች</string>
     <string name="channel_sync_progress">የማመሳሰል እድገት</string>
@@ -1088,6 +1090,11 @@
     <string name="cd_event_color">የክስተት ቀለም</string>
 
     <string name="cd_checkmark">ተመርጧል</string>
+
+    <string name="cd_event_state_cancelled">ተሰርዟል</string>
+    <string name="cd_event_state_declined">ውድቅ ተደርጓል</string>
+    <string name="cd_event_state_past">ያለፈ ክስተት</string>
+    <string name="cd_event_untitled">ርዕስ የሌለው ክስተት</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">የኮርቻ ቡናማ</string>

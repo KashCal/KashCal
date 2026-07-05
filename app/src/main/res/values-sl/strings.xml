@@ -304,6 +304,10 @@
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Izbrano</string>
+    <string name="cd_event_state_cancelled">preklicano</string>
+    <string name="cd_event_state_declined">zavrnjeno</string>
+    <string name="cd_event_state_past">pretekli dogodek</string>
+    <string name="cd_event_untitled">Dogodek brez naslova</string>
     <string name="cd_back">Nazaj</string>
     <string name="cd_close">Zapri</string>
     <string name="cd_search">Iskanje</string>
@@ -557,7 +561,7 @@
     <string name="drawer_contacts">Stiki</string>
     <string name="drawer_device_calendars">Koledarji naprave</string>
     <string name="drawer_account_offline">Brez povezave</string>
-    <string name="drawer_share_feedback">Delite povratne informacije</string>
+    <string name="drawer_share_feedback">Pomoč in dokumenti</string>
 
     <string name="event_title_fallback">Dogodek</string>
 
@@ -785,6 +789,7 @@
 
     <string name="cd_clear">Počisti</string>
     <string name="cd_offline">Brez povezave</string>
+    <string name="cd_loading_events">Nalaganje dogodkov</string>
     <string name="cd_open_drawer">Odpri meni</string>
     <string name="cd_close_drawer">Zapri meni</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1024,6 +1029,7 @@
     <string name="cd_widget_add_event">Dodaj dogodek</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ni dogodkov</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, preklicano</string>
     <string name="channel_event_reminders">Opomniki dogodkov</string>
     <string name="channel_event_reminders_desc">Obvestila za prihajajoče dogodke v koledarju</string>
     <string name="channel_sync_progress">Napredek sinhronizacije</string>

@@ -107,6 +107,11 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -139,6 +144,7 @@ import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
 import org.onekash.kashcal.ui.components.cardFillAlpha
 import org.onekash.kashcal.ui.components.declinedCardAlpha
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
+import org.onekash.kashcal.ui.components.eventStateDescription
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
@@ -573,7 +579,18 @@ fun HomeScreen(
                                 when (uiState.viewMode) {
                                     ViewMode.AGENDA -> {
                                         if (uiState.isLoadingAgenda) {
-                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                            val loadingLabel = stringResource(R.string.cd_loading_events)
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    // The spinner has no text; give it a spoken label and
+                                                    // announce it politely so TalkBack says "Loading events".
+                                                    .semantics {
+                                                        liveRegion = LiveRegionMode.Polite
+                                                        contentDescription = loadingLabel
+                                                    },
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 CircularProgressIndicator()
                                             }
                                         } else {
@@ -1182,7 +1199,10 @@ private fun HomeTopAppBar(
                             Icons.Default.CloudOff,
                             contentDescription = stringResource(R.string.cd_offline),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier
+                                .size(20.dp)
+                                // Announce the transition to offline to TalkBack.
+                                .semantics { liveRegion = LiveRegionMode.Polite }
                         )
                     }
                     IconButton(onClick = onSearchClick) {
@@ -1669,10 +1689,12 @@ private fun SearchResultCard(
         }
     }
 
+    val searchStateLabel = eventStateDescription(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled)
     Card(
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (isPast) 0.5f else 1f)
+            .then(if (searchStateLabel != null) Modifier.semantics { stateDescription = searchStateLabel } else Modifier)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
@@ -1959,10 +1981,12 @@ private fun AgendaCard(
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
+    val agendaStateLabel = eventStateDescription(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled)
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(declinedCardAlpha(isPast, displayEvent.isDeclinedByMe))
+            .alpha(declinedCardAlpha(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled))
+            .then(if (agendaStateLabel != null) Modifier.semantics { stateDescription = agendaStateLabel } else Modifier)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
@@ -1979,7 +2003,7 @@ private fun AgendaCard(
                     displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe)
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled)
                 )
                 Text(
                     dateString,

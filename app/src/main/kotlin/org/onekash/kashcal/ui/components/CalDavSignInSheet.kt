@@ -42,7 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -325,7 +327,16 @@ private fun NotConnectedContent(
             ) {
                 Text(
                     errorText,
-                    modifier = Modifier.padding(16.dp),
+                    // Announce the connection failure immediately (it appears
+                    // after tapping Sign in with no focus change) and mark it as
+                    // an error. On the Text (which carries the label), not the
+                    // Card, since the Card doesn't merge its child's text.
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .semantics {
+                            liveRegion = LiveRegionMode.Assertive
+                            error(errorText)
+                        },
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodyMedium
                 )

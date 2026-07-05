@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Контакты</string>
     <string name="drawer_device_calendars">Календари устройства</string>
     <string name="drawer_account_offline">Нет сети</string>
-    <string name="drawer_share_feedback">Оставить отзыв</string>
+    <string name="drawer_share_feedback">Справка и документы</string>
 
     <string name="event_title_fallback">Событие</string>
 
@@ -830,6 +830,11 @@
 
     <string name="cd_clear">Очистить</string>
     <string name="cd_offline">Нет сети</string>
+    <string name="cd_event_state_cancelled">отменено</string>
+    <string name="cd_event_state_declined">отклонено</string>
+    <string name="cd_event_state_past">прошедшее событие</string>
+    <string name="cd_event_untitled">Событие без названия</string>
+    <string name="cd_loading_events">Загрузка событий</string>
     <string name="cd_open_drawer">Открыть меню</string>
     <string name="cd_close_drawer">Закрыть меню</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1026,6 +1031,7 @@
     <string name="cd_widget_add_event">Добавить событие</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">нет событий</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>
     <string name="channel_event_reminders">Напоминания о событиях</string>
     <string name="channel_event_reminders_desc">Уведомления о предстоящих событиях в календаре</string>
     <string name="channel_sync_progress">Ход синхронизации</string>

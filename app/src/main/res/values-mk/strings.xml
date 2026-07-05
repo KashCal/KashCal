@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календари на уредот</string>
     <string name="drawer_account_offline">Офлајн</string>
-    <string name="drawer_share_feedback">Споделете повратна информација</string>
+    <string name="drawer_share_feedback">Помош и документација</string>
 
     <string name="event_title_fallback">Настан</string>
 
@@ -768,6 +768,7 @@
 
     <string name="cd_clear">Исчисти</string>
     <string name="cd_offline">Офлајн</string>
+    <string name="cd_loading_events">Се вчитуваат настани</string>
     <string name="cd_open_drawer">Отвори фиока</string>
     <string name="cd_close_drawer">Затвори фиока</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -987,6 +988,11 @@
     <string name="cd_widget_add_event">Додај настан</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">нема настани</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, откажано</string>
+    <string name="cd_event_state_cancelled">откажано</string>
+    <string name="cd_event_state_declined">одбиено</string>
+    <string name="cd_event_state_past">изминат настан</string>
+    <string name="cd_event_untitled">Настан без наслов</string>
     <string name="channel_event_reminders">Потсетници за настани</string>
     <string name="channel_event_reminders_desc">Известувања за претстојни настани во календарот</string>
     <string name="channel_sync_progress">Напредок на синхронизација</string>

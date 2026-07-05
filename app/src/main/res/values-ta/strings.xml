@@ -354,6 +354,10 @@
     <string name="cd_version_info">KashCal பதிப்பு %1$s. பிழைத்திருத்த விருப்பங்களுக்கு நீண்ட நேரம் அழுத்தவும்.</string>
     <string name="cd_color_slider">நிற நழுவி, தற்போது %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d பாகை</string>
+    <string name="cd_event_state_cancelled">ரத்துசெய்யப்பட்டது</string>
+    <string name="cd_event_state_declined">மறுக்கப்பட்டது</string>
+    <string name="cd_event_state_past">கடந்த நிகழ்வு</string>
+    <string name="cd_event_untitled">தலைப்பில்லா நிகழ்வு</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">நாட்காட்டி</string>
@@ -599,7 +603,7 @@
     <string name="drawer_contacts">தொடர்புகள்</string>
     <string name="drawer_device_calendars">சாதன நாட்காட்டிகள்</string>
     <string name="drawer_account_offline">ஆஃப்லைன்</string>
-    <string name="drawer_share_feedback">கருத்தைப் பகிர்</string>
+    <string name="drawer_share_feedback">உதவி &amp; ஆவணங்கள்</string>
 
     <string name="event_title_fallback">நிகழ்வு</string>
 
@@ -768,6 +772,7 @@
 
     <string name="cd_clear">அழி</string>
     <string name="cd_offline">ஆஃப்லைன்</string>
+    <string name="cd_loading_events">நிகழ்வுகள் ஏற்றப்படுகின்றன</string>
     <string name="cd_open_drawer">டிராயர் திற</string>
     <string name="cd_close_drawer">டிராயர் மூடு</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -999,6 +1004,7 @@
     <string name="cd_widget_add_event">நிகழ்வைச் சேர்க்கவும்</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">நிகழ்வுகள் இல்லை</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ரத்துசெய்யப்பட்டது</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">நிகழ்வு நினைவூட்டல்கள்</string>

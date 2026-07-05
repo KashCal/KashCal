@@ -342,6 +342,10 @@
     <string name="cd_close">Cau</string>
     <string name="cd_search">Chwilio</string>
     <string name="cd_create_event">Creu digwyddiad</string>
+    <string name="cd_event_state_cancelled">wedi\'i ganslo</string>
+    <string name="cd_event_state_declined">wedi\'i wrthod</string>
+    <string name="cd_event_state_past">digwyddiad yn y gorffennol</string>
+    <string name="cd_event_untitled">Digwyddiad heb deitl</string>
     <string name="cd_today">Heddiw</string>
     <string name="cd_delete">Dileu</string>
     <string name="cd_refresh">Adnewyddu</string>
@@ -611,7 +615,7 @@
     <string name="drawer_contacts">Cysylltiadau</string>
     <string name="drawer_device_calendars">Calendrau\'r ddyfais</string>
     <string name="drawer_account_offline">All-lein</string>
-    <string name="drawer_share_feedback">Rhannu adborth</string>
+    <string name="drawer_share_feedback">Cymorth a dogfennau</string>
     <string name="event_title_fallback">Digwyddiad</string>
 
     <!-- i18n: App Info / About -->
@@ -903,6 +907,7 @@
 
     <string name="cd_clear">Clirio</string>
     <string name="cd_offline">All-lein</string>
+    <string name="cd_loading_events">Yn llwytho digwyddiadau</string>
     <string name="cd_open_drawer">Agor droir</string>
     <string name="cd_close_drawer">Cau droir</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1183,6 +1188,7 @@
     <string name="cd_widget_add_event">Ychwanegu digwyddiad</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">dim digwyddiadau</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, wedi\'i ganslo</string>
     <string name="channel_event_reminders">Atgofion digwyddiadau</string>
     <string name="channel_event_reminders_desc">Hysbysiadau ar gyfer digwyddiadau calendr sy\'n dod</string>
     <string name="channel_sync_progress">Cynnydd cydamseru</string>

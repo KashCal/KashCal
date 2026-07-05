@@ -602,7 +602,7 @@
     <string name="drawer_contacts">Contatos</string>
     <string name="drawer_device_calendars">Calendários do dispositivo</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Enviar feedback</string>
+    <string name="drawer_share_feedback">Ajuda &amp; docs</string>
 
     <string name="event_title_fallback">Evento</string>
 
@@ -804,6 +804,11 @@
 
     <string name="cd_clear">Limpar</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_event_state_cancelled">cancelado</string>
+    <string name="cd_event_state_declined">recusado</string>
+    <string name="cd_event_state_past">evento passado</string>
+    <string name="cd_event_untitled">Evento sem título</string>
+    <string name="cd_loading_events">Carregando eventos</string>
     <string name="cd_open_drawer">Abrir menu</string>
     <string name="cd_close_drawer">Fechar menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1029,6 +1034,7 @@
     <string name="cd_widget_add_event">Adicionar evento</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sem eventos</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, cancelado</string>
     <string name="channel_event_reminders">Lembretes de eventos</string>
     <string name="channel_event_reminders_desc">Notificações para próximos eventos do calendário</string>
     <string name="channel_sync_progress">Progresso de sincronização</string>

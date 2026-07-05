@@ -354,6 +354,10 @@
     <string name="cd_version_info">KashCal సంస్కరణ %1$s. డీబగ్ ఎంపికల కోసం ఎక్కువసేపు నొక్కండి.</string>
     <string name="cd_color_slider">రంగు స్లైడర్, ప్రస్తుతం %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d డిగ్రీలు</string>
+    <string name="cd_event_state_cancelled">రద్దు చేయబడింది</string>
+    <string name="cd_event_state_declined">తిరస్కరించబడింది</string>
+    <string name="cd_event_state_past">గత ఈవెంట్</string>
+    <string name="cd_event_untitled">శీర్షిక లేని ఈవెంట్</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">క్యాలెండర్</string>
@@ -599,7 +603,7 @@
     <string name="drawer_contacts">కాంటాక్ట్‌లు</string>
     <string name="drawer_device_calendars">పరికర క్యాలెండర్లు</string>
     <string name="drawer_account_offline">ఆఫ్‌లైన్</string>
-    <string name="drawer_share_feedback">అభిప్రాయం పంచుకో</string>
+    <string name="drawer_share_feedback">సహాయం &amp; పత్రాలు</string>
 
     <string name="event_title_fallback">ఈవెంట్</string>
 
@@ -768,6 +772,7 @@
 
     <string name="cd_clear">క్లియర్</string>
     <string name="cd_offline">ఆఫ్‌లైన్</string>
+    <string name="cd_loading_events">ఈవెంట్‌లు లోడ్ అవుతున్నాయి</string>
     <string name="cd_open_drawer">డ్రాయర్ తెరువు</string>
     <string name="cd_close_drawer">డ్రాయర్ మూసివేయి</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -999,6 +1004,7 @@
     <string name="cd_widget_add_event">ఈవెంట్ జోడించండి</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ఈవెంట్‌లు లేవు</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, రద్దు చేయబడింది</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">ఈవెంట్ రిమైండర్‌లు</string>

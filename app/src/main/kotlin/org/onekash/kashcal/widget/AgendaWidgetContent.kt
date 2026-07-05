@@ -25,6 +25,8 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
@@ -182,10 +184,24 @@ private fun EventRow(
     // Format title with optional emoji prefix
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
 
+    val rowContext = LocalContext.current
+    // A cancelled event only reads as a strikethrough visually; name that state
+    // for TalkBack by labelling the whole row (time, title, cancelled).
+    val cancelledLabel = if (event.isCancelled) {
+        rowContext.getString(
+            R.string.cd_widget_event_cancelled,
+            formatWidgetEventTime(event, dayCode, timePattern, rowContext.getString(R.string.label_all_day)),
+            displayTitle,
+        )
+    } else {
+        null
+    }
+
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
+            .let { m -> if (cancelledLabel != null) m.semantics { contentDescription = cancelledLabel } else m }
             .clickable(
                 actionStartActivity<MainActivity>(
                     parameters = actionParametersOf(
@@ -208,9 +224,9 @@ private fun EventRow(
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, context.getString(R.string.label_all_day)),
             style = TextStyle(
-                color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
+                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
                 fontSize = WidgetTypography.secondary,
-                textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
+                textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
             modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
@@ -222,10 +238,10 @@ private fun EventRow(
         Text(
             text = displayTitle,
             style = TextStyle(
-                color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.primaryText,
+                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
                 fontSize = WidgetTypography.contentTitle,
                 fontWeight = FontWeight.Medium,
-                textDecoration = if (event.isPast) TextDecoration.LineThrough else TextDecoration.None
+                textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
             ),
             maxLines = 1,
             modifier = GlanceModifier.defaultWeight()

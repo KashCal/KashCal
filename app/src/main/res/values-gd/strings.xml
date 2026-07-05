@@ -332,6 +332,10 @@
     <string name="cd_close">Dùin</string>
     <string name="cd_search">Lorg</string>
     <string name="cd_create_event">Cruthaich tachartas</string>
+    <string name="cd_event_state_cancelled">air a sguabadh às</string>
+    <string name="cd_event_state_declined">air a dhiùltadh</string>
+    <string name="cd_event_state_past">tachartas a dh\'fhalbh</string>
+    <string name="cd_event_untitled">Tachartas gun tiotal</string>
     <string name="cd_today">An-diugh</string>
     <string name="cd_delete">Sguab às</string>
     <string name="cd_refresh">Ath-nuadhaich</string>
@@ -601,7 +605,7 @@
     <string name="drawer_contacts">Luchd-aithne</string>
     <string name="drawer_device_calendars">Mìosachain an uidheim</string>
     <string name="drawer_account_offline">Far loidhne</string>
-    <string name="drawer_share_feedback">Co-roinn beachd</string>
+    <string name="drawer_share_feedback">Cobhair is sgrìobhainnean</string>
     <string name="event_title_fallback">Tachartas</string>
 
     <!-- i18n: App Info / About -->
@@ -831,6 +835,7 @@
 
     <string name="cd_clear">Glan</string>
     <string name="cd_offline">Far loidhne</string>
+    <string name="cd_loading_events">A\' luchdadh thachartasan</string>
     <string name="cd_open_drawer">Fosgail drathair</string>
     <string name="cd_close_drawer">Dùin drathair</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1095,6 +1100,7 @@
     <string name="cd_widget_add_event">Cuir tachartas ris</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gun tachartasan</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, air a chur dheth</string>
     <string name="channel_event_reminders">Cuimhneachain thachartasan</string>
     <string name="channel_event_reminders_desc">Brathan airson tachartasan mìosachain ri thighinn</string>
     <string name="channel_sync_progress">Adhartas sioncronachaidh</string>

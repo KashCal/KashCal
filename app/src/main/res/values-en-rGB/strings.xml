@@ -591,7 +591,7 @@
     <string name="drawer_contacts">Contacts</string>
     <string name="drawer_device_calendars">Device calendars</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Share feedback</string>
+    <string name="drawer_share_feedback">Help &amp; docs</string>
 
     <string name="event_title_fallback">Event</string>
 
@@ -760,6 +760,7 @@
 
     <string name="cd_clear">Clear</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Loading events</string>
     <string name="cd_open_drawer">Open drawer</string>
     <string name="cd_close_drawer">Close drawer</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -977,6 +978,7 @@
     <string name="cd_widget_add_event">Add event</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">no events</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, cancelled</string>
     <string name="channel_event_reminders">Event Reminders</string>
     <string name="channel_event_reminders_desc">Notifications for upcoming calendar events</string>
     <string name="channel_sync_progress">Sync Progress</string>
@@ -1083,6 +1085,11 @@
     <string name="cd_event_color">Event colour</string>
 
     <string name="cd_checkmark">Selected</string>
+
+    <string name="cd_event_state_cancelled">cancelled</string>
+    <string name="cd_event_state_declined">declined</string>
+    <string name="cd_event_state_past">past event</string>
+    <string name="cd_event_untitled">Untitled event</string>
 
     <!-- ==================== Event Colour Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Saddle Brown</string>

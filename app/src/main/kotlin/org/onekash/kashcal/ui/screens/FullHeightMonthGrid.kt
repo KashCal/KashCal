@@ -27,6 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -34,6 +36,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.declinedCardAlpha
+import org.onekash.kashcal.ui.components.eventStateDescription
 import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.model.MonthGrid
@@ -227,7 +230,19 @@ private fun SpanBar(
     }
     val style = remember(span.displayEvent) { spanStyleFor(span.displayEvent) }
     val isDeclined = span.displayEvent.isDeclinedByMe
-    val declinedModifier = modifier.alpha(declinedCardAlpha(isPast = false, isDeclined = isDeclined))
+    val isCancelled = span.displayEvent.isCancelled
+    val stateLabel = eventStateDescription(isPast = false, isDeclined = isDeclined, isCancelled = isCancelled)
+    val declinedModifier = modifier
+        .alpha(declinedCardAlpha(isPast = false, isDeclined = isDeclined, isCancelled = isCancelled))
+        // The span bar isn't clickable, so it wouldn't merge its BarText child;
+        // mergeDescendants makes the state label attach to the spoken span title.
+        .then(
+            if (stateLabel != null) {
+                Modifier.semantics(mergeDescendants = true) { stateDescription = stateLabel }
+            } else {
+                Modifier
+            }
+        )
     when (style) {
         is SpanStyle.AllDayBusy -> StyledBox(
             modifier = declinedModifier,
@@ -235,7 +250,7 @@ private fun SpanBar(
             fill = Color(style.fillColor),
             borderColor = null,
         ) {
-            BarText(title, color = style.textColor, isDeclined = isDeclined)
+            BarText(title, color = style.textColor, isDeclined = isDeclined, isCancelled = isCancelled)
         }
         is SpanStyle.AllDayFree -> StyledBox(
             modifier = declinedModifier,
@@ -243,7 +258,7 @@ private fun SpanBar(
             fill = style.tintFill,
             borderColor = Color(style.borderColor),
         ) {
-            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
+            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined, isCancelled = isCancelled)
         }
         is SpanStyle.TimedSpan -> Box(
             modifier = declinedModifier
@@ -260,7 +275,7 @@ private fun SpanBar(
                             .background(Color(style.stripeColor))
                     )
                 }
-                BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
+                BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined, isCancelled = isCancelled)
             }
         }
     }
@@ -285,12 +300,12 @@ private fun StyledBox(
 }
 
 @Composable
-private fun BarText(text: String, color: Color, isDeclined: Boolean = false) {
+private fun BarText(text: String, color: Color, isDeclined: Boolean = false, isCancelled: Boolean = false) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
         color = color,
-        textDecoration = declinedTitleDecoration(isDeclined),
+        textDecoration = declinedTitleDecoration(isDeclined, isCancelled),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.padding(horizontal = 4.dp)
@@ -354,8 +369,9 @@ private fun EventSnippetSlot(
     val title = rememberDisplayEventTitle(displayEvent, showEventEmojis)
     val style = remember(displayEvent) { snippetStyleFor(displayEvent) }
     val isDeclined = displayEvent.isDeclinedByMe
+    val isCancelled = displayEvent.isCancelled
     val baseAlpha = if (isInOutDate) 0.4f else 1f
-    val rowAlpha = if (isDeclined) baseAlpha.coerceAtMost(0.5f) else baseAlpha
+    val rowAlpha = if (isDeclined || isCancelled) baseAlpha.coerceAtMost(0.5f) else baseAlpha
     val slotHeight = slotHeight()
     val baseModifier = modifier
         .alpha(rowAlpha)
@@ -377,7 +393,7 @@ private fun EventSnippetSlot(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Unspecified,
-                textDecoration = declinedTitleDecoration(isDeclined),
+                textDecoration = declinedTitleDecoration(isDeclined, isCancelled),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 3.dp, end = 1.dp)
@@ -389,7 +405,7 @@ private fun EventSnippetSlot(
             fill = Color(style.fillColor),
             borderColor = null,
         ) {
-            BarText(title, color = style.textColor, isDeclined = isDeclined)
+            BarText(title, color = style.textColor, isDeclined = isDeclined, isCancelled = isCancelled)
         }
         is SnippetStyle.AllDayFree -> StyledBox(
             modifier = baseModifier.height(slotHeight),
@@ -397,7 +413,7 @@ private fun EventSnippetSlot(
             fill = style.tintFill,
             borderColor = Color(style.borderColor),
         ) {
-            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
+            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined, isCancelled = isCancelled)
         }
     }
 }

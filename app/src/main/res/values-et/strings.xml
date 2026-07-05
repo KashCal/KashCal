@@ -589,7 +589,7 @@
     <string name="drawer_contacts">Kontaktid</string>
     <string name="drawer_device_calendars">Seadme kalendrid</string>
     <string name="drawer_account_offline">Võrguühenduseta</string>
-    <string name="drawer_share_feedback">Jaga tagasisidet</string>
+    <string name="drawer_share_feedback">Abi ja dokumendid</string>
 
     <string name="event_title_fallback">Sündmus</string>
 
@@ -759,6 +759,11 @@
 
     <string name="cd_clear">Tühjenda</string>
     <string name="cd_offline">Võrguühenduseta</string>
+    <string name="cd_event_state_cancelled">tühistatud</string>
+    <string name="cd_event_state_declined">tagasi lükatud</string>
+    <string name="cd_event_state_past">möödunud sündmus</string>
+    <string name="cd_event_untitled">Pealkirjata sündmus</string>
+    <string name="cd_loading_events">Sündmuste laadimine</string>
     <string name="cd_open_drawer">Ava menüü</string>
     <string name="cd_close_drawer">Sulge menüü</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -941,6 +946,7 @@
     <string name="cd_widget_add_event">Lisa sündmus</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sündmusi pole</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, tühistatud</string>
     <string name="channel_event_reminders">Sündmuste meeldetuletused</string>
     <string name="channel_event_reminders_desc">Teated eelseisvate kalendrisündmuste kohta</string>
     <string name="channel_sync_progress">Sünkroonimise edenemine</string>

@@ -24,6 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
@@ -53,6 +56,10 @@ internal fun DayEventsSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
+    val locale = LocalLocale.current.platformLocale
+    val dateLabel = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEEMMMMd"), locale)
+        .format(Date(dateMs))
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -63,16 +70,17 @@ internal fun DayEventsSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .padding(bottom = 16.dp)
+                // Announce the sheet (by its date) when it opens.
+                .semantics { paneTitle = dateLabel }
         ) {
             // Date header
-            val locale = LocalLocale.current.platformLocale
-            val dateLabel = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEEMMMMd"), locale)
-                .format(Date(dateMs))
             Text(
                 text = dateLabel,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
+                modifier = Modifier
+                    .padding(top = 16.dp, bottom = 12.dp)
+                    .semantics { heading() }
             )
 
             if (events.isEmpty()) {

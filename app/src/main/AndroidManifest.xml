@@ -71,6 +71,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.KashCal"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
             android:windowSoftInputMode="adjustResize">
 
             <!-- Launcher + default calendar app (APP_CALENDAR must be on ACTION_MAIN per Android docs) -->
@@ -223,6 +224,7 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
+            android:label="@string/settings_title"
             android:theme="@style/Theme.KashCal"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustResize" />

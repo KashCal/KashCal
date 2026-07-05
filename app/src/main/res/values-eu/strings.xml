@@ -311,6 +311,10 @@
     <string name="cd_close">Itxi</string>
     <string name="cd_search">Bilatu</string>
     <string name="cd_create_event">Gertaera sortu</string>
+    <string name="cd_event_state_cancelled">ezeztatuta</string>
+    <string name="cd_event_state_declined">ezetsita</string>
+    <string name="cd_event_state_past">iraganeko gertaera</string>
+    <string name="cd_event_untitled">Izenbururik gabeko gertaera</string>
     <string name="cd_today">Gaur</string>
     <string name="cd_delete">Ezabatu</string>
     <string name="cd_refresh">Eguneratu</string>
@@ -578,7 +582,7 @@
     <string name="drawer_contacts">Kontaktuak</string>
     <string name="drawer_device_calendars">Gailuko egutegiak</string>
     <string name="drawer_account_offline">Lineaz kanpo</string>
-    <string name="drawer_share_feedback">Iritzia partekatu</string>
+    <string name="drawer_share_feedback">Laguntza eta dokumentazioa</string>
     <string name="event_title_fallback">Gertaera</string>
 
     <!-- App Info / About -->
@@ -746,6 +750,7 @@
 
     <string name="cd_clear">Garbitu</string>
     <string name="cd_offline">Lineaz kanpo</string>
+    <string name="cd_loading_events">Gertaerak kargatzen</string>
     <string name="cd_open_drawer">Tiradera ireki</string>
     <string name="cd_close_drawer">Tiradera itxi</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -994,6 +999,7 @@
     <string name="cd_widget_add_event">Gehitu gertaera</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gertaerarik gabe</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, bertan behera utzita</string>
     <string name="channel_event_reminders">Gertaeren oroigarriak</string>
     <string name="channel_event_reminders_desc">Hurrengo egutegiko gertaeretarako jakinarazpenak</string>
     <string name="channel_sync_progress">Sinkronizazio aurrerapena</string>

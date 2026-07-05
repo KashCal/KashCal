@@ -56,6 +56,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -184,10 +187,15 @@ fun EventQuickViewSheet(
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
+        // Untitled events render a blank title, so fall back to a generic name
+        // for the pane announcement rather than announcing an empty pane.
+        val paneTitleText = displayTitle.ifBlank { stringResource(R.string.cd_event_untitled) }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                // Announce the sheet (by the event title) when it opens.
+                .semantics { paneTitle = paneTitleText }
         ) {
             // Top row beneath the drag handle: calendar dot+name pill on the
             // left, Share-as-card icon on the right. The pill was relocated
@@ -235,7 +243,8 @@ fun EventQuickViewSheet(
                             text = displayTitle,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.semantics { heading() }
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))

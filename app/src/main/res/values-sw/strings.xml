@@ -497,6 +497,10 @@
     <string name="cd_next_month">Mwezi ujao</string>
     <string name="cd_month_year_picker">Kichagua mwezi na mwaka</string>
     <string name="cd_remove_alert">Ondoa tahadhari</string>
+    <string name="cd_event_state_cancelled">imeghairiwa</string>
+    <string name="cd_event_state_declined">imekataliwa</string>
+    <string name="cd_event_state_past">tukio lililopita</string>
+    <string name="cd_event_untitled">Tukio lisilo na kichwa</string>
     <string name="cd_warning">Onyo</string>
     <string name="cd_refresh_calendars">Onyesha kalenda upya</string>
     <string name="cd_timezone_tap_to_change">Eneo la saa: %1$s, gusa kubadilisha</string>
@@ -547,7 +551,7 @@
     <string name="drawer_contacts">Anwani</string>
     <string name="drawer_device_calendars">Kalenda za kifaa</string>
     <string name="drawer_account_offline">Nje ya mtandao</string>
-    <string name="drawer_share_feedback">Shiriki maoni</string>
+    <string name="drawer_share_feedback">Usaidizi na hati</string>
 
     <string name="event_title_fallback">Tukio</string>
 
@@ -712,6 +716,7 @@
 
     <string name="cd_clear">Futa</string>
     <string name="cd_offline">Nje ya mtandao</string>
+    <string name="cd_loading_events">Inapakia matukio</string>
     <string name="cd_open_drawer">Fungua droo</string>
     <string name="cd_close_drawer">Funga droo</string>
     <string name="cd_open_rail">Fungua menyu</string>
@@ -935,6 +940,7 @@
     <string name="cd_widget_add_event">Ongeza tukio</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">hakuna matukio</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, imeghairiwa</string>
     <string name="channel_event_reminders">Vikumbusho vya Matukio</string>
     <string name="channel_event_reminders_desc">Arifa za matukio ya kalenda yanayokuja</string>
     <string name="channel_sync_progress">Maendeleo ya Usawazishaji</string>

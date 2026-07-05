@@ -20,7 +20,8 @@ class UpcomingWidgetContentTest {
         calendarColor: Int = 0xFF0000FF.toInt(),
         isPast: Boolean = false,
         isDeviceEvent: Boolean = false,
-        startDay: Int = 0
+        startDay: Int = 0,
+        isCancelled: Boolean = false
     ) = WidgetDataRepository.WidgetEvent(
         eventId = eventId,
         occurrenceStartTs = startTs,
@@ -31,7 +32,8 @@ class UpcomingWidgetContentTest {
         calendarColor = calendarColor,
         isPast = isPast,
         isDeviceEvent = isDeviceEvent,
-        startDay = startDay
+        startDay = startDay,
+        isCancelled = isCancelled
     )
 
     // ==================== buildFlatUpcomingItems ====================
@@ -50,6 +52,28 @@ class UpcomingWidgetContentTest {
         )
         val items = buildFlatUpcomingItems(mapOf(20260428 to events))
         assertTrue(items.isEmpty())
+    }
+
+    @Test
+    fun `buildFlatUpcomingItems keeps cancelled future events (crossed off, not hidden)`() {
+        // Cancelled events are dimmed + struck through, never filtered like past.
+        val cancelled = makeEvent(eventId = 1, title = "Cancelled", isPast = false, isCancelled = true)
+        val confirmed = makeEvent(eventId = 2, title = "Confirmed", isPast = false, isCancelled = false)
+        val items = buildFlatUpcomingItems(mapOf(20260428 to listOf(cancelled, confirmed)))
+
+        val eventTitles = items.filterIsInstance<UpcomingWidgetItem.Event>().map { it.event.title }
+        assertTrue("Cancelled event must remain visible", eventTitles.contains("Cancelled"))
+        assertTrue("Confirmed event must remain visible", eventTitles.contains("Confirmed"))
+        val header = items.filterIsInstance<UpcomingWidgetItem.Header>().single()
+        assertEquals("Header count includes the cancelled event", 2, header.eventCount)
+    }
+
+    @Test
+    fun `buildFlatUpcomingItems still hides a cancelled-and-past event`() {
+        // Past-filtering wins: a past event is dropped regardless of cancelled state.
+        val cancelledPast = makeEvent(eventId = 1, isPast = true, isCancelled = true)
+        val items = buildFlatUpcomingItems(mapOf(20260428 to listOf(cancelledPast)))
+        assertTrue("Past event stays filtered even when cancelled", items.isEmpty())
     }
 
     @Test

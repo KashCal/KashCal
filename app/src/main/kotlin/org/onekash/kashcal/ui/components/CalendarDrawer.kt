@@ -16,7 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Checkbox
@@ -33,6 +33,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,7 +88,9 @@ fun CalendarDrawer(
                     text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 28.dp, vertical = 16.dp)
+                        .semantics { heading() }
                 )
             }
 
@@ -100,6 +107,7 @@ fun CalendarDrawer(
                             else Color.Transparent
                         )
                         .clickable { onViewSelect(ViewMode.INSIGHTS) }
+                        .semantics { role = Role.Tab; selected = isSelected }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -140,6 +148,7 @@ fun CalendarDrawer(
                             else Color.Transparent
                         )
                         .clickable { onViewSelect(option.mode) }
+                        .semantics { role = Role.Tab; selected = isSelected }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -172,7 +181,9 @@ fun CalendarDrawer(
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 28.dp, vertical = 8.dp)
+                            .semantics { heading() }
                     )
                 }
 
@@ -217,6 +228,7 @@ fun CalendarDrawer(
                         modifier = Modifier
                             .padding(horizontal = 28.dp, vertical = 8.dp)
                             .padding(top = 4.dp)
+                            .semantics { heading() }
                     )
                 }
 
@@ -248,7 +260,9 @@ fun CalendarDrawer(
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 28.dp, vertical = 8.dp)
+                            .semantics { heading() }
                     )
                 }
 
@@ -317,13 +331,13 @@ fun CalendarDrawer(
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 2.dp)
                         .clip(RoundedCornerShape(50))
-                        .clickable { uriHandler.openUri("https://github.com/KashCal/KashCal/issues") }
+                        .clickable { uriHandler.openUri("https://kashcal.onekash.org/docs/category/get-help") }
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Chat,
+                        imageVector = Icons.Default.HelpOutline,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)

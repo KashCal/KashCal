@@ -337,6 +337,10 @@
     <string name="cd_close">Dún</string>
     <string name="cd_search">Cuardaigh</string>
     <string name="cd_create_event">Cruthaigh imeacht</string>
+    <string name="cd_event_state_cancelled">cealaithe</string>
+    <string name="cd_event_state_declined">diúltaithe</string>
+    <string name="cd_event_state_past">imeacht san am atá caite</string>
+    <string name="cd_event_untitled">Imeacht gan teideal</string>
     <string name="cd_today">Inniu</string>
     <string name="cd_delete">Scrios</string>
     <string name="cd_refresh">Athnuaigh</string>
@@ -606,7 +610,7 @@
     <string name="drawer_contacts">Teagmhálaí</string>
     <string name="drawer_device_calendars">Féilirí na gléine</string>
     <string name="drawer_account_offline">As líne</string>
-    <string name="drawer_share_feedback">Roinn aiseolas</string>
+    <string name="drawer_share_feedback">Cabhair agus cáipéisí</string>
     <string name="event_title_fallback">Imeacht</string>
 
     <!-- i18n: App Info / About -->
@@ -867,6 +871,7 @@
 
     <string name="cd_clear">Glan</string>
     <string name="cd_offline">As líne</string>
+    <string name="cd_loading_events">Imeachtaí á lódáil</string>
     <string name="cd_open_drawer">Oscail tarraiceán</string>
     <string name="cd_close_drawer">Dún tarraiceán</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1139,6 +1144,7 @@
     <string name="cd_widget_add_event">Cuir imeacht leis</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gan imeachtaí</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, cealaithe</string>
     <string name="channel_event_reminders">Meabhrúcháin imeachtaí</string>
     <string name="channel_event_reminders_desc">Fógraí d\'imeachtaí féilire atá le teacht</string>
     <string name="channel_sync_progress">Dul chun cinn sioncronaithe</string>

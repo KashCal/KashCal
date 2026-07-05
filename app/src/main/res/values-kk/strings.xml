@@ -591,7 +591,7 @@
     <string name="drawer_contacts">Контактілер</string>
     <string name="drawer_device_calendars">Құрылғы күнтізбелері</string>
     <string name="drawer_account_offline">Желіден тыс</string>
-    <string name="drawer_share_feedback">Пікір білдіру</string>
+    <string name="drawer_share_feedback">Анықтама &amp; құжаттар</string>
 
     <string name="event_title_fallback">Оқиға</string>
 
@@ -760,6 +760,7 @@
 
     <string name="cd_clear">Тазалау</string>
     <string name="cd_offline">Желіден тыс</string>
+    <string name="cd_loading_events">Оқиғалар жүктелуде</string>
     <string name="cd_open_drawer">Тартпаны ашу</string>
     <string name="cd_close_drawer">Тартпаны жабу</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -979,6 +980,7 @@
     <string name="cd_widget_add_event">Оқиға қосу</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">оқиғалар жоқ</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, бас тартылды</string>
     <string name="channel_event_reminders">Оқиға еске салулары</string>
     <string name="channel_event_reminders_desc">Алдағы күнтізбе оқиғалары туралы хабарламалар</string>
     <string name="channel_sync_progress">Синхрондау барысы</string>
@@ -1088,6 +1090,11 @@
     <string name="cd_event_color">Оқиға түсі</string>
 
     <string name="cd_checkmark">Таңдалды</string>
+
+    <string name="cd_event_state_cancelled">болдырылмады</string>
+    <string name="cd_event_state_declined">қабылданбады</string>
+    <string name="cd_event_state_past">өткен оқиға</string>
+    <string name="cd_event_untitled">Атаусыз оқиға</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Ер қоңыр</string>

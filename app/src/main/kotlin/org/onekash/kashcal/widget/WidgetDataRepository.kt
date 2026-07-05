@@ -37,7 +37,8 @@ class WidgetDataRepository @Inject constructor(
         val calendarColor: Int,
         val isPast: Boolean,
         val isDeviceEvent: Boolean,
-        val startDay: Int
+        val startDay: Int,
+        val isCancelled: Boolean = false
     )
 
     /**
@@ -129,7 +130,8 @@ class WidgetDataRepository @Inject constructor(
             calendarColor = (displayEvent.eventColor ?: displayEvent.calendarColor).takeIf { it != 0 } ?: DEFAULT_CALENDAR_COLOR,
             isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay),
             isDeviceEvent = displayEvent is DisplayEvent.Device,
-            startDay = displayEvent.startDay
+            startDay = displayEvent.startDay,
+            isCancelled = displayEvent.isCancelled
         )
     }
 

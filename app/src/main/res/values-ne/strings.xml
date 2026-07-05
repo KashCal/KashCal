@@ -497,6 +497,10 @@
     <string name="cd_next_month">आउने महिना</string>
     <string name="cd_month_year_picker">महिना र वर्ष चयनकर्ता</string>
     <string name="cd_remove_alert">सतर्कता हटाउनुहोस्</string>
+    <string name="cd_event_state_cancelled">रद्द गरियो</string>
+    <string name="cd_event_state_declined">अस्वीकृत</string>
+    <string name="cd_event_state_past">विगतको कार्यक्रम</string>
+    <string name="cd_event_untitled">शीर्षकविहीन कार्यक्रम</string>
     <string name="cd_warning">चेतावनी</string>
     <string name="cd_refresh_calendars">क्यालेन्डर रिफ्रेस</string>
     <string name="cd_timezone_tap_to_change">समय क्षेत्र: %1$s, बदल्न ट्याप गर्नुहोस्</string>
@@ -547,7 +551,7 @@
     <string name="drawer_contacts">सम्पर्कहरू</string>
     <string name="drawer_device_calendars">उपकरण क्यालेन्डरहरू</string>
     <string name="drawer_account_offline">अफलाइन</string>
-    <string name="drawer_share_feedback">प्रतिक्रिया साझा गर्नुहोस्</string>
+    <string name="drawer_share_feedback">मद्दत र कागजात</string>
 
     <string name="event_title_fallback">कार्यक्रम</string>
 
@@ -712,6 +716,7 @@
 
     <string name="cd_clear">खाली गर्नुहोस्</string>
     <string name="cd_offline">अफलाइन</string>
+    <string name="cd_loading_events">कार्यक्रमहरू लोड गर्दै</string>
     <string name="cd_open_drawer">ड्रअर खोल्नुहोस्</string>
     <string name="cd_close_drawer">ड्रअर बन्द गर्नुहोस्</string>
     <string name="cd_open_rail">मेनु खोल्नुहोस्</string>
@@ -935,6 +940,7 @@
     <string name="cd_widget_add_event">कार्यक्रम थप्नुहोस्</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">कुनै कार्यक्रम छैन</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, रद्द गरियो</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">कार्यक्रम सम्झाउने</string>

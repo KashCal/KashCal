@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Kontakter</string>
     <string name="drawer_device_calendars">Enhetskalendrar</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Dela feedback</string>
+    <string name="drawer_share_feedback">Hjälp &amp; docs</string>
     <string name="event_title_fallback">Händelse</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Rensa</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Läser in händelser</string>
     <string name="cd_open_drawer">Öppna meny</string>
     <string name="cd_close_drawer">Stäng meny</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Lägg till händelse</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, inställd</string>
     <string name="cd_widget_no_events">inga händelser</string>
     <string name="channel_event_reminders">Händelsepåminnelser</string>
     <string name="channel_event_reminders_desc">Aviseringar för kommande kalenderhändelser</string>
@@ -1058,6 +1060,10 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Anpassad</string>
     <string name="cd_event_color">Händelsefärg</string>
+    <string name="cd_event_state_cancelled">inställd</string>
+    <string name="cd_event_state_declined">avböjt</string>
+    <string name="cd_event_state_past">tidigare händelse</string>
+    <string name="cd_event_untitled">Händelse utan titel</string>
     <string name="color_saddlebrown">Sadelbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mörkorange</string>
     <string name="color_gold">Guld</string>

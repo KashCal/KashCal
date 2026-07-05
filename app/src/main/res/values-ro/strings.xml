@@ -605,7 +605,7 @@
     <string name="drawer_contacts">Contacte</string>
     <string name="drawer_device_calendars">Calendare dispozitiv</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Trimite feedback</string>
+    <string name="drawer_share_feedback">Ajutor și documentație</string>
 
     <string name="event_title_fallback">Eveniment</string>
 
@@ -806,6 +806,7 @@
 
     <string name="cd_clear">Șterge</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Se încarcă evenimentele</string>
     <string name="cd_open_drawer">Deschide meniul</string>
     <string name="cd_close_drawer">Închide meniul</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1031,6 +1032,11 @@
     <string name="cd_widget_add_event">Adaugă eveniment</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">fără evenimente</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, anulat</string>
+    <string name="cd_event_state_cancelled">anulat</string>
+    <string name="cd_event_state_declined">refuzat</string>
+    <string name="cd_event_state_past">eveniment trecut</string>
+    <string name="cd_event_untitled">Eveniment fără titlu</string>
     <string name="channel_event_reminders">Mementouri pentru evenimente</string>
     <string name="channel_event_reminders_desc">Notificări pentru evenimentele viitoare din calendar</string>
     <string name="channel_sync_progress">Progres sincronizare</string>

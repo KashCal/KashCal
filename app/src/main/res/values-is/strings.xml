@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Tengiliðir</string>
     <string name="drawer_device_calendars">Dagatöl tækis</string>
     <string name="drawer_account_offline">Ónettengdur</string>
-    <string name="drawer_share_feedback">Deila endurgjöf</string>
+    <string name="drawer_share_feedback">Hjálp &amp; skjöl</string>
     <string name="event_title_fallback">Viðburður</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Hreinsa</string>
     <string name="cd_offline">Ónettengdur</string>
+    <string name="cd_loading_events">Hleður atburðum</string>
     <string name="cd_open_drawer">Opna valmynd</string>
     <string name="cd_close_drawer">Loka valmynd</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Dagatal</string>
     <string name="cd_widget_add_event">Bæta við atburði</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, aflýst</string>
     <string name="cd_widget_no_events">engir atburðir</string>
     <string name="channel_event_reminders">Atburðaáminningar</string>
     <string name="channel_event_reminders_desc">Tilkynningar um væntanlega dagatalsatburði</string>
@@ -1060,6 +1062,10 @@
     <string name="label_calendar_default">Sjálfgefið dagatals</string>
     <string name="label_custom">Sérsniðið</string>
     <string name="cd_event_color">Litur viðburðar</string>
+    <string name="cd_event_state_cancelled">aflýst</string>
+    <string name="cd_event_state_declined">hafnað</string>
+    <string name="cd_event_state_past">liðinn viðburður</string>
+    <string name="cd_event_untitled">Viðburður án titils</string>
     <string name="color_saddlebrown">Hnakkbrúnn</string>
     <string name="color_tomato">Tómatur</string>    <string name="color_darkorange">Dökkappelsínugulur</string>
     <string name="color_gold">Gull</string>

@@ -71,6 +71,41 @@ class OccurrenceGeneratorTest {
         database.close()
     }
 
+    // ========== Synthetic Placeholder Masters ==========
+
+    @Test
+    fun `synthetic placeholder master generates no occurrence despite CANCELLED status`() = runTest {
+        // Orphan-exception support inserts a placeholder master carrying
+        // status=CANCELLED, rrule=null, and the synthetic sentinel in
+        // extraProperties. It exists only as an FK target and must never
+        // materialize an occurrence — otherwise the display layer would
+        // render a phantom crossed-out row for it.
+        val startTs = parseDate("2025-03-10 09:00")
+        val synthetic = Event(
+            uid = "orphan-master-${System.nanoTime()}@test.com",
+            calendarId = testCalendarId,
+            title = "(placeholder)",
+            startTs = startTs,
+            endTs = startTs,
+            dtstamp = System.currentTimeMillis(),
+            status = "CANCELLED",
+            rrule = null,
+            syncStatus = SyncStatus.SYNCED,
+            extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true"),
+        )
+        val eventId = database.eventsDao().insert(synthetic)
+        val saved = synthetic.copy(id = eventId)
+
+        val count = occurrenceGenerator.generateOccurrences(
+            saved,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2025-12-31 23:59")
+        )
+
+        assertEquals(0, count)
+        assertEquals(0, database.occurrencesDao().getForEvent(eventId).size)
+    }
+
     // ========== Non-Recurring Events ==========
 
     @Test

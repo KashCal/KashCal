@@ -516,6 +516,10 @@
     <string name="cd_next_month">Bulan berikutnya</string>
     <string name="cd_month_year_picker">Pemilih bulan dan tahun</string>
     <string name="cd_remove_alert">Hapus peringatan</string>
+    <string name="cd_event_state_cancelled">dibatalkan</string>
+    <string name="cd_event_state_declined">ditolak</string>
+    <string name="cd_event_state_past">acara lampau</string>
+    <string name="cd_event_untitled">Acara tanpa judul</string>
     <string name="cd_warning">Peringatan</string>
     <string name="cd_refresh_calendars">Muat ulang kalender</string>
     <string name="cd_timezone_tap_to_change">Zona waktu: %1$s, ketuk untuk mengubah</string>
@@ -569,7 +573,7 @@
     <string name="drawer_contacts">Kontak</string>
     <string name="drawer_device_calendars">Kalender perangkat</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Bagikan masukan</string>
+    <string name="drawer_share_feedback">Bantuan &amp; dokumen</string>
 
     <string name="event_title_fallback">Acara</string>
 
@@ -708,6 +712,7 @@
 
     <string name="cd_clear">Hapus</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Memuat acara</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
     <string name="cd_open_rail">Buka menu</string>
@@ -925,6 +930,7 @@
     <string name="cd_widget_add_event">Tambah acara</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">tidak ada acara</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, dibatalkan</string>
     <string name="channel_event_reminders">Pengingat Acara</string>
     <string name="channel_event_reminders_desc">Notifikasi untuk acara kalender yang akan datang</string>
     <string name="channel_sync_progress">Kemajuan Sinkronisasi</string>

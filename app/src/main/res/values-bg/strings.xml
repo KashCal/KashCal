@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календари на устройството</string>
     <string name="drawer_account_offline">Офлайн</string>
-    <string name="drawer_share_feedback">Споделете обратна връзка</string>
+    <string name="drawer_share_feedback">Помощ и документация</string>
 
     <string name="event_title_fallback">Събитие</string>
 
@@ -768,6 +768,7 @@
 
     <string name="cd_clear">Изчисти</string>
     <string name="cd_offline">Офлайн</string>
+    <string name="cd_loading_events">Зареждане на събития</string>
     <string name="cd_open_drawer">Отвори чекмеджето</string>
     <string name="cd_close_drawer">Затвори чекмеджето</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -987,6 +988,11 @@
     <string name="cd_widget_add_event">Добави събитие</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">няма събития</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>
+    <string name="cd_event_state_cancelled">отменено</string>
+    <string name="cd_event_state_declined">отказано</string>
+    <string name="cd_event_state_past">минало събитие</string>
+    <string name="cd_event_untitled">Събитие без заглавие</string>
     <string name="channel_event_reminders">Напомняния за събития</string>
     <string name="channel_event_reminders_desc">Известия за предстоящи събития в календара</string>
     <string name="channel_sync_progress">Напредък на синхронизацията</string>

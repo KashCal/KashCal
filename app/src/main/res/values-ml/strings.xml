@@ -354,6 +354,10 @@
     <string name="cd_version_info">KashCal പതിപ്പ് %1$s. ഡീബഗ് ഓപ്ഷനുകൾക്ക് ദീർഘനേരം അമർത്തുക.</string>
     <string name="cd_color_slider">നിറ സ്ലൈഡർ, ഇപ്പോൾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ഡിഗ്രി</string>
+    <string name="cd_event_state_cancelled">റദ്ദാക്കി</string>
+    <string name="cd_event_state_declined">നിരസിച്ചു</string>
+    <string name="cd_event_state_past">കഴിഞ്ഞ ഇവന്റ്</string>
+    <string name="cd_event_untitled">തലക്കെട്ടില്ലാത്ത ഇവന്റ്</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">കലണ്ടർ</string>
@@ -599,7 +603,7 @@
     <string name="drawer_contacts">കോൺടാക്ടുകൾ</string>
     <string name="drawer_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="drawer_account_offline">ഓഫ്‌ലൈൻ</string>
-    <string name="drawer_share_feedback">ഫീഡ്ബാക്ക് പങ്കിടുക</string>
+    <string name="drawer_share_feedback">സഹായവും രേഖകളും</string>
 
     <string name="event_title_fallback">ഇവന്റ്</string>
 
@@ -768,6 +772,7 @@
 
     <string name="cd_clear">ക്ലിയർ</string>
     <string name="cd_offline">ഓഫ്‌ലൈൻ</string>
+    <string name="cd_loading_events">ഇവന്റുകൾ ലോഡ് ചെയ്യുന്നു</string>
     <string name="cd_open_drawer">ഡ്രോയർ തുറക്കുക</string>
     <string name="cd_close_drawer">ഡ്രോയർ അടയ്ക്കുക</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -999,6 +1004,7 @@
     <string name="cd_widget_add_event">ഇവന്റ് ചേർക്കുക</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ഇവന്റുകളൊന്നുമില്ല</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, റദ്ദാക്കി</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">ഇവന്റ് റിമൈൻഡറുകൾ</string>

@@ -591,7 +591,7 @@
     <string name="drawer_contacts">Abantu Abaxhunywe Nabo</string>
     <string name="drawer_device_calendars">Amakhalenda edivayisi</string>
     <string name="drawer_account_offline">Ngaphandle kwe-inthanethi</string>
-    <string name="drawer_share_feedback">Yabelana ngombono</string>
+    <string name="drawer_share_feedback">Usizo &amp; amadokhumenti</string>
 
     <string name="event_title_fallback">Umcimbi</string>
 
@@ -760,6 +760,7 @@
 
     <string name="cd_clear">Sula</string>
     <string name="cd_offline">Ngaphandle kwe-inthanethi</string>
+    <string name="cd_loading_events">Ilayisha imicimbi</string>
     <string name="cd_open_drawer">Vula idrawer</string>
     <string name="cd_close_drawer">Vala idrawer</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -979,6 +980,7 @@
     <string name="cd_widget_add_event">Engeza umcimbi</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ayikho imicimbi</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, kukhanseliwe</string>
     <string name="channel_event_reminders">Izikhumbuzi Zemicimbi</string>
     <string name="channel_event_reminders_desc">Izaziso zemicimbi yekhalenda ezayo</string>
     <string name="channel_sync_progress">Inqubekela Phambili Yokuvumelanisa</string>
@@ -1088,6 +1090,11 @@
     <string name="cd_event_color">Umbala womcimbi</string>
 
     <string name="cd_checkmark">Kukhethiwe</string>
+
+    <string name="cd_event_state_cancelled">kukhanseliwe</string>
+    <string name="cd_event_state_declined">kwaliwe</string>
+    <string name="cd_event_state_past">umcimbi odlule</string>
+    <string name="cd_event_untitled">Umcimbi ongenasihloko</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Insundu Yesihlalo</string>

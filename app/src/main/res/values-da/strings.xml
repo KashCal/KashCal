@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Kontakter</string>
     <string name="drawer_device_calendars">Enhedskalendere</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Del feedback</string>
+    <string name="drawer_share_feedback">Hjælp &amp; docs</string>
     <string name="event_title_fallback">Begivenhed</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Ryd</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Indlæser begivenheder</string>
     <string name="cd_open_drawer">Åbn menu</string>
     <string name="cd_close_drawer">Luk menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Tilføj begivenhed</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, aflyst</string>
     <string name="cd_widget_no_events">ingen begivenheder</string>
     <string name="channel_event_reminders">Begivenhedspåmindelser</string>
     <string name="channel_event_reminders_desc">Notifikationer for kommende kalenderbegivenheder</string>
@@ -1058,6 +1060,10 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Brugerdefineret</string>
     <string name="cd_event_color">Begivenhedsfarve</string>
+    <string name="cd_event_state_cancelled">aflyst</string>
+    <string name="cd_event_state_declined">afvist</string>
+    <string name="cd_event_state_past">tidligere begivenhed</string>
+    <string name="cd_event_untitled">Begivenhed uden titel</string>
     <string name="color_saddlebrown">Saddelbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørkeorange</string>
     <string name="color_gold">Guld</string>

@@ -577,7 +577,7 @@
     <string name="drawer_contacts">Kontaktai</string>
     <string name="drawer_device_calendars">Įrenginio kalendoriai</string>
     <string name="drawer_account_offline">Nėra ryšio</string>
-    <string name="drawer_share_feedback">Pasidalinti atsiliepimais</string>
+    <string name="drawer_share_feedback">Pagalba ir dokumentai</string>
 
     <string name="event_title_fallback">Įvykis</string>
 
@@ -803,6 +803,11 @@
 
     <string name="cd_clear">Išvalyti</string>
     <string name="cd_offline">Nėra ryšio</string>
+    <string name="cd_event_state_cancelled">atšauktas</string>
+    <string name="cd_event_state_declined">atmestas</string>
+    <string name="cd_event_state_past">praėjęs įvykis</string>
+    <string name="cd_event_untitled">Įvykis be pavadinimo</string>
+    <string name="cd_loading_events">Įkeliami įvykiai</string>
     <string name="cd_open_drawer">Atidaryti meniu</string>
     <string name="cd_close_drawer">Uždaryti meniu</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -995,6 +1000,7 @@
     <string name="cd_widget_add_event">Pridėti įvykį</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">įvykių nėra</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, atšaukta</string>
     <string name="channel_event_reminders">Įvykių priminimai</string>
     <string name="channel_event_reminders_desc">Pranešimai apie artėjančius kalendoriaus įvykius</string>
     <string name="channel_sync_progress">Sinchronizavimo eiga</string>

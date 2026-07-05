@@ -304,6 +304,10 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Wybrane</string>
+    <string name="cd_event_state_cancelled">odwołane</string>
+    <string name="cd_event_state_declined">odrzucone</string>
+    <string name="cd_event_state_past">minione wydarzenie</string>
+    <string name="cd_event_untitled">Wydarzenie bez tytułu</string>
     <string name="cd_back">Wstecz</string>
     <string name="cd_close">Zamknij</string>
     <string name="cd_search">Szukaj</string>
@@ -580,7 +584,7 @@
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendarze urządzenia</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Podziel się opinią</string>
+    <string name="drawer_share_feedback">Pomoc i dokumenty</string>
 
     <string name="event_title_fallback">Wydarzenie</string>
 
@@ -813,6 +817,7 @@
 
     <string name="cd_clear">Wyczyść</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Ładowanie wydarzeń</string>
     <string name="cd_open_drawer">Otwórz szufladę</string>
     <string name="cd_close_drawer">Zamknij szufladę</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1055,6 +1060,7 @@
     <string name="cd_widget_add_event">Dodaj wydarzenie</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">brak wydarzeń</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, odwołane</string>
     <string name="channel_event_reminders">Przypomnienia o wydarzeniach</string>
     <string name="channel_event_reminders_desc">Powiadomienia o nadchodzących wydarzeniach w kalendarzu</string>
     <string name="channel_sync_progress">Postęp synchronizacji</string>

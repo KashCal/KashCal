@@ -536,7 +536,7 @@
     <string name="drawer_contacts">연락처</string>
     <string name="drawer_device_calendars">기기 캘린더</string>
     <string name="drawer_account_offline">오프라인</string>
-    <string name="drawer_share_feedback">피드백 보내기</string>
+    <string name="drawer_share_feedback">도움말 및 문서</string>
 
     <string name="event_title_fallback">일정</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">지우기</string>
     <string name="cd_offline">오프라인</string>
+    <string name="cd_loading_events">일정 불러오는 중</string>
     <string name="cd_open_drawer">서랍 열기</string>
     <string name="cd_close_drawer">서랍 닫기</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">일정 추가</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">일정 없음</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, 취소됨</string>
     <string name="channel_event_reminders">일정 알림</string>
     <string name="channel_event_reminders_desc">다가오는 캘린더 일정 알림</string>
     <string name="channel_sync_progress">동기화 진행률</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">사용자 지정</string>
     <string name="cd_event_color">일정 색상</string>
     <string name="cd_checkmark">선택됨</string>
+    <string name="cd_event_state_cancelled">취소됨</string>
+    <string name="cd_event_state_declined">거절됨</string>
+    <string name="cd_event_state_past">지난 일정</string>
+    <string name="cd_event_untitled">제목 없는 일정</string>
     <string name="label_device_timezone">기기 시간대</string>
     <string name="color_saddlebrown">새들 브라운</string>    <string name="color_tomato">토마토</string>    <string name="color_darkorange">다크 오렌지</string>
     <string name="color_gold">골드</string>

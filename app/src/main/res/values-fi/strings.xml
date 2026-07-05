@@ -589,7 +589,7 @@
     <string name="drawer_contacts">Yhteystiedot</string>
     <string name="drawer_device_calendars">Laitteen kalenterit</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Anna palautetta</string>
+    <string name="drawer_share_feedback">Ohje ja dokumentit</string>
 
     <string name="event_title_fallback">Tapahtuma</string>
 
@@ -759,6 +759,11 @@
 
     <string name="cd_clear">Tyhjennä</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_event_state_cancelled">peruttu</string>
+    <string name="cd_event_state_declined">hylätty</string>
+    <string name="cd_event_state_past">mennyt tapahtuma</string>
+    <string name="cd_event_untitled">Nimetön tapahtuma</string>
+    <string name="cd_loading_events">Ladataan tapahtumia</string>
     <string name="cd_open_drawer">Avaa valikko</string>
     <string name="cd_close_drawer">Sulje valikko</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -941,6 +946,7 @@
     <string name="cd_widget_add_event">Lisää tapahtuma</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ei tapahtumia</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, peruttu</string>
     <string name="channel_event_reminders">Tapahtumamuistutukset</string>
     <string name="channel_event_reminders_desc">Ilmoitukset tulevista kalenteritapahtumista</string>
     <string name="channel_sync_progress">Synkronoinnin edistyminen</string>

@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Kişiler</string>
     <string name="drawer_device_calendars">Cihaz takvimleri</string>
     <string name="drawer_account_offline">Çevrimdışı</string>
-    <string name="drawer_share_feedback">Geri bildirim paylaş</string>
+    <string name="drawer_share_feedback">Yardım ve belgeler</string>
 
     <string name="event_title_fallback">Etkinlik</string>
 
@@ -768,6 +768,7 @@
 
     <string name="cd_clear">Temizle</string>
     <string name="cd_offline">Çevrimdışı</string>
+    <string name="cd_loading_events">Etkinlikler yükleniyor</string>
     <string name="cd_open_drawer">Çekmeceyi aç</string>
     <string name="cd_close_drawer">Çekmeceyi kapat</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -987,6 +988,11 @@
     <string name="cd_widget_add_event">Etkinlik ekle</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">etkinlik yok</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, iptal edildi</string>
+    <string name="cd_event_state_cancelled">iptal edildi</string>
+    <string name="cd_event_state_declined">reddedildi</string>
+    <string name="cd_event_state_past">geçmiş etkinlik</string>
+    <string name="cd_event_untitled">Başlıksız etkinlik</string>
     <string name="channel_event_reminders">Etkinlik Hatırlatıcıları</string>
     <string name="channel_event_reminders_desc">Yaklaşan takvim etkinlikleri için bildirimler</string>
     <string name="channel_sync_progress">Eşitleme İlerlemesi</string>

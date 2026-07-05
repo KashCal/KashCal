@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Contacten</string>
     <string name="drawer_device_calendars">Apparaatagenda\'s</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Feedback delen</string>
+    <string name="drawer_share_feedback">Help &amp; docs</string>
     <string name="event_title_fallback">Afspraak</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Wissen</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Gebeurtenissen laden</string>
     <string name="cd_open_drawer">Menu openen</string>
     <string name="cd_close_drawer">Menu sluiten</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Gebeurtenis toevoegen</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, geannuleerd</string>
     <string name="cd_widget_no_events">geen gebeurtenissen</string>
     <string name="channel_event_reminders">Gebeurtenisherinneringen</string>
     <string name="channel_event_reminders_desc">Meldingen voor aankomende kalendergebeurtenissen</string>
@@ -1058,6 +1060,10 @@
     <string name="label_calendar_default">Agendastandaard</string>
     <string name="label_custom">Aangepast</string>
     <string name="cd_event_color">Afspraakkleur</string>
+    <string name="cd_event_state_cancelled">geannuleerd</string>
+    <string name="cd_event_state_declined">afgewezen</string>
+    <string name="cd_event_state_past">afgelopen afspraak</string>
+    <string name="cd_event_untitled">Afspraak zonder titel</string>
     <string name="color_saddlebrown">Zadelbruin</string>
     <string name="color_tomato">Tomaat</string>    <string name="color_darkorange">Donkeroranje</string>
     <string name="color_gold">Goud</string>

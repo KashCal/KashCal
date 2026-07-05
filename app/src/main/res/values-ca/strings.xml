@@ -311,6 +311,10 @@
     <string name="cd_close">Tancar</string>
     <string name="cd_search">Cercar</string>
     <string name="cd_create_event">Crear esdeveniment</string>
+    <string name="cd_event_state_cancelled">cancel·lat</string>
+    <string name="cd_event_state_declined">rebutjat</string>
+    <string name="cd_event_state_past">esdeveniment passat</string>
+    <string name="cd_event_untitled">Esdeveniment sense títol</string>
     <string name="cd_today">Avui</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_refresh">Actualitzar</string>
@@ -578,7 +582,7 @@
     <string name="drawer_contacts">Contactes</string>
     <string name="drawer_device_calendars">Calendaris del dispositiu</string>
     <string name="drawer_account_offline">Fora de línia</string>
-    <string name="drawer_share_feedback">Compartir opinió</string>
+    <string name="drawer_share_feedback">Ajuda i documentació</string>
     <string name="event_title_fallback">Esdeveniment</string>
 
     <!-- App Info / About -->
@@ -746,6 +750,7 @@
 
     <string name="cd_clear">Esborrar</string>
     <string name="cd_offline">Fora de línia</string>
+    <string name="cd_loading_events">Carregant esdeveniments</string>
     <string name="cd_open_drawer">Obrir calaix</string>
     <string name="cd_close_drawer">Tancar calaix</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -994,6 +999,7 @@
     <string name="cd_widget_add_event">Afegeix un esdeveniment</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sense esdeveniments</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, cancel·lat</string>
     <string name="channel_event_reminders">Recordatoris d\'esdeveniments</string>
     <string name="channel_event_reminders_desc">Notificacions per als propers esdeveniments del calendari</string>
     <string name="channel_sync_progress">Progrés de sincronització</string>

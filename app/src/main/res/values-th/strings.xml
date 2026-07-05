@@ -536,7 +536,7 @@
     <string name="drawer_contacts">ผู้ติดต่อ</string>
     <string name="drawer_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="drawer_account_offline">ออฟไลน์</string>
-    <string name="drawer_share_feedback">แสดงความคิดเห็น</string>
+    <string name="drawer_share_feedback">ความช่วยเหลือและเอกสาร</string>
 
     <string name="event_title_fallback">กิจกรรม</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">ล้าง</string>
     <string name="cd_offline">ออฟไลน์</string>
+    <string name="cd_loading_events">กำลังโหลดกิจกรรม</string>
     <string name="cd_open_drawer">เปิดลิ้นชัก</string>
     <string name="cd_close_drawer">ปิดลิ้นชัก</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">เพิ่มกิจกรรม</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ไม่มีกิจกรรม</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ยกเลิกแล้ว</string>
     <string name="channel_event_reminders">การแจ้งเตือนกิจกรรม</string>
     <string name="channel_event_reminders_desc">การแจ้งเตือนสำหรับกิจกรรมในปฏิทินที่กำลังจะมาถึง</string>
     <string name="channel_sync_progress">ความคืบหน้าการซิงค์</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">กำหนดเอง</string>
     <string name="cd_event_color">สีกิจกรรม</string>
     <string name="cd_checkmark">เลือกแล้ว</string>
+    <string name="cd_event_state_cancelled">ยกเลิกแล้ว</string>
+    <string name="cd_event_state_declined">ปฏิเสธแล้ว</string>
+    <string name="cd_event_state_past">กิจกรรมที่ผ่านมา</string>
+    <string name="cd_event_untitled">กิจกรรมที่ไม่มีชื่อ</string>
     <string name="label_device_timezone">เขตเวลาของอุปกรณ์</string>
     <string name="color_saddlebrown">น้ำตาลอานม้า</string>    <string name="color_tomato">มะเขือเทศ</string>    <string name="color_darkorange">ส้มเข้ม</string>
     <string name="color_gold">ทอง</string>

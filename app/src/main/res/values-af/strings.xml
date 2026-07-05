@@ -591,7 +591,7 @@
     <string name="drawer_contacts">Kontakte</string>
     <string name="drawer_device_calendars">Toestelkalenders</string>
     <string name="drawer_account_offline">Vanlyn</string>
-    <string name="drawer_share_feedback">Deel terugvoer</string>
+    <string name="drawer_share_feedback">Hulp &amp; dokumente</string>
 
     <string name="event_title_fallback">Gebeurtenis</string>
 
@@ -760,6 +760,7 @@
 
     <string name="cd_clear">Maak skoon</string>
     <string name="cd_offline">Vanlyn</string>
+    <string name="cd_loading_events">Laai gebeurtenisse</string>
     <string name="cd_open_drawer">Open laai</string>
     <string name="cd_close_drawer">Sluit laai</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -979,6 +980,7 @@
     <string name="cd_widget_add_event">Voeg gebeurtenis by</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">geen gebeurtenisse</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, gekanselleer</string>
     <string name="channel_event_reminders">Gebeurtenisherinneringe</string>
     <string name="channel_event_reminders_desc">Kennisgewings vir komende kalendergebeurtenisse</string>
     <string name="channel_sync_progress">Sinkronisasievordering</string>
@@ -1086,6 +1088,11 @@
     <string name="cd_event_color">Gebeurteniskleur</string>
 
     <string name="cd_checkmark">Gekies</string>
+
+    <string name="cd_event_state_cancelled">gekanselleer</string>
+    <string name="cd_event_state_declined">afgewys</string>
+    <string name="cd_event_state_past">afgelope gebeurtenis</string>
+    <string name="cd_event_untitled">Gebeurtenis sonder titel</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Saalbruin</string>

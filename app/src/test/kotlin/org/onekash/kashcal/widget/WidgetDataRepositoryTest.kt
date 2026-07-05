@@ -144,6 +144,61 @@ class WidgetDataRepositoryTest {
         assertFalse("Future event should not be marked as past", futureEvent?.isPast == true)
     }
 
+    // ========== Cancelled Event Detection Tests ==========
+
+    @Test
+    fun `getTodayEvents marks cancelled events as isCancelled=true`() = runTest {
+        val now = System.currentTimeMillis()
+        val todayCode = DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
+        val start = now + 3600000
+        val end = now + 2 * 3600000
+
+        val events = listOf(
+            createDisplayEvent(1L, "Cancelled Event", start, end, todayCode, status = "CANCELLED"),
+            createDisplayEvent(2L, "Confirmed Event", start, end, todayCode, status = "CONFIRMED")
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns
+            mapOf(todayCode to events)
+
+        val result = repository.getTodayEvents()
+        val cancelled = result.find { it.title == "Cancelled Event" }
+        val confirmed = result.find { it.title == "Confirmed Event" }
+
+        assertTrue("Cancelled event should be marked cancelled", cancelled?.isCancelled == true)
+        assertFalse("Confirmed event should not be marked cancelled", confirmed?.isCancelled == true)
+    }
+
+    @Test
+    fun `getTodayEvents keeps cancelled events visible alongside confirmed ones`() = runTest {
+        // The widget must render cancelled events (crossed off), not drop them.
+        // A cancelled + a confirmed event both survive, and only the cancelled
+        // one carries the isCancelled flag downstream.
+        val now = System.currentTimeMillis()
+        val todayCode = DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
+        val start = now + 3600000
+        val end = now + 2 * 3600000
+
+        val events = listOf(
+            createDisplayEvent(1L, "Cancelled Event", start, end, todayCode, status = "CANCELLED"),
+            createDisplayEvent(2L, "Confirmed Event", start, end, todayCode, status = "CONFIRMED")
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns
+            mapOf(todayCode to events)
+
+        val result = repository.getTodayEvents()
+        assertEquals("Both events must be returned; cancelled is crossed off, not hidden", 2, result.size)
+        assertTrue(
+            "Cancelled event survives with its flag set",
+            result.any { it.title == "Cancelled Event" && it.isCancelled }
+        )
+        assertTrue(
+            "Confirmed event survives without the flag",
+            result.any { it.title == "Confirmed Event" && !it.isCancelled }
+        )
+    }
+
     @Test
     fun `getTodayEvents all-day event today is NOT past`() = runTest {
         val todayCode = DateTimeUtils.eventTsToDayCode(System.currentTimeMillis(), false)
@@ -369,7 +424,8 @@ class WidgetDataRepositoryTest {
         endTs: Long,
         dayCode: Int,
         isAllDay: Boolean = false,
-        calendarColor: Int = testCalendar.color
+        calendarColor: Int = testCalendar.color,
+        status: String = "CONFIRMED"
     ): DisplayEvent {
         val event = Event(
             id = id,
@@ -379,6 +435,7 @@ class WidgetDataRepositoryTest {
             startTs = startTs,
             endTs = endTs,
             isAllDay = isAllDay,
+            status = status,
             dtstamp = System.currentTimeMillis(),
             syncStatus = SyncStatus.SYNCED
         )

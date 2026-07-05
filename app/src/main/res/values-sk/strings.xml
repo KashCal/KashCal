@@ -304,6 +304,10 @@
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Vybraté</string>
+    <string name="cd_event_state_cancelled">zrušené</string>
+    <string name="cd_event_state_declined">odmietnuté</string>
+    <string name="cd_event_state_past">minulá udalosť</string>
+    <string name="cd_event_untitled">Udalosť bez názvu</string>
     <string name="cd_back">Späť</string>
     <string name="cd_close">Zavrieť</string>
     <string name="cd_search">Hľadať</string>
@@ -557,7 +561,7 @@
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendáre zariadenia</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Zdieľať spätnú väzbu</string>
+    <string name="drawer_share_feedback">Pomoc a dokumenty</string>
 
     <string name="event_title_fallback">Udalosť</string>
 
@@ -785,6 +789,7 @@
 
     <string name="cd_clear">Vymazať</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Načítavanie udalostí</string>
     <string name="cd_open_drawer">Otvoriť ponuku</string>
     <string name="cd_close_drawer">Zavrieť ponuku</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1024,6 +1029,7 @@
     <string name="cd_widget_add_event">Pridať udalosť</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">žiadne udalosti</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, zrušené</string>
     <string name="channel_event_reminders">Pripomienky udalostí</string>
     <string name="channel_event_reminders_desc">Upozornenia na nadchádzajúce udalosti v kalendári</string>
     <string name="channel_sync_progress">Priebeh synchronizácie</string>

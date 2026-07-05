@@ -31,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
@@ -79,7 +82,11 @@ fun SyncBanner(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            // Announce sync status changes (Syncing / complete / failed) to
+            // TalkBack without the user having to focus the banner.
+            .semantics { liveRegion = LiveRegionMode.Polite },
         color = containerColor,
         tonalElevation = 1.dp
     ) {

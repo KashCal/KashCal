@@ -516,6 +516,10 @@
     <string name="cd_next_month">နောက်လ</string>
     <string name="cd_month_year_picker">လနှင့်နှစ် ရွေးချယ်ကိရိယာ</string>
     <string name="cd_remove_alert">သတိပေးချက် ဖယ်ရှား</string>
+    <string name="cd_event_state_cancelled">ပယ်ဖျက်လိုက်သည်</string>
+    <string name="cd_event_state_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="cd_event_state_past">ကုန်လွန်ခဲ့သော ပွဲ</string>
+    <string name="cd_event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
     <string name="cd_warning">သတိပေးချက်</string>
     <string name="cd_refresh_calendars">ပြက္ခဒိန်များ ပြန်လည်စတင်</string>
     <string name="cd_timezone_tap_to_change">အချိန်ဇုန်: %1$s, ပြောင်းရန် နှိပ်ပါ</string>
@@ -569,7 +573,7 @@
     <string name="drawer_contacts">အဆက်အသွယ်များ</string>
     <string name="drawer_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="drawer_account_offline">အော့ဖ်လိုင်း</string>
-    <string name="drawer_share_feedback">အကြံပြုချက် မျှဝေ</string>
+    <string name="drawer_share_feedback">အကူအညီနှင့် စာရွက်စာတမ်း</string>
 
     <string name="event_title_fallback">ပွဲ</string>
 
@@ -708,6 +712,7 @@
 
     <string name="cd_clear">ရှင်း</string>
     <string name="cd_offline">အော့ဖ်လိုင်း</string>
+    <string name="cd_loading_events">ပွဲများ ဖွင့်နေသည်</string>
     <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
     <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
     <string name="cd_open_rail">မီနူး ဖွင့်</string>
@@ -925,6 +930,7 @@
     <string name="cd_widget_add_event">ပွဲထည့်ရန်</string>
     <string name="cd_widget_day_cell">%1$s၊ %2$s</string>
     <string name="cd_widget_no_events">ပွဲမရှိပါ</string>
+    <string name="cd_widget_event_cancelled">%1$s၊ %2$s၊ ပယ်ဖျက်လိုက်သည်</string>
     <string name="channel_event_reminders">ပွဲသတိပေးချက်များ</string>
     <string name="channel_event_reminders_desc">လာမည့်ပြက္ခဒိန်ပွဲများအတွက် အကြောင်းကြားချက်များ</string>
     <string name="channel_sync_progress">ချိန်ကိုက်ခြင်းတိုးတက်မှု</string>

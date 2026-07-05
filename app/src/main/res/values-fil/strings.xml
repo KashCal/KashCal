@@ -516,6 +516,10 @@
     <string name="cd_next_month">Susunod na buwan</string>
     <string name="cd_month_year_picker">Tagapili ng buwan at taon</string>
     <string name="cd_remove_alert">Alisin ang alerto</string>
+    <string name="cd_event_state_cancelled">kinansela</string>
+    <string name="cd_event_state_declined">tinanggihan</string>
+    <string name="cd_event_state_past">nakaraang kaganapan</string>
+    <string name="cd_event_untitled">Kaganapang walang pamagat</string>
     <string name="cd_warning">Babala</string>
     <string name="cd_refresh_calendars">I-refresh ang mga kalendaryo</string>
     <string name="cd_timezone_tap_to_change">Timezone: %1$s, i-tap para palitan</string>
@@ -569,7 +573,7 @@
     <string name="drawer_contacts">Mga Contact</string>
     <string name="drawer_device_calendars">Mga device calendar</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Mag-share ng feedback</string>
+    <string name="drawer_share_feedback">Tulong at dokumento</string>
 
     <string name="event_title_fallback">Event</string>
 
@@ -739,6 +743,7 @@
 
     <string name="cd_clear">I-clear</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Naglo-load ng mga event</string>
     <string name="cd_open_drawer">Buksan ang drawer</string>
     <string name="cd_close_drawer">Isara ang drawer</string>
     <string name="cd_open_rail">Buksan ang menu</string>
@@ -965,6 +970,7 @@
     <string name="cd_widget_add_event">Magdagdag ng event</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">walang event</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, kinansela</string>
     <string name="channel_event_reminders">Mga Paalala ng Event</string>
     <string name="channel_event_reminders_desc">Mga notipikasyon para sa paparating na event sa kalendaryo</string>
     <string name="channel_sync_progress">Pag-sync Progress</string>

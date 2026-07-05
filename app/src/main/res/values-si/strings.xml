@@ -497,6 +497,10 @@
     <string name="cd_next_month">මීළඟ මාසය</string>
     <string name="cd_month_year_picker">මාසය සහ වසර තෝරනය</string>
     <string name="cd_remove_alert">ඇඟවීම ඉවත් කරන්න</string>
+    <string name="cd_event_state_cancelled">අවලංගු කරන ලදී</string>
+    <string name="cd_event_state_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="cd_event_state_past">පසුගිය සිදුවීම</string>
+    <string name="cd_event_untitled">නමක් නැති සිදුවීම</string>
     <string name="cd_warning">අනතුරු ඇඟවීම</string>
     <string name="cd_refresh_calendars">දින දර්ශන නැවුම් කරන්න</string>
     <string name="cd_timezone_tap_to_change">වේලා කලාපය: %1$s, වෙනස් කිරීමට තට්ටු කරන්න</string>
@@ -547,7 +551,7 @@
     <string name="drawer_contacts">සම්බන්ධතා</string>
     <string name="drawer_device_calendars">උපාංග දින දර්ශන</string>
     <string name="drawer_account_offline">මාර්ගගත නැත</string>
-    <string name="drawer_share_feedback">ප්‍රතිචාර බෙදාගන්න</string>
+    <string name="drawer_share_feedback">උදව් සහ ලේඛන</string>
 
     <string name="event_title_fallback">සිදුවීම</string>
 
@@ -712,6 +716,7 @@
 
     <string name="cd_clear">හිස් කරන්න</string>
     <string name="cd_offline">මාර්ගගත නැත</string>
+    <string name="cd_loading_events">සිදුවීම් පූරණය වෙමින්</string>
     <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
     <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
     <string name="cd_open_rail">මෙනුව විවෘත කරන්න</string>
@@ -935,6 +940,7 @@
     <string name="cd_widget_add_event">සිදුවීම එකතු කරන්න</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">සිදුවීම් නැත</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, අවලංගු කරන ලදී</string>
 
     <!-- Notification channels -->
     <string name="channel_event_reminders">සිදුවීම් මතක් කිරීම්</string>

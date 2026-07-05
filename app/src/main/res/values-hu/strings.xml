@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Névjegyek</string>
     <string name="drawer_device_calendars">Eszköz naptárak</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Visszajelzés küldése</string>
+    <string name="drawer_share_feedback">Súgó és dokumentáció</string>
 
     <string name="event_title_fallback">Esemény</string>
 
@@ -768,6 +768,7 @@
 
     <string name="cd_clear">Törlés</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Események betöltése</string>
     <string name="cd_open_drawer">Fiók megnyitása</string>
     <string name="cd_close_drawer">Fiók bezárása</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -987,6 +988,11 @@
     <string name="cd_widget_add_event">Esemény hozzáadása</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">nincsenek események</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, lemondva</string>
+    <string name="cd_event_state_cancelled">lemondva</string>
+    <string name="cd_event_state_declined">elutasítva</string>
+    <string name="cd_event_state_past">múltbeli esemény</string>
+    <string name="cd_event_untitled">Névtelen esemény</string>
     <string name="channel_event_reminders">Eseményemlékeztetők</string>
     <string name="channel_event_reminders_desc">Értesítések a közelgő naptáreseményekről</string>
     <string name="channel_sync_progress">Szinkronizálás folyamata</string>

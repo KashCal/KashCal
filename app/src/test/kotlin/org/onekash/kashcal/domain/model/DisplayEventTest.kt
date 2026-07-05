@@ -370,6 +370,53 @@ class DisplayEventTest {
         assertFalse(display.isDeclinedByMe)
     }
 
+    // ========== isCancelled Property ==========
+
+    @Test
+    fun `Room isCancelled is true when event status is CANCELLED`() {
+        val cancelled = testEvent.copy(status = "CANCELLED")
+        val display = DisplayEvent.Room(cancelled, testOccurrence, testCalendar)
+        assertTrue(display.isCancelled)
+    }
+
+    @Test
+    fun `Room isCancelled is false when event status is CONFIRMED`() {
+        val confirmed = testEvent.copy(status = "CONFIRMED")
+        val display = DisplayEvent.Room(confirmed, testOccurrence, testCalendar)
+        assertFalse(display.isCancelled)
+    }
+
+    @Test
+    fun `Room isCancelled is false when event status is TENTATIVE`() {
+        val tentative = testEvent.copy(status = "TENTATIVE")
+        val display = DisplayEvent.Room(tentative, testOccurrence, testCalendar)
+        assertFalse(display.isCancelled)
+    }
+
+    @Test
+    fun `Device isCancelled is true when instance status is STATUS_CANCELED`() {
+        // CalendarContract.Events.STATUS_CANCELED = 2
+        val cancelled = testInstance.copy(status = 2)
+        val display = DisplayEvent.Device(cancelled)
+        assertTrue(display.isCancelled)
+    }
+
+    @Test
+    fun `Device isCancelled is false when instance status is STATUS_CONFIRMED`() {
+        // CalendarContract.Events.STATUS_CONFIRMED = 1
+        val confirmed = testInstance.copy(status = 1)
+        val display = DisplayEvent.Device(confirmed)
+        assertFalse(display.isCancelled)
+    }
+
+    @Test
+    fun `Device isCancelled is false when instance status is STATUS_TENTATIVE`() {
+        // CalendarContract.Events.STATUS_TENTATIVE = 0
+        val tentative = testInstance.copy(status = 0)
+        val display = DisplayEvent.Device(tentative)
+        assertFalse(display.isCancelled)
+    }
+
     // ========== toEventForShareCard ==========
     //
     // The synthetic Event is fed into the existing share-card pipeline

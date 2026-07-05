@@ -536,7 +536,7 @@
     <string name="drawer_contacts">Kenalan</string>
     <string name="drawer_device_calendars">Kalendar peranti</string>
     <string name="drawer_account_offline">Luar talian</string>
-    <string name="drawer_share_feedback">Kongsi maklum balas</string>
+    <string name="drawer_share_feedback">Bantuan &amp; dokumen</string>
 
     <string name="event_title_fallback">Acara</string>
 
@@ -674,6 +674,7 @@
 
     <string name="cd_clear">Kosongkan</string>
     <string name="cd_offline">Luar talian</string>
+    <string name="cd_loading_events">Memuatkan acara</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -889,6 +890,7 @@
     <string name="cd_widget_add_event">Tambah acara</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">tiada acara</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, dibatalkan</string>
     <string name="channel_event_reminders">Peringatan Acara</string>
     <string name="channel_event_reminders_desc">Pemberitahuan untuk acara kalendar yang akan datang</string>
     <string name="channel_sync_progress">Kemajuan Segerak</string>
@@ -973,6 +975,10 @@
     <string name="label_custom">Tersuai</string>
     <string name="cd_event_color">Warna acara</string>
     <string name="cd_checkmark">Dipilih</string>
+    <string name="cd_event_state_cancelled">Dibatalkan</string>
+    <string name="cd_event_state_declined">Ditolak</string>
+    <string name="cd_event_state_past">Acara lepas</string>
+    <string name="cd_event_untitled">Acara tanpa tajuk</string>
     <string name="label_device_timezone">Zon waktu peranti</string>
     <string name="color_saddlebrown">Coklat Pelana</string>    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
     <string name="color_gold">Emas</string>

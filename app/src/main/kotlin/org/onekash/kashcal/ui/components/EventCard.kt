@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
@@ -50,7 +52,8 @@ internal fun EventCard(
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
-    val effectiveAlpha = declinedCardAlpha(isPast, displayEvent.isDeclinedByMe)
+    val effectiveAlpha = declinedCardAlpha(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled)
+    val stateLabel = eventStateDescription(isPast, displayEvent.isDeclinedByMe, displayEvent.isCancelled)
     val stripeColor = Color(displayEvent.calendarColor)
     val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
     val fillAlpha = displayEvent.cardFillAlpha()
@@ -60,6 +63,7 @@ internal fun EventCard(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(effectiveAlpha)
+            .then(if (stateLabel != null) Modifier.semantics { stateDescription = stateLabel } else Modifier)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
@@ -76,7 +80,7 @@ internal fun EventCard(
                     displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe)
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled)
                 )
                 val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, resources, timePattern = timePattern)
                 Text(

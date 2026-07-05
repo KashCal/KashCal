@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Επαφές</string>
     <string name="drawer_device_calendars">Ημερολόγια συσκευής</string>
     <string name="drawer_account_offline">Εκτός σύνδεσης</string>
-    <string name="drawer_share_feedback">Στείλτε σχόλια</string>
+    <string name="drawer_share_feedback">Βοήθεια και τεκμηρίωση</string>
 
     <string name="event_title_fallback">Συμβάν</string>
 
@@ -768,6 +768,7 @@
 
     <string name="cd_clear">Εκκαθάριση</string>
     <string name="cd_offline">Εκτός σύνδεσης</string>
+    <string name="cd_loading_events">Φόρτωση συμβάντων</string>
     <string name="cd_open_drawer">Άνοιγμα συρταριού</string>
     <string name="cd_close_drawer">Κλείσιμο συρταριού</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -987,6 +988,11 @@
     <string name="cd_widget_add_event">Προσθήκη συμβάντος</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">χωρίς συμβάντα</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ακυρώθηκε</string>
+    <string name="cd_event_state_cancelled">ακυρώθηκε</string>
+    <string name="cd_event_state_declined">απορρίφθηκε</string>
+    <string name="cd_event_state_past">παρελθόν συμβάν</string>
+    <string name="cd_event_untitled">Συμβάν χωρίς τίτλο</string>
     <string name="channel_event_reminders">Υπενθυμίσεις Συμβάντων</string>
     <string name="channel_event_reminders_desc">Ειδοποιήσεις για προσεχή συμβάντα ημερολογίου</string>
     <string name="channel_sync_progress">Πρόοδος Συγχρονισμού</string>

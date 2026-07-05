@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.model
 
 import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Events
 import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.contacts.ContactEventUtils
@@ -54,6 +55,17 @@ sealed interface DisplayEvent {
      */
     val isDeclinedByMe: Boolean
 
+    /**
+     * True when the whole event has been cancelled (RFC 5545 STATUS:CANCELLED),
+     * e.g. an organizer called off a meeting or the event was cancelled from
+     * another client. Unlike [isDeclinedByMe] this is not per-attendee and does
+     * not require any cross-referencing — it reads the already-loaded status.
+     * Used by the display layer to dim and strike-through cancelled events.
+     * Cancelled events are always shown (never filtered out) so the user can
+     * see the meeting was called off.
+     */
+    val isCancelled: Boolean
+
     /** Room event with full Event + Occurrence data */
     @Immutable
     data class Room(
@@ -76,6 +88,7 @@ sealed interface DisplayEvent {
         override val calendarName get() = calendar?.displayName.orEmpty()
         override val isReadOnly get() = calendar?.isReadOnly ?: false
         override val isFree get() = event.transp == "TRANSPARENT"
+        override val isCancelled get() = event.status == "CANCELLED"
     }
 
     /** Device calendar event from CalendarProvider */
@@ -96,6 +109,7 @@ sealed interface DisplayEvent {
         override val isReadOnly get() = !instance.isWritable
         override val isFree get() = instance.availability == 1
         override val isDeclinedByMe get() = instance.selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED
+        override val isCancelled get() = instance.status == Events.STATUS_CANCELED
 
         /** RFC 5545 RRULE string, null for non-recurring events. */
         val rrule: String? get() = instance.rrule

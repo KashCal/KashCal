@@ -49,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -61,6 +62,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,6 +80,9 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.declinedCardAlpha
+import org.onekash.kashcal.ui.components.eventStateDescription
+import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import java.time.Instant
@@ -943,10 +949,13 @@ private fun CompactEventChip(
         }
     }
 
+    val stateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp)
+            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled))
+            .then(if (stateLabel != null) Modifier.semantics { stateDescription = stateLabel } else Modifier)
             .clip(RoundedCornerShape(4.dp))
             .then(
                 if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
@@ -961,6 +970,7 @@ private fun CompactEventChip(
             text = displayText,
             style = MaterialTheme.typography.labelSmall,
             color = textColor,
+            textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

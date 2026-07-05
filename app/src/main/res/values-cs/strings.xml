@@ -304,6 +304,10 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Vybráno</string>
+    <string name="cd_event_state_cancelled">zrušeno</string>
+    <string name="cd_event_state_declined">odmítnuto</string>
+    <string name="cd_event_state_past">minulá událost</string>
+    <string name="cd_event_untitled">Událost bez názvu</string>
     <string name="cd_back">Zpět</string>
     <string name="cd_close">Zavřít</string>
     <string name="cd_search">Hledat</string>
@@ -557,7 +561,7 @@
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendáře zařízení</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Sdílet zpětnou vazbu</string>
+    <string name="drawer_share_feedback">Nápověda a dokumenty</string>
 
     <string name="event_title_fallback">Událost</string>
 
@@ -785,6 +789,7 @@
 
     <string name="cd_clear">Vymazat</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Načítání událostí</string>
     <string name="cd_open_drawer">Otevřít nabídku</string>
     <string name="cd_close_drawer">Zavřít nabídku</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1024,6 +1029,7 @@
     <string name="cd_widget_add_event">Přidat událost</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">žádné události</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, zrušeno</string>
     <string name="channel_event_reminders">Připomínky událostí</string>
     <string name="channel_event_reminders_desc">Upozornění na nadcházející události v kalendáři</string>
     <string name="channel_sync_progress">Průběh synchronizace</string>

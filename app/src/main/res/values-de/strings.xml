@@ -560,7 +560,7 @@
     <string name="drawer_contacts">Kontakte</string>
     <string name="drawer_device_calendars">Gerätekalender</string>
     <string name="drawer_account_offline">Offline</string>
-    <string name="drawer_share_feedback">Feedback senden</string>
+    <string name="drawer_share_feedback">Hilfe &amp; Doku</string>
     <string name="event_title_fallback">Termin</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -730,6 +730,7 @@
 
     <string name="cd_clear">Löschen</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_loading_events">Termine werden geladen</string>
     <string name="cd_open_drawer">Navigation öffnen</string>
     <string name="cd_close_drawer">Navigation schließen</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -947,6 +948,7 @@
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Termin hinzufügen</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, abgesagt</string>
     <string name="cd_widget_no_events">keine Termine</string>
     <string name="channel_event_reminders">Terminerinnerungen</string>
     <string name="channel_event_reminders_desc">Benachrichtigungen für bevorstehende Kalendertermine</string>
@@ -1058,6 +1060,10 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Benutzerdefiniert</string>
     <string name="cd_event_color">Terminfarbe</string>
+    <string name="cd_event_state_cancelled">abgesagt</string>
+    <string name="cd_event_state_declined">abgelehnt</string>
+    <string name="cd_event_state_past">vergangener Termin</string>
+    <string name="cd_event_untitled">Termin ohne Titel</string>
     <string name="color_saddlebrown">Sattelbraun</string>
     <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Dunkelorange</string>
     <string name="color_gold">Gold</string>

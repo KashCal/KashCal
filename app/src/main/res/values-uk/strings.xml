@@ -599,7 +599,7 @@
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календарі пристрою</string>
     <string name="drawer_account_offline">Немає мережі</string>
-    <string name="drawer_share_feedback">Залишити відгук</string>
+    <string name="drawer_share_feedback">Довідка та документи</string>
 
     <string name="event_title_fallback">Подія</string>
 
@@ -830,6 +830,11 @@
 
     <string name="cd_clear">Очистити</string>
     <string name="cd_offline">Немає мережі</string>
+    <string name="cd_event_state_cancelled">скасовано</string>
+    <string name="cd_event_state_declined">відхилено</string>
+    <string name="cd_event_state_past">минула подія</string>
+    <string name="cd_event_untitled">Подія без назви</string>
+    <string name="cd_loading_events">Завантаження подій</string>
     <string name="cd_open_drawer">Відкрити меню</string>
     <string name="cd_close_drawer">Закрити меню</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
@@ -1026,6 +1031,7 @@
     <string name="cd_widget_add_event">Додати подію</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">немає подій</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, скасовано</string>
     <string name="channel_event_reminders">Нагадування про події</string>
     <string name="channel_event_reminders_desc">Сповіщення про майбутні події в календарі</string>
     <string name="channel_sync_progress">Перебіг синхронізації</string>

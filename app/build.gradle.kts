@@ -138,6 +138,14 @@ android {
         buildConfig = true
     }
 
+    androidResources {
+        // Auto-generate the LocaleConfig from the values-* resource folders and
+        // wire it into the merged manifest, so all supported languages appear in
+        // the Android 13+ system per-app language picker. The default
+        // (unqualified) locale is declared in app/src/main/res/resources.properties.
+        generateLocaleConfig = true
+    }
+
     packaging {
         dex {
             useLegacyPackaging = true
@@ -169,6 +177,12 @@ android {
         // Strings with %d that could be plurals — most are always >1 or use
         // adjectives that don't inflect ("new", "updated", "more")
         disable += "PluralsCandidate"
+        // Fail the build on missing content descriptions on interactive/image
+        // elements. Compose coverage is limited (these checks mostly target
+        // View/XML), but promoting them to error guards the widgets and any
+        // future XML layouts against unlabeled controls.
+        error += "ContentDescription"
+        error += "ClickableViewAccessibility"
     }
 
     testOptions {
@@ -290,6 +304,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.ui.test.junit4.accessibility)
 
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
