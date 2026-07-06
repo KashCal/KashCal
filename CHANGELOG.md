@@ -1,3 +1,20 @@
+## [2026.07.06]
+
+This release is about making KashCal yours. Two new choices, both in Settings, one for how the app looks and one for how it shows up on your home screen.
+
+First, color. KashCal now has a proper theme picker. Stay on System, pin Light or Dark, or switch on KashCal Teal, our own palette that follows your phone's light and dark setting while keeping the brand green front and center. It runs through the whole app, contrast-checked so text stays readable on every surface, light or dark.
+
+Second, the icon on your home screen. If you've chipped in to keep KashCal free and ad-free ([or you'd like to](https://kashcal.onekash.org/donate)), you can now wear it: a gold Supporter icon with a little heart on the calendar card. Pick it under Settings then App Icon in whichever flavor you like. Keep the KashCal name, or go incognito with the same icon labeled simply "Calendar." Whether you're already a supporter or about to become one, here's a thank you from us.
+
+KashCal, the calendar you already love, now in your colors and wearing your badge.
+
+### Everything in this release
+
+- New theme picker in Settings: System, Light, Dark, or KashCal Teal
+- KashCal Teal palette follows your phone's light/dark setting and is applied app-wide, with WCAG-checked contrast
+- New supporter app icon: a gold card with a heart, chosen under Settings then App Icon
+- Two supporter variants, sharing one icon: one keeps the "KashCal" name, one shows a discreet "Calendar" name on the home screen
+
 ## [2026.07.05]
 
 For a while now, KashCal has had a quiet flaw: you could only use it by looking at it. It worked beautifully with your eyes, and went silent as a stone the moment you turned on a screen reader. A calendar that only works when you're watching it is, on reflection, a poster. So this release taught it to talk.

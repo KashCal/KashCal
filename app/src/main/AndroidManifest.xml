@@ -74,13 +74,9 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- Launcher + default calendar app (APP_CALENDAR must be on ACTION_MAIN per Android docs) -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.APP_CALENDAR" />
-            </intent-filter>
+            <!-- The launcher + APP_CALENDAR entry lives on the activity-aliases below so the
+                 app icon can be swapped by enabling exactly one alias at a time. MainActivity
+                 keeps the file/text-share filters. -->
 
             <!-- Handle .ics file imports (MIME type) -->
             <intent-filter tools:ignore="AppLinkUrlError">
@@ -220,6 +216,61 @@
                 android:resource="@xml/shortcuts"/>
 
         </activity>
+
+        <!-- App-icon aliases. Exactly one is enabled at a time; switching the icon enables the
+             chosen alias and disables the others (see AppIconUtility). The default alias is the
+             only one enabled at install; the supporter variants share one gold icon and differ
+             only in the launcher label. Each alias carries the LAUNCHER/APP_CALENDAR filter and
+             the dynamic-shortcuts meta-data so shortcuts survive an icon swap. -->
+        <activity-alias
+            android:name=".MainActivityDefault"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivitySupporter"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_supporter"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivitySupporterCalendar"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_supporter"
+            android:label="@string/app_icon_label_calendar"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
 
         <activity
             android:name=".SettingsActivity"

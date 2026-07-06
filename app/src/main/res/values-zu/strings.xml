@@ -71,11 +71,7 @@
     <string name="action_delete_event">Susa Umcimbi</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Yamukela</string>
-    <string name="rsvp_action_tentative">Mhlawumbe</string>
-    <string name="rsvp_action_decline">Yenqaba</string>
     <string name="rsvp_series_disclosure">Impendulo yakho isebenza kochungechunge lonke.</string>
-    <string name="rsvp_modified_snackbar">I-RSVP ye-%1$s yehlulekile — umcimbi uguquliwe. Sicela uphendule futhi.</string>
     <string name="invitees_host_tag">Umsingathi</string>
     <string name="invitees_summary_you_alone">Wena</string>
     <plurals name="invitees_summary_you_organizing">
@@ -112,10 +108,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Lona kuphela</string>
     <string name="recurring_this_and_future">Lona nayo yonke ezayo</string>
-    <string name="recurring_just_occurrence">Lesi senzakalo kuphela</string>
-    <string name="recurring_all_occurrences">Zonke izenzakalo</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Isihloko somcimbi</string>
@@ -145,6 +138,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Izilungiselelo</string>
+    <string name="settings_theme">Itimu</string>
+    <string name="settings_theme_system_desc">Landela isilungiselelo esikhanyayo noma esimnyama sefoni yakho</string>
+    <string name="settings_theme_light_desc">Njalo kukhanya</string>
+    <string name="settings_theme_dark_desc">Njalo mnyama</string>
+    <string name="settings_theme_teal_desc">Okuluhlaza okwesibhakabhaka kwe-KashCal, kulandela isilungiselelo sefoni yakho esikhanyayo noma esimnyama</string>
+    <string name="settings_app_icon">Isithonjana sohlelo lokusebenza</string>
+    <string name="app_icon_default">Okuzenzakalelayo</string>
+    <string name="app_icon_supporter">Umsekeli</string>
+    <string name="app_icon_supporter_calendar">Umsekeli, obizwa ngokuthi Ikhalenda</string>
+    <string name="app_icon_label_calendar">Ikhalenda</string>
+    <string name="app_icon_support_cta">Sekela KashCal</string>
+    <string name="app_icon_switch_note">Ukushintsha isithonjana kungase kuqale kabusha uhlelo lokusebenza. Izaziso zihlala zisebenzisa isithonjana negama okuzenzakalelayo.</string>
     <string name="settings_search_placeholder">Sesha izilungiselelo…</string>
     <string name="settings_search_no_results">Azikho izilungiselelo ezitholakele ze-\"%1$s\"</string>
     <string name="cd_search_settings">Sesha izilungiselelo</string>
@@ -163,7 +168,6 @@
     <string name="settings_section_calendars">Amakhalenda</string>
     <string name="settings_section_appearance">Ukubonakala</string>
     <string name="settings_section_creating_events">Ukudala izehlakalo</string>
-    <string name="settings_section_notifications">Izaziso</string>
     <string name="settings_section_sync">Vumelanisa</string>
     <string name="settings_section_data">Isipele &amp; Ukubuyisela</string>
     <string name="settings_section_privacy">Ubumfihlo</string>
@@ -217,8 +221,6 @@
     <string name="dialog_force_sync_title">Phoqelela Ukuvumelanisa Okugcwele?</string>
     <string name="dialog_force_sync_message">Lokhu kuzolanda kabusha yonke idatha yekhalenda kusuka kuseva. Izinguquko zangakini zizogcinwa.</string>
     <string name="dialog_enable_notifications">Nika Amandla Izaziso?</string>
-    <string name="dialog_delete_title">Susa \"%1$s\"</string>
-    <string name="dialog_edit_title">Hlela \"%1$s\"</string>
     <string name="dialog_action_required">Lesi senzo siyadingeka ukuze uqhubeke.</string>
     <string name="dialog_add_to_calendar">Engeza ekhalendeni</string>
     <string name="dialog_select_calendar">Khetha ikhalenda</string>
@@ -323,10 +325,8 @@
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Kukhethiwe</string>
     <string name="cd_back">Emuva</string>
-    <string name="cd_close">Vala</string>
     <string name="cd_search">Sesha</string>
     <string name="cd_create_event">Dala umcimbi</string>
-    <string name="cd_today">Namuhla</string>
     <string name="cd_delete">Susa</string>
     <string name="cd_refresh">Vuselela</string>
     <string name="cd_more_options">Ezinye izinketho</string>
@@ -384,6 +384,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Okuzenzakalelayo kwesistimu</string>
+    <string name="option_light">Okukhanyayo</string>
+    <string name="option_dark">Okumnyama</string>
+    <string name="option_kashcal_teal">KashCal Oluhlaza Okwesibhakabhaka</string>
     <string name="option_12_hour">Amahora ayi-12</string>
     <string name="option_24_hour">Amahora angama-24</string>
     <string name="option_sunday">ISonto</string>
@@ -539,15 +542,12 @@
     <string name="cd_remove_alert">Susa isexwayiso</string>
     <string name="cd_warning">Isexwayiso</string>
     <string name="cd_refresh_calendars">Vuselela amakhalenda</string>
-    <string name="cd_timezone_tap_to_change">Indawo yesikhathi: %1$s, thepha ukuze ushintshe</string>
-    <string name="cd_day_events">Usuku %1$d, imicimbi engu-%2$d</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Ngezinsuku</string>
     <string name="label_pattern">Iphethini</string>
     <string name="label_ends">Kuphela</string>
     <string name="label_timezone">Indawo yesikhathi</string>
-    <string name="label_device_timezone">Indawo yesikhathi yedivayisi</string>
     <string name="label_alerts">Izexwayiso</string>
     <string name="label_add_alert">Engeza Isexwayiso</string>
     <string name="label_recurrence_never">Akusoze</string>
@@ -764,9 +764,7 @@
     <string name="cd_open_drawer">Vula idrawer</string>
     <string name="cd_close_drawer">Vala idrawer</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Vula imenyu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Vala imenyu</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Ukubuka kwekhalenda</string>
     <string name="cd_active_view">Ukubuka okusebenzayo</string>
@@ -1032,8 +1030,6 @@
     <string name="insights_period_last_week">Isonto eledlule</string>
     <string name="insights_period_this_month">Inyanga</string>
     <string name="insights_empty_state">Ayikho imicimbi ehlelwe kuleli sonto</string>
-    <string name="insights_delta_more">+%1$s ngaphezu kwe-%2$s</string>
-    <string name="insights_delta_less">%1$s ngaphansi kwe-%2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d umcimbi wosuku lonke</item>
         <item quantity="other">%d imicimbi yosuku lonke</item>
@@ -1077,7 +1073,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Isikhathi esikhululekile esilandelayo: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Ukuhlukaniswa kwekhalenda: %1$s</string>
     <string name="insights_cd_daily_chart">Ukusabalala kwansuku zonke: usuku olumatasa kakhulu ngu-%1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1087,7 +1082,6 @@
     <string name="label_event_color">Umbala womcimbi</string>
     <string name="label_calendar_default">Okuzenzakalelayo kwekhalenda</string>
     <string name="label_custom">Ngokwezifiso</string>
-    <string name="cd_event_color">Umbala womcimbi</string>
 
     <string name="cd_checkmark">Kukhethiwe</string>
 
@@ -1119,17 +1113,8 @@
     <string name="label_more_colors">Eminye imibala</string>
     <string name="label_back_to_grid">Emuva</string>
     <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
-    <string name="label_attendees">Ababaqashe</string>
+    <string name="label_attendees">Ababambe iqhaza</string>
     <string name="attendee_you_marker">Wena</string>
-    <string name="attendee_organizer_pill">Umhleli</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d okuningi</item>
-        <item quantity="other">+%d okuningi</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d obekhona</item>
-        <item quantity="other">%d ababekhona</item>
-    </plurals>
     <string name="attendee_card_going">Uyaya</string>
     <string name="attendee_card_pending">Kulindile</string>
     <string name="attendee_card_declined">Kunqatshelwe</string>
@@ -1137,10 +1122,8 @@
     <string name="attendee_card_hosting">Ubamba iqhaza</string>
     <string name="attendee_action_copy">Kopisha i-imeyili</string>
     <string name="attendee_action_email">Thumela i-imeyili</string>
-    <string name="attendee_group_icon_description">Abantu</string>
     <string name="attendee_email_copied">I-imeyili ikopishelwe</string>
     <string name="attendee_no_email_app">Akukho uhlelo lokusebenza lwe-imeyili olufakiwe</string>
-    <string name="attendee_show_less">Bonisa okuncane</string>
     <string name="attendee_show_all">Bonisa bonke ababambe iqhaza</string>
     <string name="attendee_status_accepted">Kwamukelwe</string>
     <string name="attendee_status_declined">Kunqatshelwe</string>
@@ -1208,10 +1191,6 @@
     <string name="share_as_card_share_failed">Ayikwazanga ukwabelana ngekhadi</string>
     <string name="share_from_kashcal_footer">Kwabelwane kusuka ku-KashCal</string>
     <string name="attendee_sheet_title">Abazohambela</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d omenyiwe</item>
-        <item quantity="other">%d abamenyiwe</item>
-    </plurals>
     <string name="attendee_search_hint">Sesha</string>
     <string name="attendee_search_no_matches">Awekho amabhalwa</string>
     <string name="attendee_section_going">Bayaya</string>

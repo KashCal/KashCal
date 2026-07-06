@@ -72,14 +72,10 @@
     <string name="action_delete_event">Kustuta sündmus</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Nõustu</string>
-    <string name="rsvp_action_tentative">Võib-olla</string>
-    <string name="rsvp_action_decline">Keeldu</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Vastus kehtib kogu seeriale.</string>
-    <string name="rsvp_modified_snackbar">Vastus sündmusele „%1$s“ ebaõnnestus — sündmust muudeti. Palun vasta uuesti.</string>
     <string name="invitees_host_tag">Võõrustaja</string>
     <string name="invitees_summary_you_alone">Sina</string>
     <plurals name="invitees_summary_you_organizing">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Ainult see</string>
     <string name="recurring_this_and_future">See ja kõik tulevased</string>
-    <string name="recurring_just_occurrence">Ainult see kordus</string>
-    <string name="recurring_all_occurrences">Kõik kordused</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Sündmuse pealkiri</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Seaded</string>
+    <string name="settings_theme">Teema</string>
+    <string name="settings_theme_system_desc">Järgi telefoni heledat või tumedat seadet</string>
+    <string name="settings_theme_light_desc">Alati hele</string>
+    <string name="settings_theme_dark_desc">Alati tume</string>
+    <string name="settings_theme_teal_desc">KashCali türkiissinine, järgib telefoni heledat või tumedat seadet</string>
+    <string name="settings_app_icon">Rakenduse ikoon</string>
+    <string name="app_icon_default">Vaikimisi</string>
+    <string name="app_icon_supporter">Toetaja</string>
+    <string name="app_icon_supporter_calendar">Toetaja, nimega Kalender</string>
+    <string name="app_icon_label_calendar">Kalender</string>
+    <string name="app_icon_support_cta">Toeta KashCali</string>
+    <string name="app_icon_switch_note">Ikooni muutmine võib rakenduse taaskäivitada. Teavitused kasutavad alati vaikimisi ikooni ja nime.</string>
     <string name="settings_time_format">Kellaaja vorming</string>
     <string name="settings_start_week_on">Nädal algab</string>
     <string name="settings_event_emojis">Sündmuste emotikonid</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Kalendrid</string>
     <string name="settings_section_appearance">Välimus</string>
     <string name="settings_section_creating_events">Sündmuste loomine</string>
-    <string name="settings_section_notifications">Teavitused</string>
     <string name="settings_section_sync">Sünkroonimine</string>
     <string name="settings_section_data">Varundus ja taastamine</string>
     <string name="settings_section_privacy">Privaatsus</string>
@@ -204,8 +208,6 @@
     <string name="dialog_force_sync_title">Sundige täielik sünkroonimine?</string>
     <string name="dialog_force_sync_message">See laadib kõik kalendriandmed serverist uuesti alla. Kohalikud muudatused säilitatakse.</string>
     <string name="dialog_enable_notifications">Luba teavitused?</string>
-    <string name="dialog_delete_title">Kustuta \"%1$s\"</string>
-    <string name="dialog_edit_title">Muuda \"%1$s\"</string>
     <string name="dialog_action_required">See toiming on jätkamiseks vajalik.</string>
     <string name="dialog_add_to_calendar">Lisa kalendrisse</string>
     <string name="dialog_select_calendar">Vali kalender</string>
@@ -239,7 +241,7 @@
     <string name="error_auth_session_expired">Teie iCloud seanss on aegunud. Palun logige uuesti sisse, et jätkata sünkroonimist.</string>
     <string name="error_auth_account_locked">Teie Apple ID on lukus. Palun külastage appleid.apple.com, et see avada.</string>
 
-    <string name="error_network_offline">Olete võrguühenduseta. Muudatused sünkroonitakse, kui olete jälle võrgus.</string>
+    <string name="error_network_offline">Oled võrguühenduseta. Muudatused sünkroonitakse, kui oled jälle võrgus.</string>
     <string name="error_network_timeout">Ühenduse ajalõpp. Palun kontrollige internetiühendust ja proovige uuesti.</string>
     <string name="error_network_ssl">Turvaline ühendus ebaõnnestus. Palun kontrollige võrguseadeid.</string>
     <string name="error_network_unknown_host">Ei suudetud iCloudi ühenduda. Palun kontrollige internetiühendust.</string>
@@ -311,10 +313,8 @@
     <string name="cd_selected">Valitud</string>
     <string name="cd_checkmark">Valitud</string>
     <string name="cd_back">Tagasi</string>
-    <string name="cd_close">Sulge</string>
     <string name="cd_search">Otsi</string>
     <string name="cd_create_event">Loo sündmus</string>
-    <string name="cd_today">Täna</string>
     <string name="cd_delete">Kustuta</string>
     <string name="cd_refresh">Värskenda</string>
     <string name="cd_more_options">Rohkem valikuid</string>
@@ -372,6 +372,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Süsteemi vaikeväärtus</string>
+    <string name="option_light">Hele</string>
+    <string name="option_dark">Tume</string>
+    <string name="option_kashcal_teal">KashCali türkiissinine</string>
     <string name="option_12_hour">12-tunnine</string>
     <string name="option_24_hour">24-tunnine</string>
     <string name="option_sunday">Pühapäev</string>
@@ -534,15 +537,12 @@
     <string name="cd_remove_alert">Eemalda meeldetuletus</string>
     <string name="cd_warning">Hoiatus</string>
     <string name="cd_refresh_calendars">Värskenda kalendreid</string>
-    <string name="cd_timezone_tap_to_change">Ajavöönd: %1$s, puudutage muutmiseks</string>
-    <string name="cd_day_events">Päev %1$d, %2$d sündmust</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Päevadel</string>
     <string name="label_pattern">Muster</string>
     <string name="label_ends">Lõpeb</string>
     <string name="label_timezone">Ajavöönd</string>
-    <string name="label_device_timezone">Seadme ajavöönd</string>
     <string name="label_alerts">Meeldetuletused</string>
     <string name="label_add_alert">Lisa meeldetuletus</string>
     <string name="label_recurrence_never">Mitte kunagi</string>
@@ -767,9 +767,7 @@
     <string name="cd_open_drawer">Ava menüü</string>
     <string name="cd_close_drawer">Sulge menüü</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Ava menüü</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Sulge menüü</string>
     <string name="cd_calendar_view">Kalendrivaade</string>
     <string name="cd_active_view">Aktiivne vaade</string>
 
@@ -998,8 +996,6 @@
     <string name="insights_period_last_week">Eelmine nädal</string>
     <string name="insights_period_this_month">Kuu</string>
     <string name="insights_empty_state">Sellel nädalal pole sündmusi ajastatud</string>
-    <string name="insights_delta_more">+%1$s rohkem kui %2$s</string>
-    <string name="insights_delta_less">%1$s vähem kui %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d kogu päeva sündmus</item>
         <item quantity="other">%d kogu päeva sündmust</item>
@@ -1030,7 +1026,6 @@
     <string name="insight_tomorrow_preview_no_start">Homme: ajastatud %1$s</string>
     <string name="insight_heaviest_upcoming">%1$s on kõige tihedam eelseisev päev (%2$s)</string>
     <string name="insight_next_free_block">Järgmine vaba aeg: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Jaotus kalendrite kaupa: %1$s</string>
     <string name="insights_cd_daily_chart">Jaotus päevade kaupa: kõige tihedam päev on %1$s</string>
     <string name="label_availability">Saadavus</string>
     <string name="label_busy">Hõivatud</string>
@@ -1038,7 +1033,6 @@
     <string name="label_event_color">Sündmuse värvus</string>
     <string name="label_calendar_default">Kalendri vaikeväärtus</string>
     <string name="label_custom">Kohandatud</string>
-    <string name="cd_event_color">Sündmuse värvus</string>
 
     <string name="hue_red">Punane</string>
     <string name="hue_orange">Oranž</string>
@@ -1077,15 +1071,6 @@
     <!-- Attendees (B4) -->
     <string name="label_attendees">Osalejad</string>
     <string name="attendee_you_marker">Sina</string>
-    <string name="attendee_organizer_pill">Korraldaja</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+veel %d</item>
-        <item quantity="other">+veel %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d osaleja</item>
-        <item quantity="other">%d osalejat</item>
-    </plurals>
     <string name="attendee_card_going">Tuleb</string>
     <string name="attendee_card_pending">Ootel</string>
     <string name="attendee_card_declined">Keeldus</string>
@@ -1093,10 +1078,8 @@
     <string name="attendee_card_hosting">Korraldab</string>
     <string name="attendee_action_copy">Kopeeri e-post</string>
     <string name="attendee_action_email">Saada e-kiri</string>
-    <string name="attendee_group_icon_description">Inimesed</string>
     <string name="attendee_email_copied">E-post kopeeritud</string>
     <string name="attendee_no_email_app">E-posti rakendust pole installitud</string>
-    <string name="attendee_show_less">Näita vähem</string>
     <string name="attendee_show_all">Kuva kõik osalejad</string>
     <string name="attendee_status_accepted">Vastu võetud</string>
     <string name="attendee_status_declined">Keeldus</string>
@@ -1153,10 +1136,6 @@
     <string name="share_as_card_share_failed">Kaarti ei saanud jagada</string>
     <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
     <string name="attendee_sheet_title">Osalejad</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d kutsutud</item>
-        <item quantity="other">%d kutsutud</item>
-    </plurals>
     <string name="attendee_search_hint">Otsi</string>
     <string name="attendee_search_no_matches">Tulemusi pole</string>
     <string name="attendee_section_going">Tulevad</string>

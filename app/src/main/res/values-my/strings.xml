@@ -72,9 +72,6 @@
     <string name="action_delete_event">ပွဲ ဖျက်</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">လက်ခံ</string>
-    <string name="rsvp_action_tentative">မသေချာသေး</string>
-    <string name="rsvp_action_decline">ငြင်းပယ်</string>
     <string name="invitees_host_tag">ဧည့်ခံသူ</string>
     <string name="rsvp_question_going">သွားမှာလား?</string>
     <string name="rsvp_action_yes">ဟုတ်</string>
@@ -90,13 +87,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">ဤတုံ့ပြန်ချက်သည် အစီအစဉ်တစ်ခုလုံးအတွက် သက်ဆိုင်သည်။</string>
-    <string name="rsvp_modified_snackbar">%1$s အတွက် RSVP မအောင်မြင်ပါ — ပွဲကို ပြောင်းလဲထားသည်။ ပြန်လည် တုံ့ပြန်ပါ။</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">ဒီတစ်ခုတည်းသာ</string>
     <string name="recurring_this_and_future">ဒါနှင့် အနာဂတ် အားလုံး</string>
-    <string name="recurring_just_occurrence">ဤအကြိမ်တည်းသာ</string>
-    <string name="recurring_all_occurrences">အကြိမ်အားလုံး</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ပွဲခေါင်းစဉ်</string>
@@ -126,6 +119,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ဆက်တင်များ</string>
+    <string name="settings_theme">အသွင်အပြင်</string>
+    <string name="settings_theme_system_desc">သင့်ဖုန်း၏ အလင်း သို့မဟုတ် အမှောင် ဆက်တင်ကို လိုက်နာပါ</string>
+    <string name="settings_theme_light_desc">အမြဲ အလင်း</string>
+    <string name="settings_theme_dark_desc">အမြဲ အမှောင်</string>
+    <string name="settings_theme_teal_desc">KashCal စိမ်းပြာရောင်၊ သင့်ဖုန်း၏ အလင်း သို့မဟုတ် အမှောင် ဆက်တင်ကို လိုက်နာသည်</string>
+    <string name="settings_app_icon">အက်ပ် အိုင်ကွန်</string>
+    <string name="app_icon_default">မူရင်း</string>
+    <string name="app_icon_supporter">ပံ့ပိုးသူ</string>
+    <string name="app_icon_supporter_calendar">ပံ့ပိုးသူ၊ ပြက္ခဒိန်ဟု အမည်တပ်ထားသည်</string>
+    <string name="app_icon_label_calendar">ပြက္ခဒိန်</string>
+    <string name="app_icon_support_cta">KashCal ကို ပံ့ပိုးပါ</string>
+    <string name="app_icon_switch_note">အိုင်ကွန်ပြောင်းလဲခြင်းသည် အက်ပ်ကို ပြန်စတင်စေနိုင်သည်။ အကြောင်းကြားချက်များသည် မူရင်း အိုင်ကွန်နှင့် အမည်ကို အမြဲ အသုံးပြုသည်။</string>
     <string name="settings_search_placeholder">ဆက်တင်များ ရှာရန်…</string>
     <string name="settings_search_no_results">\"%1$s\" အတွက် ဆက်တင် မတွေ့ပါ</string>
     <string name="cd_search_settings">ဆက်တင်များ ရှာရန်</string>
@@ -144,7 +149,6 @@
     <string name="settings_section_calendars">ပြက္ခဒိန်များ</string>
     <string name="settings_section_appearance">အသွင်အပြင်</string>
     <string name="settings_section_creating_events">ပွဲများဖန်တီးခြင်း</string>
-    <string name="settings_section_notifications">အကြောင်းကြားချက်များ</string>
     <string name="settings_section_sync">ချိန်ကိုက်</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
     <string name="settings_section_privacy">ကိုယ်ရေးကိုယ်တာ</string>
@@ -197,8 +201,6 @@
     <string name="dialog_force_sync_title">အပြည့်အဝ အတင်းချိန်ကိုက်မလား?</string>
     <string name="dialog_force_sync_message">ဆာဗာမှ ပြက္ခဒိန်ဒေတာ အားလုံးကို ပြန်ဒေါင်းလုဒ်လုပ်ပါမည်။ ဒေသဆိုင်ရာ ပြောင်းလဲမှုများ ထိန်းသိမ်းထားပါမည်။</string>
     <string name="dialog_enable_notifications">အကြောင်းကြားချက်များ ဖွင့်မလား?</string>
-    <string name="dialog_delete_title">\"%1$s\" ဖျက်မလား</string>
-    <string name="dialog_edit_title">\"%1$s\" ပြင်ဆင်</string>
     <string name="dialog_action_required">ဆက်လုပ်ရန် ဤလုပ်ဆောင်ချက် လိုအပ်ပါသည်။</string>
     <string name="dialog_add_to_calendar">ပြက္ခဒိန်သို့ ထည့်</string>
     <string name="dialog_select_calendar">ပြက္ခဒိန် ရွေးချယ်</string>
@@ -302,10 +304,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ရွေးချယ်ထား</string>
     <string name="cd_back">နောက်သို့</string>
-    <string name="cd_close">ပိတ်</string>
     <string name="cd_search">ရှာဖွေ</string>
     <string name="cd_create_event">ပွဲ ဖန်တီး</string>
-    <string name="cd_today">ယနေ့</string>
     <string name="cd_delete">ဖျက်</string>
     <string name="cd_refresh">ပြန်လည်စတင်</string>
     <string name="cd_more_options">ရွေးစရာ အပိုများ</string>
@@ -363,6 +363,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">စနစ် မူရင်း</string>
+    <string name="option_light">အလင်း</string>
+    <string name="option_dark">အမှောင်</string>
+    <string name="option_kashcal_teal">KashCal စိမ်းပြာရောင်</string>
     <string name="option_12_hour">၁၂ နာရီ</string>
     <string name="option_24_hour">၂၄ နာရီ</string>
     <string name="option_sunday">တနင်္ဂနွေ</string>
@@ -522,8 +525,6 @@
     <string name="cd_event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
     <string name="cd_warning">သတိပေးချက်</string>
     <string name="cd_refresh_calendars">ပြက္ခဒိန်များ ပြန်လည်စတင်</string>
-    <string name="cd_timezone_tap_to_change">အချိန်ဇုန်: %1$s, ပြောင်းရန် နှိပ်ပါ</string>
-    <string name="cd_day_events">ရက် %1$d, ပွဲ %2$d ခု</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">ရက်များတွင်</string>
@@ -715,8 +716,6 @@
     <string name="cd_loading_events">ပွဲများ ဖွင့်နေသည်</string>
     <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
     <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
-    <string name="cd_open_rail">မီနူး ဖွင့်</string>
-    <string name="cd_close_rail">မီနူး ပိတ်</string>
     <string name="cd_calendar_view">ပြက္ခဒိန် အမြင်</string>
     <string name="cd_active_view">လက်ရှိ အမြင်</string>
 
@@ -974,8 +973,6 @@
     <string name="insights_period_last_week">ယခင်အပတ်</string>
     <string name="insights_period_this_month">လ</string>
     <string name="insights_empty_state">ဤအပတ်အတွက် ပွဲစဉ်များ စီစဉ်ထားခြင်း မရှိပါ</string>
-    <string name="insights_delta_more">+%1$s %2$s ထက် ပိုများသည်</string>
-    <string name="insights_delta_less">%1$s %2$s ထက် နည်းသည်</string>
     <plurals name="insights_all_day_count">
         <item quantity="other">တစ်နေ့တာ ပွဲစဉ် %d ခု</item>
     </plurals>
@@ -1018,7 +1015,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">နောက် အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">ပြက္ခဒိန် ခွဲခြမ်းစိတ်ဖြာမှု: %1$s</string>
     <string name="insights_cd_daily_chart">နေ့စဉ် ဖြန့်ဝေမှု: အအလုပ်များဆုံးနေ့မှာ %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1028,9 +1024,7 @@
     <string name="label_event_color">ပွဲအရောင်</string>
     <string name="label_calendar_default">ပြက္ခဒိန် မူရင်း</string>
     <string name="label_custom">စိတ်ကြိုက်</string>
-    <string name="cd_event_color">ပွဲအရောင်</string>
     <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
-    <string name="label_device_timezone">စက်၏ အချိန်ဇုန်</string>
     <string name="color_saddlebrown">ကုန်းနှီးအညိုရောင်</string>
     <string name="color_tomato">ခရမ်းချဉ်သီး</string>    <string name="color_darkorange">လိမ္မော်ရင့်</string>
     <string name="color_gold">ရွှေရောင်</string>
@@ -1055,13 +1049,6 @@
     <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
     <string name="label_attendees">ပါဝင်သူများ</string>
     <string name="attendee_you_marker">သင်</string>
-    <string name="attendee_organizer_pill">စီစဉ်သူ</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="other">+%d ထပ်မံ</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="other">ပါဝင်သူ %d ဦး</item>
-    </plurals>
     <string name="attendee_card_going">တက်ရောက်မည်</string>
     <string name="attendee_card_pending">စောင့်ဆိုင်းနေသည်</string>
     <string name="attendee_card_declined">ငြင်းပယ်ခဲ့သည်</string>
@@ -1069,10 +1056,8 @@
     <string name="attendee_card_hosting">အိမ်ရှင်</string>
     <string name="attendee_action_copy">အီးမေးလ်ကူးယူရန်</string>
     <string name="attendee_action_email">အီးမေးလ်ပို့ရန်</string>
-    <string name="attendee_group_icon_description">လူများ</string>
     <string name="attendee_email_copied">အီးမေးလ်ကို ကူးယူပြီးပါပြီ</string>
     <string name="attendee_no_email_app">အီးမေးလ်အက်ပ် မထည့်သွင်းထားပါ</string>
-    <string name="attendee_show_less">ပိုနည်းနည်း ပြပါ</string>
     <string name="attendee_show_all">တက်ရောက်သူအားလုံးကို ပြရန်</string>
     <string name="attendee_status_accepted">လက်ခံခဲ့သည်</string>
     <string name="attendee_status_declined">ငြင်းပယ်ခဲ့သည်</string>
@@ -1135,9 +1120,6 @@
     <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
     <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
     <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="other">ဖိတ်ထား %d ယောက်</item>
-    </plurals>
     <string name="attendee_search_hint">ရှာဖွေ</string>
     <string name="attendee_search_no_matches">ရလဒ်မရှိ</string>
     <string name="attendee_section_going">လာမည်</string>

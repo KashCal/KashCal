@@ -71,11 +71,7 @@
     <string name="action_delete_event">Διαγραφή συμβάντος</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Αποδοχή</string>
-    <string name="rsvp_action_tentative">Πιθανώς</string>
-    <string name="rsvp_action_decline">Απόρριψη</string>
     <string name="rsvp_series_disclosure">Η απάντηση ισχύει για ολόκληρη τη σειρά.</string>
-    <string name="rsvp_modified_snackbar">Η απάντηση για %1$s απέτυχε — το συμβάν τροποποιήθηκε. Παρακαλώ απαντήστε ξανά.</string>
     <string name="invitees_host_tag">Οικοδεσπότης</string>
     <string name="invitees_summary_you_alone">Εσύ</string>
     <plurals name="reminder_in_days">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Μόνο αυτό</string>
     <string name="recurring_this_and_future">Αυτό και όλα τα μελλοντικά</string>
-    <string name="recurring_just_occurrence">Μόνο αυτή την εμφάνιση</string>
-    <string name="recurring_all_occurrences">Όλες τις εμφανίσεις</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Τίτλος συμβάντος</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ρυθμίσεις</string>
+    <string name="settings_theme">Θέμα</string>
+    <string name="settings_theme_system_desc">Ακολουθεί τη φωτεινή ή σκοτεινή ρύθμιση του τηλεφώνου σας</string>
+    <string name="settings_theme_light_desc">Πάντα φωτεινό</string>
+    <string name="settings_theme_dark_desc">Πάντα σκοτεινό</string>
+    <string name="settings_theme_teal_desc">KashCal πετρόλ, ακολουθεί τη φωτεινή ή σκοτεινή ρύθμιση του τηλεφώνου σας</string>
+    <string name="settings_app_icon">Εικονίδιο εφαρμογής</string>
+    <string name="app_icon_default">Προεπιλογή</string>
+    <string name="app_icon_supporter">Υποστηρικτής</string>
+    <string name="app_icon_supporter_calendar">Υποστηρικτής, με ετικέτα Ημερολόγιο</string>
+    <string name="app_icon_label_calendar">Ημερολόγιο</string>
+    <string name="app_icon_support_cta">Υποστηρίξτε το KashCal</string>
+    <string name="app_icon_switch_note">Η αλλαγή του εικονιδίου μπορεί να επανεκκινήσει την εφαρμογή. Οι ειδοποιήσεις χρησιμοποιούν πάντα το προεπιλεγμένο εικονίδιο και όνομα.</string>
     <string name="settings_time_format">Μορφή ώρας</string>
     <string name="settings_start_week_on">Η εβδομάδα αρχίζει</string>
     <string name="settings_event_emojis">Emoji συμβάντων</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Ημερολόγια</string>
     <string name="settings_section_appearance">Εμφάνιση</string>
     <string name="settings_section_creating_events">Δημιουργία συμβάντων</string>
-    <string name="settings_section_notifications">Ειδοποιήσεις</string>
     <string name="settings_section_sync">Συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
     <string name="settings_section_privacy">Απόρρητο</string>
@@ -219,8 +223,6 @@
     <string name="dialog_force_sync_title">Αναγκαστικός πλήρης συγχρονισμός;</string>
     <string name="dialog_force_sync_message">Αυτό θα κατεβάσει εκ νέου όλα τα δεδομένα ημερολογίου από τον διακομιστή. Οι τοπικές αλλαγές θα διατηρηθούν.</string>
     <string name="dialog_enable_notifications">Ενεργοποίηση ειδοποιήσεων;</string>
-    <string name="dialog_delete_title">Διαγραφή \"%1$s\"</string>
-    <string name="dialog_edit_title">Επεξεργασία \"%1$s\"</string>
     <string name="dialog_action_required">Αυτή η ενέργεια είναι απαραίτητη για να συνεχίσετε.</string>
     <string name="dialog_add_to_calendar">Προσθήκη στο ημερολόγιο</string>
     <string name="dialog_select_calendar">Επιλογή ημερολογίου</string>
@@ -325,10 +327,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Επιλεγμένο</string>
     <string name="cd_back">Πίσω</string>
-    <string name="cd_close">Κλείσιμο</string>
     <string name="cd_search">Αναζήτηση</string>
     <string name="cd_create_event">Δημιουργία συμβάντος</string>
-    <string name="cd_today">Σήμερα</string>
     <string name="cd_delete">Διαγραφή</string>
     <string name="cd_refresh">Ανανέωση</string>
     <string name="cd_more_options">Περισσότερες επιλογές</string>
@@ -386,6 +386,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Προεπιλογή συστήματος</string>
+    <string name="option_light">Φωτεινό</string>
+    <string name="option_dark">Σκοτεινό</string>
+    <string name="option_kashcal_teal">KashCal Πετρόλ</string>
     <string name="option_12_hour">12ωρο</string>
     <string name="option_24_hour">24ωρο</string>
     <string name="option_sunday">Κυριακή</string>
@@ -545,8 +548,6 @@
     <string name="cd_remove_alert">Αφαίρεση ειδοποίησης</string>
     <string name="cd_warning">Προειδοποίηση</string>
     <string name="cd_refresh_calendars">Ανανέωση ημερολογίων</string>
-    <string name="cd_timezone_tap_to_change">Ζώνη ώρας: %1$s, πατήστε για αλλαγή</string>
-    <string name="cd_day_events">Ημέρα %1$d, %2$d συμβάντα</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Τις ημέρες</string>
@@ -772,9 +773,7 @@
     <string name="cd_open_drawer">Άνοιγμα συρταριού</string>
     <string name="cd_close_drawer">Κλείσιμο συρταριού</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Άνοιγμα μενού</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Κλείσιμο μενού</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Προβολή ημερολογίου</string>
     <string name="cd_active_view">Ενεργή προβολή</string>
@@ -1044,8 +1043,6 @@
     <string name="insights_period_last_week">Προηγ. εβδομάδα</string>
     <string name="insights_period_this_month">Μήνας</string>
     <string name="insights_empty_state">Δεν υπάρχουν προγραμματισμένα γεγονότα αυτή την εβδομάδα</string>
-    <string name="insights_delta_more">+%1$s περισσότερα από %2$s</string>
-    <string name="insights_delta_less">%1$s λιγότερα από %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d ολοήμερο γεγονός</item>
         <item quantity="other">%d ολοήμερα γεγονότα</item>
@@ -1089,7 +1086,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Επόμενο ελεύθερο διάστημα: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Κατανομή ημερολογίων: %1$s</string>
     <string name="insights_cd_daily_chart">Ημερήσια κατανομή: η πιο γεμάτη μέρα είναι %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1099,9 +1095,7 @@
     <string name="label_event_color">Χρώμα συμβάντος</string>
     <string name="label_calendar_default">Προεπιλογή ημερολογίου</string>
     <string name="label_custom">Προσαρμοσμένο</string>
-    <string name="cd_event_color">Χρώμα συμβάντος</string>
     <string name="cd_checkmark">Επιλεγμένο</string>
-    <string name="label_device_timezone">Ζώνη ώρας συσκευής</string>
 
     <!-- Color names -->
     <string name="color_saddlebrown">Καφέ σέλας</string>    <string name="color_tomato">Ντομάτα</string>    <string name="color_darkorange">Σκούρο πορτοκαλί</string>
@@ -1128,15 +1122,6 @@
     <string name="settings_suggest_titles">Πρόταση τίτλων εκδηλώσεων</string>
     <string name="label_attendees">Συμμετέχοντες</string>
     <string name="attendee_you_marker">Εσύ</string>
-    <string name="attendee_organizer_pill">Διοργανωτής</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d ακόμη</item>
-        <item quantity="other">+%d ακόμη</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d συμμετέχων</item>
-        <item quantity="other">%d συμμετέχοντες</item>
-    </plurals>
     <string name="attendee_card_going">Συμμετοχή</string>
     <string name="attendee_card_pending">Εκκρεμές</string>
     <string name="attendee_card_declined">Απορρίφθηκε</string>
@@ -1144,10 +1129,8 @@
     <string name="attendee_card_hosting">Διοργάνωση</string>
     <string name="attendee_action_copy">Αντιγραφή email</string>
     <string name="attendee_action_email">Αποστολή email</string>
-    <string name="attendee_group_icon_description">Άτομα</string>
     <string name="attendee_email_copied">Το email αντιγράφηκε</string>
     <string name="attendee_no_email_app">Δεν υπάρχει εγκατεστημένη εφαρμογή email</string>
-    <string name="attendee_show_less">Εμφάνιση λιγότερων</string>
     <string name="attendee_show_all">Εμφάνιση όλων των συμμετεχόντων</string>
     <string name="attendee_status_accepted">Αποδεκτό</string>
     <string name="attendee_status_declined">Απορρίφθηκε</string>
@@ -1215,10 +1198,6 @@
     <string name="share_as_card_chooser_title">Κοινοποίηση εκδήλωσης</string>
     <string name="share_as_card_share_failed">Δεν ήταν δυνατή η κοινοποίηση της κάρτας</string>
     <string name="attendee_sheet_title">Συμμετέχοντες</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d καλεσμένος</item>
-        <item quantity="other">%d καλεσμένοι</item>
-    </plurals>
     <string name="attendee_search_hint">Αναζήτηση</string>
     <string name="attendee_search_no_matches">Καμία αντιστοιχία</string>
     <string name="attendee_section_going">Πάνε</string>

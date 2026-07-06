@@ -121,24 +121,17 @@
 
     <!-- ==================== RSVP Actions ==================== -->
     <!-- Button: accept a meeting invitation -->
-    <string name="rsvp_action_accept">Accept</string>
     <!-- Button: tentatively accept a meeting invitation -->
-    <string name="rsvp_action_tentative">Tentative</string>
     <!-- Button: decline a meeting invitation -->
-    <string name="rsvp_action_decline">Decline</string>
     <!-- Caption shown under the RSVP buttons on a recurring event. Series-level RSVP is the only
          supported mode, so this disclosure prevents the surprise of "I declined Friday and now every
          Friday is gone from my calendar." -->
     <string name="rsvp_series_disclosure">Your reply applies to the whole series.</string>
     <!-- Snackbar shown when an RSVP write is rejected because the organizer concurrently edited the event. %1$s is the event title. -->
-    <string name="rsvp_modified_snackbar">RSVP for %1$s failed — event was modified. Please re-respond.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <!-- Dialog options when editing/deleting a recurring (repeating) event -->
-    <string name="recurring_just_this">Just this one</string>
     <string name="recurring_this_and_future">This and all future</string>
-    <string name="recurring_just_occurrence">Just this occurrence</string>
-    <string name="recurring_all_occurrences">All occurrences</string>
 
     <!-- ==================== Form Labels ==================== -->
     <!-- Form field labels for event creation/editing -->
@@ -190,6 +183,18 @@
     <!-- ==================== Settings ==================== -->
     <!-- Settings screen labels. Match Android system Settings terminology where possible. -->
     <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system_desc">Follow your phone\'s light or dark setting</string>
+    <string name="settings_theme_light_desc">Always light</string>
+    <string name="settings_theme_dark_desc">Always dark</string>
+    <string name="settings_theme_teal_desc">KashCal teal, following your phone\'s light or dark setting</string>
+    <string name="settings_app_icon">App Icon</string>
+    <string name="app_icon_default">Default</string>
+    <string name="app_icon_supporter">Supporter</string>
+    <string name="app_icon_supporter_calendar">Supporter, labeled Calendar</string>
+    <string name="app_icon_label_calendar">Calendar</string>
+    <string name="app_icon_support_cta">Support KashCal</string>
+    <string name="app_icon_switch_note">Changing the icon may restart the app. Notifications always use the default icon and name.</string>
     <string name="settings_time_format">Time Format</string>
     <string name="settings_start_week_on">Start Week On</string>
     <string name="settings_event_emojis">Event Emojis</string>
@@ -209,7 +214,6 @@
     <string name="settings_section_calendars">Calendars</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_creating_events">Creating events</string>
-    <string name="settings_section_notifications">Notifications</string>
     <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
@@ -307,9 +311,7 @@
     <!-- Match Android system "Notifications" terminology -->
     <string name="dialog_enable_notifications">Enable Notifications?</string>
     <!-- %1$s = event title -->
-    <string name="dialog_delete_title">Delete \"%1$s\"</string>
     <!-- %1$s = event title -->
-    <string name="dialog_edit_title">Edit \"%1$s\"</string>
     <string name="dialog_action_required">This action is required to continue.</string>
     <!-- "calendar" = the container, not the grid view -->
     <string name="dialog_add_to_calendar">Add to calendar</string>
@@ -449,10 +451,8 @@
     <!-- State: item is currently selected (past participle/adjective) -->
     <string name="cd_selected">Selected</string>
     <string name="cd_back">Back</string>
-    <string name="cd_close">Close</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
-    <string name="cd_today">Today</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_refresh">Refresh</string>
     <string name="cd_more_options">More options</string>
@@ -536,6 +536,9 @@
     <!-- ==================== Settings Options ==================== -->
     <!-- Setting value: use the device's default setting -->
     <string name="option_system_default">System default</string>
+    <string name="option_light">Light</string>
+    <string name="option_dark">Dark</string>
+    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">12-hour</string>
     <string name="option_24_hour">24-hour</string>
     <string name="option_sunday">Sunday</string>
@@ -753,9 +756,7 @@
     <string name="cd_warning">Warning</string>
     <string name="cd_refresh_calendars">Refresh calendars</string>
     <!-- %1$s = timezone abbreviation -->
-    <string name="cd_timezone_tap_to_change">Timezone: %1$s, tap to change</string>
     <!-- %1$d = day of month, %2$d = event count -->
-    <string name="cd_day_events">Day %1$d, %2$d events</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <!-- Recurrence picker: how often event repeats (Daily, Weekly, etc.) -->
@@ -768,7 +769,6 @@
     <!-- Event form: timezone row label -->
     <string name="label_timezone">Time zone</string>
     <!-- Event form: shown in the timezone row when the event uses the device's default timezone -->
-    <string name="label_device_timezone">Device time zone</string>
     <!-- Event form section: reminder alerts -->
     <string name="label_alerts">Alerts</string>
     <!-- Button: add another reminder alert to the event -->
@@ -1017,10 +1017,6 @@
     <!-- Title of the full attendee list sheet, opened by tapping the caret on the InviteesBlock. -->
     <string name="attendee_sheet_title">Attendees</string>
     <!-- Plural in the sheet's header counter, e.g. "12 invited" — the "invited" half. -->
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d invited</item>
-        <item quantity="other">%d invited</item>
-    </plurals>
     <!-- Placeholder shown inside the search field above the attendee list. -->
     <string name="attendee_search_hint">Search</string>
     <!-- Empty state when the search query matches no attendee in the sheet. -->
@@ -1129,9 +1125,7 @@
     <string name="cd_open_drawer">Open drawer</string>
     <string name="cd_close_drawer">Close drawer</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Open menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Close menu</string>
     <string name="cd_calendar_view">Calendar view</string>
     <string name="cd_active_view">Active view</string>
 
@@ -1409,8 +1403,6 @@
     <string name="insights_period_last_week">Last week</string>
     <string name="insights_period_this_month">Month</string>
     <string name="insights_empty_state">No events scheduled this week</string>
-    <string name="insights_delta_more">+%1$s more than %2$s</string>
-    <string name="insights_delta_less">%1$s less than %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d all-day event</item>
         <item quantity="other">%d all-day events</item>
@@ -1454,7 +1446,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Next free block: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Calendar breakdown: %1$s</string>
     <string name="insights_cd_daily_chart">Daily distribution: busiest day is %1$s</string>
 
     <!-- ==================== Event Form Redesign ==================== -->
@@ -1464,7 +1455,6 @@
     <string name="label_event_color">Event color</string>
     <string name="label_calendar_default">Calendar default</string>
     <string name="label_custom">Custom</string>
-    <string name="cd_event_color">Event color</string>
 
     <string name="cd_checkmark">Selected</string>
 
@@ -1504,17 +1494,8 @@
     <!-- Label that replaces the current user's display name on their own attendee chip — i.e., the chip reads "You" instead of their email/CN. Capitalize per locale conventions; do NOT include parentheses. -->
     <string name="attendee_you_marker">You</string>
     <!-- Pill shown on the organizer's chip; precedes their name -->
-    <string name="attendee_organizer_pill">Organizer</string>
     <!-- Disclosure button on a collapsed chip row when there are more attendees than visible -->
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d more</item>
-        <item quantity="other">+%d more</item>
-    </plurals>
     <!-- Lavender count chip rendered when the user is not on the attendee list -->
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d attendee</item>
-        <item quantity="other">%d attendees</item>
-    </plurals>
     <!-- Compact day-card status — user accepted the invite -->
     <string name="attendee_card_going">Going</string>
     <!-- Compact day-card status — user has not responded yet -->
@@ -1530,7 +1511,6 @@
     <!-- Inline action revealed when user taps a chip; opens compose mail intent -->
     <string name="attendee_action_email">Send email</string>
     <!-- Spoken description for the attendee chip group icon -->
-    <string name="attendee_group_icon_description">People</string>
 
     <!-- ========== v23.7.17 chip polish ========== -->
     <!-- Toast shown after the user taps Copy on an attendee chip -->
@@ -1538,7 +1518,6 @@
     <!-- Toast shown when the user taps Email but no mail app is installed -->
     <string name="attendee_no_email_app">No email app installed</string>
     <!-- "Show less" disclosure that collapses an expanded chip row back to 3 chips -->
-    <string name="attendee_show_less">Show less</string>
     <!-- Talkback action label spoken when the lavender count chip is focused (e.g., "5 attendees, double-tap to show all attendees"). The visible chip text remains the count; this string only names the action verb. Phrase as a verb action, not a noun phrase. -->
     <string name="attendee_show_all">Show all attendees</string>
     <!-- Talkback status label for an attendee who accepted the invite -->

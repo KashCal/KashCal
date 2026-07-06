@@ -71,11 +71,7 @@
     <string name="action_delete_event">Etkinliği Sil</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Kabul Et</string>
-    <string name="rsvp_action_tentative">Belki</string>
-    <string name="rsvp_action_decline">Reddet</string>
     <string name="rsvp_series_disclosure">Yanıt, tüm seriye uygulanır.</string>
-    <string name="rsvp_modified_snackbar">%1$s için yanıt başarısız oldu — etkinlik değiştirildi. Lütfen yeniden yanıtlayın.</string>
     <string name="invitees_host_tag">Ev sahibi</string>
     <string name="invitees_summary_you_alone">Sen</string>
     <plurals name="reminder_in_days">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Sadece bunu</string>
     <string name="recurring_this_and_future">Bu ve gelecekteki tümü</string>
-    <string name="recurring_just_occurrence">Sadece bu tekrarı</string>
-    <string name="recurring_all_occurrences">Tüm tekrarlar</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Etkinlik başlığı</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ayarlar</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Telefonunuzun açık veya koyu ayarını izler</string>
+    <string name="settings_theme_light_desc">Her zaman açık</string>
+    <string name="settings_theme_dark_desc">Her zaman koyu</string>
+    <string name="settings_theme_teal_desc">KashCal turkuaz, telefonunun açık veya koyu ayarını izler</string>
+    <string name="settings_app_icon">Uygulama Simgesi</string>
+    <string name="app_icon_default">Varsayılan</string>
+    <string name="app_icon_supporter">Destekçi</string>
+    <string name="app_icon_supporter_calendar">Destekçi, Takvim adıyla</string>
+    <string name="app_icon_label_calendar">Takvim</string>
+    <string name="app_icon_support_cta">KashCal\'ı Destekle</string>
+    <string name="app_icon_switch_note">Simgeyi değiştirmek uygulamayı yeniden başlatabilir. Bildirimler her zaman varsayılan simgeyi ve adı kullanır.</string>
     <string name="settings_time_format">Saat Biçimi</string>
     <string name="settings_start_week_on">Haftayı Başlat</string>
     <string name="settings_event_emojis">Etkinlik Emojileri</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Takvimler</string>
     <string name="settings_section_appearance">Görünüm</string>
     <string name="settings_section_creating_events">Etkinlik oluşturma</string>
-    <string name="settings_section_notifications">Bildirimler</string>
     <string name="settings_section_sync">Eşitleme</string>
     <string name="settings_section_data">Yedekle ve Geri Yükle</string>
     <string name="settings_section_privacy">Gizlilik</string>
@@ -205,7 +209,7 @@
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Takvim mi?</string>
-    <string name="onboarding_got_you">Seni anlıyoruz.</string>
+    <string name="onboarding_got_you">Yanındayız.</string>
     <string name="onboarding_connect_prompt">Etkinliklerini burada görmek için iCloud\'a bağlan</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
@@ -219,8 +223,6 @@
     <string name="dialog_force_sync_title">Tam Eşitleme Yapılsın mı?</string>
     <string name="dialog_force_sync_message">Bu işlem tüm takvim verilerini sunucudan yeniden indirecek. Yerel değişiklikler korunacak.</string>
     <string name="dialog_enable_notifications">Bildirimler Etkinleştirilsin mi?</string>
-    <string name="dialog_delete_title">\"%1$s\" silinsin mi</string>
-    <string name="dialog_edit_title">\"%1$s\" düzenlensin mi</string>
     <string name="dialog_action_required">Devam etmek için bu işlem gerekli.</string>
     <string name="dialog_add_to_calendar">Takvime ekle</string>
     <string name="dialog_select_calendar">Takvim seç</string>
@@ -325,10 +327,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Seçili</string>
     <string name="cd_back">Geri</string>
-    <string name="cd_close">Kapat</string>
     <string name="cd_search">Ara</string>
     <string name="cd_create_event">Etkinlik oluştur</string>
-    <string name="cd_today">Bugün</string>
     <string name="cd_delete">Sil</string>
     <string name="cd_refresh">Yenile</string>
     <string name="cd_more_options">Diğer seçenekler</string>
@@ -386,6 +386,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistem varsayılanı</string>
+    <string name="option_light">Açık</string>
+    <string name="option_dark">Koyu</string>
+    <string name="option_kashcal_teal">KashCal Turkuaz</string>
     <string name="option_12_hour">12 saat</string>
     <string name="option_24_hour">24 saat</string>
     <string name="option_sunday">Pazar</string>
@@ -545,8 +548,6 @@
     <string name="cd_remove_alert">Uyarıyı kaldır</string>
     <string name="cd_warning">Uyarı</string>
     <string name="cd_refresh_calendars">Takvimleri yenile</string>
-    <string name="cd_timezone_tap_to_change">Saat dilimi: %1$s, değiştirmek için dokun</string>
-    <string name="cd_day_events">%1$d. gün, %2$d etkinlik</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Günlerde</string>
@@ -772,9 +773,7 @@
     <string name="cd_open_drawer">Çekmeceyi aç</string>
     <string name="cd_close_drawer">Çekmeceyi kapat</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Menüyü aç</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Menüyü kapat</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Takvim görünümü</string>
     <string name="cd_active_view">Aktif görünüm</string>
@@ -1044,8 +1043,6 @@
     <string name="insights_period_last_week">Geçen hafta</string>
     <string name="insights_period_this_month">Ay</string>
     <string name="insights_empty_state">Bu hafta planlanmış etkinlik yok</string>
-    <string name="insights_delta_more">%2$s\'dan +%1$s fazla</string>
-    <string name="insights_delta_less">%2$s\'dan %1$s az</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d tüm gün etkinliği</item>
         <item quantity="other">%d tüm gün etkinliği</item>
@@ -1089,7 +1086,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Sonraki boş zaman: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Takvim dağılımı: %1$s</string>
     <string name="insights_cd_daily_chart">Günlük dağılım: en yoğun gün %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1099,9 +1095,7 @@
     <string name="label_event_color">Etkinlik rengi</string>
     <string name="label_calendar_default">Takvim varsayılanı</string>
     <string name="label_custom">Özel</string>
-    <string name="cd_event_color">Etkinlik rengi</string>
     <string name="cd_checkmark">Seçili</string>
-    <string name="label_device_timezone">Cihaz saat dilimi</string>
 
     <!-- Color names -->
     <string name="color_saddlebrown">Eyer kahverengisi</string>    <string name="color_tomato">Domates</string>    <string name="color_darkorange">Koyu turuncu</string>
@@ -1128,15 +1122,6 @@
     <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
     <string name="label_attendees">Katılımcılar</string>
     <string name="attendee_you_marker">Sen</string>
-    <string name="attendee_organizer_pill">Düzenleyici</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d daha</item>
-        <item quantity="other">+%d daha</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d katılımcı</item>
-        <item quantity="other">%d katılımcı</item>
-    </plurals>
     <string name="attendee_card_going">Geliyor</string>
     <string name="attendee_card_pending">Beklemede</string>
     <string name="attendee_card_declined">Reddedildi</string>
@@ -1144,10 +1129,8 @@
     <string name="attendee_card_hosting">Düzenleyen</string>
     <string name="attendee_action_copy">E-postayı kopyala</string>
     <string name="attendee_action_email">E-posta gönder</string>
-    <string name="attendee_group_icon_description">Kişiler</string>
     <string name="attendee_email_copied">E-posta kopyalandı</string>
     <string name="attendee_no_email_app">Yüklü e-posta uygulaması yok</string>
-    <string name="attendee_show_less">Daha az göster</string>
     <string name="attendee_show_all">Tüm katılımcıları göster</string>
     <string name="attendee_status_accepted">Kabul edildi</string>
     <string name="attendee_status_declined">Reddedildi</string>
@@ -1215,10 +1198,6 @@
     <string name="share_as_card_chooser_title">Etkinliği paylaş</string>
     <string name="share_as_card_share_failed">Kart paylaşılamadı</string>
     <string name="attendee_sheet_title">Katılımcılar</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d davetli</item>
-        <item quantity="other">%d davetli</item>
-    </plurals>
     <string name="attendee_search_hint">Ara</string>
     <string name="attendee_search_no_matches">Sonuç yok</string>
     <string name="attendee_section_going">Geliyor</string>

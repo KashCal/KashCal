@@ -1,7 +1,5 @@
 package org.onekash.kashcal.ui.components
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +24,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.util.ExternalLinks
 
 /**
  * App info bottom sheet showing origin message and website link.
@@ -85,10 +84,7 @@ fun AppInfoSheet(
 
             // Support button
             OutlinedButton(
-                onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.onekash.org/donate/"))
-                    context.startActivity(intent)
-                }
+                onClick = { ExternalLinks.openUrl(context, ExternalLinks.DONATE) }
             ) {
                 Text(
                     text = stringResource(R.string.action_keep_it_that_way),
@@ -106,8 +102,7 @@ fun AppInfoSheet(
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .clickable(role = Role.Button) {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.onekash.org/"))
-                        context.startActivity(intent)
+                        ExternalLinks.openUrl(context, ExternalLinks.HOME)
                     }
             )
         }

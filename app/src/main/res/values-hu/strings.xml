@@ -71,11 +71,7 @@
     <string name="action_delete_event">Esemény törlése</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Elfogadás</string>
-    <string name="rsvp_action_tentative">Bizonytalan</string>
-    <string name="rsvp_action_decline">Elutasítás</string>
     <string name="rsvp_series_disclosure">A válasz a teljes sorozatra érvényes.</string>
-    <string name="rsvp_modified_snackbar">A válasz a következőre nem sikerült: %1$s — az eseményt módosították. Kérjük, válaszoljon újra.</string>
     <string name="invitees_host_tag">Házigazda</string>
     <string name="invitees_summary_you_alone">Te</string>
     <plurals name="reminder_in_days">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Csak ezt</string>
     <string name="recurring_this_and_future">Ezt és az összes jövőbelit</string>
-    <string name="recurring_just_occurrence">Csak ezt az előfordulást</string>
-    <string name="recurring_all_occurrences">Összes előfordulás</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Esemény címe</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Beállítások</string>
+    <string name="settings_theme">Téma</string>
+    <string name="settings_theme_system_desc">A telefon világos vagy sötét beállítását követi</string>
+    <string name="settings_theme_light_desc">Mindig világos</string>
+    <string name="settings_theme_dark_desc">Mindig sötét</string>
+    <string name="settings_theme_teal_desc">KashCal türkiz, a telefonod világos vagy sötét beállítását követi</string>
+    <string name="settings_app_icon">Alkalmazásikon</string>
+    <string name="app_icon_default">Alapértelmezett</string>
+    <string name="app_icon_supporter">Támogató</string>
+    <string name="app_icon_supporter_calendar">Támogató, Naptár néven</string>
+    <string name="app_icon_label_calendar">Naptár</string>
+    <string name="app_icon_support_cta">KashCal támogatása</string>
+    <string name="app_icon_switch_note">Az ikon módosítása újraindíthatja az alkalmazást. Az értesítések mindig az alapértelmezett ikont és nevet használják.</string>
     <string name="settings_time_format">Időformátum</string>
     <string name="settings_start_week_on">Hét kezdőnapja</string>
     <string name="settings_event_emojis">Esemény emojik</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Naptárak</string>
     <string name="settings_section_appearance">Megjelenés</string>
     <string name="settings_section_creating_events">Események létrehozása</string>
-    <string name="settings_section_notifications">Értesítések</string>
     <string name="settings_section_sync">Szinkronizálás</string>
     <string name="settings_section_data">Mentés és visszaállítás</string>
     <string name="settings_section_privacy">Adatvédelem</string>
@@ -219,8 +223,6 @@
     <string name="dialog_force_sync_title">Teljes szinkronizálás?</string>
     <string name="dialog_force_sync_message">Ez az összes naptáradatot újratölti a szerverről. A helyi módosítások megmaradnak.</string>
     <string name="dialog_enable_notifications">Értesítések engedélyezése?</string>
-    <string name="dialog_delete_title">\"%1$s\" törlése</string>
-    <string name="dialog_edit_title">\"%1$s\" szerkesztése</string>
     <string name="dialog_action_required">Ez a művelet szükséges a folytatáshoz.</string>
     <string name="dialog_add_to_calendar">Hozzáadás a naptárhoz</string>
     <string name="dialog_select_calendar">Naptár kiválasztása</string>
@@ -325,10 +327,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Kiválasztva</string>
     <string name="cd_back">Vissza</string>
-    <string name="cd_close">Bezárás</string>
     <string name="cd_search">Keresés</string>
     <string name="cd_create_event">Esemény létrehozása</string>
-    <string name="cd_today">Ma</string>
     <string name="cd_delete">Törlés</string>
     <string name="cd_refresh">Frissítés</string>
     <string name="cd_more_options">További lehetőségek</string>
@@ -386,6 +386,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Rendszer alapértelmezett</string>
+    <string name="option_light">Világos</string>
+    <string name="option_dark">Sötét</string>
+    <string name="option_kashcal_teal">KashCal Türkiz</string>
     <string name="option_12_hour">12 órás</string>
     <string name="option_24_hour">24 órás</string>
     <string name="option_sunday">Vasárnap</string>
@@ -545,8 +548,6 @@
     <string name="cd_remove_alert">Figyelmeztetés eltávolítása</string>
     <string name="cd_warning">Figyelmeztetés</string>
     <string name="cd_refresh_calendars">Naptárak frissítése</string>
-    <string name="cd_timezone_tap_to_change">Időzóna: %1$s, koppints a módosításhoz</string>
-    <string name="cd_day_events">%1$d. nap, %2$d esemény</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Napokon</string>
@@ -772,9 +773,7 @@
     <string name="cd_open_drawer">Fiók megnyitása</string>
     <string name="cd_close_drawer">Fiók bezárása</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Menü megnyitása</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Menü bezárása</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Naptár nézet</string>
     <string name="cd_active_view">Aktív nézet</string>
@@ -1044,8 +1043,6 @@
     <string name="insights_period_last_week">Múlt hét</string>
     <string name="insights_period_this_month">Hónap</string>
     <string name="insights_empty_state">Nincs esemény erre a hétre</string>
-    <string name="insights_delta_more">+%1$s több, mint %2$s</string>
-    <string name="insights_delta_less">%1$s kevesebb, mint %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d egész napos esemény</item>
         <item quantity="other">%d egész napos esemény</item>
@@ -1089,7 +1086,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Következő szabad idő: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Naptár megoszlás: %1$s</string>
     <string name="insights_cd_daily_chart">Napi eloszlás: a legzsúfoltabb nap %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1099,9 +1095,7 @@
     <string name="label_event_color">Esemény színe</string>
     <string name="label_calendar_default">Naptár alapértelmezés</string>
     <string name="label_custom">Egyéni</string>
-    <string name="cd_event_color">Esemény színe</string>
     <string name="cd_checkmark">Kiválasztva</string>
-    <string name="label_device_timezone">Eszköz időzónája</string>
 
     <!-- Color names -->
     <string name="color_saddlebrown">Nyeregbarna</string>    <string name="color_tomato">Paradicsom</string>    <string name="color_darkorange">Sötétnarancs</string>
@@ -1128,15 +1122,6 @@
     <string name="settings_suggest_titles">Eseménycímek javaslata</string>
     <string name="label_attendees">Résztvevők</string>
     <string name="attendee_you_marker">Te</string>
-    <string name="attendee_organizer_pill">Szervező</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d további</item>
-        <item quantity="other">+%d további</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d résztvevő</item>
-        <item quantity="other">%d résztvevő</item>
-    </plurals>
     <string name="attendee_card_going">Megy</string>
     <string name="attendee_card_pending">Függő</string>
     <string name="attendee_card_declined">Elutasítva</string>
@@ -1144,10 +1129,8 @@
     <string name="attendee_card_hosting">Szervezi</string>
     <string name="attendee_action_copy">E-mail másolása</string>
     <string name="attendee_action_email">E-mail küldése</string>
-    <string name="attendee_group_icon_description">Emberek</string>
     <string name="attendee_email_copied">E-mail másolva</string>
     <string name="attendee_no_email_app">Nincs telepítve e-mail alkalmazás</string>
-    <string name="attendee_show_less">Kevesebb megjelenítése</string>
     <string name="attendee_show_all">Összes résztvevő megjelenítése</string>
     <string name="attendee_status_accepted">Elfogadva</string>
     <string name="attendee_status_declined">Elutasítva</string>
@@ -1215,10 +1198,6 @@
     <string name="share_as_card_chooser_title">Esemény megosztása</string>
     <string name="share_as_card_share_failed">A kártyát nem sikerült megosztani</string>
     <string name="attendee_sheet_title">Résztvevők</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d meghívott</item>
-        <item quantity="other">%d meghívott</item>
-    </plurals>
     <string name="attendee_search_hint">Keresés</string>
     <string name="attendee_search_no_matches">Nincs találat</string>
     <string name="attendee_section_going">Mennek</string>

@@ -71,13 +71,9 @@
     <string name="action_delete_event">Eliminar esdeveniment</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Acceptar</string>
-    <string name="rsvp_action_tentative">Provisional</string>
-    <string name="rsvp_action_decline">Rebutjar</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">La resposta s\'aplica a tota la sèrie.</string>
-    <string name="rsvp_modified_snackbar">La resposta per a %1$s ha fallat: l\'esdeveniment s\'ha modificat. Torna a respondre.</string>
     <string name="invitees_host_tag">Amfitrió</string>
     <string name="invitees_summary_you_alone">Tu</string>
     <string name="holiday_catalog_add">Afegeix un calendari de festius</string>
@@ -121,10 +117,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Només aquest</string>
     <string name="recurring_this_and_future">Aquest i tots els futurs</string>
-    <string name="recurring_just_occurrence">Només aquesta ocurrència</string>
-    <string name="recurring_all_occurrences">Totes les ocurrències</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Títol de l\'esdeveniment</string>
@@ -154,6 +147,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Configuració</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Segueix la configuració clara o fosca del telèfon</string>
+    <string name="settings_theme_light_desc">Sempre clar</string>
+    <string name="settings_theme_dark_desc">Sempre fosc</string>
+    <string name="settings_theme_teal_desc">Turquesa KashCal, segueix la configuració clara o fosca del telèfon</string>
+    <string name="settings_app_icon">Icona de l\'aplicació</string>
+    <string name="app_icon_default">Predeterminat</string>
+    <string name="app_icon_supporter">Col·laborador</string>
+    <string name="app_icon_supporter_calendar">Col·laborador, amb el nom Calendari</string>
+    <string name="app_icon_label_calendar">Calendari</string>
+    <string name="app_icon_support_cta">Dona suport a KashCal</string>
+    <string name="app_icon_switch_note">Canviar-la pot reiniciar l\'aplicació. Les notificacions sempre utilitzen la icona i el nom predeterminats.</string>
     <string name="settings_time_format">Format horari</string>
     <string name="settings_start_week_on">Començar setmana en</string>
     <string name="settings_event_emojis">Emojis d\'esdeveniments</string>
@@ -169,7 +174,6 @@
     <string name="settings_section_calendars">Calendaris</string>
     <string name="settings_section_appearance">Aparença</string>
     <string name="settings_section_creating_events">Creació d\'esdeveniments</string>
-    <string name="settings_section_notifications">Notificacions</string>
     <string name="settings_section_sync">Sincronització</string>
     <string name="settings_section_data">Còpia de seguretat i restauració</string>
     <string name="settings_section_privacy">Privadesa</string>
@@ -203,8 +207,6 @@
     <string name="dialog_force_sync_title">Forçar sincronització completa?</string>
     <string name="dialog_force_sync_message">Això tornarà a baixar totes les dades del calendari des del servidor. Els canvis locals es conservaran.</string>
     <string name="dialog_enable_notifications">Activar notificacions?</string>
-    <string name="dialog_delete_title">Eliminar \"%1$s\"</string>
-    <string name="dialog_edit_title">Editar \"%1$s\"</string>
     <string name="dialog_action_required">Aquesta acció és necessària per continuar.</string>
     <string name="dialog_add_to_calendar">Afegir al calendari</string>
     <string name="dialog_select_calendar">Seleccionar calendari</string>
@@ -308,14 +310,12 @@
     <!-- Content Descriptions -->
     <string name="cd_selected">Seleccionat</string>
     <string name="cd_back">Enrere</string>
-    <string name="cd_close">Tancar</string>
     <string name="cd_search">Cercar</string>
     <string name="cd_create_event">Crear esdeveniment</string>
     <string name="cd_event_state_cancelled">cancel·lat</string>
     <string name="cd_event_state_declined">rebutjat</string>
     <string name="cd_event_state_past">esdeveniment passat</string>
     <string name="cd_event_untitled">Esdeveniment sense títol</string>
-    <string name="cd_today">Avui</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_refresh">Actualitzar</string>
     <string name="cd_more_options">Més opcions</string>
@@ -373,6 +373,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Per defecte del sistema</string>
+    <string name="option_light">Clar</string>
+    <string name="option_dark">Fosc</string>
+    <string name="option_kashcal_teal">KashCal Turquesa</string>
     <string name="option_12_hour">12 hores</string>
     <string name="option_24_hour">24 hores</string>
     <string name="option_sunday">Diumenge</string>
@@ -528,8 +531,6 @@
     <string name="cd_remove_alert">Eliminar alerta</string>
     <string name="cd_warning">Avís</string>
     <string name="cd_refresh_calendars">Actualitzar calendaris</string>
-    <string name="cd_timezone_tap_to_change">Zona horària: %1$s, toca per canviar</string>
-    <string name="cd_day_events">Dia %1$d, %2$d esdeveniments</string>
 
     <!-- Pickers / Forms -->
     <string name="label_on_days">Els dies</string>
@@ -754,9 +755,7 @@
     <string name="cd_open_drawer">Obrir calaix</string>
     <string name="cd_close_drawer">Tancar calaix</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Obrir menú</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Tancar menú</string>
     <string name="cd_calendar_view">Vista de calendari</string>
     <string name="cd_active_view">Vista activa</string>
 
@@ -1016,8 +1015,6 @@
     <string name="insights_period_last_week">Setm. passada</string>
     <string name="insights_period_this_month">Mes</string>
     <string name="insights_empty_state">Cap esdeveniment programat aquesta setmana</string>
-    <string name="insights_delta_more">+%1$s més que %2$s</string>
-    <string name="insights_delta_less">%1$s menys que %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d esdeveniment de tot el dia</item>
         <item quantity="other">%d esdeveniments de tot el dia</item>
@@ -1048,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">Demà: %1$s programats</string>
     <string name="insight_heaviest_upcoming">%1$s és el teu dia més carregat (%2$s)</string>
     <string name="insight_next_free_block">Pròxim bloc lliure: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Distribució de calendaris: %1$s</string>
     <string name="insights_cd_daily_chart">Distribució diària: el dia més ocupat és %1$s</string>
 
     <!-- Event Form Redesign -->
@@ -1058,10 +1054,8 @@
     <string name="label_event_color">Color de l\'esdeveniment</string>
     <string name="label_calendar_default">Per defecte del calendari</string>
     <string name="label_custom">Personalitzat</string>
-    <string name="cd_event_color">Color de l\'esdeveniment</string>
 
     <string name="cd_checkmark">Seleccionat</string>
-    <string name="label_device_timezone">Zona horària del dispositiu</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Marró cuir</string>
@@ -1108,15 +1102,6 @@
     <string name="backup_error_read_failed">No s\'ha pogut llegir el fitxer</string>
     <string name="label_attendees">Assistents</string>
     <string name="attendee_you_marker">Tu</string>
-    <string name="attendee_organizer_pill">Organitzador</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d més</item>
-        <item quantity="other">+%d més</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d assistent</item>
-        <item quantity="other">%d assistents</item>
-    </plurals>
     <string name="attendee_card_going">Assisteix</string>
     <string name="attendee_card_pending">Pendent</string>
     <string name="attendee_card_declined">Rebutjat</string>
@@ -1124,10 +1109,8 @@
     <string name="attendee_card_hosting">Amfitrió</string>
     <string name="attendee_action_copy">Copia el correu</string>
     <string name="attendee_action_email">Envia un correu</string>
-    <string name="attendee_group_icon_description">Persones</string>
     <string name="attendee_email_copied">Correu copiat</string>
     <string name="attendee_no_email_app">No hi ha cap aplicació de correu instal·lada</string>
-    <string name="attendee_show_less">Mostra\'n menys</string>
     <string name="attendee_show_all">Mostra tots els assistents</string>
     <string name="attendee_status_accepted">Acceptat</string>
     <string name="attendee_status_declined">Rebutjat</string>
@@ -1197,10 +1180,6 @@
     <string name="share_as_card_share_failed">No s\'ha pogut compartir la targeta</string>
     <string name="share_from_kashcal_footer">Compartit des de KashCal</string>
     <string name="attendee_sheet_title">Assistents</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d convidat</item>
-        <item quantity="other">%d convidats</item>
-    </plurals>
     <string name="attendee_search_hint">Cerca</string>
     <string name="attendee_search_no_matches">Sense resultats</string>
     <string name="attendee_section_going">Hi van</string>

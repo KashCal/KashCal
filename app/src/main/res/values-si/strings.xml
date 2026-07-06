@@ -71,9 +71,6 @@
     <string name="action_delete_event">සිදුවීම මකන්න</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">පිළිගන්න</string>
-    <string name="rsvp_action_tentative">කල්පනා කරමින්</string>
-    <string name="rsvp_action_decline">ප්‍රතික්ෂේප කරන්න</string>
     <string name="invitees_host_tag">සත්කාරක</string>
     <string name="rsvp_question_going">යනවාද?</string>
     <string name="rsvp_action_yes">ඔව්</string>
@@ -89,13 +86,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">මෙම ප්‍රතිචාරය මුළු මාලාවටම අදාළ වේ.</string>
-    <string name="rsvp_modified_snackbar">%1$s සඳහා RSVP අසාර්ථක විය — සිදුවීම වෙනස් කර ඇත. කරුණාකර නැවත ප්‍රතිචාර දක්වන්න.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">මෙය පමණයි</string>
     <string name="recurring_this_and_future">මෙය සහ ඉදිරි සියල්ල</string>
-    <string name="recurring_just_occurrence">මෙම අවස්ථාව පමණයි</string>
-    <string name="recurring_all_occurrences">සියලු අවස්ථා</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">සිදුවීමේ මාතෘකාව</string>
@@ -125,6 +118,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">සැකසීම්</string>
+    <string name="settings_theme">තේමාව</string>
+    <string name="settings_theme_system_desc">ඔබේ දුරකථනයේ ආලෝක හෝ අඳුරු සැකසුම අනුගමනය කරන්න</string>
+    <string name="settings_theme_light_desc">සැමවිටම ආලෝකවත්</string>
+    <string name="settings_theme_dark_desc">සැමවිටම අඳුරු</string>
+    <string name="settings_theme_teal_desc">KashCal නිල්හරිත, ඔබේ දුරකථනයේ ආලෝක හෝ අඳුරු සැකසුම අනුගමනය කරයි</string>
+    <string name="settings_app_icon">යෙදුම් නිරූපකය</string>
+    <string name="app_icon_default">පෙරනිමිය</string>
+    <string name="app_icon_supporter">අනුග්‍රාහක</string>
+    <string name="app_icon_supporter_calendar">අනුග්‍රාහක, දින දර්ශනය ලෙස ලේබල් කළ</string>
+    <string name="app_icon_label_calendar">දින දර්ශනය</string>
+    <string name="app_icon_support_cta">KashCal ට සහාය වන්න</string>
+    <string name="app_icon_switch_note">නිරූපකය වෙනස් කිරීමෙන් යෙදුම යළි ආරම්භ විය හැක. දැනුම්දීම් සැමවිටම පෙරනිමි නිරූපකය සහ නම භාවිත කරයි.</string>
     <string name="settings_search_placeholder">සැකසීම් සොයන්න…</string>
     <string name="settings_search_no_results">\"%1$s\" සඳහා සැකසීම් හමු නොවීය</string>
     <string name="cd_search_settings">සැකසීම් සොයන්න</string>
@@ -143,7 +148,6 @@
     <string name="settings_section_calendars">දින දර්ශන</string>
     <string name="settings_section_appearance">පෙනුම</string>
     <string name="settings_section_creating_events">සිදුවීම් නිර්මාණය</string>
-    <string name="settings_section_notifications">දැනුම්දීම්</string>
     <string name="settings_section_sync">සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
     <string name="settings_section_privacy">පෞද්ගලිකත්වය</string>
@@ -196,8 +200,6 @@
     <string name="dialog_force_sync_title">සම්පූර්ණ බලෙන් සමමුහුර්තය?</string>
     <string name="dialog_force_sync_message">මෙය සේවාදායකයෙන් සියලු දින දර්ශන දත්ත නැවත බාගනු ඇත. දේශීය වෙනස්කම් ආරක්ෂිතව පවතිනු ඇත.</string>
     <string name="dialog_enable_notifications">දැනුම්දීම් සක්‍රිය කරන්නද?</string>
-    <string name="dialog_delete_title">\"%1$s\" මකන්න</string>
-    <string name="dialog_edit_title">\"%1$s\" සංස්කරණය කරන්න</string>
     <string name="dialog_action_required">ඉදිරියට යාමට මෙම ක්‍රියාව අවශ්‍යයි.</string>
     <string name="dialog_add_to_calendar">දින දර්ශනයට එකතු කරන්න</string>
     <string name="dialog_select_calendar">දින දර්ශනය තෝරන්න</string>
@@ -301,10 +303,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">තෝරාගත්</string>
     <string name="cd_back">ආපසු</string>
-    <string name="cd_close">වසන්න</string>
     <string name="cd_search">සොයන්න</string>
     <string name="cd_create_event">සිදුවීම සාදන්න</string>
-    <string name="cd_today">අද</string>
     <string name="cd_delete">මකන්න</string>
     <string name="cd_refresh">නැවුම් කරන්න</string>
     <string name="cd_more_options">තවත් විකල්ප</string>
@@ -358,6 +358,9 @@
     <string name="settings_new_events">නව සිදුවීම්</string>
 
     <string name="option_system_default">පද්ධති පෙරනිමිය</string>
+    <string name="option_light">ආලෝක</string>
+    <string name="option_dark">අඳුරු</string>
+    <string name="option_kashcal_teal">KashCal නිල්හරිත</string>
     <string name="option_12_hour">පැය 12</string>
     <string name="option_24_hour">පැය 24</string>
     <string name="option_sunday">ඉරිදා</string>
@@ -503,8 +506,6 @@
     <string name="cd_event_untitled">නමක් නැති සිදුවීම</string>
     <string name="cd_warning">අනතුරු ඇඟවීම</string>
     <string name="cd_refresh_calendars">දින දර්ශන නැවුම් කරන්න</string>
-    <string name="cd_timezone_tap_to_change">වේලා කලාපය: %1$s, වෙනස් කිරීමට තට්ටු කරන්න</string>
-    <string name="cd_day_events">දිනය %1$d, සිදුවීම් %2$d</string>
 
     <string name="label_on_days">දිනවල</string>
     <string name="label_pattern">රටාව</string>
@@ -719,8 +720,6 @@
     <string name="cd_loading_events">සිදුවීම් පූරණය වෙමින්</string>
     <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
     <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
-    <string name="cd_open_rail">මෙනුව විවෘත කරන්න</string>
-    <string name="cd_close_rail">මෙනුව වසන්න</string>
     <string name="cd_calendar_view">දින දර්ශන දසුන</string>
     <string name="cd_active_view">සක්‍රිය දසුන</string>
 
@@ -988,8 +987,6 @@
     <string name="insights_period_last_week">පසුගිය සතිය</string>
     <string name="insights_period_this_month">මාසය</string>
     <string name="insights_empty_state">මෙම සතියේ කිසිදු සිදුවීමක් උපලේඛනගත කර නැත</string>
-    <string name="insights_delta_more">+%1$s %2$s ට වඩා වැඩිය</string>
-    <string name="insights_delta_less">%1$s %2$s ට වඩා අඩුය</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">දිනපුරා සිදුවීම් %d ක්</item>
         <item quantity="other">දිනපුරා සිදුවීම් %d ක්</item>
@@ -1033,7 +1030,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">ඊළඟ නිදහස් කාලය: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">දින දර්ශන විභාජනය: %1$s</string>
     <string name="insights_cd_daily_chart">දෛනික බෙදාහැරීම: වඩාත්ම කාර්යබහුල දිනය %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1043,9 +1039,7 @@
     <string name="label_event_color">සිදුවීමේ වර්ණය</string>
     <string name="label_calendar_default">දින දර්ශන පෙරනිමිය</string>
     <string name="label_custom">අභිරුචි</string>
-    <string name="cd_event_color">සිදුවීමේ වර්ණය</string>
     <string name="cd_checkmark">තෝරාගත්</string>
-    <string name="label_device_timezone">උපාංගයේ වේලා කලාපය</string>
     <string name="color_saddlebrown">සෑදල දුඹුරු</string>
     <string name="color_tomato">තක්කාලි</string>    <string name="color_darkorange">තද තැඹිලි</string>
     <string name="color_gold">රන්වන්</string>
@@ -1071,15 +1065,6 @@
     <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
     <string name="label_attendees">සහභාගිවන්නන්</string>
     <string name="attendee_you_marker">ඔබ</string>
-    <string name="attendee_organizer_pill">සංවිධායක</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+තවත් %d</item>
-        <item quantity="other">+තවත් %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">සහභාගිවන්නන් %d</item>
-        <item quantity="other">සහභාගිවන්නන් %d</item>
-    </plurals>
     <string name="attendee_card_going">පැමිණේ</string>
     <string name="attendee_card_pending">පොරොත්තුවේ</string>
     <string name="attendee_card_declined">ප්‍රතික්ෂේප කළා</string>
@@ -1087,10 +1072,8 @@
     <string name="attendee_card_hosting">සත්කාරකත්වය</string>
     <string name="attendee_action_copy">ඊමේල් පිටපත් කරන්න</string>
     <string name="attendee_action_email">ඊමේල් යවන්න</string>
-    <string name="attendee_group_icon_description">පුද්ගලයින්</string>
     <string name="attendee_email_copied">ඊමේල් පිටපත් කළා</string>
     <string name="attendee_no_email_app">ඊමේල් යෙදුමක් ස්ථාපනය කර නැත</string>
-    <string name="attendee_show_less">අඩුවෙන් පෙන්වන්න</string>
     <string name="attendee_show_all">සියලු සහභාගිවන්නන් පෙන්වන්න</string>
     <string name="attendee_status_accepted">පිළිගන්නා ලදී</string>
     <string name="attendee_status_declined">ප්‍රතික්ෂේප කළා</string>
@@ -1158,10 +1141,6 @@
     <string name="share_as_card_chooser_title">සිදුවීම බෙදාගන්න</string>
     <string name="share_as_card_share_failed">කාඩ්පත බෙදා ගත නොහැකි විය</string>
     <string name="attendee_sheet_title">සහභාගිවන්නන්</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d ක් ආරාධිතයි</item>
-        <item quantity="other">%d ක් ආරාධිතයි</item>
-    </plurals>
     <string name="attendee_search_hint">සොයන්න</string>
     <string name="attendee_search_no_matches">ප්‍රතිඵල නැත</string>
     <string name="attendee_section_going">යනවා</string>

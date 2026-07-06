@@ -71,14 +71,10 @@
     <string name="action_delete_event">Ištrinti įvykį</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Priimti</string>
-    <string name="rsvp_action_tentative">Galbūt</string>
-    <string name="rsvp_action_decline">Atmesti</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Atsakymas taikomas visai serijai.</string>
-    <string name="rsvp_modified_snackbar">Nepavyko atsakyti į „%1$s“ — įvykis buvo pakeistas. Atsakykite iš naujo.</string>
     <string name="invitees_host_tag">Šeimininkas</string>
     <string name="invitees_summary_you_alone">Tu</string>
     <plurals name="invitees_summary_you_organizing">
@@ -125,10 +121,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Tik šį</string>
     <string name="recurring_this_and_future">Šį ir visus būsimus</string>
-    <string name="recurring_just_occurrence">Tik šį kartojimą</string>
-    <string name="recurring_all_occurrences">Visus kartojimus</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Įvykio pavadinimas</string>
@@ -158,6 +151,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Nustatymai</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Sekti telefono šviesią arba tamsią nuostatą</string>
+    <string name="settings_theme_light_desc">Visada šviesi</string>
+    <string name="settings_theme_dark_desc">Visada tamsi</string>
+    <string name="settings_theme_teal_desc">KashCal žalsvai mėlyna, seka telefono šviesią arba tamsią nuostatą</string>
+    <string name="settings_app_icon">Programėlės piktograma</string>
+    <string name="app_icon_default">Numatytoji</string>
+    <string name="app_icon_supporter">Rėmėjas</string>
+    <string name="app_icon_supporter_calendar">Rėmėjas, pavadinimu Kalendorius</string>
+    <string name="app_icon_label_calendar">Kalendorius</string>
+    <string name="app_icon_support_cta">Paremti KashCal</string>
+    <string name="app_icon_switch_note">Piktogramos keitimas gali paleisti programėlę iš naujo. Pranešimuose visada naudojama numatytoji piktograma ir pavadinimas.</string>
     <string name="settings_time_format">Laiko formatas</string>
     <string name="settings_start_week_on">Savaitės pradžia</string>
     <string name="settings_event_emojis">Įvykių jaustukai</string>
@@ -173,7 +178,6 @@
     <string name="settings_section_calendars">Kalendoriai</string>
     <string name="settings_section_appearance">Išvaizda</string>
     <string name="settings_section_creating_events">Įvykių kūrimas</string>
-    <string name="settings_section_notifications">Pranešimai</string>
     <string name="settings_section_sync">Sinchronizavimas</string>
     <string name="settings_section_data">Atsarginė kopija ir atkūrimas</string>
     <string name="settings_section_privacy">Privatumas</string>
@@ -213,8 +217,6 @@
     <string name="dialog_force_sync_title">Pilnas sinchronizavimas?</string>
     <string name="dialog_force_sync_message">Visi duomenys bus iš naujo atsisiųsti iš serverio. Vietiniai pakeitimai bus išsaugoti.</string>
     <string name="dialog_enable_notifications">Įjungti pranešimus?</string>
-    <string name="dialog_delete_title">Ištrinti „%1$s"</string>
-    <string name="dialog_edit_title">Redaguoti „%1$s"</string>
     <string name="dialog_action_required">Šis veiksmas reikalingas norint tęsti.</string>
     <string name="dialog_add_to_calendar">Pridėti į kalendorių</string>
     <string name="dialog_select_calendar">Pasirinkti kalendorių</string>
@@ -320,10 +322,8 @@
     <string name="cd_selected">Pasirinkta</string>
     <string name="cd_checkmark">Pasirinkta</string>
     <string name="cd_back">Atgal</string>
-    <string name="cd_close">Uždaryti</string>
     <string name="cd_search">Paieška</string>
     <string name="cd_create_event">Sukurti įvykį</string>
-    <string name="cd_today">Šiandien</string>
     <string name="cd_delete">Ištrinti</string>
     <string name="cd_refresh">Atnaujinti</string>
     <string name="cd_more_options">Daugiau parinkčių</string>
@@ -377,6 +377,9 @@
     <string name="settings_new_events">Nauji įvykiai</string>
 
     <string name="option_system_default">Sistemos numatytasis</string>
+    <string name="option_light">Šviesi</string>
+    <string name="option_dark">Tamsi</string>
+    <string name="option_kashcal_teal">KashCal žalsvai mėlyna</string>
     <string name="option_12_hour">12 valandų</string>
     <string name="option_24_hour">24 valandos</string>
     <string name="option_sunday">Sekmadienis</string>
@@ -525,14 +528,11 @@
     <string name="cd_remove_alert">Pašalinti priminimą</string>
     <string name="cd_warning">Įspėjimas</string>
     <string name="cd_refresh_calendars">Atnaujinti kalendorius</string>
-    <string name="cd_timezone_tap_to_change">Laiko juosta: %1$s, bakstelėkite keisti</string>
-    <string name="cd_day_events">%1$d diena, įvykių: %2$d</string>
 
     <string name="label_on_days">Dienomis</string>
     <string name="label_pattern">Šablonas</string>
     <string name="label_ends">Baigiasi</string>
     <string name="label_timezone">Laiko juosta</string>
-    <string name="label_device_timezone">Įrenginio laiko juosta</string>
     <string name="label_alerts">Priminimai</string>
     <string name="label_add_alert">Pridėti priminimą</string>
     <string name="label_recurrence_never">Niekada</string>
@@ -811,9 +811,7 @@
     <string name="cd_open_drawer">Atidaryti meniu</string>
     <string name="cd_close_drawer">Uždaryti meniu</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Atidaryti meniu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Uždaryti meniu</string>
     <string name="cd_calendar_view">Kalendoriaus vaizdas</string>
     <string name="cd_active_view">Aktyvus vaizdas</string>
 
@@ -1054,8 +1052,6 @@
     <string name="insights_period_last_week">Praėjusi sav.</string>
     <string name="insights_period_this_month">Mėnuo</string>
     <string name="insights_empty_state">Šią savaitę nėra suplanuotų įvykių</string>
-    <string name="insights_delta_more">+%1$s daugiau nei per %2$s</string>
-    <string name="insights_delta_less">%1$s mažiau nei per %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d visos dienos įvykis</item>
         <item quantity="few">%d visos dienos įvykiai</item>
@@ -1088,7 +1084,6 @@
     <string name="insight_tomorrow_preview_no_start">Rytoj: suplanuota %1$s</string>
     <string name="insight_heaviest_upcoming">%1$s — užimčiausia artėjanti diena (%2$s)</string>
     <string name="insight_next_free_block">Kitas laisvas blokas: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Pasiskirstymas pagal kalendorius: %1$s</string>
     <string name="insights_cd_daily_chart">Pasiskirstymas pagal dienas: užimčiausia diena — %1$s</string>
     <string name="label_availability">Prieinamumas</string>
     <string name="label_busy">Užimtas</string>
@@ -1096,7 +1091,6 @@
     <string name="label_event_color">Įvykio spalva</string>
     <string name="label_calendar_default">Kalendoriaus numatytoji</string>
     <string name="label_custom">Pasirinktinė</string>
-    <string name="cd_event_color">Įvykio spalva</string>
 
     <string name="hue_red">Raudona</string>
     <string name="hue_orange">Oranžinė</string>
@@ -1135,19 +1129,6 @@
     <!-- Attendees (B4) -->
     <string name="label_attendees">Dalyviai</string>
     <string name="attendee_you_marker">Jūs</string>
-    <string name="attendee_organizer_pill">Organizatorius</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+dar %d</item>
-        <item quantity="few">+dar %d</item>
-        <item quantity="many">+dar %d</item>
-        <item quantity="other">+dar %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d dalyvis</item>
-        <item quantity="few">%d dalyviai</item>
-        <item quantity="many">%d dalyvio</item>
-        <item quantity="other">%d dalyvių</item>
-    </plurals>
     <string name="attendee_card_going">Dalyvauja</string>
     <string name="attendee_card_pending">Laukiama</string>
     <string name="attendee_card_declined">Atmetė</string>
@@ -1155,10 +1136,8 @@
     <string name="attendee_card_hosting">Organizuoja</string>
     <string name="attendee_action_copy">Kopijuoti el. paštą</string>
     <string name="attendee_action_email">Siųsti el. laišką</string>
-    <string name="attendee_group_icon_description">Žmonės</string>
     <string name="attendee_email_copied">El. paštas nukopijuotas</string>
     <string name="attendee_no_email_app">Nėra įdiegtos el. pašto programos</string>
-    <string name="attendee_show_less">Rodyti mažiau</string>
     <string name="attendee_show_all">Rodyti visus dalyvius</string>
     <string name="attendee_status_accepted">Priimta</string>
     <string name="attendee_status_declined">Atmetė</string>
@@ -1223,12 +1202,6 @@
     <string name="share_as_card_share_failed">Nepavyko bendrinti kortelės</string>
     <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
     <string name="attendee_sheet_title">Dalyviai</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d pakviestas</item>
-        <item quantity="few">%d pakviesti</item>
-        <item quantity="many">%d pakviesta</item>
-        <item quantity="other">%d pakviestų</item>
-    </plurals>
     <string name="attendee_search_hint">Ieškoti</string>
     <string name="attendee_search_no_matches">Nėra rezultatų</string>
     <string name="attendee_section_going">Eina</string>

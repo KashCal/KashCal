@@ -41,11 +41,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.backup.BackupFilename
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
@@ -70,6 +73,7 @@ import org.onekash.kashcal.ui.lock.AppLockEnrollmentAction
 import org.onekash.kashcal.ui.lock.decideDisableAction
 import org.onekash.kashcal.ui.lock.decideEnrollmentAction
 import org.onekash.kashcal.ui.theme.KashCalTheme
+import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsFileReader
@@ -111,13 +115,23 @@ class SettingsActivity : FragmentActivity() {
     @Inject
     lateinit var icsFileReader: IcsFileReader
 
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
         enableEdgeToEdge()
 
+        // Resolve the theme synchronously so the first frame renders in the chosen theme — no
+        // flash of the default on cold start. DataStore caches after the first read.
+        val initialThemeMode = ThemeMode.fromPrefValue(
+            runBlocking { userPreferencesRepository.theme.first() }
+        )
+
         setContent {
-            KashCalTheme {
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle(initialValue = initialThemeMode)
+            KashCalTheme(themeMode = themeMode) {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val calendars by viewModel.calendars.collectAsStateWithLifecycle()
                 val calendarGroups by viewModel.calendarGroups.collectAsStateWithLifecycle()
@@ -656,6 +670,8 @@ class SettingsActivity : FragmentActivity() {
                             onQuickAddEnabledChange = viewModel::setQuickAddEnabled,
                             titleSuggestionsEnabled = titleSuggestionsEnabled,
                             onTitleSuggestionsEnabledChange = viewModel::setTitleSuggestionsEnabled,
+                            themeMode = themeMode,
+                            onThemeModeChange = viewModel::setThemeMode,
                             timeFormat = timeFormat,
                             onTimeFormatChange = viewModel::setTimeFormat,
                             firstDayOfWeek = firstDayOfWeek,

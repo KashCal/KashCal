@@ -23,17 +23,28 @@ class MainActivityIntentFilterTest {
 
     private val pm: PackageManager = RuntimeEnvironment.getApplication().packageManager
 
+    private companion object {
+        // The launcher/calendar filters moved from MainActivity onto the default activity-alias
+        // (which targets MainActivity) so the app icon can be swapped. Either resolving is correct.
+        val LAUNCHER_COMPONENT_NAMES = setOf(
+            "org.onekash.kashcal.MainActivity",
+            "org.onekash.kashcal.MainActivityDefault",
+        )
+    }
+
     @Test
     fun `resolves ACTION_MAIN with CATEGORY_APP_CALENDAR`() {
+        // The launcher/calendar entry lives on the default activity-alias so the app icon can be
+        // swapped; the alias targets MainActivity, so either name resolving satisfies issue #129.
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_APP_CALENDAR)
         }
         val resolved = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
         val match = resolved.any {
-            it.activityInfo.name == "org.onekash.kashcal.MainActivity"
+            it.activityInfo.name in LAUNCHER_COMPONENT_NAMES
         }
         assertTrue(
-            "MainActivity must resolve ACTION_MAIN + CATEGORY_APP_CALENDAR (issue #129)",
+            "A launcher entry must resolve ACTION_MAIN + CATEGORY_APP_CALENDAR (issue #129)",
             match
         )
     }
@@ -45,10 +56,10 @@ class MainActivityIntentFilterTest {
         }
         val resolved = pm.queryIntentActivities(intent, 0)
         val match = resolved.any {
-            it.activityInfo.name == "org.onekash.kashcal.MainActivity"
+            it.activityInfo.name in LAUNCHER_COMPONENT_NAMES
         }
         assertTrue(
-            "MainActivity must resolve ACTION_MAIN + CATEGORY_LAUNCHER",
+            "A launcher entry must resolve ACTION_MAIN + CATEGORY_LAUNCHER",
             match
         )
     }

@@ -71,11 +71,7 @@
     <string name="action_delete_event">Șterge eveniment</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Acceptă</string>
-    <string name="rsvp_action_tentative">Provizoriu</string>
-    <string name="rsvp_action_decline">Refuză</string>
     <string name="rsvp_series_disclosure">Răspunsul se aplică întregii serii.</string>
-    <string name="rsvp_modified_snackbar">Răspunsul pentru %1$s a eșuat — evenimentul a fost modificat. Te rugăm să răspunzi din nou.</string>
     <string name="invitees_host_tag">Gazdă</string>
     <string name="invitees_summary_you_alone">Tu</string>
     <plurals name="reminder_in_days">
@@ -122,10 +118,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Doar acesta</string>
     <string name="recurring_this_and_future">Acesta și toate cele viitoare</string>
-    <string name="recurring_just_occurrence">Doar această apariție</string>
-    <string name="recurring_all_occurrences">Toate aparițiile</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titlu eveniment</string>
@@ -155,6 +148,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Setări</string>
+    <string name="settings_theme">Temă</string>
+    <string name="settings_theme_system_desc">Urmează setarea luminoasă sau întunecată a telefonului</string>
+    <string name="settings_theme_light_desc">Întotdeauna luminoasă</string>
+    <string name="settings_theme_dark_desc">Întotdeauna întunecată</string>
+    <string name="settings_theme_teal_desc">KashCal turcoaz, urmează setarea luminoasă sau întunecată a telefonului tău</string>
+    <string name="settings_app_icon">Pictograma aplicației</string>
+    <string name="app_icon_default">Implicit</string>
+    <string name="app_icon_supporter">Susținător</string>
+    <string name="app_icon_supporter_calendar">Susținător, etichetat Calendar</string>
+    <string name="app_icon_label_calendar">Calendar</string>
+    <string name="app_icon_support_cta">Susține KashCal</string>
+    <string name="app_icon_switch_note">Schimbarea pictogramei poate reporni aplicația. Notificările folosesc întotdeauna pictograma și numele implicite.</string>
     <string name="settings_time_format">Format oră</string>
     <string name="settings_start_week_on">Săptămâna începe</string>
     <string name="settings_event_emojis">Emoji-uri pentru evenimente</string>
@@ -170,7 +175,6 @@
     <string name="settings_section_calendars">Calendare</string>
     <string name="settings_section_appearance">Aspect</string>
     <string name="settings_section_creating_events">Crearea evenimentelor</string>
-    <string name="settings_section_notifications">Notificări</string>
     <string name="settings_section_sync">Sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
     <string name="settings_section_privacy">Confidențialitate</string>
@@ -225,8 +229,6 @@
     <string name="dialog_force_sync_title">Sincronizare completă forțată?</string>
     <string name="dialog_force_sync_message">Aceasta va redescărca toate datele calendarului de pe server. Modificările locale vor fi păstrate.</string>
     <string name="dialog_enable_notifications">Activezi notificările?</string>
-    <string name="dialog_delete_title">Șterge \"%1$s\"</string>
-    <string name="dialog_edit_title">Editează \"%1$s\"</string>
     <string name="dialog_action_required">Această acțiune este necesară pentru a continua.</string>
     <string name="dialog_add_to_calendar">Adaugă în calendar</string>
     <string name="dialog_select_calendar">Selectează calendarul</string>
@@ -331,10 +333,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Selectat</string>
     <string name="cd_back">Înapoi</string>
-    <string name="cd_close">Închide</string>
     <string name="cd_search">Caută</string>
     <string name="cd_create_event">Creează eveniment</string>
-    <string name="cd_today">Azi</string>
     <string name="cd_delete">Șterge</string>
     <string name="cd_refresh">Reîmprospătare</string>
     <string name="cd_more_options">Mai multe opțiuni</string>
@@ -392,6 +392,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Implicit sistem</string>
+    <string name="option_light">Luminoasă</string>
+    <string name="option_dark">Întunecată</string>
+    <string name="option_kashcal_teal">KashCal Turcoaz</string>
     <string name="option_12_hour">12 ore</string>
     <string name="option_24_hour">24 ore</string>
     <string name="option_sunday">Duminică</string>
@@ -551,8 +554,6 @@
     <string name="cd_remove_alert">Elimină alerta</string>
     <string name="cd_warning">Avertisment</string>
     <string name="cd_refresh_calendars">Reîmprospătează calendarele</string>
-    <string name="cd_timezone_tap_to_change">Fus orar: %1$s, apasă pentru schimbare</string>
-    <string name="cd_day_events">Ziua %1$d, %2$d evenimente</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">În zilele</string>
@@ -810,9 +811,7 @@
     <string name="cd_open_drawer">Deschide meniul</string>
     <string name="cd_close_drawer">Închide meniul</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Deschide meniul</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Închide meniul</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Vizualizare calendar</string>
     <string name="cd_active_view">Vizualizare activă</string>
@@ -1088,8 +1087,6 @@
     <string name="insights_period_last_week">Săpt. trecută</string>
     <string name="insights_period_this_month">Luna</string>
     <string name="insights_empty_state">Niciun eveniment programat săptămâna aceasta</string>
-    <string name="insights_delta_more">+%1$s mai mult decât %2$s</string>
-    <string name="insights_delta_less">%1$s mai puțin decât %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d eveniment pe toată ziua</item>
         <item quantity="few">%d evenimente pe toată ziua</item>
@@ -1134,7 +1131,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Următorul interval liber: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Distribuția calendarelor: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuția zilnică: cea mai aglomerată zi este %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1144,9 +1140,7 @@
     <string name="label_event_color">Culoarea evenimentului</string>
     <string name="label_calendar_default">Implicit calendar</string>
     <string name="label_custom">Personalizat</string>
-    <string name="cd_event_color">Culoarea evenimentului</string>
     <string name="cd_checkmark">Selectat</string>
-    <string name="label_device_timezone">Fus orar dispozitiv</string>
 
     <!-- Color names -->
     <string name="color_saddlebrown">Maro șa</string>    <string name="color_tomato">Roșu tomate</string>    <string name="color_darkorange">Portocaliu închis</string>
@@ -1173,17 +1167,6 @@
     <string name="settings_suggest_titles">Sugerează titluri de evenimente</string>
     <string name="label_attendees">Participanți</string>
     <string name="attendee_you_marker">Tu</string>
-    <string name="attendee_organizer_pill">Organizator</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d în plus</item>
-        <item quantity="few">+%d în plus</item>
-        <item quantity="other">+%d în plus</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d participant</item>
-        <item quantity="few">%d participanți</item>
-        <item quantity="other">%d de participanți</item>
-    </plurals>
     <string name="attendee_card_going">Merge</string>
     <string name="attendee_card_pending">În așteptare</string>
     <string name="attendee_card_declined">Refuzat</string>
@@ -1191,10 +1174,8 @@
     <string name="attendee_card_hosting">Gazdă</string>
     <string name="attendee_action_copy">Copiază e-mail</string>
     <string name="attendee_action_email">Trimite e-mail</string>
-    <string name="attendee_group_icon_description">Persoane</string>
     <string name="attendee_email_copied">E-mail copiat</string>
     <string name="attendee_no_email_app">Nu există nicio aplicație de e-mail instalată</string>
-    <string name="attendee_show_less">Afișează mai puțin</string>
     <string name="attendee_show_all">Afișează toți participanții</string>
     <string name="attendee_status_accepted">Acceptat</string>
     <string name="attendee_status_declined">Refuzat</string>
@@ -1267,11 +1248,6 @@
     <string name="share_as_card_chooser_title">Partajează evenimentul</string>
     <string name="share_as_card_share_failed">Cardul nu a putut fi partajat</string>
     <string name="attendee_sheet_title">Participanți</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d invitat</item>
-        <item quantity="few">%d invitați</item>
-        <item quantity="other">%d de invitați</item>
-    </plurals>
     <string name="attendee_search_hint">Caută</string>
     <string name="attendee_search_no_matches">Niciun rezultat</string>
     <string name="attendee_section_going">Merg</string>

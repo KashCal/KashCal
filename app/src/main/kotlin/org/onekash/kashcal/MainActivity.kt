@@ -71,6 +71,7 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager.Permissio
 import org.onekash.kashcal.ui.lock.AppLockVeil
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
+import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AppLockViewModel
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
@@ -138,11 +139,19 @@ class MainActivity : FragmentActivity() {
         val appLockEnabledAtStart = runBlocking { userPreferencesRepository.appLockEnabled.first() }
         appLockViewModel.onActivityCreated(enabled = appLockEnabledAtStart)
 
+        // Resolve the theme synchronously so the first frame renders in the chosen theme — no
+        // flash of the default on cold start (same rationale as the app-lock read above). DataStore
+        // caches after the first read, so this doesn't re-hit disk on rotation.
+        val initialThemeMode = ThemeMode.fromPrefValue(
+            runBlocking { userPreferencesRepository.theme.first() }
+        )
+
         // Handle webcal:// deep link if present
         handleIncomingIntent(intent)
 
         setContent {
-            KashCalTheme {
+            val themeMode by homeViewModel.themeMode.collectAsStateWithLifecycle(initialValue = initialThemeMode)
+            KashCalTheme(themeMode = themeMode) {
                 val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()

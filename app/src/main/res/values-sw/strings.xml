@@ -71,9 +71,6 @@
     <string name="action_delete_event">Futa Tukio</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Kubali</string>
-    <string name="rsvp_action_tentative">Huenda</string>
-    <string name="rsvp_action_decline">Kataa</string>
     <string name="invitees_host_tag">Mwenyeji</string>
     <string name="rsvp_question_going">Unakwenda?</string>
     <string name="rsvp_action_yes">Ndio</string>
@@ -89,13 +86,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Jibu hili linatumika kwa mfululizo wote.</string>
-    <string name="rsvp_modified_snackbar">RSVP ya %1$s imeshindwa — tukio limebadilishwa. Tafadhali jibu tena.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Hili tu</string>
     <string name="recurring_this_and_future">Hili na yote yajayo</string>
-    <string name="recurring_just_occurrence">Tukio hili tu</string>
-    <string name="recurring_all_occurrences">Matukio yote</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Kichwa cha tukio</string>
@@ -125,6 +118,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Mipangilio</string>
+    <string name="settings_theme">Mandhari</string>
+    <string name="settings_theme_system_desc">Fuata mpangilio wa mwanga au giza wa simu yako</string>
+    <string name="settings_theme_light_desc">Mwanga kila wakati</string>
+    <string name="settings_theme_dark_desc">Giza kila wakati</string>
+    <string name="settings_theme_teal_desc">Kijani-buluu ya KashCal, hufuata mpangilio wa mwanga au giza wa simu yako</string>
+    <string name="settings_app_icon">Aikoni ya Programu</string>
+    <string name="app_icon_default">Chaguo-msingi</string>
+    <string name="app_icon_supporter">Mfadhili</string>
+    <string name="app_icon_supporter_calendar">Mfadhili, yenye lebo Kalenda</string>
+    <string name="app_icon_label_calendar">Kalenda</string>
+    <string name="app_icon_support_cta">Saidia KashCal</string>
+    <string name="app_icon_switch_note">Kubadilisha aikoni kunaweza kuanzisha upya programu. Arifa hutumia aikoni na jina la chaguo-msingi kila wakati.</string>
     <string name="settings_search_placeholder">Tafuta mipangilio…</string>
     <string name="settings_search_no_results">Hakuna mipangilio iliyopatikana kwa \"%1$s\"</string>
     <string name="cd_search_settings">Tafuta mipangilio</string>
@@ -143,7 +148,6 @@
     <string name="settings_section_calendars">Kalenda</string>
     <string name="settings_section_appearance">Mwonekano</string>
     <string name="settings_section_creating_events">Kuunda matukio</string>
-    <string name="settings_section_notifications">Arifa</string>
     <string name="settings_section_sync">Kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
     <string name="settings_section_privacy">Faragha</string>
@@ -196,8 +200,6 @@
     <string name="dialog_force_sync_title">Sawazisha Kamili kwa Nguvu?</string>
     <string name="dialog_force_sync_message">Hii itapakua upya data yote ya kalenda kutoka kwa seva. Mabadiliko ya ndani yatahifadhiwa.</string>
     <string name="dialog_enable_notifications">Washa Arifa?</string>
-    <string name="dialog_delete_title">Futa \"%1$s\"</string>
-    <string name="dialog_edit_title">Hariri \"%1$s\"</string>
     <string name="dialog_action_required">Kitendo hiki kinahitajika kuendelea.</string>
     <string name="dialog_add_to_calendar">Ongeza kwenye kalenda</string>
     <string name="dialog_select_calendar">Chagua kalenda</string>
@@ -301,10 +303,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Imechaguliwa</string>
     <string name="cd_back">Rudi</string>
-    <string name="cd_close">Funga</string>
     <string name="cd_search">Tafuta</string>
     <string name="cd_create_event">Unda tukio</string>
-    <string name="cd_today">Leo</string>
     <string name="cd_delete">Futa</string>
     <string name="cd_refresh">Onyesha upya</string>
     <string name="cd_more_options">Chaguo zaidi</string>
@@ -358,6 +358,9 @@
     <string name="settings_new_events">Matukio mapya</string>
 
     <string name="option_system_default">Chaguomsingi ya mfumo</string>
+    <string name="option_light">Mwanga</string>
+    <string name="option_dark">Giza</string>
+    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">Saa 12</string>
     <string name="option_24_hour">Saa 24</string>
     <string name="option_sunday">Jumapili</string>
@@ -503,8 +506,6 @@
     <string name="cd_event_untitled">Tukio lisilo na kichwa</string>
     <string name="cd_warning">Onyo</string>
     <string name="cd_refresh_calendars">Onyesha kalenda upya</string>
-    <string name="cd_timezone_tap_to_change">Eneo la saa: %1$s, gusa kubadilisha</string>
-    <string name="cd_day_events">Siku %1$d, matukio %2$d</string>
 
     <string name="label_on_days">Siku</string>
     <string name="label_pattern">Muundo</string>
@@ -719,8 +720,6 @@
     <string name="cd_loading_events">Inapakia matukio</string>
     <string name="cd_open_drawer">Fungua droo</string>
     <string name="cd_close_drawer">Funga droo</string>
-    <string name="cd_open_rail">Fungua menyu</string>
-    <string name="cd_close_rail">Funga menyu</string>
     <string name="cd_calendar_view">Mtazamo wa kalenda</string>
     <string name="cd_active_view">Mtazamo unaotumika</string>
 
@@ -986,8 +985,6 @@
     <string name="insights_period_last_week">Wiki iliyopita</string>
     <string name="insights_period_this_month">Mwezi</string>
     <string name="insights_empty_state">Hakuna matukio yaliyoratibiwa wiki hii</string>
-    <string name="insights_delta_more">+%1$s zaidi ya %2$s</string>
-    <string name="insights_delta_less">%1$s pungufu ya %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">tukio %d la siku nzima</item>
         <item quantity="other">matukio %d ya siku nzima</item>
@@ -1031,7 +1028,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Muda wa bure unaofuata: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Mgawanyo wa kalenda: %1$s</string>
     <string name="insights_cd_daily_chart">Usambazaji wa kila siku: siku yenye shughuli nyingi zaidi ni %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1041,9 +1037,7 @@
     <string name="label_event_color">Rangi ya tukio</string>
     <string name="label_calendar_default">Chaguomsingi ya kalenda</string>
     <string name="label_custom">Maalum</string>
-    <string name="cd_event_color">Rangi ya tukio</string>
     <string name="cd_checkmark">Imechaguliwa</string>
-    <string name="label_device_timezone">Saa za kifaa</string>
     <string name="color_saddlebrown">Kahawia ya tandiko</string>
     <string name="color_tomato">Nyanya</string>    <string name="color_darkorange">Machungwa iliyokolea</string>
     <string name="color_gold">Dhahabu</string>
@@ -1068,15 +1062,6 @@
     <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
     <string name="label_attendees">Washiriki</string>
     <string name="attendee_you_marker">Wewe</string>
-    <string name="attendee_organizer_pill">Mwandalizi</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d zaidi</item>
-        <item quantity="other">+%d zaidi</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">mshiriki %d</item>
-        <item quantity="other">washiriki %d</item>
-    </plurals>
     <string name="attendee_card_going">Anaenda</string>
     <string name="attendee_card_pending">Inasubiri</string>
     <string name="attendee_card_declined">Imekataliwa</string>
@@ -1084,10 +1069,8 @@
     <string name="attendee_card_hosting">Mwenyeji</string>
     <string name="attendee_action_copy">Nakili barua pepe</string>
     <string name="attendee_action_email">Tuma barua pepe</string>
-    <string name="attendee_group_icon_description">Watu</string>
     <string name="attendee_email_copied">Barua pepe imenakiliwa</string>
     <string name="attendee_no_email_app">Hakuna programu ya barua pepe iliyosakinishwa</string>
-    <string name="attendee_show_less">Onyesha kidogo</string>
     <string name="attendee_show_all">Onyesha washiriki wote</string>
     <string name="attendee_status_accepted">Imekubaliwa</string>
     <string name="attendee_status_declined">Imekataliwa</string>
@@ -1155,10 +1138,6 @@
     <string name="share_as_card_chooser_title">Shiriki tukio</string>
     <string name="share_as_card_share_failed">Imeshindwa kushiriki kadi</string>
     <string name="attendee_sheet_title">Washiriki</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d aliyealikwa</item>
-        <item quantity="other">%d walioalikwa</item>
-    </plurals>
     <string name="attendee_search_hint">Tafuta</string>
     <string name="attendee_search_no_matches">Hakuna matokeo</string>
     <string name="attendee_section_going">Wanahudhuria</string>

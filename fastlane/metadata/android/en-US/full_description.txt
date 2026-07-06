@@ -4,9 +4,9 @@ Learn more at https://kashcal.onekash.org
 
 • iCloud: switched to Android but your family is still on Apple? Sync iCloud calendars directly. No bridge, no workaround.
 
-• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, mailbox.org, Stalwart, SOGo, and more. Native two-way sync, no middleware. Your phone's Google and Outlook calendars show up too.
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo, and more. Native two-way sync, no middleware. Your phone's Google and Outlook calendars show up too.
 
-• Six views: month, agenda, day, 3-day, week, and year. Pinch to zoom the timeline, drag an event to reschedule it.
+• Seven views: month, full-height month, agenda, day, 3-day, week, and year. Pinch to zoom the timeline, drag an event to reschedule it.
 
 • Quick Add: type "Coffee with Kash tomorrow 3pm" and the event is made. Understands dates, times, recurrence, and locations.
 
@@ -22,6 +22,10 @@ Learn more at https://kashcal.onekash.org
 
 • Per-event colors: from a curated palette or a full color wheel, so your week reads at a glance.
 
+• Make it yours: light, dark, or system theme, plus a KashCal Teal palette. Supporters can switch to a special app icon.
+
+• Accessibility: full screen-reader (TalkBack) support, and set the app's language right from Android settings, in 67 languages.
+
 • Works fully offline out of the box.
 
 Private by default
@@ -30,7 +34,5 @@ No analytics. No telemetry. No KashCal account. We have no servers, so there is 
 
 • Credentials encrypted with the Android Keystore
 • App lock: hide your events behind your fingerprint, face, or screen lock
-
-Open source under Apache-2.0. https://kashcal.onekash.org
 
 Free as in speech. Also free as in beer.

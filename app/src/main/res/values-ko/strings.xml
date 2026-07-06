@@ -72,10 +72,7 @@
     <string name="action_delete_event">일정 삭제</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">이것만</string>
     <string name="recurring_this_and_future">이후 모두</string>
-    <string name="recurring_just_occurrence">이 항목만</string>
-    <string name="recurring_all_occurrences">모든 항목</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">일정 제목</string>
@@ -105,6 +102,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">설정</string>
+    <string name="settings_theme">테마</string>
+    <string name="settings_theme_system_desc">휴대폰의 밝게 또는 어둡게 설정을 따라요</string>
+    <string name="settings_theme_light_desc">항상 밝게</string>
+    <string name="settings_theme_dark_desc">항상 어둡게</string>
+    <string name="settings_theme_teal_desc">KashCal 청록색, 휴대전화의 밝게 또는 어둡게 설정을 따라요</string>
+    <string name="settings_app_icon">앱 아이콘</string>
+    <string name="app_icon_default">기본</string>
+    <string name="app_icon_supporter">후원자</string>
+    <string name="app_icon_supporter_calendar">후원자(라벨은 캘린더)</string>
+    <string name="app_icon_label_calendar">캘린더</string>
+    <string name="app_icon_support_cta">KashCal 후원하기</string>
+    <string name="app_icon_switch_note">아이콘을 변경하면 앱이 다시 시작될 수 있어요. 알림은 항상 기본 아이콘과 이름을 사용해요.</string>
     <string name="settings_time_format">시간 형식</string>
     <string name="settings_start_week_on">주 시작 요일</string>
     <string name="settings_event_emojis">일정 이모지</string>
@@ -120,7 +129,6 @@
     <string name="settings_section_calendars">캘린더</string>
     <string name="settings_section_appearance">표시</string>
     <string name="settings_section_creating_events">이벤트 만들기</string>
-    <string name="settings_section_notifications">알림</string>
     <string name="settings_section_sync">동기화</string>
     <string name="settings_section_data">백업 &amp; 복원</string>
     <string name="settings_section_privacy">개인정보 보호</string>
@@ -160,8 +168,6 @@
     <string name="dialog_force_sync_title">전체 동기화를 할까요?</string>
     <string name="dialog_force_sync_message">서버에서 모든 캘린더 데이터를 다시 다운로드해요. 로컬 변경 사항은 유지돼요.</string>
     <string name="dialog_enable_notifications">알림을 활성화할까요?</string>
-    <string name="dialog_delete_title">\"%1$s\" 삭제</string>
-    <string name="dialog_edit_title">\"%1$s\" 편집</string>
     <string name="dialog_action_required">계속하려면 이 작업이 필요해요.</string>
     <string name="dialog_add_to_calendar">캘린더에 추가</string>
     <string name="dialog_select_calendar">캘린더 선택</string>
@@ -265,10 +271,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">선택됨</string>
     <string name="cd_back">뒤로</string>
-    <string name="cd_close">닫기</string>
     <string name="cd_search">검색</string>
     <string name="cd_create_event">일정 만들기</string>
-    <string name="cd_today">오늘</string>
     <string name="cd_delete">삭제</string>
     <string name="cd_refresh">새로고침</string>
     <string name="cd_more_options">더 보기</string>
@@ -326,6 +330,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">시스템 기본값</string>
+    <string name="option_light">밝게</string>
+    <string name="option_dark">어둡게</string>
+    <string name="option_kashcal_teal">KashCal 청록색</string>
     <string name="option_12_hour">12시간</string>
     <string name="option_24_hour">24시간</string>
     <string name="option_sunday">일요일</string>
@@ -482,8 +489,6 @@
     <string name="cd_remove_alert">알림 제거</string>
     <string name="cd_warning">경고</string>
     <string name="cd_refresh_calendars">캘린더 새로고침</string>
-    <string name="cd_timezone_tap_to_change">시간대: %1$s, 탭하여 변경</string>
-    <string name="cd_day_events">%1$d일, 일정 %2$d개</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">요일</string>
@@ -678,9 +683,7 @@
     <string name="cd_open_drawer">서랍 열기</string>
     <string name="cd_close_drawer">서랍 닫기</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">메뉴 열기</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">메뉴 닫기</string>
     <string name="cd_calendar_view">캘린더 보기</string>
     <string name="cd_active_view">활성 보기</string>
 
@@ -934,8 +937,6 @@
     <string name="insights_period_last_week">지난주</string>
     <string name="insights_period_this_month">월</string>
     <string name="insights_empty_state">이번 주 일정이 없어요</string>
-    <string name="insights_delta_more">%2$s보다 +%1$s 더 많아요</string>
-    <string name="insights_delta_less">%2$s보다 %1$s 적어요</string>
     <plurals name="insights_all_day_count">
         <item quantity="other">종일 일정 %d개</item>
     </plurals>
@@ -965,7 +966,6 @@
     <string name="insight_tomorrow_preview_no_start">내일: %1$s 일정</string>
     <string name="insight_heaviest_upcoming">%1$s이(가) 가장 바쁜 예정일이에요 (%2$s)</string>
     <string name="insight_next_free_block">다음 여유 시간: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">캘린더 분포: %1$s</string>
     <string name="insights_cd_daily_chart">일별 분포: 가장 바쁜 날은 %1$s</string>
     <string name="label_availability">가용 상태</string>
     <string name="label_busy">바쁨</string>
@@ -973,13 +973,11 @@
     <string name="label_event_color">일정 색상</string>
     <string name="label_calendar_default">캘린더 기본값</string>
     <string name="label_custom">사용자 지정</string>
-    <string name="cd_event_color">일정 색상</string>
     <string name="cd_checkmark">선택됨</string>
     <string name="cd_event_state_cancelled">취소됨</string>
     <string name="cd_event_state_declined">거절됨</string>
     <string name="cd_event_state_past">지난 일정</string>
     <string name="cd_event_untitled">제목 없는 일정</string>
-    <string name="label_device_timezone">기기 시간대</string>
     <string name="color_saddlebrown">새들 브라운</string>    <string name="color_tomato">토마토</string>    <string name="color_darkorange">다크 오렌지</string>
     <string name="color_gold">골드</string>
     <string name="color_yellowgreen">옐로 그린</string>
@@ -1024,7 +1022,6 @@
     <string name="backup_error_read_failed">파일을 읽을 수 없어요</string>
     <string name="label_attendees">참석자</string>
     <string name="attendee_you_marker">나</string>
-    <string name="attendee_organizer_pill">주최자</string>
     <string name="attendee_picker_title">참석자 추가</string>
     <string name="attendee_pick_add_people">참석자 추가</string>
     <string name="attendee_pick_from_contacts">이름 또는 이메일</string>
@@ -1037,12 +1034,6 @@
     <string name="attendee_scheduling_unavailable">이 계정에서는 사람을 초대할 수 없어요</string>
     <string name="device_attendee_local_no_delivery">이 캘린더는 초대장을 보낼 수 없어요. 게스트는 저장되지만 알림은 가지 않아요.</string>
     <string name="action_save_and_notify">저장 후 알림</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="other">+%d명 더보기</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="other">참석자 %d명</item>
-    </plurals>
     <string name="attendee_card_going">참석</string>
     <string name="attendee_card_pending">대기 중</string>
     <string name="attendee_card_declined">거절</string>
@@ -1050,25 +1041,16 @@
     <string name="attendee_card_hosting">주최</string>
     <string name="attendee_action_copy">이메일 복사</string>
     <string name="attendee_action_email">이메일 보내기</string>
-    <string name="attendee_group_icon_description">사람</string>
     <string name="attendee_email_copied">이메일 복사됨</string>
     <string name="attendee_no_email_app">이메일 앱이 없습니다</string>
-    <string name="attendee_show_less">간략히 보기</string>
     <string name="attendee_show_all">모든 참석자 표시</string>
     <string name="attendee_status_accepted">수락</string>
     <string name="attendee_status_declined">거절</string>
     <string name="attendee_status_tentative">미정</string>
     <string name="attendee_status_delegated">위임</string>
     <string name="attendee_status_pending">대기 중</string>
-    <string name="rsvp_action_accept">수락</string>
-    <string name="rsvp_action_tentative">미정</string>
-    <string name="rsvp_action_decline">거절</string>
     <string name="rsvp_series_disclosure">응답이 반복 일정 전체에 적용돼요.</string>
-    <string name="rsvp_modified_snackbar">%1$s에 대한 응답이 실패했어요. 일정이 변경되었으니 다시 응답해 주세요.</string>
     <string name="attendee_sheet_title">참석자</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="other">%d명 초대됨</item>
-    </plurals>
     <string name="attendee_search_hint">검색</string>
     <string name="attendee_search_no_matches">결과 없음</string>
     <string name="attendee_section_going">참석</string>

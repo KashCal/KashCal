@@ -72,14 +72,10 @@
     <string name="action_delete_event">Удалить событие</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Принять</string>
-    <string name="rsvp_action_tentative">Возможно</string>
-    <string name="rsvp_action_decline">Отклонить</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Ответ распространяется на всю серию.</string>
-    <string name="rsvp_modified_snackbar">Не удалось ответить на «%1$s» — событие изменено. Ответьте ещё раз.</string>
     <string name="invitees_host_tag">Хозяин</string>
     <string name="invitees_summary_you_alone">Ты</string>
     <plurals name="invitees_summary_you_organizing">
@@ -126,10 +122,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Только это</string>
     <string name="recurring_this_and_future">Это и все будущие</string>
-    <string name="recurring_just_occurrence">Только это повторение</string>
-    <string name="recurring_all_occurrences">Все повторения</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Название события</string>
@@ -159,6 +152,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Настройки</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system_desc">Следовать светлой или тёмной теме телефона</string>
+    <string name="settings_theme_light_desc">Всегда светлая</string>
+    <string name="settings_theme_dark_desc">Всегда тёмная</string>
+    <string name="settings_theme_teal_desc">Бирюзовый KashCal, следует светлой или тёмной настройке телефона</string>
+    <string name="settings_app_icon">Значок приложения</string>
+    <string name="app_icon_default">По умолчанию</string>
+    <string name="app_icon_supporter">Сторонник</string>
+    <string name="app_icon_supporter_calendar">Сторонник, с названием Календарь</string>
+    <string name="app_icon_label_calendar">Календарь</string>
+    <string name="app_icon_support_cta">Поддержать KashCal</string>
+    <string name="app_icon_switch_note">Смена значка может перезапустить приложение. Уведомления всегда используют значок и название по умолчанию.</string>
     <string name="settings_time_format">Формат времени</string>
     <string name="settings_start_week_on">Начало недели</string>
     <string name="settings_event_emojis">Эмодзи событий</string>
@@ -174,7 +179,6 @@
     <string name="settings_section_calendars">Календари</string>
     <string name="settings_section_appearance">Оформление</string>
     <string name="settings_section_creating_events">Создание событий</string>
-    <string name="settings_section_notifications">Уведомления</string>
     <string name="settings_section_sync">Синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
     <string name="settings_section_privacy">Конфиденциальность</string>
@@ -214,8 +218,6 @@
     <string name="dialog_force_sync_title">Полная синхронизация?</string>
     <string name="dialog_force_sync_message">Все данные будут загружены с сервера заново. Локальные изменения сохранятся.</string>
     <string name="dialog_enable_notifications">Включить уведомления?</string>
-    <string name="dialog_delete_title">Удалить «%1$s»</string>
-    <string name="dialog_edit_title">Изменить «%1$s»</string>
     <string name="dialog_action_required">Это действие необходимо для продолжения.</string>
     <string name="dialog_add_to_calendar">Добавить в календарь</string>
     <string name="dialog_select_calendar">Выбрать календарь</string>
@@ -321,10 +323,8 @@
     <string name="cd_selected">Выбрано</string>
     <string name="cd_checkmark">Выбрано</string>
     <string name="cd_back">Назад</string>
-    <string name="cd_close">Закрыть</string>
     <string name="cd_search">Поиск</string>
     <string name="cd_create_event">Создать событие</string>
-    <string name="cd_today">Сегодня</string>
     <string name="cd_delete">Удалить</string>
     <string name="cd_refresh">Обновить</string>
     <string name="cd_more_options">Дополнительные параметры</string>
@@ -382,6 +382,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Системный</string>
+    <string name="option_light">Светлая</string>
+    <string name="option_dark">Тёмная</string>
+    <string name="option_kashcal_teal">Бирюзовый KashCal</string>
     <string name="option_12_hour">12-часовой</string>
     <string name="option_24_hour">24-часовой</string>
     <string name="option_sunday">Воскресенье</string>
@@ -544,15 +547,12 @@
     <string name="cd_remove_alert">Удалить напоминание</string>
     <string name="cd_warning">Предупреждение</string>
     <string name="cd_refresh_calendars">Обновить календари</string>
-    <string name="cd_timezone_tap_to_change">Часовой пояс: %1$s, нажмите для изменения</string>
-    <string name="cd_day_events">День %1$d, событий: %2$d</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">По дням</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчивается</string>
     <string name="label_timezone">Часовой пояс</string>
-    <string name="label_device_timezone">Часовой пояс устройства</string>
     <string name="label_alerts">Напоминания</string>
     <string name="label_add_alert">Добавить напоминание</string>
     <string name="label_recurrence_never">Никогда</string>
@@ -838,9 +838,7 @@
     <string name="cd_open_drawer">Открыть меню</string>
     <string name="cd_close_drawer">Закрыть меню</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Открыть меню</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Закрыть меню</string>
     <string name="cd_calendar_view">Вид календаря</string>
     <string name="cd_active_view">Активный вид</string>
 
@@ -1083,8 +1081,6 @@
     <string name="insights_period_last_week">Прошлая нед.</string>
     <string name="insights_period_this_month">Месяц</string>
     <string name="insights_empty_state">На этой неделе нет запланированных событий</string>
-    <string name="insights_delta_more">+%1$s больше, чем за %2$s</string>
-    <string name="insights_delta_less">%1$s меньше, чем за %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d событие на весь день</item>
         <item quantity="few">%d события на весь день</item>
@@ -1117,7 +1113,6 @@
     <string name="insight_tomorrow_preview_no_start">Завтра: запланировано %1$s</string>
     <string name="insight_heaviest_upcoming">%1$s — самый загруженный предстоящий день (%2$s)</string>
     <string name="insight_next_free_block">Следующий свободный блок: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Распределение по календарям: %1$s</string>
     <string name="insights_cd_daily_chart">Распределение по дням: самый загруженный день — %1$s</string>
     <string name="label_availability">Доступность</string>
     <string name="label_busy">Занят</string>
@@ -1125,7 +1120,6 @@
     <string name="label_event_color">Цвет события</string>
     <string name="label_calendar_default">По умолчанию</string>
     <string name="label_custom">Свой</string>
-    <string name="cd_event_color">Цвет события</string>
     <string name="hue_red">Красный</string>
     <string name="hue_orange">Оранжевый</string>
     <string name="hue_yellow">Жёлтый</string>
@@ -1163,19 +1157,6 @@
     <!-- Attendees (B4) -->
     <string name="label_attendees">Участники</string>
     <string name="attendee_you_marker">Вы</string>
-    <string name="attendee_organizer_pill">Организатор</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+ещё %d</item>
-        <item quantity="few">+ещё %d</item>
-        <item quantity="many">+ещё %d</item>
-        <item quantity="other">+ещё %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d участник</item>
-        <item quantity="few">%d участника</item>
-        <item quantity="many">%d участников</item>
-        <item quantity="other">%d участника</item>
-    </plurals>
     <string name="attendee_card_going">Принял</string>
     <string name="attendee_card_pending">Ожидает</string>
     <string name="attendee_card_declined">Отклонил</string>
@@ -1183,10 +1164,8 @@
     <string name="attendee_card_hosting">Организатор</string>
     <string name="attendee_action_copy">Скопировать e-mail</string>
     <string name="attendee_action_email">Отправить письмо</string>
-    <string name="attendee_group_icon_description">Люди</string>
     <string name="attendee_email_copied">E-mail скопирован</string>
     <string name="attendee_no_email_app">Приложение электронной почты не установлено</string>
-    <string name="attendee_show_less">Показать меньше</string>
     <string name="attendee_show_all">Показать всех участников</string>
     <string name="attendee_status_accepted">Принято</string>
     <string name="attendee_status_declined">Отклонил</string>
@@ -1251,12 +1230,6 @@
     <string name="share_as_card_share_failed">Не удалось поделиться карточкой</string>
     <string name="share_from_kashcal_footer">Отправлено из KashCal</string>
     <string name="attendee_sheet_title">Участники</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d приглашён</item>
-        <item quantity="few">%d приглашённых</item>
-        <item quantity="many">%d приглашённых</item>
-        <item quantity="other">%d приглашённых</item>
-    </plurals>
     <string name="attendee_search_hint">Поиск</string>
     <string name="attendee_search_no_matches">Ничего не найдено</string>
     <string name="attendee_section_going">Идут</string>

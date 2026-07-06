@@ -71,11 +71,7 @@
     <string name="action_delete_event">ክስተት ሰርዝ</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">ተቀበል</string>
-    <string name="rsvp_action_tentative">በሙከራ</string>
-    <string name="rsvp_action_decline">አይቀበሉ</string>
     <string name="rsvp_series_disclosure">ምላሽዎ ለመላው ተከታታይ ክስተት ይተገበራል።</string>
-    <string name="rsvp_modified_snackbar">ለ%1$s የተደረገው RSVP አልተሳካም — ክስተቱ ተሻሽሏል። እባክዎ እንደገና ምላሽ ይስጡ።</string>
     <string name="invitees_host_tag">አስተናጋጅ</string>
     <string name="invitees_summary_you_alone">አንተ</string>
     <plurals name="invitees_summary_you_organizing">
@@ -112,10 +108,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">ይህን ብቻ</string>
     <string name="recurring_this_and_future">ይህን እና ሁሉም ወደፊት</string>
-    <string name="recurring_just_occurrence">ይህን ክስተት ብቻ</string>
-    <string name="recurring_all_occurrences">ሁሉም ክስተቶች</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">የክስተት ርዕስ</string>
@@ -145,6 +138,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ቅንብሮች</string>
+    <string name="settings_theme">ገጽታ</string>
+    <string name="settings_theme_system_desc">የስልክዎን የብርሃን ወይም የጨለማ ቅንብር ይከተላል</string>
+    <string name="settings_theme_light_desc">ሁልጊዜ ብሩህ</string>
+    <string name="settings_theme_dark_desc">ሁልጊዜ ጨለማ</string>
+    <string name="settings_theme_teal_desc">የKashCal አረንጓዴ-ሰማያዊ፣ የስልክዎን የብርሃን ወይም የጨለማ ቅንብር ይከተላል</string>
+    <string name="settings_app_icon">የመተግበሪያ አዶ</string>
+    <string name="app_icon_default">ነባሪ</string>
+    <string name="app_icon_supporter">ደጋፊ</string>
+    <string name="app_icon_supporter_calendar">ደጋፊ፣ ቀን መቁጠሪያ ተብሎ የተሰየመ</string>
+    <string name="app_icon_label_calendar">ቀን መቁጠሪያ</string>
+    <string name="app_icon_support_cta">KashCal ይደግፉ</string>
+    <string name="app_icon_switch_note">አዶውን መቀየር መተግበሪያውን እንደገና ሊያስጀምረው ይችላል። ማሳወቂያዎች ሁልጊዜ ነባሪውን አዶና ስም ይጠቀማሉ።</string>
     <string name="settings_search_placeholder">ቅንብሮችን ይፈልጉ…</string>
     <string name="settings_search_no_results">ለ\"%1$s\" ምንም ቅንብር አልተገኘም</string>
     <string name="cd_search_settings">ቅንብሮችን ይፈልጉ</string>
@@ -163,7 +168,6 @@
     <string name="settings_section_calendars">የቀን መቁጠሪያዎች</string>
     <string name="settings_section_appearance">መልክ</string>
     <string name="settings_section_creating_events">ዝግጅቶችን መፍጠር</string>
-    <string name="settings_section_notifications">ማሳወቂያዎች</string>
     <string name="settings_section_sync">ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
     <string name="settings_section_privacy">ግላዊነት</string>
@@ -203,7 +207,7 @@
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
-    <string name="onboarding_got_you">አገኘንህ።</string>
+    <string name="onboarding_got_you">እኛ ከጎንህ ነን።</string>
     <string name="onboarding_connect_prompt">ክስተቶችህን እዚህ ለማየት iCloud አገናኝ</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
@@ -217,8 +221,6 @@
     <string name="dialog_force_sync_title">ሙሉ ማመሳሰል ያስገድዱ?</string>
     <string name="dialog_force_sync_message">ይህ ሁሉንም የቀን መቁጠሪያ ውሂብ ከአገልጋዩ እንደገና ያወርዳል። የአካባቢ ለውጦች ይጠበቃሉ።</string>
     <string name="dialog_enable_notifications">ማሳወቂያዎችን ያንቁ?</string>
-    <string name="dialog_delete_title">\"%1$s\" ሰርዝ</string>
-    <string name="dialog_edit_title">\"%1$s\" አርትዕ</string>
     <string name="dialog_action_required">ለመቀጠል ይህ እርምጃ ያስፈልጋል።</string>
     <string name="dialog_add_to_calendar">ወደ ቀን መቁጠሪያ አክል</string>
     <string name="dialog_select_calendar">ቀን መቁጠሪያ ምረጥ</string>
@@ -323,10 +325,8 @@
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">ተመርጧል</string>
     <string name="cd_back">ተመለስ</string>
-    <string name="cd_close">ዝጋ</string>
     <string name="cd_search">ፈልግ</string>
     <string name="cd_create_event">ክስተት ፍጠር</string>
-    <string name="cd_today">ዛሬ</string>
     <string name="cd_delete">ሰርዝ</string>
     <string name="cd_refresh">አድስ</string>
     <string name="cd_more_options">ተጨማሪ አማራጮች</string>
@@ -384,6 +384,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">የስርዓት ነባሪ</string>
+    <string name="option_light">ብሩህ</string>
+    <string name="option_dark">ጨለማ</string>
+    <string name="option_kashcal_teal">KashCal አረንጓዴ-ሰማያዊ</string>
     <string name="option_12_hour">12-ሰዓት</string>
     <string name="option_24_hour">24-ሰዓት</string>
     <string name="option_sunday">እሁድ</string>
@@ -539,15 +542,12 @@
     <string name="cd_remove_alert">ማንቂያ አስወግድ</string>
     <string name="cd_warning">ማስጠንቀቂያ</string>
     <string name="cd_refresh_calendars">ቀን መቁጠሪያዎችን አድስ</string>
-    <string name="cd_timezone_tap_to_change">ሰዓት ክልል: %1$s፣ ለመቀየር ይንኩ</string>
-    <string name="cd_day_events">ቀን %1$d፣ %2$d ክስተቶች</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">በቀናት</string>
     <string name="label_pattern">ጥለት</string>
     <string name="label_ends">ያበቃል</string>
     <string name="label_timezone">የሰዓት ክልል</string>
-    <string name="label_device_timezone">የመሣሪያ ሰዓት ክልል</string>
     <string name="label_alerts">ማንቂያዎች</string>
     <string name="label_add_alert">ማንቂያ አክል</string>
     <string name="label_recurrence_never">ፈጽሞ</string>
@@ -764,9 +764,7 @@
     <string name="cd_open_drawer">መሳቢያ ክፈት</string>
     <string name="cd_close_drawer">መሳቢያ ዝጋ</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">ምናሌ ክፈት</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">ምናሌ ዝጋ</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">የቀን መቁጠሪያ እይታ</string>
     <string name="cd_active_view">ንቁ እይታ</string>
@@ -1032,8 +1030,6 @@
     <string name="insights_period_last_week">ያለፈው ሳምንት</string>
     <string name="insights_period_this_month">ወር</string>
     <string name="insights_empty_state">በዚህ ሳምንት ምንም ክስተቶች አልተያዙም</string>
-    <string name="insights_delta_more">+%1$s ከ%2$s የበለጠ</string>
-    <string name="insights_delta_less">%1$s ከ%2$s ያነሰ</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d ሙሉ ቀን ክስተት</item>
         <item quantity="other">%d ሙሉ ቀን ክስተቶች</item>
@@ -1077,7 +1073,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">ቀጣዩ ነፃ ጊዜ: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">የቀን መቁጠሪያ ክፍፍል: %1$s</string>
     <string name="insights_cd_daily_chart">ዕለታዊ ስርጭት: በጣም የተጨናነቀው ቀን %1$s ነው</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1087,7 +1082,6 @@
     <string name="label_event_color">የክስተት ቀለም</string>
     <string name="label_calendar_default">የቀን መቁጠሪያ ነባሪ</string>
     <string name="label_custom">ብጁ</string>
-    <string name="cd_event_color">የክስተት ቀለም</string>
 
     <string name="cd_checkmark">ተመርጧል</string>
 
@@ -1121,15 +1115,6 @@
     <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
     <string name="label_attendees">ተሳታፊዎች</string>
     <string name="attendee_you_marker">አንተ</string>
-    <string name="attendee_organizer_pill">አደራጅ</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d ተጨማሪ</item>
-        <item quantity="other">+%d ተጨማሪ</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d ተሳታፊ</item>
-        <item quantity="other">%d ተሳታፊዎች</item>
-    </plurals>
     <string name="attendee_card_going">ይሄዳል</string>
     <string name="attendee_card_pending">በመጠባበቅ ላይ</string>
     <string name="attendee_card_declined">ተቀባይነት አላገኘም</string>
@@ -1137,10 +1122,8 @@
     <string name="attendee_card_hosting">አስተናጋጅ</string>
     <string name="attendee_action_copy">ኢሜይል ቅዳ</string>
     <string name="attendee_action_email">ኢሜይል ላክ</string>
-    <string name="attendee_group_icon_description">ሰዎች</string>
     <string name="attendee_email_copied">ኢሜይል ተቀድቷል</string>
     <string name="attendee_no_email_app">ምንም የኢሜይል መተግበሪያ አልተጫነም</string>
-    <string name="attendee_show_less">ያንሳል አሳይ</string>
     <string name="attendee_show_all">ሁሉንም ተጋባዦች አሳይ</string>
     <string name="attendee_status_accepted">ተቀብሏል</string>
     <string name="attendee_status_declined">ተቀባይነት አላገኘም</string>
@@ -1208,10 +1191,6 @@
     <string name="share_as_card_share_failed">ካርዱን ማጋራት አልተቻለም</string>
     <string name="share_from_kashcal_footer">ከKashCal ተጋርቷል</string>
     <string name="attendee_sheet_title">ተሳታፊዎች</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d ተጋብዟል</item>
-        <item quantity="other">%d ተጋብዘዋል</item>
-    </plurals>
     <string name="attendee_search_hint">ፈልግ</string>
     <string name="attendee_search_no_matches">ምንም ውጤት የለም</string>
     <string name="attendee_section_going">ይሄዳሉ</string>

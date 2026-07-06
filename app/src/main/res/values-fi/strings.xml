@@ -72,14 +72,10 @@
     <string name="action_delete_event">Poista tapahtuma</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Hyväksy</string>
-    <string name="rsvp_action_tentative">Ehkä</string>
-    <string name="rsvp_action_decline">Hylkää</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Vastaus koskee koko sarjaa.</string>
-    <string name="rsvp_modified_snackbar">Vastaus tapahtumaan %1$s epäonnistui — tapahtumaa muokattiin. Vastaa uudelleen.</string>
     <string name="invitees_host_tag">Isäntä</string>
     <string name="invitees_summary_you_alone">Sinä</string>
     <plurals name="invitees_summary_you_organizing">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Vain tämä</string>
     <string name="recurring_this_and_future">Tämä ja kaikki tulevat</string>
-    <string name="recurring_just_occurrence">Vain tämä esiintymä</string>
-    <string name="recurring_all_occurrences">Kaikki esiintymät</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Tapahtuman otsikko</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Asetukset</string>
+    <string name="settings_theme">Teema</string>
+    <string name="settings_theme_system_desc">Seuraa puhelimen vaaleaa tai tummaa asetusta</string>
+    <string name="settings_theme_light_desc">Aina vaalea</string>
+    <string name="settings_theme_dark_desc">Aina tumma</string>
+    <string name="settings_theme_teal_desc">KashCal-sinivihreä, seuraa puhelimen vaaleaa tai tummaa asetusta</string>
+    <string name="settings_app_icon">Sovelluksen kuvake</string>
+    <string name="app_icon_default">Oletus</string>
+    <string name="app_icon_supporter">Tukija</string>
+    <string name="app_icon_supporter_calendar">Tukija, nimellä Kalenteri</string>
+    <string name="app_icon_label_calendar">Kalenteri</string>
+    <string name="app_icon_support_cta">Tue KashCalia</string>
+    <string name="app_icon_switch_note">Kuvakkeen vaihtaminen voi käynnistää sovelluksen uudelleen. Ilmoitukset käyttävät aina oletuskuvaketta ja -nimeä.</string>
     <string name="settings_time_format">Aikamuoto</string>
     <string name="settings_start_week_on">Viikko alkaa</string>
     <string name="settings_event_emojis">Tapahtumien emojit</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Kalenterit</string>
     <string name="settings_section_appearance">Ulkoasu</string>
     <string name="settings_section_creating_events">Tapahtumien luominen</string>
-    <string name="settings_section_notifications">Ilmoitukset</string>
     <string name="settings_section_sync">Synkronointi</string>
     <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
     <string name="settings_section_privacy">Yksityisyys</string>
@@ -204,8 +208,6 @@
     <string name="dialog_force_sync_title">Pakota täysi synkronointi?</string>
     <string name="dialog_force_sync_message">Tämä lataa kaikki kalenteritiedot palvelimelta uudelleen. Paikalliset muutokset säilytetään.</string>
     <string name="dialog_enable_notifications">Ota ilmoitukset käyttöön?</string>
-    <string name="dialog_delete_title">Poista \"%1$s\"</string>
-    <string name="dialog_edit_title">Muokkaa \"%1$s\"</string>
     <string name="dialog_action_required">Tämä toiminto on pakollinen jatkaaksesi.</string>
     <string name="dialog_add_to_calendar">Lisää kalenteriin</string>
     <string name="dialog_select_calendar">Valitse kalenteri</string>
@@ -311,10 +313,8 @@
     <string name="cd_selected">Valittu</string>
     <string name="cd_checkmark">Valittu</string>
     <string name="cd_back">Takaisin</string>
-    <string name="cd_close">Sulje</string>
     <string name="cd_search">Hae</string>
     <string name="cd_create_event">Luo tapahtuma</string>
-    <string name="cd_today">Tänään</string>
     <string name="cd_delete">Poista</string>
     <string name="cd_refresh">Päivitä</string>
     <string name="cd_more_options">Lisää vaihtoehtoja</string>
@@ -372,6 +372,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Järjestelmän oletus</string>
+    <string name="option_light">Vaalea</string>
+    <string name="option_dark">Tumma</string>
+    <string name="option_kashcal_teal">KashCal-sinivihreä</string>
     <string name="option_12_hour">12 tunnin</string>
     <string name="option_24_hour">24 tunnin</string>
     <string name="option_sunday">Sunnuntai</string>
@@ -534,15 +537,12 @@
     <string name="cd_remove_alert">Poista muistutus</string>
     <string name="cd_warning">Varoitus</string>
     <string name="cd_refresh_calendars">Päivitä kalenterit</string>
-    <string name="cd_timezone_tap_to_change">Aikavyöhyke: %1$s, napauta vaihtaaksesi</string>
-    <string name="cd_day_events">Päivä %1$d, %2$d tapahtumaa</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Päivinä</string>
     <string name="label_pattern">Malli</string>
     <string name="label_ends">Päättyy</string>
     <string name="label_timezone">Aikavyöhyke</string>
-    <string name="label_device_timezone">Laitteen aikavyöhyke</string>
     <string name="label_alerts">Muistutukset</string>
     <string name="label_add_alert">Lisää muistutus</string>
     <string name="label_recurrence_never">Ei koskaan</string>
@@ -767,9 +767,7 @@
     <string name="cd_open_drawer">Avaa valikko</string>
     <string name="cd_close_drawer">Sulje valikko</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Avaa valikko</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Sulje valikko</string>
     <string name="cd_calendar_view">Kalenterinäkymä</string>
     <string name="cd_active_view">Aktiivinen näkymä</string>
 
@@ -998,8 +996,6 @@
     <string name="insights_period_last_week">Edellinen vko</string>
     <string name="insights_period_this_month">Kuukausi</string>
     <string name="insights_empty_state">Tälle viikolle ei ole ajastettuja tapahtumia</string>
-    <string name="insights_delta_more">+%1$s enemmän kuin %2$s</string>
-    <string name="insights_delta_less">%1$s vähemmän kuin %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d koko päivän tapahtuma</item>
         <item quantity="other">%d koko päivän tapahtumaa</item>
@@ -1030,7 +1026,6 @@
     <string name="insight_tomorrow_preview_no_start">Huomenna: ajastettu %1$s</string>
     <string name="insight_heaviest_upcoming">%1$s on kiireisin tuleva päivä (%2$s)</string>
     <string name="insight_next_free_block">Seuraava vapaa jakso: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Jakauma kalentereittain: %1$s</string>
     <string name="insights_cd_daily_chart">Jakauma päivittäin: kiireisin päivä on %1$s</string>
     <string name="label_availability">Saatavuus</string>
     <string name="label_busy">Varattu</string>
@@ -1038,7 +1033,6 @@
     <string name="label_event_color">Tapahtuman väri</string>
     <string name="label_calendar_default">Kalenterin oletus</string>
     <string name="label_custom">Mukautettu</string>
-    <string name="cd_event_color">Tapahtuman väri</string>
 
     <string name="hue_red">Punainen</string>
     <string name="hue_orange">Oranssi</string>
@@ -1077,15 +1071,6 @@
     <!-- Attendees (B4) -->
     <string name="label_attendees">Osallistujat</string>
     <string name="attendee_you_marker">Sinä</string>
-    <string name="attendee_organizer_pill">Järjestäjä</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d lisää</item>
-        <item quantity="other">+%d lisää</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d osallistuja</item>
-        <item quantity="other">%d osallistujaa</item>
-    </plurals>
     <string name="attendee_card_going">Tulossa</string>
     <string name="attendee_card_pending">Odottaa</string>
     <string name="attendee_card_declined">Kieltäytyi</string>
@@ -1093,10 +1078,8 @@
     <string name="attendee_card_hosting">Järjestää</string>
     <string name="attendee_action_copy">Kopioi sähköposti</string>
     <string name="attendee_action_email">Lähetä sähköposti</string>
-    <string name="attendee_group_icon_description">Ihmiset</string>
     <string name="attendee_email_copied">Sähköposti kopioitu</string>
     <string name="attendee_no_email_app">Sähköpostisovellusta ei ole asennettu</string>
-    <string name="attendee_show_less">Näytä vähemmän</string>
     <string name="attendee_show_all">Näytä kaikki osallistujat</string>
     <string name="attendee_status_accepted">Hyväksytty</string>
     <string name="attendee_status_declined">Kieltäytyi</string>
@@ -1153,10 +1136,6 @@
     <string name="share_as_card_share_failed">Korttia ei voitu jakaa</string>
     <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
     <string name="attendee_sheet_title">Osallistujat</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d kutsuttu</item>
-        <item quantity="other">%d kutsuttua</item>
-    </plurals>
     <string name="attendee_search_hint">Hae</string>
     <string name="attendee_search_no_matches">Ei tuloksia</string>
     <string name="attendee_section_going">Tulevat</string>

@@ -72,10 +72,7 @@
     <string name="action_delete_event">刪除事件</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">僅此一次</string>
     <string name="recurring_this_and_future">此次及所有未來</string>
-    <string name="recurring_just_occurrence">僅此次</string>
-    <string name="recurring_all_occurrences">所有次</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">事件標題</string>
@@ -105,6 +102,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">設定</string>
+    <string name="settings_theme">主題</string>
+    <string name="settings_theme_system_desc">跟隨手機的淺色或深色設定</string>
+    <string name="settings_theme_light_desc">一律淺色</string>
+    <string name="settings_theme_dark_desc">一律深色</string>
+    <string name="settings_theme_teal_desc">KashCal 青色，跟隨手機的淺色或深色設定</string>
+    <string name="settings_app_icon">應用程式圖示</string>
+    <string name="app_icon_default">預設</string>
+    <string name="app_icon_supporter">支持者</string>
+    <string name="app_icon_supporter_calendar">支持者（標示為「行事曆」）</string>
+    <string name="app_icon_label_calendar">行事曆</string>
+    <string name="app_icon_support_cta">支持 KashCal</string>
+    <string name="app_icon_switch_note">變更圖示可能會重新啟動應用程式。通知一律使用預設圖示與名稱。</string>
     <string name="settings_time_format">時間格式</string>
     <string name="settings_start_week_on">每週開始於</string>
     <string name="settings_event_emojis">事件表情符號</string>
@@ -120,7 +129,6 @@
     <string name="settings_section_calendars">日曆</string>
     <string name="settings_section_appearance">外觀</string>
     <string name="settings_section_creating_events">建立活動</string>
-    <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同步</string>
     <string name="settings_section_data">備份與還原</string>
     <string name="settings_section_privacy">隱私</string>
@@ -160,8 +168,6 @@
     <string name="dialog_force_sync_title">執行完整同步？</string>
     <string name="dialog_force_sync_message">將從伺服器重新下載所有行事曆資料。本機變更將被保留。</string>
     <string name="dialog_enable_notifications">啟用通知？</string>
-    <string name="dialog_delete_title">刪除「%1$s」</string>
-    <string name="dialog_edit_title">編輯「%1$s」</string>
     <string name="dialog_action_required">需要執行此操作才能繼續。</string>
     <string name="dialog_add_to_calendar">加入行事曆</string>
     <string name="dialog_select_calendar">選擇行事曆</string>
@@ -265,10 +271,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">已選取</string>
     <string name="cd_back">返回</string>
-    <string name="cd_close">關閉</string>
     <string name="cd_search">搜尋</string>
     <string name="cd_create_event">建立事件</string>
-    <string name="cd_today">今天</string>
     <string name="cd_delete">刪除</string>
     <string name="cd_refresh">重新整理</string>
     <string name="cd_more_options">更多選項</string>
@@ -326,6 +330,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">系統預設</string>
+    <string name="option_light">淺色</string>
+    <string name="option_dark">深色</string>
+    <string name="option_kashcal_teal">KashCal 青色</string>
     <string name="option_12_hour">12小時制</string>
     <string name="option_24_hour">24小時制</string>
     <string name="option_sunday">星期日</string>
@@ -482,8 +489,6 @@
     <string name="cd_remove_alert">移除提醒</string>
     <string name="cd_warning">警告</string>
     <string name="cd_refresh_calendars">重新整理行事曆</string>
-    <string name="cd_timezone_tap_to_change">時區：%1$s，點選變更</string>
-    <string name="cd_day_events">%1$d 日，%2$d 個事件</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">選擇日期</string>
@@ -678,9 +683,7 @@
     <string name="cd_open_drawer">開啟抽屜</string>
     <string name="cd_close_drawer">關閉抽屜</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">開啟選單</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">關閉選單</string>
     <string name="cd_calendar_view">行事曆檢視</string>
     <string name="cd_active_view">目前檢視</string>
 
@@ -934,8 +937,6 @@
     <string name="insights_period_last_week">上週</string>
     <string name="insights_period_this_month">月</string>
     <string name="insights_empty_state">本週沒有事件</string>
-    <string name="insights_delta_more">比%2$s多 +%1$s</string>
-    <string name="insights_delta_less">比%2$s少 %1$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="other">%d個整天事件</item>
     </plurals>
@@ -965,7 +966,6 @@
     <string name="insight_tomorrow_preview_no_start">明天：%1$s的行程</string>
     <string name="insight_heaviest_upcoming">%1$s是你最忙碌的一天（%2$s）</string>
     <string name="insight_next_free_block">下一個空閒時段：%1$s %2$s–%3$s（%4$s）</string>
-    <string name="insights_cd_calendar_bar">行事曆分佈：%1$s</string>
     <string name="insights_cd_daily_chart">每日分佈：最忙碌的一天是%1$s</string>
     <string name="label_availability">忙閒狀態</string>
     <string name="label_busy">忙碌</string>
@@ -973,13 +973,11 @@
     <string name="label_event_color">行程顏色</string>
     <string name="label_calendar_default">行事曆預設</string>
     <string name="label_custom">自訂</string>
-    <string name="cd_event_color">行程顏色</string>
     <string name="cd_checkmark">已選取</string>
     <string name="cd_event_state_cancelled">已取消</string>
     <string name="cd_event_state_declined">已拒絕</string>
     <string name="cd_event_state_past">已過去的行程</string>
     <string name="cd_event_untitled">無標題行程</string>
-    <string name="label_device_timezone">裝置時區</string>
     <string name="color_saddlebrown">馬鞍棕</string>    <string name="color_tomato">番茄紅</string>    <string name="color_darkorange">深橙</string>
     <string name="color_gold">金色</string>
     <string name="color_yellowgreen">黃綠</string>
@@ -1024,7 +1022,6 @@
     <string name="backup_error_read_failed">無法讀取檔案</string>
     <string name="label_attendees">參與者</string>
     <string name="attendee_you_marker">我</string>
-    <string name="attendee_organizer_pill">主辦人</string>
     <string name="attendee_picker_title">新增參與者</string>
     <string name="attendee_pick_add_people">新增參與者</string>
     <string name="attendee_pick_from_contacts">姓名或電子郵件</string>
@@ -1037,12 +1034,6 @@
     <string name="attendee_scheduling_unavailable">此帳戶無法邀請成員</string>
     <string name="device_attendee_local_no_delivery">此行事曆無法傳送邀請。來賓會被儲存，但不會收到通知。</string>
     <string name="action_save_and_notify">儲存並通知</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="other">+%d 個</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="other">%d 位參與者</item>
-    </plurals>
     <string name="attendee_card_going">參加</string>
     <string name="attendee_card_pending">待定</string>
     <string name="attendee_card_declined">已拒絕</string>
@@ -1050,25 +1041,16 @@
     <string name="attendee_card_hosting">主辦</string>
     <string name="attendee_action_copy">複製電子郵件</string>
     <string name="attendee_action_email">傳送電子郵件</string>
-    <string name="attendee_group_icon_description">人員</string>
     <string name="attendee_email_copied">已複製電子郵件</string>
     <string name="attendee_no_email_app">未安裝電子郵件應用程式</string>
-    <string name="attendee_show_less">收合</string>
     <string name="attendee_show_all">顯示所有與會者</string>
     <string name="attendee_status_accepted">已接受</string>
     <string name="attendee_status_declined">已拒絕</string>
     <string name="attendee_status_tentative">暫定</string>
     <string name="attendee_status_delegated">已委派</string>
     <string name="attendee_status_pending">待定</string>
-    <string name="rsvp_action_accept">接受</string>
-    <string name="rsvp_action_tentative">暫定</string>
-    <string name="rsvp_action_decline">拒絕</string>
     <string name="rsvp_series_disclosure">您的回覆將套用至整個系列。</string>
-    <string name="rsvp_modified_snackbar">「%1$s」的回覆失敗,活動已被修改,請重新回覆。</string>
     <string name="attendee_sheet_title">參加者</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="other">已邀請 %d 人</item>
-    </plurals>
     <string name="attendee_search_hint">搜尋</string>
     <string name="attendee_search_no_matches">無結果</string>
     <string name="attendee_section_going">參加</string>

@@ -194,6 +194,15 @@ class HomeViewModel(
     val timeFormat: StateFlow<String> = dataStore.timeFormat
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.TIME_FORMAT_SYSTEM)
 
+    /**
+     * App theme choice, derived from the stored theme string. Drives KashCalTheme in MainActivity.
+     * A cold flow (not stateIn): the activity seeds the first frame with a synchronous read and
+     * collects this, whose first emission is the same stored value — so there's no flash of the
+     * default theme on cold start. Later writes propagate here to recolor live.
+     */
+    val themeMode: Flow<org.onekash.kashcal.ui.theme.ThemeMode> = dataStore.theme
+        .map { org.onekash.kashcal.ui.theme.ThemeMode.fromPrefValue(it) }
+
     /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
     val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)

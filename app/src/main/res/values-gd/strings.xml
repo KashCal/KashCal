@@ -71,13 +71,9 @@
     <string name="action_delete_event">Sguab Tachartas Às</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Gabh ris</string>
-    <string name="rsvp_action_tentative">An teagamh</string>
-    <string name="rsvp_action_decline">Diùlt</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Tha am freagairt a\' buntainn ris an t-sreath gu lèir.</string>
-    <string name="rsvp_modified_snackbar">Dh\'fhàillig am freagairt airson %1$s: chaidh an tachartas atharrachadh. Freagair a-rithist.</string>
     <string name="invitees_host_tag">Aoigh</string>
     <string name="invitees_summary_you_alone">Thu</string>
     <string name="holiday_catalog_add">Cuir mìosachan làithean-saora ris</string>
@@ -131,10 +127,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Dìreach am fear seo</string>
     <string name="recurring_this_and_future">Am fear seo agus gach fear san àm ri teachd</string>
-    <string name="recurring_just_occurrence">Dìreach an tachartas seo</string>
-    <string name="recurring_all_occurrences">Gach tachartas</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Tiotal an tachartais</string>
@@ -164,6 +157,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Roghainnean</string>
+    <string name="settings_theme">Ùrlar</string>
+    <string name="settings_theme_system_desc">Lean suidheachadh soilleir no dorcha an fhòn agad</string>
+    <string name="settings_theme_light_desc">Soilleir an-còmhnaidh</string>
+    <string name="settings_theme_dark_desc">Dorcha an-còmhnaidh</string>
+    <string name="settings_theme_teal_desc">Gorm-uaine KashCal, a\' leantainn suidheachadh soilleir no dorcha an fhòin agad</string>
+    <string name="settings_app_icon">Ìomhaigheag na h-aplacaid</string>
+    <string name="app_icon_default">Bunaiteach</string>
+    <string name="app_icon_supporter">Neach-taic</string>
+    <string name="app_icon_supporter_calendar">Neach-taic, leis an ainm Mìosachan</string>
+    <string name="app_icon_label_calendar">Mìosachan</string>
+    <string name="app_icon_support_cta">Cuir taic ri KashCal</string>
+    <string name="app_icon_switch_note">Faodaidh atharrachadh an aplacaid ath-thòiseachadh. Bidh brathan an-còmhnaidh a\' cleachdadh na h-ìomhaigheige is an ainm bhunaitich.</string>
     <string name="settings_time_format">Cruth Ùine</string>
     <string name="settings_start_week_on">Tòisich an t-Seachdain Air</string>
     <string name="settings_event_emojis">Emojis Thachartasan</string>
@@ -179,7 +184,6 @@
     <string name="settings_section_calendars">Mìosachain</string>
     <string name="settings_section_appearance">Coltas</string>
     <string name="settings_section_creating_events">A\' cruthachadh thachartasan</string>
-    <string name="settings_section_notifications">Brathan</string>
     <string name="settings_section_sync">Sioncronachadh</string>
     <string name="settings_section_data">Lethbhreac-glèidhidh is aiseag</string>
     <string name="settings_section_privacy">Prìobhaideachd</string>
@@ -213,8 +217,6 @@
     <string name="dialog_force_sync_title">Sioncronaich Slàn le Èiginn?</string>
     <string name="dialog_force_sync_message">Ath-luchdaichidh seo an dàta mìosachain uile bhon fhrithealaiche. Thèid atharrachaidhean ionadail a ghlèidheadh.</string>
     <string name="dialog_enable_notifications">Cuir Brathan an Comas?</string>
-    <string name="dialog_delete_title">Sguab às \"%1$s\"</string>
-    <string name="dialog_edit_title">Deasaich \"%1$s\"</string>
     <string name="dialog_action_required">Tha an gnìomh seo riatanach gus leantainn air adhart.</string>
     <string name="dialog_add_to_calendar">Cuir ri mìosachan</string>
     <string name="dialog_select_calendar">Tagh mìosachan</string>
@@ -329,14 +331,12 @@
     <!-- Content Descriptions (Accessibility) -->
     <string name="cd_selected">Air a thaghadh</string>
     <string name="cd_back">Air ais</string>
-    <string name="cd_close">Dùin</string>
     <string name="cd_search">Lorg</string>
     <string name="cd_create_event">Cruthaich tachartas</string>
     <string name="cd_event_state_cancelled">air a sguabadh às</string>
     <string name="cd_event_state_declined">air a dhiùltadh</string>
     <string name="cd_event_state_past">tachartas a dh\'fhalbh</string>
     <string name="cd_event_untitled">Tachartas gun tiotal</string>
-    <string name="cd_today">An-diugh</string>
     <string name="cd_delete">Sguab às</string>
     <string name="cd_refresh">Ath-nuadhaich</string>
     <string name="cd_more_options">Barrachd roghainnean</string>
@@ -395,6 +395,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Bun-roghainn an t-siostaim</string>
+    <string name="option_light">Soilleir</string>
+    <string name="option_dark">Dorcha</string>
+    <string name="option_kashcal_teal">KashCal Gorm-uaine</string>
     <string name="option_12_hour">12 uairean</string>
     <string name="option_24_hour">24 uairean</string>
     <string name="option_sunday">Didòmhnaich</string>
@@ -551,8 +554,6 @@
     <string name="cd_remove_alert">Thoir rabhadh air falbh</string>
     <string name="cd_warning">Rabhadh</string>
     <string name="cd_refresh_calendars">Ath-nuadhaich mìosachain</string>
-    <string name="cd_timezone_tap_to_change">Roinn-tìde: %1$s, thoir gnogag gus atharrachadh</string>
-    <string name="cd_day_events">Là %1$d, %2$d tachartas</string>
 
     <!-- i18n: Pickers / Forms -->
     <string name="label_on_days">Air làithean</string>
@@ -839,9 +840,7 @@
     <string name="cd_open_drawer">Fosgail drathair</string>
     <string name="cd_close_drawer">Dùin drathair</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Fosgail clàr-taice</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Dùin clàr-taice</string>
     <string name="cd_calendar_view">Sealladh mìosachain</string>
     <string name="cd_active_view">Sealladh gnìomhach</string>
 
@@ -1117,8 +1116,6 @@
     <string name="insights_period_last_week">Seachd. sa chaidh</string>
     <string name="insights_period_this_month">Mìos</string>
     <string name="insights_empty_state">Chan eil tachartasan air an clàradh an t-seachdain seo</string>
-    <string name="insights_delta_more">+%1$s a bharrachd na %2$s</string>
-    <string name="insights_delta_less">%1$s nas lugha na %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d thachartas fad an latha</item>
         <item quantity="two">%d thachartas fad an latha</item>
@@ -1151,7 +1148,6 @@
     <string name="insight_tomorrow_preview_no_start">A-màireach: %1$s air an clàradh</string>
     <string name="insight_heaviest_upcoming">\'S e %1$s an là as truime a tha ri thighinn (%2$s)</string>
     <string name="insight_next_free_block">An ath bhloca saor: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Sgaoileadh mhìosachain: %1$s</string>
     <string name="insights_cd_daily_chart">Sgaoileadh làitheil: \'s e an là as trainge %1$s</string>
 
     <!-- Event Form Redesign -->
@@ -1161,10 +1157,8 @@
     <string name="label_event_color">Dath an tachartais</string>
     <string name="label_calendar_default">Bun-roghainn a\' mhìosachain</string>
     <string name="label_custom">Gnàthaichte</string>
-    <string name="cd_event_color">Dath an tachartais</string>
 
     <string name="cd_checkmark">Air a thaghadh</string>
-    <string name="label_device_timezone">Roinn-tìde an uidheim</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Donn dìollaid</string>
@@ -1211,19 +1205,6 @@
     <string name="backup_error_read_failed">Cha b\'urrainnear am faidhle a leughadh</string>
     <string name="label_attendees">Luchd-frithealaidh</string>
     <string name="attendee_you_marker">Thusa</string>
-    <string name="attendee_organizer_pill">Eagraiche</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d eile</item>
-        <item quantity="two">+%d eile</item>
-        <item quantity="few">+%d eile</item>
-        <item quantity="other">+%d eile</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d neach-frithealaidh</item>
-        <item quantity="two">%d neach-frithealaidh</item>
-        <item quantity="few">%d luchd-frithealaidh</item>
-        <item quantity="other">%d luchd-frithealaidh</item>
-    </plurals>
     <string name="attendee_card_going">A\' frithealadh</string>
     <string name="attendee_card_pending">Ri làimh</string>
     <string name="attendee_card_declined">Air a dhiùltadh</string>
@@ -1231,10 +1212,8 @@
     <string name="attendee_card_hosting">A\' toirt aoigheachd</string>
     <string name="attendee_action_copy">Dèan lethbhreac dhen phost-d</string>
     <string name="attendee_action_email">Cuir post-d</string>
-    <string name="attendee_group_icon_description">Daoine</string>
     <string name="attendee_email_copied">Chaidh am post-d a chur lethbhreac dheth</string>
     <string name="attendee_no_email_app">Chan eil aplacaid puist-d air a stàladh</string>
-    <string name="attendee_show_less">Seall nas lugha</string>
     <string name="attendee_show_all">Seall a h-uile neach a tha an làthair</string>
     <string name="attendee_status_accepted">Air gabhail ris</string>
     <string name="attendee_status_declined">Air a dhiùltadh</string>
@@ -1314,12 +1293,6 @@
     <string name="share_as_card_share_failed">Cha b\'urrainn dhuinn an cairt a cho-roinneadh</string>
     <string name="share_from_kashcal_footer">Air co-roinneadh o KashCal</string>
     <string name="attendee_sheet_title">Luchd-frithealaidh</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d air a chuireadh</item>
-        <item quantity="two">%d air an cuireadh</item>
-        <item quantity="few">%d air an cuireadh</item>
-        <item quantity="other">%d air an cuireadh</item>
-    </plurals>
     <string name="attendee_search_hint">Lorg</string>
     <string name="attendee_search_no_matches">Gun toraidhean</string>
     <string name="attendee_section_going">A\' dol</string>
@@ -1328,7 +1301,7 @@
     <string name="attendee_section_declined">Air dhiùltadh</string>
     <string name="attendee_section_delegated">Air sgaoileadh</string>
     <string name="whats_new_title">Dè tha ùr</string>
-    <string name="whats_new_dismiss">Tha mi tuigsinn</string>
+    <string name="whats_new_dismiss">Tha mi a\' tuigsinn</string>
     <string name="whats_new_v598_title">Cuidich gus Android a chumail fosgailte</string>
     <string name="whats_new_v598_body">Tha Google ag atharrachadh mar a chuireas tu a-steach aplacaidean air an inneal agad. Tha feum againn air do chuideachadh.</string>
     <string name="whats_new_v598_action_label">Tadhail air keepandroidopen.org</string>

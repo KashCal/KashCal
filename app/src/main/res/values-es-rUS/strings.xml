@@ -72,9 +72,6 @@
     <string name="action_delete_event">Eliminar evento</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Aceptar</string>
-    <string name="rsvp_action_tentative">Provisional</string>
-    <string name="rsvp_action_decline">Rechazar</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
@@ -82,7 +79,6 @@
          supported mode, so this disclosure prevents the surprise of "I declined Friday and now every
          Friday is gone from my calendar." -->
     <string name="rsvp_series_disclosure">Tu respuesta se aplica a toda la serie.</string>
-    <string name="rsvp_modified_snackbar">La respuesta a %1$s falló: el evento fue modificado. Por favor, responde de nuevo.</string>
     <string name="invitees_host_tag">Anfitrión</string>
     <string name="invitees_summary_you_alone">Tú</string>
     <plurals name="invitees_summary_you_organizing">
@@ -119,10 +115,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Solo este</string>
     <string name="recurring_this_and_future">Este y todos los futuros</string>
-    <string name="recurring_just_occurrence">Solo esta ocurrencia</string>
-    <string name="recurring_all_occurrences">Todas las ocurrencias</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Título del evento</string>
@@ -153,6 +146,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Configuración</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Seguir la configuración clara u oscura del teléfono</string>
+    <string name="settings_theme_light_desc">Siempre claro</string>
+    <string name="settings_theme_dark_desc">Siempre oscuro</string>
+    <string name="settings_theme_teal_desc">Verde azulado de KashCal, sigue la configuración clara u oscura del teléfono</string>
+    <string name="settings_app_icon">Ícono de la app</string>
+    <string name="app_icon_default">Predeterminada</string>
+    <string name="app_icon_supporter">Colaborador</string>
+    <string name="app_icon_supporter_calendar">Colaborador, llamado Calendario</string>
+    <string name="app_icon_label_calendar">Calendario</string>
+    <string name="app_icon_support_cta">Apoyar a KashCal</string>
+    <string name="app_icon_switch_note">Cambiar el ícono puede reiniciar la app. Las notificaciones siempre usan el ícono y el nombre predeterminados.</string>
     <string name="settings_time_format">Formato de hora</string>
     <string name="settings_start_week_on">Iniciar semana el</string>
     <string name="settings_event_emojis">Emojis de eventos</string>
@@ -168,7 +173,6 @@
     <string name="settings_section_calendars">Calendarios</string>
     <string name="settings_section_appearance">Apariencia</string>
     <string name="settings_section_creating_events">Creación de eventos</string>
-    <string name="settings_section_notifications">Notificaciones</string>
     <string name="settings_section_sync">Sincronización</string>
     <string name="settings_section_data">Respaldo y restauración</string>
     <string name="settings_section_privacy">Privacidad</string>
@@ -197,7 +201,7 @@
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">¿Calendario de Apple?</string>
-    <string name="onboarding_got_you">Te tenemos.</string>
+    <string name="onboarding_got_you">Estamos contigo.</string>
     <string name="onboarding_connect_prompt">Conecta iCloud para ver tus eventos aquí</string>
 
     <!-- ==================== What\'s New ==================== -->
@@ -217,8 +221,6 @@
     <string name="dialog_force_sync_title">¿Forzar sincronización completa?</string>
     <string name="dialog_force_sync_message">Esto volverá a descargar todos los datos del calendario del servidor. Los cambios locales se conservarán.</string>
     <string name="dialog_enable_notifications">¿Activar notificaciones?</string>
-    <string name="dialog_delete_title">Eliminar \"%1$s\"</string>
-    <string name="dialog_edit_title">Editar \"%1$s\"</string>
     <string name="dialog_action_required">Esta acción es necesaria para continuar.</string>
     <string name="dialog_add_to_calendar">Agregar al calendario</string>
     <string name="dialog_select_calendar">Seleccionar calendario</string>
@@ -323,10 +325,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Seleccionado</string>
     <string name="cd_back">Atrás</string>
-    <string name="cd_close">Cerrar</string>
     <string name="cd_search">Buscar</string>
     <string name="cd_create_event">Crear evento</string>
-    <string name="cd_today">Hoy</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_refresh">Actualizar</string>
     <string name="cd_more_options">Más opciones</string>
@@ -384,6 +384,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Predeterminado del sistema</string>
+    <string name="option_light">Claro</string>
+    <string name="option_dark">Oscuro</string>
+    <string name="option_kashcal_teal">Verde azulado KashCal</string>
     <string name="option_12_hour">12 horas</string>
     <string name="option_24_hour">24 horas</string>
     <string name="option_sunday">Domingo</string>
@@ -547,15 +550,12 @@
     <string name="cd_remove_alert">Eliminar alerta</string>
     <string name="cd_warning">Advertencia</string>
     <string name="cd_refresh_calendars">Actualizar calendarios</string>
-    <string name="cd_timezone_tap_to_change">Zona horaria: %1$s, toca para cambiar</string>
-    <string name="cd_day_events">Día %1$d, %2$d eventos</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">En los días</string>
     <string name="label_pattern">Patrón</string>
     <string name="label_ends">Termina</string>
     <string name="label_timezone">Zona horaria</string>
-    <string name="label_device_timezone">Zona horaria del dispositivo</string>
     <string name="label_alerts">Alertas</string>
     <string name="label_add_alert">Agregar alerta</string>
     <string name="label_recurrence_never">Nunca</string>
@@ -812,9 +812,7 @@
     <string name="cd_open_drawer">Abrir menú</string>
     <string name="cd_close_drawer">Cerrar menú</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Abrir menú</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Cerrar menú</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Vista de calendario</string>
     <string name="cd_active_view">Vista activa</string>
@@ -1086,8 +1084,6 @@
     <string name="insights_period_last_week">Sem. pasada</string>
     <string name="insights_period_this_month">Mes</string>
     <string name="insights_empty_state">No hay eventos programados esta semana</string>
-    <string name="insights_delta_more">+%1$s más que %2$s</string>
-    <string name="insights_delta_less">%1$s menos que %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d evento de todo el día</item>
         <item quantity="other">%d eventos de todo el día</item>
@@ -1131,7 +1127,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Próximo bloque libre: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Distribución por calendario: %1$s</string>
     <string name="insights_cd_daily_chart">Distribución diaria: el día más ocupado es %1$s</string>
 
     <!-- Event editor: availability & color -->
@@ -1141,7 +1136,6 @@
     <string name="label_event_color">Color del evento</string>
     <string name="label_calendar_default">Predeterminado del calendario</string>
     <string name="label_custom">Personalizado</string>
-    <string name="cd_event_color">Color del evento</string>
     <string name="cd_checkmark">Seleccionado</string>
 
     <!-- Event color palette (CSS3 color names) -->
@@ -1191,15 +1185,6 @@
     <string name="backup_error_read_failed">No se pudo leer el archivo</string>
     <string name="label_attendees">Asistentes</string>
     <string name="attendee_you_marker">Tú</string>
-    <string name="attendee_organizer_pill">Organizador</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d más</item>
-        <item quantity="other">+%d más</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d asistente</item>
-        <item quantity="other">%d asistentes</item>
-    </plurals>
     <string name="attendee_card_going">Asistirá</string>
     <string name="attendee_card_pending">Pendiente</string>
     <string name="attendee_card_declined">Rechazado</string>
@@ -1207,10 +1192,8 @@
     <string name="attendee_card_hosting">Anfitrión</string>
     <string name="attendee_action_copy">Copiar correo</string>
     <string name="attendee_action_email">Enviar correo</string>
-    <string name="attendee_group_icon_description">Personas</string>
     <string name="attendee_email_copied">Correo copiado</string>
     <string name="attendee_no_email_app">No hay aplicación de correo instalada</string>
-    <string name="attendee_show_less">Mostrar menos</string>
     <string name="attendee_show_all">Mostrar todos los asistentes</string>
     <string name="attendee_status_accepted">Aceptado</string>
     <string name="attendee_status_declined">Rechazado</string>
@@ -1231,10 +1214,6 @@
     <string name="device_attendee_local_no_delivery">Este calendario no puede enviar invitaciones. Los invitados se guardan, pero no se les notificará.</string>
     <string name="action_save_and_notify">Guardar y notificar</string>
     <string name="attendee_sheet_title">Asistentes</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d invitado</item>
-        <item quantity="other">%d invitados</item>
-    </plurals>
     <string name="attendee_search_hint">Buscar</string>
     <string name="attendee_search_no_matches">Sin coincidencias</string>
     <string name="attendee_section_going">Asisten</string>

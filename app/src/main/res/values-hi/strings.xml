@@ -71,11 +71,7 @@
     <string name="action_delete_event">इवेंट हटाएँ</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">स्वीकार करें</string>
-    <string name="rsvp_action_tentative">संभावित</string>
-    <string name="rsvp_action_decline">अस्वीकार करें</string>
     <string name="rsvp_series_disclosure">आपका जवाब पूरी श्रृंखला पर लागू होता है।</string>
-    <string name="rsvp_modified_snackbar">%1$s के लिए RSVP विफल — इवेंट संशोधित किया गया था। कृपया फिर से जवाब दें।</string>
     <string name="invitees_host_tag">होस्ट</string>
     <string name="rsvp_question_going">जा रहे हैं?</string>
     <string name="rsvp_action_yes">हाँ</string>
@@ -113,10 +109,7 @@
     <string name="rsvp_action_change_a11y">उत्तर बदलें</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">केवल यह एक</string>
     <string name="recurring_this_and_future">यह और सभी भविष्य के</string>
-    <string name="recurring_just_occurrence">केवल यह इवेंट</string>
-    <string name="recurring_all_occurrences">सभी इवेंट</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">इवेंट का शीर्षक</string>
@@ -146,6 +139,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_theme">थीम</string>
+    <string name="settings_theme_system_desc">अपने फ़ोन की लाइट या डार्क सेटिंग का पालन करें</string>
+    <string name="settings_theme_light_desc">हमेशा लाइट</string>
+    <string name="settings_theme_dark_desc">हमेशा डार्क</string>
+    <string name="settings_theme_teal_desc">KashCal टील, आपके फ़ोन की लाइट या डार्क सेटिंग का पालन करता है</string>
+    <string name="settings_app_icon">ऐप आइकन</string>
+    <string name="app_icon_default">डिफ़ॉल्ट</string>
+    <string name="app_icon_supporter">समर्थक</string>
+    <string name="app_icon_supporter_calendar">समर्थक, नाम कैलेंडर</string>
+    <string name="app_icon_label_calendar">कैलेंडर</string>
+    <string name="app_icon_support_cta">KashCal का समर्थन करें</string>
+    <string name="app_icon_switch_note">आइकन बदलने पर ऐप पुनः आरंभ हो सकता है। सूचनाएँ हमेशा डिफ़ॉल्ट आइकन और नाम का उपयोग करती हैं।</string>
     <string name="settings_time_format">समय प्रारूप</string>
     <string name="settings_start_week_on">सप्ताह शुरू करें</string>
     <string name="settings_event_emojis">इवेंट इमोजी</string>
@@ -161,7 +166,6 @@
     <string name="settings_section_calendars">कैलेंडर</string>
     <string name="settings_section_appearance">दिखावट</string>
     <string name="settings_section_creating_events">इवेंट बनाना</string>
-    <string name="settings_section_notifications">सूचनाएँ</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">बैकअप और रीस्टोर</string>
     <string name="settings_section_privacy">गोपनीयता</string>
@@ -222,8 +226,6 @@
     <string name="dialog_force_sync_title">फ़ोर्स फ़ुल सिंक?</string>
     <string name="dialog_force_sync_message">इससे सर्वर से सभी कैलेंडर डेटा फिर से डाउनलोड होगा। स्थानीय बदलाव सुरक्षित रहेंगे।</string>
     <string name="dialog_enable_notifications">सूचनाएँ चालू करें?</string>
-    <string name="dialog_delete_title">\"%1$s\" हटाएँ</string>
-    <string name="dialog_edit_title">\"%1$s\" संपादित करें</string>
     <string name="dialog_action_required">जारी रखने के लिए यह कार्रवाई आवश्यक है।</string>
     <string name="dialog_add_to_calendar">कैलेंडर में जोड़ें</string>
     <string name="dialog_select_calendar">कैलेंडर चुनें</string>
@@ -328,10 +330,8 @@
     <string name="cd_selected">चयनित</string>
     <string name="cd_checkmark">चयनित</string>
     <string name="cd_back">वापस</string>
-    <string name="cd_close">बंद करें</string>
     <string name="cd_search">खोजें</string>
     <string name="cd_create_event">इवेंट बनाएँ</string>
-    <string name="cd_today">आज</string>
     <string name="cd_delete">हटाएँ</string>
     <string name="cd_refresh">रिफ़्रेश</string>
     <string name="cd_more_options">और विकल्प</string>
@@ -393,6 +393,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">सिस्टम डिफ़ॉल्ट</string>
+    <string name="option_light">लाइट</string>
+    <string name="option_dark">डार्क</string>
+    <string name="option_kashcal_teal">KashCal टील</string>
     <string name="option_12_hour">12-घंटा</string>
     <string name="option_24_hour">24-घंटा</string>
     <string name="option_sunday">रविवार</string>
@@ -548,15 +551,12 @@
     <string name="cd_remove_alert">अलर्ट हटाएँ</string>
     <string name="cd_warning">चेतावनी</string>
     <string name="cd_refresh_calendars">कैलेंडर रिफ़्रेश करें</string>
-    <string name="cd_timezone_tap_to_change">टाइमज़ोन: %1$s, बदलने के लिए टैप करें</string>
-    <string name="cd_day_events">दिन %1$d, %2$d इवेंट</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">दिनों पर</string>
     <string name="label_pattern">पैटर्न</string>
     <string name="label_ends">समाप्ति</string>
     <string name="label_timezone">समय क्षेत्र</string>
-    <string name="label_device_timezone">डिवाइस समय क्षेत्र</string>
     <string name="label_alerts">अलर्ट</string>
     <string name="label_add_alert">अलर्ट जोड़ें</string>
     <string name="label_recurrence_never">कभी नहीं</string>
@@ -776,9 +776,7 @@
     <string name="cd_open_drawer">ड्रॉअर खोलें</string>
     <string name="cd_close_drawer">ड्रॉअर बंद करें</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">मेनू खोलें</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">मेनू बंद करें</string>
     <string name="cd_calendar_view">कैलेंडर दृश्य</string>
     <string name="cd_active_view">सक्रिय दृश्य</string>
 
@@ -1049,8 +1047,6 @@
     <string name="insights_period_last_week">पिछला सप्ताह</string>
     <string name="insights_period_this_month">माह</string>
     <string name="insights_empty_state">इस सप्ताह कोई इवेंट निर्धारित नहीं</string>
-    <string name="insights_delta_more">+%1$s %2$s से अधिक</string>
-    <string name="insights_delta_less">%1$s %2$s से कम</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d पूरे दिन का इवेंट</item>
         <item quantity="other">%d पूरे दिन के इवेंट</item>
@@ -1081,7 +1077,6 @@
     <string name="insight_tomorrow_preview_no_start">कल: %1$s निर्धारित</string>
     <string name="insight_heaviest_upcoming">%1$s आपका सबसे भारी आगामी दिन है (%2$s)</string>
     <string name="insight_next_free_block">अगला खाली समय: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">कैलेंडर विभाजन: %1$s</string>
     <string name="insights_cd_daily_chart">दैनिक वितरण: सबसे व्यस्त दिन %1$s है</string>
 
     <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
@@ -1091,7 +1086,6 @@
     <string name="label_event_color">इवेंट का रंग</string>
     <string name="label_calendar_default">कैलेंडर डिफ़ॉल्ट</string>
     <string name="label_custom">कस्टम</string>
-    <string name="cd_event_color">इवेंट का रंग</string>
 
     <string name="hue_red">लाल</string>
     <string name="hue_orange">नारंगी</string>
@@ -1109,15 +1103,6 @@
 
     <string name="label_attendees">प्रतिभागी</string>
     <string name="attendee_you_marker">आप</string>
-    <string name="attendee_organizer_pill">आयोजक</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d और</item>
-        <item quantity="other">+%d और</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d प्रतिभागी</item>
-        <item quantity="other">%d प्रतिभागी</item>
-    </plurals>
     <string name="attendee_card_going">जा रहा</string>
     <string name="attendee_card_pending">लंबित</string>
     <string name="attendee_card_declined">अस्वीकृत</string>
@@ -1138,10 +1123,8 @@
     <string name="action_save_and_notify">सहेजें और सूचित करें</string>
     <string name="attendee_action_copy">ईमेल कॉपी करें</string>
     <string name="attendee_action_email">ईमेल भेजें</string>
-    <string name="attendee_group_icon_description">लोग</string>
     <string name="attendee_email_copied">ईमेल कॉपी किया गया</string>
     <string name="attendee_no_email_app">कोई ईमेल ऐप इंस्टॉल नहीं है</string>
-    <string name="attendee_show_less">कम दिखाएं</string>
     <string name="attendee_show_all">सभी प्रतिभागी दिखाएं</string>
     <string name="attendee_status_accepted">स्वीकृत</string>
     <string name="attendee_status_declined">अस्वीकृत</string>
@@ -1204,10 +1187,6 @@
     <string name="cd_decrease_interval">अंतराल घटाएँ</string>
     <string name="cd_increase_interval">अंतराल बढ़ाएँ</string>
     <string name="attendee_sheet_title">उपस्थित</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d आमंत्रित</item>
-        <item quantity="other">%d आमंत्रित</item>
-    </plurals>
     <string name="attendee_search_hint">खोजें</string>
     <string name="attendee_search_no_matches">कोई परिणाम नहीं</string>
     <string name="attendee_section_going">जा रहे</string>

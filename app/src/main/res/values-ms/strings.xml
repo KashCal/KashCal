@@ -72,10 +72,7 @@
     <string name="action_delete_event">Padam Acara</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Yang ini sahaja</string>
     <string name="recurring_this_and_future">Yang ini dan semua akan datang</string>
-    <string name="recurring_just_occurrence">Kejadian ini sahaja</string>
-    <string name="recurring_all_occurrences">Semua kejadian</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Tajuk acara</string>
@@ -105,6 +102,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Tetapan</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Ikut tetapan cerah atau gelap telefon anda</string>
+    <string name="settings_theme_light_desc">Sentiasa cerah</string>
+    <string name="settings_theme_dark_desc">Sentiasa gelap</string>
+    <string name="settings_theme_teal_desc">Biru kehijauan KashCal, ikut tetapan cerah atau gelap telefon anda</string>
+    <string name="settings_app_icon">Ikon Apl</string>
+    <string name="app_icon_default">Lalai</string>
+    <string name="app_icon_supporter">Penyokong</string>
+    <string name="app_icon_supporter_calendar">Penyokong (berlabel Kalendar)</string>
+    <string name="app_icon_label_calendar">Kalendar</string>
+    <string name="app_icon_support_cta">Sokong KashCal</string>
+    <string name="app_icon_switch_note">Menukar ikon mungkin memulakan semula apl. Pemberitahuan sentiasa menggunakan ikon dan nama lalai.</string>
     <string name="settings_time_format">Format Masa</string>
     <string name="settings_start_week_on">Mula Minggu Pada</string>
     <string name="settings_event_emojis">Emoji Acara</string>
@@ -120,7 +129,6 @@
     <string name="settings_section_calendars">Kalendar</string>
     <string name="settings_section_appearance">Penampilan</string>
     <string name="settings_section_creating_events">Mencipta acara</string>
-    <string name="settings_section_notifications">Pemberitahuan</string>
     <string name="settings_section_sync">Segerak</string>
     <string name="settings_section_data">Sandaran &amp; Pemulihan</string>
     <string name="settings_section_privacy">Privasi</string>
@@ -160,8 +168,6 @@
     <string name="dialog_force_sync_title">Segerak Penuh?</string>
     <string name="dialog_force_sync_message">Ini akan memuat turun semula semua data kalendar dari pelayan. Perubahan setempat akan dikekalkan.</string>
     <string name="dialog_enable_notifications">Dayakan Pemberitahuan?</string>
-    <string name="dialog_delete_title">Padam \"%1$s\"</string>
-    <string name="dialog_edit_title">Edit \"%1$s\"</string>
     <string name="dialog_action_required">Tindakan ini diperlukan untuk meneruskan.</string>
     <string name="dialog_add_to_calendar">Tambah ke kalendar</string>
     <string name="dialog_select_calendar">Pilih kalendar</string>
@@ -265,10 +271,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Dipilih</string>
     <string name="cd_back">Kembali</string>
-    <string name="cd_close">Tutup</string>
     <string name="cd_search">Cari</string>
     <string name="cd_create_event">Cipta acara</string>
-    <string name="cd_today">Hari ini</string>
     <string name="cd_delete">Padam</string>
     <string name="cd_refresh">Muat semula</string>
     <string name="cd_more_options">Lagi pilihan</string>
@@ -326,6 +330,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Lalai sistem</string>
+    <string name="option_light">Cerah</string>
+    <string name="option_dark">Gelap</string>
+    <string name="option_kashcal_teal">KashCal Biru Kehijauan</string>
     <string name="option_12_hour">12 jam</string>
     <string name="option_24_hour">24 jam</string>
     <string name="option_sunday">Ahad</string>
@@ -482,8 +489,6 @@
     <string name="cd_remove_alert">Buang peringatan</string>
     <string name="cd_warning">Amaran</string>
     <string name="cd_refresh_calendars">Muat semula kalendar</string>
-    <string name="cd_timezone_tap_to_change">Zon masa: %1$s, ketik untuk tukar</string>
-    <string name="cd_day_events">Hari %1$d, %2$d acara</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Pada hari</string>
@@ -678,9 +683,7 @@
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Buka menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Tutup menu</string>
     <string name="cd_calendar_view">Paparan kalendar</string>
     <string name="cd_active_view">Paparan aktif</string>
 
@@ -934,8 +937,6 @@
     <string name="insights_period_last_week">Minggu lepas</string>
     <string name="insights_period_this_month">Bulan</string>
     <string name="insights_empty_state">Tiada acara minggu ini</string>
-    <string name="insights_delta_more">+%1$s lebih daripada %2$s</string>
-    <string name="insights_delta_less">%1$s kurang daripada %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="other">%d acara sepanjang hari</item>
     </plurals>
@@ -965,7 +966,6 @@
     <string name="insight_tomorrow_preview_no_start">Esok: %1$s dijadualkan</string>
     <string name="insight_heaviest_upcoming">%1$s adalah hari paling sibuk akan datang (%2$s)</string>
     <string name="insight_next_free_block">Blok lapang seterusnya: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Pecahan kalendar: %1$s</string>
     <string name="insights_cd_daily_chart">Taburan harian: hari paling sibuk ialah %1$s</string>
     <string name="label_availability">Ketersediaan</string>
     <string name="label_busy">Sibuk</string>
@@ -973,13 +973,11 @@
     <string name="label_event_color">Warna acara</string>
     <string name="label_calendar_default">Lalai kalendar</string>
     <string name="label_custom">Tersuai</string>
-    <string name="cd_event_color">Warna acara</string>
     <string name="cd_checkmark">Dipilih</string>
     <string name="cd_event_state_cancelled">Dibatalkan</string>
     <string name="cd_event_state_declined">Ditolak</string>
     <string name="cd_event_state_past">Acara lepas</string>
     <string name="cd_event_untitled">Acara tanpa tajuk</string>
-    <string name="label_device_timezone">Zon waktu peranti</string>
     <string name="color_saddlebrown">Coklat Pelana</string>    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
     <string name="color_gold">Emas</string>
     <string name="color_yellowgreen">Hijau Kuning</string>
@@ -1024,7 +1022,6 @@
     <string name="backup_error_read_failed">Tidak dapat membaca fail</string>
     <string name="label_attendees">Peserta</string>
     <string name="attendee_you_marker">Anda</string>
-    <string name="attendee_organizer_pill">Penganjur</string>
     <string name="attendee_picker_title">Tambah peserta</string>
     <string name="attendee_pick_add_people">Tambah peserta</string>
     <string name="attendee_pick_from_contacts">Nama atau e-mel</string>
@@ -1037,12 +1034,6 @@
     <string name="attendee_scheduling_unavailable">Menjemput orang tidak tersedia pada akaun ini</string>
     <string name="device_attendee_local_no_delivery">Kalendar ini tidak boleh menghantar jemputan. Tetamu disimpan tetapi tidak dimaklumkan.</string>
     <string name="action_save_and_notify">Simpan &amp; maklum</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="other">+%d lagi</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="other">%d peserta</item>
-    </plurals>
     <string name="attendee_card_going">Hadir</string>
     <string name="attendee_card_pending">Menunggu</string>
     <string name="attendee_card_declined">Ditolak</string>
@@ -1050,25 +1041,16 @@
     <string name="attendee_card_hosting">Mengelola</string>
     <string name="attendee_action_copy">Salin e-mel</string>
     <string name="attendee_action_email">Hantar e-mel</string>
-    <string name="attendee_group_icon_description">Orang</string>
     <string name="attendee_email_copied">E-mel disalin</string>
     <string name="attendee_no_email_app">Tiada aplikasi e-mel dipasang</string>
-    <string name="attendee_show_less">Tunjukkan kurang</string>
     <string name="attendee_show_all">Tunjuk semua hadirin</string>
     <string name="attendee_status_accepted">Diterima</string>
     <string name="attendee_status_declined">Ditolak</string>
     <string name="attendee_status_tentative">Tentatif</string>
     <string name="attendee_status_delegated">Diwakilkan</string>
     <string name="attendee_status_pending">Menunggu</string>
-    <string name="rsvp_action_accept">Terima</string>
-    <string name="rsvp_action_tentative">Tentatif</string>
-    <string name="rsvp_action_decline">Tolak</string>
     <string name="rsvp_series_disclosure">Balasan anda terpakai untuk seluruh siri.</string>
-    <string name="rsvp_modified_snackbar">Balasan untuk %1$s gagal, acara telah diubah suai. Sila balas semula.</string>
     <string name="attendee_sheet_title">Hadirin</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="other">%d dijemput</item>
-    </plurals>
     <string name="attendee_search_hint">Cari</string>
     <string name="attendee_search_no_matches">Tiada padanan</string>
     <string name="attendee_section_going">Hadir</string>

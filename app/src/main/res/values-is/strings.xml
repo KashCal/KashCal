@@ -72,10 +72,7 @@
     <string name="action_delete_event">Eyða viðburði</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Aðeins þennan</string>
     <string name="recurring_this_and_future">Þennan og alla framtíðar</string>
-    <string name="recurring_just_occurrence">Aðeins þessa tilviku</string>
-    <string name="recurring_all_occurrences">Allar tilvikunir</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titill viðburðar</string>
@@ -106,6 +103,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Stillingar</string>
+    <string name="settings_theme">Þema</string>
+    <string name="settings_theme_system_desc">Fylgdu ljósri eða dökkri stillingu símans</string>
+    <string name="settings_theme_light_desc">Alltaf ljóst</string>
+    <string name="settings_theme_dark_desc">Alltaf dökkt</string>
+    <string name="settings_theme_teal_desc">KashCal blágrænn, fylgir ljósri eða dökkri stillingu símans þíns</string>
+    <string name="settings_app_icon">Forritstákn</string>
+    <string name="app_icon_default">Sjálfgefið</string>
+    <string name="app_icon_supporter">Stuðningsaðili</string>
+    <string name="app_icon_supporter_calendar">Stuðningsaðili, kallað Dagatal</string>
+    <string name="app_icon_label_calendar">Dagatal</string>
+    <string name="app_icon_support_cta">Styðja KashCal</string>
+    <string name="app_icon_switch_note">Að breyta tákninu getur endurræst forritið. Tilkynningar nota alltaf sjálfgefna táknið og heitið.</string>
     <string name="settings_time_format">Tímasnið</string>
     <string name="settings_start_week_on">Vika byrjar á</string>
     <string name="settings_event_emojis">Viðburða-emojis</string>
@@ -121,7 +130,6 @@
     <string name="settings_section_calendars">Dagatöl</string>
     <string name="settings_section_appearance">Útlit</string>
     <string name="settings_section_creating_events">Búa til viðburði</string>
-    <string name="settings_section_notifications">Tilkynningar</string>
     <string name="settings_section_sync">Samstilling</string>
     <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
     <string name="settings_section_privacy">Persónuvernd</string>
@@ -182,8 +190,6 @@
     <string name="dialog_force_sync_title">Fullkomin samstilling?</string>
     <string name="dialog_force_sync_message">Allar dagatalsupplýsingar verða hlaðnar niður aftur af þjóninum. Staðbundnar breytingar verða varðveittar.</string>
     <string name="dialog_enable_notifications">Virkja tilkynningar?</string>
-    <string name="dialog_delete_title">Eyða \"%1$s\"</string>
-    <string name="dialog_edit_title">Breyta \"%1$s\"</string>
     <string name="dialog_action_required">Þessi aðgerð er nauðsynleg til að halda áfram.</string>
     <string name="dialog_add_to_calendar">Bæta í dagatal</string>
     <string name="dialog_select_calendar">Velja dagatal</string>
@@ -288,10 +294,8 @@
     <string name="cd_selected">Valið</string>
     <string name="cd_checkmark">Valið</string>
     <string name="cd_back">Til baka</string>
-    <string name="cd_close">Loka</string>
     <string name="cd_search">Leita</string>
     <string name="cd_create_event">Búa til viðburð</string>
-    <string name="cd_today">Í dag</string>
     <string name="cd_delete">Eyða</string>
     <string name="cd_refresh">Endurnýja</string>
     <string name="cd_more_options">Fleiri valkostir</string>
@@ -350,6 +354,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sjálfgefið kerfis</string>
+    <string name="option_light">Ljóst</string>
+    <string name="option_dark">Dökkt</string>
+    <string name="option_kashcal_teal">KashCal blágrænt</string>
     <string name="option_12_hour">12 klst.</string>
     <string name="option_24_hour">24 klst.</string>
     <string name="option_sunday">Sunnudagur</string>
@@ -505,15 +512,12 @@
     <string name="cd_remove_alert">Fjarlægja áminningu</string>
     <string name="cd_warning">Viðvörun</string>
     <string name="cd_refresh_calendars">Endurnýja dagatöl</string>
-    <string name="cd_timezone_tap_to_change">Tímabelti: %1$s, ýttu til að breyta</string>
-    <string name="cd_day_events">Dagur %1$d, %2$d viðburðir</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Á dögum</string>
     <string name="label_pattern">Mynstur</string>
     <string name="label_ends">Endar</string>
     <string name="label_timezone">Tímabelti</string>
-    <string name="label_device_timezone">Tímabelti tækis</string>
     <string name="label_alerts">Áminningar</string>
     <string name="label_add_alert">Bæta við áminningu</string>
     <string name="label_recurrence_never">Aldrei</string>
@@ -734,9 +738,7 @@
     <string name="cd_open_drawer">Opna valmynd</string>
     <string name="cd_close_drawer">Loka valmynd</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Opna valmynd</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Loka valmynd</string>
     <string name="cd_calendar_view">Dagatalssýn</string>
     <string name="cd_active_view">Virk sýn</string>
 
@@ -961,12 +963,8 @@
     <string name="invite_notification_body">Frá %1$s · Ýttu til að svara</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Samþykkja</string>
-    <string name="rsvp_action_tentative">Kannski</string>
-    <string name="rsvp_action_decline">Hafna</string>
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svarið gildir fyrir alla röðina.</string>
-    <string name="rsvp_modified_snackbar">Svar fyrir %1$s mistókst – viðburðinum var breytt. Vinsamlegast svaraðu aftur.</string>
     <string name="invitees_host_tag">Gestgjafi</string>
     <string name="rsvp_question_going">Mætir þú?</string>
     <string name="rsvp_action_yes">Já</string>
@@ -1019,8 +1017,6 @@
     <string name="insights_period_last_week">Síðasta vika</string>
     <string name="insights_period_this_month">Mánuður</string>
     <string name="insights_empty_state">Engir viðburðir áætlaðir þessa viku</string>
-    <string name="insights_delta_more">+%1$s meira en %2$s</string>
-    <string name="insights_delta_less">%1$s minna en %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d heildagsviðburður</item>
         <item quantity="other">%d heildagsviðburðir</item>
@@ -1051,7 +1047,6 @@
     <string name="insight_tomorrow_preview_no_start">Á morgun: %1$s áætluð</string>
     <string name="insight_heaviest_upcoming">%1$s er þinn ánniðsamasti komandi dagur (%2$s)</string>
     <string name="insight_next_free_block">Næsti frji tími: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Dagatalsdreifing: %1$s</string>
     <string name="insights_cd_daily_chart">Dagleg dreifing: ánniðsamasti dagur er %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
@@ -1061,7 +1056,6 @@
     <string name="label_event_color">Litur viðburðar</string>
     <string name="label_calendar_default">Sjálfgefið dagatals</string>
     <string name="label_custom">Sérsniðið</string>
-    <string name="cd_event_color">Litur viðburðar</string>
     <string name="cd_event_state_cancelled">aflýst</string>
     <string name="cd_event_state_declined">hafnað</string>
     <string name="cd_event_state_past">liðinn viðburður</string>
@@ -1090,15 +1084,6 @@
     <string name="settings_suggest_titles">Stinga upp á heiti atburða</string>
     <string name="label_attendees">Þátttakendur</string>
     <string name="attendee_you_marker">Þú</string>
-    <string name="attendee_organizer_pill">Skipuleggjandi</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d í viðbót</item>
-        <item quantity="other">+%d í viðbót</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d þátttakandi</item>
-        <item quantity="other">%d þátttakendur</item>
-    </plurals>
     <string name="attendee_card_going">Mætir</string>
     <string name="attendee_card_pending">Bíður</string>
     <string name="attendee_card_declined">Hafnað</string>
@@ -1106,10 +1091,8 @@
     <string name="attendee_card_hosting">Gestgjafi</string>
     <string name="attendee_action_copy">Afrita tölvupóst</string>
     <string name="attendee_action_email">Senda tölvupóst</string>
-    <string name="attendee_group_icon_description">Fólk</string>
     <string name="attendee_email_copied">Tölvupóstur afritaður</string>
     <string name="attendee_no_email_app">Ekkert tölvupóstforrit uppsett</string>
-    <string name="attendee_show_less">Sýna minna</string>
     <string name="attendee_show_all">Sýna alla þátttakendur</string>
     <string name="attendee_status_accepted">Samþykkt</string>
     <string name="attendee_status_declined">Hafnað</string>
@@ -1117,10 +1100,6 @@
     <string name="attendee_status_delegated">Framsalið</string>
     <string name="attendee_status_pending">Bíður</string>
     <string name="attendee_sheet_title">Þátttakendur</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d boðið</item>
-        <item quantity="other">%d boðnir</item>
-    </plurals>
     <string name="attendee_search_hint">Leita</string>
     <string name="attendee_search_no_matches">Engar niðurstöður</string>
     <string name="attendee_section_going">Mæta</string>

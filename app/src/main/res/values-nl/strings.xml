@@ -72,10 +72,7 @@
     <string name="action_delete_event">Afspraak verwijderen</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Alleen deze</string>
     <string name="recurring_this_and_future">Deze en alle toekomstige</string>
-    <string name="recurring_just_occurrence">Alleen dit exemplaar</string>
-    <string name="recurring_all_occurrences">Alle exemplaren</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titel van afspraak</string>
@@ -106,6 +103,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Instellingen</string>
+    <string name="settings_theme">Thema</string>
+    <string name="settings_theme_system_desc">Volg de lichte of donkere instelling van je telefoon</string>
+    <string name="settings_theme_light_desc">Altijd licht</string>
+    <string name="settings_theme_dark_desc">Altijd donker</string>
+    <string name="settings_theme_teal_desc">KashCal-turquoise, volgt de lichte of donkere instelling van je telefoon</string>
+    <string name="settings_app_icon">App-pictogram</string>
+    <string name="app_icon_default">Standaard</string>
+    <string name="app_icon_supporter">Donateur</string>
+    <string name="app_icon_supporter_calendar">Donateur, genaamd Agenda</string>
+    <string name="app_icon_label_calendar">Agenda</string>
+    <string name="app_icon_support_cta">Steun KashCal</string>
+    <string name="app_icon_switch_note">Het wijzigen van het pictogram kan de app opnieuw starten. Meldingen gebruiken altijd het standaardpictogram en de standaardnaam.</string>
     <string name="settings_time_format">Tijdnotatie</string>
     <string name="settings_start_week_on">Week begint op</string>
     <string name="settings_event_emojis">Afspraak-emoji\'s</string>
@@ -121,7 +130,6 @@
     <string name="settings_section_calendars">Agenda\'s</string>
     <string name="settings_section_appearance">Weergave</string>
     <string name="settings_section_creating_events">Afspraken maken</string>
-    <string name="settings_section_notifications">Meldingen</string>
     <string name="settings_section_sync">Synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
     <string name="settings_section_privacy">Privacy</string>
@@ -163,7 +171,7 @@
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Agenda?</string>
     <string name="onboarding_got_you">Wij helpen je.</string>
-    <string name="onboarding_connect_prompt">Verbind iCloud om je afspraken hier te zien</string>
+    <string name="onboarding_connect_prompt">Koppel iCloud om je afspraken hier te zien</string>
 
     <!-- ==================== Wat is nieuw ==================== -->
     <string name="whats_new_title">Wat is nieuw</string>
@@ -182,8 +190,6 @@
     <string name="dialog_force_sync_title">Volledige synchronisatie?</string>
     <string name="dialog_force_sync_message">Alle agendagegevens worden opnieuw gedownload van de server. Lokale wijzigingen blijven behouden.</string>
     <string name="dialog_enable_notifications">Meldingen inschakelen?</string>
-    <string name="dialog_delete_title">\"%1$s\" verwijderen</string>
-    <string name="dialog_edit_title">\"%1$s\" bewerken</string>
     <string name="dialog_action_required">Deze actie is vereist om door te gaan.</string>
     <string name="dialog_add_to_calendar">Toevoegen aan agenda</string>
     <string name="dialog_select_calendar">Agenda selecteren</string>
@@ -288,10 +294,8 @@
     <string name="cd_selected">Geselecteerd</string>
     <string name="cd_checkmark">Geselecteerd</string>
     <string name="cd_back">Terug</string>
-    <string name="cd_close">Sluiten</string>
     <string name="cd_search">Zoeken</string>
     <string name="cd_create_event">Afspraak maken</string>
-    <string name="cd_today">Vandaag</string>
     <string name="cd_delete">Verwijderen</string>
     <string name="cd_refresh">Vernieuwen</string>
     <string name="cd_more_options">Meer opties</string>
@@ -350,6 +354,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systeemstandaard</string>
+    <string name="option_light">Licht</string>
+    <string name="option_dark">Donker</string>
+    <string name="option_kashcal_teal">KashCal Turquoise</string>
     <string name="option_12_hour">12-uurs</string>
     <string name="option_24_hour">24-uurs</string>
     <string name="option_sunday">Zondag</string>
@@ -505,15 +512,12 @@
     <string name="cd_remove_alert">Herinnering verwijderen</string>
     <string name="cd_warning">Waarschuwing</string>
     <string name="cd_refresh_calendars">Agenda\'s vernieuwen</string>
-    <string name="cd_timezone_tap_to_change">Tijdzone: %1$s, tik om te wijzigen</string>
-    <string name="cd_day_events">Dag %1$d, %2$d afspraken</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Op dagen</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindigt</string>
     <string name="label_timezone">Tijdzone</string>
-    <string name="label_device_timezone">Tijdzone van apparaat</string>
     <string name="label_alerts">Herinneringen</string>
     <string name="label_add_alert">Herinnering toevoegen</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -734,9 +738,7 @@
     <string name="cd_open_drawer">Menu openen</string>
     <string name="cd_close_drawer">Menu sluiten</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Menu openen</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Menu sluiten</string>
     <string name="cd_calendar_view">Agendaweergave</string>
     <string name="cd_active_view">Actieve weergave</string>
 
@@ -961,12 +963,8 @@
     <string name="invite_notification_body">Van %1$s · Tik om te reageren</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Accepteren</string>
-    <string name="rsvp_action_tentative">Misschien</string>
-    <string name="rsvp_action_decline">Afwijzen</string>
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">De reactie geldt voor de hele reeks.</string>
-    <string name="rsvp_modified_snackbar">Reactie op %1$s mislukt – de afspraak is gewijzigd. Reageer opnieuw.</string>
     <string name="invitees_host_tag">Host</string>
     <string name="rsvp_question_going">Ga je?</string>
     <string name="rsvp_action_yes">Ja</string>
@@ -1017,8 +1015,6 @@
     <string name="insights_period_last_week">Vorige week</string>
     <string name="insights_period_this_month">Maand</string>
     <string name="insights_empty_state">Geen afspraken gepland deze week</string>
-    <string name="insights_delta_more">+%1$s meer dan %2$s</string>
-    <string name="insights_delta_less">%1$s minder dan %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d hele dag afspraak</item>
         <item quantity="other">%d hele dag afspraken</item>
@@ -1049,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">Morgen: %1$s gepland</string>
     <string name="insight_heaviest_upcoming">%1$s is je drukste komende dag (%2$s)</string>
     <string name="insight_next_free_block">Volgend vrij blok: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Agendaverdeling: %1$s</string>
     <string name="insights_cd_daily_chart">Dagelijkse verdeling: drukste dag is %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
@@ -1059,7 +1054,6 @@
     <string name="label_event_color">Afspraakkleur</string>
     <string name="label_calendar_default">Agendastandaard</string>
     <string name="label_custom">Aangepast</string>
-    <string name="cd_event_color">Afspraakkleur</string>
     <string name="cd_event_state_cancelled">geannuleerd</string>
     <string name="cd_event_state_declined">afgewezen</string>
     <string name="cd_event_state_past">afgelopen afspraak</string>
@@ -1088,15 +1082,6 @@
     <string name="settings_suggest_titles">Titels van afspraken voorstellen</string>
     <string name="label_attendees">Aanwezigen</string>
     <string name="attendee_you_marker">Jij</string>
-    <string name="attendee_organizer_pill">Organisator</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d meer</item>
-        <item quantity="other">+%d meer</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d aanwezige</item>
-        <item quantity="other">%d aanwezigen</item>
-    </plurals>
     <string name="attendee_card_going">Komt</string>
     <string name="attendee_card_pending">In afwachting</string>
     <string name="attendee_card_declined">Afgewezen</string>
@@ -1104,10 +1089,8 @@
     <string name="attendee_card_hosting">Gastheer</string>
     <string name="attendee_action_copy">E-mail kopiëren</string>
     <string name="attendee_action_email">E-mail versturen</string>
-    <string name="attendee_group_icon_description">Personen</string>
     <string name="attendee_email_copied">E-mail gekopieerd</string>
     <string name="attendee_no_email_app">Geen e-mailapp geïnstalleerd</string>
-    <string name="attendee_show_less">Minder weergeven</string>
     <string name="attendee_show_all">Alle deelnemers tonen</string>
     <string name="attendee_status_accepted">Geaccepteerd</string>
     <string name="attendee_status_declined">Afgewezen</string>
@@ -1115,10 +1098,6 @@
     <string name="attendee_status_delegated">Gedelegeerd</string>
     <string name="attendee_status_pending">In afwachting</string>
     <string name="attendee_sheet_title">Deelnemers</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d uitgenodigd</item>
-        <item quantity="other">%d uitgenodigd</item>
-    </plurals>
     <string name="attendee_search_hint">Zoeken</string>
     <string name="attendee_search_no_matches">Geen resultaten</string>
     <string name="attendee_section_going">Komen</string>

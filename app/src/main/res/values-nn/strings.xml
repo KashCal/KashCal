@@ -72,10 +72,7 @@
     <string name="action_delete_event">Slett hending</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Berre denne</string>
     <string name="recurring_this_and_future">Denne og alle framtidige</string>
-    <string name="recurring_just_occurrence">Berre denne førekomsten</string>
-    <string name="recurring_all_occurrences">Alle førekomstar</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Hendingstittel</string>
@@ -106,6 +103,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Innstillingar</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Følg den lyse eller mørke innstillinga på telefonen</string>
+    <string name="settings_theme_light_desc">Alltid lyst</string>
+    <string name="settings_theme_dark_desc">Alltid mørkt</string>
+    <string name="settings_theme_teal_desc">KashCal-turkis, følgjer den lyse eller mørke innstillinga på telefonen din</string>
+    <string name="settings_app_icon">App-ikon</string>
+    <string name="app_icon_default">Standard</string>
+    <string name="app_icon_supporter">Støttespelar</string>
+    <string name="app_icon_supporter_calendar">Støttespelar, kalla Kalender</string>
+    <string name="app_icon_label_calendar">Kalender</string>
+    <string name="app_icon_support_cta">Støtt KashCal</string>
+    <string name="app_icon_switch_note">Å endre ikonet kan starte appen på nytt. Varsel brukar alltid standardikonet og standardnamnet.</string>
     <string name="settings_time_format">Tidsformat</string>
     <string name="settings_start_week_on">Veka startar på</string>
     <string name="settings_event_emojis">Hendings-emojiar</string>
@@ -121,7 +130,6 @@
     <string name="settings_section_calendars">Kalendarar</string>
     <string name="settings_section_appearance">Utsjånad</string>
     <string name="settings_section_creating_events">Oppretting av hendingar</string>
-    <string name="settings_section_notifications">Varsel</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Sikkerheitskopi &amp; gjenoppretting</string>
     <string name="settings_section_privacy">Personvern</string>
@@ -182,8 +190,6 @@
     <string name="dialog_force_sync_title">Fullstendig synkronisering?</string>
     <string name="dialog_force_sync_message">All kalenderdata vert lasta ned på nytt frå serveren. Lokale endringar vert bevarte.</string>
     <string name="dialog_enable_notifications">Aktivere varsel?</string>
-    <string name="dialog_delete_title">Slett \"%1$s\"</string>
-    <string name="dialog_edit_title">Rediger \"%1$s\"</string>
     <string name="dialog_action_required">Denne handlinga er naudsynt for å halde fram.</string>
     <string name="dialog_add_to_calendar">Legg til i kalender</string>
     <string name="dialog_select_calendar">Vel kalender</string>
@@ -288,10 +294,8 @@
     <string name="cd_selected">Vald</string>
     <string name="cd_checkmark">Vald</string>
     <string name="cd_back">Tilbake</string>
-    <string name="cd_close">Lukk</string>
     <string name="cd_search">Søk</string>
     <string name="cd_create_event">Opprett hending</string>
-    <string name="cd_today">I dag</string>
     <string name="cd_delete">Slett</string>
     <string name="cd_refresh">Oppdater</string>
     <string name="cd_more_options">Fleire alternativ</string>
@@ -350,6 +354,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
+    <string name="option_light">Lyst</string>
+    <string name="option_dark">Mørkt</string>
+    <string name="option_kashcal_teal">KashCal Turkis</string>
     <string name="option_12_hour">12-timars</string>
     <string name="option_24_hour">24-timars</string>
     <string name="option_sunday">Søndag</string>
@@ -505,15 +512,12 @@
     <string name="cd_remove_alert">Fjern påminning</string>
     <string name="cd_warning">Åtvaring</string>
     <string name="cd_refresh_calendars">Oppdater kalendrar</string>
-    <string name="cd_timezone_tap_to_change">Tidssone: %1$s, trykk for å endre</string>
-    <string name="cd_day_events">Dag %1$d, %2$d hendingar</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">På dagar</string>
     <string name="label_pattern">Mønster</string>
     <string name="label_ends">Sluttar</string>
     <string name="label_timezone">Tidssone</string>
-    <string name="label_device_timezone">Tidssone for eininga</string>
     <string name="label_alerts">Påminningar</string>
     <string name="label_add_alert">Legg til påminning</string>
     <string name="label_recurrence_never">Aldri</string>
@@ -734,9 +738,7 @@
     <string name="cd_open_drawer">Opne meny</string>
     <string name="cd_close_drawer">Lukk meny</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Opne meny</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Lukk meny</string>
     <string name="cd_calendar_view">Kalendervising</string>
     <string name="cd_active_view">Aktiv vising</string>
 
@@ -961,12 +963,8 @@
     <string name="invite_notification_body">Frå %1$s · Trykk for å svara</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Godta</string>
-    <string name="rsvp_action_tentative">Kanskje</string>
-    <string name="rsvp_action_decline">Avslå</string>
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svaret gjeld heile serien.</string>
-    <string name="rsvp_modified_snackbar">Svar på %1$s mislukkast – hendinga vart endra. Ver venleg og svar på nytt.</string>
     <string name="invitees_host_tag">Vert</string>
     <string name="rsvp_question_going">Kjem du?</string>
     <string name="rsvp_action_yes">Ja</string>
@@ -1017,8 +1015,6 @@
     <string name="insights_period_last_week">Førre veke</string>
     <string name="insights_period_this_month">Månad</string>
     <string name="insights_empty_state">Ingen hendingar planlagde denne veka</string>
-    <string name="insights_delta_more">+%1$s meir enn %2$s</string>
-    <string name="insights_delta_less">%1$s mindre enn %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d heldagshending</item>
         <item quantity="other">%d heldagshendingar</item>
@@ -1049,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">I morgon: %1$s planlagde</string>
     <string name="insight_heaviest_upcoming">%1$s er din travlaste komande dag (%2$s)</string>
     <string name="insight_next_free_block">Neste ledige blokk: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Kalenderfordeling: %1$s</string>
     <string name="insights_cd_daily_chart">Dagleg fordeling: travlaste dag er %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
@@ -1059,7 +1054,6 @@
     <string name="label_event_color">Hendingsfarge</string>
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Eigendefinert</string>
-    <string name="cd_event_color">Hendingsfarge</string>
     <string name="cd_event_state_cancelled">avlyst</string>
     <string name="cd_event_state_declined">avslått</string>
     <string name="cd_event_state_past">tidlegare hending</string>
@@ -1088,15 +1082,6 @@
     <string name="settings_suggest_titles">Foreslå hendelsestitlar</string>
     <string name="label_attendees">Deltakarar</string>
     <string name="attendee_you_marker">Du</string>
-    <string name="attendee_organizer_pill">Arrangør</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d til</item>
-        <item quantity="other">+%d til</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d deltakar</item>
-        <item quantity="other">%d deltakarar</item>
-    </plurals>
     <string name="attendee_card_going">Kjem</string>
     <string name="attendee_card_pending">Ventar</string>
     <string name="attendee_card_declined">Avslått</string>
@@ -1104,10 +1089,8 @@
     <string name="attendee_card_hosting">Vert</string>
     <string name="attendee_action_copy">Kopier e-post</string>
     <string name="attendee_action_email">Send e-post</string>
-    <string name="attendee_group_icon_description">Personar</string>
     <string name="attendee_email_copied">E-post kopiert</string>
     <string name="attendee_no_email_app">Ingen e-postapp installert</string>
-    <string name="attendee_show_less">Vis mindre</string>
     <string name="attendee_show_all">Vis alle deltakarar</string>
     <string name="attendee_status_accepted">Akseptert</string>
     <string name="attendee_status_declined">Avslått</string>
@@ -1115,10 +1098,6 @@
     <string name="attendee_status_delegated">Delegert</string>
     <string name="attendee_status_pending">Ventar</string>
     <string name="attendee_sheet_title">Deltakarar</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d invitert</item>
-        <item quantity="other">%d inviterte</item>
-    </plurals>
     <string name="attendee_search_hint">Søk</string>
     <string name="attendee_search_no_matches">Ingen treff</string>
     <string name="attendee_section_going">Kjem</string>

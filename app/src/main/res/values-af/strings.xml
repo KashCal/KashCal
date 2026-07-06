@@ -71,11 +71,7 @@
     <string name="action_delete_event">Verwyder Gebeurtenis</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Aanvaar</string>
-    <string name="rsvp_action_tentative">Voorlopig</string>
-    <string name="rsvp_action_decline">Weier</string>
     <string name="rsvp_series_disclosure">Jou antwoord geld vir die hele reeks.</string>
-    <string name="rsvp_modified_snackbar">RSVP vir %1$s het misluk — gebeurtenis is verander. Reageer asseblief weer.</string>
     <string name="invitees_host_tag">Gasheer</string>
     <string name="invitees_summary_you_alone">Jy</string>
     <plurals name="invitees_summary_you_organizing">
@@ -112,10 +108,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Net hierdie een</string>
     <string name="recurring_this_and_future">Hierdie en alle toekomstige</string>
-    <string name="recurring_just_occurrence">Net hierdie voorkoms</string>
-    <string name="recurring_all_occurrences">Alle voorkomste</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Gebeurtenistitel</string>
@@ -145,6 +138,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Instellings</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Volg jou foon se lig- of donkerinstelling</string>
+    <string name="settings_theme_light_desc">Altyd lig</string>
+    <string name="settings_theme_dark_desc">Altyd donker</string>
+    <string name="settings_theme_teal_desc">KashCal-blougroen, volg jou foon se lig- of donkerinstelling</string>
+    <string name="settings_app_icon">Programikoon</string>
+    <string name="app_icon_default">Verstek</string>
+    <string name="app_icon_supporter">Ondersteuner</string>
+    <string name="app_icon_supporter_calendar">Ondersteuner, genaamd Kalender</string>
+    <string name="app_icon_label_calendar">Kalender</string>
+    <string name="app_icon_support_cta">Ondersteun KashCal</string>
+    <string name="app_icon_switch_note">Die verandering van die ikoon kan die program herbegin. Kennisgewings gebruik altyd die verstekikoon en -naam.</string>
     <string name="settings_search_placeholder">Soek instellings…</string>
     <string name="settings_search_no_results">Geen instellings gevind vir \"%1$s\" nie</string>
     <string name="cd_search_settings">Soek instellings</string>
@@ -163,7 +168,6 @@
     <string name="settings_section_calendars">Kalenders</string>
     <string name="settings_section_appearance">Voorkoms</string>
     <string name="settings_section_creating_events">Gebeurtenisse skep</string>
-    <string name="settings_section_notifications">Kennisgewings</string>
     <string name="settings_section_sync">Sinkronisering</string>
     <string name="settings_section_data">Rugsteun &amp; Herstel</string>
     <string name="settings_section_privacy">Privaatheid</string>
@@ -203,7 +207,7 @@
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
-    <string name="onboarding_got_you">Ons het jou.</string>
+    <string name="onboarding_got_you">Ons help jou.</string>
     <string name="onboarding_connect_prompt">Koppel iCloud om jou gebeurtenisse hier te sien</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
@@ -217,8 +221,6 @@
     <string name="dialog_force_sync_title">Forseer Volle Sinkronisering?</string>
     <string name="dialog_force_sync_message">Dit sal alle kalenderdata van die bediener herlaai. Plaaslike veranderinge sal behoue bly.</string>
     <string name="dialog_enable_notifications">Aktiveer Kennisgewings?</string>
-    <string name="dialog_delete_title">Verwyder \"%1$s\"</string>
-    <string name="dialog_edit_title">Wysig \"%1$s\"</string>
     <string name="dialog_action_required">Hierdie aksie is nodig om voort te gaan.</string>
     <string name="dialog_add_to_calendar">Voeg by kalender</string>
     <string name="dialog_select_calendar">Kies kalender</string>
@@ -323,10 +325,8 @@
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Gekies</string>
     <string name="cd_back">Terug</string>
-    <string name="cd_close">Sluit</string>
     <string name="cd_search">Soek</string>
     <string name="cd_create_event">Skep gebeurtenis</string>
-    <string name="cd_today">Vandag</string>
     <string name="cd_delete">Verwyder</string>
     <string name="cd_refresh">Herlaai</string>
     <string name="cd_more_options">Meer opsies</string>
@@ -384,6 +384,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Stelselverstek</string>
+    <string name="option_light">Lig</string>
+    <string name="option_dark">Donker</string>
+    <string name="option_kashcal_teal">KashCal Blougroen</string>
     <string name="option_12_hour">12-uur</string>
     <string name="option_24_hour">24-uur</string>
     <string name="option_sunday">Sondag</string>
@@ -539,15 +542,12 @@
     <string name="cd_remove_alert">Verwyder waarskuwing</string>
     <string name="cd_warning">Waarskuwing</string>
     <string name="cd_refresh_calendars">Herlaai kalenders</string>
-    <string name="cd_timezone_tap_to_change">Tydzone: %1$s, tik om te verander</string>
-    <string name="cd_day_events">Dag %1$d, %2$d gebeurtenisse</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Op dae</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindig</string>
     <string name="label_timezone">Tydsone</string>
-    <string name="label_device_timezone">Toestel-tydsone</string>
     <string name="label_alerts">Waarskuwings</string>
     <string name="label_add_alert">Voeg Waarskuwing By</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -764,9 +764,7 @@
     <string name="cd_open_drawer">Open laai</string>
     <string name="cd_close_drawer">Sluit laai</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Open kieslys</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Sluit kieslys</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Kalenderaansig</string>
     <string name="cd_active_view">Aktiewe aansig</string>
@@ -1030,8 +1028,6 @@
     <string name="insights_period_last_week">Verlede week</string>
     <string name="insights_period_this_month">Maand</string>
     <string name="insights_empty_state">Geen gebeurtenisse hierdie week geskeduleer nie</string>
-    <string name="insights_delta_more">+%1$s meer as %2$s</string>
-    <string name="insights_delta_less">%1$s minder as %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d heeldag-gebeurtenis</item>
         <item quantity="other">%d heeldag-gebeurtenisse</item>
@@ -1075,7 +1071,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Volgende vrye blok: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Kalenderuiteensetting: %1$s</string>
     <string name="insights_cd_daily_chart">Daaglikse verspreiding: besigste dag is %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1085,7 +1080,6 @@
     <string name="label_event_color">Gebeurteniskleur</string>
     <string name="label_calendar_default">Kalenderverstek</string>
     <string name="label_custom">Aangepas</string>
-    <string name="cd_event_color">Gebeurteniskleur</string>
 
     <string name="cd_checkmark">Gekies</string>
 
@@ -1119,15 +1113,6 @@
     <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
     <string name="label_attendees">Bywoners</string>
     <string name="attendee_you_marker">Jy</string>
-    <string name="attendee_organizer_pill">Organiseerder</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d meer</item>
-        <item quantity="other">+%d meer</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d bywoner</item>
-        <item quantity="other">%d bywoners</item>
-    </plurals>
     <string name="attendee_card_going">Gaan</string>
     <string name="attendee_card_pending">Hangende</string>
     <string name="attendee_card_declined">Geweier</string>
@@ -1135,10 +1120,8 @@
     <string name="attendee_card_hosting">Aanbieder</string>
     <string name="attendee_action_copy">Kopieer e-pos</string>
     <string name="attendee_action_email">Stuur e-pos</string>
-    <string name="attendee_group_icon_description">Mense</string>
     <string name="attendee_email_copied">E-pos gekopieer</string>
     <string name="attendee_no_email_app">Geen e-pos-toepassing geïnstalleer nie</string>
-    <string name="attendee_show_less">Wys minder</string>
     <string name="attendee_show_all">Wys alle genooides</string>
     <string name="attendee_status_accepted">Aanvaar</string>
     <string name="attendee_status_declined">Geweier</string>
@@ -1206,10 +1189,6 @@
     <string name="share_as_card_share_failed">Kon nie kaart deel nie</string>
     <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
     <string name="attendee_sheet_title">Bywoners</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d genooi</item>
-        <item quantity="other">%d genooi</item>
-    </plurals>
     <string name="attendee_search_hint">Soek</string>
     <string name="attendee_search_no_matches">Geen resultate</string>
     <string name="attendee_section_going">Gaan</string>

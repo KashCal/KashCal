@@ -72,10 +72,7 @@
     <string name="action_delete_event">イベントを削除</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">この予定のみ</string>
     <string name="recurring_this_and_future">これ以降のすべて</string>
-    <string name="recurring_just_occurrence">この回のみ</string>
-    <string name="recurring_all_occurrences">すべての回</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">イベントのタイトル</string>
@@ -105,6 +102,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">設定</string>
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_theme_system_desc">スマートフォンのライトまたはダークの設定に従います</string>
+    <string name="settings_theme_light_desc">常にライト</string>
+    <string name="settings_theme_dark_desc">常にダーク</string>
+    <string name="settings_theme_teal_desc">KashCal のティール。スマートフォンのライトまたはダークの設定に従います</string>
+    <string name="settings_app_icon">アプリアイコン</string>
+    <string name="app_icon_default">デフォルト</string>
+    <string name="app_icon_supporter">サポーター</string>
+    <string name="app_icon_supporter_calendar">サポーター（表示名は「カレンダー」）</string>
+    <string name="app_icon_label_calendar">カレンダー</string>
+    <string name="app_icon_support_cta">KashCal を支援</string>
+    <string name="app_icon_switch_note">アイコンを変更するとアプリが再起動することがあります。通知では常にデフォルトのアイコンと名前が使用されます。</string>
     <string name="settings_time_format">時間の形式</string>
     <string name="settings_start_week_on">週の開始日</string>
     <string name="settings_event_emojis">イベント絵文字</string>
@@ -120,7 +129,6 @@
     <string name="settings_section_calendars">カレンダー</string>
     <string name="settings_section_appearance">外観</string>
     <string name="settings_section_creating_events">イベントの作成</string>
-    <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同期</string>
     <string name="settings_section_data">バックアップと復元</string>
     <string name="settings_section_privacy">プライバシー</string>
@@ -160,8 +168,6 @@
     <string name="dialog_force_sync_title">フル同期を実行しますか？</string>
     <string name="dialog_force_sync_message">サーバーからすべてのカレンダーデータを再ダウンロードします。ローカルの変更は保持されます。</string>
     <string name="dialog_enable_notifications">通知を有効にしますか？</string>
-    <string name="dialog_delete_title">\"%1$s\"を削除</string>
-    <string name="dialog_edit_title">\"%1$s\"を編集</string>
     <string name="dialog_action_required">続行するにはこの操作が必要です。</string>
     <string name="dialog_add_to_calendar">カレンダーに追加</string>
     <string name="dialog_select_calendar">カレンダーを選択</string>
@@ -265,10 +271,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">選択済み</string>
     <string name="cd_back">戻る</string>
-    <string name="cd_close">閉じる</string>
     <string name="cd_search">検索</string>
     <string name="cd_create_event">イベントを作成</string>
-    <string name="cd_today">今日</string>
     <string name="cd_delete">削除</string>
     <string name="cd_refresh">更新</string>
     <string name="cd_more_options">その他のオプション</string>
@@ -326,6 +330,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">システムの既定値</string>
+    <string name="option_light">ライト</string>
+    <string name="option_dark">ダーク</string>
+    <string name="option_kashcal_teal">KashCal ティール</string>
     <string name="option_12_hour">12時間</string>
     <string name="option_24_hour">24時間</string>
     <string name="option_sunday">日曜日</string>
@@ -482,8 +489,6 @@
     <string name="cd_remove_alert">アラートを削除</string>
     <string name="cd_warning">警告</string>
     <string name="cd_refresh_calendars">カレンダーを更新</string>
-    <string name="cd_timezone_tap_to_change">タイムゾーン: %1$s、タップで変更</string>
-    <string name="cd_day_events">%1$d日、%2$d件のイベント</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">曜日</string>
@@ -678,9 +683,7 @@
     <string name="cd_open_drawer">ドロワーを開く</string>
     <string name="cd_close_drawer">ドロワーを閉じる</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">メニューを開く</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">メニューを閉じる</string>
     <string name="cd_calendar_view">カレンダー表示</string>
     <string name="cd_active_view">アクティブな表示</string>
 
@@ -934,8 +937,6 @@
     <string name="insights_period_last_week">先週</string>
     <string name="insights_period_this_month">月</string>
     <string name="insights_empty_state">今週の予定はありません</string>
-    <string name="insights_delta_more">%2$sより+%1$s多い</string>
-    <string name="insights_delta_less">%2$sより%1$s少ない</string>
     <plurals name="insights_all_day_count">
         <item quantity="other">%d件の終日イベント</item>
     </plurals>
@@ -965,7 +966,6 @@
     <string name="insight_tomorrow_preview_no_start">明日: %1$sの予定</string>
     <string name="insight_heaviest_upcoming">%1$sが最も忙しい予定の日です（%2$s）</string>
     <string name="insight_next_free_block">次の空き時間: %1$s %2$s–%3$s（%4$s）</string>
-    <string name="insights_cd_calendar_bar">カレンダー内訳: %1$s</string>
     <string name="insights_cd_daily_chart">日別分布: 最も忙しい日は%1$s</string>
     <string name="label_availability">空き状況</string>
     <string name="label_busy">予定あり</string>
@@ -973,13 +973,11 @@
     <string name="label_event_color">予定の色</string>
     <string name="label_calendar_default">カレンダーの既定</string>
     <string name="label_custom">カスタム</string>
-    <string name="cd_event_color">予定の色</string>
     <string name="cd_checkmark">選択済み</string>
     <string name="cd_event_state_cancelled">キャンセル済み</string>
     <string name="cd_event_state_declined">辞退済み</string>
     <string name="cd_event_state_past">過去の予定</string>
     <string name="cd_event_untitled">無題の予定</string>
-    <string name="label_device_timezone">デバイスのタイムゾーン</string>
     <string name="color_saddlebrown">サドルブラウン</string>    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
     <string name="color_gold">ゴールド</string>
     <string name="color_yellowgreen">イエローグリーン</string>
@@ -1024,7 +1022,6 @@
     <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
     <string name="label_attendees">参加者</string>
     <string name="attendee_you_marker">あなた</string>
-    <string name="attendee_organizer_pill">主催者</string>
     <string name="attendee_picker_title">参加者を追加</string>
     <string name="attendee_pick_add_people">参加者を追加</string>
     <string name="attendee_pick_from_contacts">名前またはメール</string>
@@ -1037,12 +1034,6 @@
     <string name="attendee_scheduling_unavailable">このアカウントではユーザーを招待できません</string>
     <string name="device_attendee_local_no_delivery">このカレンダーは招待状を送信できません。ゲストは保存されますが通知されません。</string>
     <string name="action_save_and_notify">保存して通知</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="other">+%d 件</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="other">%d 人の参加者</item>
-    </plurals>
     <string name="attendee_card_going">参加</string>
     <string name="attendee_card_pending">保留</string>
     <string name="attendee_card_declined">辞退</string>
@@ -1050,25 +1041,16 @@
     <string name="attendee_card_hosting">主催</string>
     <string name="attendee_action_copy">メールアドレスをコピー</string>
     <string name="attendee_action_email">メールを送信</string>
-    <string name="attendee_group_icon_description">人</string>
     <string name="attendee_email_copied">メールアドレスをコピーしました</string>
     <string name="attendee_no_email_app">メールアプリが未インストール</string>
-    <string name="attendee_show_less">折りたたむ</string>
     <string name="attendee_show_all">すべての出席者を表示</string>
     <string name="attendee_status_accepted">承諾</string>
     <string name="attendee_status_declined">辞退</string>
     <string name="attendee_status_tentative">未定</string>
     <string name="attendee_status_delegated">委任</string>
     <string name="attendee_status_pending">保留</string>
-    <string name="rsvp_action_accept">承諾する</string>
-    <string name="rsvp_action_tentative">仮承諾する</string>
-    <string name="rsvp_action_decline">辞退する</string>
     <string name="rsvp_series_disclosure">回答はシリーズ全体に適用されます。</string>
-    <string name="rsvp_modified_snackbar">%1$s への返信に失敗しました。予定が変更されたため、もう一度返信してください。</string>
     <string name="attendee_sheet_title">出席者</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="other">%d人 招待済み</item>
-    </plurals>
     <string name="attendee_search_hint">検索</string>
     <string name="attendee_search_no_matches">該当なし</string>
     <string name="attendee_section_going">参加</string>

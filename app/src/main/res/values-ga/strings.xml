@@ -71,13 +71,9 @@
     <string name="action_delete_event">Scrios Imeacht</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Glac leis</string>
-    <string name="rsvp_action_tentative">Sealadach</string>
-    <string name="rsvp_action_decline">Diúltaigh</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Baineann an freagra leis an tsraith ar fad.</string>
-    <string name="rsvp_modified_snackbar">Theip ar fhreagra do %1$s: athraíodh an t-imeacht. Freagair arís.</string>
     <string name="invitees_host_tag">Óstach</string>
     <string name="invitees_summary_you_alone">Tú</string>
     <string name="holiday_catalog_add">Cuir féilire saoire leis</string>
@@ -136,10 +132,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">An ceann seo amháin</string>
     <string name="recurring_this_and_future">An ceann seo agus gach ceann amach anseo</string>
-    <string name="recurring_just_occurrence">An t-imeacht seo amháin</string>
-    <string name="recurring_all_occurrences">Gach imeacht</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Teideal an imeachta</string>
@@ -169,6 +162,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Socruithe</string>
+    <string name="settings_theme">Téama</string>
+    <string name="settings_theme_system_desc">Lean socrú solais nó dorcha do ghutháin</string>
+    <string name="settings_theme_light_desc">Solas i gcónaí</string>
+    <string name="settings_theme_dark_desc">Dorcha i gcónaí</string>
+    <string name="settings_theme_teal_desc">Teal KashCal, a leanann socrú solais nó dorcha do ghutháin</string>
+    <string name="settings_app_icon">Deilbhín an Aip</string>
+    <string name="app_icon_default">Réamhshocrú</string>
+    <string name="app_icon_supporter">Tacadóir</string>
+    <string name="app_icon_supporter_calendar">Tacadóir, darb ainm Féilire</string>
+    <string name="app_icon_label_calendar">Féilire</string>
+    <string name="app_icon_support_cta">Tacaigh le KashCal</string>
+    <string name="app_icon_switch_note">D\'fhéadfadh athrú an aip a atosú. Úsáideann fógraí an deilbhín agus an t-ainm réamhshocraithe i gcónaí.</string>
     <string name="settings_time_format">Formáid Ama</string>
     <string name="settings_start_week_on">Tosaigh an tSeachtain Ar</string>
     <string name="settings_event_emojis">Emojis Imeachtaí</string>
@@ -184,7 +189,6 @@
     <string name="settings_section_calendars">Féilirí</string>
     <string name="settings_section_appearance">Cuma</string>
     <string name="settings_section_creating_events">Imeachtaí a chruthú</string>
-    <string name="settings_section_notifications">Fógraí</string>
     <string name="settings_section_sync">Sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
     <string name="settings_section_privacy">Príobháideachas</string>
@@ -218,8 +222,6 @@
     <string name="dialog_force_sync_title">Sioncronú Iomláin Éigeantach?</string>
     <string name="dialog_force_sync_message">Ath-íoslódálfaidh sé seo gach sonraí féilire ón bhfreastalaí. Coinneofar athruithe áitiúla.</string>
     <string name="dialog_enable_notifications">Cumasaigh Fógraí?</string>
-    <string name="dialog_delete_title">Scrios \"%1$s\"</string>
-    <string name="dialog_edit_title">Cuir \"%1$s\" in Eagar</string>
     <string name="dialog_action_required">Tá an gníomh seo riachtanach chun leanúint ar aghaidh.</string>
     <string name="dialog_add_to_calendar">Cuir le féilire</string>
     <string name="dialog_select_calendar">Roghnaigh féilire</string>
@@ -334,14 +336,12 @@
     <!-- Content Descriptions (Accessibility) -->
     <string name="cd_selected">Roghnaithe</string>
     <string name="cd_back">Ar ais</string>
-    <string name="cd_close">Dún</string>
     <string name="cd_search">Cuardaigh</string>
     <string name="cd_create_event">Cruthaigh imeacht</string>
     <string name="cd_event_state_cancelled">cealaithe</string>
     <string name="cd_event_state_declined">diúltaithe</string>
     <string name="cd_event_state_past">imeacht san am atá caite</string>
     <string name="cd_event_untitled">Imeacht gan teideal</string>
-    <string name="cd_today">Inniu</string>
     <string name="cd_delete">Scrios</string>
     <string name="cd_refresh">Athnuaigh</string>
     <string name="cd_more_options">Tuilleadh roghanna</string>
@@ -400,6 +400,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Réamhshocrú an chórais</string>
+    <string name="option_light">Solas</string>
+    <string name="option_dark">Dorcha</string>
+    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">12 uair</string>
     <string name="option_24_hour">24 uair</string>
     <string name="option_sunday">Dé Domhnaigh</string>
@@ -556,8 +559,6 @@
     <string name="cd_remove_alert">Bain foláireamh</string>
     <string name="cd_warning">Rabhadh</string>
     <string name="cd_refresh_calendars">Athnuaigh féilirí</string>
-    <string name="cd_timezone_tap_to_change">Crios ama: %1$s, tapáil chun athrú</string>
-    <string name="cd_day_events">Lá %1$d, %2$d imeacht</string>
 
     <!-- i18n: Pickers / Forms -->
     <string name="label_on_days">Ar laethanta</string>
@@ -875,9 +876,7 @@
     <string name="cd_open_drawer">Oscail tarraiceán</string>
     <string name="cd_close_drawer">Dún tarraiceán</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Oscail roghchlár</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Dún roghchlár</string>
     <string name="cd_calendar_view">Amharc féilire</string>
     <string name="cd_active_view">Amharc gníomhach</string>
 
@@ -1161,8 +1160,6 @@
     <string name="insights_period_last_week">Seachtain seo caite</string>
     <string name="insights_period_this_month">Mí</string>
     <string name="insights_empty_state">Níl aon imeachtaí sceidealta an tseachtain seo</string>
-    <string name="insights_delta_more">+%1$s níos mó ná %2$s</string>
-    <string name="insights_delta_less">%1$s níos lú ná %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d imeacht lá iomláin</item>
         <item quantity="two">%d imeacht lá iomláin</item>
@@ -1196,7 +1193,6 @@
     <string name="insight_tomorrow_preview_no_start">Amárach: %1$s sceidealta</string>
     <string name="insight_heaviest_upcoming">Is é %1$s an lá is troime atá le teacht (%2$s)</string>
     <string name="insight_next_free_block">An chéad bhloc saor eile: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Miondealú féilirí: %1$s</string>
     <string name="insights_cd_daily_chart">Dáileadh laethúil: is é an lá is gnóthaí %1$s</string>
 
     <!-- Event Form Redesign -->
@@ -1206,10 +1202,8 @@
     <string name="label_event_color">Dath an imeachta</string>
     <string name="label_calendar_default">Réamhshocrú an fhéilire</string>
     <string name="label_custom">Saincheaptha</string>
-    <string name="cd_event_color">Dath an imeachta</string>
 
     <string name="cd_checkmark">Roghnaithe</string>
-    <string name="label_device_timezone">Crios ama an ghléis</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Donn diallaite</string>
@@ -1256,21 +1250,6 @@
     <string name="backup_error_read_failed">Níorbh fhéidir an comhad a léamh</string>
     <string name="label_attendees">Freastalaithe</string>
     <string name="attendee_you_marker">Tú</string>
-    <string name="attendee_organizer_pill">Eagraí</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d eile</item>
-        <item quantity="two">+%d eile</item>
-        <item quantity="few">+%d eile</item>
-        <item quantity="many">+%d eile</item>
-        <item quantity="other">+%d eile</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d fhreastalaí</item>
-        <item quantity="two">%d fhreastalaí</item>
-        <item quantity="few">%d fhreastalaí</item>
-        <item quantity="many">%d bhfreastalaí</item>
-        <item quantity="other">%d freastalaí</item>
-    </plurals>
     <string name="attendee_card_going">Ag freastal</string>
     <string name="attendee_card_pending">Ar feitheamh</string>
     <string name="attendee_card_declined">Diúltaithe</string>
@@ -1278,10 +1257,8 @@
     <string name="attendee_card_hosting">Ag óstáil</string>
     <string name="attendee_action_copy">Cóipeáil ríomhphost</string>
     <string name="attendee_action_email">Seol ríomhphost</string>
-    <string name="attendee_group_icon_description">Daoine</string>
     <string name="attendee_email_copied">Ríomhphost cóipeáilte</string>
     <string name="attendee_no_email_app">Níl aon aip ríomhphoist suiteáilte</string>
-    <string name="attendee_show_less">Taispeáin níos lú</string>
     <string name="attendee_show_all">Taispeáin gach freastalaí</string>
     <string name="attendee_status_accepted">Glactha</string>
     <string name="attendee_status_declined">Diúltaithe</string>
@@ -1366,13 +1343,6 @@
     <string name="share_as_card_share_failed">Níorbh fhéidir an cárta a roinnt</string>
     <string name="share_from_kashcal_footer">Roinnte ó KashCal</string>
     <string name="attendee_sheet_title">Freastalaithe</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d cuireadh tugtha</item>
-        <item quantity="two">%d chuireadh tugtha</item>
-        <item quantity="few">%d cuireadh tugtha</item>
-        <item quantity="many">%d gcuireadh tugtha</item>
-        <item quantity="other">%d cuireadh tugtha</item>
-    </plurals>
     <string name="attendee_search_hint">Cuardaigh</string>
     <string name="attendee_search_no_matches">Gan torthaí</string>
     <string name="attendee_section_going">Ag dul</string>

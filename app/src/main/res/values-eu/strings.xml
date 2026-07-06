@@ -71,13 +71,9 @@
     <string name="action_delete_event">Gertaera ezabatu</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Onartu</string>
-    <string name="rsvp_action_tentative">Behin-behinekoa</string>
-    <string name="rsvp_action_decline">Ezetsi</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Erantzuna serie osoari aplikatzen zaio.</string>
-    <string name="rsvp_modified_snackbar">%1$s gertaerarako erantzunak huts egin du: gertaera aldatu egin da. Berriro erantzun.</string>
     <string name="invitees_host_tag">Antolatzailea</string>
     <string name="invitees_summary_you_alone">Zu</string>
     <string name="holiday_catalog_add">Gehitu jaiegunen egutegia</string>
@@ -121,10 +117,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Hau bakarrik</string>
     <string name="recurring_this_and_future">Hau eta etorkizuneko guztiak</string>
-    <string name="recurring_just_occurrence">Agerpen hau bakarrik</string>
-    <string name="recurring_all_occurrences">Agerpen guztiak</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Gertaeraren izenburua</string>
@@ -154,6 +147,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Ezarpenak</string>
+    <string name="settings_theme">Gaia</string>
+    <string name="settings_theme_system_desc">Jarraitu telefonoaren argi edo ilun ezarpenari</string>
+    <string name="settings_theme_light_desc">Beti argia</string>
+    <string name="settings_theme_dark_desc">Beti iluna</string>
+    <string name="settings_theme_teal_desc">KashCal turkesa, telefonoaren argi edo ilun ezarpenari jarraitzen dio</string>
+    <string name="settings_app_icon">Aplikazioaren ikonoa</string>
+    <string name="app_icon_default">Lehenetsia</string>
+    <string name="app_icon_supporter">Laguntzaile</string>
+    <string name="app_icon_supporter_calendar">Laguntzaile, Egutegia izenekoa</string>
+    <string name="app_icon_label_calendar">Egutegia</string>
+    <string name="app_icon_support_cta">Lagundu KashCal</string>
+    <string name="app_icon_switch_note">Aldatzeak aplikazioa berrabiaraz dezake. Jakinarazpenek beti erabiltzen dute ikono eta izen lehenetsia.</string>
     <string name="settings_time_format">Ordu-formatua</string>
     <string name="settings_start_week_on">Astea hasi hemen</string>
     <string name="settings_event_emojis">Gertaera emojiak</string>
@@ -169,7 +174,6 @@
     <string name="settings_section_calendars">Egutegiak</string>
     <string name="settings_section_appearance">Itxura</string>
     <string name="settings_section_creating_events">Gertaerak sortzea</string>
-    <string name="settings_section_notifications">Jakinarazpenak</string>
     <string name="settings_section_sync">Sinkronizazioa</string>
     <string name="settings_section_data">Babeskopia eta leheneratzea</string>
     <string name="settings_section_privacy">Pribatutasuna</string>
@@ -203,8 +207,6 @@
     <string name="dialog_force_sync_title">Sinkronizazio osoa behartu?</string>
     <string name="dialog_force_sync_message">Honek egutegiko datu guztiak zerbitzaritik berriro jaitsiko ditu. Tokiko aldaketak gordeko dira.</string>
     <string name="dialog_enable_notifications">Jakinarazpenak gaitu?</string>
-    <string name="dialog_delete_title">\"%1$s\" ezabatu</string>
-    <string name="dialog_edit_title">\"%1$s\" editatu</string>
     <string name="dialog_action_required">Ekintza hau beharrezkoa da jarraitzeko.</string>
     <string name="dialog_add_to_calendar">Egutegira gehitu</string>
     <string name="dialog_select_calendar">Egutegia hautatu</string>
@@ -308,14 +310,12 @@
     <!-- Content Descriptions -->
     <string name="cd_selected">Hautatuta</string>
     <string name="cd_back">Atzera</string>
-    <string name="cd_close">Itxi</string>
     <string name="cd_search">Bilatu</string>
     <string name="cd_create_event">Gertaera sortu</string>
     <string name="cd_event_state_cancelled">ezeztatuta</string>
     <string name="cd_event_state_declined">ezetsita</string>
     <string name="cd_event_state_past">iraganeko gertaera</string>
     <string name="cd_event_untitled">Izenbururik gabeko gertaera</string>
-    <string name="cd_today">Gaur</string>
     <string name="cd_delete">Ezabatu</string>
     <string name="cd_refresh">Eguneratu</string>
     <string name="cd_more_options">Aukera gehiago</string>
@@ -373,6 +373,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Sistemaren lehenetsia</string>
+    <string name="option_light">Argia</string>
+    <string name="option_dark">Iluna</string>
+    <string name="option_kashcal_teal">KashCal Turkesa</string>
     <string name="option_12_hour">12 ordu</string>
     <string name="option_24_hour">24 ordu</string>
     <string name="option_sunday">Igandea</string>
@@ -528,8 +531,6 @@
     <string name="cd_remove_alert">Alerta kendu</string>
     <string name="cd_warning">Abisua</string>
     <string name="cd_refresh_calendars">Egutegiak eguneratu</string>
-    <string name="cd_timezone_tap_to_change">Ordu-zona: %1$s, sakatu aldatzeko</string>
-    <string name="cd_day_events">%1$d eguna, %2$d gertaera</string>
 
     <!-- Pickers / Forms -->
     <string name="label_on_days">Egunetan</string>
@@ -754,9 +755,7 @@
     <string name="cd_open_drawer">Tiradera ireki</string>
     <string name="cd_close_drawer">Tiradera itxi</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Menua ireki</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Menua itxi</string>
     <string name="cd_calendar_view">Egutegi ikuspegia</string>
     <string name="cd_active_view">Ikuspegi aktiboa</string>
 
@@ -1016,8 +1015,6 @@
     <string name="insights_period_last_week">Aurreko astea</string>
     <string name="insights_period_this_month">Hilabetea</string>
     <string name="insights_empty_state">Ez dago gertaerarik programatuta aste honetan</string>
-    <string name="insights_delta_more">+%1$s gehiago %2$s baino</string>
-    <string name="insights_delta_less">%1$s gutxiago %2$s baino</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">Egun osoko gertaera %d</item>
         <item quantity="other">Egun osoko %d gertaera</item>
@@ -1048,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">Bihar: %1$s programatuta</string>
     <string name="insight_heaviest_upcoming">%1$s da zure egun kargatuena (%2$s)</string>
     <string name="insight_next_free_block">Hurrengo bloke librea: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Egutegi banaketa: %1$s</string>
     <string name="insights_cd_daily_chart">Eguneroko banaketa: egun okupatuena %1$s da</string>
 
     <!-- Event Form Redesign -->
@@ -1058,10 +1054,8 @@
     <string name="label_event_color">Gertaeraren kolorea</string>
     <string name="label_calendar_default">Egutegiaren lehenetsia</string>
     <string name="label_custom">Pertsonalizatua</string>
-    <string name="cd_event_color">Gertaeraren kolorea</string>
 
     <string name="cd_checkmark">Hautatuta</string>
-    <string name="label_device_timezone">Gailuaren ordu-zona</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Larru-marroia</string>
@@ -1108,15 +1102,6 @@
     <string name="backup_error_read_failed">Ezin izan da fitxategia irakurri</string>
     <string name="label_attendees">Partaideak</string>
     <string name="attendee_you_marker">Zu</string>
-    <string name="attendee_organizer_pill">Antolatzailea</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d gehiago</item>
-        <item quantity="other">+%d gehiago</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">partaide %d</item>
-        <item quantity="other">%d partaide</item>
-    </plurals>
     <string name="attendee_card_going">Joango da</string>
     <string name="attendee_card_pending">Zain</string>
     <string name="attendee_card_declined">Ukatua</string>
@@ -1124,10 +1109,8 @@
     <string name="attendee_card_hosting">Anfitrioia</string>
     <string name="attendee_action_copy">Kopiatu helbide elektronikoa</string>
     <string name="attendee_action_email">Bidali mezua</string>
-    <string name="attendee_group_icon_description">Pertsonak</string>
     <string name="attendee_email_copied">Helbide elektronikoa kopiatuta</string>
     <string name="attendee_no_email_app">Ez dago posta-aplikaziorik instalatuta</string>
-    <string name="attendee_show_less">Erakutsi gutxiago</string>
     <string name="attendee_show_all">Erakutsi parte-hartzaile guztiak</string>
     <string name="attendee_status_accepted">Onartua</string>
     <string name="attendee_status_declined">Ukatua</string>
@@ -1197,10 +1180,6 @@
     <string name="share_as_card_share_failed">Ezin izan da txartela partekatu</string>
     <string name="share_from_kashcal_footer">KashCal-etik partekatua</string>
     <string name="attendee_sheet_title">Bertaratuak</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d gonbidatu</item>
-        <item quantity="other">%d gonbidatu</item>
-    </plurals>
     <string name="attendee_search_hint">Bilatu</string>
     <string name="attendee_search_no_matches">Emaitzarik ez</string>
     <string name="attendee_section_going">Joaten</string>

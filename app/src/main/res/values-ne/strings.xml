@@ -54,7 +54,7 @@
     <string name="action_view">हेर्नुहोस्</string>
     <string name="action_enable">सक्षम गर्नुहोस्</string>
     <string name="action_done">सकियो</string>
-    <string name="action_save">बचत गर्नुहोस्</string>
+    <string name="action_save">सुरक्षित गर्नुहोस्</string>
     <string name="action_add">थप्नुहोस्</string>
     <string name="action_edit">सम्पादन</string>
     <string name="action_delete">मेट्नुहोस्</string>
@@ -71,9 +71,6 @@
     <string name="action_delete_event">कार्यक्रम मेट्नुहोस्</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">स्वीकार</string>
-    <string name="rsvp_action_tentative">सम्भावित</string>
-    <string name="rsvp_action_decline">अस्वीकार</string>
     <string name="invitees_host_tag">होस्ट</string>
     <string name="rsvp_question_going">जानुहुन्छ?</string>
     <string name="rsvp_action_yes">हुन्छ</string>
@@ -89,13 +86,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">यो जवाफ सम्पूर्ण शृंखलामा लागू हुन्छ।</string>
-    <string name="rsvp_modified_snackbar">%1$s को लागि RSVP असफल भयो — कार्यक्रम परिमार्जन गरिएको थियो। कृपया पुनः जवाफ दिनुहोस्।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">यो मात्र</string>
     <string name="recurring_this_and_future">यो र सबै भविष्यका</string>
-    <string name="recurring_just_occurrence">यो घटना मात्र</string>
-    <string name="recurring_all_occurrences">सबै घटनाहरू</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">कार्यक्रम शीर्षक</string>
@@ -125,6 +118,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">सेटिङ</string>
+    <string name="settings_theme">थिम</string>
+    <string name="settings_theme_system_desc">तपाईंको फोनको उज्यालो वा अँध्यारो सेटिङ अनुसरण गर्नुहोस्</string>
+    <string name="settings_theme_light_desc">सधैं उज्यालो</string>
+    <string name="settings_theme_dark_desc">सधैं अँध्यारो</string>
+    <string name="settings_theme_teal_desc">KashCal टिल, तपाईंको फोनको उज्यालो वा अँध्यारो सेटिङ अनुसरण गर्दछ</string>
+    <string name="settings_app_icon">एप आइकन</string>
+    <string name="app_icon_default">पूर्वनिर्धारित</string>
+    <string name="app_icon_supporter">समर्थक</string>
+    <string name="app_icon_supporter_calendar">समर्थक, पात्रो लेबल गरिएको</string>
+    <string name="app_icon_label_calendar">पात्रो</string>
+    <string name="app_icon_support_cta">KashCal लाई समर्थन गर्नुहोस्</string>
+    <string name="app_icon_switch_note">आइकन बदल्दा एप पुनः सुरु हुन सक्छ। सूचनाहरूले सधैं पूर्वनिर्धारित आइकन र नाम प्रयोग गर्छन्।</string>
     <string name="settings_search_placeholder">सेटिङ खोज्नुहोस्…</string>
     <string name="settings_search_no_results">\"%1$s\" का लागि कुनै सेटिङ भेटिएन</string>
     <string name="cd_search_settings">सेटिङ खोज्नुहोस्</string>
@@ -143,7 +148,6 @@
     <string name="settings_section_calendars">पात्राहरू</string>
     <string name="settings_section_appearance">रूप</string>
     <string name="settings_section_creating_events">घटनाहरू सिर्जना गर्ने</string>
-    <string name="settings_section_notifications">सूचनाहरू</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">ब्याकअप &amp; रिस्टोर</string>
     <string name="settings_section_privacy">गोपनीयता</string>
@@ -196,8 +200,6 @@
     <string name="dialog_force_sync_title">पूर्ण बलपूर्वक सिंक?</string>
     <string name="dialog_force_sync_message">यसले सर्भरबाट सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नेछ। स्थानीय परिवर्तनहरू सुरक्षित रहनेछन्।</string>
     <string name="dialog_enable_notifications">सूचनाहरू सक्षम गर्ने?</string>
-    <string name="dialog_delete_title">\"%1$s\" मेट्नुहोस्</string>
-    <string name="dialog_edit_title">\"%1$s\" सम्पादन गर्नुहोस्</string>
     <string name="dialog_action_required">जारी राख्न यो कार्य आवश्यक छ।</string>
     <string name="dialog_add_to_calendar">क्यालेन्डरमा थप्नुहोस्</string>
     <string name="dialog_select_calendar">क्यालेन्डर चयन गर्नुहोस्</string>
@@ -301,10 +303,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">चयन गरिएको</string>
     <string name="cd_back">पछाडि</string>
-    <string name="cd_close">बन्द</string>
     <string name="cd_search">खोज</string>
     <string name="cd_create_event">कार्यक्रम बनाउनुहोस्</string>
-    <string name="cd_today">आज</string>
     <string name="cd_delete">मेट्नुहोस्</string>
     <string name="cd_refresh">रिफ्रेस</string>
     <string name="cd_more_options">थप विकल्पहरू</string>
@@ -358,6 +358,9 @@
     <string name="settings_new_events">नयाँ कार्यक्रमहरू</string>
 
     <string name="option_system_default">प्रणाली पूर्वनिर्धारित</string>
+    <string name="option_light">उज्यालो</string>
+    <string name="option_dark">अँध्यारो</string>
+    <string name="option_kashcal_teal">KashCal टिल</string>
     <string name="option_12_hour">१२ घण्टा</string>
     <string name="option_24_hour">२४ घण्टा</string>
     <string name="option_sunday">आइतबार</string>
@@ -503,8 +506,6 @@
     <string name="cd_event_untitled">शीर्षकविहीन कार्यक्रम</string>
     <string name="cd_warning">चेतावनी</string>
     <string name="cd_refresh_calendars">क्यालेन्डर रिफ्रेस</string>
-    <string name="cd_timezone_tap_to_change">समय क्षेत्र: %1$s, बदल्न ट्याप गर्नुहोस्</string>
-    <string name="cd_day_events">दिन %1$d, %2$d कार्यक्रम</string>
 
     <string name="label_on_days">दिनहरूमा</string>
     <string name="label_pattern">ढाँचा</string>
@@ -719,8 +720,6 @@
     <string name="cd_loading_events">कार्यक्रमहरू लोड गर्दै</string>
     <string name="cd_open_drawer">ड्रअर खोल्नुहोस्</string>
     <string name="cd_close_drawer">ड्रअर बन्द गर्नुहोस्</string>
-    <string name="cd_open_rail">मेनु खोल्नुहोस्</string>
-    <string name="cd_close_rail">मेनु बन्द गर्नुहोस्</string>
     <string name="cd_calendar_view">क्यालेन्डर दृश्य</string>
     <string name="cd_active_view">सक्रिय दृश्य</string>
 
@@ -988,8 +987,6 @@
     <string name="insights_period_last_week">गत हप्ता</string>
     <string name="insights_period_this_month">महिना</string>
     <string name="insights_empty_state">यो हप्ता कुनै कार्यक्रम तालिकाबद्ध छैन</string>
-    <string name="insights_delta_more">+%1$s %2$s भन्दा बढी</string>
-    <string name="insights_delta_less">%1$s %2$s भन्दा कम</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d दिनभरको कार्यक्रम</item>
         <item quantity="other">%d दिनभरका कार्यक्रमहरू</item>
@@ -1033,7 +1030,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">अर्को खाली समय: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">पात्रो विश्लेषण: %1$s</string>
     <string name="insights_cd_daily_chart">दैनिक वितरण: सबैभन्दा व्यस्त दिन %1$s हो</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1043,9 +1039,7 @@
     <string name="label_event_color">कार्यक्रम रंग</string>
     <string name="label_calendar_default">क्यालेन्डर पूर्वनिर्धारित</string>
     <string name="label_custom">अनुकूलन</string>
-    <string name="cd_event_color">कार्यक्रम रंग</string>
     <string name="cd_checkmark">चयन गरिएको</string>
-    <string name="label_device_timezone">उपकरणको समय क्षेत्र</string>
     <string name="color_saddlebrown">काठी खैरो</string>
     <string name="color_tomato">गोलभेडा</string>    <string name="color_darkorange">गाढा सुन्तला</string>
     <string name="color_gold">सुन</string>
@@ -1071,15 +1065,6 @@
     <string name="settings_suggest_titles">घटना शीर्षकहरू सुझाव</string>
     <string name="label_attendees">सहभागीहरू</string>
     <string name="attendee_you_marker">तपाईं</string>
-    <string name="attendee_organizer_pill">आयोजक</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d थप</item>
-        <item quantity="other">+%d थप</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d सहभागी</item>
-        <item quantity="other">%d सहभागीहरू</item>
-    </plurals>
     <string name="attendee_card_going">जाँदै</string>
     <string name="attendee_card_pending">पर्खाइमा</string>
     <string name="attendee_card_declined">अस्वीकृत</string>
@@ -1087,10 +1072,8 @@
     <string name="attendee_card_hosting">आयोजना गर्दै</string>
     <string name="attendee_action_copy">इमेल प्रतिलिपि गर्नुहोस्</string>
     <string name="attendee_action_email">इमेल पठाउनुहोस्</string>
-    <string name="attendee_group_icon_description">मानिसहरू</string>
     <string name="attendee_email_copied">इमेल प्रतिलिपि गरियो</string>
     <string name="attendee_no_email_app">कुनै इमेल एप स्थापना गरिएको छैन</string>
-    <string name="attendee_show_less">कम देखाउनुहोस्</string>
     <string name="attendee_show_all">सबै सहभागीहरू देखाउनुहोस्</string>
     <string name="attendee_status_accepted">स्वीकृत</string>
     <string name="attendee_status_declined">अस्वीकृत</string>
@@ -1158,10 +1141,6 @@
     <string name="share_as_card_chooser_title">कार्यक्रम साझेदारी गर्नुहोस्</string>
     <string name="share_as_card_share_failed">कार्ड साझेदारी गर्न सकिएन</string>
     <string name="attendee_sheet_title">उपस्थित</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d आमन्त्रित</item>
-        <item quantity="other">%d आमन्त्रित</item>
-    </plurals>
     <string name="attendee_search_hint">खोज्नुहोस्</string>
     <string name="attendee_search_no_matches">कुनै परिणाम छैन</string>
     <string name="attendee_section_going">जाँदै</string>

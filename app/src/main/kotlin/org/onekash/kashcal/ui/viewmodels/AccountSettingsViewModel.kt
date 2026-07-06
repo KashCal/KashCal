@@ -14,10 +14,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -64,6 +66,7 @@ import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.util.UiMessage
 import org.onekash.kashcal.util.importEventsToDeviceCalendar
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -299,6 +302,14 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _timeFormat = MutableStateFlow(KashCalDataStore.TIME_FORMAT_SYSTEM)
     val timeFormat: StateFlow<String> = _timeFormat.asStateFlow()
+
+    /**
+     * Current app theme choice, derived from the stored theme string. A cold flow (not stateIn):
+     * the activity seeds the first frame with a synchronous read and collects this, whose first
+     * emission is the same stored value — so there's no flash of the default theme on cold start.
+     */
+    val themeMode: Flow<ThemeMode> = dataStore.theme
+        .map { ThemeMode.fromPrefValue(it) }
 
     private val _firstDayOfWeek = MutableStateFlow(java.util.Calendar.SUNDAY)
     val firstDayOfWeek: StateFlow<Int> = _firstDayOfWeek.asStateFlow()
@@ -741,6 +752,16 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.setTimeFormat(format)
             widgetUpdateManager.updateAllWidgets("time_format_changed")
+        }
+    }
+
+    /**
+     * Update the app theme choice. Persists the mode's string; the running app recolors
+     * because activities collect [themeMode] into KashCalTheme.
+     */
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            dataStore.setTheme(mode.prefValue)
         }
     }
 

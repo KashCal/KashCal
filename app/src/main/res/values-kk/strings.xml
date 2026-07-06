@@ -71,11 +71,7 @@
     <string name="action_delete_event">Оқиғаны жою</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Қабылдау</string>
-    <string name="rsvp_action_tentative">Шартты түрде</string>
-    <string name="rsvp_action_decline">Бас тарту</string>
     <string name="rsvp_series_disclosure">Жауабыңыз бүкіл серияға қолданылады.</string>
-    <string name="rsvp_modified_snackbar">%1$s үшін RSVP сәтсіз аяқталды — оқиға өзгертілді. Қайта жауап беріңіз.</string>
     <string name="invitees_host_tag">Хост</string>
     <string name="invitees_summary_you_alone">Сен</string>
     <plurals name="invitees_summary_you_organizing">
@@ -112,10 +108,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Тек мынау</string>
     <string name="recurring_this_and_future">Мынау және болашақтағылардың барлығы</string>
-    <string name="recurring_just_occurrence">Тек осы рет</string>
-    <string name="recurring_all_occurrences">Барлық реттер</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Оқиға атауы</string>
@@ -145,6 +138,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Параметрлер</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system_desc">Телефоныңыздың ашық немесе қараңғы параметрін ұстанады</string>
+    <string name="settings_theme_light_desc">Әрдайым ашық</string>
+    <string name="settings_theme_dark_desc">Әрдайым қараңғы</string>
+    <string name="settings_theme_teal_desc">KashCal көгілдір-жасылы, телефоныңыздың ашық немесе қараңғы параметрін ұстанады</string>
+    <string name="settings_app_icon">Қолданба белгішесі</string>
+    <string name="app_icon_default">Әдепкі</string>
+    <string name="app_icon_supporter">Қолдаушы</string>
+    <string name="app_icon_supporter_calendar">Қолдаушы, Күнтізбе деп аталған</string>
+    <string name="app_icon_label_calendar">Күнтізбе</string>
+    <string name="app_icon_support_cta">KashCal қолдау</string>
+    <string name="app_icon_switch_note">Белгішені өзгерту қолданбаны қайта іске қосуы мүмкін. Хабарландырулар әрқашан әдепкі белгіше мен атауды пайдаланады.</string>
     <string name="settings_search_placeholder">Параметрлерді іздеу…</string>
     <string name="settings_search_no_results">\"%1$s\" үшін параметрлер табылмады</string>
     <string name="cd_search_settings">Параметрлерді іздеу</string>
@@ -163,7 +168,6 @@
     <string name="settings_section_calendars">Күнтізбелер</string>
     <string name="settings_section_appearance">Безендіру</string>
     <string name="settings_section_creating_events">Оқиғалар жасау</string>
-    <string name="settings_section_notifications">Хабарландырулар</string>
     <string name="settings_section_sync">Синхрондау</string>
     <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
     <string name="settings_section_privacy">Құпиялылық</string>
@@ -217,8 +221,6 @@
     <string name="dialog_force_sync_title">Мәжбүрлі толық синхрондау?</string>
     <string name="dialog_force_sync_message">Бұл серверден барлық күнтізбе деректерін қайта жүктейді. Жергілікті өзгерістер сақталады.</string>
     <string name="dialog_enable_notifications">Хабарландыруларды қосу керек пе?</string>
-    <string name="dialog_delete_title">\"%1$s\" жою</string>
-    <string name="dialog_edit_title">\"%1$s\" өңдеу</string>
     <string name="dialog_action_required">Жалғастыру үшін бұл әрекет қажет.</string>
     <string name="dialog_add_to_calendar">Күнтізбеге қосу</string>
     <string name="dialog_select_calendar">Күнтізбе таңдау</string>
@@ -323,10 +325,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Таңдалды</string>
     <string name="cd_back">Артқа</string>
-    <string name="cd_close">Жабу</string>
     <string name="cd_search">Іздеу</string>
     <string name="cd_create_event">Оқиға жасау</string>
-    <string name="cd_today">Бүгін</string>
     <string name="cd_delete">Жою</string>
     <string name="cd_refresh">Жаңарту</string>
     <string name="cd_more_options">Қосымша параметрлер</string>
@@ -384,6 +384,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Жүйе әдепкісі</string>
+    <string name="option_light">Ашық</string>
+    <string name="option_dark">Қараңғы</string>
+    <string name="option_kashcal_teal">KashCal Көгілдір-жасыл</string>
     <string name="option_12_hour">12 сағат</string>
     <string name="option_24_hour">24 сағат</string>
     <string name="option_sunday">Жексенбі</string>
@@ -539,15 +542,12 @@
     <string name="cd_remove_alert">Ескертуді жою</string>
     <string name="cd_warning">Ескерту</string>
     <string name="cd_refresh_calendars">Күнтізбелерді жаңарту</string>
-    <string name="cd_timezone_tap_to_change">Уақыт белдеуі: %1$s, өзгерту үшін түртіңіз</string>
-    <string name="cd_day_events">%1$d-күн, %2$d оқиға</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Күндері</string>
     <string name="label_pattern">Үлгі</string>
     <string name="label_ends">Аяқталуы</string>
     <string name="label_timezone">Уақыт белдеуі</string>
-    <string name="label_device_timezone">Құрылғы уақыт белдеуі</string>
     <string name="label_alerts">Ескертулер</string>
     <string name="label_add_alert">Ескерту қосу</string>
     <string name="label_recurrence_never">Ешқашан</string>
@@ -764,9 +764,7 @@
     <string name="cd_open_drawer">Тартпаны ашу</string>
     <string name="cd_close_drawer">Тартпаны жабу</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Мәзірді ашу</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Мәзірді жабу</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Күнтізбе көрінісі</string>
     <string name="cd_active_view">Белсенді көрініс</string>
@@ -1032,8 +1030,6 @@
     <string name="insights_period_last_week">Өткен апта</string>
     <string name="insights_period_this_month">Ай</string>
     <string name="insights_empty_state">Осы аптада жоспарланған оқиғалар жоқ</string>
-    <string name="insights_delta_more">%2$s-дан +%1$s көп</string>
-    <string name="insights_delta_less">%2$s-дан %1$s аз</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d күндік оқиға</item>
         <item quantity="other">%d күндік оқиға</item>
@@ -1077,7 +1073,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Келесі бос уақыт: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Күнтізбе бойынша бөлу: %1$s</string>
     <string name="insights_cd_daily_chart">Күнделікті бөлу: ең жүктелген күн %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1087,7 +1082,6 @@
     <string name="label_event_color">Оқиға түсі</string>
     <string name="label_calendar_default">Күнтізбе әдепкісі</string>
     <string name="label_custom">Таңдамалы</string>
-    <string name="cd_event_color">Оқиға түсі</string>
 
     <string name="cd_checkmark">Таңдалды</string>
 
@@ -1122,15 +1116,6 @@
     <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
     <string name="label_attendees">Қатысушылар</string>
     <string name="attendee_you_marker">Сіз</string>
-    <string name="attendee_organizer_pill">Ұйымдастырушы</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d тағы</item>
-        <item quantity="other">+%d тағы</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d қатысушы</item>
-        <item quantity="other">%d қатысушы</item>
-    </plurals>
     <string name="attendee_card_going">Барады</string>
     <string name="attendee_card_pending">Күтілуде</string>
     <string name="attendee_card_declined">Бас тартты</string>
@@ -1138,10 +1123,8 @@
     <string name="attendee_card_hosting">Өткізуші</string>
     <string name="attendee_action_copy">Электрондық поштаны көшіру</string>
     <string name="attendee_action_email">Электрондық пошта жіберу</string>
-    <string name="attendee_group_icon_description">Адамдар</string>
     <string name="attendee_email_copied">Электрондық пошта көшірілді</string>
     <string name="attendee_no_email_app">Электрондық пошта қолданбасы орнатылмаған</string>
-    <string name="attendee_show_less">Азырақ көрсету</string>
     <string name="attendee_show_all">Барлық қатысушыларды көрсету</string>
     <string name="attendee_status_accepted">Қабылданды</string>
     <string name="attendee_status_declined">Бас тартты</string>
@@ -1209,10 +1192,6 @@
     <string name="share_as_card_share_failed">Картамен бөлісу мүмкін болмады</string>
     <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
     <string name="attendee_sheet_title">Қатысушылар</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d шақырылған</item>
-        <item quantity="other">%d шақырылған</item>
-    </plurals>
     <string name="attendee_search_hint">Іздеу</string>
     <string name="attendee_search_no_matches">Нәтиже жоқ</string>
     <string name="attendee_section_going">Барады</string>

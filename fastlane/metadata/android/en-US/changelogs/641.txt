@@ -1,0 +1,2 @@
+• New theme picker with a KashCal Teal option
+• New supporter app icon, wear it if you've donated or would like to: https://kashcal.onekash.org/donate

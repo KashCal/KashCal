@@ -71,11 +71,7 @@
     <string name="action_delete_event">Изтрий събитие</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Приеми</string>
-    <string name="rsvp_action_tentative">Под въпрос</string>
-    <string name="rsvp_action_decline">Откажи</string>
     <string name="rsvp_series_disclosure">Отговорът важи за цялата серия.</string>
-    <string name="rsvp_modified_snackbar">Отговорът за %1$s не успя — събитието беше променено. Моля, отговорете отново.</string>
     <string name="invitees_host_tag">Домакин</string>
     <string name="invitees_summary_you_alone">Ти</string>
     <plurals name="reminder_in_days">
@@ -116,10 +112,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Само това</string>
     <string name="recurring_this_and_future">Това и всички бъдещи</string>
-    <string name="recurring_just_occurrence">Само тази поява</string>
-    <string name="recurring_all_occurrences">Всички появи</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Заглавие на събитие</string>
@@ -149,6 +142,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Настройки</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system_desc">Следва светлата или тъмната настройка на телефона ви</string>
+    <string name="settings_theme_light_desc">Винаги светла</string>
+    <string name="settings_theme_dark_desc">Винаги тъмна</string>
+    <string name="settings_theme_teal_desc">KashCal синьо-зелено, следва светлата или тъмната настройка на телефона ви</string>
+    <string name="settings_app_icon">Икона на приложението</string>
+    <string name="app_icon_default">По подразбиране</string>
+    <string name="app_icon_supporter">Поддръжник</string>
+    <string name="app_icon_supporter_calendar">Поддръжник, с етикет Календар</string>
+    <string name="app_icon_label_calendar">Календар</string>
+    <string name="app_icon_support_cta">Подкрепете KashCal</string>
+    <string name="app_icon_switch_note">Смяната на иконата може да рестартира приложението. Известията винаги използват иконата и името по подразбиране.</string>
     <string name="settings_time_format">Формат на часа</string>
     <string name="settings_start_week_on">Седмицата започва в</string>
     <string name="settings_event_emojis">Емоджита на събития</string>
@@ -164,7 +169,6 @@
     <string name="settings_section_calendars">Календари</string>
     <string name="settings_section_appearance">Облик</string>
     <string name="settings_section_creating_events">Създаване на събития</string>
-    <string name="settings_section_notifications">Известия</string>
     <string name="settings_section_sync">Синхронизиране</string>
     <string name="settings_section_data">Архивиране и възстановяване</string>
     <string name="settings_section_privacy">Поверителност</string>
@@ -219,8 +223,6 @@
     <string name="dialog_force_sync_title">Принудително пълно синхронизиране?</string>
     <string name="dialog_force_sync_message">Това ще изтегли повторно всички данни от календара от сървъра. Локалните промени ще бъдат запазени.</string>
     <string name="dialog_enable_notifications">Включи известията?</string>
-    <string name="dialog_delete_title">Изтрий \"%1$s\"</string>
-    <string name="dialog_edit_title">Редактирай \"%1$s\"</string>
     <string name="dialog_action_required">Това действие е необходимо, за да продължите.</string>
     <string name="dialog_add_to_calendar">Добави в календара</string>
     <string name="dialog_select_calendar">Избери календар</string>
@@ -325,10 +327,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Избрано</string>
     <string name="cd_back">Назад</string>
-    <string name="cd_close">Затвори</string>
     <string name="cd_search">Търсене</string>
     <string name="cd_create_event">Създай събитие</string>
-    <string name="cd_today">Днес</string>
     <string name="cd_delete">Изтрий</string>
     <string name="cd_refresh">Обнови</string>
     <string name="cd_more_options">Повече опции</string>
@@ -386,6 +386,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Системно по подразбиране</string>
+    <string name="option_light">Светла</string>
+    <string name="option_dark">Тъмна</string>
+    <string name="option_kashcal_teal">KashCal Синьо-зелено</string>
     <string name="option_12_hour">12-часов</string>
     <string name="option_24_hour">24-часов</string>
     <string name="option_sunday">Неделя</string>
@@ -545,8 +548,6 @@
     <string name="cd_remove_alert">Премахни напомняне</string>
     <string name="cd_warning">Предупреждение</string>
     <string name="cd_refresh_calendars">Обнови календарите</string>
-    <string name="cd_timezone_tap_to_change">Часова зона: %1$s, натиснете за промяна</string>
-    <string name="cd_day_events">Ден %1$d, %2$d събития</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">В дни</string>
@@ -772,9 +773,7 @@
     <string name="cd_open_drawer">Отвори чекмеджето</string>
     <string name="cd_close_drawer">Затвори чекмеджето</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Отвори менюто</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Затвори менюто</string>
     <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Изглед на календара</string>
     <string name="cd_active_view">Активен изглед</string>
@@ -1042,8 +1041,6 @@
     <string name="insights_period_last_week">Мин. седмица</string>
     <string name="insights_period_this_month">Месец</string>
     <string name="insights_empty_state">Няма планирани събития тази седмица</string>
-    <string name="insights_delta_more">+%1$s повече от %2$s</string>
-    <string name="insights_delta_less">%1$s по-малко от %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d целодневно събитие</item>
         <item quantity="other">%d целодневни събития</item>
@@ -1087,7 +1084,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Следващ свободен период: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Разпределение по календари: %1$s</string>
     <string name="insights_cd_daily_chart">Дневно разпределение: най-натовареният ден е %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1097,9 +1093,7 @@
     <string name="label_event_color">Цвят на събитието</string>
     <string name="label_calendar_default">По подразбиране</string>
     <string name="label_custom">Персонализиран</string>
-    <string name="cd_event_color">Цвят на събитието</string>
     <string name="cd_checkmark">Избрано</string>
-    <string name="label_device_timezone">Часова зона на устройството</string>
 
     <!-- Color names -->
     <string name="color_saddlebrown">Седлесто кафяво</string>    <string name="color_tomato">Доматено червено</string>    <string name="color_darkorange">Тъмнооранжево</string>
@@ -1126,15 +1120,6 @@
     <string name="settings_suggest_titles">Предлагай заглавия на събития</string>
     <string name="label_attendees">Участници</string>
     <string name="attendee_you_marker">Ти</string>
-    <string name="attendee_organizer_pill">Организатор</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+още %d</item>
-        <item quantity="other">+още %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d участник</item>
-        <item quantity="other">%d участници</item>
-    </plurals>
     <string name="attendee_card_going">Отива</string>
     <string name="attendee_card_pending">Изчакване</string>
     <string name="attendee_card_declined">Отказан</string>
@@ -1142,10 +1127,8 @@
     <string name="attendee_card_hosting">Домакин</string>
     <string name="attendee_action_copy">Копирай имейл</string>
     <string name="attendee_action_email">Изпрати имейл</string>
-    <string name="attendee_group_icon_description">Хора</string>
     <string name="attendee_email_copied">Имейлът е копиран</string>
     <string name="attendee_no_email_app">Няма инсталирано имейл приложение</string>
-    <string name="attendee_show_less">Покажи по-малко</string>
     <string name="attendee_show_all">Покажи всички участници</string>
     <string name="attendee_status_accepted">Прието</string>
     <string name="attendee_status_declined">Отказан</string>
@@ -1213,10 +1196,6 @@
     <string name="share_as_card_chooser_title">Споделяне на събитието</string>
     <string name="share_as_card_share_failed">Картата не може да бъде споделена</string>
     <string name="attendee_sheet_title">Участници</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d поканен</item>
-        <item quantity="other">%d поканени</item>
-    </plurals>
     <string name="attendee_search_hint">Търсене</string>
     <string name="attendee_search_no_matches">Няма резултати</string>
     <string name="attendee_section_going">Отиват</string>

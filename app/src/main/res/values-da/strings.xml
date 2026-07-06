@@ -72,10 +72,7 @@
     <string name="action_delete_event">Slet begivenhed</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Kun denne</string>
     <string name="recurring_this_and_future">Denne og alle fremtidige</string>
-    <string name="recurring_just_occurrence">Kun denne forekomst</string>
-    <string name="recurring_all_occurrences">Alle forekomster</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Begivenhedstitel</string>
@@ -106,6 +103,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Indstillinger</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Følg din telefons lyse eller mørke indstilling</string>
+    <string name="settings_theme_light_desc">Altid lyst</string>
+    <string name="settings_theme_dark_desc">Altid mørkt</string>
+    <string name="settings_theme_teal_desc">KashCal-turkis, følger din telefons lyse eller mørke indstilling</string>
+    <string name="settings_app_icon">Appikon</string>
+    <string name="app_icon_default">Standard</string>
+    <string name="app_icon_supporter">Supporter</string>
+    <string name="app_icon_supporter_calendar">Supporter, kaldet Kalender</string>
+    <string name="app_icon_label_calendar">Kalender</string>
+    <string name="app_icon_support_cta">Støt KashCal</string>
+    <string name="app_icon_switch_note">Ændring af ikonet kan genstarte appen. Notifikationer bruger altid standardikonet og -navnet.</string>
     <string name="settings_time_format">Tidsformat</string>
     <string name="settings_start_week_on">Ugen starter</string>
     <string name="settings_event_emojis">Begivenheds-emojis</string>
@@ -121,7 +130,6 @@
     <string name="settings_section_calendars">Kalendere</string>
     <string name="settings_section_appearance">Udseende</string>
     <string name="settings_section_creating_events">Oprettelse af begivenheder</string>
-    <string name="settings_section_notifications">Notifikationer</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Sikkerhedskopi &amp; gendannelse</string>
     <string name="settings_section_privacy">Privatliv</string>
@@ -162,7 +170,7 @@
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
-    <string name="onboarding_got_you">Vi har dig.</string>
+    <string name="onboarding_got_you">Vi har styr på det.</string>
     <string name="onboarding_connect_prompt">Forbind iCloud for at se dine begivenheder her</string>
 
     <!-- ==================== Nyheder ==================== -->
@@ -182,8 +190,6 @@
     <string name="dialog_force_sync_title">Fuld synkronisering?</string>
     <string name="dialog_force_sync_message">Alle kalenderdata downloades igen fra serveren. Lokale ændringer bevares.</string>
     <string name="dialog_enable_notifications">Aktiver notifikationer?</string>
-    <string name="dialog_delete_title">Slet \"%1$s\"</string>
-    <string name="dialog_edit_title">Rediger \"%1$s\"</string>
     <string name="dialog_action_required">Denne handling er nødvendig for at fortsætte.</string>
     <string name="dialog_add_to_calendar">Tilføj til kalender</string>
     <string name="dialog_select_calendar">Vælg kalender</string>
@@ -288,10 +294,8 @@
     <string name="cd_selected">Valgt</string>
     <string name="cd_checkmark">Valgt</string>
     <string name="cd_back">Tilbage</string>
-    <string name="cd_close">Luk</string>
     <string name="cd_search">Søg</string>
     <string name="cd_create_event">Opret begivenhed</string>
-    <string name="cd_today">I dag</string>
     <string name="cd_delete">Slet</string>
     <string name="cd_refresh">Opdater</string>
     <string name="cd_more_options">Flere muligheder</string>
@@ -350,6 +354,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
+    <string name="option_light">Lyst</string>
+    <string name="option_dark">Mørkt</string>
+    <string name="option_kashcal_teal">KashCal Turkis</string>
     <string name="option_12_hour">12-timer</string>
     <string name="option_24_hour">24-timer</string>
     <string name="option_sunday">Søndag</string>
@@ -505,15 +512,12 @@
     <string name="cd_remove_alert">Fjern påmindelse</string>
     <string name="cd_warning">Advarsel</string>
     <string name="cd_refresh_calendars">Opdater kalendere</string>
-    <string name="cd_timezone_tap_to_change">Tidszone: %1$s, tryk for at ændre</string>
-    <string name="cd_day_events">Dag %1$d, %2$d begivenheder</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">På dage</string>
     <string name="label_pattern">Mønster</string>
     <string name="label_ends">Slutter</string>
     <string name="label_timezone">Tidszone</string>
-    <string name="label_device_timezone">Enhedens tidszone</string>
     <string name="label_alerts">Påmindelser</string>
     <string name="label_add_alert">Tilføj påmindelse</string>
     <string name="label_recurrence_never">Aldrig</string>
@@ -734,9 +738,7 @@
     <string name="cd_open_drawer">Åbn menu</string>
     <string name="cd_close_drawer">Luk menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Åbn menu</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Luk menu</string>
     <string name="cd_calendar_view">Kalendervisning</string>
     <string name="cd_active_view">Aktiv visning</string>
 
@@ -961,12 +963,8 @@
     <string name="invite_notification_body">Fra %1$s · Tryk for at svare</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Accepter</string>
-    <string name="rsvp_action_tentative">Måske</string>
-    <string name="rsvp_action_decline">Afvis</string>
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Svaret gælder for hele serien.</string>
-    <string name="rsvp_modified_snackbar">Svar på %1$s mislykkedes – begivenheden blev ændret. Svar venligst igen.</string>
     <string name="invitees_host_tag">Vært</string>
     <string name="rsvp_question_going">Deltager du?</string>
     <string name="rsvp_action_yes">Ja</string>
@@ -1017,8 +1015,6 @@
     <string name="insights_period_last_week">Sidste uge</string>
     <string name="insights_period_this_month">Måned</string>
     <string name="insights_empty_state">Ingen begivenheder planlagt denne uge</string>
-    <string name="insights_delta_more">+%1$s mere end %2$s</string>
-    <string name="insights_delta_less">%1$s mindre end %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d heldagsbegivenhed</item>
         <item quantity="other">%d heldagsbegivenheder</item>
@@ -1049,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">I morgen: %1$s planlagt</string>
     <string name="insight_heaviest_upcoming">%1$s er din travleste kommende dag (%2$s)</string>
     <string name="insight_next_free_block">Næste ledige blok: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Kalenderfordeling: %1$s</string>
     <string name="insights_cd_daily_chart">Daglig fordeling: travleste dag er %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
@@ -1059,7 +1054,6 @@
     <string name="label_event_color">Begivenhedsfarve</string>
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Brugerdefineret</string>
-    <string name="cd_event_color">Begivenhedsfarve</string>
     <string name="cd_event_state_cancelled">aflyst</string>
     <string name="cd_event_state_declined">afvist</string>
     <string name="cd_event_state_past">tidligere begivenhed</string>
@@ -1088,15 +1082,6 @@
     <string name="settings_suggest_titles">Foreslå begivenhedstitler</string>
     <string name="label_attendees">Deltagere</string>
     <string name="attendee_you_marker">Dig</string>
-    <string name="attendee_organizer_pill">Arrangør</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d mere</item>
-        <item quantity="other">+%d flere</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d deltager</item>
-        <item quantity="other">%d deltagere</item>
-    </plurals>
     <string name="attendee_card_going">Deltager</string>
     <string name="attendee_card_pending">Afventer</string>
     <string name="attendee_card_declined">Afvist</string>
@@ -1104,10 +1089,8 @@
     <string name="attendee_card_hosting">Vært</string>
     <string name="attendee_action_copy">Kopiér e-mail</string>
     <string name="attendee_action_email">Send e-mail</string>
-    <string name="attendee_group_icon_description">Personer</string>
     <string name="attendee_email_copied">E-mail kopieret</string>
     <string name="attendee_no_email_app">Ingen e-mail-app installeret</string>
-    <string name="attendee_show_less">Vis mindre</string>
     <string name="attendee_show_all">Vis alle deltagere</string>
     <string name="attendee_status_accepted">Accepteret</string>
     <string name="attendee_status_declined">Afvist</string>
@@ -1115,10 +1098,6 @@
     <string name="attendee_status_delegated">Delegeret</string>
     <string name="attendee_status_pending">Afventer</string>
     <string name="attendee_sheet_title">Deltagere</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d inviteret</item>
-        <item quantity="other">%d inviteret</item>
-    </plurals>
     <string name="attendee_search_hint">Søg</string>
     <string name="attendee_search_no_matches">Ingen resultater</string>
     <string name="attendee_section_going">Deltager</string>

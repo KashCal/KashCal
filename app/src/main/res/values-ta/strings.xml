@@ -71,11 +71,7 @@
     <string name="action_delete_event">நிகழ்வை நீக்கு</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">ஏற்றுக்கொள்</string>
-    <string name="rsvp_action_tentative">தற்காலிகம்</string>
-    <string name="rsvp_action_decline">மறு</string>
     <string name="rsvp_series_disclosure">உங்கள் பதில் முழுத் தொடருக்கும் பொருந்தும்.</string>
-    <string name="rsvp_modified_snackbar">%1$s க்கான RSVP தோல்வியடைந்தது — நிகழ்வு மாற்றப்பட்டது. மீண்டும் பதிலளிக்கவும்.</string>
     <string name="invitees_host_tag">தொகுப்பாளர்</string>
     <string name="rsvp_question_going">வருகிறீர்களா?</string>
     <string name="rsvp_action_yes">ஆம்</string>
@@ -113,10 +109,7 @@
     <string name="rsvp_action_change_a11y">பதிலை மாற்றவும்</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">இது மட்டும்</string>
     <string name="recurring_this_and_future">இதும் எதிர்கால அனைத்தும்</string>
-    <string name="recurring_just_occurrence">இந்த நிகழ்வு மட்டும்</string>
-    <string name="recurring_all_occurrences">அனைத்து நிகழ்வுகளும்</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">நிகழ்வுத் தலைப்பு</string>
@@ -146,6 +139,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">அமைப்புகள்</string>
+    <string name="settings_theme">தீம்</string>
+    <string name="settings_theme_system_desc">உங்கள் மொபைலின் லைட் அல்லது டார்க் அமைப்பைப் பின்பற்றவும்</string>
+    <string name="settings_theme_light_desc">எப்போதும் லைட்</string>
+    <string name="settings_theme_dark_desc">எப்போதும் டார்க்</string>
+    <string name="settings_theme_teal_desc">KashCal டீல், உங்கள் ஃபோனின் லைட் அல்லது டார்க் அமைப்பைப் பின்பற்றுகிறது</string>
+    <string name="settings_app_icon">ஆப்ப் ஐகான்</string>
+    <string name="app_icon_default">இயல்புநிலை</string>
+    <string name="app_icon_supporter">ஆதரவாளர்</string>
+    <string name="app_icon_supporter_calendar">ஆதரவாளர், பெயர் நாட்காட்டி</string>
+    <string name="app_icon_label_calendar">நாட்காட்டி</string>
+    <string name="app_icon_support_cta">KashCal-ஐ ஆதரிக்கவும்</string>
+    <string name="app_icon_switch_note">ஐகானை மாற்றும்போது ஆப்ப் மறுதொடக்கம் ஆகலாம். அறிவிப்புகள் எப்போதும் இயல்புநிலை ஐகான் மற்றும் பெயரைப் பயன்படுத்தும்.</string>
     <string name="settings_time_format">நேர வடிவம்</string>
     <string name="settings_start_week_on">வாரம் தொடங்கும் நாள்</string>
     <string name="settings_event_emojis">நிகழ்வு எமோஜிகள்</string>
@@ -161,7 +166,6 @@
     <string name="settings_section_calendars">நாள்காட்டிகள்</string>
     <string name="settings_section_appearance">தோற்றம்</string>
     <string name="settings_section_creating_events">நிகழ்வுகளை உருவாக்குதல்</string>
-    <string name="settings_section_notifications">அறிவிப்புகள்</string>
     <string name="settings_section_sync">ஒத்திசைவு</string>
     <string name="settings_section_data">காப்புப்பிரதி மற்றும் மீட்டெடுப்பு</string>
     <string name="settings_section_privacy">தனியுரிமை</string>
@@ -222,8 +226,6 @@
     <string name="dialog_force_sync_title">கட்டாய முழு ஒத்திசைவா?</string>
     <string name="dialog_force_sync_message">இது சேவையகத்திலிருந்து அனைத்து நாட்காட்டி தரவையும் மீண்டும் பதிவிறக்கும். உள்ளூர் மாற்றங்கள் பாதுகாக்கப்படும்.</string>
     <string name="dialog_enable_notifications">அறிவிப்புகளை இயக்கவா?</string>
-    <string name="dialog_delete_title">\"%1$s\" நீக்கவா</string>
-    <string name="dialog_edit_title">\"%1$s\" திருத்தவா</string>
     <string name="dialog_action_required">தொடர இந்தச் செயல் தேவை.</string>
     <string name="dialog_add_to_calendar">நாட்காட்டியில் சேர்</string>
     <string name="dialog_select_calendar">நாட்காட்டியைத் தேர்வுசெய்</string>
@@ -328,10 +330,8 @@
     <string name="cd_selected">தேர்ந்தெடுக்கப்பட்டது</string>
     <string name="cd_checkmark">தேர்ந்தெடுக்கப்பட்டது</string>
     <string name="cd_back">பின்செல்</string>
-    <string name="cd_close">மூடு</string>
     <string name="cd_search">தேடு</string>
     <string name="cd_create_event">நிகழ்வு உருவாக்கு</string>
-    <string name="cd_today">இன்று</string>
     <string name="cd_delete">நீக்கு</string>
     <string name="cd_refresh">புதுப்பி</string>
     <string name="cd_more_options">மேலும் விருப்பங்கள்</string>
@@ -393,6 +393,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">கணினி இயல்புநிலை</string>
+    <string name="option_light">லைட்</string>
+    <string name="option_dark">டார்க்</string>
+    <string name="option_kashcal_teal">KashCal டீல்</string>
     <string name="option_12_hour">12-மணி</string>
     <string name="option_24_hour">24-மணி</string>
     <string name="option_sunday">ஞாயிற்றுக்கிழமை</string>
@@ -548,15 +551,12 @@
     <string name="cd_remove_alert">எச்சரிக்கையை நீக்கு</string>
     <string name="cd_warning">எச்சரிக்கை</string>
     <string name="cd_refresh_calendars">நாட்காட்டிகளைப் புதுப்பி</string>
-    <string name="cd_timezone_tap_to_change">நேரமண்டலம்: %1$s, மாற்ற தட்டவும்</string>
-    <string name="cd_day_events">நாள் %1$d, %2$d நிகழ்வுகள்</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">நாட்களில்</string>
     <string name="label_pattern">வடிவம்</string>
     <string name="label_ends">முடிவு</string>
     <string name="label_timezone">நேர மண்டலம்</string>
-    <string name="label_device_timezone">சாதன நேர மண்டலம்</string>
     <string name="label_alerts">எச்சரிக்கைகள்</string>
     <string name="label_add_alert">எச்சரிக்கை சேர்</string>
     <string name="label_recurrence_never">ஒருபோதும் இல்லை</string>
@@ -776,9 +776,7 @@
     <string name="cd_open_drawer">டிராயர் திற</string>
     <string name="cd_close_drawer">டிராயர் மூடு</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">மெனுவைத் திற</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">மெனுவை மூடு</string>
     <string name="cd_calendar_view">நாட்காட்டிக் காட்சி</string>
     <string name="cd_active_view">செயலில் காட்சி</string>
 
@@ -1049,8 +1047,6 @@
     <string name="insights_period_last_week">கடந்த வாரம்</string>
     <string name="insights_period_this_month">மாதம்</string>
     <string name="insights_empty_state">இந்த வாரம் நிகழ்வுகள் திட்டமிடப்படவில்லை</string>
-    <string name="insights_delta_more">+%1$s %2$s-ஐ விட அதிகம்</string>
-    <string name="insights_delta_less">%1$s %2$s-ஐ விட குறைவு</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d நாள் முழுவதும் நிகழ்வு</item>
         <item quantity="other">%d நாள் முழுவதும் நிகழ்வுகள்</item>
@@ -1081,7 +1077,6 @@
     <string name="insight_tomorrow_preview_no_start">நாளை: %1$s திட்டமிடப்பட்டது</string>
     <string name="insight_heaviest_upcoming">%1$s உங்கள் மிகவும் நிரம்பிய வரவிருக்கும் நாள் (%2$s)</string>
     <string name="insight_next_free_block">அடுத்த காலி நேரம்: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">நாட்காட்டி பிரிவு: %1$s</string>
     <string name="insights_cd_daily_chart">தினசரி விநியோகம்: மிகவும் பரபரப்பான நாள் %1$s</string>
 
     <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
@@ -1091,7 +1086,6 @@
     <string name="label_event_color">நிகழ்வு நிறம்</string>
     <string name="label_calendar_default">நாட்காட்டி இயல்புநிலை</string>
     <string name="label_custom">தனிப்பயன்</string>
-    <string name="cd_event_color">நிகழ்வு நிறம்</string>
 
     <string name="hue_red">சிவப்பு</string>
     <string name="hue_orange">ஆரஞ்சு</string>
@@ -1109,15 +1103,6 @@
 
     <string name="label_attendees">பங்கேற்பாளர்கள்</string>
     <string name="attendee_you_marker">நீங்கள்</string>
-    <string name="attendee_organizer_pill">ஏற்பாட்டாளர்</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d மேலும்</item>
-        <item quantity="other">+%d மேலும்</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d பங்கேற்பாளர்</item>
-        <item quantity="other">%d பங்கேற்பாளர்கள்</item>
-    </plurals>
     <string name="attendee_card_going">வருகிறேன்</string>
     <string name="attendee_card_pending">நிலுவையில்</string>
     <string name="attendee_card_declined">மறுக்கப்பட்டது</string>
@@ -1138,10 +1123,8 @@
     <string name="action_save_and_notify">சேமித்து அறிவிக்கவும்</string>
     <string name="attendee_action_copy">மின்னஞ்சலை நகலெடு</string>
     <string name="attendee_action_email">மின்னஞ்சல் அனுப்பு</string>
-    <string name="attendee_group_icon_description">மக்கள்</string>
     <string name="attendee_email_copied">மின்னஞ்சல் நகலெடுக்கப்பட்டது</string>
     <string name="attendee_no_email_app">மின்னஞ்சல் ஆப் நிறுவப்படவில்லை</string>
-    <string name="attendee_show_less">குறைவாகக் காட்டு</string>
     <string name="attendee_show_all">அனைத்து கலந்துகொள்வோரையும் காட்டு</string>
     <string name="attendee_status_accepted">ஏற்றுக்கொள்ளப்பட்டது</string>
     <string name="attendee_status_declined">மறுக்கப்பட்டது</string>
@@ -1204,10 +1187,6 @@
     <string name="cd_decrease_interval">இடைவெளியைக் குறை</string>
     <string name="cd_increase_interval">இடைவெளியை அதிகரி</string>
     <string name="attendee_sheet_title">கலந்துகொள்வோர்</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d அழைக்கப்பட்டவர்</item>
-        <item quantity="other">%d அழைக்கப்பட்டவர்கள்</item>
-    </plurals>
     <string name="attendee_search_hint">தேடு</string>
     <string name="attendee_search_no_matches">முடிவுகள் இல்லை</string>
     <string name="attendee_section_going">வருகிறார்கள்</string>

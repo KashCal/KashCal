@@ -951,6 +951,7 @@ class KashCalDataStore(
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        const val THEME_TEAL = "teal"
 
         // View values
         const val VIEW_MONTH = "month"

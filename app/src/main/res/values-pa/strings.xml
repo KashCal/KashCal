@@ -71,9 +71,6 @@
     <string name="action_delete_event">ਘਟਨਾ ਮਿਟਾਓ</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">ਸਵੀਕਾਰ</string>
-    <string name="rsvp_action_tentative">ਸੰਭਾਵੀ</string>
-    <string name="rsvp_action_decline">ਇਨਕਾਰ</string>
     <string name="invitees_host_tag">ਮੇਜ਼ਬਾਨ</string>
     <string name="rsvp_question_going">ਜਾ ਰਹੇ ਹੋ?</string>
     <string name="rsvp_action_yes">ਹਾਂ</string>
@@ -89,13 +86,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">ਇਹ ਜਵਾਬ ਪੂਰੀ ਲੜੀ \'ਤੇ ਲਾਗੂ ਹੁੰਦਾ ਹੈ।</string>
-    <string name="rsvp_modified_snackbar">%1$s ਲਈ RSVP ਅਸਫਲ ਹੋਇਆ — ਘਟਨਾ ਨੂੰ ਸੋਧਿਆ ਗਿਆ ਸੀ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਜਵਾਬ ਦਿਓ।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">ਸਿਰਫ਼ ਇਹ ਇੱਕ</string>
     <string name="recurring_this_and_future">ਇਹ ਅਤੇ ਸਾਰੀਆਂ ਅਗਲੀਆਂ</string>
-    <string name="recurring_just_occurrence">ਸਿਰਫ਼ ਇਹ ਘਟਨਾ</string>
-    <string name="recurring_all_occurrences">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ਘਟਨਾ ਦਾ ਸਿਰਲੇਖ</string>
@@ -125,6 +118,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ਸੈਟਿੰਗਾਂ</string>
+    <string name="settings_theme">ਥੀਮ</string>
+    <string name="settings_theme_system_desc">ਆਪਣੇ ਫ਼ੋਨ ਦੀ ਹਲਕੀ ਜਾਂ ਗੂੜ੍ਹੀ ਸੈਟਿੰਗ ਦੀ ਪਾਲਣਾ ਕਰੋ</string>
+    <string name="settings_theme_light_desc">ਹਮੇਸ਼ਾ ਹਲਕਾ</string>
+    <string name="settings_theme_dark_desc">ਹਮੇਸ਼ਾ ਗੂੜ੍ਹਾ</string>
+    <string name="settings_theme_teal_desc">KashCal ਟੀਲ, ਤੁਹਾਡੇ ਫ਼ੋਨ ਦੀ ਹਲਕੀ ਜਾਂ ਗੂੜ੍ਹੀ ਸੈਟਿੰਗ ਦੀ ਪਾਲਣਾ ਕਰਦਾ ਹੈ</string>
+    <string name="settings_app_icon">ਐਪ ਆਈਕਨ</string>
+    <string name="app_icon_default">ਪੂਰਵ-ਨਿਰਧਾਰਤ</string>
+    <string name="app_icon_supporter">ਸਮਰਥਕ</string>
+    <string name="app_icon_supporter_calendar">ਸਮਰਥਕ, ਕੈਲੰਡਰ ਲੇਬਲ ਵਾਲਾ</string>
+    <string name="app_icon_label_calendar">ਕੈਲੰਡਰ</string>
+    <string name="app_icon_support_cta">KashCal ਦਾ ਸਮਰਥਨ ਕਰੋ</string>
+    <string name="app_icon_switch_note">ਆਈਕਨ ਬਦਲਣ ਨਾਲ ਐਪ ਮੁੜ ਚਾਲੂ ਹੋ ਸਕਦੀ ਹੈ। ਸੂਚਨਾਵਾਂ ਹਮੇਸ਼ਾ ਮੂਲ ਆਈਕਨ ਅਤੇ ਨਾਮ ਵਰਤਦੀਆਂ ਹਨ।</string>
     <string name="settings_search_placeholder">ਸੈਟਿੰਗਾਂ ਖੋਜੋ…</string>
     <string name="settings_search_no_results">\"%1$s\" ਲਈ ਕੋਈ ਸੈਟਿੰਗ ਨਹੀਂ ਮਿਲੀ</string>
     <string name="cd_search_settings">ਸੈਟਿੰਗਾਂ ਖੋਜੋ</string>
@@ -143,7 +148,6 @@
     <string name="settings_section_calendars">ਕੈਲੰਡਰ</string>
     <string name="settings_section_appearance">ਦਿੱਖ</string>
     <string name="settings_section_creating_events">ਇਵੈਂਟ ਬਣਾਉਣਾ</string>
-    <string name="settings_section_notifications">ਸੂਚਨਾਵਾਂ</string>
     <string name="settings_section_sync">ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
     <string name="settings_section_privacy">ਪਰਦੇਦਾਰੀ</string>
@@ -196,8 +200,6 @@
     <string name="dialog_force_sync_title">ਪੂਰਾ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ?</string>
     <string name="dialog_force_sync_message">ਇਹ ਸਰਵਰ ਤੋਂ ਸਾਰਾ ਕੈਲੰਡਰ ਡਾਟਾ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੇਗਾ। ਸਥਾਨਕ ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਰਹਿਣਗੇ।</string>
     <string name="dialog_enable_notifications">ਸੂਚਨਾਵਾਂ ਚਾਲੂ ਕਰੋ?</string>
-    <string name="dialog_delete_title">\"%1$s\" ਮਿਟਾਓ</string>
-    <string name="dialog_edit_title">\"%1$s\" ਸੰਪਾਦਨ ਕਰੋ</string>
     <string name="dialog_action_required">ਜਾਰੀ ਰੱਖਣ ਲਈ ਇਹ ਕਾਰਵਾਈ ਲੋੜੀਂਦੀ ਹੈ।</string>
     <string name="dialog_add_to_calendar">ਕੈਲੰਡਰ ਵਿੱਚ ਜੋੜੋ</string>
     <string name="dialog_select_calendar">ਕੈਲੰਡਰ ਚੁਣੋ</string>
@@ -301,10 +303,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ਚੁਣਿਆ</string>
     <string name="cd_back">ਪਿੱਛੇ</string>
-    <string name="cd_close">ਬੰਦ</string>
     <string name="cd_search">ਖੋਜ</string>
     <string name="cd_create_event">ਘਟਨਾ ਬਣਾਓ</string>
-    <string name="cd_today">ਅੱਜ</string>
     <string name="cd_delete">ਮਿਟਾਓ</string>
     <string name="cd_refresh">ਰਿਫ਼ਰੈਸ਼</string>
     <string name="cd_more_options">ਹੋਰ ਵਿਕਲਪ</string>
@@ -358,6 +358,9 @@
     <string name="settings_new_events">ਨਵੀਆਂ ਘਟਨਾਵਾਂ</string>
 
     <string name="option_system_default">ਸਿਸਟਮ ਡਿਫ਼ੌਲਟ</string>
+    <string name="option_light">ਹਲਕਾ</string>
+    <string name="option_dark">ਗੂੜ੍ਹਾ</string>
+    <string name="option_kashcal_teal">KashCal ਟੀਲ</string>
     <string name="option_12_hour">12 ਘੰਟੇ</string>
     <string name="option_24_hour">24 ਘੰਟੇ</string>
     <string name="option_sunday">ਐਤਵਾਰ</string>
@@ -503,8 +506,6 @@
     <string name="cd_event_untitled">ਬਿਨਾਂ ਸਿਰਲੇਖ ਸਮਾਗਮ</string>
     <string name="cd_warning">ਚੇਤਾਵਨੀ</string>
     <string name="cd_refresh_calendars">ਕੈਲੰਡਰ ਰਿਫ਼ਰੈਸ਼</string>
-    <string name="cd_timezone_tap_to_change">ਟਾਈਮਜ਼ੋਨ: %1$s, ਬਦਲਣ ਲਈ ਟੈਪ ਕਰੋ</string>
-    <string name="cd_day_events">ਦਿਨ %1$d, %2$d ਘਟਨਾਵਾਂ</string>
 
     <string name="label_on_days">ਦਿਨਾਂ \'ਤੇ</string>
     <string name="label_pattern">ਪੈਟਰਨ</string>
@@ -719,8 +720,6 @@
     <string name="cd_loading_events">ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ</string>
     <string name="cd_open_drawer">ਡ੍ਰਾਅਰ ਖੋਲ੍ਹੋ</string>
     <string name="cd_close_drawer">ਡ੍ਰਾਅਰ ਬੰਦ ਕਰੋ</string>
-    <string name="cd_open_rail">ਮੀਨੂ ਖੋਲ੍ਹੋ</string>
-    <string name="cd_close_rail">ਮੀਨੂ ਬੰਦ ਕਰੋ</string>
     <string name="cd_calendar_view">ਕੈਲੰਡਰ ਦ੍ਰਿਸ਼</string>
     <string name="cd_active_view">ਸਰਗਰਮ ਦ੍ਰਿਸ਼</string>
 
@@ -988,8 +987,6 @@
     <string name="insights_period_last_week">ਪਿਛਲਾ ਹਫ਼ਤਾ</string>
     <string name="insights_period_this_month">ਮਹੀਨਾ</string>
     <string name="insights_empty_state">ਇਸ ਹਫ਼ਤੇ ਕੋਈ ਸਮਾਗਮ ਨਿਰਧਾਰਤ ਨਹੀਂ ਹੈ</string>
-    <string name="insights_delta_more">+%1$s %2$s ਤੋਂ ਵੱਧ</string>
-    <string name="insights_delta_less">%1$s %2$s ਤੋਂ ਘੱਟ</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
         <item quantity="other">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
@@ -1033,7 +1030,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">ਅਗਲਾ ਖਾਲੀ ਸਮਾਂ: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">ਕੈਲੰਡਰ ਵਿਸ਼ਲੇਸ਼ਣ: %1$s</string>
     <string name="insights_cd_daily_chart">ਰੋਜ਼ਾਨਾ ਵੰਡ: ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ %1$s ਹੈ</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1043,9 +1039,7 @@
     <string name="label_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
     <string name="label_calendar_default">ਕੈਲੰਡਰ ਡਿਫ਼ੌਲਟ</string>
     <string name="label_custom">ਕਸਟਮ</string>
-    <string name="cd_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
     <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
-    <string name="label_device_timezone">ਡਿਵਾਈਸ ਸਮਾਂ ਖੇਤਰ</string>
     <string name="color_saddlebrown">ਕਾਠੀ ਭੂਰਾ</string>
     <string name="color_tomato">ਟਮਾਟਰ</string>    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
     <string name="color_gold">ਸੁਨਹਿਰੀ</string>
@@ -1071,15 +1065,6 @@
     <string name="settings_suggest_titles">ਇਵੈਂਟ ਟਾਇਟਲ ਸੁਝਾਓ</string>
     <string name="label_attendees">ਹਾਜ਼ਰੀਨ</string>
     <string name="attendee_you_marker">ਤੁਸੀਂ</string>
-    <string name="attendee_organizer_pill">ਪ੍ਰਬੰਧਕ</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d ਹੋਰ</item>
-        <item quantity="other">+%d ਹੋਰ</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d ਹਾਜ਼ਰ</item>
-        <item quantity="other">%d ਹਾਜ਼ਰੀਨ</item>
-    </plurals>
     <string name="attendee_card_going">ਜਾ ਰਹੇ ਹਨ</string>
     <string name="attendee_card_pending">ਉਡੀਕ ਵਿੱਚ</string>
     <string name="attendee_card_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
@@ -1087,10 +1072,8 @@
     <string name="attendee_card_hosting">ਮੇਜ਼ਬਾਨੀ</string>
     <string name="attendee_action_copy">ਈਮੇਲ ਕਾਪੀ ਕਰੋ</string>
     <string name="attendee_action_email">ਈਮੇਲ ਭੇਜੋ</string>
-    <string name="attendee_group_icon_description">ਲੋਕ</string>
     <string name="attendee_email_copied">ਈਮੇਲ ਕਾਪੀ ਹੋ ਗਈ</string>
     <string name="attendee_no_email_app">ਕੋਈ ਈਮੇਲ ਐਪ ਸਥਾਪਤ ਨਹੀਂ ਹੈ</string>
-    <string name="attendee_show_less">ਘੱਟ ਦਿਖਾਓ</string>
     <string name="attendee_show_all">ਸਾਰੇ ਹਾਜ਼ਰੀਨ ਦਿਖਾਓ</string>
     <string name="attendee_status_accepted">ਸਵੀਕਾਰ ਕੀਤਾ</string>
     <string name="attendee_status_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
@@ -1158,10 +1141,6 @@
     <string name="share_as_card_chooser_title">ਸਮਾਗਮ ਸਾਂਝਾ ਕਰੋ</string>
     <string name="share_as_card_share_failed">ਕਾਰਡ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ</string>
     <string name="attendee_sheet_title">ਹਾਜ਼ਰੀਨ</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d ਸੱਦੇ ਗਏ</item>
-        <item quantity="other">%d ਸੱਦੇ ਗਏ</item>
-    </plurals>
     <string name="attendee_search_hint">ਖੋਜੋ</string>
     <string name="attendee_search_no_matches">ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ</string>
     <string name="attendee_section_going">ਜਾ ਰਹੇ</string>

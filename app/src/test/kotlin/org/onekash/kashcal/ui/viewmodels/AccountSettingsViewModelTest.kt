@@ -288,6 +288,52 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `themeMode maps a stored value with no default seed`() = runTest {
+        // Cold flow: first emission is the stored value itself (no SYSTEM seed), which is what
+        // lets the activity avoid a flash of the default theme on cold start.
+        every { dataStore.theme } returns flowOf(KashCalDataStore.THEME_DARK)
+        val viewModel = createViewModel()
+
+        viewModel.themeMode.test {
+            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.DARK, awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `themeMode maps an unknown stored value to SYSTEM`() = runTest {
+        every { dataStore.theme } returns flowOf("some-future-theme")
+        val viewModel = createViewModel()
+
+        viewModel.themeMode.test {
+            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.SYSTEM, awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `setThemeMode TEAL persists teal and emits TEAL`() = runTest {
+        val themeFlow = MutableStateFlow(KashCalDataStore.THEME_SYSTEM)
+        every { dataStore.theme } returns themeFlow
+        coEvery { dataStore.setTheme(any()) } answers { themeFlow.value = firstArg() }
+
+        val viewModel = createViewModel()
+
+        viewModel.themeMode.test {
+            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.SYSTEM, awaitItem())
+
+            viewModel.setThemeMode(org.onekash.kashcal.ui.theme.ThemeMode.TEAL)
+            advanceUntilIdle()
+
+            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.TEAL, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertEquals(KashCalDataStore.THEME_TEAL, themeFlow.value)
+        coVerify { dataStore.setTheme(KashCalDataStore.THEME_TEAL) }
+    }
+
+    @Test
     fun `contactBirthdaysColor seeds to a palette entry`() = runTest {
         val paletteArgbs = EventColorPalette.entries.map { it.argb }.toSet()
         val viewModel = createViewModel()

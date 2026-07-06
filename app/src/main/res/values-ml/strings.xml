@@ -71,11 +71,7 @@
     <string name="action_delete_event">ഇവന്റ് ഇല്ലാതാക്കുക</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">സ്വീകരിക്കുക</string>
-    <string name="rsvp_action_tentative">താൽക്കാലികം</string>
-    <string name="rsvp_action_decline">നിരസിക്കുക</string>
     <string name="rsvp_series_disclosure">നിങ്ങളുടെ പ്രതികരണം മുഴുവൻ പരമ്പരയ്ക്കും ബാധകമാണ്.</string>
-    <string name="rsvp_modified_snackbar">%1$s നായുള്ള RSVP പരാജയപ്പെട്ടു — ഇവന്റ് പരിഷ്കരിച്ചു. ദയവായി വീണ്ടും പ്രതികരിക്കുക.</string>
     <string name="invitees_host_tag">ഹോസ്റ്റ്</string>
     <string name="rsvp_question_going">വരുമോ?</string>
     <string name="rsvp_action_yes">അതെ</string>
@@ -113,10 +109,7 @@
     <string name="rsvp_action_change_a11y">പ്രതികരണം മാറ്റുക</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">ഇത് മാത്രം</string>
     <string name="recurring_this_and_future">ഇതും ഭാവിയിലേതും എല്ലാം</string>
-    <string name="recurring_just_occurrence">ഈ സംഭവം മാത്രം</string>
-    <string name="recurring_all_occurrences">എല്ലാ സംഭവങ്ങളും</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ഇവന്റ് ശീർഷകം</string>
@@ -146,6 +139,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ക്രമീകരണങ്ങൾ</string>
+    <string name="settings_theme">തീം</string>
+    <string name="settings_theme_system_desc">നിങ്ങളുടെ ഫോണിന്റെ ലൈറ്റ് അല്ലെങ്കിൽ ഡാർക്ക് ക്രമീകരണം പിന്തുടരുക</string>
+    <string name="settings_theme_light_desc">എപ്പോഴും ലൈറ്റ്</string>
+    <string name="settings_theme_dark_desc">എപ്പോഴും ഡാർക്ക്</string>
+    <string name="settings_theme_teal_desc">KashCal ടീൽ, നിങ്ങളുടെ ഫോണിന്റെ ലൈറ്റ് അല്ലെങ്കിൽ ഡാർക്ക് ക്രമീകരണം പിന്തുടരുന്നു</string>
+    <string name="settings_app_icon">ആപ്പ് ഐക്കൺ</string>
+    <string name="app_icon_default">ഡിഫോൾട്ട്</string>
+    <string name="app_icon_supporter">പിന്തുണക്കാരൻ</string>
+    <string name="app_icon_supporter_calendar">പിന്തുണക്കാരൻ, പേര് കലണ്ടർ</string>
+    <string name="app_icon_label_calendar">കലണ്ടർ</string>
+    <string name="app_icon_support_cta">KashCal-നെ പിന്തുണയ്ക്കുക</string>
+    <string name="app_icon_switch_note">ഐക്കൺ മാറ്റുമ്പോൾ ആപ്പ് പുനരാരംഭിച്ചേക്കാം. അറിയിപ്പുകൾ എപ്പോഴും ഡിഫോൾട്ട് ഐക്കണും പേരും ഉപയോഗിക്കുന്നു.</string>
     <string name="settings_time_format">സമയ ഫോർമാറ്റ്</string>
     <string name="settings_start_week_on">ആഴ്ച ആരംഭിക്കുന്നത്</string>
     <string name="settings_event_emojis">ഇവന്റ് ഇമോജികൾ</string>
@@ -161,7 +166,6 @@
     <string name="settings_section_calendars">കലണ്ടറുകൾ</string>
     <string name="settings_section_appearance">രൂപഭാവം</string>
     <string name="settings_section_creating_events">ഇവന്റുകൾ സൃഷ്ടിക്കൽ</string>
-    <string name="settings_section_notifications">അറിയിപ്പുകൾ</string>
     <string name="settings_section_sync">സിങ്ക്</string>
     <string name="settings_section_data">ബാക്കപ്പും പുനഃസ്ഥാപനവും</string>
     <string name="settings_section_privacy">സ്വകാര്യത</string>
@@ -222,8 +226,6 @@
     <string name="dialog_force_sync_title">ഫോഴ്സ് ഫുൾ സിങ്ക്?</string>
     <string name="dialog_force_sync_message">ഇത് സർവറിൽ നിന്ന് എല്ലാ കലണ്ടർ ഡാറ്റയും വീണ്ടും ഡൗൺലോഡ് ചെയ്യും. ലോക്കൽ മാറ്റങ്ങൾ സുരക്ഷിതമായി നിലനിൽക്കും.</string>
     <string name="dialog_enable_notifications">അറിയിപ്പുകൾ ഓൺ ആക്കണോ?</string>
-    <string name="dialog_delete_title">\"%1$s\" ഇല്ലാതാക്കുക</string>
-    <string name="dialog_edit_title">\"%1$s\" തിരുത്തുക</string>
     <string name="dialog_action_required">തുടരാൻ ഈ നടപടി ആവശ്യമാണ്.</string>
     <string name="dialog_add_to_calendar">കലണ്ടറിൽ ചേർക്കുക</string>
     <string name="dialog_select_calendar">കലണ്ടർ തിരഞ്ഞെടുക്കുക</string>
@@ -328,10 +330,8 @@
     <string name="cd_selected">തിരഞ്ഞെടുത്തു</string>
     <string name="cd_checkmark">തിരഞ്ഞെടുത്തു</string>
     <string name="cd_back">പിന്നിലേക്ക്</string>
-    <string name="cd_close">അടയ്ക്കുക</string>
     <string name="cd_search">തിരയുക</string>
     <string name="cd_create_event">ഇവന്റ് സൃഷ്ടിക്കുക</string>
-    <string name="cd_today">ഇന്ന്</string>
     <string name="cd_delete">ഇല്ലാതാക്കുക</string>
     <string name="cd_refresh">റിഫ്രഷ്</string>
     <string name="cd_more_options">കൂടുതൽ ഓപ്ഷനുകൾ</string>
@@ -393,6 +393,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">സിസ്റ്റം ഡിഫോൾട്ട്</string>
+    <string name="option_light">ലൈറ്റ്</string>
+    <string name="option_dark">ഡാർക്ക്</string>
+    <string name="option_kashcal_teal">KashCal ടീൽ</string>
     <string name="option_12_hour">12-മണിക്കൂർ</string>
     <string name="option_24_hour">24-മണിക്കൂർ</string>
     <string name="option_sunday">ഞായർ</string>
@@ -548,15 +551,12 @@
     <string name="cd_remove_alert">അലേർട്ട് നീക്കം ചെയ്യുക</string>
     <string name="cd_warning">മുന്നറിയിപ്പ്</string>
     <string name="cd_refresh_calendars">കലണ്ടറുകൾ റിഫ്രഷ് ചെയ്യുക</string>
-    <string name="cd_timezone_tap_to_change">ടൈംസോൺ: %1$s, മാറ്റാൻ ടാപ്പ് ചെയ്യുക</string>
-    <string name="cd_day_events">ദിവസം %1$d, %2$d ഇവന്റുകൾ</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">ദിവസങ്ങളിൽ</string>
     <string name="label_pattern">പാറ്റേൺ</string>
     <string name="label_ends">അവസാനിക്കുന്നു</string>
     <string name="label_timezone">സമയ മേഖല</string>
-    <string name="label_device_timezone">ഉപകരണ സമയ മേഖല</string>
     <string name="label_alerts">അലേർട്ടുകൾ</string>
     <string name="label_add_alert">അലേർട്ട് ചേർക്കുക</string>
     <string name="label_recurrence_never">ഒരിക്കലും ഇല്ല</string>
@@ -776,9 +776,7 @@
     <string name="cd_open_drawer">ഡ്രോയർ തുറക്കുക</string>
     <string name="cd_close_drawer">ഡ്രോയർ അടയ്ക്കുക</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">മെനു തുറക്കുക</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">മെനു അടയ്ക്കുക</string>
     <string name="cd_calendar_view">കലണ്ടർ കാഴ്ച</string>
     <string name="cd_active_view">സജീവ കാഴ്ച</string>
 
@@ -1049,8 +1047,6 @@
     <string name="insights_period_last_week">കഴിഞ്ഞ ആഴ്ച</string>
     <string name="insights_period_this_month">മാസം</string>
     <string name="insights_empty_state">ഈ ആഴ്ച ഇവന്റുകൾ ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല</string>
-    <string name="insights_delta_more">+%1$s %2$s-നേക്കാൾ കൂടുതൽ</string>
-    <string name="insights_delta_less">%1$s %2$s-നേക്കാൾ കുറവ്</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d മുഴുവൻ ദിവസ ഇവന്റ്</item>
         <item quantity="other">%d മുഴുവൻ ദിവസ ഇവന്റുകൾ</item>
@@ -1081,7 +1077,6 @@
     <string name="insight_tomorrow_preview_no_start">നാളെ: %1$s ഷെഡ്യൂൾ ചെയ്തു</string>
     <string name="insight_heaviest_upcoming">%1$s നിങ്ങളുടെ ഏറ്റവും തിരക്കുള്ള വരാനിരിക്കുന്ന ദിവസമാണ് (%2$s)</string>
     <string name="insight_next_free_block">അടുത്ത ഒഴിവ് സമയം: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">കലണ്ടർ വിഭജനം: %1$s</string>
     <string name="insights_cd_daily_chart">ദൈനംദിന വിതരണം: ഏറ്റവും തിരക്കുള്ള ദിവസം %1$s</string>
 
     <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
@@ -1091,7 +1086,6 @@
     <string name="label_event_color">ഇവന്റ് നിറം</string>
     <string name="label_calendar_default">കലണ്ടർ ഡിഫോൾട്ട്</string>
     <string name="label_custom">ഇഷ്ടാനുസൃതം</string>
-    <string name="cd_event_color">ഇവന്റ് നിറം</string>
 
     <string name="hue_red">ചുവപ്പ്</string>
     <string name="hue_orange">ഓറഞ്ച്</string>
@@ -1109,15 +1103,6 @@
 
     <string name="label_attendees">പങ്കെടുക്കുന്നവർ</string>
     <string name="attendee_you_marker">നിങ്ങൾ</string>
-    <string name="attendee_organizer_pill">സംഘാടകൻ</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d കൂടുതൽ</item>
-        <item quantity="other">+%d കൂടുതൽ</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d പങ്കാളി</item>
-        <item quantity="other">%d പങ്കാളികൾ</item>
-    </plurals>
     <string name="attendee_card_going">പോകുന്നു</string>
     <string name="attendee_card_pending">തീർപ്പാക്കാത്തത്</string>
     <string name="attendee_card_declined">നിരസിച്ചു</string>
@@ -1138,10 +1123,8 @@
     <string name="action_save_and_notify">സംരക്ഷിച്ച് അറിയിക്കുക</string>
     <string name="attendee_action_copy">ഇമെയിൽ പകർത്തുക</string>
     <string name="attendee_action_email">ഇമെയിൽ അയയ്ക്കുക</string>
-    <string name="attendee_group_icon_description">ആളുകൾ</string>
     <string name="attendee_email_copied">ഇമെയിൽ പകർത്തി</string>
     <string name="attendee_no_email_app">ഇമെയിൽ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല</string>
-    <string name="attendee_show_less">കുറച്ച് കാണിക്കുക</string>
     <string name="attendee_show_all">എല്ലാ പങ്കാളികളെയും കാണിക്കുക</string>
     <string name="attendee_status_accepted">സ്വീകരിച്ചു</string>
     <string name="attendee_status_declined">നിരസിച്ചു</string>
@@ -1204,10 +1187,6 @@
     <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
     <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
     <string name="attendee_sheet_title">പങ്കെടുക്കുന്നവർ</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d പേർ ക്ഷണിച്ചു</item>
-        <item quantity="other">%d പേർ ക്ഷണിച്ചു</item>
-    </plurals>
     <string name="attendee_search_hint">തിരയുക</string>
     <string name="attendee_search_no_matches">ഫലങ്ങളില്ല</string>
     <string name="attendee_section_going">വരുന്നു</string>

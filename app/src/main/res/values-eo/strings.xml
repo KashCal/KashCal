@@ -71,13 +71,9 @@
     <string name="action_delete_event">Forigi eventon</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Akcepti</string>
-    <string name="rsvp_action_tentative">Provizore</string>
-    <string name="rsvp_action_decline">Rifuzi</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">La respondo validas por la tuta serio.</string>
-    <string name="rsvp_modified_snackbar">Respondo por %1$s malsukcesis: la evento estis modifita. Bonvolu respondi denove.</string>
     <string name="invitees_host_tag">Gastiganto</string>
     <string name="invitees_summary_you_alone">Vi</string>
     <string name="holiday_catalog_add">Aldoni feritagan kalendaron</string>
@@ -121,10 +117,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Nur ĉi tiu</string>
     <string name="recurring_this_and_future">Ĉi tiu kaj ĉiuj estontaj</string>
-    <string name="recurring_just_occurrence">Nur ĉi tiu okazo</string>
-    <string name="recurring_all_occurrences">Ĉiuj okazoj</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Eventa titolo</string>
@@ -154,6 +147,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Agordoj</string>
+    <string name="settings_theme">Etoso</string>
+    <string name="settings_theme_system_desc">Sekvu la helan aŭ malhelan agordon de via telefono</string>
+    <string name="settings_theme_light_desc">Ĉiam hela</string>
+    <string name="settings_theme_dark_desc">Ĉiam malhela</string>
+    <string name="settings_theme_teal_desc">KashCal turkisa, sekvas la helan aŭ malhelan agordon de via telefono</string>
+    <string name="settings_app_icon">Aplikaĵa piktogramo</string>
+    <string name="app_icon_default">Defaŭlta</string>
+    <string name="app_icon_supporter">Subtenanto</string>
+    <string name="app_icon_supporter_calendar">Subtenanto, etikedita Kalendaro</string>
+    <string name="app_icon_label_calendar">Kalendaro</string>
+    <string name="app_icon_support_cta">Subteni KashCal</string>
+    <string name="app_icon_switch_note">Ŝanĝo povas restartigi la aplikaĵon. Sciigoj ĉiam uzas la defaŭltan piktogramon kaj nomon.</string>
     <string name="settings_time_format">Hora formato</string>
     <string name="settings_start_week_on">Komenci semajnon je</string>
     <string name="settings_event_emojis">Eventaj emoĝioj</string>
@@ -169,7 +174,6 @@
     <string name="settings_section_calendars">Kalendaroj</string>
     <string name="settings_section_appearance">Aspekto</string>
     <string name="settings_section_creating_events">Krei eventojn</string>
-    <string name="settings_section_notifications">Sciigoj</string>
     <string name="settings_section_sync">Sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
     <string name="settings_section_privacy">Privateco</string>
@@ -203,8 +207,6 @@
     <string name="dialog_force_sync_title">Devigi plenan sinkronigon?</string>
     <string name="dialog_force_sync_message">Ĉi tio re-elŝutos ĉiujn kalendarajn datumojn de la servilo. Lokaj ŝanĝoj estos konservitaj.</string>
     <string name="dialog_enable_notifications">Ŝalti sciigojn?</string>
-    <string name="dialog_delete_title">Forigi \"%1$s\"</string>
-    <string name="dialog_edit_title">Redakti \"%1$s\"</string>
     <string name="dialog_action_required">Ĉi tiu ago estas necesa por daŭrigi.</string>
     <string name="dialog_add_to_calendar">Aldoni al kalendaro</string>
     <string name="dialog_select_calendar">Elekti kalendaron</string>
@@ -238,7 +240,7 @@
     <string name="error_auth_session_expired">Via iCloud seanco eksvalidiĝis. Bonvolu ensaluti denove por daŭrigi sinkronigi.</string>
     <string name="error_auth_account_locked">Via Apple ID estas blokita. Bonvolu viziti appleid.apple.com por malbloki ĝin.</string>
 
-    <string name="error_network_offline">Vi estas eksterrete. Ŝanĝoj sinkronigos kiam vi estos rete denove.</string>
+    <string name="error_network_offline">Vi estas eksterrete. Ŝanĝoj sinkroniĝos kiam vi estos rete denove.</string>
     <string name="error_network_timeout">Konekto ekstempiĝis. Bonvolu kontroli vian interreton kaj reprovi.</string>
     <string name="error_network_ssl">Sekura konekto malsukcesis. Bonvolu kontroli viajn retajn agordojn.</string>
     <string name="error_network_unknown_host">Ne povis atingi iCloud. Bonvolu kontroli vian interretan konekton.</string>
@@ -308,14 +310,12 @@
     <!-- Content Descriptions -->
     <string name="cd_selected">Elektita</string>
     <string name="cd_back">Reen</string>
-    <string name="cd_close">Fermi</string>
     <string name="cd_search">Serĉi</string>
     <string name="cd_create_event">Krei eventon</string>
     <string name="cd_event_state_cancelled">nuligita</string>
     <string name="cd_event_state_declined">malakceptita</string>
     <string name="cd_event_state_past">pasinta evento</string>
     <string name="cd_event_untitled">Sentitola evento</string>
-    <string name="cd_today">Hodiaŭ</string>
     <string name="cd_delete">Forigi</string>
     <string name="cd_refresh">Aktualigi</string>
     <string name="cd_more_options">Pliaj elektoj</string>
@@ -373,6 +373,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Sistema defaŭlto</string>
+    <string name="option_light">Hela</string>
+    <string name="option_dark">Malhela</string>
+    <string name="option_kashcal_teal">KashCal Turkisa</string>
     <string name="option_12_hour">12-hora</string>
     <string name="option_24_hour">24-hora</string>
     <string name="option_sunday">Dimanĉo</string>
@@ -528,8 +531,6 @@
     <string name="cd_remove_alert">Forigi alarmon</string>
     <string name="cd_warning">Averto</string>
     <string name="cd_refresh_calendars">Aktualigi kalendarojn</string>
-    <string name="cd_timezone_tap_to_change">Horzono: %1$s, tuŝu por ŝanĝi</string>
-    <string name="cd_day_events">Tago %1$d, %2$d eventoj</string>
 
     <!-- Pickers / Forms -->
     <string name="label_on_days">En tagoj</string>
@@ -754,9 +755,7 @@
     <string name="cd_open_drawer">Malfermi tirkeston</string>
     <string name="cd_close_drawer">Fermi tirkeston</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Malfermi menuon</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Fermi menuon</string>
     <string name="cd_calendar_view">Kalendara vido</string>
     <string name="cd_active_view">Aktiva vido</string>
 
@@ -1016,8 +1015,6 @@
     <string name="insights_period_last_week">Pasinta sem.</string>
     <string name="insights_period_this_month">Monato</string>
     <string name="insights_empty_state">Neniuj eventoj planitaj ĉi-semajne</string>
-    <string name="insights_delta_more">+%1$s pli ol %2$s</string>
-    <string name="insights_delta_less">%1$s malpli ol %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d tuttaga evento</item>
         <item quantity="other">%d tuttagaj eventoj</item>
@@ -1048,7 +1045,6 @@
     <string name="insight_tomorrow_preview_no_start">Morgaŭ: %1$s planitaj</string>
     <string name="insight_heaviest_upcoming">%1$s estas via plej ŝarĝita venonta tago (%2$s)</string>
     <string name="insight_next_free_block">Sekva libera bloko: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Kalendara distribuo: %1$s</string>
     <string name="insights_cd_daily_chart">Taga distribuo: plej okupita tago estas %1$s</string>
 
     <!-- Event Form Redesign -->
@@ -1058,10 +1054,8 @@
     <string name="label_event_color">Eventa koloro</string>
     <string name="label_calendar_default">Kalendara defaŭlto</string>
     <string name="label_custom">Propra</string>
-    <string name="cd_event_color">Eventa koloro</string>
 
     <string name="cd_checkmark">Elektita</string>
-    <string name="label_device_timezone">Horzono de aparato</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Seltela bruna</string>
@@ -1108,15 +1102,6 @@
     <string name="backup_error_read_failed">Ne eblis legi dosieron</string>
     <string name="label_attendees">Partoprenantoj</string>
     <string name="attendee_you_marker">Vi</string>
-    <string name="attendee_organizer_pill">Organizanto</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d pli</item>
-        <item quantity="other">+%d pli</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d partoprenanto</item>
-        <item quantity="other">%d partoprenantoj</item>
-    </plurals>
     <string name="attendee_card_going">Venonta</string>
     <string name="attendee_card_pending">Atendanta</string>
     <string name="attendee_card_declined">Rifuzita</string>
@@ -1124,10 +1109,8 @@
     <string name="attendee_card_hosting">Gastiganto</string>
     <string name="attendee_action_copy">Kopii retpoŝton</string>
     <string name="attendee_action_email">Sendi retpoŝton</string>
-    <string name="attendee_group_icon_description">Homoj</string>
     <string name="attendee_email_copied">Retpoŝto kopiita</string>
     <string name="attendee_no_email_app">Neniu retpoŝta aplikaĵo instalita</string>
-    <string name="attendee_show_less">Montri malpli</string>
     <string name="attendee_show_all">Montri ĉiujn partoprenantojn</string>
     <string name="attendee_status_accepted">Akceptita</string>
     <string name="attendee_status_declined">Rifuzita</string>
@@ -1197,10 +1180,6 @@
     <string name="share_as_card_share_failed">Ne eblis kunhavigi karton</string>
     <string name="share_from_kashcal_footer">Kunhavigita el KashCal</string>
     <string name="attendee_sheet_title">Ĉeestantoj</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d invitita</item>
-        <item quantity="other">%d invititaj</item>
-    </plurals>
     <string name="attendee_search_hint">Serĉi</string>
     <string name="attendee_search_no_matches">Neniuj rezultoj</string>
     <string name="attendee_section_going">Iras</string>

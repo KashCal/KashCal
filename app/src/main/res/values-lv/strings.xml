@@ -72,14 +72,10 @@
     <string name="action_delete_event">Dzēst notikumu</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Pieņemt</string>
-    <string name="rsvp_action_tentative">Varbūt</string>
-    <string name="rsvp_action_decline">Noraidīt</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Atbilde attiecas uz visu sēriju.</string>
-    <string name="rsvp_modified_snackbar">Neizdevās atbildēt uz „%1$s“ — notikums tika mainīts. Lūdzu, atbildiet vēlreiz.</string>
     <string name="invitees_host_tag">Saimnieks</string>
     <string name="invitees_summary_you_alone">Tu</string>
     <plurals name="invitees_summary_you_organizing">
@@ -121,10 +117,7 @@
 
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Tikai šo</string>
     <string name="recurring_this_and_future">Šo un visus nākamos</string>
-    <string name="recurring_just_occurrence">Tikai šo reizi</string>
-    <string name="recurring_all_occurrences">Visas reizes</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Notikuma nosaukums</string>
@@ -154,6 +147,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Iestatījumi</string>
+    <string name="settings_theme">Motīvs</string>
+    <string name="settings_theme_system_desc">Sekot tālruņa gaišajam vai tumšajam iestatījumam</string>
+    <string name="settings_theme_light_desc">Vienmēr gaišs</string>
+    <string name="settings_theme_dark_desc">Vienmēr tumšs</string>
+    <string name="settings_theme_teal_desc">KashCal zilganzaļš, seko tālruņa gaišajam vai tumšajam iestatījumam</string>
+    <string name="settings_app_icon">Lietotnes ikona</string>
+    <string name="app_icon_default">Noklusējums</string>
+    <string name="app_icon_supporter">Atbalstītājs</string>
+    <string name="app_icon_supporter_calendar">Atbalstītājs, ar nosaukumu Kalendārs</string>
+    <string name="app_icon_label_calendar">Kalendārs</string>
+    <string name="app_icon_support_cta">Atbalstīt KashCal</string>
+    <string name="app_icon_switch_note">Ikonas maiņa var restartēt lietotni. Paziņojumos vienmēr tiek izmantota noklusējuma ikona un nosaukums.</string>
     <string name="settings_time_format">Laika formāts</string>
     <string name="settings_start_week_on">Nedēļa sākas</string>
     <string name="settings_event_emojis">Notikumu emocijzīmes</string>
@@ -169,7 +174,6 @@
     <string name="settings_section_calendars">Kalendāri</string>
     <string name="settings_section_appearance">Izskats</string>
     <string name="settings_section_creating_events">Notikumu izveide</string>
-    <string name="settings_section_notifications">Paziņojumi</string>
     <string name="settings_section_sync">Sinhronizācija</string>
     <string name="settings_section_data">Dublēšana un atjaunošana</string>
     <string name="settings_section_privacy">Konfidencialitāte</string>
@@ -209,8 +213,6 @@
     <string name="dialog_force_sync_title">Piespiedu pilna sinhronizācija?</string>
     <string name="dialog_force_sync_message">Tiks lejupielādēti visi kalendāra dati no servera. Lokālās izmaiņas tiks saglabātas.</string>
     <string name="dialog_enable_notifications">Iespējot paziņojumus?</string>
-    <string name="dialog_delete_title">Dzēst \"%1$s\"</string>
-    <string name="dialog_edit_title">Rediģēt \"%1$s\"</string>
     <string name="dialog_action_required">Šī darbība ir nepieciešama, lai turpinātu.</string>
     <string name="dialog_add_to_calendar">Pievienot kalendāram</string>
     <string name="dialog_select_calendar">Izvēlēties kalendāru</string>
@@ -244,7 +246,7 @@
     <string name="error_auth_session_expired">Jūsu iCloud sesija ir beigusies. Lūdzu, pierakstieties vēlreiz, lai turpinātu sinhronizāciju.</string>
     <string name="error_auth_account_locked">Jūsu Apple ID ir bloķēts. Lūdzu, apmeklējiet appleid.apple.com, lai to atbloķētu.</string>
 
-    <string name="error_network_offline">Jūs esat bezsaistē. Izmaiņas tiks sinhronizētas, kad atkal būsiet tiešsaistē.</string>
+    <string name="error_network_offline">Tu esi bezsaistē. Izmaiņas tiks sinhronizētas, kad atkal būsi tiešsaistē.</string>
     <string name="error_network_timeout">Savienojuma noildze. Lūdzu, pārbaudiet internetu un mēģiniet vēlreiz.</string>
     <string name="error_network_ssl">Drošs savienojums neizdevās. Lūdzu, pārbaudiet tīkla iestatījumus.</string>
     <string name="error_network_unknown_host">Neizdevās sasniegt iCloud. Lūdzu, pārbaudiet interneta savienojumu.</string>
@@ -316,10 +318,8 @@
     <string name="cd_selected">Atlasīts</string>
     <string name="cd_checkmark">Atlasīts</string>
     <string name="cd_back">Atpakaļ</string>
-    <string name="cd_close">Aizvērt</string>
     <string name="cd_search">Meklēt</string>
     <string name="cd_create_event">Izveidot notikumu</string>
-    <string name="cd_today">Šodien</string>
     <string name="cd_delete">Dzēst</string>
     <string name="cd_refresh">Atsvaidzināt</string>
     <string name="cd_more_options">Vairāk iespēju</string>
@@ -377,6 +377,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistēmas noklusējums</string>
+    <string name="option_light">Gaišs</string>
+    <string name="option_dark">Tumšs</string>
+    <string name="option_kashcal_teal">KashCal zilganzaļš</string>
     <string name="option_12_hour">12 stundu</string>
     <string name="option_24_hour">24 stundu</string>
     <string name="option_sunday">Svētdiena</string>
@@ -539,15 +542,12 @@
     <string name="cd_remove_alert">Noņemt atgādinājumu</string>
     <string name="cd_warning">Brīdinājums</string>
     <string name="cd_refresh_calendars">Atsvaidzināt kalendārus</string>
-    <string name="cd_timezone_tap_to_change">Laika josla: %1$s, pieskarieties, lai mainītu</string>
-    <string name="cd_day_events">Diena %1$d, %2$d notikumi</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Dienās</string>
     <string name="label_pattern">Modelis</string>
     <string name="label_ends">Beidzas</string>
     <string name="label_timezone">Laika josla</string>
-    <string name="label_device_timezone">Ierīces laika josla</string>
     <string name="label_alerts">Atgādinājumi</string>
     <string name="label_add_alert">Pievienot atgādinājumu</string>
     <string name="label_recurrence_never">Nekad</string>
@@ -803,9 +803,7 @@
     <string name="cd_open_drawer">Atvērt izvēlni</string>
     <string name="cd_close_drawer">Aizvērt izvēlni</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Atvērt izvēlni</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Aizvērt izvēlni</string>
     <string name="cd_calendar_view">Kalendāra skats</string>
     <string name="cd_active_view">Aktīvais skats</string>
 
@@ -1042,8 +1040,6 @@
     <string name="insights_period_last_week">Iepr. nedēļa</string>
     <string name="insights_period_this_month">Mēnesis</string>
     <string name="insights_empty_state">Šonedēļ nav ieplānotu notikumu</string>
-    <string name="insights_delta_more">+%1$s vairāk nekā par %2$s</string>
-    <string name="insights_delta_less">%1$s mazāk nekā par %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="zero">%d visas dienas notikumu</item>
         <item quantity="one">%d visas dienas notikums</item>
@@ -1075,7 +1071,6 @@
     <string name="insight_tomorrow_preview_no_start">Rīt: ieplānots %1$s</string>
     <string name="insight_heaviest_upcoming">%1$s ir aizņemtākā gaidāmā diena (%2$s)</string>
     <string name="insight_next_free_block">Nākamais brīvais bloks: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Sadalījums pa kalendāriem: %1$s</string>
     <string name="insights_cd_daily_chart">Sadalījums pa dienām: aizņemtākā diena — %1$s</string>
     <string name="label_availability">Pieejamība</string>
     <string name="label_busy">Aizņemts</string>
@@ -1083,7 +1078,6 @@
     <string name="label_event_color">Notikuma krāsa</string>
     <string name="label_calendar_default">Kalendāra noklusējums</string>
     <string name="label_custom">Pielāgota</string>
-    <string name="cd_event_color">Notikuma krāsa</string>
 
     <string name="hue_red">Sarkana</string>
     <string name="hue_orange">Oranža</string>
@@ -1122,17 +1116,6 @@
     <!-- Attendees (B4) -->
     <string name="label_attendees">Dalībnieki</string>
     <string name="attendee_you_marker">Jūs</string>
-    <string name="attendee_organizer_pill">Organizators</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="zero">+vēl %d</item>
-        <item quantity="one">+vēl %d</item>
-        <item quantity="other">+vēl %d</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="zero">%d dalībnieku</item>
-        <item quantity="one">%d dalībnieks</item>
-        <item quantity="other">%d dalībnieki</item>
-    </plurals>
     <string name="attendee_card_going">Pieņēma</string>
     <string name="attendee_card_pending">Gaida</string>
     <string name="attendee_card_declined">Noraidīja</string>
@@ -1140,10 +1123,8 @@
     <string name="attendee_card_hosting">Organizē</string>
     <string name="attendee_action_copy">Kopēt e-pastu</string>
     <string name="attendee_action_email">Sūtīt e-pastu</string>
-    <string name="attendee_group_icon_description">Cilvēki</string>
     <string name="attendee_email_copied">E-pasts nokopēts</string>
     <string name="attendee_no_email_app">Nav instalēta e-pasta lietotne</string>
-    <string name="attendee_show_less">Rādīt mazāk</string>
     <string name="attendee_show_all">Rādīt visus dalībniekus</string>
     <string name="attendee_status_accepted">Pieņemts</string>
     <string name="attendee_status_declined">Noraidīja</string>
@@ -1204,11 +1185,6 @@
     <string name="share_as_card_share_failed">Neizdevās kopīgot kartīti</string>
     <string name="share_from_kashcal_footer">Kopīgots no KashCal</string>
     <string name="attendee_sheet_title">Dalībnieki</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="zero">%d uzaicināto</item>
-        <item quantity="one">%d uzaicināts</item>
-        <item quantity="other">%d uzaicināti</item>
-    </plurals>
     <string name="attendee_search_hint">Meklēt</string>
     <string name="attendee_search_no_matches">Nav rezultātu</string>
     <string name="attendee_section_going">Ies</string>

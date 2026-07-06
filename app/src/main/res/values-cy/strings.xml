@@ -71,13 +71,9 @@
     <string name="action_delete_event">Dileu Digwyddiad</string>
 
     <!-- RSVP Actions -->
-    <string name="rsvp_action_accept">Derbyn</string>
-    <string name="rsvp_action_tentative">Dros dro</string>
-    <string name="rsvp_action_decline">Gwrthod</string>
     <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <string name="rsvp_series_disclosure">Mae\'r ymateb yn berthnasol i\'r gyfres gyfan.</string>
-    <string name="rsvp_modified_snackbar">Methodd yr ymateb ar gyfer %1$s: cafodd y digwyddiad ei addasu. Ymateba eto.</string>
     <string name="invitees_host_tag">Gwesteiwr</string>
     <string name="invitees_summary_you_alone">Ti</string>
     <string name="holiday_catalog_add">Ychwanegu calendr gwyliau</string>
@@ -141,10 +137,7 @@
 
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Dim ond hwn</string>
     <string name="recurring_this_and_future">Hwn a phob un yn y dyfodol</string>
-    <string name="recurring_just_occurrence">Dim ond y digwyddiad hwn</string>
-    <string name="recurring_all_occurrences">Pob digwyddiad</string>
 
     <!-- Form Labels -->
     <string name="label_event_title">Teitl y digwyddiad</string>
@@ -174,6 +167,18 @@
 
     <!-- Settings -->
     <string name="settings_title">Gosodiadau</string>
+    <string name="settings_theme">Thema</string>
+    <string name="settings_theme_system_desc">Dilyn gosodiad golau neu dywyll eich ffôn</string>
+    <string name="settings_theme_light_desc">Golau bob amser</string>
+    <string name="settings_theme_dark_desc">Tywyll bob amser</string>
+    <string name="settings_theme_teal_desc">Glaswyrdd KashCal, yn dilyn gosodiad golau neu dywyll eich ffôn</string>
+    <string name="settings_app_icon">Eicon yr Ap</string>
+    <string name="app_icon_default">Rhagosodedig</string>
+    <string name="app_icon_supporter">Cefnogwr</string>
+    <string name="app_icon_supporter_calendar">Cefnogwr, o\'r enw Calendr</string>
+    <string name="app_icon_label_calendar">Calendr</string>
+    <string name="app_icon_support_cta">Cefnogi KashCal</string>
+    <string name="app_icon_switch_note">Gall newid ailgychwyn yr ap. Mae hysbysiadau bob amser yn defnyddio\'r eicon a\'r enw rhagosodedig.</string>
     <string name="settings_time_format">Fformat Amser</string>
     <string name="settings_start_week_on">Dechrau\'r Wythnos Ar</string>
     <string name="settings_event_emojis">Emojis Digwyddiadau</string>
@@ -189,7 +194,6 @@
     <string name="settings_section_calendars">Calendrau</string>
     <string name="settings_section_appearance">Golwg</string>
     <string name="settings_section_creating_events">Creu digwyddiadau</string>
-    <string name="settings_section_notifications">Hysbysiadau</string>
     <string name="settings_section_sync">Cysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
     <string name="settings_section_privacy">Preifatrwydd</string>
@@ -223,8 +227,6 @@
     <string name="dialog_force_sync_title">Gorfodi Cysoni Llawn?</string>
     <string name="dialog_force_sync_message">Bydd hyn yn ail-lwytho\'r holl ddata calendr o\'r gweinydd. Bydd newidiadau lleol yn cael eu cadw.</string>
     <string name="dialog_enable_notifications">Galluogi Hysbysiadau?</string>
-    <string name="dialog_delete_title">Dileu \"%1$s\"</string>
-    <string name="dialog_edit_title">Golygu \"%1$s\"</string>
     <string name="dialog_action_required">Mae\'r weithred hon yn ofynnol i barhau.</string>
     <string name="dialog_add_to_calendar">Ychwanegu at galendr</string>
     <string name="dialog_select_calendar">Dewis calendr</string>
@@ -339,14 +341,12 @@
     <!-- Content Descriptions (Accessibility) -->
     <string name="cd_selected">Wedi\'i ddewis</string>
     <string name="cd_back">Yn ôl</string>
-    <string name="cd_close">Cau</string>
     <string name="cd_search">Chwilio</string>
     <string name="cd_create_event">Creu digwyddiad</string>
     <string name="cd_event_state_cancelled">wedi\'i ganslo</string>
     <string name="cd_event_state_declined">wedi\'i wrthod</string>
     <string name="cd_event_state_past">digwyddiad yn y gorffennol</string>
     <string name="cd_event_untitled">Digwyddiad heb deitl</string>
-    <string name="cd_today">Heddiw</string>
     <string name="cd_delete">Dileu</string>
     <string name="cd_refresh">Adnewyddu</string>
     <string name="cd_more_options">Mwy o opsiynau</string>
@@ -405,6 +405,9 @@
 
     <!-- Settings Options -->
     <string name="option_system_default">Rhagosodiad y system</string>
+    <string name="option_light">Golau</string>
+    <string name="option_dark">Tywyll</string>
+    <string name="option_kashcal_teal">KashCal Glaswyrdd</string>
     <string name="option_12_hour">12 awr</string>
     <string name="option_24_hour">24 awr</string>
     <string name="option_sunday">Dydd Sul</string>
@@ -561,8 +564,6 @@
     <string name="cd_remove_alert">Tynnu rhybudd</string>
     <string name="cd_warning">Rhybudd</string>
     <string name="cd_refresh_calendars">Adnewyddu calendrau</string>
-    <string name="cd_timezone_tap_to_change">Cylchfa amser: %1$s, tapiwch i newid</string>
-    <string name="cd_day_events">Diwrnod %1$d, %2$d digwyddiad</string>
 
     <!-- i18n: Pickers / Forms -->
     <string name="label_on_days">Ar ddyddiau</string>
@@ -911,9 +912,7 @@
     <string name="cd_open_drawer">Agor droir</string>
     <string name="cd_close_drawer">Cau droir</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Agor dewislen</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Cau dewislen</string>
     <string name="cd_calendar_view">Golwg calendr</string>
     <string name="cd_active_view">Golwg gweithredol</string>
 
@@ -1205,8 +1204,6 @@
     <string name="insights_period_last_week">Wythnos ddiwethaf</string>
     <string name="insights_period_this_month">Mis</string>
     <string name="insights_empty_state">Dim digwyddiadau wedi\'u trefnu\'r wythnos hon</string>
-    <string name="insights_delta_more">+%1$s yn fwy na %2$s</string>
-    <string name="insights_delta_less">%1$s yn llai na %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="zero">%d digwyddiad drwy\'r dydd</item>
         <item quantity="one">%d digwyddiad drwy\'r dydd</item>
@@ -1241,7 +1238,6 @@
     <string name="insight_tomorrow_preview_no_start">Yfory: %1$s wedi\'u trefnu</string>
     <string name="insight_heaviest_upcoming">%1$s yw eich diwrnod trymaf sydd i ddod (%2$s)</string>
     <string name="insight_next_free_block">Bloc rhydd nesaf: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Dosraniad calendrau: %1$s</string>
     <string name="insights_cd_daily_chart">Dosraniad dyddiol: y diwrnod prysuraf yw %1$s</string>
 
     <!-- Event Form Redesign -->
@@ -1251,10 +1247,8 @@
     <string name="label_event_color">Lliw digwyddiad</string>
     <string name="label_calendar_default">Rhagosodiad y calendr</string>
     <string name="label_custom">Personol</string>
-    <string name="cd_event_color">Lliw digwyddiad</string>
 
     <string name="cd_checkmark">Dewiswyd</string>
-    <string name="label_device_timezone">Cylchfa amser y dyfais</string>
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_saddlebrown">Brown cyfrwy</string>
@@ -1301,23 +1295,6 @@
     <string name="backup_error_read_failed">Methwyd darllen y ffeil</string>
     <string name="label_attendees">Mynychwyr</string>
     <string name="attendee_you_marker">Ti</string>
-    <string name="attendee_organizer_pill">Trefnydd</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="zero">+%d arall</item>
-        <item quantity="one">+%d arall</item>
-        <item quantity="two">+%d arall</item>
-        <item quantity="few">+%d arall</item>
-        <item quantity="many">+%d arall</item>
-        <item quantity="other">+%d arall</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="zero">%d mynychwr</item>
-        <item quantity="one">%d mynychwr</item>
-        <item quantity="two">%d fynychwr</item>
-        <item quantity="few">%d mynychwr</item>
-        <item quantity="many">%d mynychwr</item>
-        <item quantity="other">%d mynychwr</item>
-    </plurals>
     <string name="attendee_card_going">Yn mynychu</string>
     <string name="attendee_card_pending">Yn aros</string>
     <string name="attendee_card_declined">Wedi gwrthod</string>
@@ -1325,10 +1302,8 @@
     <string name="attendee_card_hosting">Yn cynnal</string>
     <string name="attendee_action_copy">Copïo e-bost</string>
     <string name="attendee_action_email">Anfon e-bost</string>
-    <string name="attendee_group_icon_description">Pobl</string>
     <string name="attendee_email_copied">E-bost wedi\'i gopïo</string>
     <string name="attendee_no_email_app">Dim ap e-bost wedi\'i osod</string>
-    <string name="attendee_show_less">Dangos llai</string>
     <string name="attendee_show_all">Dangos pob mynychwr</string>
     <string name="attendee_status_accepted">Derbyniwyd</string>
     <string name="attendee_status_declined">Wedi gwrthod</string>
@@ -1352,7 +1327,7 @@
     <string name="attendee_scheduling_unavailable">Nid yw gwahodd pobl ar gael ar y cyfrif hwn</string>
     <string name="device_attendee_local_no_delivery">Ni all y calendr hwn anfon gwahoddiadau. Caiff gwesteion eu cadw, ond ni roddir gwybod iddynt.</string>
     <string name="action_save_and_notify">Cadw a hysbysu</string>
-    <string name="inbox_empty_caught_up">Popeth wedi\'i ddal</string>
+    <string name="inbox_empty_caught_up">Popeth yn gyfredol</string>
     <string name="inbox_organizer_suffix">(trefnydd)</string>
     <string name="menu_invites">Gwahoddiadau</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
@@ -1418,14 +1393,6 @@
     <string name="share_as_card_share_failed">Methu rhannu\'r cerdyn</string>
     <string name="share_from_kashcal_footer">Wedi rhannu o KashCal</string>
     <string name="attendee_sheet_title">Mynychwyr</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="zero">neb wedi\'i wahodd</item>
-        <item quantity="one">%d wedi\'i wahodd</item>
-        <item quantity="two">%d wedi\'u gwahodd</item>
-        <item quantity="few">%d wedi\'u gwahodd</item>
-        <item quantity="many">%d wedi\'u gwahodd</item>
-        <item quantity="other">%d wedi\'u gwahodd</item>
-    </plurals>
     <string name="attendee_search_hint">Chwilio</string>
     <string name="attendee_search_no_matches">Dim canlyniadau</string>
     <string name="attendee_section_going">Mynd</string>

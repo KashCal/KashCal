@@ -71,9 +71,6 @@
     <string name="action_delete_event">Obriši događaj</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Prihvati</string>
-    <string name="rsvp_action_tentative">Uslovno</string>
-    <string name="rsvp_action_decline">Odbij</string>
     <string name="invitees_host_tag">Domaćin</string>
     <string name="rsvp_question_going">Ideš?</string>
     <string name="rsvp_action_yes">Da</string>
@@ -89,13 +86,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Odgovor se odnosi na celu seriju.</string>
-    <string name="rsvp_modified_snackbar">Odgovor na poziv za %1$s nije uspeo — događaj je izmenjen. Molimo odgovorite ponovo.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Samo ovaj</string>
     <string name="recurring_this_and_future">Ovaj i svi budući</string>
-    <string name="recurring_just_occurrence">Samo ovo pojavljivanje</string>
-    <string name="recurring_all_occurrences">Sva pojavljivanja</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Naziv događaja</string>
@@ -125,6 +118,18 @@
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Podešavanja</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Prati svetlo ili tamno podešavanje telefona</string>
+    <string name="settings_theme_light_desc">Uvek svetla</string>
+    <string name="settings_theme_dark_desc">Uvek tamna</string>
+    <string name="settings_theme_teal_desc">Tirkizni KashCal, prati svetlo ili tamno podešavanje telefona</string>
+    <string name="settings_app_icon">Ikona aplikacije</string>
+    <string name="app_icon_default">Podrazumevano</string>
+    <string name="app_icon_supporter">Podržavalac</string>
+    <string name="app_icon_supporter_calendar">Podržavalac, s nazivom Kalendar</string>
+    <string name="app_icon_label_calendar">Kalendar</string>
+    <string name="app_icon_support_cta">Podrži KashCal</string>
+    <string name="app_icon_switch_note">Promena ikone može ponovo pokrenuti aplikaciju. Obaveštenja uvek koriste podrazumevanu ikonu i naziv.</string>
     <string name="settings_time_format">Format vremena</string>
     <string name="settings_start_week_on">Nedelja počinje</string>
     <string name="settings_event_emojis">Emoji događaja</string>
@@ -140,7 +145,6 @@
     <string name="settings_section_calendars">Календари</string>
     <string name="settings_section_appearance">Изглед</string>
     <string name="settings_section_creating_events">Прављење догађаја</string>
-    <string name="settings_section_notifications">Obaveštenja</string>
     <string name="settings_section_sync">Sinhronizacija</string>
     <string name="settings_section_data">Rezervna kopija i vraćanje</string>
     <string name="settings_section_privacy">Privatnost</string>
@@ -199,8 +203,6 @@
     <string name="dialog_force_sync_title">Prinudna potpuna sinhronizacija?</string>
     <string name="dialog_force_sync_message">Ovo će ponovo preuzeti sve podatke kalendara sa servera. Lokalne izmene biće sačuvane.</string>
     <string name="dialog_enable_notifications">Omogućiti obaveštenja?</string>
-    <string name="dialog_delete_title">Obrisati \"%1$s\"</string>
-    <string name="dialog_edit_title">Izmeniti \"%1$s\"</string>
     <string name="dialog_action_required">Ova radnja je neophodna za nastavak.</string>
     <string name="dialog_add_to_calendar">Dodaj u kalendar</string>
     <string name="dialog_select_calendar">Izaberi kalendar</string>
@@ -309,10 +311,8 @@
     <string name="cd_event_state_past">prošli događaj</string>
     <string name="cd_event_untitled">Događaj bez naslova</string>
     <string name="cd_back">Nazad</string>
-    <string name="cd_close">Zatvori</string>
     <string name="cd_search">Pretraži</string>
     <string name="cd_create_event">Napravi događaj</string>
-    <string name="cd_today">Danas</string>
     <string name="cd_delete">Obriši</string>
     <string name="cd_refresh">Osveži</string>
     <string name="cd_more_options">Više opcija</string>
@@ -366,6 +366,9 @@
     <string name="settings_new_events">Novi događaji</string>
 
     <string name="option_system_default">Podrazumevano sistemsko</string>
+    <string name="option_light">Svetla</string>
+    <string name="option_dark">Tamna</string>
+    <string name="option_kashcal_teal">KashCal tirkizna</string>
     <string name="option_12_hour">12-časovni</string>
     <string name="option_24_hour">24-časovni</string>
     <string name="option_sunday">Nedelja</string>
@@ -509,14 +512,11 @@
     <string name="cd_remove_alert">Ukloni podsetnik</string>
     <string name="cd_warning">Upozorenje</string>
     <string name="cd_refresh_calendars">Osveži kalendare</string>
-    <string name="cd_timezone_tap_to_change">Vremenska zona: %1$s, dodirni za promenu</string>
-    <string name="cd_day_events">Dan %1$d, %2$d događaja</string>
 
     <string name="label_on_days">U dane</string>
     <string name="label_pattern">Obrazac</string>
     <string name="label_ends">Završava se</string>
     <string name="label_timezone">Временска зона</string>
-    <string name="label_device_timezone">Временска зона уређаја</string>
     <string name="label_alerts">Podsetnici</string>
     <string name="label_add_alert">Dodaj podsetnik</string>
     <string name="label_recurrence_never">Nikad</string>
@@ -762,9 +762,7 @@
     <string name="cd_open_drawer">Otvori meni</string>
     <string name="cd_close_drawer">Zatvori meni</string>
     <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <string name="cd_open_rail">Otvori meni</string>
     <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_close_rail">Zatvori meni</string>
     <string name="cd_calendar_view">Prikaz kalendara</string>
     <string name="cd_active_view">Aktivni prikaz</string>
 
@@ -1042,8 +1040,6 @@
     <string name="insights_period_last_week">Прошла нед.</string>
     <string name="insights_period_this_month">Месец</string>
     <string name="insights_empty_state">Nema zakazanih događaja ove nedelje</string>
-    <string name="insights_delta_more">+%1$s više od %2$s</string>
-    <string name="insights_delta_less">%1$s manje od %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d celodnevni događaj</item>
         <item quantity="few">%d celodnevna događaja</item>
@@ -1075,7 +1071,6 @@
     <string name="insight_tomorrow_preview_no_start">Sutra: %1$s zakazano</string>
     <string name="insight_heaviest_upcoming">%1$s je vaš najzauzetiji nadolazeći dan (%2$s)</string>
     <string name="insight_next_free_block">Sledeći slobodan blok: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Raspodela kalendara: %1$s</string>
     <string name="insights_cd_daily_chart">Dnevna raspodela: najzauzetiji dan je %1$s</string>
     <string name="label_availability">Dostupnost</string>
     <string name="label_busy">Zauzeto</string>
@@ -1083,7 +1078,6 @@
     <string name="label_event_color">Boja događaja</string>
     <string name="label_calendar_default">Podrazumevano iz kalendara</string>
     <string name="label_custom">Prilagođeno</string>
-    <string name="cd_event_color">Boja događaja</string>
     <string name="hue_red">Crvena</string>
     <string name="hue_orange">Narandžasta</string>
     <string name="hue_yellow">Žuta</string>
@@ -1099,17 +1093,6 @@
     <string name="settings_suggest_titles">Predloži nazive događaja</string>
     <string name="label_attendees">Učesnici</string>
     <string name="attendee_you_marker">Ti</string>
-    <string name="attendee_organizer_pill">Organizator</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d više</item>
-        <item quantity="few">+%d više</item>
-        <item quantity="other">+%d više</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d učesnik</item>
-        <item quantity="few">%d učesnika</item>
-        <item quantity="other">%d učesnika</item>
-    </plurals>
     <string name="attendee_card_going">Dolazi</string>
     <string name="attendee_card_pending">Na čekanju</string>
     <string name="attendee_card_declined">Odbio</string>
@@ -1117,10 +1100,8 @@
     <string name="attendee_card_hosting">Domaćin</string>
     <string name="attendee_action_copy">Kopiraj e-poštu</string>
     <string name="attendee_action_email">Pošalji e-poštu</string>
-    <string name="attendee_group_icon_description">Osobe</string>
     <string name="attendee_email_copied">E-pošta kopirana</string>
     <string name="attendee_no_email_app">Nije instalirana nijedna aplikacija za e-poštu</string>
-    <string name="attendee_show_less">Prikaži manje</string>
     <string name="attendee_show_all">Прикажи све учеснике</string>
     <string name="attendee_status_accepted">Prihvaćeno</string>
     <string name="attendee_status_declined">Odbio</string>
@@ -1128,11 +1109,6 @@
     <string name="attendee_status_delegated">Delegirano</string>
     <string name="attendee_status_pending">Na čekanju</string>
     <string name="attendee_sheet_title">Učesnici</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d pozvan</item>
-        <item quantity="few">%d pozvana</item>
-        <item quantity="other">%d pozvanih</item>
-    </plurals>
     <string name="attendee_search_hint">Pretraga</string>
     <string name="attendee_search_no_matches">Nema rezultata</string>
     <string name="attendee_section_going">Idu</string>

@@ -72,9 +72,6 @@
     <string name="action_delete_event">Burahin ang Event</string>
 
     <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="rsvp_action_accept">Tanggapin</string>
-    <string name="rsvp_action_tentative">Posible</string>
-    <string name="rsvp_action_decline">Tanggihan</string>
     <string name="invitees_host_tag">Host</string>
     <string name="rsvp_question_going">Pupunta?</string>
     <string name="rsvp_action_yes">Oo</string>
@@ -90,13 +87,9 @@
          Explains why most fields are dimmed and which fields the attendee can still change. -->
     <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
     <string name="rsvp_series_disclosure">Ang sagot na ito ay para sa buong serye.</string>
-    <string name="rsvp_modified_snackbar">Nabigo ang RSVP para sa %1$s — binago ang event. Pakitugon muli.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
-    <string name="recurring_just_this">Ito lang</string>
     <string name="recurring_this_and_future">Ito at lahat ng susunod</string>
-    <string name="recurring_just_occurrence">Ang occurrence na ito lang</string>
-    <string name="recurring_all_occurrences">Lahat ng occurrence</string>
 
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Pamagat ng event</string>
@@ -125,7 +118,19 @@
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
-    <string name="settings_title">Settings</string>
+    <string name="settings_title">Mga Setting</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system_desc">Sundin ang light o dark na setting ng iyong telepono</string>
+    <string name="settings_theme_light_desc">Palaging maliwanag</string>
+    <string name="settings_theme_dark_desc">Palaging madilim</string>
+    <string name="settings_theme_teal_desc">Teal ng KashCal, sumusunod sa maliwanag o madilim na setting ng iyong telepono</string>
+    <string name="settings_app_icon">Icon ng App</string>
+    <string name="app_icon_default">Default</string>
+    <string name="app_icon_supporter">Tagasuporta</string>
+    <string name="app_icon_supporter_calendar">Tagasuporta, may etiketang Kalendaryo</string>
+    <string name="app_icon_label_calendar">Kalendaryo</string>
+    <string name="app_icon_support_cta">Suportahan ang KashCal</string>
+    <string name="app_icon_switch_note">Maaaring i-restart ng pagpapalit ng icon ang app. Palaging ginagamit ng mga notification ang default na icon at pangalan.</string>
     <string name="settings_search_placeholder">Maghanap ng mga setting…</string>
     <string name="settings_search_no_results">Walang nahanap na setting para sa \"%1$s\"</string>
     <string name="cd_search_settings">Maghanap ng mga setting</string>
@@ -144,7 +149,6 @@
     <string name="settings_section_calendars">Mga Kalendaryo</string>
     <string name="settings_section_appearance">Hitsura</string>
     <string name="settings_section_creating_events">Paggawa ng mga kaganapan</string>
-    <string name="settings_section_notifications">Mga Notification</string>
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
     <string name="settings_section_privacy">Privacy</string>
@@ -197,8 +201,6 @@
     <string name="dialog_force_sync_title">Force Full Sync?</string>
     <string name="dialog_force_sync_message">Ido-download muli nito ang lahat ng data ng kalendaryo mula sa server. Ang mga lokal na pagbabago ay mananatili.</string>
     <string name="dialog_enable_notifications">I-enable ang Mga Notification?</string>
-    <string name="dialog_delete_title">Burahin ang \"%1$s\"</string>
-    <string name="dialog_edit_title">I-edit ang \"%1$s\"</string>
     <string name="dialog_action_required">Kailangan ang aksyon na ito para magpatuloy.</string>
     <string name="dialog_add_to_calendar">Idagdag sa kalendaryo</string>
     <string name="dialog_select_calendar">Pumili ng kalendaryo</string>
@@ -302,10 +304,8 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Napili</string>
     <string name="cd_back">Bumalik</string>
-    <string name="cd_close">Isara</string>
     <string name="cd_search">Maghanap</string>
     <string name="cd_create_event">Gumawa ng event</string>
-    <string name="cd_today">Ngayon</string>
     <string name="cd_delete">Burahin</string>
     <string name="cd_refresh">I-refresh</string>
     <string name="cd_more_options">Higit pang mga opsyon</string>
@@ -363,6 +363,9 @@
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Default ng system</string>
+    <string name="option_light">Maliwanag</string>
+    <string name="option_dark">Madilim</string>
+    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">12 oras</string>
     <string name="option_24_hour">24 oras</string>
     <string name="option_sunday">Linggo</string>
@@ -522,8 +525,6 @@
     <string name="cd_event_untitled">Kaganapang walang pamagat</string>
     <string name="cd_warning">Babala</string>
     <string name="cd_refresh_calendars">I-refresh ang mga kalendaryo</string>
-    <string name="cd_timezone_tap_to_change">Timezone: %1$s, i-tap para palitan</string>
-    <string name="cd_day_events">Araw %1$d, %2$d event</string>
 
     <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Sa mga araw na</string>
@@ -746,8 +747,6 @@
     <string name="cd_loading_events">Naglo-load ng mga event</string>
     <string name="cd_open_drawer">Buksan ang drawer</string>
     <string name="cd_close_drawer">Isara ang drawer</string>
-    <string name="cd_open_rail">Buksan ang menu</string>
-    <string name="cd_close_rail">Isara ang menu</string>
     <string name="cd_calendar_view">Calendar view</string>
     <string name="cd_active_view">Aktibong view</string>
 
@@ -1014,8 +1013,6 @@
     <string name="insights_period_last_week">Nakaraang linggo</string>
     <string name="insights_period_this_month">Buwan</string>
     <string name="insights_empty_state">Walang naka-iskedyul na kaganapan ngayong linggo</string>
-    <string name="insights_delta_more">+%1$s higit sa %2$s</string>
-    <string name="insights_delta_less">%1$s mas kaunti kaysa %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d buong-araw na kaganapan</item>
         <item quantity="other">%d buong-araw na kaganapan</item>
@@ -1059,7 +1056,6 @@
     <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Susunod na libreng bloke: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
-    <string name="insights_cd_calendar_bar">Breakdown ng kalendaryo: %1$s</string>
     <string name="insights_cd_daily_chart">Pamamahagi araw-araw: pinaka-abalang araw ay %1$s</string>
 
     <!-- ==================== Event Form: Availability & Color ==================== -->
@@ -1069,9 +1065,7 @@
     <string name="label_event_color">Kulay ng event</string>
     <string name="label_calendar_default">Default ng kalendaryo</string>
     <string name="label_custom">Custom</string>
-    <string name="cd_event_color">Kulay ng event</string>
     <string name="cd_checkmark">Napili</string>
-    <string name="label_device_timezone">Time zone ng device</string>
     <string name="color_saddlebrown">Kayumangging siya</string>
     <string name="color_tomato">Kamatis</string>    <string name="color_darkorange">Madilim na kahel</string>
     <string name="color_gold">Ginto</string>
@@ -1096,15 +1090,6 @@
     <string name="settings_suggest_titles">Magmungkahi ng mga pamagat ng kaganapan</string>
     <string name="label_attendees">Mga Dadalo</string>
     <string name="attendee_you_marker">Ikaw</string>
-    <string name="attendee_organizer_pill">Organisador</string>
-    <plurals name="attendee_show_n_more">
-        <item quantity="one">+%d pa</item>
-        <item quantity="other">+%d pa</item>
-    </plurals>
-    <plurals name="attendee_count_off_list">
-        <item quantity="one">%d dadalo</item>
-        <item quantity="other">%d na dadalo</item>
-    </plurals>
     <string name="attendee_card_going">Pupunta</string>
     <string name="attendee_card_pending">Naghihintay</string>
     <string name="attendee_card_declined">Tinanggihan</string>
@@ -1112,10 +1097,8 @@
     <string name="attendee_card_hosting">Naghahanda</string>
     <string name="attendee_action_copy">Kopyahin ang email</string>
     <string name="attendee_action_email">Magpadala ng email</string>
-    <string name="attendee_group_icon_description">Mga Tao</string>
     <string name="attendee_email_copied">Nakopya ang email</string>
     <string name="attendee_no_email_app">Walang naka-install na email app</string>
-    <string name="attendee_show_less">Ipakita ang mas kaunti</string>
     <string name="attendee_show_all">Ipakita ang lahat ng dadalo</string>
     <string name="attendee_status_accepted">Tinanggap</string>
     <string name="attendee_status_declined">Tinanggihan</string>
@@ -1183,10 +1166,6 @@
     <string name="share_as_card_chooser_title">Ibahagi ang kaganapan</string>
     <string name="share_as_card_share_failed">Hindi maibahagi ang card</string>
     <string name="attendee_sheet_title">Mga dadalo</string>
-    <plurals name="attendee_count_invited">
-        <item quantity="one">%d inanyayahan</item>
-        <item quantity="other">%d inanyayahan</item>
-    </plurals>
     <string name="attendee_search_hint">Maghanap</string>
     <string name="attendee_search_no_matches">Walang resulta</string>
     <string name="attendee_section_going">Pupunta</string>
