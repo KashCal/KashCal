@@ -122,7 +122,11 @@
     <string name="settings_theme_system_desc">ඔබේ දුරකථනයේ ආලෝක හෝ අඳුරු සැකසුම අනුගමනය කරන්න</string>
     <string name="settings_theme_light_desc">සැමවිටම ආලෝකවත්</string>
     <string name="settings_theme_dark_desc">සැමවිටම අඳුරු</string>
-    <string name="settings_theme_teal_desc">KashCal නිල්හරිත, ඔබේ දුරකථනයේ ආලෝක හෝ අඳුරු සැකසුම අනුගමනය කරයි</string>
+    <string name="settings_accent_color">අවධාරක වර්ණය</string>
+    <string name="settings_accent_color_desc">ඔබ තෝරාගත් අවධාරකයෙන් යෙදුම සහ විජට් වර්ණවත් කරන්න</string>
+    <string name="settings_accent_color_brand">KashCal නිල්හරිත</string>
+    <string name="settings_accent_color_dynamic">ස්වයංක්‍රීය</string>
+    <string name="settings_accent_color_dynamic_desc">ඔබේ උපාංගයේ Material You වර්ණ අනුගමනය කරන්න</string>
     <string name="settings_app_icon">යෙදුම් නිරූපකය</string>
     <string name="app_icon_default">පෙරනිමිය</string>
     <string name="app_icon_supporter">අනුග්‍රාහක</string>
@@ -360,7 +364,6 @@
     <string name="option_system_default">පද්ධති පෙරනිමිය</string>
     <string name="option_light">ආලෝක</string>
     <string name="option_dark">අඳුරු</string>
-    <string name="option_kashcal_teal">KashCal නිල්හරිත</string>
     <string name="option_12_hour">පැය 12</string>
     <string name="option_24_hour">පැය 24</string>
     <string name="option_sunday">ඉරිදා</string>

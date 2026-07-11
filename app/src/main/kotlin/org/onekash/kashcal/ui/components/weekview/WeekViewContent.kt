@@ -76,6 +76,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
@@ -118,6 +119,7 @@ fun WeekViewContent(
     isLoading: Boolean,
     error: String?,
     scrollPosition: Int,
+    savedScrollMinutes: Int = -1,
     hourHeight: Float = 60f,
     onHourHeightChange: (Float) -> Unit = {},
     showEventEmojis: Boolean = true,
@@ -128,6 +130,7 @@ fun WeekViewContent(
     onEventClick: (DisplayEvent) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit,
+    onScrollMinutesChange: (Int) -> Unit = {},
     onPageChanged: (Int) -> Unit = {},
     pendingNavigateToPage: Int? = null,
     onNavigationConsumed: () -> Unit = {},
@@ -185,7 +188,8 @@ fun WeekViewContent(
     val initialScrollPx = WeekViewUtils.resolveInitialScrollPx(
         savedPosition = scrollPosition,
         hourHeightDp = hourHeight,
-        density = density
+        density = density,
+        savedMinutes = savedScrollMinutes
     )
     val scrollState = rememberScrollState(initial = initialScrollPx)
 
@@ -243,6 +247,7 @@ fun WeekViewContent(
                 onOverflowClick = { events -> overflowEvents = events },
                 onEmptyTap = onEmptyTap,
                 onScrollPositionChange = onScrollPositionChange,
+                onScrollMinutesChange = onScrollMinutesChange,
                 onReschedule = onReschedule,
                 modifier = modifier.fillMaxSize()
             )
@@ -285,6 +290,7 @@ private fun UnifiedTimeGrid(
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit = {},
+    onScrollMinutesChange: (Int) -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -323,6 +329,14 @@ private fun UnifiedTimeGrid(
         }
     }
 
+    // Density / hour-height are needed both here (to persist scroll as clock minutes) and
+    // by the grid body below. rememberUpdatedState lets the debounced collectors read the
+    // live hour-height without restarting on every pinch-zoom.
+    val density = LocalDensity.current
+    val hourHeightPx = with(density) { hourHeight.toPx() }
+    val currentHourHeight by rememberUpdatedState(hourHeight)
+    val currentHourHeightPx by rememberUpdatedState(hourHeightPx)
+
     // Track scroll position changes - debounced to prevent per-pixel state updates
     LaunchedEffect(scrollState) {
         @OptIn(FlowPreview::class)
@@ -331,6 +345,19 @@ private fun UnifiedTimeGrid(
             .collect { position ->
                 onScrollPositionChange(position)
             }
+    }
+
+    // Persist the scroll position as clock minutes for cross-restart restore. Longer debounce
+    // than the in-memory pixel path above so active scrolling doesn't hammer DataStore — only
+    // the settled position matters for restore. Uses the live hour-height so a pinch-zoom
+    // before settling still records the correct clock time.
+    LaunchedEffect(scrollState) {
+        @OptIn(FlowPreview::class)
+        snapshotFlow { scrollState.value }
+            .debounce(1000)
+            .map { position -> WeekViewUtils.pixelsToMinutesOfDay(position.toFloat(), currentHourHeightPx) }
+            .distinctUntilChanged()  // don't re-persist when the settled clock-minute is unchanged
+            .collect { minutes -> onScrollMinutesChange(minutes) }
     }
 
     // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
@@ -377,12 +404,7 @@ private fun UnifiedTimeGrid(
             onOverflowClick = onOverflowClick
         )
 
-        // Main time grid area
-        val density = LocalDensity.current
-        val hourHeightPx = with(density) { hourHeight.toPx() }
-        val currentHourHeight by rememberUpdatedState(hourHeight)
-        val currentHourHeightPx by rememberUpdatedState(hourHeightPx)
-
+        // Main time grid area (density / hour-height hoisted above the scroll collectors)
         Row(modifier = Modifier.weight(1f)) {
             // Time labels column (fixed)
             Column(

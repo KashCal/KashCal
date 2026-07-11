@@ -175,7 +175,7 @@ fun DeviceCalendarsScreen(
                     Text(
                         stringResource(R.string.device_calendars_grant),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }

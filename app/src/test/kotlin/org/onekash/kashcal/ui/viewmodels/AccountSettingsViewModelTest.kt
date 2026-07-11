@@ -236,6 +236,13 @@ class AccountSettingsViewModelTest {
         coEvery { eventCoordinator.getContactAnniversariesColor() } returns null
         coEvery { eventCoordinator.getContactBirthdayEventCount() } returns 0
         coEvery { eventCoordinator.getContactAnniversaryEventCount() } returns 0
+
+        // Accent color source/seed defaults (relaxed mock would return an empty flow, which
+        // would stall collectors). Explicit per de-relax guidance.
+        every { dataStore.theme } returns flowOf(KashCalDataStore.THEME_SYSTEM)
+        every { dataStore.colorSource } returns flowOf(null)
+        every { dataStore.accentSeed } returns flowOf(KashCalDataStore.ACCENT_SEED_DEFAULT)
+        every { userPreferences.resolvedColorSource } returns flowOf(org.onekash.kashcal.ui.theme.ColorSource.DYNAMIC)
     }
 
     @After
@@ -311,26 +318,53 @@ class AccountSettingsViewModelTest {
         }
     }
 
-    @Test
-    fun `setThemeMode TEAL persists teal and emits TEAL`() = runTest {
-        val themeFlow = MutableStateFlow(KashCalDataStore.THEME_SYSTEM)
-        every { dataStore.theme } returns themeFlow
-        coEvery { dataStore.setTheme(any()) } answers { themeFlow.value = firstArg() }
+    // ---- accent color source + seed ----
 
+    @Test
+    fun `colorSource reflects the repository's resolved source`() = runTest {
+        // The migration/resolution logic lives in UserPreferencesRepository.resolvedColorSource
+        // (covered by ColorSourceTest); the VM simply surfaces it.
+        every { userPreferences.resolvedColorSource } returns flowOf(org.onekash.kashcal.ui.theme.ColorSource.SEED)
         val viewModel = createViewModel()
 
-        viewModel.themeMode.test {
-            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.SYSTEM, awaitItem())
-
-            viewModel.setThemeMode(org.onekash.kashcal.ui.theme.ThemeMode.TEAL)
-            advanceUntilIdle()
-
-            assertEquals(org.onekash.kashcal.ui.theme.ThemeMode.TEAL, awaitItem())
+        viewModel.colorSource.test {
+            assertEquals(org.onekash.kashcal.ui.theme.ColorSource.SEED, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
+    }
 
-        assertEquals(KashCalDataStore.THEME_TEAL, themeFlow.value)
-        coVerify { dataStore.setTheme(KashCalDataStore.THEME_TEAL) }
+    @Test
+    fun `accentSeed exposes the stored seed`() = runTest {
+        every { dataStore.accentSeed } returns flowOf(0xFFFF6347.toInt())
+        val viewModel = createViewModel()
+
+        viewModel.accentSeed.test {
+            assertEquals(0xFFFF6347.toInt(), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setAccentSeed persists seed, selects SEED source, and refreshes widgets`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setAccentSeed(0xFF1E90FF.toInt())
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAccentSeed(0xFF1E90FF.toInt()) }
+        coVerify { dataStore.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.SEED.prefValue) }
+        coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
+    }
+
+    @Test
+    fun `setColorSource to dynamic persists and refreshes widgets`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.DYNAMIC)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.DYNAMIC.prefValue) }
+        coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
     }
 
     @Test
@@ -525,6 +559,53 @@ class AccountSettingsViewModelTest {
                 ),
                 (state.iCloudState as ICloudConnectionState.NotConnected).error
             )
+        }
+    }
+
+    @Test
+    fun `onSignIn does not log the full Apple ID`() = runTest {
+        val appleId = "jane.appleseed@icloud.com"
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
+            account = testDbAccount,
+            calendars = testCalendars
+        )
+
+        io.mockk.mockkStatic(android.util.Log::class)
+        try {
+            val logMessages = mutableListOf<String>()
+            every { android.util.Log.v(any(), any<String>()) } returns 0
+            every { android.util.Log.i(any(), capture(logMessages)) } returns 0
+            every { android.util.Log.d(any(), any<String>()) } returns 0
+            every { android.util.Log.w(any(), any<String>()) } returns 0
+            every { android.util.Log.e(any(), any<String>()) } returns 0
+            every { android.util.Log.e(any(), any<String>(), any()) } returns 0
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onAppleIdChange(appleId)
+            viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+            advanceUntilIdle()
+
+            viewModel.onSignIn()
+            advanceUntilIdle()
+
+            // Guard against a vacuous pass: the discovery log line must actually
+            // have been emitted, and it must carry the masked form, not the raw id.
+            assertTrue(
+                "Expected a discovery log line to be emitted; captured: $logMessages",
+                logMessages.any { it.contains("Starting iCloud discovery") }
+            )
+            assertTrue(
+                "No log line should contain the unmasked Apple ID; captured: $logMessages",
+                logMessages.none { it.contains(appleId) }
+            )
+            assertTrue(
+                "Discovery log should contain the masked Apple ID; captured: $logMessages",
+                logMessages.any { it.contains("jan***@***.com") }
+            )
+        } finally {
+            io.mockk.unmockkStatic(android.util.Log::class)
         }
     }
 

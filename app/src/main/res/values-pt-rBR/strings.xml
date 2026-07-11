@@ -150,7 +150,11 @@
     <string name="settings_theme_system_desc">Seguir a configuração clara ou escura do celular</string>
     <string name="settings_theme_light_desc">Sempre claro</string>
     <string name="settings_theme_dark_desc">Sempre escuro</string>
-    <string name="settings_theme_teal_desc">Verde-azulado da KashCal, segue a configuração clara ou escura do celular</string>
+    <string name="settings_accent_color">Cor de destaque</string>
+    <string name="settings_accent_color_desc">Colore o app e os widgets com o destaque que você escolher</string>
+    <string name="settings_accent_color_brand">Verde-azulado KashCal</string>
+    <string name="settings_accent_color_dynamic">Automático</string>
+    <string name="settings_accent_color_dynamic_desc">Seguir as cores Material You do seu dispositivo</string>
     <string name="settings_app_icon">Ícone do app</string>
     <string name="app_icon_default">Padrão</string>
     <string name="app_icon_supporter">Apoiador</string>
@@ -386,7 +390,6 @@
     <string name="option_system_default">Padrão do sistema</string>
     <string name="option_light">Claro</string>
     <string name="option_dark">Escuro</string>
-    <string name="option_kashcal_teal">Verde-azulado KashCal</string>
     <string name="option_12_hour">12 horas</string>
     <string name="option_24_hour">24 horas</string>
     <string name="option_sunday">Domingo</string>

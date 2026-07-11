@@ -187,7 +187,11 @@
     <string name="settings_theme_system_desc">Follow your phone\'s light or dark setting</string>
     <string name="settings_theme_light_desc">Always light</string>
     <string name="settings_theme_dark_desc">Always dark</string>
-    <string name="settings_theme_teal_desc">KashCal teal, following your phone\'s light or dark setting</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_accent_color_desc">Color the app and widgets with your chosen accent</string>
+    <string name="settings_accent_color_brand">KashCal Teal</string>
+    <string name="settings_accent_color_dynamic">Automatic</string>
+    <string name="settings_accent_color_dynamic_desc">Follow your device\'s Material You colors</string>
     <string name="settings_app_icon">App Icon</string>
     <string name="app_icon_default">Default</string>
     <string name="app_icon_supporter">Supporter</string>
@@ -538,7 +542,6 @@
     <string name="option_system_default">System default</string>
     <string name="option_light">Light</string>
     <string name="option_dark">Dark</string>
-    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">12-hour</string>
     <string name="option_24_hour">24-hour</string>
     <string name="option_sunday">Sunday</string>

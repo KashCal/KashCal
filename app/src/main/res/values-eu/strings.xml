@@ -151,7 +151,11 @@
     <string name="settings_theme_system_desc">Jarraitu telefonoaren argi edo ilun ezarpenari</string>
     <string name="settings_theme_light_desc">Beti argia</string>
     <string name="settings_theme_dark_desc">Beti iluna</string>
-    <string name="settings_theme_teal_desc">KashCal turkesa, telefonoaren argi edo ilun ezarpenari jarraitzen dio</string>
+    <string name="settings_accent_color">Azentu-kolorea</string>
+    <string name="settings_accent_color_desc">Koloreztatu aplikazioa eta widgetak aukeratutako azentuarekin</string>
+    <string name="settings_accent_color_brand">KashCal Turkesa</string>
+    <string name="settings_accent_color_dynamic">Automatikoa</string>
+    <string name="settings_accent_color_dynamic_desc">Jarraitu zure gailuaren Material You koloreei</string>
     <string name="settings_app_icon">Aplikazioaren ikonoa</string>
     <string name="app_icon_default">Lehenetsia</string>
     <string name="app_icon_supporter">Laguntzaile</string>
@@ -375,7 +379,6 @@
     <string name="option_system_default">Sistemaren lehenetsia</string>
     <string name="option_light">Argia</string>
     <string name="option_dark">Iluna</string>
-    <string name="option_kashcal_teal">KashCal Turkesa</string>
     <string name="option_12_hour">12 ordu</string>
     <string name="option_24_hour">24 ordu</string>
     <string name="option_sunday">Igandea</string>

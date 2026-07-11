@@ -122,7 +122,11 @@
     <string name="settings_theme_system_desc">तपाईंको फोनको उज्यालो वा अँध्यारो सेटिङ अनुसरण गर्नुहोस्</string>
     <string name="settings_theme_light_desc">सधैं उज्यालो</string>
     <string name="settings_theme_dark_desc">सधैं अँध्यारो</string>
-    <string name="settings_theme_teal_desc">KashCal टिल, तपाईंको फोनको उज्यालो वा अँध्यारो सेटिङ अनुसरण गर्दछ</string>
+    <string name="settings_accent_color">एक्सेन्ट रङ</string>
+    <string name="settings_accent_color_desc">तपाईंले रोजेको एक्सेन्टले एप र विजेटहरूलाई रङ लगाउनुहोस्</string>
+    <string name="settings_accent_color_brand">KashCal टिल</string>
+    <string name="settings_accent_color_dynamic">स्वचालित</string>
+    <string name="settings_accent_color_dynamic_desc">तपाईंको उपकरणको Material You रङहरू अनुसरण गर्नुहोस्</string>
     <string name="settings_app_icon">एप आइकन</string>
     <string name="app_icon_default">पूर्वनिर्धारित</string>
     <string name="app_icon_supporter">समर्थक</string>
@@ -360,7 +364,6 @@
     <string name="option_system_default">प्रणाली पूर्वनिर्धारित</string>
     <string name="option_light">उज्यालो</string>
     <string name="option_dark">अँध्यारो</string>
-    <string name="option_kashcal_teal">KashCal टिल</string>
     <string name="option_12_hour">१२ घण्टा</string>
     <string name="option_24_hour">२४ घण्टा</string>
     <string name="option_sunday">आइतबार</string>

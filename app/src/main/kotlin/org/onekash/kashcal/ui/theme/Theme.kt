@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -29,16 +30,17 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun KashCalTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    colorSource: ColorSource = ColorSource.DYNAMIC,
+    accentSeed: Int = KashCalDataStore.ACCENT_SEED_DEFAULT,
     content: @Composable () -> Unit
 ) {
     val darkTheme = themeMode.isDark(isSystemInDarkTheme())
-    val palette = themeMode.palette
 
     val colorScheme = when {
-        // A branded theme (e.g. KashCal Teal) carries a fixed palette: use it and never let
-        // Material You dynamic color override the brand. Adding a new branded shade needs no
-        // change here — it just supplies a palette on its ThemeMode entry.
-        palette != null -> if (darkTheme) palette.dark else palette.light
+        // Seed source: a full Material 3 scheme generated from the user's chosen accent color.
+        // WCAG AA is guaranteed for any seed (see AccentSchemeTest).
+        colorSource == ColorSource.SEED -> accentColorScheme(accentSeed, darkTheme)
+        // Dynamic source: Material You (wallpaper-derived) on Android 12+, baseline otherwise.
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)

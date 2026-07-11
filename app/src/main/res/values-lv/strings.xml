@@ -151,7 +151,11 @@
     <string name="settings_theme_system_desc">Sekot tālruņa gaišajam vai tumšajam iestatījumam</string>
     <string name="settings_theme_light_desc">Vienmēr gaišs</string>
     <string name="settings_theme_dark_desc">Vienmēr tumšs</string>
-    <string name="settings_theme_teal_desc">KashCal zilganzaļš, seko tālruņa gaišajam vai tumšajam iestatījumam</string>
+    <string name="settings_accent_color">Akcenta krāsa</string>
+    <string name="settings_accent_color_desc">Iekrāso lietotni un logrīkus ar tavu izvēlēto akcenta krāsu</string>
+    <string name="settings_accent_color_brand">KashCal zilganzaļš</string>
+    <string name="settings_accent_color_dynamic">Automātiski</string>
+    <string name="settings_accent_color_dynamic_desc">Seko savas ierīces Material You krāsām</string>
     <string name="settings_app_icon">Lietotnes ikona</string>
     <string name="app_icon_default">Noklusējums</string>
     <string name="app_icon_supporter">Atbalstītājs</string>
@@ -379,7 +383,6 @@
     <string name="option_system_default">Sistēmas noklusējums</string>
     <string name="option_light">Gaišs</string>
     <string name="option_dark">Tumšs</string>
-    <string name="option_kashcal_teal">KashCal zilganzaļš</string>
     <string name="option_12_hour">12 stundu</string>
     <string name="option_24_hour">24 stundu</string>
     <string name="option_sunday">Svētdiena</string>

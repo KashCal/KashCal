@@ -275,6 +275,18 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
 
+    // MaterialKolor (seed -> M3 ColorScheme).
+    // Exclude its Compose-Multiplatform transitives — the app already supplies the
+    // androidx Compose equivalents, and MaterialKolor's CMP graph otherwise drags
+    // androidx.compose.material3 up to an alpha (1.5.0-alpha08) past the pinned BOM.
+    implementation(libs.materialkolor) {
+        exclude(group = "org.jetbrains.compose.material3")
+        exclude(group = "org.jetbrains.compose.runtime")
+        exclude(group = "org.jetbrains.compose.ui")
+        exclude(group = "org.jetbrains.compose.foundation")
+        exclude(group = "org.jetbrains.compose.animation")
+    }
+
     // Testing - Unit
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

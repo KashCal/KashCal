@@ -49,6 +49,9 @@ hiltWork = "1.3.0"
 # Glance (App Widgets)
 glance = "1.1.1"
 
+# MaterialKolor (seed -> M3 ColorScheme)
+materialkolor = "4.1.1"
+
 # Code Coverage
 kover = "0.9.8"
 
@@ -129,6 +132,7 @@ hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.
 # Glance (App Widgets)
 androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
+materialkolor = { group = "com.materialkolor", name = "material-kolor", version.ref = "materialkolor" }
 androidx-glance-testing = { group = "androidx.glance", name = "glance-testing", version.ref = "glance" }
 androidx-glance-appwidget-testing = { group = "androidx.glance", name = "glance-appwidget-testing", version.ref = "glance" }
 

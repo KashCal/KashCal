@@ -23,8 +23,11 @@ object WidgetTypography {
     /** Widget header title (date range, month/year, widget name). */
     val headerTitle: TextUnit = 16.sp
 
-    /** Primary content — event titles and month-grid day numbers. */
+    /** Primary content — event titles. */
     val contentTitle: TextUnit = 14.sp
+
+    /** Month-grid day-of-month numbers. Slightly larger than body content for at-a-glance legibility, sized to stay within the fixed day-cell height. */
+    val monthDayNumber: TextUnit = 16.sp
 
     /** Supporting text — event times, day headers, counts, empty/overflow rows. */
     val secondary: TextUnit = 12.sp

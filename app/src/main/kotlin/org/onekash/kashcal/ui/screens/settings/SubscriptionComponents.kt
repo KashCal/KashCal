@@ -1,16 +1,26 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import android.content.res.Resources
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import org.onekash.kashcal.R
 
 /**
  * Accent colors for UI feedback indicators (success, info, etc.).
  */
 object AccentColors {
-    val Green = Color(0xFF34C759)
-    val Blue = Color(0xFF007AFF)
-    val iCloudBlue = Color(0xFF5AC8FA)
+    // Success semantics stay fixed-hue (green) regardless of the app accent or dynamic color —
+    // a "success" checkmark must never track a user-chosen accent hue. Only the shade adapts to
+    // the surface: a slightly brighter green reads better against dark surfaces.
+    val SuccessLight = Color(0xFF34C759)
+    val SuccessDark = Color(0xFF30D158)
+
+    /** Success green, shade-selected against the resolved theme surface (honors forced dark mode). */
+    val Green: Color
+        @Composable get() =
+            if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) SuccessDark else SuccessLight
 }
 
 /**

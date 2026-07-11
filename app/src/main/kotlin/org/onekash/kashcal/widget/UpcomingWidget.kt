@@ -6,6 +6,7 @@ import androidx.compose.runtime.produceState
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
+import androidx.glance.color.ColorProviders
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
@@ -62,7 +63,10 @@ class UpcomingWidget : GlanceAppWidget() {
             ) {
                 value = fetchUpcomingState(repository, dataStore, context)
             }
-            GlanceTheme {
+            val accentColors by produceState<ColorProviders?>(initialValue = null, key1 = stamp) {
+                value = resolveWidgetAccentColors(dataStore)
+            }
+            GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
                 UpcomingWidgetScaffold(state = state)
             }
         }

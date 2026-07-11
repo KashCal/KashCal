@@ -72,6 +72,7 @@ import org.onekash.kashcal.ui.lock.AppLockDisableAction
 import org.onekash.kashcal.ui.lock.AppLockEnrollmentAction
 import org.onekash.kashcal.ui.lock.decideDisableAction
 import org.onekash.kashcal.ui.lock.decideEnrollmentAction
+import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
@@ -125,13 +126,19 @@ class SettingsActivity : FragmentActivity() {
 
         // Resolve the theme synchronously so the first frame renders in the chosen theme — no
         // flash of the default on cold start. DataStore caches after the first read.
-        val initialThemeMode = ThemeMode.fromPrefValue(
-            runBlocking { userPreferencesRepository.theme.first() }
+        val initialThemeString = runBlocking { userPreferencesRepository.theme.first() }
+        val initialThemeMode = ThemeMode.fromPrefValue(initialThemeString)
+        val initialColorSource = ColorSource.fromPrefValue(
+            explicit = runBlocking { userPreferencesRepository.colorSource.first() },
+            legacyTheme = initialThemeString,
         )
+        val initialAccentSeed = runBlocking { userPreferencesRepository.accentSeed.first() }
 
         setContent {
             val themeMode by viewModel.themeMode.collectAsStateWithLifecycle(initialValue = initialThemeMode)
-            KashCalTheme(themeMode = themeMode) {
+            val colorSource by viewModel.colorSource.collectAsStateWithLifecycle(initialValue = initialColorSource)
+            val accentSeed by viewModel.accentSeed.collectAsStateWithLifecycle(initialValue = initialAccentSeed)
+            KashCalTheme(themeMode = themeMode, colorSource = colorSource, accentSeed = accentSeed) {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val calendars by viewModel.calendars.collectAsStateWithLifecycle()
                 val calendarGroups by viewModel.calendarGroups.collectAsStateWithLifecycle()
@@ -672,6 +679,10 @@ class SettingsActivity : FragmentActivity() {
                             onTitleSuggestionsEnabledChange = viewModel::setTitleSuggestionsEnabled,
                             themeMode = themeMode,
                             onThemeModeChange = viewModel::setThemeMode,
+                            colorSource = colorSource,
+                            accentSeed = accentSeed,
+                            onAccentSeedChange = viewModel::setAccentSeed,
+                            onColorSourceChange = viewModel::setColorSource,
                             timeFormat = timeFormat,
                             onTimeFormatChange = viewModel::setTimeFormat,
                             firstDayOfWeek = firstDayOfWeek,

@@ -123,7 +123,11 @@
     <string name="settings_theme_system_desc">သင့်ဖုန်း၏ အလင်း သို့မဟုတ် အမှောင် ဆက်တင်ကို လိုက်နာပါ</string>
     <string name="settings_theme_light_desc">အမြဲ အလင်း</string>
     <string name="settings_theme_dark_desc">အမြဲ အမှောင်</string>
-    <string name="settings_theme_teal_desc">KashCal စိမ်းပြာရောင်၊ သင့်ဖုန်း၏ အလင်း သို့မဟုတ် အမှောင် ဆက်တင်ကို လိုက်နာသည်</string>
+    <string name="settings_accent_color">အသားပေးအရောင်</string>
+    <string name="settings_accent_color_desc">သင်ရွေးချယ်ထားသော အသားပေးအရောင်ဖြင့် အက်ပ်နှင့် ဝိဂျက်များကို အရောင်ခြယ်ပါ</string>
+    <string name="settings_accent_color_brand">KashCal စိမ်းပြာရောင်</string>
+    <string name="settings_accent_color_dynamic">အလိုအလျောက်</string>
+    <string name="settings_accent_color_dynamic_desc">သင့်စက်ပစ္စည်း၏ Material You အရောင်များကို လိုက်နာပါ</string>
     <string name="settings_app_icon">အက်ပ် အိုင်ကွန်</string>
     <string name="app_icon_default">မူရင်း</string>
     <string name="app_icon_supporter">ပံ့ပိုးသူ</string>
@@ -365,7 +369,6 @@
     <string name="option_system_default">စနစ် မူရင်း</string>
     <string name="option_light">အလင်း</string>
     <string name="option_dark">အမှောင်</string>
-    <string name="option_kashcal_teal">KashCal စိမ်းပြာရောင်</string>
     <string name="option_12_hour">၁၂ နာရီ</string>
     <string name="option_24_hour">၂၄ နာရီ</string>
     <string name="option_sunday">တနင်္ဂနွေ</string>

@@ -582,12 +582,25 @@ class EventWriterAdversarialTest {
     }
 
     @Test
-    fun `sequence stays same on title-only change`() = runTest {
+    fun `sequence bumps on title-only change`() = runTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
         val originalSeq = event.sequence
 
         val updated = eventWriter.updateEvent(
             event.copy(title = "New Title"),
+            isLocal = false
+        )
+
+        assertEquals(originalSeq + 1, updated.sequence)
+    }
+
+    @Test
+    fun `sequence stays same on notes-only change`() = runTest {
+        val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
+        val originalSeq = event.sequence
+
+        val updated = eventWriter.updateEvent(
+            event.copy(description = "New agenda"),
             isLocal = false
         )
 

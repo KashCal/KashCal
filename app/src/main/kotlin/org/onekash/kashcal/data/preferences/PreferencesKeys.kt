@@ -72,8 +72,14 @@ object PreferencesKeys {
 
     // ========== UI Settings ==========
 
-    /** Theme: "system", "light", "dark" */
+    /** Theme face: "system", "light", "dark" (legacy value "teal" migrates to a seed accent) */
     val THEME = stringPreferencesKey("theme")
+
+    /** Color source: "dynamic" (Material You / baseline) or "seed" (accent-derived) */
+    val COLOR_SOURCE = stringPreferencesKey("color_source")
+
+    /** Accent seed color as packed ARGB int; drives the generated scheme when source is "seed" */
+    val ACCENT_SEED = intPreferencesKey("accent_seed")
 
     /** Enable notification sounds */
     val NOTIFICATION_SOUND = booleanPreferencesKey("notification_sound")
@@ -108,6 +114,15 @@ object PreferencesKeys {
 
     /** Maximum events shown per day in widgets (agenda + week) */
     val WIDGET_MAX_EVENTS_PER_DAY = intPreferencesKey("widget_max_events_per_day")
+
+    /**
+     * Last vertical scroll position of the Day/3-Day/Week time grid, stored as
+     * minutes from midnight (0..1439). Restored on cold launch so the timeline
+     * opens where the user last left it instead of the default hour. Stored as
+     * clock time (not pixels) so pinch-zoom hour-height changes between sessions
+     * still restore to the same time. -1 means "never saved" (fresh install).
+     */
+    val WEEK_VIEW_SCROLL_MINUTES = intPreferencesKey("week_view_scroll_minutes")
 
     // ========== Migration Flags ==========
 

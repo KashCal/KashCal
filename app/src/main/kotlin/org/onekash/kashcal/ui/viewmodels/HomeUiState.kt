@@ -153,8 +153,13 @@ data class HomeUiState(
     val isLoadingWeekView: Boolean = false,
     /** Error message if week view load fails */
     val weekViewError: String? = null,
-    /** Scroll position in week time grid (pixels) for state preservation */
+    /** Scroll position in week time grid (pixels) for in-session state preservation */
     val weekViewScrollPosition: Int = 0,
+    /**
+     * Persisted time-grid scroll position as minutes from midnight (0..1439), restored
+     * across app restarts. -1 = never saved (fresh install) -> falls back to the default hour.
+     */
+    val weekViewSavedScrollMinutes: Int = -1,
     /** Hour height in dp for pinch-to-zoom (30-150 range) */
     val weekViewHourHeight: Float = 60f,
     /** Current pager position (day index 0-6) for context-aware FAB */

@@ -143,7 +143,11 @@
     <string name="settings_theme_system_desc">আপনার ফোনের লাইট বা ডার্ক সেটিং অনুসরণ করুন</string>
     <string name="settings_theme_light_desc">সবসময় লাইট</string>
     <string name="settings_theme_dark_desc">সবসময় ডার্ক</string>
-    <string name="settings_theme_teal_desc">KashCal টিল, আপনার ফোনের লাইট বা ডার্ক সেটিং অনুসরণ করে</string>
+    <string name="settings_accent_color">অ্যাকসেন্ট রং</string>
+    <string name="settings_accent_color_desc">আপনার বেছে নেওয়া অ্যাকসেন্ট দিয়ে অ্যাপ ও উইজেট রঙিন করুন</string>
+    <string name="settings_accent_color_brand">KashCal টিল</string>
+    <string name="settings_accent_color_dynamic">স্বয়ংক্রিয়</string>
+    <string name="settings_accent_color_dynamic_desc">আপনার ডিভাইসের Material You রং অনুসরণ করুন</string>
     <string name="settings_app_icon">অ্যাপ আইকন</string>
     <string name="app_icon_default">ডিফল্ট</string>
     <string name="app_icon_supporter">সমর্থক</string>
@@ -395,7 +399,6 @@
     <string name="option_system_default">সিস্টেম ডিফল্ট</string>
     <string name="option_light">লাইট</string>
     <string name="option_dark">ডার্ক</string>
-    <string name="option_kashcal_teal">KashCal টিল</string>
     <string name="option_12_hour">১২-ঘণ্টা</string>
     <string name="option_24_hour">২৪-ঘণ্টা</string>
     <string name="option_sunday">রবিবার</string>

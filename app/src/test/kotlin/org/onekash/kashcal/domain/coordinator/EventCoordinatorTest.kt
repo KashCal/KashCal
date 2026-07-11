@@ -1678,8 +1678,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `setting organizer on update does not bump SEQUENCE`() = runTest {
-        // SequenceBumper compares timing/recurrence/STATUS only, not
-        // organizerEmail — resolving the organizer must not re-notify attendees.
+        // SequenceBumper does not compare organizerEmail — resolving the
+        // organizer must not re-notify attendees.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.updateEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
         coEvery { accountRepository.getAccountById(2L) } returns Account(

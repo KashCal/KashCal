@@ -22,6 +22,7 @@ class WidgetTypographyTest {
         listOf(
             WidgetTypography.headerTitle,
             WidgetTypography.contentTitle,
+            WidgetTypography.monthDayNumber,
             WidgetTypography.secondary,
             WidgetTypography.label,
             WidgetTypography.dateNumber
@@ -38,6 +39,7 @@ class WidgetTypographyTest {
         val allRoles = listOf(
             WidgetTypography.headerTitle,
             WidgetTypography.contentTitle,
+            WidgetTypography.monthDayNumber,
             WidgetTypography.secondary,
             WidgetTypography.label,
             WidgetTypography.navGlyph,
@@ -57,6 +59,17 @@ class WidgetTypographyTest {
     @Test
     fun `primary content is at least 14sp`() {
         assertTrue(WidgetTypography.contentTitle.value >= 14f)
+    }
+
+    @Test
+    fun `month day number sits between body content and the header title`() {
+        // Month-grid numbers get extra presence over event-title body text, but
+        // must not out-rank the header title — the header stays the most
+        // prominent text in the widget. Keeping the number at or below the
+        // header also bounds its size so that, at the normal system font scale,
+        // the number plus its event-dot row fits the fixed 40dp day cell.
+        assertTrue(WidgetTypography.monthDayNumber.value > WidgetTypography.contentTitle.value)
+        assertTrue(WidgetTypography.monthDayNumber.value <= WidgetTypography.headerTitle.value)
     }
 
     @Test

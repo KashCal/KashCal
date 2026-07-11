@@ -150,7 +150,11 @@
     <string name="settings_theme_system_desc">Suivre le réglage clair ou sombre du téléphone</string>
     <string name="settings_theme_light_desc">Toujours clair</string>
     <string name="settings_theme_dark_desc">Toujours sombre</string>
-    <string name="settings_theme_teal_desc">Bleu sarcelle KashCal, suit le réglage clair ou sombre de ton téléphone</string>
+    <string name="settings_accent_color">Couleur d\'accentuation</string>
+    <string name="settings_accent_color_desc">Colore l\'app et les widgets avec la couleur d\'accentuation de ton choix</string>
+    <string name="settings_accent_color_brand">Bleu sarcelle KashCal</string>
+    <string name="settings_accent_color_dynamic">Automatique</string>
+    <string name="settings_accent_color_dynamic_desc">Suivre les couleurs Material You de ton appareil</string>
     <string name="settings_app_icon">Icône de l\'application</string>
     <string name="app_icon_default">Par défaut</string>
     <string name="app_icon_supporter">Soutien</string>
@@ -386,7 +390,6 @@
     <string name="option_system_default">Par défaut du système</string>
     <string name="option_light">Clair</string>
     <string name="option_dark">Sombre</string>
-    <string name="option_kashcal_teal">Bleu sarcelle KashCal</string>
     <string name="option_12_hour">12 heures</string>
     <string name="option_24_hour">24 heures</string>
     <string name="option_sunday">Dimanche</string>

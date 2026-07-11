@@ -326,30 +326,13 @@ private fun UpcomingWidgetHeader() {
             Text(
                 text = context.getString(R.string.upcoming_widget_name),
                 style = TextStyle(
-                    color = WidgetTheme.primaryText,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
         }
-        Box(
-            modifier = GlanceModifier
-                .size(UPCOMING_HEADER_BUTTON_SIZE_DP.dp)
-                .clickable(
-                    actionStartActivity<MainActivity>(
-                        parameters = actionParametersOf(
-                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = context.getString(R.string.cd_widget_add_event),
-                modifier = GlanceModifier.size(20.dp)
-            )
-        }
+        WidgetAddButton()
     }
 }
 
@@ -485,7 +468,7 @@ private fun UpcomingDayHeader(
                 eventCount
             ),
             style = TextStyle(
-                color = WidgetTheme.secondaryText,
+                color = if (isToday) WidgetTheme.onHeaderBackground else WidgetTheme.secondaryText,
                 fontSize = WidgetTypography.label
             )
         )

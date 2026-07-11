@@ -237,6 +237,28 @@ object EventColorPalette {
     fun entryForArgbOrDefault(argb: Int?): Css3ColorEntry =
         argb?.let { wheelArgbToEntry[it] } ?: colorsInFamily(HueFamily.RED).first()
 
+    /**
+     * Returns the wheel entry for [argb] if present, else the perceptually-nearest wheel color by
+     * squared RGB distance. Unlike [entryForArgbOrDefault] this never jumps to an unrelated hue
+     * (e.g. red) for an off-wheel color like the brand-teal accent — it lands on the closest
+     * available swatch, so the wheel opens near the user's current selection.
+     */
+    fun nearestWheelEntry(argb: Int): Css3ColorEntry {
+        wheelArgbToEntry[argb]?.let { return it }
+        val r = (argb shr 16) and 0xFF
+        val g = (argb shr 8) and 0xFF
+        val b = argb and 0xFF
+        return allCss3Colors.minBy { e ->
+            val er = (e.argb shr 16) and 0xFF
+            val eg = (e.argb shr 8) and 0xFF
+            val eb = e.argb and 0xFF
+            val dr = r - er
+            val dg = g - eg
+            val db = b - eb
+            dr * dr + dg * dg + db * db
+        }
+    }
+
     /** Random ARGB from the 12-color grid palette. Used to seed new calendars. */
     fun randomArgb(): Int = entries.random().argb
 }

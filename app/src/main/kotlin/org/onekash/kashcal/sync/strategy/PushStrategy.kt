@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.icaldav.scheduling.ITipBuilder
@@ -812,14 +813,52 @@ class PushStrategy @Inject constructor(
 
             when {
                 moveResult.isSuccess() -> {
-                    // MOVE succeeded - we're done! Skip CREATE phase entirely.
-                    val (newUrl, newEtag) = moveResult.getOrNull()
+                    // WebDAV MOVE relocated the resource, but MOVE is bodyless
+                    // (RFC 4918 §9.9 = copy + delete): the destination now holds
+                    // the OLD body. If the same save also edited the event (e.g.
+                    // title/note changed while moving calendars), that edit lives
+                    // only in the local row and would be silently lost unless we
+                    // PUT the current body to the new URL.
+                    //
+                    // Rather than hand-roll that PUT (and re-derive etag recovery,
+                    // 412 retry, scheduling read-back, and cancel draining), record
+                    // the relocation and hand off to processUpdate — the one write
+                    // path that owns all of that. Two invariants make the hand-off
+                    // safe against a failing body PUT:
+                    //   1. The row stays PENDING_UPDATE (NOT synced) until the body
+                    //      lands, so an interleaved pull treats it as locally-dirty
+                    //      and won't overwrite the edit with the stale moved body.
+                    //   2. The op becomes a real UPDATE (no MOVE-only fields), so a
+                    //      retry re-PUTs the body to the new URL — it never re-runs
+                    //      the MOVE (whose source is already gone, which would
+                    //      404 → CREATE → account-wide UID clash).
+                    // retryCount is intentionally NOT reset: pushAll gates the
+                    // retry decision on its in-memory `operation` (this same count),
+                    // so the body PUT shares the MOVE's budget. That is consistent
+                    // (a DB-only reset would diverge from that gate without effect),
+                    // and in the common case the MOVE succeeds first try (count 0).
+                    val (newUrl, movedEtag) = moveResult.getOrNull()
                         ?: return SinglePushResult.Error(-1, "Null result from MOVE", false)
 
-                    eventsDao.markCreatedOnServer(event.id, newUrl, newEtag, System.currentTimeMillis())
-                    pendingOperationsDao.deleteById(operation.id)
-                    Log.d(TAG, "MOVE succeeded: Event moved atomically to $newUrl")
-                    return SinglePushResult.Success(newEtag = newEtag, newUrl = newUrl)
+                    val now = System.currentTimeMillis()
+                    eventsDao.updateCaldavUrl(event.id, newUrl)
+                    eventsDao.updateEtag(event.id, movedEtag)
+                    eventsDao.updateSyncStatus(event.id, SyncStatus.PENDING_UPDATE, now)
+
+                    val updateOp = operation.copy(
+                        operation = PendingOperation.OPERATION_UPDATE,
+                        targetUrl = null,
+                        targetCalendarId = null
+                    )
+                    pendingOperationsDao.update(updateOp)
+
+                    Log.d(TAG, "MOVE succeeded: relocated to $newUrl; pushing current body via UPDATE path")
+                    // Delegate with a fresh single-entry cache so processUpdate sees
+                    // the just-written newUrl/PENDING_UPDATE row, not the batch
+                    // snapshot taken before the MOVE (which still has caldavUrl=null).
+                    val updated = eventsDao.getById(event.id)
+                    val refreshedCache = if (updated != null) mapOf(updated.id to updated) else emptyMap()
+                    return processUpdate(updateOp, refreshedCache, clientToUse)
                 }
 
                 moveResult.isNotFound() -> {
@@ -833,10 +872,14 @@ class PushStrategy @Inject constructor(
                     val error = moveResult as? CalDavResult.Error
                     val code = error?.code ?: -1
 
-                    // 403/405/412 = MOVE not supported or failed, fall back to CREATE+DELETE
-                    // - 403: Forbidden (cross-server move)
+                    // 403/405/412 = server declined the MOVE, fall back to CREATE+DELETE.
+                    // - 403: Forbidden (e.g. Nextcloud/Sabre builds that reject MOVE)
                     // - 405: Method Not Allowed (server doesn't support MOVE)
-                    // - 412: Precondition Failed (iCloud returns this for MOVE)
+                    // - 412: Precondition Failed
+                    // The CREATE+DELETE fallback re-serializes the current body, so
+                    // edits survive on this path. (Servers that ACCEPT MOVE — iCloud,
+                    // some Nextcloud builds — take the isSuccess branch above, which
+                    // now PUTs the body after relocating.)
                     // Safety: CREATE first, DELETE second (ensures no data loss)
                     if (code == 403 || code == 405 || code == 412) {
                         Log.w(TAG, "MOVE failed ($code), falling back to CREATE+DELETE")

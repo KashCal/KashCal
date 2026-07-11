@@ -156,7 +156,11 @@
     <string name="settings_theme_system_desc">Використовувати світлу або темну тему телефона</string>
     <string name="settings_theme_light_desc">Завжди світла</string>
     <string name="settings_theme_dark_desc">Завжди темна</string>
-    <string name="settings_theme_teal_desc">Бірюзовий KashCal, слідує світлому або темному налаштуванню телефона</string>
+    <string name="settings_accent_color">Акцентний колір</string>
+    <string name="settings_accent_color_desc">Розфарбувати додаток і віджети вибраним акцентом</string>
+    <string name="settings_accent_color_brand">Бірюзовий KashCal</string>
+    <string name="settings_accent_color_dynamic">Автоматично</string>
+    <string name="settings_accent_color_dynamic_desc">Використовувати кольори Material You твого пристрою</string>
     <string name="settings_app_icon">Значок додатка</string>
     <string name="app_icon_default">За замовчуванням</string>
     <string name="app_icon_supporter">Прихильник</string>
@@ -384,7 +388,6 @@
     <string name="option_system_default">Системний</string>
     <string name="option_light">Світла</string>
     <string name="option_dark">Темна</string>
-    <string name="option_kashcal_teal">Бірюзовий KashCal</string>
     <string name="option_12_hour">12-годинний</string>
     <string name="option_24_hour">24-годинний</string>
     <string name="option_sunday">Неділя</string>

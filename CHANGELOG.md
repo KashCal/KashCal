@@ -1,3 +1,23 @@
+## [2026.07.11]
+
+Last release we gave you KashCal Teal and were very pleased with ourselves. Then someone pointed out the obvious: we had spent a whole update letting you choose your color, and then chose it for you. A calendar telling you your favorite color is teal is a bit like a waiter ordering for the table. Bold. Rarely correct.
+
+So this release we got out of the way. Pick your accent from all 92 colors, and it runs through the entire app and, for the first time, out onto your home screen widgets too. The agenda, week, month, and date widgets all wear it, down to a proper raised add button. Want the old magic where the color follows your wallpaper? "Automatic" keeps your Material You colors exactly as they were.
+
+Our marketing team, several donuts deep by mid-afternoon, has decided to call this "Calendar You." We did the math on 92 colors, one calendar, and infinite you, and we could not find the flaw, so it is approved. Please clap.
+
+While we were in a generous mood: the week and 3-day views now remember where you were looking and put you back there when you reopen the app, instead of scrolling you off to some default hour like nothing happened. And moving an event to another calendar no longer quietly eats a title or note you edited in the same breath.
+
+Ninety-two colors. Still one calendar. Now unmistakably yours.
+
+### Everything in this release
+
+- Accent color picker: theme the whole app and all home-screen widgets with any of 92 colors, defaulting to KashCal Teal (#293)
+- "Automatic" accent keeps your Material You / wallpaper colors
+- Agenda, week, month, and date widgets recolor to your accent, with a raised add button
+- Week and 3-day views restore your last scroll position across app restart (#224)
+- Moving an event to another calendar preserves title/note edits made in the same save (#292)
+
 ## [2026.07.06]
 
 This release is about making KashCal yours. Two new choices, both in Settings, one for how the app looks and one for how it shows up on your home screen.

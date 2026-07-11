@@ -67,21 +67,10 @@ class SubscriptionDialogsTest {
     // ==================== AccentColors Tests ====================
 
     @Test
-    fun `AccentColors Green exists`() {
-        // System green: #34C759
-        assertNotNull(AccentColors.Green)
-    }
-
-    @Test
-    fun `AccentColors Blue exists`() {
-        // System blue: #007AFF
-        assertNotNull(AccentColors.Blue)
-    }
-
-    @Test
-    fun `AccentColors iCloudBlue exists`() {
-        // iCloud Blue: #5AC8FA
-        assertNotNull(AccentColors.iCloudBlue)
+    fun `AccentColors success shades exist`() {
+        // Success green stays fixed-hue; only the shade adapts to the surface
+        assertNotNull(AccentColors.SuccessLight)
+        assertNotNull(AccentColors.SuccessDark)
     }
 
     // ==================== SyncInterval Integration Tests ====================

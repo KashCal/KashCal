@@ -76,13 +76,13 @@ internal fun actualToNearestVirtualIndex(
 }
 
 /**
- * iOS-style vertical wheel picker component.
+ * Vertical snapping wheel picker component.
  * Uses LazyColumn with snap behavior for smooth scrolling and center-item selection.
  *
  * Best practices applied:
  * - State hoisting: receives selectedItem, emits onItemSelected
  * - derivedStateOf: for computed centerIndex from scroll position
- * - rememberSnapFlingBehavior: for iOS-style snapping
+ * - rememberSnapFlingBehavior: for center-snap fling behavior
  *
  * @param isCircular If true, enables infinite/circular scrolling (wraps around)
  */
@@ -311,7 +311,7 @@ fun <T> VerticalWheelPicker(
 }
 
 /**
- * iOS-style time picker with separate wheels for hours, minutes, and optionally AM/PM.
+ * Wheel-based time picker with separate wheels for hours, minutes, and optionally AM/PM.
  *
  * @param selectedHour Hour in 24-hour format (0-23) - internal state
  * @param selectedMinute Minute (0-59)

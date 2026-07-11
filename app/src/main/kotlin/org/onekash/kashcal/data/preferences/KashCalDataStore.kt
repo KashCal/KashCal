@@ -297,6 +297,21 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.THEME, theme)
     }
 
+    /** Stored color-source value ("dynamic"/"seed"), or null if the user never chose one. */
+    val colorSource: Flow<String?>
+        get() = getOptionalPreference(PreferencesKeys.COLOR_SOURCE)
+
+    suspend fun setColorSource(value: String) {
+        setPreference(PreferencesKeys.COLOR_SOURCE, value)
+    }
+
+    val accentSeed: Flow<Int>
+        get() = getPreference(PreferencesKeys.ACCENT_SEED, ACCENT_SEED_DEFAULT)
+
+    suspend fun setAccentSeed(seed: Int) {
+        setPreference(PreferencesKeys.ACCENT_SEED, seed)
+    }
+
     val notificationSound: Flow<Boolean>
         get() = getPreference(PreferencesKeys.NOTIFICATION_SOUND, true)
 
@@ -364,6 +379,22 @@ class KashCalDataStore(
         val validOptions = setOf(3, 5, 8, 10, 15)
         val safeCount = if (count in validOptions) count else 5
         setPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, safeCount)
+    }
+
+    /**
+     * Last time-grid scroll position as minutes from midnight (0..1439).
+     * -1 means never saved: fresh installs fall back to the default scroll hour.
+     */
+    val weekViewScrollMinutes: Flow<Int>
+        get() = getPreference(PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES, WEEK_VIEW_SCROLL_NOT_SAVED)
+
+    suspend fun getWeekViewScrollMinutes(): Int = weekViewScrollMinutes.first()
+
+    suspend fun setWeekViewScrollMinutes(minutesOfDay: Int) {
+        // Only real positions are persisted; clamp into the day so a bad input
+        // can never store the never-saved sentinel or an out-of-grid value.
+        val safe = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
+        setPreference(PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES, safe)
     }
 
     /**
@@ -889,6 +920,10 @@ class KashCalDataStore(
         // Other defaults
         const val DEFAULT_EVENT_DURATION_MINUTES = 30
 
+        // Week-view scroll restore
+        const val WEEK_VIEW_SCROLL_NOT_SAVED = -1  // Sentinel: no position saved yet
+        const val MINUTES_PER_DAY = 24 * 60
+
         // Share-availability defaults
         const val SHARE_AVAILABILITY_DEFAULT_DAYS = 7
         const val SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN = 9 * 60 // 09:00 (540)
@@ -951,7 +986,11 @@ class KashCalDataStore(
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        // Retired theme option; retained only to migrate existing users onto a seed accent.
         const val THEME_TEAL = "teal"
+
+        /** Default accent seed = brand teal, as a packed ARGB int. */
+        const val ACCENT_SEED_DEFAULT: Int = 0xFF0E6E62.toInt()
 
         // View values
         const val VIEW_MONTH = "month"

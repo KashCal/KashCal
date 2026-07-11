@@ -154,30 +154,13 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
             Text(
                 text = formatWeekHeaderRange(firstDay, lastDay),
                 style = TextStyle(
-                    color = WidgetTheme.accentColor,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
         }
-        Box(
-            modifier = GlanceModifier
-                .size(40.dp)
-                .clickable(
-                    actionStartActivity<MainActivity>(
-                        parameters = actionParametersOf(
-                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
-                modifier = GlanceModifier.size(20.dp)
-            )
-        }
+        WidgetAddButton()
     }
 }
 
@@ -213,7 +196,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
             Text(
                 text = LocalContext.current.getString(R.string.label_today),
                 style = TextStyle(
-                    color = WidgetTheme.accentColor,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.label,
                     fontWeight = FontWeight.Medium
                 )
@@ -224,7 +207,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
             Text(
                 text = LocalContext.current.resources.getQuantityString(R.plurals.widget_event_count_plural, eventCount, eventCount),
                 style = TextStyle(
-                    color = WidgetTheme.secondaryText,
+                    color = if (isToday) WidgetTheme.onHeaderBackground else WidgetTheme.secondaryText,
                     fontSize = WidgetTypography.label
                 )
             )

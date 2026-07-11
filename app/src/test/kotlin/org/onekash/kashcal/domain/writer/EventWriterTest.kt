@@ -48,6 +48,7 @@ class EventWriterTest {
     private var testCalendarId: Long = 0
     private var iCloudCalendar2Id: Long = 0
     private var localCalendarId: Long = 0
+    private var otherAccountCalendarId: Long = 0
 
     @Before
     fun setup() {
@@ -90,6 +91,20 @@ class EventWriterTest {
                     caldavUrl = "local://default",
                     displayName = "Local",
                     color = 0xFF4CAF50.toInt()
+                )
+            )
+
+            // A SECOND synced account (distinct from test@icloud.com) for
+            // cross-account move tests.
+            val otherAccountId = database.accountsDao().insert(
+                Account(provider = AccountProvider.CALDAV, email = "other@nextcloud.test")
+            )
+            otherAccountCalendarId = database.calendarsDao().insert(
+                Calendar(
+                    accountId = otherAccountId,
+                    caldavUrl = "https://nc.test/remote.php/dav/calendars/other/personal/",
+                    displayName = "Other Account",
+                    color = 0xFF9C27B0.toInt()
                 )
             )
         }
@@ -226,7 +241,7 @@ class EventWriterTest {
     }
 
     @Test
-    fun `updateEvent does not increment sequence for title change`() = runTest {
+    fun `updateEvent increments sequence for title change`() = runTest {
         val original = eventWriter.createEvent(createBaseEvent(), isLocal = true)
 
         val updated = eventWriter.updateEvent(
@@ -234,7 +249,19 @@ class EventWriterTest {
             isLocal = true
         )
 
-        assertEquals(0, updated.sequence)
+        assertEquals(1, updated.sequence)
+    }
+
+    @Test
+    fun `updateEvent increments sequence for location change`() = runTest {
+        val original = eventWriter.createEvent(createBaseEvent(), isLocal = true)
+
+        val updated = eventWriter.updateEvent(
+            original.copy(location = "Room B"),
+            isLocal = true
+        )
+
+        assertEquals(1, updated.sequence)
     }
 
     @Test
@@ -295,11 +322,11 @@ class EventWriterTest {
     }
 
     @Test
-    fun `updateEvent does not increment sequence for description or location change`() = runTest {
+    fun `updateEvent does not increment sequence for description change`() = runTest {
         val original = eventWriter.createEvent(createBaseEvent(), isLocal = true)
 
         val updated = eventWriter.updateEvent(
-            original.copy(description = "Bring the deck", location = "Room B"),
+            original.copy(description = "Bring the deck"),
             isLocal = true
         )
 
@@ -785,10 +812,37 @@ class EventWriterTest {
         assertEquals("rescheduled occurrence must bump SEQUENCE", 1, exception.sequence)
     }
 
-    // A cosmetic-only single-occurrence edit (title) must NOT bump SEQUENCE,
+    // A cosmetic-only single-occurrence edit (notes) must NOT bump SEQUENCE,
     // or attendees get re-notified for nothing.
     @Test
-    fun `editSingleOccurrence does not bump SEQUENCE for title-only change`() = runTest {
+    fun `editSingleOccurrence does not bump SEQUENCE for notes-only change`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false
+        )
+        val target = database.occurrencesDao().getForEvent(master.id)[2]
+
+        val exception = eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = target.startTs,
+            // Same occurrence time, only the notes differ.
+            modifiedEvent = master.copy(
+                id = 0,
+                uid = "",
+                rrule = null,
+                description = "Added an agenda",
+                startTs = target.startTs,
+                endTs = target.endTs,
+            ),
+            isLocal = false
+        )
+
+        assertEquals("notes-only edit must not bump SEQUENCE", 0, exception.sequence)
+    }
+
+    // A retitled occurrence is attendee-facing, so it MUST bump SEQUENCE.
+    @Test
+    fun `editSingleOccurrence bumps SEQUENCE for title-only change`() = runTest {
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false
@@ -810,7 +864,7 @@ class EventWriterTest {
             isLocal = false
         )
 
-        assertEquals("title-only edit must not bump SEQUENCE", 0, exception.sequence)
+        assertEquals("title-only edit must bump SEQUENCE", 1, exception.sequence)
     }
 
     // Re-editing an already-materialized exception with a fresh timing change
@@ -823,7 +877,7 @@ class EventWriterTest {
         )
         val target = database.occurrencesDao().getForEvent(master.id)[2]
 
-        // First edit: title-only, establishes the exception at occurrence time
+        // First edit: notes-only, establishes the exception at occurrence time
         // without bumping (SEQUENCE stays 0).
         val firstEdit = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
@@ -832,13 +886,13 @@ class EventWriterTest {
                 id = 0,
                 uid = "",
                 rrule = null,
-                title = "First",
+                description = "First agenda",
                 startTs = target.startTs,
                 endTs = target.endTs,
             ),
             isLocal = false
         )
-        assertEquals("title-only first edit should not bump", 0, firstEdit.sequence)
+        assertEquals("notes-only first edit should not bump", 0, firstEdit.sequence)
 
         // Second edit of the same occurrence: shift the time.
         val secondEdit = eventWriter.editSingleOccurrence(
@@ -848,7 +902,7 @@ class EventWriterTest {
                 id = 0,
                 uid = "",
                 rrule = null,
-                title = "First",
+                description = "First agenda",
                 startTs = target.startTs + 3_600_000L,
                 endTs = target.endTs + 3_600_000L,
             ),
@@ -866,7 +920,7 @@ class EventWriterTest {
                 id = 0,
                 uid = "",
                 rrule = null,
-                title = "First",
+                description = "First agenda",
                 startTs = target.startTs + 7_200_000L,
                 endTs = target.endTs + 7_200_000L,
             ),
@@ -877,12 +931,12 @@ class EventWriterTest {
     }
 
     // Guards the pristine-occurrence projection for all-day masters: a
-    // title-only edit must not bump SEQUENCE even though the projection
+    // notes-only edit must not bump SEQUENCE even though the projection
     // recomputes endTs from the master's span and carries isAllDay. If the
     // projection ever desynced from the modified event on these fields, this
     // would false-fire and re-notify attendees.
     @Test
-    fun `editSingleOccurrence does not bump SEQUENCE for title-only change on all-day master`() = runTest {
+    fun `editSingleOccurrence does not bump SEQUENCE for notes-only change on all-day master`() = runTest {
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5", isAllDay = true),
             isLocal = false
@@ -896,14 +950,14 @@ class EventWriterTest {
                 id = 0,
                 uid = "",
                 rrule = null,
-                title = "Renamed all-day occurrence",
+                description = "Added an agenda",
                 startTs = target.startTs,
                 endTs = target.endTs,
             ),
             isLocal = false
         )
 
-        assertEquals("all-day title-only edit must not bump SEQUENCE", 0, exception.sequence)
+        assertEquals("all-day notes-only edit must not bump SEQUENCE", 0, exception.sequence)
     }
 
     // ========== Delete Single Occurrence (EXDATE) ==========
@@ -1968,6 +2022,112 @@ class EventWriterTest {
         assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
         assertEquals("https://caldav.icloud.com/test/event123.ics", ops[0].targetUrl)
         assertEquals(iCloudCalendar2Id, ops[0].targetCalendarId)
+    }
+
+    // ---- cross-account move is blocked for events with attendees ----
+    // Moving an attendee-bearing event to a different account would send the
+    // wrong ORGANIZER (the source account's address), which scheduling servers
+    // reject/rewrite — re-inviting or stripping guests. Block it; the user can
+    // duplicate into the other account instead (fresh UID, correct organizer).
+
+    @Test
+    fun `moveEventToCalendar cross-account with attendees is rejected`() = runTest {
+        val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
+        database.eventsDao().markCreatedOnServer(
+            event.id, "https://caldav.icloud.com/test/e.ics", "etag", System.currentTimeMillis()
+        )
+        database.attendeesDao().replaceForEvent(
+            event.id,
+            listOf(Attendee(eventId = event.id, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0))
+        )
+        database.pendingOperationsDao().deleteForEvent(event.id)
+
+        // Cross-account move (test@icloud.com -> other@nextcloud.test) must throw.
+        var threw = false
+        try {
+            eventWriter.moveEventToCalendar(event.id, otherAccountCalendarId)
+        } catch (e: IllegalArgumentException) {
+            threw = true
+        }
+        assertTrue("cross-account move of an attendee event must be rejected", threw)
+
+        // The event must stay put (calendar unchanged, no move op queued).
+        val after = database.eventsDao().getById(event.id)
+        assertEquals(testCalendarId, after?.calendarId)
+        assertTrue(database.pendingOperationsDao().getForEvent(event.id).isEmpty())
+    }
+
+    @Test
+    fun `moveEventToCalendar cross-account without attendees is allowed`() = runTest {
+        val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
+        database.eventsDao().markCreatedOnServer(
+            event.id, "https://caldav.icloud.com/test/e.ics", "etag", System.currentTimeMillis()
+        )
+        database.pendingOperationsDao().deleteForEvent(event.id)
+
+        // No attendees -> cross-account move proceeds (linked CREATE + DELETE).
+        eventWriter.moveEventToCalendar(event.id, otherAccountCalendarId)
+
+        assertEquals(otherAccountCalendarId, database.eventsDao().getById(event.id)?.calendarId)
+        assertTrue(database.pendingOperationsDao().getForEvent(event.id).isNotEmpty())
+    }
+
+    @Test
+    fun `moveEventToCalendar cross-account rejected when only an EXCEPTION has attendees`() = runTest {
+        // Recurring master with NO attendees, but a per-occurrence edit adds a
+        // guest to one occurrence (an exception row with its own attendee rows).
+        // The cross-account guard must count exception attendees too, or the
+        // move slips through and mis-schedules the exception's guest.
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
+            isLocal = false
+        )
+        database.eventsDao().markCreatedOnServer(
+            master.id, "https://caldav.icloud.com/test/m.ics", "etag", System.currentTimeMillis()
+        )
+        val occTs = master.startTs + 86_400_000L // second occurrence
+        eventWriter.editSingleOccurrence(
+            masterEventId = master.id,
+            occurrenceTimeMs = occTs,
+            modifiedEvent = master.copy(rrule = null, title = "Just this one"),
+            attendees = listOf(
+                Attendee(eventId = 0, address = "mailto:guest@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
+            )
+        )
+        // Master itself has zero attendees.
+        assertEquals(0, database.attendeesDao().countForEvent(master.id))
+        database.pendingOperationsDao().deleteForEvent(master.id)
+
+        var threw = false
+        try {
+            eventWriter.moveEventToCalendar(master.id, otherAccountCalendarId)
+        } catch (e: IllegalArgumentException) {
+            threw = true
+        }
+        assertTrue("cross-account move must be rejected when an exception carries attendees", threw)
+        assertEquals(testCalendarId, database.eventsDao().getById(master.id)?.calendarId)
+    }
+
+    @Test
+    fun `moveEventToCalendar same-account with attendees is allowed`() = runTest {
+        val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
+        database.eventsDao().markCreatedOnServer(
+            event.id, "https://caldav.icloud.com/test/e.ics", "etag", System.currentTimeMillis()
+        )
+        database.attendeesDao().replaceForEvent(
+            event.id,
+            listOf(Attendee(eventId = event.id, address = "mailto:alice@example.test", partstat = "NEEDS-ACTION", sortOrder = 0))
+        )
+        database.pendingOperationsDao().deleteForEvent(event.id)
+
+        // Same-account move (two iCloud calendars) is safe — attendees ride along
+        // on the same eventId, no re-invite (proven by MoveReInviteProbeTest).
+        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
+
+        assertEquals(iCloudCalendar2Id, database.eventsDao().getById(event.id)?.calendarId)
+        val ops = database.pendingOperationsDao().getForEvent(event.id)
+        assertEquals(1, ops.size)
+        assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
     }
 
     @Test

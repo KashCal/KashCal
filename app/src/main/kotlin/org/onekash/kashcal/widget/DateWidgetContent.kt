@@ -83,7 +83,7 @@ fun DateWidgetContent() {
                 Text(
                     text = dayName,
                     style = TextStyle(
-                        color = WidgetTheme.secondaryText,
+                        color = WidgetTheme.onHeaderBackground,
                         fontSize = WidgetTypography.label,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
@@ -94,7 +94,7 @@ fun DateWidgetContent() {
                 Text(
                     text = dateNumber,
                     style = TextStyle(
-                        color = WidgetTheme.primaryText,
+                        color = WidgetTheme.onHeaderBackground,
                         fontSize = WidgetTypography.dateNumber,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center

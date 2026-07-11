@@ -17,21 +17,15 @@ class SharedComponentsTest {
     // ==================== AccentColors Tests ====================
 
     @Test
-    fun `AccentColors Green has correct value`() {
+    fun `AccentColors success light has correct value`() {
         // System green: #34C759
-        assertEquals(0xFF34C759.toInt().toLong(), AccentColors.Green.value.toLong() shr 32)
+        assertEquals(0xFF34C759.toInt().toLong(), AccentColors.SuccessLight.value.toLong() shr 32)
     }
 
     @Test
-    fun `AccentColors Blue has correct value`() {
-        // System blue: #007AFF
-        assertEquals(0xFF007AFF.toInt().toLong(), AccentColors.Blue.value.toLong() shr 32)
-    }
-
-    @Test
-    fun `AccentColors iCloudBlue has correct value`() {
-        // iCloud Blue: #5AC8FA
-        assertEquals(0xFF5AC8FA.toInt().toLong(), AccentColors.iCloudBlue.value.toLong() shr 32)
+    fun `AccentColors success dark has correct value`() {
+        // Brighter green for dark surfaces: #30D158
+        assertEquals(0xFF30D158.toInt().toLong(), AccentColors.SuccessDark.value.toLong() shr 32)
     }
 
     // ==================== SubscriptionColors Tests ====================

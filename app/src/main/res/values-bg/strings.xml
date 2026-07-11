@@ -146,7 +146,11 @@
     <string name="settings_theme_system_desc">Следва светлата или тъмната настройка на телефона ви</string>
     <string name="settings_theme_light_desc">Винаги светла</string>
     <string name="settings_theme_dark_desc">Винаги тъмна</string>
-    <string name="settings_theme_teal_desc">KashCal синьо-зелено, следва светлата или тъмната настройка на телефона ви</string>
+    <string name="settings_accent_color">Акцентен цвят</string>
+    <string name="settings_accent_color_desc">Оцветете приложението и джаджите с избрания от вас акцентен цвят</string>
+    <string name="settings_accent_color_brand">KashCal Синьо-зелено</string>
+    <string name="settings_accent_color_dynamic">Автоматично</string>
+    <string name="settings_accent_color_dynamic_desc">Следвайте цветовете Material You на вашето устройство</string>
     <string name="settings_app_icon">Икона на приложението</string>
     <string name="app_icon_default">По подразбиране</string>
     <string name="app_icon_supporter">Поддръжник</string>
@@ -388,7 +392,6 @@
     <string name="option_system_default">Системно по подразбиране</string>
     <string name="option_light">Светла</string>
     <string name="option_dark">Тъмна</string>
-    <string name="option_kashcal_teal">KashCal Синьо-зелено</string>
     <string name="option_12_hour">12-часов</string>
     <string name="option_24_hour">24-часов</string>
     <string name="option_sunday">Неделя</string>

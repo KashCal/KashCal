@@ -66,9 +66,11 @@ import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.util.UiMessage
 import org.onekash.kashcal.util.importEventsToDeviceCalendar
+import org.onekash.kashcal.util.maskEmail
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
@@ -310,6 +312,16 @@ class AccountSettingsViewModel @Inject constructor(
      */
     val themeMode: Flow<ThemeMode> = dataStore.theme
         .map { ThemeMode.fromPrefValue(it) }
+
+    /**
+     * Where app + widget colors come from (dynamic Material You vs. accent seed). Combines the
+     * explicit stored source with the legacy theme string so users who had picked the retired
+     * "teal" theme land on the seed path (their brand color is preserved via the seed default).
+     */
+    val colorSource: Flow<ColorSource> = userPreferences.resolvedColorSource
+
+    /** Current accent seed color (packed ARGB); meaningful when [colorSource] is SEED. */
+    val accentSeed: Flow<Int> = dataStore.accentSeed
 
     private val _firstDayOfWeek = MutableStateFlow(java.util.Calendar.SUNDAY)
     val firstDayOfWeek: StateFlow<Int> = _firstDayOfWeek.asStateFlow()
@@ -766,6 +778,27 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
+     * Pick an accent color. Persists the seed, switches the color source to seed-derived, and
+     * refreshes widgets so they recolor too. The running app recolors because activities collect
+     * [accentSeed]/[colorSource] into KashCalTheme.
+     */
+    fun setAccentSeed(seed: Int) {
+        viewModelScope.launch {
+            dataStore.setAccentSeed(seed)
+            dataStore.setColorSource(ColorSource.SEED.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("accent_changed")
+        }
+    }
+
+    /** Switch the color source (e.g. back to dynamic Material You) and refresh widgets. */
+    fun setColorSource(source: ColorSource) {
+        viewModelScope.launch {
+            dataStore.setColorSource(source.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("color_source_changed")
+        }
+    }
+
+    /**
      * Update the first day of week preference.
      */
     fun setFirstDayOfWeek(day: Int) {
@@ -895,7 +928,7 @@ class AccountSettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            Log.i(TAG, "Starting iCloud discovery for: ${appleIdInput.trim()}")
+            Log.i(TAG, "Starting iCloud discovery for: ${appleIdInput.trim().maskEmail()}")
 
             // Discover account and calendars with timeout and retry
             // Retries on timeout only, not on auth errors

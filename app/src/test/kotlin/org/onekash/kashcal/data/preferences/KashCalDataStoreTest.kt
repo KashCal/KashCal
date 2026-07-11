@@ -110,6 +110,26 @@ class KashCalDataStoreTest {
         }
     }
 
+    // ==================== accent seed ====================
+
+    @Test
+    fun `accentSeed defaults to brand teal`() = runTest {
+        dataStore.accentSeed.test {
+            assertEquals(KashCalDataStore.ACCENT_SEED_DEFAULT, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `accentSeed emits the value after set`() = runTest {
+        dataStore.accentSeed.test {
+            assertEquals(KashCalDataStore.ACCENT_SEED_DEFAULT, awaitItem())
+            dataStore.setAccentSeed(0xFFFF6347.toInt())
+            assertEquals(0xFFFF6347.toInt(), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Test
     fun `getPreference emits multiple distinct changes`() = runTest {
         dataStore.defaultReminderMinutes.test {
@@ -285,6 +305,48 @@ class KashCalDataStoreTest {
         // with lightweight ctag-based incremental sync
         assertEquals(60, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MINUTES)
         assertEquals(1L * 60 * 60 * 1000, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
+    }
+
+    // ==================== Week View Scroll Restore Tests ====================
+
+    @Test
+    fun `weekViewScrollMinutes defaults to -1 sentinel when never saved`() = runTest {
+        dataStore.weekViewScrollMinutes.test {
+            assertEquals(-1, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setWeekViewScrollMinutes round-trips a saved clock time`() = runTest {
+        dataStore.weekViewScrollMinutes.test {
+            assertEquals(-1, awaitItem())
+
+            // 14:00 (2 PM) as minutes-of-day
+            dataStore.setWeekViewScrollMinutes(840)
+            assertEquals(840, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setWeekViewScrollMinutes clamps above end-of-day to 1439`() = runTest {
+        dataStore.setWeekViewScrollMinutes(5000)
+        assertEquals(1439, dataStore.getWeekViewScrollMinutes())
+    }
+
+    @Test
+    fun `setWeekViewScrollMinutes clamps negative input to 0`() = runTest {
+        // Only real positions are written; a negative reaching the setter clamps to
+        // the start of day rather than persisting the never-saved sentinel.
+        dataStore.setWeekViewScrollMinutes(-99)
+        assertEquals(0, dataStore.getWeekViewScrollMinutes())
+    }
+
+    @Test
+    fun `getWeekViewScrollMinutes returns sentinel before any save`() = runTest {
+        assertEquals(-1, dataStore.getWeekViewScrollMinutes())
     }
 
     // ==================== First Day of Week Tests ====================

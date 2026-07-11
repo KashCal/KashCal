@@ -146,7 +146,11 @@
     <string name="settings_theme_system_desc">Telefonunuzun açık veya koyu ayarını izler</string>
     <string name="settings_theme_light_desc">Her zaman açık</string>
     <string name="settings_theme_dark_desc">Her zaman koyu</string>
-    <string name="settings_theme_teal_desc">KashCal turkuaz, telefonunun açık veya koyu ayarını izler</string>
+    <string name="settings_accent_color">Vurgu rengi</string>
+    <string name="settings_accent_color_desc">Uygulamayı ve widget\'ları seçtiğin vurgu rengiyle renklendir</string>
+    <string name="settings_accent_color_brand">KashCal Turkuaz</string>
+    <string name="settings_accent_color_dynamic">Otomatik</string>
+    <string name="settings_accent_color_dynamic_desc">Cihazının Material You renklerini takip et</string>
     <string name="settings_app_icon">Uygulama Simgesi</string>
     <string name="app_icon_default">Varsayılan</string>
     <string name="app_icon_supporter">Destekçi</string>
@@ -388,7 +392,6 @@
     <string name="option_system_default">Sistem varsayılanı</string>
     <string name="option_light">Açık</string>
     <string name="option_dark">Koyu</string>
-    <string name="option_kashcal_teal">KashCal Turkuaz</string>
     <string name="option_12_hour">12 saat</string>
     <string name="option_24_hour">24 saat</string>
     <string name="option_sunday">Pazar</string>

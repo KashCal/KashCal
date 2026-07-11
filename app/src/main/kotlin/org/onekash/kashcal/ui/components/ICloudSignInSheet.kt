@@ -63,8 +63,7 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.UiMessage
 import org.onekash.kashcal.ui.util.asString
 
-// iCloud brand color
-private val iCloudBlue = Color(0xFF5AC8FA)
+private val AccentBlue = Color(0xFF5AC8FA)
 
 /**
  * Visual transformation for Apple app-specific passwords.
@@ -158,7 +157,7 @@ fun ICloudSignInSheet(
             Icon(
                 imageVector = Icons.Default.Cloud,
                 contentDescription = null,
-                tint = iCloudBlue,
+                tint = AccentBlue,
                 modifier = Modifier.size(48.dp)
             )
 

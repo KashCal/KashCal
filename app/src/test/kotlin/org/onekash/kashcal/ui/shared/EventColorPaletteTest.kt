@@ -104,6 +104,23 @@ class EventColorPaletteTest {
     }
 
     @Test
+    fun `nearestWheelEntry returns the exact entry when argb is a wheel color`() {
+        val teal = EventColorPalette.allCss3Colors.first { it.name == "teal" }
+        assertEquals(teal, EventColorPalette.nearestWheelEntry(teal.argb))
+    }
+
+    @Test
+    fun `nearestWheelEntry maps an off-wheel teal to a teal-family neighbor, not red`() {
+        // Brand teal 0xFF0E6E62 is NOT in the wheel; the nearest color must be a green/teal,
+        // never the RED-family fallback that entryForArgbOrDefault would return.
+        val nearest = EventColorPalette.nearestWheelEntry(0xFF0E6E62.toInt())
+        assertTrue(
+            "nearest to brand teal should be teal/green family, got ${nearest.name} (${nearest.family})",
+            nearest.family == HueFamily.TEAL || nearest.family == HueFamily.GREEN,
+        )
+    }
+
+    @Test
     fun `allCss3Colors names are unique and lowercase`() {
         val names = EventColorPalette.allCss3Colors.map { it.name }
         assertEquals("duplicate names in allCss3Colors", names.size, names.toSet().size)

@@ -11,10 +11,11 @@ import org.onekash.kashcal.data.db.entity.Event
  * organizer edit must bump the iCalendar SEQUENCE (RFC 5546 §2.1.4).
  *
  * Significant properties (MUST bump): DTSTART, DTEND, DURATION, RRULE, RDATE,
- * EXDATE, and a transition of STATUS to CANCELLED. Everything else
- * (SUMMARY/title, DESCRIPTION, LOCATION, CATEGORIES, COLOR) must NOT bump —
- * those changes don't invalidate an attendee's prior acceptance, so re-sending
- * them as a higher SEQUENCE spuriously re-notifies attendees.
+ * EXDATE, a transition of STATUS to CANCELLED, and the attendee-facing
+ * SUMMARY/title and LOCATION. Purely cosmetic properties (DESCRIPTION,
+ * CATEGORIES, COLOR) must NOT bump — those changes don't invalidate an
+ * attendee's prior acceptance, so re-sending them as a higher SEQUENCE
+ * spuriously re-notifies attendees.
  */
 class SequenceBumperTest {
 
@@ -129,26 +130,60 @@ class SequenceBumperTest {
         assertTrue(SequenceBumper.shouldBump(old, new))
     }
 
-    // ---- Non-significant properties: MUST NOT bump ----
+    @Test
+    fun `title change bumps`() {
+        // A renamed meeting is attendee-facing: attendees should be
+        // re-notified so their calendars reflect the new title.
+        val old = baseEvent()
+        val new = old.copy(title = "Renamed standup")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
 
     @Test
-    fun `title change does not bump`() {
+    fun `location change bumps`() {
+        // RFC 5546 §2.1.4 names LOCATION as an example of a change that can
+        // jeopardize an attendee's participation status (a moved venue).
         val old = baseEvent()
-        val new = old.copy(title = "Standup (moved room)")
+        val new = old.copy(location = "Room B")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `location set from null bumps`() {
+        val old = baseEvent().copy(location = null)
+        val new = old.copy(location = "Room B")
+        assertTrue(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `location whitespace-only difference does not bump`() {
+        // A no-op re-save that only pads whitespace must not spuriously
+        // re-notify attendees.
+        val old = baseEvent().copy(location = "Room B")
+        val new = old.copy(location = "  Room B  ")
         assertFalse(SequenceBumper.shouldBump(old, new))
     }
+
+    @Test
+    fun `location null-vs-blank difference does not bump`() {
+        val old = baseEvent().copy(location = null)
+        val new = old.copy(location = "   ")
+        assertFalse(SequenceBumper.shouldBump(old, new))
+    }
+
+    @Test
+    fun `title whitespace-only difference does not bump`() {
+        val old = baseEvent().copy(title = "Standup")
+        val new = old.copy(title = "  Standup  ")
+        assertFalse(SequenceBumper.shouldBump(old, new))
+    }
+
+    // ---- Non-significant properties: MUST NOT bump ----
 
     @Test
     fun `description change does not bump`() {
         val old = baseEvent()
         val new = old.copy(description = "Bring the deck")
-        assertFalse(SequenceBumper.shouldBump(old, new))
-    }
-
-    @Test
-    fun `location change does not bump`() {
-        val old = baseEvent()
-        val new = old.copy(location = "Room B")
         assertFalse(SequenceBumper.shouldBump(old, new))
     }
 
@@ -193,7 +228,7 @@ class SequenceBumperTest {
     @Test
     fun `nextSequence preserves on non-significant change`() {
         val old = baseEvent()
-        val new = old.copy(title = "Renamed")
+        val new = old.copy(description = "Added an agenda")
         assertEquals(4, SequenceBumper.nextSequence(old, new))
     }
 

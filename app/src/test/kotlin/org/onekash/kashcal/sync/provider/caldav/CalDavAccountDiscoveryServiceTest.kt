@@ -1059,6 +1059,30 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
+    @Test
+    fun `removeAccountByEmail does not log the full email address`() = runTest {
+        val email = "user@example.com"
+        val account = createAccount(1L)
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, email) } returns account
+        val logMessages = mutableListOf<String>()
+        every { Log.i(any(), capture(logMessages)) } returns 0
+
+        discoveryService.removeAccountByEmail(email)
+
+        assertTrue(
+            "Expected the removal log line to be emitted; captured: $logMessages",
+            logMessages.any { it.contains("Removing CalDAV account") }
+        )
+        assertTrue(
+            "No log line should contain the unmasked email; captured: $logMessages",
+            logMessages.none { it.contains(email) }
+        )
+        assertTrue(
+            "Removal log should contain the masked email; captured: $logMessages",
+            logMessages.any { it.contains("use***@***.com") }
+        )
+    }
+
     // ==================== Account Collision Tests (Issue #69) ====================
 
     @Test

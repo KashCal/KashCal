@@ -406,6 +406,29 @@ class ICloudAccountDiscoveryServiceTest {
         coVerify { accountRepository.deleteAccount(testDbAccount.id) }
     }
 
+    @Test
+    fun `removeAccountByEmail does not log the full email address`() = runTest {
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, testAppleId) } returns testDbAccount
+        val logMessages = mutableListOf<String>()
+        every { Log.i(any(), capture(logMessages)) } returns 0
+
+        val service = createService()
+        service.removeAccountByEmail(testAppleId)
+
+        assertTrue(
+            "Expected the removal log line to be emitted; captured: $logMessages",
+            logMessages.any { it.contains("Removing iCloud account") }
+        )
+        assertTrue(
+            "No log line should contain the unmasked email; captured: $logMessages",
+            logMessages.none { it.contains(testAppleId) }
+        )
+        assertTrue(
+            "Removal log should contain the masked email; captured: $logMessages",
+            logMessages.any { it.contains("tes***@***.com") }
+        )
+    }
+
     // ==================== Credential Save Failure Tests (Issue #55) ====================
 
     @Test

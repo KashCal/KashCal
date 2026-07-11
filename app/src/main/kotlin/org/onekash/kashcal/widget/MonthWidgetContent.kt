@@ -26,6 +26,7 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -52,6 +53,21 @@ internal const val MONTH_DAY_CELL_HEIGHT_DP = 40
 
 /** Number of week rows the month grid always renders (fixed 6x7 grid). */
 internal const val MONTH_GRID_WEEK_ROWS = 6
+
+/**
+ * The weeks the widget should actually render: [MonthGrid.compute] always returns 6 rows (fixed
+ * for the full-size view's paging), but a month usually spans 5 (sometimes 4 or 6). Drop trailing
+ * rows that are entirely next-month padding so the widget shows only the weeks the month needs —
+ * no stray empty row, less wasted height. Never drops a row containing a day of this month.
+ */
+internal fun visibleWeeks(grid: org.onekash.kashcal.ui.model.MonthGrid): List<List<org.onekash.kashcal.ui.model.MonthGrid.DayCell>> {
+    val weeks = grid.weeks
+    var last = weeks.size - 1
+    while (last > 0 && weeks[last].all { it.position == org.onekash.kashcal.ui.model.MonthGrid.DayPosition.OutDate }) {
+        last--
+    }
+    return weeks.subList(0, last + 1)
+}
 
 /**
  * Format month header text for the widget.
@@ -109,10 +125,12 @@ fun MonthWidgetContent(
         // Day-of-week headers
         DayOfWeekRow(firstDayOfWeek)
 
-        // 6 rows of day cells
-        monthGrid.weeks.forEach { week ->
+        // Only the weeks this month spans (drops trailing all-next-month padding rows). Each week
+        // Row takes equal vertical weight so the rows fill the widget height evenly regardless of
+        // how many weeks the month spans — consistent look at any widget size, no dead space.
+        visibleWeeks(monthGrid).forEach { week ->
             Row(
-                modifier = GlanceModifier.fillMaxWidth(),
+                modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 week.forEach { cell ->
@@ -161,7 +179,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             Text(
                 text = "\u2039",
                 style = TextStyle(
-                    color = WidgetTheme.accentColor,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.navGlyph,
                     fontWeight = FontWeight.Bold
                 )
@@ -190,7 +208,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             Text(
                 text = headerText,
                 style = TextStyle(
-                    color = WidgetTheme.accentColor,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
@@ -211,32 +229,15 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             Text(
                 text = "\u203A",
                 style = TextStyle(
-                    color = WidgetTheme.accentColor,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.navGlyph,
                     fontWeight = FontWeight.Bold
                 )
             )
         }
 
-        // "+" button — 48dp touch target
-        Box(
-            modifier = GlanceModifier
-                .size(48.dp)
-                .clickable(
-                    actionStartActivity<MainActivity>(
-                        parameters = actionParametersOf(
-                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
-                modifier = GlanceModifier.size(18.dp)
-            )
-        }
+        // Filled accent "+" button (FAB-like)
+        WidgetAddButton()
     }
 }
 
@@ -289,7 +290,7 @@ private fun DayCell(
     if (isAdjacentMonth) {
         Box(
             modifier = modifier
-                .height(MONTH_DAY_CELL_HEIGHT_DP.dp)
+                .fillMaxHeight()
                 .clickable(
                     actionStartActivity<MainActivity>(
                         parameters = actionParametersOf(
@@ -305,7 +306,7 @@ private fun DayCell(
                 text = "${cell.dayOfMonth}",
                 style = TextStyle(
                     color = WidgetTheme.adjacentMonthText,
-                    fontSize = WidgetTypography.contentTitle
+                    fontSize = WidgetTypography.monthDayNumber
                 )
             )
         }
@@ -322,7 +323,7 @@ private fun DayCell(
 
     Box(
         modifier = modifier
-            .height(MONTH_DAY_CELL_HEIGHT_DP.dp)
+            .fillMaxHeight()
             .then(bgModifier)
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -348,7 +349,7 @@ private fun DayCell(
                 text = "${cell.dayOfMonth}",
                 style = TextStyle(
                     color = textColor,
-                    fontSize = WidgetTypography.contentTitle,
+                    fontSize = WidgetTypography.monthDayNumber,
                     // Medium (vs Normal) gives the numbers more presence against
                     // the dynamic Material You surface, which renders softer than
                     // a fixed high-contrast palette. Today stays Bold.

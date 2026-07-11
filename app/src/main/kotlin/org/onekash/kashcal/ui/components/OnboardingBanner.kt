@@ -26,8 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
-// iCloud brand color
-private val iCloudBlue = Color(0xFF5AC8FA)
+private val AccentBlue = Color(0xFF5AC8FA)
 
 /**
  * Onboarding banner shown to first-time users.
@@ -62,7 +61,7 @@ fun OnboardingBanner(
             Icon(
                 imageVector = Icons.Default.Cloud,
                 contentDescription = null,
-                tint = iCloudBlue,
+                tint = AccentBlue,
                 modifier = Modifier.size(64.dp)
             )
 
@@ -79,7 +78,7 @@ fun OnboardingBanner(
                 text = stringResource(R.string.onboarding_got_you),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = iCloudBlue,
+                color = AccentBlue,
                 textAlign = TextAlign.Center
             )
 

@@ -967,6 +967,30 @@ class EventWriter @Inject constructor(
             val targetIsLocal = targetAccount?.provider?.requiresSync == false
             val isSameAccount = sourceAccountId == targetAccountId && sourceAccountId != null
 
+            // Block a cross-account move of an event that has attendees. The move
+            // would carry the SOURCE account's ORGANIZER onto a CREATE against the
+            // TARGET account; scheduling servers reject/rewrite a foreign
+            // organizer and either re-invite everyone under a new identity or
+            // strip the guests (RFC 6638 / iTIP). We don't rewrite organizer
+            // identity on move, so this can only mis-schedule. Users who want the
+            // event on another account can duplicate it there (fresh UID, the new
+            // account becomes organizer, guests re-invited cleanly). Same-account
+            // moves are safe (attendees ride along on the unchanged eventId) and
+            // are not blocked. Defense in depth: the UI also disables the
+            // different-account picker options for attendee events.
+            // Count attendees on the master AND any exception rows: a recurring
+            // event can carry a per-occurrence guest only on an exception (its
+            // own eventId), which the cross-account CREATE serializes too — so
+            // the master's count alone would miss it and let the move through.
+            val hasAttendees = attendeesDao.countForEvent(eventId) > 0 ||
+                eventsDao.getExceptionsForMaster(eventId)
+                    .any { attendeesDao.countForEvent(it.id) > 0 }
+            val crossAccountWithAttendees = !isSameAccount && hasAttendees
+            require(!crossAccountWithAttendees) {
+                "Cannot move an event with attendees to a different account " +
+                    "(would misdeliver invitations); duplicate it instead"
+            }
+
             // Capture old URL BEFORE clearing (critical for sync)
             val oldCaldavUrl = event.caldavUrl
             val wasSynced = event.syncStatus == SyncStatus.SYNCED && oldCaldavUrl != null

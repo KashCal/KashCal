@@ -122,7 +122,11 @@
     <string name="settings_theme_system_desc">Fuata mpangilio wa mwanga au giza wa simu yako</string>
     <string name="settings_theme_light_desc">Mwanga kila wakati</string>
     <string name="settings_theme_dark_desc">Giza kila wakati</string>
-    <string name="settings_theme_teal_desc">Kijani-buluu ya KashCal, hufuata mpangilio wa mwanga au giza wa simu yako</string>
+    <string name="settings_accent_color">Rangi ya lafudhi</string>
+    <string name="settings_accent_color_desc">Paka rangi programu na wijeti kwa lafudhi uliyochagua</string>
+    <string name="settings_accent_color_brand">KashCal Teal</string>
+    <string name="settings_accent_color_dynamic">Kiotomatiki</string>
+    <string name="settings_accent_color_dynamic_desc">Fuata rangi za Material You za kifaa chako</string>
     <string name="settings_app_icon">Aikoni ya Programu</string>
     <string name="app_icon_default">Chaguo-msingi</string>
     <string name="app_icon_supporter">Mfadhili</string>
@@ -360,7 +364,6 @@
     <string name="option_system_default">Chaguomsingi ya mfumo</string>
     <string name="option_light">Mwanga</string>
     <string name="option_dark">Giza</string>
-    <string name="option_kashcal_teal">KashCal Teal</string>
     <string name="option_12_hour">Saa 12</string>
     <string name="option_24_hour">Saa 24</string>
     <string name="option_sunday">Jumapili</string>

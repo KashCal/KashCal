@@ -21,6 +21,7 @@ import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
 import org.onekash.kashcal.sync.discovery.persistSchedulingDiscovery
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
+import org.onekash.kashcal.util.maskEmail
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.UnknownHostException
@@ -501,7 +502,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
         replaceWith = ReplaceWith("removeAccount(accountId)")
     )
     suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
-        Log.i(TAG, "Removing CalDAV account: $email")
+        Log.i(TAG, "Removing CalDAV account: ${email.maskEmail()}")
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, email)
         if (account != null) {
             accountRepository.deleteAccount(account.id)

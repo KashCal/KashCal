@@ -19,6 +19,7 @@ class EditNotifyPredicateTest {
         endTs: Long = 1_700_003_600_000L,
         title: String = "Standup",
         location: String? = null,
+        description: String? = null,
         rrule: String? = null,
         status: String = "CONFIRMED",
     ) = Event(
@@ -28,6 +29,7 @@ class EditNotifyPredicateTest {
         startTs = startTs,
         endTs = endTs,
         location = location,
+        description = description,
         rrule = rrule,
         isAllDay = false,
         status = status,
@@ -57,9 +59,23 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `cosmetic-only change with attendees does not notify`() {
-        val old = event(title = "Standup", location = "Room A")
-        val new = event(title = "Daily Standup", location = "Room B")
+        val old = event(description = "Agenda A")
+        val new = event(description = "Agenda B")
         assertFalse(shouldNotifyAttendees(old = old, new = new, attendeeCount = 2))
+    }
+
+    @Test
+    fun `title change with attendees notifies`() {
+        val old = event(title = "Standup")
+        val new = event(title = "Daily Standup")
+        assertTrue(shouldNotifyAttendees(old = old, new = new, attendeeCount = 2))
+    }
+
+    @Test
+    fun `location change with attendees notifies`() {
+        val old = event(location = "Room A")
+        val new = event(location = "Room B")
+        assertTrue(shouldNotifyAttendees(old = old, new = new, attendeeCount = 2))
     }
 
     @Test
@@ -120,8 +136,8 @@ class EditNotifyPredicateTest {
     fun `a cosmetic edit to a zero-attendee event with no removal does not notify`() {
         // Regression guard: relaxing the empty-set gate must apply ONLY when a
         // removal is present, never to a plain cosmetic edit on a zero-attendee event.
-        val old = event(title = "Standup")
-        val new = event(title = "Daily Standup")
+        val old = event(description = "Agenda A")
+        val new = event(description = "Agenda B")
         assertFalse(
             shouldNotifyAttendees(old, new, attendeeCount = 0, attendeeRemoved = false),
         )
@@ -136,8 +152,8 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `cosmetic change with no attendee delta does not notify`() {
-        val old = event(title = "Standup", location = "Room A")
-        val new = event(title = "Daily Standup", location = "Room B")
+        val old = event(description = "Agenda A")
+        val new = event(description = "Agenda B")
         assertFalse(
             shouldNotifyAttendees(old, new, attendeeCount = 2, attendeeSetChanged = false),
         )
@@ -153,7 +169,7 @@ class EditNotifyPredicateTest {
             shouldNotifyAttendees(old, timing, attendeeCount = 1) ==
                 SequenceBumper.shouldBump(old, timing),
         )
-        val cosmetic = event(title = "Renamed")
+        val cosmetic = event(description = "Added an agenda")
         assertTrue(
             shouldNotifyAttendees(old, cosmetic, attendeeCount = 1) ==
                 SequenceBumper.shouldBump(old, cosmetic),

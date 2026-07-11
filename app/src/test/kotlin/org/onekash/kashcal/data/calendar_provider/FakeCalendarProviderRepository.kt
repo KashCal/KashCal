@@ -36,6 +36,13 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     var failCreateOnCall: Int = -1
     private var createCallCount = 0
 
+    /**
+     * When true, deleteEvent fails while other writes still succeed. Use to
+     * exercise the create-then-delete move path where the target copy is
+     * created but the source delete fails (must not be a hard save failure).
+     */
+    var failDelete: Boolean = false
+
     // Operation tracking
     val createdEvents = mutableListOf<CreatedEvent>()
     val updatedEventIds = mutableListOf<Long>()
@@ -317,6 +324,9 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
 
     override suspend fun deleteEvent(eventId: Long): Result<Unit> {
         writeFailure?.let { return Result.failure(it.toException()) }
+        if (failDelete) {
+            return Result.failure(CalendarError.DeviceCalendar.WriteFailed("delete failed").toException())
+        }
         if (shouldThrowSecurityException) {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
@@ -545,6 +555,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         shouldThrowSecurityException = false
         writeFailure = null
         failCreateOnCall = -1
+        failDelete = false
         createCallCount = 0
         createdEventId = 100L
         createdEvents.clear()

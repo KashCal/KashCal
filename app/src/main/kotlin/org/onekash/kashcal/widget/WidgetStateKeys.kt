@@ -75,17 +75,34 @@ internal suspend fun <T : GlanceAppWidget> bumpRefreshStamp(
  * so adding a new widget requires one edit, not three.
  *
  * Stamp write triggers recomposition of active provideContent sessions; the subsequent
- * updateAll is belt-and-braces for freshly-cold sessions. DateWidget is omitted: its
- * content depends only on today's date, refreshed by midnight alarm + periodic worker.
+ * updateAll is belt-and-braces for freshly-cold sessions. DateWidget is normally omitted: its
+ * content depends only on today's date, refreshed by midnight alarm + periodic worker — so
+ * event-driven refreshes skip it. Set [includeDateWidget] for changes that DO affect its
+ * appearance (e.g. accent color), so it recolors immediately rather than waiting for midnight.
  */
-internal suspend fun refreshAllWidgets(context: Context): Unit = coroutineScope {
-    listOf(
-        AgendaWidget::class.java to AgendaWidget(),
-        WeekWidget::class.java to WeekWidget(),
-        MonthWidget::class.java to MonthWidget(),
-        UpcomingWidget::class.java to UpcomingWidget()
-    ).forEach { (cls, instance) ->
-        launch { bumpRefreshStamp(context, cls) }
-        launch { instance.updateAll(context) }
+internal suspend fun refreshAllWidgets(
+    context: Context,
+    includeDateWidget: Boolean = false,
+): Unit = coroutineScope {
+    val widgets = buildList {
+        add(AgendaWidget::class.java to AgendaWidget())
+        add(WeekWidget::class.java to WeekWidget())
+        add(MonthWidget::class.java to MonthWidget())
+        add(UpcomingWidget::class.java to UpcomingWidget())
+        // DateWidget is normally omitted (its content is date-only, refreshed by midnight alarm +
+        // periodic worker), but color changes DO affect it, so include it then. It reads the same
+        // refresh stamp and keys its accent producer on it, so it recolors immediately.
+        if (includeDateWidget) add(DateWidget::class.java to DateWidget())
+    }
+    widgets.forEach { (cls, instance) ->
+        // Widgets refresh in parallel, but WITHIN each widget the stamp write must complete
+        // before updateAll (see bumpRefreshStamp docs): updateAll recomposes provideContent,
+        // and it must see the NEW stamp so produceState re-runs its data + accent-color fetch.
+        // Racing them (two sibling launches) let updateAll win and recompose on the old stamp,
+        // leaving stale data/colors on some widgets nondeterministically.
+        launch {
+            bumpRefreshStamp(context, cls)
+            instance.updateAll(context)
+        }
     }
 }

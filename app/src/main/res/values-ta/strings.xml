@@ -143,7 +143,11 @@
     <string name="settings_theme_system_desc">உங்கள் மொபைலின் லைட் அல்லது டார்க் அமைப்பைப் பின்பற்றவும்</string>
     <string name="settings_theme_light_desc">எப்போதும் லைட்</string>
     <string name="settings_theme_dark_desc">எப்போதும் டார்க்</string>
-    <string name="settings_theme_teal_desc">KashCal டீல், உங்கள் ஃபோனின் லைட் அல்லது டார்க் அமைப்பைப் பின்பற்றுகிறது</string>
+    <string name="settings_accent_color">ஆக்சென்ட் நிறம்</string>
+    <string name="settings_accent_color_desc">நீங்கள் தேர்ந்தெடுத்த ஆக்சென்ட் நிறத்தால் ஆப்பையும் விட்ஜெட்டுகளையும் நிறமாக்குங்கள்</string>
+    <string name="settings_accent_color_brand">KashCal டீல்</string>
+    <string name="settings_accent_color_dynamic">தானியங்கு</string>
+    <string name="settings_accent_color_dynamic_desc">உங்கள் சாதனத்தின் Material You நிறங்களைப் பின்பற்றுங்கள்</string>
     <string name="settings_app_icon">ஆப்ப் ஐகான்</string>
     <string name="app_icon_default">இயல்புநிலை</string>
     <string name="app_icon_supporter">ஆதரவாளர்</string>
@@ -395,7 +399,6 @@
     <string name="option_system_default">கணினி இயல்புநிலை</string>
     <string name="option_light">லைட்</string>
     <string name="option_dark">டார்க்</string>
-    <string name="option_kashcal_teal">KashCal டீல்</string>
     <string name="option_12_hour">12-மணி</string>
     <string name="option_24_hour">24-மணி</string>
     <string name="option_sunday">ஞாயிற்றுக்கிழமை</string>

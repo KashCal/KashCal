@@ -236,6 +236,7 @@ fun HomeScreen(
     onWeekDatePickerDismiss: () -> Unit = {},
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
+    onWeekScrollMinutesChange: (Int) -> Unit = {},
     onWeekHourHeightChange: (Float) -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
@@ -616,6 +617,7 @@ fun HomeScreen(
                                             isLoading = uiState.isLoadingWeekView,
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
+                                            savedScrollMinutes = uiState.weekViewSavedScrollMinutes,
                                             hourHeight = uiState.weekViewHourHeight,
                                             onHourHeightChange = onWeekHourHeightChange,
                                             showEventEmojis = uiState.showEventEmojis,
@@ -637,6 +639,7 @@ fun HomeScreen(
                                                 onCreateEventWithDateTime(calendar.timeInMillis)
                                             },
                                             onScrollPositionChange = onWeekScrollPositionChange,
+                                            onScrollMinutesChange = onWeekScrollMinutesChange,
                                             onPageChanged = onDayPagerPageChanged,
                                             pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
                                             onNavigationConsumed = onClearPendingWeekPagerPosition,

@@ -110,31 +110,14 @@ private fun WidgetHeader(date: String) {
             Text(
                 text = date,
                 style = TextStyle(
-                    color = WidgetTheme.primaryText,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 )
             )
         }
-        // Right region: "+" button with 40dp touch target
-        Box(
-            modifier = GlanceModifier
-                .size(40.dp)
-                .clickable(
-                    actionStartActivity<MainActivity>(
-                        parameters = actionParametersOf(
-                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
-                modifier = GlanceModifier.size(20.dp)
-            )
-        }
+        // Right region: filled accent "+" button (FAB-like) with 40dp touch target
+        WidgetAddButton()
     }
 }
 

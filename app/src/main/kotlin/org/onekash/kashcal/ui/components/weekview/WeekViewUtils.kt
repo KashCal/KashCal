@@ -362,19 +362,47 @@ object WeekViewUtils {
      * @param hourHeightDp Current hour-row height in dp (pinch-zoomable at runtime, clamped
      *   to [MIN_HOUR_HEIGHT_DP]..[MAX_HOUR_HEIGHT_DP] by the caller).
      * @param density Display density factor from `LocalDensity.current.density`.
+     * @param savedMinutes Persisted clock time (minutes from midnight, 0..1439) restored across
+     *   app restarts. `< 0` means "never saved" (fresh install) and falls through to [defaultHour].
+     *   Stored as clock minutes rather than pixels so a zoom change between sessions still lands on
+     *   the same time. Only consulted when there is no in-session [savedPosition].
      * @param defaultHour Target hour (0..23) to scroll to when no saved position exists.
      */
     fun resolveInitialScrollPx(
         savedPosition: Int,
         hourHeightDp: Float,
         density: Float,
+        savedMinutes: Int = -1,
         defaultHour: Int = DEFAULT_SCROLL_START_HOUR
     ): Int {
-        return if (savedPosition > 0) {
-            savedPosition
-        } else {
-            (defaultHour * hourHeightDp * density).toInt()
+        return when {
+            // In-session scroll wins: the user has already moved the grid this session.
+            savedPosition > 0 -> savedPosition
+            // Cold-launch restore from a persisted clock time.
+            savedMinutes >= 0 -> minutesOfDayToPixels(savedMinutes, hourHeightDp * density)
+            // Fresh install / never scrolled: land on the default hour.
+            else -> (defaultHour * hourHeightDp * density).toInt()
         }
+    }
+
+    /**
+     * Convert a vertical scroll offset (pixels) to a clock time in minutes from midnight,
+     * clamped to a valid time-of-day (0..1439). Used to persist the scroll position as
+     * zoom-independent clock time. A non-positive [hourHeightPx] returns 0 rather than
+     * dividing by zero.
+     */
+    fun pixelsToMinutesOfDay(pixels: Float, hourHeightPx: Float): Int {
+        if (hourHeightPx <= 0f) return 0
+        val minutes = (pixels / hourHeightPx * MINUTES_PER_HOUR).toInt()
+        return minutes.coerceIn(0, 24 * MINUTES_PER_HOUR - 1)
+    }
+
+    /**
+     * Convert a clock time (minutes from midnight) to a vertical scroll offset in pixels
+     * at the given hour-row height. Inverse of [pixelsToMinutesOfDay] at a fixed zoom.
+     */
+    fun minutesOfDayToPixels(minutesOfDay: Int, hourHeightPx: Float): Int {
+        return (minutesOfDay.toFloat() / MINUTES_PER_HOUR * hourHeightPx).toInt()
     }
 
     /**

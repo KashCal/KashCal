@@ -203,6 +203,15 @@ class HomeViewModel(
     val themeMode: Flow<org.onekash.kashcal.ui.theme.ThemeMode> = dataStore.theme
         .map { org.onekash.kashcal.ui.theme.ThemeMode.fromPrefValue(it) }
 
+    /** Where app colors come from (dynamic vs. accent seed); migrates legacy teal to seed. */
+    val colorSource: Flow<org.onekash.kashcal.ui.theme.ColorSource> =
+        combine(dataStore.colorSource, dataStore.theme) { explicit, legacyTheme ->
+            org.onekash.kashcal.ui.theme.ColorSource.fromPrefValue(explicit, legacyTheme)
+        }
+
+    /** Current accent seed color (packed ARGB); meaningful when [colorSource] is SEED. */
+    val accentSeed: Flow<Int> = dataStore.accentSeed
+
     /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
     val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
@@ -511,8 +520,17 @@ class HomeViewModel(
             // (when Insights is the initial view) lands on the user's preferred view, not MONTH.
             // DataStore's VALID_VIEWS rejects "insights", so this seed is guaranteed non-INSIGHTS.
             val defaultView = ViewMode.fromKey(dataStore.getDefaultCalendarView())
+            // Seed the persisted time-grid scroll position in the SAME update that flips
+            // viewMode. viewMode starts at MONTH, so the time grid (WeekViewContent) can't
+            // compose until this update lands — meaning the restored value is already present
+            // on its first composition and the debounced scroll writer can't overwrite it first.
+            val savedScrollMinutes = dataStore.getWeekViewScrollMinutes()
             _uiState.update {
-                it.copy(viewMode = defaultView, previousNonInsightsMode = defaultView)
+                it.copy(
+                    viewMode = defaultView,
+                    previousNonInsightsMode = defaultView,
+                    weekViewSavedScrollMinutes = savedScrollMinutes
+                )
             }
 
             // Load data for the default view
@@ -1744,10 +1762,21 @@ class HomeViewModel(
     }
 
     /**
-     * Save week view scroll position for state preservation.
+     * Save week view scroll position for in-session state preservation (pixels, in-memory only).
      */
     fun setWeekViewScrollPosition(position: Int) {
         _uiState.update { it.copy(weekViewScrollPosition = position) }
+    }
+
+    /**
+     * Persist the time-grid scroll position as minutes from midnight so it survives app
+     * restart. Stored as clock time (not pixels) so pinch-zoom between sessions still restores
+     * to the same time. Written on a longer debounce than the in-session pixel path.
+     */
+    fun setWeekViewScrollMinutes(minutesOfDay: Int) {
+        viewModelScope.launch {
+            dataStore.setWeekViewScrollMinutes(minutesOfDay)
+        }
     }
 
     fun setWeekViewHourHeight(height: Float) {
@@ -3955,22 +3984,89 @@ class HomeViewModel(
                 // Editing existing event (not occurrence)
                 formState.editingDeviceEventId != null -> {
                     val eventId = formState.editingDeviceEventId
-                    calendarProviderRepository.updateEvent(
-                        eventId = eventId,
-                        title = formState.title,
-                        description = formState.description.ifBlank { null },
-                        location = formState.location.ifBlank { null },
-                        startTs = startTs,
-                        endTs = if (formState.rrule != null) null else endTs,
-                        isAllDay = formState.isAllDay,
-                        rrule = formState.rrule,
-                        duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
-                        timezone = timezone,
-                        reminders = reminders,
-                        availability = transpToAvailability(formState.transp),
-                        eventColor = formState.eventColor,
-                        attendees = deviceAttendeesArg
-                    ).map { eventId }
+                    val existing = calendarProviderRepository.getDeviceEvent(eventId)
+
+                    // A calendar change is a move. Android treats CALENDAR_ID as
+                    // effectively create-time (an in-place change misbehaves on
+                    // synced calendars), so a move is delete-old + insert-new,
+                    // carrying the edited fields. Create first, delete second, so
+                    // a failed create leaves the event safe in its source.
+                    //
+                    // Gate on the SOURCE being non-recurring, not the form's rrule:
+                    // recurring device moves (exception cascade) are out of scope,
+                    // but a save that ADDS recurrence while also changing calendar
+                    // must still move — else the calendar change is silently
+                    // dropped by the in-place update. Already-recurring events
+                    // can't reach here anyway (the form disables the picker).
+                    val isMove = existing != null &&
+                        existing.calendarId != calendarId &&
+                        existing.rrule == null
+
+                    if (isMove) {
+                        // Carry the guest set into the recreated event. If the
+                        // user edited guests, use that set; otherwise preserve the
+                        // event's existing guests so the move doesn't uninvite
+                        // anyone. Drop the source ORGANIZER row: createEvent writes
+                        // a fresh organizer for the TARGET calendar's owner, and a
+                        // carried source-organizer (whose address differs on a
+                        // cross-account move) would otherwise land as a spurious
+                        // guest.
+                        val moveAttendees = (
+                            deviceAttendeesArg
+                                ?: calendarProviderRepository.getAttendees(eventId)
+                        ).orEmpty()
+                            .filter {
+                                it.relationship !=
+                                    android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER
+                            }
+                            .takeIf { it.isNotEmpty() }
+
+                        // The move carries whatever recurrence the form now has
+                        // (adding recurrence while moving is supported).
+                        val moveRrule = formState.rrule
+                        calendarProviderRepository.createEvent(
+                            calendarId = calendarId,
+                            title = formState.title,
+                            description = formState.description.ifBlank { null },
+                            location = formState.location.ifBlank { null },
+                            startTs = startTs,
+                            endTs = if (moveRrule != null) null else endTs,
+                            isAllDay = formState.isAllDay,
+                            rrule = moveRrule,
+                            duration = if (moveRrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
+                            timezone = timezone,
+                            reminders = reminders,
+                            availability = transpToAvailability(formState.transp),
+                            eventColor = formState.eventColor,
+                            attendees = moveAttendees,
+                        ).map { newId ->
+                            // The target copy exists, so the move has succeeded.
+                            // Deleting the source is best-effort cleanup: a failure
+                            // leaves a source orphan but must NOT fail the save (a
+                            // hard failure invites a duplicating retry).
+                            calendarProviderRepository.deleteEvent(eventId).onFailure { e ->
+                                Log.w(TAG, "Device move: created in target but source delete failed", e)
+                            }
+                            newId
+                        }
+                    } else {
+                        calendarProviderRepository.updateEvent(
+                            eventId = eventId,
+                            title = formState.title,
+                            description = formState.description.ifBlank { null },
+                            location = formState.location.ifBlank { null },
+                            startTs = startTs,
+                            endTs = if (formState.rrule != null) null else endTs,
+                            isAllDay = formState.isAllDay,
+                            rrule = formState.rrule,
+                            duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
+                            timezone = timezone,
+                            reminders = reminders,
+                            availability = transpToAvailability(formState.transp),
+                            eventColor = formState.eventColor,
+                            attendees = deviceAttendeesArg
+                        ).map { eventId }
+                    }
                 }
 
                 // Creating new event

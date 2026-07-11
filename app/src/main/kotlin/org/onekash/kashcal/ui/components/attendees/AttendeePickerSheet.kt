@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.contacts.ContactEmail
 import org.onekash.kashcal.data.db.entity.Attendee
@@ -275,7 +276,7 @@ fun AttendeePickerSheet(
                                         Text(
                                             text = avatarInitials(label),
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            color = contrastForegroundOn(avatarColorFor(att.address)),
                                         )
                                     }
                                 },
@@ -371,7 +372,7 @@ fun AttendeePickChip(label: String, address: String, initialsSource: String = la
                     // still show the user's own initials, not "Y".
                     text = avatarInitials(initialsSource),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = contrastForegroundOn(avatarColorFor(address)),
                 )
             }
             Spacer(Modifier.width(6.dp))
@@ -502,7 +503,7 @@ private fun ContactRow(contact: ContactEmail, onClick: () -> Unit) {
                 text = avatarInitials(label),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = contrastForegroundOn(avatarColorFor(contact.address)),
             )
         }
         Spacer(Modifier.width(12.dp))

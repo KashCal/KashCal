@@ -242,7 +242,7 @@ fun ShareCardComposable(
                 )
 
                 // ---- Body ----
-                // Information hierarchy (Apple-philosophy: cluster by
+                // Information hierarchy (cluster by
                 // meaning, not by data presence):
                 //   • Title cluster (WHAT + WHEN): title + time/all-day/
                 //     range text glued together at top.

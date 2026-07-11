@@ -146,7 +146,11 @@
     <string name="settings_theme_system_desc">Järgi telefoni heledat või tumedat seadet</string>
     <string name="settings_theme_light_desc">Alati hele</string>
     <string name="settings_theme_dark_desc">Alati tume</string>
-    <string name="settings_theme_teal_desc">KashCali türkiissinine, järgib telefoni heledat või tumedat seadet</string>
+    <string name="settings_accent_color">Rõhuvärv</string>
+    <string name="settings_accent_color_desc">Värvi rakendus ja vidinad valitud rõhuvärviga</string>
+    <string name="settings_accent_color_brand">KashCali türkiissinine</string>
+    <string name="settings_accent_color_dynamic">Automaatne</string>
+    <string name="settings_accent_color_dynamic_desc">Järgi oma seadme Material You värve</string>
     <string name="settings_app_icon">Rakenduse ikoon</string>
     <string name="app_icon_default">Vaikimisi</string>
     <string name="app_icon_supporter">Toetaja</string>
@@ -374,7 +378,6 @@
     <string name="option_system_default">Süsteemi vaikeväärtus</string>
     <string name="option_light">Hele</string>
     <string name="option_dark">Tume</string>
-    <string name="option_kashcal_teal">KashCali türkiissinine</string>
     <string name="option_12_hour">12-tunnine</string>
     <string name="option_24_hour">24-tunnine</string>
     <string name="option_sunday">Pühapäev</string>

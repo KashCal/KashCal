@@ -48,10 +48,10 @@ fun themeSheetOptions(): List<ThemeSheetOption> =
     ThemeMode.entries.map { ThemeSheetOption(it, it.labelRes, it.descriptionRes) }
 
 /**
- * Bottom sheet for selecting the app theme.
+ * Bottom sheet for selecting the app's light/dark face.
  *
- * System default follows the device light/dark setting; Light and Dark force that appearance;
- * KashCal Teal applies the teal brand palette (following the device light/dark setting).
+ * System default follows the device light/dark setting; Light and Dark force that appearance.
+ * The accent color is chosen separately (see the accent color picker).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

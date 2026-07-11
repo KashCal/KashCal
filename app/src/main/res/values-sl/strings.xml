@@ -122,7 +122,11 @@
     <string name="settings_theme_system_desc">Sledi svetli ali temni nastavitvi telefona</string>
     <string name="settings_theme_light_desc">Vedno svetla</string>
     <string name="settings_theme_dark_desc">Vedno temna</string>
-    <string name="settings_theme_teal_desc">Turkizni KashCal, sledi svetli ali temni nastavitvi telefona</string>
+    <string name="settings_accent_color">Barva poudarka</string>
+    <string name="settings_accent_color_desc">Pobarvaj aplikacijo in pripomočke z izbrano barvo poudarka</string>
+    <string name="settings_accent_color_brand">KashCal turkizna</string>
+    <string name="settings_accent_color_dynamic">Samodejno</string>
+    <string name="settings_accent_color_dynamic_desc">Sledi barvam Material You tvoje naprave</string>
     <string name="settings_app_icon">Ikona aplikacije</string>
     <string name="app_icon_default">Privzeto</string>
     <string name="app_icon_supporter">Podpornik</string>
@@ -368,7 +372,6 @@
     <string name="option_system_default">Sistemsko privzeto</string>
     <string name="option_light">Svetla</string>
     <string name="option_dark">Temna</string>
-    <string name="option_kashcal_teal">KashCal turkizna</string>
     <string name="option_12_hour">12-urni</string>
     <string name="option_24_hour">24-urni</string>
     <string name="option_sunday">Nedelja</string>

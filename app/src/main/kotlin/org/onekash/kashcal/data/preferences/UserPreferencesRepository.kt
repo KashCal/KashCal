@@ -1,10 +1,12 @@
 package org.onekash.kashcal.data.preferences
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_MINUTES
 import org.onekash.kashcal.ui.shared.SYNC_INTERVALS_MS
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
+import org.onekash.kashcal.ui.theme.ColorSource
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -137,6 +139,24 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setTheme(theme: String) {
         dataStore.setTheme(theme)
     }
+
+    /** Stored color-source value ("dynamic"/"seed"), or null if never chosen. */
+    val colorSource: Flow<String?>
+        get() = dataStore.colorSource
+
+    /**
+     * Resolved color source (dynamic vs. accent seed), combining the explicit stored value with
+     * the legacy theme string so a user who had picked the retired "teal" theme lands on the seed
+     * path. Single source of truth shared by the home and settings ViewModels.
+     */
+    val resolvedColorSource: Flow<ColorSource>
+        get() = combine(dataStore.colorSource, dataStore.theme) { explicit, legacyTheme ->
+            ColorSource.fromPrefValue(explicit, legacyTheme)
+        }
+
+    /** Accent seed color (packed ARGB), defaulting to brand teal. */
+    val accentSeed: Flow<Int>
+        get() = dataStore.accentSeed
 
     /**
      * First day of week (Calendar.SUNDAY = 1, Calendar.MONDAY = 2, etc.).

@@ -67,6 +67,26 @@ class WidgetUpdateManager @Inject constructor(
         }
     }
 
+    /**
+     * Update all widgets after a change that affects their appearance rather than their data
+     * (accent color, color source). Unlike [updateAllWidgets] this also refreshes the DateWidget,
+     * which the event-driven path skips because its content is date-only.
+     */
+    suspend fun updateAllWidgetsForColorChange(reason: String = "color_change") {
+        Log.d(TAG, "Updating all widgets incl. DateWidget (reason: $reason)")
+        try {
+            refreshAllWidgets(context, includeDateWidget = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Immediate widget color update failed", e)
+            if (isTransientError(e)) {
+                Log.d(TAG, "Scheduling retry for transient error")
+                scheduleRetryUpdate()
+            }
+        }
+    }
+
     private fun scheduleRetryUpdate() {
         val workRequest = OneTimeWorkRequestBuilder<WidgetRetryWorker>()
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)

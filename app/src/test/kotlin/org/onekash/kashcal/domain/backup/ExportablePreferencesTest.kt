@@ -12,13 +12,25 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 30 keys`() {
-        assertEquals(30, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 32 keys`() {
+        assertEquals(32, ExportablePreferences.KEYS.size)
     }
 
     @Test
-    fun `exclude list contains exactly 22 key names`() {
-        assertEquals(22, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 23 key names`() {
+        assertEquals(23, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    }
+
+    @Test
+    fun `WEEK_VIEW_SCROLL_MINUTES is excluded because it is ephemeral UI scroll state`() {
+        assertTrue(
+            "WEEK_VIEW_SCROLL_MINUTES must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES.name),
+        )
+        assertFalse(
+            "WEEK_VIEW_SCROLL_MINUTES must not be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES.name },
+        )
     }
 
     @Test

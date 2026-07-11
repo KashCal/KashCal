@@ -155,7 +155,11 @@
     <string name="settings_theme_system_desc">Sekti telefono šviesią arba tamsią nuostatą</string>
     <string name="settings_theme_light_desc">Visada šviesi</string>
     <string name="settings_theme_dark_desc">Visada tamsi</string>
-    <string name="settings_theme_teal_desc">KashCal žalsvai mėlyna, seka telefono šviesią arba tamsią nuostatą</string>
+    <string name="settings_accent_color">Akcento spalva</string>
+    <string name="settings_accent_color_desc">Nudažyti programėlę ir valdiklius pasirinkta akcento spalva</string>
+    <string name="settings_accent_color_brand">KashCal žalsvai mėlyna</string>
+    <string name="settings_accent_color_dynamic">Automatiškai</string>
+    <string name="settings_accent_color_dynamic_desc">Sekti įrenginio Material You spalvas</string>
     <string name="settings_app_icon">Programėlės piktograma</string>
     <string name="app_icon_default">Numatytoji</string>
     <string name="app_icon_supporter">Rėmėjas</string>
@@ -379,7 +383,6 @@
     <string name="option_system_default">Sistemos numatytasis</string>
     <string name="option_light">Šviesi</string>
     <string name="option_dark">Tamsi</string>
-    <string name="option_kashcal_teal">KashCal žalsvai mėlyna</string>
     <string name="option_12_hour">12 valandų</string>
     <string name="option_24_hour">24 valandos</string>
     <string name="option_sunday">Sekmadienis</string>

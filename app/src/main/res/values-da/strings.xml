@@ -107,7 +107,11 @@
     <string name="settings_theme_system_desc">Følg din telefons lyse eller mørke indstilling</string>
     <string name="settings_theme_light_desc">Altid lyst</string>
     <string name="settings_theme_dark_desc">Altid mørkt</string>
-    <string name="settings_theme_teal_desc">KashCal-turkis, følger din telefons lyse eller mørke indstilling</string>
+    <string name="settings_accent_color">Accentfarve</string>
+    <string name="settings_accent_color_desc">Farv appen og widgets med din valgte accent</string>
+    <string name="settings_accent_color_brand">KashCal Turkis</string>
+    <string name="settings_accent_color_dynamic">Automatisk</string>
+    <string name="settings_accent_color_dynamic_desc">Følg din enheds Material You-farver</string>
     <string name="settings_app_icon">Appikon</string>
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Supporter</string>
@@ -355,9 +359,7 @@
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
     <string name="option_light">Lyst</string>
-    <string name="option_dark">Mørkt</string>
-    <string name="option_kashcal_teal">KashCal Turkis</string>
-    <string name="option_12_hour">12-timer</string>
+    <string name="option_dark">Mørkt</string>    <string name="option_12_hour">12-timer</string>
     <string name="option_24_hour">24-timer</string>
     <string name="option_sunday">Søndag</string>
     <string name="option_monday">Mandag</string>

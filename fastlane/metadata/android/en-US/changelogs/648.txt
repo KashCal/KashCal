@@ -1,0 +1,4 @@
+• Calendar You: pick your accent from 92 colors, across the app and all widgets (#293)
+• "Automatic" keeps your Material You / wallpaper colors
+• Week and 3-day views remember your scroll position (#224)
+• Moving an event no longer drops edits made in the same save (#292)

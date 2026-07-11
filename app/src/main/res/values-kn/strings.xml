@@ -143,7 +143,11 @@
     <string name="settings_theme_system_desc">ನಿಮ್ಮ ಫೋನ್‌ನ ಲೈಟ್ ಅಥವಾ ಡಾರ್ಕ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಅನುಸರಿಸಿ</string>
     <string name="settings_theme_light_desc">ಯಾವಾಗಲೂ ಲೈಟ್</string>
     <string name="settings_theme_dark_desc">ಯಾವಾಗಲೂ ಡಾರ್ಕ್</string>
-    <string name="settings_theme_teal_desc">KashCal ಟೀಲ್, ನಿಮ್ಮ ಫೋನ್‌ನ ಲೈಟ್ ಅಥವಾ ಡಾರ್ಕ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಅನುಸರಿಸುತ್ತದೆ</string>
+    <string name="settings_accent_color">ಆ್ಯಕ್ಸೆಂಟ್ ಬಣ್ಣ</string>
+    <string name="settings_accent_color_desc">ನೀವು ಆಯ್ಕೆ ಮಾಡಿದ ಆ್ಯಕ್ಸೆಂಟ್‌ನಿಂದ ಆ್ಯಪ್ ಮತ್ತು ವಿಜೆಟ್‌ಗಳಿಗೆ ಬಣ್ಣ ನೀಡಿ</string>
+    <string name="settings_accent_color_brand">KashCal ಟೀಲ್</string>
+    <string name="settings_accent_color_dynamic">ಸ್ವಯಂಚಾಲಿತ</string>
+    <string name="settings_accent_color_dynamic_desc">ನಿಮ್ಮ ಸಾಧನದ Material You ಬಣ್ಣಗಳನ್ನು ಅನುಸರಿಸಿ</string>
     <string name="settings_app_icon">ಆ್ಯಪ್ ಐಕಾನ್</string>
     <string name="app_icon_default">ಡೀಫಾಲ್ಟ್</string>
     <string name="app_icon_supporter">ಬೆಂಬಲಿಗ</string>
@@ -395,7 +399,6 @@
     <string name="option_system_default">ಸಿಸ್ಟಮ್ ಡೀಫಾಲ್ಟ್</string>
     <string name="option_light">ಲೈಟ್</string>
     <string name="option_dark">ಡಾರ್ಕ್</string>
-    <string name="option_kashcal_teal">KashCal ಟೀಲ್</string>
     <string name="option_12_hour">12-ಗಂಟೆ</string>
     <string name="option_24_hour">24-ಗಂಟೆ</string>
     <string name="option_sunday">ಭಾನುವಾರ</string>

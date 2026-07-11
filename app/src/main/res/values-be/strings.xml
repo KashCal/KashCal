@@ -155,7 +155,11 @@
     <string name="settings_theme_system_desc">Выкарыстоўваць светлую або цёмную тэму тэлефона</string>
     <string name="settings_theme_light_desc">Заўсёды светлая</string>
     <string name="settings_theme_dark_desc">Заўсёды цёмная</string>
-    <string name="settings_theme_teal_desc">Бірузовы KashCal, адпавядае светлай або цёмнай наладзе тэлефона</string>
+    <string name="settings_accent_color">Акцэнтны колер</string>
+    <string name="settings_accent_color_desc">Расфарбаваць праграму і віджэты выбраным акцэнтам</string>
+    <string name="settings_accent_color_brand">Бірузовы KashCal</string>
+    <string name="settings_accent_color_dynamic">Аўтаматычна</string>
+    <string name="settings_accent_color_dynamic_desc">Выкарыстоўваць колеры Material You тваёй прылады</string>
     <string name="settings_app_icon">Значок праграмы</string>
     <string name="app_icon_default">Па змаўчанні</string>
     <string name="app_icon_supporter">Прыхільнік</string>
@@ -379,7 +383,6 @@
     <string name="option_system_default">Сістэмнае</string>
     <string name="option_light">Светлая</string>
     <string name="option_dark">Цёмная</string>
-    <string name="option_kashcal_teal">Бірузовы KashCal</string>
     <string name="option_12_hour">12-гадзінны</string>
     <string name="option_24_hour">24-гадзінны</string>
     <string name="option_sunday">Нядзеля</string>

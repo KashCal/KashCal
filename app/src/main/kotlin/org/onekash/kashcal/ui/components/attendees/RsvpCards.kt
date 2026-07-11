@@ -36,8 +36,7 @@ private val RSVP_CARD_HEIGHT = 44.dp
  *
  * Word labels (Yes / Maybe / No), with the chosen status filled in
  * primary blue. When no status is chosen yet (NeedsAction or null),
- * "Yes" gets the weighted primary fill as the hopeful default —
- * Apple Calendar's pattern.
+ * "Yes" gets the weighted primary fill as the hopeful default.
  *
  * Behavior:
  * - Tap any card → [onRsvp] fires with the corresponding status.

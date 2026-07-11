@@ -70,6 +70,7 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.lock.AppLockVeil
 import org.onekash.kashcal.ui.screens.HomeScreen
+import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AppLockViewModel
@@ -142,16 +143,24 @@ class MainActivity : FragmentActivity() {
         // Resolve the theme synchronously so the first frame renders in the chosen theme — no
         // flash of the default on cold start (same rationale as the app-lock read above). DataStore
         // caches after the first read, so this doesn't re-hit disk on rotation.
-        val initialThemeMode = ThemeMode.fromPrefValue(
-            runBlocking { userPreferencesRepository.theme.first() }
+        // Seed theme + accent source/seed synchronously so the first frame renders in the chosen
+        // colors — no flash of the default/dynamic theme on cold start. Read each pref once.
+        val initialThemeString = runBlocking { userPreferencesRepository.theme.first() }
+        val initialThemeMode = ThemeMode.fromPrefValue(initialThemeString)
+        val initialColorSource = ColorSource.fromPrefValue(
+            explicit = runBlocking { userPreferencesRepository.colorSource.first() },
+            legacyTheme = initialThemeString,
         )
+        val initialAccentSeed = runBlocking { userPreferencesRepository.accentSeed.first() }
 
         // Handle webcal:// deep link if present
         handleIncomingIntent(intent)
 
         setContent {
             val themeMode by homeViewModel.themeMode.collectAsStateWithLifecycle(initialValue = initialThemeMode)
-            KashCalTheme(themeMode = themeMode) {
+            val colorSource by homeViewModel.colorSource.collectAsStateWithLifecycle(initialValue = initialColorSource)
+            val accentSeed by homeViewModel.accentSeed.collectAsStateWithLifecycle(initialValue = initialAccentSeed)
+            KashCalTheme(themeMode = themeMode, colorSource = colorSource, accentSeed = accentSeed) {
                 val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
@@ -617,6 +626,7 @@ class MainActivity : FragmentActivity() {
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
+                    onWeekScrollMinutesChange = { minutes -> homeViewModel.setWeekViewScrollMinutes(minutes) },
                     onWeekHourHeightChange = { height -> homeViewModel.setWeekViewHourHeight(height) },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
                     onReschedule = { displayEvent, targetDate, targetStartMinutes ->

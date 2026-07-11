@@ -122,7 +122,11 @@
     <string name="settings_theme_system_desc">Prati svijetlu ili tamnu postavku telefona</string>
     <string name="settings_theme_light_desc">Uvijek svijetla</string>
     <string name="settings_theme_dark_desc">Uvijek tamna</string>
-    <string name="settings_theme_teal_desc">Tirkizni KashCal, prati svijetlu ili tamnu postavku telefona</string>
+    <string name="settings_accent_color">Boja naglaska</string>
+    <string name="settings_accent_color_desc">Oboji aplikaciju i widgete odabranom bojom naglaska</string>
+    <string name="settings_accent_color_brand">KashCal tirkizna</string>
+    <string name="settings_accent_color_dynamic">Automatski</string>
+    <string name="settings_accent_color_dynamic_desc">Prati Material You boje tvog uređaja</string>
     <string name="settings_app_icon">Ikona aplikacije</string>
     <string name="app_icon_default">Zadano</string>
     <string name="app_icon_supporter">Podupiratelj</string>
@@ -368,7 +372,6 @@
     <string name="option_system_default">Sistemsko podrazumijevano</string>
     <string name="option_light">Svijetla</string>
     <string name="option_dark">Tamna</string>
-    <string name="option_kashcal_teal">KashCal tirkizna</string>
     <string name="option_12_hour">12-satni</string>
     <string name="option_24_hour">24-satni</string>
     <string name="option_sunday">Nedjelja</string>

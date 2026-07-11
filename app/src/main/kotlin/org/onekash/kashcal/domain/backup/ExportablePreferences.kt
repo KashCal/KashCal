@@ -30,6 +30,8 @@ object ExportablePreferences {
         PreferencesKeys.SYNC_PAST_DAYS.name to PrefKind.INT,
         PreferencesKeys.SYNC_FUTURE_DAYS.name to PrefKind.INT,
         PreferencesKeys.THEME.name to PrefKind.STRING,
+        PreferencesKeys.COLOR_SOURCE.name to PrefKind.STRING,
+        PreferencesKeys.ACCENT_SEED.name to PrefKind.INT,
         PreferencesKeys.NOTIFICATION_SOUND.name to PrefKind.BOOL,
         PreferencesKeys.NOTIFICATION_VIBRATE.name to PrefKind.BOOL,
         PreferencesKeys.QUICK_ADD_ENABLED.name to PrefKind.BOOL,
@@ -67,6 +69,8 @@ object ExportablePreferences {
         PreferencesKeys.SYNC_FUTURE_DAYS,
         // UI
         PreferencesKeys.THEME,
+        PreferencesKeys.COLOR_SOURCE,
+        PreferencesKeys.ACCENT_SEED,
         PreferencesKeys.NOTIFICATION_SOUND,
         PreferencesKeys.NOTIFICATION_VIBRATE,
         PreferencesKeys.QUICK_ADD_ENABLED,
@@ -90,14 +94,17 @@ object ExportablePreferences {
         PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN,
         PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY,
     ).also {
-        require(it.size == 30) {
-            "KEYS size drifted; expected 30 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 32) {
+            "KEYS size drifted; expected 32 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 
     val EXCLUDED_KEY_NAMES: Set<String> = setOf(
         // Runtime state
         PreferencesKeys.LAST_SYNC_TIME.name,
+        // Ephemeral UI scroll position — where the timeline was last scrolled to;
+        // per-device view state, not a portable user setting
+        PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES.name,
         PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
         PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
         PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,

@@ -152,7 +152,11 @@
     <string name="settings_theme_system_desc">Urmează setarea luminoasă sau întunecată a telefonului</string>
     <string name="settings_theme_light_desc">Întotdeauna luminoasă</string>
     <string name="settings_theme_dark_desc">Întotdeauna întunecată</string>
-    <string name="settings_theme_teal_desc">KashCal turcoaz, urmează setarea luminoasă sau întunecată a telefonului tău</string>
+    <string name="settings_accent_color">Culoare de accent</string>
+    <string name="settings_accent_color_desc">Colorează aplicația și widgeturile cu culoarea de accent aleasă de tine</string>
+    <string name="settings_accent_color_brand">KashCal Turcoaz</string>
+    <string name="settings_accent_color_dynamic">Automat</string>
+    <string name="settings_accent_color_dynamic_desc">Urmează culorile Material You ale dispozitivului tău</string>
     <string name="settings_app_icon">Pictograma aplicației</string>
     <string name="app_icon_default">Implicit</string>
     <string name="app_icon_supporter">Susținător</string>
@@ -394,7 +398,6 @@
     <string name="option_system_default">Implicit sistem</string>
     <string name="option_light">Luminoasă</string>
     <string name="option_dark">Întunecată</string>
-    <string name="option_kashcal_teal">KashCal Turcoaz</string>
     <string name="option_12_hour">12 ore</string>
     <string name="option_24_hour">24 ore</string>
     <string name="option_sunday">Duminică</string>

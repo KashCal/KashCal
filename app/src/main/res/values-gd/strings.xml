@@ -161,7 +161,11 @@
     <string name="settings_theme_system_desc">Lean suidheachadh soilleir no dorcha an fhòn agad</string>
     <string name="settings_theme_light_desc">Soilleir an-còmhnaidh</string>
     <string name="settings_theme_dark_desc">Dorcha an-còmhnaidh</string>
-    <string name="settings_theme_teal_desc">Gorm-uaine KashCal, a\' leantainn suidheachadh soilleir no dorcha an fhòin agad</string>
+    <string name="settings_accent_color">Dath sònrachaidh</string>
+    <string name="settings_accent_color_desc">Cuir dath air an aplacaid \'s na widgets leis an dath sònrachaidh a thagh thu</string>
+    <string name="settings_accent_color_brand">KashCal Gorm-uaine</string>
+    <string name="settings_accent_color_dynamic">Fèin-obrachail</string>
+    <string name="settings_accent_color_dynamic_desc">Lean dathan Material You an inneil agad</string>
     <string name="settings_app_icon">Ìomhaigheag na h-aplacaid</string>
     <string name="app_icon_default">Bunaiteach</string>
     <string name="app_icon_supporter">Neach-taic</string>
@@ -397,7 +401,6 @@
     <string name="option_system_default">Bun-roghainn an t-siostaim</string>
     <string name="option_light">Soilleir</string>
     <string name="option_dark">Dorcha</string>
-    <string name="option_kashcal_teal">KashCal Gorm-uaine</string>
     <string name="option_12_hour">12 uairean</string>
     <string name="option_24_hour">24 uairean</string>
     <string name="option_sunday">Didòmhnaich</string>

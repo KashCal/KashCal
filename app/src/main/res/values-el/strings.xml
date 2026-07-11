@@ -146,7 +146,11 @@
     <string name="settings_theme_system_desc">Ακολουθεί τη φωτεινή ή σκοτεινή ρύθμιση του τηλεφώνου σας</string>
     <string name="settings_theme_light_desc">Πάντα φωτεινό</string>
     <string name="settings_theme_dark_desc">Πάντα σκοτεινό</string>
-    <string name="settings_theme_teal_desc">KashCal πετρόλ, ακολουθεί τη φωτεινή ή σκοτεινή ρύθμιση του τηλεφώνου σας</string>
+    <string name="settings_accent_color">Χρώμα τονισμού</string>
+    <string name="settings_accent_color_desc">Χρωματίστε την εφαρμογή και τα γραφικά στοιχεία με το χρώμα τονισμού που επιλέξατε</string>
+    <string name="settings_accent_color_brand">KashCal Πετρόλ</string>
+    <string name="settings_accent_color_dynamic">Αυτόματο</string>
+    <string name="settings_accent_color_dynamic_desc">Ακολουθήστε τα χρώματα Material You της συσκευής σας</string>
     <string name="settings_app_icon">Εικονίδιο εφαρμογής</string>
     <string name="app_icon_default">Προεπιλογή</string>
     <string name="app_icon_supporter">Υποστηρικτής</string>
@@ -388,7 +392,6 @@
     <string name="option_system_default">Προεπιλογή συστήματος</string>
     <string name="option_light">Φωτεινό</string>
     <string name="option_dark">Σκοτεινό</string>
-    <string name="option_kashcal_teal">KashCal Πετρόλ</string>
     <string name="option_12_hour">12ωρο</string>
     <string name="option_24_hour">24ωρο</string>
     <string name="option_sunday">Κυριακή</string>

@@ -146,7 +146,11 @@
     <string name="settings_theme_system_desc">Seuraa puhelimen vaaleaa tai tummaa asetusta</string>
     <string name="settings_theme_light_desc">Aina vaalea</string>
     <string name="settings_theme_dark_desc">Aina tumma</string>
-    <string name="settings_theme_teal_desc">KashCal-sinivihreä, seuraa puhelimen vaaleaa tai tummaa asetusta</string>
+    <string name="settings_accent_color">Korostusväri</string>
+    <string name="settings_accent_color_desc">Väritä sovellus ja widgetit valitsemallasi korostusvärillä</string>
+    <string name="settings_accent_color_brand">KashCal-sinivihreä</string>
+    <string name="settings_accent_color_dynamic">Automaattinen</string>
+    <string name="settings_accent_color_dynamic_desc">Seuraa laitteesi Material You -värejä</string>
     <string name="settings_app_icon">Sovelluksen kuvake</string>
     <string name="app_icon_default">Oletus</string>
     <string name="app_icon_supporter">Tukija</string>
@@ -374,7 +378,6 @@
     <string name="option_system_default">Järjestelmän oletus</string>
     <string name="option_light">Vaalea</string>
     <string name="option_dark">Tumma</string>
-    <string name="option_kashcal_teal">KashCal-sinivihreä</string>
     <string name="option_12_hour">12 tunnin</string>
     <string name="option_24_hour">24 tunnin</string>
     <string name="option_sunday">Sunnuntai</string>

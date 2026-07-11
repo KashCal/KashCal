@@ -142,7 +142,11 @@
     <string name="settings_theme_system_desc">Landela isilungiselelo esikhanyayo noma esimnyama sefoni yakho</string>
     <string name="settings_theme_light_desc">Njalo kukhanya</string>
     <string name="settings_theme_dark_desc">Njalo mnyama</string>
-    <string name="settings_theme_teal_desc">Okuluhlaza okwesibhakabhaka kwe-KashCal, kulandela isilungiselelo sefoni yakho esikhanyayo noma esimnyama</string>
+    <string name="settings_accent_color">Umbala ogqamile</string>
+    <string name="settings_accent_color_desc">Faka umbala kuhlelo lokusebenza namawijethi ngombala ogqamile owukhethile</string>
+    <string name="settings_accent_color_brand">KashCal Oluhlaza Okwesibhakabhaka</string>
+    <string name="settings_accent_color_dynamic">Okuzenzakalelayo</string>
+    <string name="settings_accent_color_dynamic_desc">Landela imibala ye-Material You yedivayisi yakho</string>
     <string name="settings_app_icon">Isithonjana sohlelo lokusebenza</string>
     <string name="app_icon_default">Okuzenzakalelayo</string>
     <string name="app_icon_supporter">Umsekeli</string>
@@ -386,7 +390,6 @@
     <string name="option_system_default">Okuzenzakalelayo kwesistimu</string>
     <string name="option_light">Okukhanyayo</string>
     <string name="option_dark">Okumnyama</string>
-    <string name="option_kashcal_teal">KashCal Oluhlaza Okwesibhakabhaka</string>
     <string name="option_12_hour">Amahora ayi-12</string>
     <string name="option_24_hour">Amahora angama-24</string>
     <string name="option_sunday">ISonto</string>

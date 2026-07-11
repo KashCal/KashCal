@@ -962,4 +962,129 @@ class WeekViewUtilsTest {
         )
         assertEquals(8, result)
     }
+
+    // ==================== Minutes <-> Pixels conversion (scroll restore) ====================
+
+    @Test
+    fun `pixelsToMinutesOfDay converts scroll offset to clock minutes`() {
+        // 840 px at 60 px/hr = 14 hours = 14:00 = 840 minutes
+        assertEquals(840, WeekViewUtils.pixelsToMinutesOfDay(840f, 60f))
+    }
+
+    @Test
+    fun `pixelsToMinutesOfDay is independent of hour height`() {
+        // Same clock time (12:00) at two zoom levels maps to the same minutes,
+        // even though the pixel offsets differ. This is the anti-drift guarantee.
+        val atNormalZoom = WeekViewUtils.pixelsToMinutesOfDay(720f, 60f)   // 12h * 60px
+        val atMaxZoom = WeekViewUtils.pixelsToMinutesOfDay(1800f, 150f)    // 12h * 150px
+        assertEquals(720, atNormalZoom)
+        assertEquals(720, atMaxZoom)
+    }
+
+    @Test
+    fun `pixelsToMinutesOfDay clamps to end of day`() {
+        assertEquals(1439, WeekViewUtils.pixelsToMinutesOfDay(999_999f, 60f))
+    }
+
+    @Test
+    fun `pixelsToMinutesOfDay clamps negative to start of day`() {
+        assertEquals(0, WeekViewUtils.pixelsToMinutesOfDay(-50f, 60f))
+    }
+
+    @Test
+    fun `pixelsToMinutesOfDay guards against non-positive hour height`() {
+        // Degenerate hour height must not divide-by-zero or throw.
+        assertEquals(0, WeekViewUtils.pixelsToMinutesOfDay(500f, 0f))
+    }
+
+    @Test
+    fun `minutesOfDayToPixels converts clock minutes to scroll offset`() {
+        // 14:00 (840 min) at 60 px/hr = 840 px
+        assertEquals(840, WeekViewUtils.minutesOfDayToPixels(840, 60f))
+    }
+
+    @Test
+    fun `minutesOfDayToPixels scales with hour height`() {
+        // Same clock time, different zoom -> different pixels (by design).
+        assertEquals(720, WeekViewUtils.minutesOfDayToPixels(720, 60f))
+        assertEquals(1800, WeekViewUtils.minutesOfDayToPixels(720, 150f))
+    }
+
+    @Test
+    fun `minutes and pixels round-trip within one minute at a given zoom`() {
+        // Round-trip through integer pixels is lossy below ~1 minute (at 157.5 px/hr
+        // one minute is ~2.6 px, and both conversions truncate). A ±1 minute tolerance
+        // is the honest contract; the restored scroll lands on the same visible time.
+        val hourHeightPx = 157.5f  // xxhdpi 60dp * 2.625
+        val originalMinutes = 555  // 09:15
+        val px = WeekViewUtils.minutesOfDayToPixels(originalMinutes, hourHeightPx)
+        val backToMinutes = WeekViewUtils.pixelsToMinutesOfDay(px.toFloat(), hourHeightPx)
+        assertTrue(
+            "round-trip $originalMinutes -> $px px -> $backToMinutes min drifted more than 1 minute",
+            kotlin.math.abs(originalMinutes - backToMinutes) <= 1
+        )
+    }
+
+    // ==================== resolveInitialScrollPx savedMinutes branch ====================
+
+    @Test
+    fun `resolveInitialScrollPx restores savedMinutes on cold launch`() {
+        // Cold launch: no in-session pixel scroll (savedPosition 0), but a persisted
+        // clock time exists -> land at that time, not the 6 AM default.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f,
+            savedMinutes = 840  // 14:00
+        )
+        assertEquals(840, result)  // 840 min at 60 px/hr, density 1x
+    }
+
+    @Test
+    fun `resolveInitialScrollPx restored minutes scale with density and hour height`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 2.0f,
+            savedMinutes = 720  // 12:00
+        )
+        assertEquals(1440, result)  // 720 min -> 12h * 60dp * 2.0 density
+    }
+
+    @Test
+    fun `resolveInitialScrollPx prefers in-session pixels over savedMinutes`() {
+        // If the user has already scrolled this session, that wins over the
+        // persisted cold-launch value.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 1234,
+            hourHeightDp = 60f,
+            density = 1.0f,
+            savedMinutes = 840
+        )
+        assertEquals(1234, result)
+    }
+
+    @Test
+    fun `resolveInitialScrollPx falls back to default hour when no saved minutes`() {
+        // savedMinutes sentinel (-1) and no in-session scroll -> 6 AM default,
+        // preserving prior behavior for fresh installs.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f,
+            savedMinutes = -1
+        )
+        assertEquals(360, result)  // 6 AM default
+    }
+
+    @Test
+    fun `resolveInitialScrollPx defaults savedMinutes to sentinel keeping legacy behavior`() {
+        // Callers that don't pass savedMinutes get the original default-hour behavior.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f
+        )
+        assertEquals(360, result)
+    }
 }

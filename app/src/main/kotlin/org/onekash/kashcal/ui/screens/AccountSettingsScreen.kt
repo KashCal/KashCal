@@ -1,15 +1,19 @@
 package org.onekash.kashcal.ui.screens
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Colorize
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
@@ -43,6 +47,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -84,6 +90,9 @@ import org.onekash.kashcal.util.ExternalLinks
 import org.onekash.kashcal.ui.screens.settings.AppIconSheet
 import org.onekash.kashcal.ui.screens.settings.ThemeSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
+import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
+import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
@@ -250,6 +259,10 @@ fun AccountSettingsScreen(
     onTitleSuggestionsEnabledChange: (Boolean) -> Unit = {},
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     onThemeModeChange: (ThemeMode) -> Unit = {},
+    colorSource: ColorSource = ColorSource.DYNAMIC,
+    accentSeed: Int = KashCalDataStore.ACCENT_SEED_DEFAULT,
+    onAccentSeedChange: (Int) -> Unit = {},
+    onColorSourceChange: (ColorSource) -> Unit = {},
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     onTimeFormatChange: (String) -> Unit = {},
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
@@ -377,6 +390,10 @@ fun AccountSettingsScreen(
                     onTitleSuggestionsEnabledChange = onTitleSuggestionsEnabledChange,
                     themeMode = themeMode,
                     onThemeModeChange = onThemeModeChange,
+                    colorSource = colorSource,
+                    accentSeed = accentSeed,
+                    onAccentSeedChange = onAccentSeedChange,
+                    onColorSourceChange = onColorSourceChange,
                     timeFormat = timeFormat,
                     onTimeFormatChange = onTimeFormatChange,
                     firstDayOfWeek = firstDayOfWeek,
@@ -519,6 +536,10 @@ private fun FlatSettingsContent(
     onTitleSuggestionsEnabledChange: (Boolean) -> Unit,
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    colorSource: ColorSource,
+    accentSeed: Int,
+    onAccentSeedChange: (Int) -> Unit,
+    onColorSourceChange: (ColorSource) -> Unit,
     timeFormat: String,
     onTimeFormatChange: (String) -> Unit,
     firstDayOfWeek: Int,
@@ -540,6 +561,7 @@ private fun FlatSettingsContent(
     var showAlertsSheet by remember { mutableStateOf(false) }
     var showEventEmojisSheet by remember { mutableStateOf(false) }
     var showThemeSheet by remember { mutableStateOf(false) }
+    var showAccentSheet by remember { mutableStateOf(false) }
     var showAppIconSheet by remember { mutableStateOf(false) }
     var showTimeFormatSheet by remember { mutableStateOf(false) }
     var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
@@ -706,6 +728,33 @@ private fun FlatSettingsContent(
                     label = stringResource(R.string.settings_theme),
                     subtitle = themeSubtitle,
                     onClick = { showThemeSheet = true },
+                    showDivider = false,
+                    searchQuery = searchQuery
+                )
+            }
+
+            val accentSubtitle = when {
+                colorSource != ColorSource.SEED -> stringResource(R.string.settings_accent_color_dynamic)
+                // Brand teal isn't a CSS3 palette entry, so it would otherwise read as "Custom".
+                accentSeed == KashCalDataStore.ACCENT_SEED_DEFAULT -> stringResource(R.string.settings_accent_color_brand)
+                else -> stringResource(EventColorPalette.stringResIdForColor(accentSeed))
+            }
+            row(label = stringResource(R.string.settings_accent_color), subtitle = accentSubtitle, id = "accent_color") {
+                SettingsRow(
+                    icon = Icons.Default.Colorize,
+                    label = stringResource(R.string.settings_accent_color),
+                    subtitle = accentSubtitle,
+                    onClick = { showAccentSheet = true },
+                    trailing = if (colorSource == ColorSource.SEED) {
+                        {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(accentSeed))
+                            )
+                        }
+                    } else null,
                     showDivider = false,
                     searchQuery = searchQuery
                 )
@@ -1054,6 +1103,23 @@ private fun FlatSettingsContent(
             currentMode = themeMode,
             onModeSelect = onThemeModeChange,
             onDismiss = { showThemeSheet = false }
+        )
+    }
+
+    // Accent Color Sheet
+    if (showAccentSheet) {
+        AccentColorSheet(
+            selectedArgb = accentSeed,
+            useDynamic = colorSource == ColorSource.DYNAMIC,
+            onColorSelected = {
+                onAccentSeedChange(it)
+                showAccentSheet = false
+            },
+            onUseDynamic = {
+                onColorSourceChange(ColorSource.DYNAMIC)
+                showAccentSheet = false
+            },
+            onDismiss = { showAccentSheet = false }
         )
     }
 

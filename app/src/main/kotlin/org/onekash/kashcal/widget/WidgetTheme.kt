@@ -23,6 +23,14 @@ object WidgetTheme {
     val headerBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.primaryContainer
 
+    /**
+     * Text/icon color for content ON [headerBackground] — the correct M3 on-role for a
+     * primaryContainer surface. Using onSurface/primary here (as earlier code did) is not a
+     * guaranteed contrast pair against primaryContainer and fails for some accent seeds.
+     */
+    val onHeaderBackground: ColorProvider
+        @Composable get() = GlanceTheme.colors.onPrimaryContainer
+
     /** Content/widget background — Glance-specific widget background */
     val contentBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.widgetBackground
@@ -79,6 +87,7 @@ object WidgetTheme {
  */
 internal enum class WidgetThemeColor {
     HeaderBackground,
+    OnHeaderBackground,
     RowTintBackground,
     PrimaryText,
     RowTintText
@@ -98,7 +107,7 @@ internal data class DayHeaderColors(
  */
 internal fun dayHeaderColors(isToday: Boolean): DayHeaderColors =
     if (isToday) {
-        DayHeaderColors(WidgetThemeColor.HeaderBackground, WidgetThemeColor.PrimaryText)
+        DayHeaderColors(WidgetThemeColor.HeaderBackground, WidgetThemeColor.OnHeaderBackground)
     } else {
         DayHeaderColors(WidgetThemeColor.RowTintBackground, WidgetThemeColor.RowTintText)
     }
@@ -107,6 +116,7 @@ internal fun dayHeaderColors(isToday: Boolean): DayHeaderColors =
 @Composable
 internal fun WidgetThemeColor.provider(): ColorProvider = when (this) {
     WidgetThemeColor.HeaderBackground -> WidgetTheme.headerBackground
+    WidgetThemeColor.OnHeaderBackground -> WidgetTheme.onHeaderBackground
     WidgetThemeColor.RowTintBackground -> WidgetTheme.rowTintBackground
     WidgetThemeColor.PrimaryText -> WidgetTheme.primaryText
     WidgetThemeColor.RowTintText -> WidgetTheme.rowTintText

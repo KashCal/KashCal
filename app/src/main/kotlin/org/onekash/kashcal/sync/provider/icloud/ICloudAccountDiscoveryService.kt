@@ -19,6 +19,7 @@ import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
 import org.onekash.kashcal.sync.discovery.persistSchedulingDiscovery
 import org.onekash.kashcal.sync.parser.ServerColorParser
+import org.onekash.kashcal.util.maskEmail
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.inject.Inject
@@ -463,7 +464,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
      * Remove iCloud account by email.
      */
     override suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
-        Log.i(TAG, "Removing iCloud account: $email")
+        Log.i(TAG, "Removing iCloud account: ${email.maskEmail()}")
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, email)
         if (account != null) {
             accountRepository.deleteAccount(account.id)

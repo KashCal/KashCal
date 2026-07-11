@@ -7,9 +7,11 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -118,14 +120,32 @@ class PushStrategyMoveOperationTest {
             movePhase = PendingOperation.MOVE_PHASE_DELETE // Phase 0: try MOVE
         )
 
+        val finalEtag = "\"final-etag\""
+        // After the MOVE relocates the resource, the row is repointed at newUrl and
+        // kept PENDING_UPDATE; the success path hands off to the shared UPDATE path,
+        // which reads this relocated row and PUTs the current body to the new URL.
+        val relocatedEvent = testEvent.copy(
+            caldavUrl = newUrl,
+            etag = newEtag,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
-        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { eventsDao.getById(testEvent.id) } returns relocatedEvent
         coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // WebDAV MOVE succeeds
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.success(Pair(newUrl, newEtag))
-        coEvery { eventsDao.markCreatedOnServer(testEvent.id, newUrl, newEtag, any()) } just Runs
+        // Relocation bookkeeping: repoint URL/etag, keep the row dirty, convert op.
+        coEvery { eventsDao.updateCaldavUrl(testEvent.id, newUrl) } just Runs
+        coEvery { eventsDao.updateEtag(testEvent.id, newEtag) } just Runs
+        coEvery { eventsDao.updateSyncStatus(testEvent.id, SyncStatus.PENDING_UPDATE, any()) } just Runs
+        coEvery { pendingOperationsDao.update(any()) } just Runs
+        // MOVE is bodyless (RFC 4918 §9.9): the current body is PUT to the new URL
+        // via the shared UPDATE path so a same-save edit isn't stranded.
+        coEvery { client.updateEvent(newUrl, any(), any()) } returns CalDavResult.success(finalEtag)
+        coEvery { eventsDao.markSynced(testEvent.id, finalEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(moveOperation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -135,9 +155,13 @@ class PushStrategyMoveOperationTest {
         assertEquals(1, success.eventsCreated)
         assertEquals(1, success.eventsDeleted)
 
-        // Verify atomic MOVE was called
+        // Verify atomic MOVE, then a body PUT to the new URL
         coVerify { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) }
-        // No separate CREATE or DELETE calls
+        coVerify { client.updateEvent(newUrl, any(), any()) }
+        // Row kept dirty (PENDING_UPDATE) until the body PUT lands, so an
+        // interleaved pull won't overwrite the local edit.
+        coVerify { eventsDao.updateSyncStatus(testEvent.id, SyncStatus.PENDING_UPDATE, any()) }
+        // No separate CREATE or source DELETE calls (MOVE is atomic)
         coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
         // Operation completed - deleted
@@ -664,5 +688,160 @@ class PushStrategyMoveOperationTest {
 
         // Verify FIFO order
         assertEquals(listOf(1L, 2L, 3L), processOrder)
+    }
+
+    // ============ MOVE-then-PUT adversarial paths (issue #292 fix) ============
+    //
+    // A successful WebDAV MOVE is bodyless (RFC 4918 §9.9), so after relocating
+    // the resource the current body is pushed to the new URL via the shared
+    // UPDATE path. These cover the failure branches of that hand-off.
+
+    private val moveOp = PendingOperation(
+        id = 1L,
+        eventId = testEvent.id,
+        operation = PendingOperation.OPERATION_MOVE,
+        targetUrl = "https://caldav.icloud.com/123/personal/move-test-uid-123.ics",
+        targetCalendarId = targetCalendar.id,
+        status = PendingOperation.STATUS_PENDING,
+        movePhase = PendingOperation.MOVE_PHASE_DELETE
+    )
+    private val newUrl = "https://caldav.icloud.com/123/work/move-test-uid-123.ics"
+
+    /**
+     * Wire up a scenario where the WebDAV MOVE succeeds (returning [moveEtag])
+     * and the subsequent body PUT to the new URL returns [putResult].
+     * The relocated row is returned by getById so the delegated UPDATE targets
+     * the new URL.
+     */
+    private fun stubMoveThenPut(
+        moveEtag: String,
+        putResult: CalDavResult<String>
+    ) {
+        val relocated = testEvent.copy(
+            caldavUrl = newUrl,
+            etag = moveEtag,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOp)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns relocated
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { client.moveEvent(moveOp.targetUrl!!, targetCalendar.caldavUrl, testEvent.uid) } returns
+            CalDavResult.success(Pair(newUrl, moveEtag))
+        coEvery { eventsDao.updateCaldavUrl(testEvent.id, newUrl) } just Runs
+        coEvery { eventsDao.updateEtag(testEvent.id, any()) } just Runs
+        coEvery { eventsDao.updateSyncStatus(testEvent.id, any(), any()) } just Runs
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { client.fetchEtag(any()) } returns CalDavResult.success(moveEtag.ifEmpty { "\"recovered\"" })
+        coEvery { client.updateEvent(newUrl, any(), any()) } returns putResult
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.update(any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+    }
+
+    @Test
+    fun `MOVE success keeps row PENDING_UPDATE until the body PUT lands`() = runTest {
+        // Before the body PUT confirms, the row must NOT be marked SYNCED — a
+        // premature SYNCED would let an interleaved pull overwrite the local edit.
+        stubMoveThenPut("\"etag\"", CalDavResult.success("\"final\""))
+
+        pushStrategy.pushAll(client)
+
+        // Row is repointed to the new URL but kept dirty until the PUT succeeds.
+        coVerify { eventsDao.updateCaldavUrl(testEvent.id, newUrl) }
+        coVerify { eventsDao.updateSyncStatus(testEvent.id, SyncStatus.PENDING_UPDATE, any()) }
+        // markCreatedOnServer (which sets SYNCED) must NOT be used on this path.
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServer(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `MOVE succeeds then body PUT converts the op to a plain UPDATE`() = runTest {
+        // A failing body PUT must NOT leave the op as a MOVE (a retry would
+        // re-MOVE the now-gone source, 404 -> CREATE -> account-wide UID clash).
+        // It must become a real UPDATE against the new URL.
+        val captured = slot<PendingOperation>()
+        stubMoveThenPut("\"etag\"", CalDavResult.error(500, "server error", isRetryable = true))
+        coEvery { pendingOperationsDao.update(capture(captured)) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        assertTrue("op should be converted before the PUT is attempted", captured.isCaptured)
+        assertEquals(PendingOperation.OPERATION_UPDATE, captured.captured.operation)
+        assertNull("MOVE-only targetUrl must be cleared", captured.captured.targetUrl)
+        assertNull("MOVE-only targetCalendarId must be cleared", captured.captured.targetCalendarId)
+        // The MOVE itself must not run again.
+        coVerify(exactly = 1) { client.moveEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `MOVE succeeds then 412 on body PUT is retried, not permanently failed`() = runTest {
+        // A 412 on the follow-up PUT is a genuine conflict; the shared UPDATE
+        // path fetches a fresh etag and retries once rather than giving up.
+        val relocated = testEvent.copy(
+            caldavUrl = newUrl, etag = "\"stale\"", syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOp)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns relocated
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { client.moveEvent(moveOp.targetUrl!!, targetCalendar.caldavUrl, testEvent.uid) } returns
+            CalDavResult.success(Pair(newUrl, "\"stale\""))
+        coEvery { eventsDao.updateCaldavUrl(testEvent.id, newUrl) } just Runs
+        coEvery { eventsDao.updateEtag(testEvent.id, any()) } just Runs
+        coEvery { eventsDao.updateSyncStatus(testEvent.id, any(), any()) } just Runs
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.update(any()) } just Runs
+        // First PUT (stale etag) -> 412; fresh etag fetched; retry PUT -> success.
+        coEvery { client.updateEvent(newUrl, any(), "\"stale\"") } returns
+            CalDavResult.conflictError("Precondition failed")
+        coEvery { client.fetchEtag(newUrl) } returns CalDavResult.success("\"fresh\"")
+        coEvery { client.updateEvent(newUrl, any(), "\"fresh\"") } returns CalDavResult.success("\"final\"")
+        coEvery { eventsDao.updateEtag(testEvent.id, "\"fresh\"") } just Runs
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        // Fresh-etag retry happened and won — no re-MOVE.
+        coVerify { client.fetchEtag(newUrl) }
+        coVerify { client.updateEvent(newUrl, any(), "\"fresh\"") }
+        coVerify(exactly = 1) { client.moveEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `MOVE returning empty etag never PUTs with a blank If-Match`() = runTest {
+        // Some servers omit ETag on MOVE (moveEvent returns ""). The delegated
+        // UPDATE must recover a real etag via PROPFIND rather than PUT If-Match: "".
+        val relocated = testEvent.copy(
+            caldavUrl = newUrl, etag = "", syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOp)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns relocated
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { client.moveEvent(moveOp.targetUrl!!, targetCalendar.caldavUrl, testEvent.uid) } returns
+            CalDavResult.success(Pair(newUrl, ""))
+        coEvery { eventsDao.updateCaldavUrl(testEvent.id, newUrl) } just Runs
+        coEvery { eventsDao.updateEtag(testEvent.id, any()) } just Runs
+        coEvery { eventsDao.updateSyncStatus(testEvent.id, any(), any()) } just Runs
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.update(any()) } just Runs
+        // Empty etag -> PROPFIND recovery -> PUT with the recovered etag.
+        coEvery { client.fetchEtag(newUrl) } returns CalDavResult.success("\"recovered\"")
+        val putEtagSlot = slot<String>()
+        coEvery { client.updateEvent(newUrl, any(), capture(putEtagSlot)) } returns
+            CalDavResult.success("\"final\"")
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        assertTrue("PUT must have been attempted", putEtagSlot.isCaptured)
+        assertTrue(
+            "If-Match etag must be non-blank (recovered via PROPFIND), was '${putEtagSlot.captured}'",
+            putEtagSlot.captured.isNotEmpty()
+        )
     }
 }

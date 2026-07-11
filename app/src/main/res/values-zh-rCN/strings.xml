@@ -106,7 +106,11 @@
     <string name="settings_theme_system_desc">跟随手机的浅色或深色设置</string>
     <string name="settings_theme_light_desc">始终浅色</string>
     <string name="settings_theme_dark_desc">始终深色</string>
-    <string name="settings_theme_teal_desc">KashCal 青色，跟随手机的浅色或深色设置</string>
+    <string name="settings_accent_color">强调色</string>
+    <string name="settings_accent_color_desc">用你选择的强调色为应用和小部件着色</string>
+    <string name="settings_accent_color_brand">KashCal 青色</string>
+    <string name="settings_accent_color_dynamic">自动</string>
+    <string name="settings_accent_color_dynamic_desc">跟随设备的 Material You 配色</string>
     <string name="settings_app_icon">应用图标</string>
     <string name="app_icon_default">默认</string>
     <string name="app_icon_supporter">支持者</string>
@@ -332,7 +336,6 @@
     <string name="option_system_default">系统默认</string>
     <string name="option_light">浅色</string>
     <string name="option_dark">深色</string>
-    <string name="option_kashcal_teal">KashCal 青色</string>
     <string name="option_12_hour">12小时制</string>
     <string name="option_24_hour">24小时制</string>
     <string name="option_sunday">星期日</string>

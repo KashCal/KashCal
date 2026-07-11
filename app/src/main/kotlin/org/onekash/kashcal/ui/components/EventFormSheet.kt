@@ -346,7 +346,7 @@ internal fun resolveDefaultCalendar(
 }
 
 /**
- * Event creation/editing bottom sheet with iOS-style UI.
+ * Event creation/editing bottom sheet with a wheel-picker UI.
  *
  * @param eventId Event ID for edit mode, null for create mode
  * @param initialStartTs Initial start timestamp (epoch milliseconds) for new events
@@ -1285,10 +1285,11 @@ fun EventFormContent(
         }
     }
 
-    // Edit-notify: saving a scheduling-significant change (time, recurrence,
-    // cancellation) on an event with attendees will email them an updated
-    // invite. Surface that consequence inline before the tap — the predicate
-    // delegates to SequenceBumper so the banner matches the wire behaviour.
+    // Edit-notify: saving a scheduling-significant change (title, location,
+    // time, recurrence, cancellation) on an event with attendees will email
+    // them an updated invite. Surface that consequence inline before the tap —
+    // the predicate delegates to SequenceBumper so the banner matches the wire
+    // behaviour, so the candidate must carry every field SequenceBumper reads.
     //
     // attendeeCount is the set that WILL be saved: the picker-edited
     // state.attendees once the user has touched it (attendeesEdited), else the
@@ -1312,6 +1313,11 @@ fun EventFormContent(
             val original = loadedEvent ?: return@derivedStateOf false
             val (candStart, candEnd) = state.toStartEndTs()
             val candidate = original.copy(
+                // Mirror the save-path normalization (HomeViewModel applies the
+                // same ifBlank transforms) so the banner's bump prediction
+                // matches the value that will actually be written.
+                title = state.title.ifBlank { "Untitled" },
+                location = state.location.ifBlank { null },
                 startTs = candStart,
                 endTs = candEnd,
                 isAllDay = state.isAllDay,
@@ -1642,7 +1648,25 @@ fun EventFormContent(
                     },
                     isSelectedDeviceCalendar = state.isDeviceCalendar,
                     isExpanded = expandedPicker == "calendar",
-                    enabled = !isReadOnly && !(state.isEditMode && state.editingOccurrenceTs != null),
+                    // Recurring DEVICE events can't be moved between calendars:
+                    // Android treats CALENDAR_ID as create-time, so a move is a
+                    // delete+recreate that we only support for non-recurring
+                    // device events. Disable the picker for a recurring device
+                    // edit rather than let a pick silently do nothing. (Room
+                    // recurring events move fine and stay enabled.)
+                    //
+                    // A synced event WITH ATTENDEES can't be moved to another
+                    // account (the move would carry the source account's ORGANIZER
+                    // and misdeliver invitations — the domain layer rejects it).
+                    // We can't selectively offer only same-account targets without
+                    // per-option disabling, so disable the whole picker for such
+                    // an edit; the user can duplicate the event onto the other
+                    // account instead. (Device attendee events are covered by the
+                    // recurring/occurrence clauses and the device move path.)
+                    enabled = !isReadOnly &&
+                        !(state.isEditMode && state.editingOccurrenceTs != null) &&
+                        !(state.isEditMode && state.isDeviceCalendar && state.rrule != null) &&
+                        !(state.isEditMode && !state.isDeviceCalendar && state.attendees.isNotEmpty()),
                     onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
                     onSelect = { id, name, color, isDevice ->
                         state = state.copy(
@@ -2201,7 +2225,8 @@ fun EventFormContent(
                                     .weight(1f)
                                     .height(48.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.error
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
                                 )
                             ) {
                                 if (state.isSaving) {

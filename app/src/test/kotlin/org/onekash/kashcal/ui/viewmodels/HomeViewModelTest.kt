@@ -245,6 +245,11 @@ class HomeViewModelTest {
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
+        // Week-view scroll restore: default to the never-saved sentinel so initializeAsync's
+        // .first() read doesn't hang/throw on the relaxed mock, and existing tests are unaffected.
+        every { dataStore.weekViewScrollMinutes } returns flowOf(-1)
+        coEvery { dataStore.getWeekViewScrollMinutes() } returns -1
+
         // Device-calendar prefs: stub Flow getters so combine() in observeCalendars can emit,
         // and stub suspend variants used by loadCalendars. Default = feature off, no enabled IDs.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
@@ -3713,6 +3718,45 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(500, viewModel.uiState.value.weekViewScrollPosition)
+    }
+
+    @Test
+    fun `initializeAsync seeds saved scroll minutes from DataStore`() = runTest {
+        // Persisted clock time (14:00) must reach uiState so the time grid restores it
+        // on first composition, before the debounced writer can overwrite it.
+        // onboardingDismissed must be stubbed so initializeAsync runs past the onboarding
+        // gate and reaches the seed (the gate reads it via .first()).
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+        every { dataStore.weekViewScrollMinutes } returns flowOf(840)
+        coEvery { dataStore.getWeekViewScrollMinutes() } returns 840
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(840, viewModel.uiState.value.weekViewSavedScrollMinutes)
+    }
+
+    @Test
+    fun `setWeekViewScrollMinutes persists to DataStore`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setWeekViewScrollMinutes(615)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setWeekViewScrollMinutes(615) }
+    }
+
+    @Test
+    fun `setWeekViewScrollPosition does not persist to DataStore`() = runTest {
+        // In-session pixel position stays in memory only; persistence is the minutes path's job.
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setWeekViewScrollPosition(500)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { dataStore.setWeekViewScrollMinutes(any()) }
     }
 
     @Test
