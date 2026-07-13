@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">എപ്പോഴും ലൈറ്റ്</string>
     <string name="settings_theme_dark_desc">എപ്പോഴും ഡാർക്ക്</string>
     <string name="settings_accent_color">ആക്സന്റ് നിറം</string>
-    <string name="settings_accent_color_desc">നിങ്ങൾ തിരഞ്ഞെടുത്ത ആക്സന്റ് ഉപയോഗിച്ച് ആപ്പിനും വിജറ്റുകൾക്കും നിറം നൽകുക</string>
     <string name="settings_accent_color_brand">KashCal ടീൽ</string>
     <string name="settings_accent_color_dynamic">സ്വയമേവ</string>
     <string name="settings_accent_color_dynamic_desc">നിങ്ങളുടെ ഉപകരണത്തിന്റെ Material You നിറങ്ങൾ പിന്തുടരുക</string>

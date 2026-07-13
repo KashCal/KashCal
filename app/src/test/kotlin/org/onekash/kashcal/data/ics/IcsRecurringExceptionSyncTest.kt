@@ -1,6 +1,5 @@
 package org.onekash.kashcal.data.ics
 
-import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk

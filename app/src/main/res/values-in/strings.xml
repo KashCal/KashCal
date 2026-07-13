@@ -124,7 +124,6 @@
     <string name="settings_theme_light_desc">Selalu terang</string>
     <string name="settings_theme_dark_desc">Selalu gelap</string>
     <string name="settings_accent_color">Warna aksen</string>
-    <string name="settings_accent_color_desc">Warnai aplikasi dan widget dengan aksen pilihan Anda</string>
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Otomatis</string>
     <string name="settings_accent_color_dynamic_desc">Ikuti warna Material You perangkat Anda</string>

@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">ସର୍ବଦା ଲାଇଟ୍</string>
     <string name="settings_theme_dark_desc">ସର୍ବଦା ଡାର୍କ</string>
     <string name="settings_accent_color">ଆକସେଣ୍ଟ ରଙ୍ଗ</string>
-    <string name="settings_accent_color_desc">ଆପଣ ବାଛିଥିବା ଆକସେଣ୍ଟରେ ଆପ ଏବଂ ୱିଜେଟଗୁଡ଼ିକୁ ରଙ୍ଗ ଦିଅନ୍ତୁ</string>
     <string name="settings_accent_color_brand">KashCal ଟିଲ୍</string>
     <string name="settings_accent_color_dynamic">ସ୍ୱୟଂଚାଳିତ</string>
     <string name="settings_accent_color_dynamic_desc">ଆପଣଙ୍କ ଡିଭାଇସର Material You ରଙ୍ଗ ଅନୁସରଣ କରନ୍ତୁ</string>

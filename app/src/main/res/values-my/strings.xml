@@ -124,7 +124,6 @@
     <string name="settings_theme_light_desc">အမြဲ အလင်း</string>
     <string name="settings_theme_dark_desc">အမြဲ အမှောင်</string>
     <string name="settings_accent_color">အသားပေးအရောင်</string>
-    <string name="settings_accent_color_desc">သင်ရွေးချယ်ထားသော အသားပေးအရောင်ဖြင့် အက်ပ်နှင့် ဝိဂျက်များကို အရောင်ခြယ်ပါ</string>
     <string name="settings_accent_color_brand">KashCal စိမ်းပြာရောင်</string>
     <string name="settings_accent_color_dynamic">အလိုအလျောက်</string>
     <string name="settings_accent_color_dynamic_desc">သင့်စက်ပစ္စည်း၏ Material You အရောင်များကို လိုက်နာပါ</string>

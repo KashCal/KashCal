@@ -17,8 +17,20 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 23 key names`() {
-        assertEquals(23, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 24 key names`() {
+        assertEquals(24, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    }
+
+    @Test
+    fun `WEEK_VIEW_HOUR_HEIGHT is excluded because it is ephemeral per-device zoom state`() {
+        assertTrue(
+            "WEEK_VIEW_HOUR_HEIGHT must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT.name),
+        )
+        assertFalse(
+            "WEEK_VIEW_HOUR_HEIGHT must not be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT.name },
+        )
     }
 
     @Test

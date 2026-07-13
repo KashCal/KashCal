@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Her zaman açık</string>
     <string name="settings_theme_dark_desc">Her zaman koyu</string>
     <string name="settings_accent_color">Vurgu rengi</string>
-    <string name="settings_accent_color_desc">Uygulamayı ve widget\'ları seçtiğin vurgu rengiyle renklendir</string>
     <string name="settings_accent_color_brand">KashCal Turkuaz</string>
     <string name="settings_accent_color_dynamic">Otomatik</string>
     <string name="settings_accent_color_dynamic_desc">Cihazının Material You renklerini takip et</string>

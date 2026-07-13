@@ -107,7 +107,6 @@
     <string name="settings_theme_light_desc">始终浅色</string>
     <string name="settings_theme_dark_desc">始终深色</string>
     <string name="settings_accent_color">强调色</string>
-    <string name="settings_accent_color_desc">用你选择的强调色为应用和小部件着色</string>
     <string name="settings_accent_color_brand">KashCal 青色</string>
     <string name="settings_accent_color_dynamic">自动</string>
     <string name="settings_accent_color_dynamic_desc">跟随设备的 Material You 配色</string>

@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">ఎల్లప్పుడూ లైట్</string>
     <string name="settings_theme_dark_desc">ఎల్లప్పుడూ డార్క్</string>
     <string name="settings_accent_color">యాక్సెంట్ రంగు</string>
-    <string name="settings_accent_color_desc">మీరు ఎంచుకున్న యాక్సెంట్‌తో యాప్ మరియు విడ్జెట్‌లకు రంగు వేయండి</string>
     <string name="settings_accent_color_brand">KashCal టీల్</string>
     <string name="settings_accent_color_dynamic">స్వయంచాలక</string>
     <string name="settings_accent_color_dynamic_desc">మీ పరికరం యొక్క Material You రంగులను అనుసరించండి</string>

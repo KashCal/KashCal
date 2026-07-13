@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
@@ -250,6 +251,13 @@ class HomeViewModelTest {
         every { dataStore.weekViewScrollMinutes } returns flowOf(-1)
         coEvery { dataStore.getWeekViewScrollMinutes() } returns -1
 
+        // Week-view zoom restore: stub the default hour-height so the relaxed mock's 0f
+        // (which would clamp to MIN_HOUR_HEIGHT_DP and shift the seeded default) doesn't
+        // perturb existing tests. Mirrors the scroll-minutes stubs above.
+        every { dataStore.weekViewHourHeight } returns flowOf(60f)
+        coEvery { dataStore.getWeekViewHourHeight() } returns 60f
+        coEvery { dataStore.setWeekViewHourHeight(any()) } returns Unit
+
         // Device-calendar prefs: stub Flow getters so combine() in observeCalendars can emit,
         // and stub suspend variants used by loadCalendars. Default = feature off, no enabled IDs.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
@@ -296,6 +304,46 @@ class HomeViewModelTest {
     @Test
     fun `initial state has current month and year`() = runTest {
         val viewModel = createViewModel()
+
+        val today = JavaCalendar.getInstance()
+        assertEquals(today.get(JavaCalendar.YEAR), viewModel.uiState.value.viewingYear)
+        assertEquals(today.get(JavaCalendar.MONTH), viewModel.uiState.value.viewingMonth)
+    }
+
+    @Test
+    fun `switching to MONTH_FULL with no prior selection stays on current month not epoch`() = runTest {
+        // Regression: selectedDate defaults to 0L. Switching to a month view synced
+        // the pager to Calendar(timeInMillis = 0) -> Dec 1969. With no explicit
+        // selection the month views must stay on today's month.
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        // Simulate the common entry point: default Agenda view leaves selectedDate at 0L.
+        viewModel.setViewMode(ViewMode.AGENDA)
+        advanceUntilIdle()
+        assertEquals(0L, viewModel.uiState.value.selectedDate)
+
+        viewModel.setViewMode(ViewMode.MONTH_FULL)
+        advanceUntilIdle()
+
+        val today = JavaCalendar.getInstance()
+        assertEquals(today.get(JavaCalendar.YEAR), viewModel.uiState.value.viewingYear)
+        assertEquals(today.get(JavaCalendar.MONTH), viewModel.uiState.value.viewingMonth)
+    }
+
+    @Test
+    fun `switching to MONTH with no prior selection stays on current month not epoch`() = runTest {
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.AGENDA)
+        advanceUntilIdle()
+        assertEquals(0L, viewModel.uiState.value.selectedDate)
+
+        viewModel.setViewMode(ViewMode.MONTH)
+        advanceUntilIdle()
 
         val today = JavaCalendar.getInstance()
         assertEquals(today.get(JavaCalendar.YEAR), viewModel.uiState.value.viewingYear)
@@ -1236,8 +1284,12 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `agenda loads 30 days of events`() = runTest {
-        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
+    fun `agenda loads 90 days of events`() = runTest {
+        val startSlot = slot<Long>()
+        val endSlot = slot<Long>()
+        every {
+            displayEventRepository.getDisplayEventsForRange(capture(startSlot), capture(endSlot))
+        } returns flowOf(persistentListOf())
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1245,10 +1297,12 @@ class HomeViewModelTest {
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
-        // Verify the DisplayEventRepository range query was called
+        // Verify the DisplayEventRepository range query was called with a ~90-day window
         verify {
             displayEventRepository.getDisplayEventsForRange(any(), any())
         }
+        val ninetyDaysMs = 90L * 24 * 60 * 60 * 1000
+        assertEquals(ninetyDaysMs, endSlot.captured - startSlot.captured)
     }
 
     @Test
@@ -3757,6 +3811,84 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { dataStore.setWeekViewScrollMinutes(any()) }
+    }
+
+    @Test
+    fun `initializeAsync seeds saved hour height from DataStore`() = runTest {
+        // Persisted zoom (90dp) must reach uiState so the time grid restores it on first
+        // composition — in the SAME update that seeds the scroll minutes, so the scroll's
+        // minutes->pixels conversion uses the restored zoom rather than the default.
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+        every { dataStore.weekViewHourHeight } returns flowOf(90f)
+        coEvery { dataStore.getWeekViewHourHeight() } returns 90f
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(90f, viewModel.uiState.value.weekViewHourHeight)
+    }
+
+    @Test
+    fun `initializeAsync clamps an out-of-range persisted hour height`() = runTest {
+        // A persisted or corrupt value outside the pinch range snaps back in on restore,
+        // never rendering a degenerate grid.
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+        every { dataStore.weekViewHourHeight } returns flowOf(999f)
+        coEvery { dataStore.getWeekViewHourHeight() } returns 999f
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(WeekViewUtils.MAX_HOUR_HEIGHT_DP, viewModel.uiState.value.weekViewHourHeight)
+    }
+
+    @Test
+    fun `initializeAsync clamps a too-small persisted hour height`() = runTest {
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+        every { dataStore.weekViewHourHeight } returns flowOf(5f)
+        coEvery { dataStore.getWeekViewHourHeight() } returns 5f
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(WeekViewUtils.MIN_HOUR_HEIGHT_DP, viewModel.uiState.value.weekViewHourHeight)
+    }
+
+    @Test
+    fun `initializeAsync falls back to default for a non-finite persisted hour height`() = runTest {
+        // A corrupt DataStore proto could hold NaN; coerceIn leaves NaN unchanged, which would
+        // render a degenerate (NaN-height) grid. The seed must reject it and use the default.
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+        every { dataStore.weekViewHourHeight } returns flowOf(Float.NaN)
+        coEvery { dataStore.getWeekViewHourHeight() } returns Float.NaN
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(60f, viewModel.uiState.value.weekViewHourHeight)
+    }
+
+    @Test
+    fun `setWeekViewHourHeight persists to DataStore after debounce`() = runTest {
+        val viewModel = createViewModel()
+        // Let the init-launched persistence collector subscribe before emitting; the
+        // persist SharedFlow has replay=0, so an emit before subscription would be dropped.
+        advanceUntilIdle()
+
+        viewModel.setWeekViewHourHeight(90f)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setWeekViewHourHeight(90f) }
+    }
+
+    @Test
+    fun `setWeekViewHourHeight updates in-session hour height clamped`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setWeekViewHourHeight(999f)
+
+        assertEquals(WeekViewUtils.MAX_HOUR_HEIGHT_DP, viewModel.uiState.value.weekViewHourHeight)
     }
 
     @Test

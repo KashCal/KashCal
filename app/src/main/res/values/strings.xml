@@ -188,7 +188,6 @@
     <string name="settings_theme_light_desc">Always light</string>
     <string name="settings_theme_dark_desc">Always dark</string>
     <string name="settings_accent_color">Accent color</string>
-    <string name="settings_accent_color_desc">Color the app and widgets with your chosen accent</string>
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Automatic</string>
     <string name="settings_accent_color_dynamic_desc">Follow your device\'s Material You colors</string>

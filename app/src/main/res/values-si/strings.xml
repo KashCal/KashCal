@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">සැමවිටම ආලෝකවත්</string>
     <string name="settings_theme_dark_desc">සැමවිටම අඳුරු</string>
     <string name="settings_accent_color">අවධාරක වර්ණය</string>
-    <string name="settings_accent_color_desc">ඔබ තෝරාගත් අවධාරකයෙන් යෙදුම සහ විජට් වර්ණවත් කරන්න</string>
     <string name="settings_accent_color_brand">KashCal නිල්හරිත</string>
     <string name="settings_accent_color_dynamic">ස්වයංක්‍රීය</string>
     <string name="settings_accent_color_dynamic_desc">ඔබේ උපාංගයේ Material You වර්ණ අනුගමනය කරන්න</string>

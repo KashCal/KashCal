@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Alati hele</string>
     <string name="settings_theme_dark_desc">Alati tume</string>
     <string name="settings_accent_color">Rõhuvärv</string>
-    <string name="settings_accent_color_desc">Värvi rakendus ja vidinad valitud rõhuvärviga</string>
     <string name="settings_accent_color_brand">KashCali türkiissinine</string>
     <string name="settings_accent_color_dynamic">Automaatne</string>
     <string name="settings_accent_color_dynamic_desc">Järgi oma seadme Material You värve</string>

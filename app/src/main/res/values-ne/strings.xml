@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">सधैं उज्यालो</string>
     <string name="settings_theme_dark_desc">सधैं अँध्यारो</string>
     <string name="settings_accent_color">एक्सेन्ट रङ</string>
-    <string name="settings_accent_color_desc">तपाईंले रोजेको एक्सेन्टले एप र विजेटहरूलाई रङ लगाउनुहोस्</string>
     <string name="settings_accent_color_brand">KashCal टिल</string>
     <string name="settings_accent_color_dynamic">स्वचालित</string>
     <string name="settings_accent_color_dynamic_desc">तपाईंको उपकरणको Material You रङहरू अनुसरण गर्नुहोस्</string>

@@ -1,6 +1,5 @@
 package org.onekash.kashcal.data.db.dao
 
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

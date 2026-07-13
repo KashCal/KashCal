@@ -15,7 +15,6 @@ import java.util.Locale
 class TopBarTitleFormatterTest {
 
     private val weekSuffixTemplate = "%s · %s"
-    private val agendaLabel = "Agenda"
     private val yearLabel = "Year"
 
     @Test
@@ -28,7 +27,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.SUNDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
         )
@@ -39,26 +37,41 @@ class TopBarTitleFormatterTest {
     @Test
     fun `format MONTH_FULL matches MONTH format`() {
         val month = TopBarTitleFormatter.format(
-            ViewMode.MONTH, 2026, 8, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.MONTH, 2026, 8, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
         val monthFull = TopBarTitleFormatter.format(
-            ViewMode.MONTH_FULL, 2026, 8, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.MONTH_FULL, 2026, 8, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
         assertEquals(month, monthFull)
     }
 
     @Test
-    fun `format AGENDA returns the static agenda label`() {
+    fun `format AGENDA returns abbreviated month and year of the viewing month`() {
         val result = TopBarTitleFormatter.format(
-            ViewMode.AGENDA, 2026, 8, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.AGENDA, 2026, 6, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
-        assertEquals(agendaLabel, result)
+        // July 2026 (viewingMonth 6, 0-indexed), abbreviated, matching the month/week/3-day format
+        assertTrue("Should contain abbreviated Jul, got: $result", result.contains("Jul"))
+        assertFalse("Should not contain full July, got: $result", result.contains("July"))
+        assertTrue("Should contain year 2026, got: $result", result.contains("2026"))
+        assertFalse("Should not be the static 'Agenda' label, got: $result", result.contains("Agenda"))
+    }
+
+    @Test
+    fun `format AGENDA matches MONTH format for the same year and month`() {
+        val agenda = TopBarTitleFormatter.format(
+            ViewMode.AGENDA, 2026, 6, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
+        )
+        val month = TopBarTitleFormatter.format(
+            ViewMode.MONTH, 2026, 6, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
+        )
+        assertEquals(month, agenda)
     }
 
     @Test
     fun `format YEAR returns the static year label`() {
         val result = TopBarTitleFormatter.format(
-            ViewMode.YEAR, 2026, 0, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.YEAR, 2026, 0, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
         assertEquals(yearLabel, result)
     }
@@ -74,7 +87,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.MONDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
         )
@@ -94,7 +106,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.SUNDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
         )
@@ -118,7 +129,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.SUNDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
             today = displayed,
@@ -139,7 +149,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.SUNDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
             today = nextYear,
@@ -158,7 +167,6 @@ class TopBarTitleFormatterTest {
             firstDayOfWeek = Calendar.SUNDAY,
             weekPrefix = "W",
             weekSuffixTemplate = weekSuffixTemplate,
-            agendaLabel = agendaLabel,
             yearLabel = yearLabel,
             locale = Locale.US,
         )
@@ -168,7 +176,7 @@ class TopBarTitleFormatterTest {
     @Test
     fun `format INSIGHTS returns empty string`() {
         val result = TopBarTitleFormatter.format(
-            ViewMode.INSIGHTS, 2026, 4, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.INSIGHTS, 2026, 4, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
         assertEquals("", result)
     }
@@ -176,7 +184,7 @@ class TopBarTitleFormatterTest {
     @Test
     fun `format MONTH abbreviates month not full name`() {
         val result = TopBarTitleFormatter.format(
-            ViewMode.MONTH, 2026, 3, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, agendaLabel, yearLabel, Locale.US,
+            ViewMode.MONTH, 2026, 3, 0, Calendar.SUNDAY, "W", weekSuffixTemplate, yearLabel, Locale.US,
         )
         // April → Apr (abbreviated)
         assertTrue("Should contain Apr, got: $result", result.contains("Apr"))

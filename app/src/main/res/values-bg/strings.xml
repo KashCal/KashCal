@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Винаги светла</string>
     <string name="settings_theme_dark_desc">Винаги тъмна</string>
     <string name="settings_accent_color">Акцентен цвят</string>
-    <string name="settings_accent_color_desc">Оцветете приложението и джаджите с избрания от вас акцентен цвят</string>
     <string name="settings_accent_color_brand">KashCal Синьо-зелено</string>
     <string name="settings_accent_color_dynamic">Автоматично</string>
     <string name="settings_accent_color_dynamic_desc">Следвайте цветовете Material You на вашето устройство</string>

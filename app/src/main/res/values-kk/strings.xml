@@ -143,7 +143,6 @@
     <string name="settings_theme_light_desc">Әрдайым ашық</string>
     <string name="settings_theme_dark_desc">Әрдайым қараңғы</string>
     <string name="settings_accent_color">Акцент түсі</string>
-    <string name="settings_accent_color_desc">Қолданба мен виджеттерді таңдаған акцент түсіңізбен бояңыз</string>
     <string name="settings_accent_color_brand">KashCal Көгілдір-жасыл</string>
     <string name="settings_accent_color_dynamic">Автоматты</string>
     <string name="settings_accent_color_dynamic_desc">Құрылғыңыздың Material You түстерін ұстаныңыз</string>

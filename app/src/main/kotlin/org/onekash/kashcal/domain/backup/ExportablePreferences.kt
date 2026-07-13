@@ -105,6 +105,9 @@ object ExportablePreferences {
         // Ephemeral UI scroll position — where the timeline was last scrolled to;
         // per-device view state, not a portable user setting
         PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES.name,
+        // Ephemeral UI zoom level — the timeline's last pinch-to-zoom hour-height;
+        // per-device view state, not a portable user setting
+        PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT.name,
         PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
         PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
         PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,

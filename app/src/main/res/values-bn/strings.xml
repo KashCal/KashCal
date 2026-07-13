@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">সবসময় লাইট</string>
     <string name="settings_theme_dark_desc">সবসময় ডার্ক</string>
     <string name="settings_accent_color">অ্যাকসেন্ট রং</string>
-    <string name="settings_accent_color_desc">আপনার বেছে নেওয়া অ্যাকসেন্ট দিয়ে অ্যাপ ও উইজেট রঙিন করুন</string>
     <string name="settings_accent_color_brand">KashCal টিল</string>
     <string name="settings_accent_color_dynamic">স্বয়ংক্রিয়</string>
     <string name="settings_accent_color_dynamic_desc">আপনার ডিভাইসের Material You রং অনুসরণ করুন</string>

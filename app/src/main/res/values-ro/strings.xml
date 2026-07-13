@@ -153,7 +153,6 @@
     <string name="settings_theme_light_desc">Întotdeauna luminoasă</string>
     <string name="settings_theme_dark_desc">Întotdeauna întunecată</string>
     <string name="settings_accent_color">Culoare de accent</string>
-    <string name="settings_accent_color_desc">Colorează aplicația și widgeturile cu culoarea de accent aleasă de tine</string>
     <string name="settings_accent_color_brand">KashCal Turcoaz</string>
     <string name="settings_accent_color_dynamic">Automat</string>
     <string name="settings_accent_color_dynamic_desc">Urmează culorile Material You ale dispozitivului tău</string>

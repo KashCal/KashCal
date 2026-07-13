@@ -151,7 +151,6 @@
     <string name="settings_theme_light_desc">Sempre chiaro</string>
     <string name="settings_theme_dark_desc">Sempre scuro</string>
     <string name="settings_accent_color">Colore d\'accento</string>
-    <string name="settings_accent_color_desc">Colora l\'app e i widget con l\'accento che scegli</string>
     <string name="settings_accent_color_brand">Verde acqua KashCal</string>
     <string name="settings_accent_color_dynamic">Automatico</string>
     <string name="settings_accent_color_dynamic_desc">Segui i colori Material You del tuo dispositivo</string>

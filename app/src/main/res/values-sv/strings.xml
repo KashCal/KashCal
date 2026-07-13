@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Alltid ljust</string>
     <string name="settings_theme_dark_desc">Alltid mörkt</string>
     <string name="settings_accent_color">Accentfärg</string>
-    <string name="settings_accent_color_desc">Färga appen och widgetar med din valda accent</string>
     <string name="settings_accent_color_brand">KashCal Turkos</string>
     <string name="settings_accent_color_dynamic">Automatiskt</string>
     <string name="settings_accent_color_dynamic_desc">Följ enhetens Material You-färger</string>

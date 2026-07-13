@@ -14,14 +14,18 @@ import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
@@ -158,6 +162,16 @@ class HomeViewModel(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    /**
+     * Pinch-zoom hour-heights awaiting persistence. A pinch gesture calls the setter many
+     * times per second; collecting this with a debounce persists only the settled zoom
+     * instead of hammering DataStore. DROP_OLDEST keeps only the latest pending value.
+     */
+    private val hourHeightToPersist = MutableSharedFlow<Float>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     /** Network connectivity state for UI */
     val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
@@ -479,6 +493,9 @@ class HomeViewModel(
 
         // Observe device calendar changes to invalidate event dots cache
         observeDeviceCalendarChanges()
+
+        // Persist the settled pinch-zoom level across restarts (debounced)
+        observeHourHeightPersistence()
     }
 
     /**
@@ -525,11 +542,21 @@ class HomeViewModel(
             // compose until this update lands — meaning the restored value is already present
             // on its first composition and the debounced scroll writer can't overwrite it first.
             val savedScrollMinutes = dataStore.getWeekViewScrollMinutes()
+            // Seed the persisted zoom in the SAME update as the scroll minutes. The grid's
+            // scroll restore converts saved clock-minutes to pixels using the hour-height, so
+            // the restored zoom must be present on the grid's first composition — otherwise
+            // the conversion runs against the default zoom and lands on the wrong time. Reject
+            // a non-finite stored value (coerceIn leaves NaN as NaN) and clamp the rest so a
+            // corrupt/out-of-range stored value can never render a degenerate grid.
+            val storedHourHeight = dataStore.getWeekViewHourHeight()
+            val savedHourHeight = (if (storedHourHeight.isFinite()) storedHourHeight else 60f)
+                .coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)
             _uiState.update {
                 it.copy(
                     viewMode = defaultView,
                     previousNonInsightsMode = defaultView,
-                    weekViewSavedScrollMinutes = savedScrollMinutes
+                    weekViewSavedScrollMinutes = savedScrollMinutes,
+                    weekViewHourHeight = savedHourHeight
                 )
             }
 
@@ -1780,7 +1807,25 @@ class HomeViewModel(
     }
 
     fun setWeekViewHourHeight(height: Float) {
-        _uiState.update { it.copy(weekViewHourHeight = height.coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)) }
+        val clamped = height.coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)
+        _uiState.update { it.copy(weekViewHourHeight = clamped) }
+        // Queue the clamped zoom for debounced persistence so it survives app restart.
+        hourHeightToPersist.tryEmit(clamped)
+    }
+
+    /**
+     * Persist the settled pinch-zoom level. Debounced so an active pinch (many emits/sec)
+     * results in one DataStore write of the final zoom rather than one per frame; the seed
+     * in [initializeAsync] restores it on cold launch.
+     */
+    private fun observeHourHeightPersistence() {
+        viewModelScope.launch {
+            @OptIn(FlowPreview::class)
+            hourHeightToPersist
+                .debounce(1000)
+                .distinctUntilChanged()
+                .collect { dataStore.setWeekViewHourHeight(it) }
+        }
     }
 
     /**
@@ -2247,7 +2292,7 @@ class HomeViewModel(
     // ==================== Agenda ====================
 
     /**
-     * Observe agenda events - upcoming 30 days using reactive Flow.
+     * Observe agenda events - upcoming 90 days using reactive Flow.
      * Merges Room + device calendar events via DisplayEventRepository.
      * Each recurring event instance is shown separately.
      *
@@ -2261,13 +2306,13 @@ class HomeViewModel(
         _uiState.update { it.copy(isLoadingAgenda = true) }
 
         val now = System.currentTimeMillis()
-        val oneMonthLater = now + (30L * 24 * 60 * 60 * 1000) // 30 days
+        val windowEnd = now + (90L * 24 * 60 * 60 * 1000) // 90 days
 
         // DisplayEventRepository merges Room + device calendar events,
         // sorted by startTs, with SecurityException fallback to Room-only
         agendaEventsJob = viewModelScope.launch {
             try {
-                displayEventRepository.getDisplayEventsForRange(now, oneMonthLater)
+                displayEventRepository.getDisplayEventsForRange(now, windowEnd)
                     .collect { displayEvents ->
                         _uiState.update {
                             it.copy(
@@ -2468,6 +2513,10 @@ class HomeViewModel(
      */
     private fun syncPagerToSelectedDate() {
         val state = _uiState.value
+        // selectedDate is 0L until the user picks a day (e.g. arriving from the
+        // Agenda view, which never sets it). Treat "no selection" as "stay on the
+        // current viewing month" rather than syncing the pager to epoch (Dec 1969).
+        if (state.selectedDate == 0L) return
         val selectedCal = Calendar.getInstance().apply { timeInMillis = state.selectedDate }
         val year = selectedCal.get(Calendar.YEAR)
         val month = selectedCal.get(Calendar.MONTH)

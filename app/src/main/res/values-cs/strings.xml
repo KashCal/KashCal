@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">Vždy světlý</string>
     <string name="settings_theme_dark_desc">Vždy tmavý</string>
     <string name="settings_accent_color">Barva zvýraznění</string>
-    <string name="settings_accent_color_desc">Obarvi aplikaci a widgety zvolenou barvou zvýraznění</string>
     <string name="settings_accent_color_brand">KashCal tyrkysový</string>
     <string name="settings_accent_color_dynamic">Automaticky</string>
     <string name="settings_accent_color_dynamic_desc">Řiď se barvami Material You tvého zařízení</string>

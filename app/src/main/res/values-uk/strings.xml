@@ -157,7 +157,6 @@
     <string name="settings_theme_light_desc">Завжди світла</string>
     <string name="settings_theme_dark_desc">Завжди темна</string>
     <string name="settings_accent_color">Акцентний колір</string>
-    <string name="settings_accent_color_desc">Розфарбувати додаток і віджети вибраним акцентом</string>
     <string name="settings_accent_color_brand">Бірюзовий KashCal</string>
     <string name="settings_accent_color_dynamic">Автоматично</string>
     <string name="settings_accent_color_dynamic_desc">Використовувати кольори Material You твого пристрою</string>

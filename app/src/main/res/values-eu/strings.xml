@@ -152,7 +152,6 @@
     <string name="settings_theme_light_desc">Beti argia</string>
     <string name="settings_theme_dark_desc">Beti iluna</string>
     <string name="settings_accent_color">Azentu-kolorea</string>
-    <string name="settings_accent_color_desc">Koloreztatu aplikazioa eta widgetak aukeratutako azentuarekin</string>
     <string name="settings_accent_color_brand">KashCal Turkesa</string>
     <string name="settings_accent_color_dynamic">Automatikoa</string>
     <string name="settings_accent_color_dynamic_desc">Jarraitu zure gailuaren Material You koloreei</string>

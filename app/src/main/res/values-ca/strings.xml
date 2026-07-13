@@ -152,7 +152,6 @@
     <string name="settings_theme_light_desc">Sempre clar</string>
     <string name="settings_theme_dark_desc">Sempre fosc</string>
     <string name="settings_accent_color">Color d\'accent</string>
-    <string name="settings_accent_color_desc">Acoloreix l\'aplicació i els ginys amb l\'accent que triïs</string>
     <string name="settings_accent_color_brand">KashCal Turquesa</string>
     <string name="settings_accent_color_dynamic">Automàtic</string>
     <string name="settings_accent_color_dynamic_desc">Segueix els colors Material You del teu dispositiu</string>

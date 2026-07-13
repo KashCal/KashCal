@@ -162,7 +162,6 @@
     <string name="settings_theme_light_desc">Soilleir an-còmhnaidh</string>
     <string name="settings_theme_dark_desc">Dorcha an-còmhnaidh</string>
     <string name="settings_accent_color">Dath sònrachaidh</string>
-    <string name="settings_accent_color_desc">Cuir dath air an aplacaid \'s na widgets leis an dath sònrachaidh a thagh thu</string>
     <string name="settings_accent_color_brand">KashCal Gorm-uaine</string>
     <string name="settings_accent_color_dynamic">Fèin-obrachail</string>
     <string name="settings_accent_color_dynamic_desc">Lean dathan Material You an inneil agad</string>

@@ -167,7 +167,6 @@
     <string name="settings_theme_light_desc">Solas i gcónaí</string>
     <string name="settings_theme_dark_desc">Dorcha i gcónaí</string>
     <string name="settings_accent_color">Dath béime</string>
-    <string name="settings_accent_color_desc">Cuir dath ar an aip agus ar na giuirléidí leis an mbéim a roghnaíonn tú</string>
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Uathoibríoch</string>
     <string name="settings_accent_color_dynamic_desc">Lean dathanna Material You do ghléis</string>

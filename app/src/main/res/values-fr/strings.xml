@@ -151,7 +151,6 @@
     <string name="settings_theme_light_desc">Toujours clair</string>
     <string name="settings_theme_dark_desc">Toujours sombre</string>
     <string name="settings_accent_color">Couleur d\'accentuation</string>
-    <string name="settings_accent_color_desc">Colore l\'app et les widgets avec la couleur d\'accentuation de ton choix</string>
     <string name="settings_accent_color_brand">Bleu sarcelle KashCal</string>
     <string name="settings_accent_color_dynamic">Automatique</string>
     <string name="settings_accent_color_dynamic_desc">Suivre les couleurs Material You de ton appareil</string>

@@ -349,6 +349,33 @@ class KashCalDataStoreTest {
         assertEquals(-1, dataStore.getWeekViewScrollMinutes())
     }
 
+    // ==================== Week View Zoom (hour-height) Restore Tests ====================
+
+    @Test
+    fun `weekViewHourHeight defaults to 60 when never saved`() = runTest {
+        dataStore.weekViewHourHeight.test {
+            assertEquals(60f, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setWeekViewHourHeight round-trips a saved zoom level`() = runTest {
+        dataStore.weekViewHourHeight.test {
+            assertEquals(60f, awaitItem())
+
+            dataStore.setWeekViewHourHeight(90f)
+            assertEquals(90f, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `getWeekViewHourHeight returns default before any save`() = runTest {
+        assertEquals(60f, dataStore.getWeekViewHourHeight())
+    }
+
     // ==================== First Day of Week Tests ====================
 
     @Test

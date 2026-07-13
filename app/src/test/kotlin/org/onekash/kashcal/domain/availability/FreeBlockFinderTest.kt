@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.availability
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.domain.insights.SimpleOccurrence

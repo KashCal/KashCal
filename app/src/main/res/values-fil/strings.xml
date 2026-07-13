@@ -124,7 +124,6 @@
     <string name="settings_theme_light_desc">Palaging maliwanag</string>
     <string name="settings_theme_dark_desc">Palaging madilim</string>
     <string name="settings_accent_color">Kulay ng accent</string>
-    <string name="settings_accent_color_desc">Kulayan ang app at mga widget gamit ang napili mong accent</string>
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Awtomatiko</string>
     <string name="settings_accent_color_dynamic_desc">Sundin ang mga kulay ng Material You ng iyong device</string>

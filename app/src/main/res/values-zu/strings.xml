@@ -143,7 +143,6 @@
     <string name="settings_theme_light_desc">Njalo kukhanya</string>
     <string name="settings_theme_dark_desc">Njalo mnyama</string>
     <string name="settings_accent_color">Umbala ogqamile</string>
-    <string name="settings_accent_color_desc">Faka umbala kuhlelo lokusebenza namawijethi ngombala ogqamile owukhethile</string>
     <string name="settings_accent_color_brand">KashCal Oluhlaza Okwesibhakabhaka</string>
     <string name="settings_accent_color_dynamic">Okuzenzakalelayo</string>
     <string name="settings_accent_color_dynamic_desc">Landela imibala ye-Material You yedivayisi yakho</string>

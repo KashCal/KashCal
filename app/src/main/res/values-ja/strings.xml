@@ -107,7 +107,6 @@
     <string name="settings_theme_light_desc">常にライト</string>
     <string name="settings_theme_dark_desc">常にダーク</string>
     <string name="settings_accent_color">アクセントカラー</string>
-    <string name="settings_accent_color_desc">選択したアクセントカラーでアプリとウィジェットを彩ります</string>
     <string name="settings_accent_color_brand">KashCal ティール</string>
     <string name="settings_accent_color_dynamic">自動</string>
     <string name="settings_accent_color_dynamic_desc">デバイスの Material You カラーに従います</string>

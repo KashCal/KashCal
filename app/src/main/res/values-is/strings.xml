@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Alltaf ljóst</string>
     <string name="settings_theme_dark_desc">Alltaf dökkt</string>
     <string name="settings_accent_color">Áherslulitur</string>
-    <string name="settings_accent_color_desc">Litaðu appið og græjurnar með völdum áherslulit þínum</string>
     <string name="settings_accent_color_brand">KashCal blágrænt</string>
     <string name="settings_accent_color_dynamic">Sjálfvirkt</string>
     <string name="settings_accent_color_dynamic_desc">Fylgdu Material You-litum tækisins þíns</string>

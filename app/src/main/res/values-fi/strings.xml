@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Aina vaalea</string>
     <string name="settings_theme_dark_desc">Aina tumma</string>
     <string name="settings_accent_color">Korostusväri</string>
-    <string name="settings_accent_color_desc">Väritä sovellus ja widgetit valitsemallasi korostusvärillä</string>
     <string name="settings_accent_color_brand">KashCal-sinivihreä</string>
     <string name="settings_accent_color_dynamic">Automaattinen</string>
     <string name="settings_accent_color_dynamic_desc">Seuraa laitteesi Material You -värejä</string>

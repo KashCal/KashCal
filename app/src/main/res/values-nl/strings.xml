@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Altijd licht</string>
     <string name="settings_theme_dark_desc">Altijd donker</string>
     <string name="settings_accent_color">Accentkleur</string>
-    <string name="settings_accent_color_desc">Kleur de app en widgets met je gekozen accent</string>
     <string name="settings_accent_color_brand">KashCal Turquoise</string>
     <string name="settings_accent_color_dynamic">Automatisch</string>
     <string name="settings_accent_color_dynamic_desc">Volg de Material You-kleuren van je apparaat</string>

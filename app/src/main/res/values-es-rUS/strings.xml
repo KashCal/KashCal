@@ -151,7 +151,6 @@
     <string name="settings_theme_light_desc">Siempre claro</string>
     <string name="settings_theme_dark_desc">Siempre oscuro</string>
     <string name="settings_accent_color">Color de énfasis</string>
-    <string name="settings_accent_color_desc">Colorea la app y los widgets con el énfasis que elijas</string>
     <string name="settings_accent_color_brand">Verde azulado KashCal</string>
     <string name="settings_accent_color_dynamic">Automático</string>
     <string name="settings_accent_color_dynamic_desc">Seguir los colores Material You de tu dispositivo</string>

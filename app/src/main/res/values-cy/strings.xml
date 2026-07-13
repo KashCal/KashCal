@@ -172,7 +172,6 @@
     <string name="settings_theme_light_desc">Golau bob amser</string>
     <string name="settings_theme_dark_desc">Tywyll bob amser</string>
     <string name="settings_accent_color">Lliw acen</string>
-    <string name="settings_accent_color_desc">Lliwiwch yr ap a\'r teclynnau â\'r acen o\'ch dewis</string>
     <string name="settings_accent_color_brand">KashCal Glaswyrdd</string>
     <string name="settings_accent_color_dynamic">Awtomatig</string>
     <string name="settings_accent_color_dynamic_desc">Dilyn lliwiau Material You eich dyfais</string>

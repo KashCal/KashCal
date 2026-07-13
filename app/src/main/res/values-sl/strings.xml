@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">Vedno svetla</string>
     <string name="settings_theme_dark_desc">Vedno temna</string>
     <string name="settings_accent_color">Barva poudarka</string>
-    <string name="settings_accent_color_desc">Pobarvaj aplikacijo in pripomočke z izbrano barvo poudarka</string>
     <string name="settings_accent_color_brand">KashCal turkizna</string>
     <string name="settings_accent_color_dynamic">Samodejno</string>
     <string name="settings_accent_color_dynamic_desc">Sledi barvam Material You tvoje naprave</string>

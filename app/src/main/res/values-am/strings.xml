@@ -143,7 +143,6 @@
     <string name="settings_theme_light_desc">ሁልጊዜ ብሩህ</string>
     <string name="settings_theme_dark_desc">ሁልጊዜ ጨለማ</string>
     <string name="settings_accent_color">የማድመቂያ ቀለም</string>
-    <string name="settings_accent_color_desc">መተግበሪያውንና ንዑስ ፕሮግራሞችን በመረጡት የማድመቂያ ቀለም ይሳሉ</string>
     <string name="settings_accent_color_brand">KashCal አረንጓዴ-ሰማያዊ</string>
     <string name="settings_accent_color_dynamic">ራስ-ሰር</string>
     <string name="settings_accent_color_dynamic_desc">የመሣሪያዎን የ Material You ቀለሞች ይከተሉ</string>

@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Mindig világos</string>
     <string name="settings_theme_dark_desc">Mindig sötét</string>
     <string name="settings_accent_color">Kiemelőszín</string>
-    <string name="settings_accent_color_desc">Színezd az alkalmazást és a widgeteket a választott kiemelőszíneddel</string>
     <string name="settings_accent_color_brand">KashCal Türkiz</string>
     <string name="settings_accent_color_dynamic">Automatikus</string>
     <string name="settings_accent_color_dynamic_desc">Kövesd az eszközöd Material You színeit</string>

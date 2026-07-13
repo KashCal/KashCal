@@ -17,16 +17,14 @@ object TopBarTitleFormatter {
         firstDayOfWeek: Int,
         weekPrefix: String,
         weekSuffixTemplate: String,
-        agendaLabel: String,
         yearLabel: String,
         locale: Locale = Locale.getDefault(),
         today: LocalDate = LocalDate.now(),
     ): String {
         return when (viewMode) {
-            ViewMode.MONTH, ViewMode.MONTH_FULL -> {
+            ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.AGENDA -> {
                 WeekViewUtils.formatMonthYear(LocalDate.of(viewingYear, viewingMonth + 1, 1))
             }
-            ViewMode.AGENDA -> agendaLabel
             ViewMode.YEAR -> yearLabel
             ViewMode.WEEK -> {
                 val centerDate = WeekViewUtils.weekPageToStartDate(

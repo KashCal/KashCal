@@ -8,7 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import javax.inject.Inject
 import javax.inject.Singleton
 

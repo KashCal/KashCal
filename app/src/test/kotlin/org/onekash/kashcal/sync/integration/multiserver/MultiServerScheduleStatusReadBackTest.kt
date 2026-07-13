@@ -2,7 +2,6 @@ package org.onekash.kashcal.sync.integration.multiserver
 
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test

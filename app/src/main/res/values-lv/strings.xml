@@ -152,7 +152,6 @@
     <string name="settings_theme_light_desc">Vienmēr gaišs</string>
     <string name="settings_theme_dark_desc">Vienmēr tumšs</string>
     <string name="settings_accent_color">Akcenta krāsa</string>
-    <string name="settings_accent_color_desc">Iekrāso lietotni un logrīkus ar tavu izvēlēto akcenta krāsu</string>
     <string name="settings_accent_color_brand">KashCal zilganzaļš</string>
     <string name="settings_accent_color_dynamic">Automātiski</string>
     <string name="settings_accent_color_dynamic_desc">Seko savas ierīces Material You krāsām</string>

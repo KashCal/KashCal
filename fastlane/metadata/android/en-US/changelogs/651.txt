@@ -1,0 +1,4 @@
+• Agenda now shows the next 90 days of events instead of 30
+• The agenda top bar shows the current month and updates as you scroll
+• The day timeline remembers your pinch-to-zoom level across restart
+• Fixed the month views opening on December 1969 when no day was selected

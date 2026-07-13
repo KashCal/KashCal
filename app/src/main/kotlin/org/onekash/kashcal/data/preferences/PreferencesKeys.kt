@@ -1,6 +1,7 @@
 package org.onekash.kashcal.data.preferences
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -123,6 +124,15 @@ object PreferencesKeys {
      * still restore to the same time. -1 means "never saved" (fresh install).
      */
     val WEEK_VIEW_SCROLL_MINUTES = intPreferencesKey("week_view_scroll_minutes")
+
+    /**
+     * Pinch-to-zoom level of the Day/3-Day/Week time grid, stored as the hour-row
+     * height in dp. Restored on cold launch so the timeline reopens at the same
+     * density the user last set instead of the default. Stored and consumed in the
+     * same unit (dp), so no conversion is needed. Clamped into the valid pinch range
+     * (MIN_HOUR_HEIGHT_DP..MAX_HOUR_HEIGHT_DP) on restore. Absent = default zoom.
+     */
+    val WEEK_VIEW_HOUR_HEIGHT = floatPreferencesKey("week_view_hour_height")
 
     // ========== Migration Flags ==========
 

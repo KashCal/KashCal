@@ -156,7 +156,6 @@
     <string name="settings_theme_light_desc">Visada šviesi</string>
     <string name="settings_theme_dark_desc">Visada tamsi</string>
     <string name="settings_accent_color">Akcento spalva</string>
-    <string name="settings_accent_color_desc">Nudažyti programėlę ir valdiklius pasirinkta akcento spalva</string>
     <string name="settings_accent_color_brand">KashCal žalsvai mėlyna</string>
     <string name="settings_accent_color_dynamic">Automatiškai</string>
     <string name="settings_accent_color_dynamic_desc">Sekti įrenginio Material You spalvas</string>

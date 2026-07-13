@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">Uvek svetla</string>
     <string name="settings_theme_dark_desc">Uvek tamna</string>
     <string name="settings_accent_color">Boja naglaska</string>
-    <string name="settings_accent_color_desc">Oboji aplikaciju i vidžete izabranom bojom naglaska</string>
     <string name="settings_accent_color_brand">KashCal tirkizna</string>
     <string name="settings_accent_color_dynamic">Automatski</string>
     <string name="settings_accent_color_dynamic_desc">Prati Material You boje tvog uređaja</string>

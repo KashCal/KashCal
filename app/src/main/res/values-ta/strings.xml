@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">எப்போதும் லைட்</string>
     <string name="settings_theme_dark_desc">எப்போதும் டார்க்</string>
     <string name="settings_accent_color">ஆக்சென்ட் நிறம்</string>
-    <string name="settings_accent_color_desc">நீங்கள் தேர்ந்தெடுத்த ஆக்சென்ட் நிறத்தால் ஆப்பையும் விட்ஜெட்டுகளையும் நிறமாக்குங்கள்</string>
     <string name="settings_accent_color_brand">KashCal டீல்</string>
     <string name="settings_accent_color_dynamic">தானியங்கு</string>
     <string name="settings_accent_color_dynamic_desc">உங்கள் சாதனத்தின் Material You நிறங்களைப் பின்பற்றுங்கள்</string>

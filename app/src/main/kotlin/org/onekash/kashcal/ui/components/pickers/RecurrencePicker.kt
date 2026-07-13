@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +55,6 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.rrule.EndCondition
 import org.onekash.kashcal.domain.rrule.FrequencyOption
 import org.onekash.kashcal.domain.rrule.MonthlyPattern
-import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils

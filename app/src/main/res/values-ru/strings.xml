@@ -157,7 +157,6 @@
     <string name="settings_theme_light_desc">Всегда светлая</string>
     <string name="settings_theme_dark_desc">Всегда тёмная</string>
     <string name="settings_accent_color">Акцентный цвет</string>
-    <string name="settings_accent_color_desc">Раскрасить приложение и виджеты выбранным акцентом</string>
     <string name="settings_accent_color_brand">Бирюзовый KashCal</string>
     <string name="settings_accent_color_dynamic">Автоматически</string>
     <string name="settings_accent_color_dynamic_desc">Использовать цвета Material You твоего устройства</string>

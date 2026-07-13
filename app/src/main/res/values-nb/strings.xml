@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Alltid lyst</string>
     <string name="settings_theme_dark_desc">Alltid mørkt</string>
     <string name="settings_accent_color">Aksentfarge</string>
-    <string name="settings_accent_color_desc">Fargelegg appen og widgetene med din valgte aksent</string>
     <string name="settings_accent_color_brand">KashCal Turkis</string>
     <string name="settings_accent_color_dynamic">Automatisk</string>
     <string name="settings_accent_color_dynamic_desc">Følg enhetens Material You-farger</string>

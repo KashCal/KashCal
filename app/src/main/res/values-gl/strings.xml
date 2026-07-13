@@ -152,7 +152,6 @@
     <string name="settings_theme_light_desc">Sempre claro</string>
     <string name="settings_theme_dark_desc">Sempre escuro</string>
     <string name="settings_accent_color">Cor de acento</string>
-    <string name="settings_accent_color_desc">Colorea a aplicación e os widgets co acento que elixas</string>
     <string name="settings_accent_color_brand">KashCal Turquesa</string>
     <string name="settings_accent_color_dynamic">Automático</string>
     <string name="settings_accent_color_dynamic_desc">Segue as cores Material You do teu dispositivo</string>

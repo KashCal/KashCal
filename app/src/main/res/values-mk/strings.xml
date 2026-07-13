@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Секогаш светла</string>
     <string name="settings_theme_dark_desc">Секогаш темна</string>
     <string name="settings_accent_color">Акцентна боја</string>
-    <string name="settings_accent_color_desc">Обојте ги апликацијата и виџетите со избраната акцентна боја</string>
     <string name="settings_accent_color_brand">KashCal Тиркизна</string>
     <string name="settings_accent_color_dynamic">Автоматски</string>
     <string name="settings_accent_color_dynamic_desc">Следете ги боите Material You на вашиот уред</string>

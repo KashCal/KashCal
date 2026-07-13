@@ -1,3 +1,20 @@
+## [2026.07.13]
+
+Your agenda finally learned to read the room. For years its top bar proudly announced "Agenda," heroically confirming that the agenda screen was, against all odds, the agenda screen. Thank you, brave label. It has now been reassigned to showing the month you are actually looking at, keeping pace as you scroll, so August becomes September without you wondering where the summer went. And there is more of it: ninety days ahead instead of thirty, because your future has a way of arriving whether we render it or not.
+
+The day timeline has also been persuaded to stop having amnesia. Pinch to zoom the hours in or out, and it now stays exactly where you left it after you close the app, rather than resetting to default overnight and pretending the two of you never met.
+
+The month view, meanwhile, had a charming habit of opening in December 1969 if you hadn't tapped a day first. Lovely for nostalgia, useless for dentist appointments. It now opens in the current month, having been gently reminded which decade we are all living in.
+
+KashCal has now retired from its brief career impersonating a relic from 1969 and checked in to 2026, where the rest of us have been waiting.
+
+### Everything in this release
+
+- Agenda now shows the next 90 days of events instead of 30
+- The agenda top bar shows the current month and updates as you scroll, replacing the static "Agenda" title
+- Fixed the month and full-month views opening on December 1969 when no day was selected yet
+- The day timeline remembers your pinch-to-zoom hour height across app restart
+
 ## [2026.07.11]
 
 Last release we gave you KashCal Teal and were very pleased with ourselves. Then someone pointed out the obvious: we had spent a whole update letting you choose your color, and then chose it for you. A calendar telling you your favorite color is teal is a bit like a waiter ordering for the table. Bold. Rarely correct.

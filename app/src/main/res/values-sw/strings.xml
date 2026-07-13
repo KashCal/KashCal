@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">Mwanga kila wakati</string>
     <string name="settings_theme_dark_desc">Giza kila wakati</string>
     <string name="settings_accent_color">Rangi ya lafudhi</string>
-    <string name="settings_accent_color_desc">Paka rangi programu na wijeti kwa lafudhi uliyochagua</string>
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Kiotomatiki</string>
     <string name="settings_accent_color_dynamic_desc">Fuata rangi za Material You za kifaa chako</string>

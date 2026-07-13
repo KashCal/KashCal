@@ -7,7 +7,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.onekash.icaldav.model.ITipMethod
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.entity.Attendee

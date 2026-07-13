@@ -2,12 +2,9 @@ package org.onekash.kashcal.rfc
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.icaldav.model.ICalCalendar
-import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.model.Transparency

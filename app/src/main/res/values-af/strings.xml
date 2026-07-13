@@ -143,7 +143,6 @@
     <string name="settings_theme_light_desc">Altyd lig</string>
     <string name="settings_theme_dark_desc">Altyd donker</string>
     <string name="settings_accent_color">Aksentkleur</string>
-    <string name="settings_accent_color_desc">Kleur die program en legstukke met jou gekose aksent</string>
     <string name="settings_accent_color_brand">KashCal Blougroen</string>
     <string name="settings_accent_color_dynamic">Outomaties</string>
     <string name="settings_accent_color_dynamic_desc">Volg jou toestel se Material You-kleure</string>

@@ -107,7 +107,6 @@
     <string name="settings_theme_light_desc">항상 밝게</string>
     <string name="settings_theme_dark_desc">항상 어둡게</string>
     <string name="settings_accent_color">강조 색상</string>
-    <string name="settings_accent_color_desc">선택한 강조 색상으로 앱과 위젯을 물들여요</string>
     <string name="settings_accent_color_brand">KashCal 청록색</string>
     <string name="settings_accent_color_dynamic">자동</string>
     <string name="settings_accent_color_dynamic_desc">기기의 Material You 색상을 따라요</string>

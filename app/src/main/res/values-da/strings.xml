@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Altid lyst</string>
     <string name="settings_theme_dark_desc">Altid mørkt</string>
     <string name="settings_accent_color">Accentfarve</string>
-    <string name="settings_accent_color_desc">Farv appen og widgets med din valgte accent</string>
     <string name="settings_accent_color_brand">KashCal Turkis</string>
     <string name="settings_accent_color_dynamic">Automatisk</string>
     <string name="settings_accent_color_dynamic_desc">Følg din enheds Material You-farver</string>

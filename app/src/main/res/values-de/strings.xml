@@ -108,7 +108,6 @@
     <string name="settings_theme_light_desc">Immer hell</string>
     <string name="settings_theme_dark_desc">Immer dunkel</string>
     <string name="settings_accent_color">Akzentfarbe</string>
-    <string name="settings_accent_color_desc">Färbe App und Widgets mit deiner gewählten Akzentfarbe</string>
     <string name="settings_accent_color_brand">KashCal Türkis</string>
     <string name="settings_accent_color_dynamic">Automatisch</string>
     <string name="settings_accent_color_dynamic_desc">Folge den Material You-Farben deines Geräts</string>

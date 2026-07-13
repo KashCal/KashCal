@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,13 +42,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -84,6 +81,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -114,7 +112,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -138,6 +135,7 @@ import org.onekash.kashcal.ui.components.formatBadgeCount
 import org.onekash.kashcal.ui.components.overflowContentDescription
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.TopBarLogoButton
+import org.onekash.kashcal.ui.components.AgendaTitleMonth
 import org.onekash.kashcal.ui.components.TopBarTitleFormatter
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
@@ -310,6 +308,20 @@ fun HomeScreen(
         now to DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
     }
 
+    // Agenda list scroll state is hoisted here (above the top bar) so the top-bar
+    // title can reflect the month of the topmost visible agenda item as the user
+    // scrolls. Falls back to today's month when the list is empty/unparseable.
+    val agendaListState = rememberLazyListState()
+    val agendaTitleMonth by remember(refreshKey) {
+        // Fallback date captured per refreshKey (same resume semantics as `today`),
+        // so an empty agenda's title stays consistent with the rest of the bar.
+        val fallbackDate = LocalDate.now()
+        derivedStateOf {
+            val firstKey = agendaListState.layoutInfo.visibleItemsInfo.firstOrNull()?.key as? String
+            AgendaTitleMonth.monthYearFromItemKey(firstKey, fallbackDate)
+        }
+    }
+
     // Focus requester for search field
     val searchFocusRequester = remember { FocusRequester() }
 
@@ -451,6 +463,7 @@ fun HomeScreen(
                 isOnline = isOnline,
                 searchFocusRequester = searchFocusRequester,
                 today = remember(refreshKey) { LocalDate.now() },
+                agendaTitleMonth = agendaTitleMonth,
                 drawerState = drawerState,
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
@@ -566,9 +579,6 @@ fun HomeScreen(
                         }
                         uiState.viewMode == ViewMode.AGENDA || uiState.viewMode.isTimeGrid -> {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                // Agenda list scroll state
-                                val agendaListState = rememberLazyListState()
-
                                 // Handle scroll to top when Today button is pressed in agenda view
                                 LaunchedEffect(uiState.pendingScrollAgendaToTop) {
                                     if (uiState.pendingScrollAgendaToTop) {
@@ -1046,6 +1056,7 @@ private fun HomeTopAppBar(
     isOnline: Boolean,
     searchFocusRequester: FocusRequester,
     today: LocalDate,
+    agendaTitleMonth: Pair<Int, Int>,
     drawerState: DrawerState?,
     pendingInvitesCount: Int,
     onSearchClick: () -> Unit,
@@ -1154,17 +1165,19 @@ private fun HomeTopAppBar(
         else -> {
             val weekPrefix = stringResource(R.string.label_week)
             val weekSuffixTemplate = stringResource(R.string.calendar_header_week_suffix, "%1\$s", "%2\$s")
-            val agendaLabel = stringResource(R.string.view_agenda)
             val yearLabel = stringResource(R.string.view_year)
+            // Agenda's title tracks the topmost visible day's month; all other views
+            // use their own viewing month. The formatter reads viewingYear/viewingMonth,
+            // so substitute the scroll-derived month only for AGENDA.
+            val isAgenda = uiState.viewMode == ViewMode.AGENDA
             val titleText = TopBarTitleFormatter.format(
                 viewMode = uiState.viewMode,
-                viewingYear = uiState.viewingYear,
-                viewingMonth = uiState.viewingMonth,
+                viewingYear = if (isAgenda) agendaTitleMonth.first else uiState.viewingYear,
+                viewingMonth = if (isAgenda) agendaTitleMonth.second else uiState.viewingMonth,
                 weekViewPagerPosition = uiState.weekViewPagerPosition,
                 firstDayOfWeek = uiState.firstDayOfWeek,
                 weekPrefix = weekPrefix,
                 weekSuffixTemplate = weekSuffixTemplate,
-                agendaLabel = agendaLabel,
                 yearLabel = yearLabel,
                 today = today,
             )
@@ -1850,7 +1863,7 @@ private data class AgendaDisplayItem(
 )
 
 /**
- * Agenda content - shows upcoming 30 days of occurrences.
+ * Agenda content - shows upcoming 90 days of occurrences.
  * Each recurring event instance is shown separately.
  * Multi-day events appear on each day they span with "Day X of Y" indicator.
  * Groups occurrences by date with date headers.

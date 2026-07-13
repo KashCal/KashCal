@@ -107,7 +107,6 @@
     <string name="settings_theme_light_desc">Sentiasa cerah</string>
     <string name="settings_theme_dark_desc">Sentiasa gelap</string>
     <string name="settings_accent_color">Warna aksen</string>
-    <string name="settings_accent_color_desc">Warnakan apl dan widget dengan warna aksen pilihan anda</string>
     <string name="settings_accent_color_brand">KashCal Biru Kehijauan</string>
     <string name="settings_accent_color_dynamic">Automatik</string>
     <string name="settings_accent_color_dynamic_desc">Ikut warna Material You peranti anda</string>

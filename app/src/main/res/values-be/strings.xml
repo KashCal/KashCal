@@ -156,7 +156,6 @@
     <string name="settings_theme_light_desc">Заўсёды светлая</string>
     <string name="settings_theme_dark_desc">Заўсёды цёмная</string>
     <string name="settings_accent_color">Акцэнтны колер</string>
-    <string name="settings_accent_color_desc">Расфарбаваць праграму і віджэты выбраным акцэнтам</string>
     <string name="settings_accent_color_brand">Бірузовы KashCal</string>
     <string name="settings_accent_color_dynamic">Аўтаматычна</string>
     <string name="settings_accent_color_dynamic_desc">Выкарыстоўваць колеры Material You тваёй прылады</string>

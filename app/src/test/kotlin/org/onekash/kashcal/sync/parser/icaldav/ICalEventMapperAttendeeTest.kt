@@ -10,13 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.icaldav.model.AttendeeRole
-import org.onekash.icaldav.model.CUType
-import org.onekash.icaldav.model.PartStat
 import org.onekash.icaldav.model.ParseResult
-import org.onekash.icaldav.model.ScheduleAgent
-import org.onekash.icaldav.model.ScheduleForceSend
-import org.onekash.icaldav.model.ScheduleStatus
 import org.onekash.icaldav.parser.ICalParser
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config

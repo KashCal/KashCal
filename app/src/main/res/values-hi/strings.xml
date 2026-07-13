@@ -144,7 +144,6 @@
     <string name="settings_theme_light_desc">हमेशा लाइट</string>
     <string name="settings_theme_dark_desc">हमेशा डार्क</string>
     <string name="settings_accent_color">एक्सेंट रंग</string>
-    <string name="settings_accent_color_desc">अपने चुने हुए एक्सेंट से ऐप और विजेट को रंगें</string>
     <string name="settings_accent_color_brand">KashCal टील</string>
     <string name="settings_accent_color_dynamic">स्वचालित</string>
     <string name="settings_accent_color_dynamic_desc">अपने डिवाइस के Material You रंगों का पालन करें</string>

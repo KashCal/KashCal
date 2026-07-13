@@ -123,7 +123,6 @@
     <string name="settings_theme_light_desc">ਹਮੇਸ਼ਾ ਹਲਕਾ</string>
     <string name="settings_theme_dark_desc">ਹਮੇਸ਼ਾ ਗੂੜ੍ਹਾ</string>
     <string name="settings_accent_color">ਐਕਸੈਂਟ ਰੰਗ</string>
-    <string name="settings_accent_color_desc">ਆਪਣੇ ਚੁਣੇ ਹੋਏ ਐਕਸੈਂਟ ਨਾਲ ਐਪ ਅਤੇ ਵਿਜੇਟਾਂ ਨੂੰ ਰੰਗੋ</string>
     <string name="settings_accent_color_brand">KashCal ਟੀਲ</string>
     <string name="settings_accent_color_dynamic">ਆਟੋਮੈਟਿਕ</string>
     <string name="settings_accent_color_dynamic_desc">ਆਪਣੇ ਡੀਵਾਈਸ ਦੇ Material You ਰੰਗਾਂ ਦੀ ਪਾਲਣਾ ਕਰੋ</string>

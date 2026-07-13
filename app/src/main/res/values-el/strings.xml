@@ -147,7 +147,6 @@
     <string name="settings_theme_light_desc">Πάντα φωτεινό</string>
     <string name="settings_theme_dark_desc">Πάντα σκοτεινό</string>
     <string name="settings_accent_color">Χρώμα τονισμού</string>
-    <string name="settings_accent_color_desc">Χρωματίστε την εφαρμογή και τα γραφικά στοιχεία με το χρώμα τονισμού που επιλέξατε</string>
     <string name="settings_accent_color_brand">KashCal Πετρόλ</string>
     <string name="settings_accent_color_dynamic">Αυτόματο</string>
     <string name="settings_accent_color_dynamic_desc">Ακολουθήστε τα χρώματα Material You της συσκευής σας</string>

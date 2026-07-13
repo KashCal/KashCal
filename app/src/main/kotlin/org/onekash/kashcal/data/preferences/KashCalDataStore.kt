@@ -398,6 +398,21 @@ class KashCalDataStore(
     }
 
     /**
+     * Pinch-to-zoom level of the time grid as hour-row height in dp. Defaults to
+     * [DEFAULT_HOUR_HEIGHT_DP] when never saved (fresh install). The valid range is
+     * enforced by the ViewModel on restore, keeping a single source of truth for the
+     * pinch bounds in WeekViewUtils.
+     */
+    val weekViewHourHeight: Flow<Float>
+        get() = getPreference(PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT, DEFAULT_HOUR_HEIGHT_DP)
+
+    suspend fun getWeekViewHourHeight(): Float = weekViewHourHeight.first()
+
+    suspend fun setWeekViewHourHeight(hourHeightDp: Float) {
+        setPreference(PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT, hourHeightDp)
+    }
+
+    /**
      * Time format preference.
      * - "system": Follow device's 24-hour setting
      * - "12h": Always 12-hour (2:30 PM)
@@ -923,6 +938,9 @@ class KashCalDataStore(
         // Week-view scroll restore
         const val WEEK_VIEW_SCROLL_NOT_SAVED = -1  // Sentinel: no position saved yet
         const val MINUTES_PER_DAY = 24 * 60
+
+        // Week-view zoom restore: default hour-row height in dp (matches WeekViewUtils.HOUR_HEIGHT)
+        const val DEFAULT_HOUR_HEIGHT_DP = 60f
 
         // Share-availability defaults
         const val SHARE_AVAILABILITY_DEFAULT_DAYS = 7

@@ -152,7 +152,6 @@
     <string name="settings_theme_light_desc">Ĉiam hela</string>
     <string name="settings_theme_dark_desc">Ĉiam malhela</string>
     <string name="settings_accent_color">Akcenta koloro</string>
-    <string name="settings_accent_color_desc">Kolorigu la aplikaĵon kaj fenestraĵojn per via elektita akcento</string>
     <string name="settings_accent_color_brand">KashCal Turkisa</string>
     <string name="settings_accent_color_dynamic">Aŭtomata</string>
     <string name="settings_accent_color_dynamic_desc">Sekvu la Material You kolorojn de via aparato</string>

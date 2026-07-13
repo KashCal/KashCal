@@ -107,7 +107,6 @@
     <string name="settings_theme_light_desc">Luôn sáng</string>
     <string name="settings_theme_dark_desc">Luôn tối</string>
     <string name="settings_accent_color">Màu nhấn</string>
-    <string name="settings_accent_color_desc">Tô màu ứng dụng và tiện ích bằng màu nhấn bạn chọn</string>
     <string name="settings_accent_color_brand">KashCal Xanh mòng két</string>
     <string name="settings_accent_color_dynamic">Tự động</string>
     <string name="settings_accent_color_dynamic_desc">Theo màu Material You của thiết bị</string>

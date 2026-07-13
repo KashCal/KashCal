@@ -3,7 +3,6 @@ package org.onekash.kashcal.ui.screens.monthfull
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Calendar

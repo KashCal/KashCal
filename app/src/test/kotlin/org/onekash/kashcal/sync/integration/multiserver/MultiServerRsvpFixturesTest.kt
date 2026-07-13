@@ -16,7 +16,6 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.DigestAuthenticator
-import org.onekash.kashcal.sync.client.model.CalDavResult
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone

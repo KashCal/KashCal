@@ -151,7 +151,6 @@
     <string name="settings_theme_light_desc">Sempre claro</string>
     <string name="settings_theme_dark_desc">Sempre escuro</string>
     <string name="settings_accent_color">Cor de destaque</string>
-    <string name="settings_accent_color_desc">Colore a app e os widgets com o destaque que escolheres</string>
     <string name="settings_accent_color_brand">Verde-azulado KashCal</string>
     <string name="settings_accent_color_dynamic">Automático</string>
     <string name="settings_accent_color_dynamic_desc">Seguir as cores Material You do teu dispositivo</string>
