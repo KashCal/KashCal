@@ -315,6 +315,15 @@ class AndroidCalendarProviderRepositoryTest {
     }
 
     @Test
+    fun `parseDurationMs returns default on overflow, not a garbage negative`() {
+        // An absurd week/day count whose millisecond total overflows Long must
+        // fall back to the default duration rather than silently wrapping to a
+        // negative value that would place DTEND before DTSTART on a write.
+        assertEquals(86_400_000L, parseDurationMs("P999999999999W", true))
+        assertEquals(3_600_000L, parseDurationMs("P100000000000000D", false))
+    }
+
+    @Test
     fun `parseDurationMs returns default for null`() {
         assertEquals(86_400_000L, parseDurationMs(null, true))   // all-day default: 1 day
         assertEquals(3_600_000L, parseDurationMs(null, false))    // timed default: 1 hour

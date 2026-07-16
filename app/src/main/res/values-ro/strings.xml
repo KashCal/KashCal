@@ -123,8 +123,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titlu eveniment</string>
     <string name="label_location">Locație</string>
-    <string name="label_location_hint">Adresă, sală sau link de întâlnire</string>
+    <string name="label_location_hint">Adresă sau link</string>
     <string name="label_notes">Notițe</string>
+    <string name="label_categories">Etichete</string>
+    <string name="tags_new">Etichetă nouă</string>
+    <string name="tags_empty_reject">Introdu un nume de etichetă</string>
+    <string name="tags_too_long">Eticheta este prea lungă</string>
+    <string name="tags_comma_reject">Etichetele nu pot conține virgule</string>
+    <string name="tags_hint_n_more">+%1$d mai multe</string>
+    <string name="tags_autocomplete_create_new">Creează „%1$s”</string>
+    <string name="cd_tag">Etichetă: %1$s</string>
+    <string name="cd_tags_move_menu">Mută etichetele</string>
+    <string name="tags_move_above_notes">Mută deasupra notițelor</string>
+    <string name="tags_move_below_notes">Mută sub notițe</string>
     <string name="label_starts">Începe</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Parolă specifică aplicației</string>
@@ -734,6 +745,11 @@
         <item quantity="few">%1$d evenimente</item>
         <item quantity="other">%1$d de evenimente</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="few">%1$d calendare</item>
+        <item quantity="other">%1$d de calendare</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minut</item>
         <item quantity="few">%1$d minute</item>
@@ -912,6 +928,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s nu au putut fi sincronizate după 30 de zile. Se va folosi versiunea serverului. Sincronizare forțată pentru a reîncerca.</string>
     <string name="sync_notification_expired_content_calendar">%1$s din %2$s nu au putut fi sincronizate după 30 de zile. Se va folosi versiunea serverului. Sincronizare forțată pentru a reîncerca.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s din %2$s nu au putut fi sincronizate după 30 de zile. Se va folosi versiunea serverului. Sincronizare forțată pentru a reîncerca.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d calendar sincronizat</item>

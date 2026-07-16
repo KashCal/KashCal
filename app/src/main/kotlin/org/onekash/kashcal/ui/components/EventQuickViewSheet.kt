@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomSheetDefaults
@@ -297,6 +298,26 @@ fun EventQuickViewSheet(
                                     contentDescription = if (hasUrl) stringResource(R.string.cd_open_link) else stringResource(R.string.cd_open_maps),
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        // Tags (read-only chips)
+                        if (event.categories.orEmpty().isNotEmpty()) {
+                            Row(verticalAlignment = Alignment.Top) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalOffer,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                org.onekash.kashcal.ui.components.category.TagChipRow(
+                                    selected = event.categories.orEmpty().toSet(),
+                                    suggestions = emptyList(),
+                                    onToggle = {},
+                                    onAdd = {},
+                                    readOnly = true
                                 )
                             }
                         }

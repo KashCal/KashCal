@@ -99,6 +99,8 @@ data class HomeUiState(
     val deviceCalendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
     /** Default calendar for new events (supports both Room and Device) */
     val defaultCalendar: DefaultCalendar? = null,
+    /** Usage-ranked tag suggestions for the event form's tag chip row */
+    val categorySuggestions: ImmutableList<String> = persistentListOf(),
     /** Device calendars feature enabled */
     val deviceCalendarsEnabled: Boolean = false,
     /** Enabled device calendars (for drawer visibility toggles) */
@@ -281,7 +283,9 @@ data class HomeUiState(
     /** First day of week: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
     val firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     /** Show week numbers in month calendar grid */
-    val showWeekNumbers: Boolean = false
+    val showWeekNumbers: Boolean = false,
+    /** Render the event form's tag row above the notes/attendees block */
+    val tagsAboveNotes: Boolean = false
 ) {
     /**
      * Format the current viewing month/year for display.

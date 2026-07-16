@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Kichwa cha tukio</string>
     <string name="label_location">Mahali</string>
-    <string name="label_location_hint">Anwani, chumba, au kiungo cha mkutano</string>
+    <string name="label_location_hint">Anwani au kiungo</string>
     <string name="label_notes">Maelezo</string>
+    <string name="label_categories">Lebo</string>
+    <string name="tags_new">Lebo mpya</string>
+    <string name="tags_empty_reject">Weka jina la lebo</string>
+    <string name="tags_too_long">Lebo ni ndefu mno</string>
+    <string name="tags_comma_reject">Lebo haziwezi kuwa na mikato</string>
+    <string name="tags_hint_n_more">+%1$d zaidi</string>
+    <string name="tags_autocomplete_create_new">Unda \"%1$s\"</string>
+    <string name="cd_tag">Lebo: %1$s</string>
+    <string name="cd_tags_move_menu">Hamisha lebo</string>
+    <string name="tags_move_above_notes">Hamisha juu ya madokezo</string>
+    <string name="tags_move_below_notes">Hamisha chini ya madokezo</string>
     <string name="label_starts">Inaanza</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Nenosiri la Programu Mahususi</string>
@@ -656,6 +667,10 @@
         <item quantity="one">Tukio %1$d</item>
         <item quantity="other">Matukio %1$d</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">Kalenda %1$d</item>
+        <item quantity="other">Kalenda %1$d</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">Dakika %1$d</item>
         <item quantity="other">Dakika %1$d</item>
@@ -821,6 +836,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s hayakuweza kusawazishwa baada ya siku 30. Toleo la seva litatumika. Fanya Force Sync kujaribu tena.</string>
     <string name="sync_notification_expired_content_calendar">%1$s katika %2$s hayakuweza kusawazishwa baada ya siku 30. Toleo la seva litatumika. Fanya Force Sync kujaribu tena.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s katika %2$s hayakuweza kusawazishwa baada ya siku 30. Toleo la seva litatumika. Fanya Force Sync kujaribu tena.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Imesawazisha kalenda %1$d</item>

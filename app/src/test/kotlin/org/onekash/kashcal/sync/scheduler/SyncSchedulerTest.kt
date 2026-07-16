@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.scheduler
 
 import android.content.Context
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.work.Configuration
 import androidx.work.WorkInfo
@@ -132,6 +133,45 @@ class SyncSchedulerTest {
         // Then - Should still have one unique work
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
+    }
+
+    // ==================== Network Constraint Tests (#296) ====================
+
+    @Test
+    fun `periodic sync requires internet without requiring validation`() {
+        // A self-hosted server on a LAN/VPN reports INTERNET without VALIDATED.
+        // The sync job must be dispatchable on such a network, so its constraint
+        // requires INTERNET but not VALIDATED.
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
+
+        val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        val request = workInfos[0].constraints.requiredNetworkRequest
+        assertNotNull("Sync work should carry a custom NetworkRequest", request)
+        assertTrue(
+            "Sync must require INTERNET",
+            request!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET),
+        )
+        assertFalse(
+            "Sync must NOT require VALIDATED (would block LAN/VPN servers, #296)",
+            request.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+        )
+        assertFalse(
+            "Sync must NOT require NOT_VPN (would block VPN-only servers, #296)",
+            request.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN),
+        )
+    }
+
+    @Test
+    fun `expedited sync requires internet without requiring validation`() {
+        scheduler.requestExpeditedSync()
+
+        val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        val request = workInfos[0].constraints.requiredNetworkRequest
+        assertNotNull("Expedited sync work should carry a custom NetworkRequest", request)
+        assertTrue(request!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))
+        assertFalse(request.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
     }
 
     // ==================== Immediate Sync Tests ====================

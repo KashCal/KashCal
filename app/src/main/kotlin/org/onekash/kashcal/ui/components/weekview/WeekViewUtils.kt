@@ -577,6 +577,26 @@ object WeekViewUtils {
             { -(it.endTs - it.startTs) }
         ))
 
+        // Events shorter than MIN_EVENT_HEIGHT render floored to that height, but
+        // their true (sub-floor) layout window is thinner than the block drawn on
+        // screen — so overlap detection would pack them into one slot and draw them
+        // on top of each other. Give every such event a layout window at least as
+        // tall as the rendered block, so packing matches what the user sees. This
+        // also rescues zero-duration (point-in-time) and sub-minute events, whose
+        // raw span would otherwise collapse to nothing and be dropped by the
+        // grid-clamp guard below. Off-grid events still clamp to a point and drop.
+        //
+        // Cap the window at its default-zoom size: zooming out makes a floored block
+        // cover more real minutes, but inflating the overlap window to match would
+        // force back-to-back meetings (e.g. two 30-min events at min zoom) into
+        // half-width columns — a worse read than a few px of block overlap, which
+        // the user resolves by zooming in or switching to Agenda/Day view. Zooming
+        // in still shrinks the window (more accurate packing) since it stays below
+        // the cap.
+        val defaultMinHeightMinutes = (MIN_EVENT_HEIGHT.value / HOUR_HEIGHT.value * MINUTES_PER_HOUR).toInt()
+        val minHeightMinutes = (MIN_EVENT_HEIGHT.value / hourHeight.value * MINUTES_PER_HOUR)
+            .toInt().coerceIn(1, defaultMinHeightMinutes)
+
         // Step 2: Convert to time spans (clamp cross-midnight events to day boundaries)
         val timeSpans = sorted.map { displayEvent ->
             val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
@@ -587,8 +607,21 @@ object WeekViewUtils {
             val startMinutes = if (eventStartDate < date) 0
                 else start.hour * MINUTES_PER_HOUR + start.minute
 
-            val endMinutes = if (eventEndDate > date) END_HOUR * MINUTES_PER_HOUR
+            val rawEndMinutes = if (eventEndDate > date) END_HOUR * MINUTES_PER_HOUR
                 else end.hour * MINUTES_PER_HOUR + end.minute
+
+            // Bump the layout window up to the rendered height for events shorter
+            // than the floor. But a multi-day event whose end-day portion is a
+            // zero-length sliver at midnight (it began on a prior day and ends at
+            // exactly 00:00 today) must still collapse and drop off that day — so
+            // exclude that case. Same-day short/zero/sub-minute events are NOT
+            // slivers and do get bumped.
+            val isMidnightSliver = eventStartDate < date && rawEndMinutes == startMinutes
+            val endMinutes = if (!isMidnightSliver && rawEndMinutes - startMinutes < minHeightMinutes) {
+                startMinutes + minHeightMinutes
+            } else {
+                rawEndMinutes
+            }
 
             EventTimeSpan(startMinutes = startMinutes, endMinutes = endMinutes)
         }

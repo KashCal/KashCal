@@ -410,15 +410,29 @@ fun cleanHtmlEntities(text: String): String {
     HTML_ENTITIES.forEach { (entity, replacement) ->
         result = result.replace(entity, replacement, ignoreCase = true)
     }
-    // Handle numeric entities
-    result = result.replace(Regex("&#(\\d+);")) { match ->
-        val code = match.groupValues[1].toIntOrNull()
-        if (code != null && code in 0..0x10FFFF) {
-            code.toChar().toString()
-        } else {
-            match.value
-        }
+    // Handle numeric entities in both decimal (&#NNN;) and hex (&#xHH;) forms —
+    // the hex form is at least as common as decimal for emoji in real HTML.
+    result = result.replace(NUMERIC_ENTITY) { match ->
+        val hex = match.groupValues[1].isNotEmpty() // the 'x'/'X' marker matched
+        val digits = match.groupValues[2]
+        decodeCodePoint(digits, radix = if (hex) 16 else 10) ?: match.value
     }
     return result
+}
+
+/** Matches a decimal or hex numeric HTML entity, capturing the 'x' marker and the digits. */
+private val NUMERIC_ENTITY = Regex("&#([xX]?)([0-9a-fA-F]+);")
+
+/**
+ * Decode a numeric HTML entity's digits to its character(s), or null if the value
+ * is not a Unicode scalar value (out of range, or a bare surrogate half) so the
+ * caller can leave the entity literal. Builds via [Character.toChars] so code
+ * points above U+FFFF are emitted as a surrogate pair rather than truncated to
+ * their low 16 bits.
+ */
+private fun decodeCodePoint(digits: String, radix: Int): String? {
+    val code = digits.toIntOrNull(radix) ?: return null
+    if (!Character.isValidCodePoint(code) || code in 0xD800..0xDFFF) return null
+    return String(Character.toChars(code))
 }
 

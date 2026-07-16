@@ -4,12 +4,10 @@ import android.content.Context
 import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -17,6 +15,7 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import org.onekash.kashcal.sync.util.SyncNetworkConstraints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -79,8 +78,7 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             Log.i(TAG, "Scheduling periodic ICS refresh every $actualInterval hours")
 
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+            val constraints = SyncNetworkConstraints.builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
 
@@ -122,8 +120,7 @@ class IcsRefreshWorker @AssistedInject constructor(
         fun requestImmediateRefresh(context: Context): java.util.UUID {
             Log.i(TAG, "Requesting immediate ICS refresh")
 
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+            val constraints = SyncNetworkConstraints.builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
 
@@ -157,8 +154,7 @@ class IcsRefreshWorker @AssistedInject constructor(
         fun requestSubscriptionRefresh(context: Context, subscriptionId: Long): java.util.UUID {
             Log.i(TAG, "Requesting refresh for subscription: $subscriptionId")
 
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+            val constraints = SyncNetworkConstraints.builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
 

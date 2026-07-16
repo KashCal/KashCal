@@ -69,4 +69,15 @@ class ReminderConverterTest {
     fun `positive duration without minus sign also works`() {
         assertEquals(listOf(15), isoRemindersToMinutes(listOf("PT15M")))
     }
+
+    @Test
+    fun `overflowing reminder duration is skipped, not crashed on`() {
+        // isoRemindersToMinutes does NOT wrap parseIsoDuration in try/catch, so an
+        // overflowing value must return null internally (be dropped) rather than
+        // throw an uncaught ArithmeticException. Valid entries still come through.
+        assertEquals(
+            listOf(15),
+            isoRemindersToMinutes(listOf("-P999999999999W", "-PT15M"))
+        )
+    }
 }

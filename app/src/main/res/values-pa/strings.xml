@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ਘਟਨਾ ਦਾ ਸਿਰਲੇਖ</string>
     <string name="label_location">ਟਿਕਾਣਾ</string>
-    <string name="label_location_hint">ਪਤਾ, ਕਮਰਾ, ਜਾਂ ਮੀਟਿੰਗ ਲਿੰਕ</string>
+    <string name="label_location_hint">ਪਤਾ ਜਾਂ ਲਿੰਕ</string>
     <string name="label_notes">ਨੋਟਸ</string>
+    <string name="label_categories">ਟੈਗ</string>
+    <string name="tags_new">ਨਵਾਂ ਟੈਗ</string>
+    <string name="tags_empty_reject">ਟੈਗ ਦਾ ਨਾਮ ਦਾਖਲ ਕਰੋ</string>
+    <string name="tags_too_long">ਟੈਗ ਬਹੁਤ ਲੰਬਾ ਹੈ</string>
+    <string name="tags_comma_reject">ਟੈਗਾਂ ਵਿੱਚ ਕੌਮੇ ਨਹੀਂ ਹੋ ਸਕਦੇ</string>
+    <string name="tags_hint_n_more">+%1$d ਹੋਰ</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" ਬਣਾਓ</string>
+    <string name="cd_tag">ਟੈਗ: %1$s</string>
+    <string name="cd_tags_move_menu">ਟੈਗ ਲੈ ਜਾਓ</string>
+    <string name="tags_move_above_notes">ਨੋਟਾਂ ਤੋਂ ਉੱਪਰ ਲੈ ਜਾਓ</string>
+    <string name="tags_move_below_notes">ਨੋਟਾਂ ਤੋਂ ਹੇਠਾਂ ਲੈ ਜਾਓ</string>
     <string name="label_starts">ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ਐਪ-ਵਿਸ਼ੇਸ਼ ਪਾਸਵਰਡ</string>
@@ -656,6 +667,10 @@
         <item quantity="one">%1$d ਘਟਨਾ</item>
         <item quantity="other">%1$d ਘਟਨਾਵਾਂ</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d ਕੈਲੰਡਰ</item>
+        <item quantity="other">%1$d ਕੈਲੰਡਰ</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d ਮਿੰਟ</item>
         <item quantity="other">%1$d ਮਿੰਟ</item>
@@ -821,6 +836,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
     <string name="sync_notification_expired_content_calendar">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਇਆ</item>

@@ -27,6 +27,9 @@ object PreferencesKeys {
     /** Show week numbers in calendar view */
     val SHOW_WEEK_NUMBERS = booleanPreferencesKey("show_week_numbers")
 
+    /** Render the event form's tag row above the notes/attendees block. */
+    val TAGS_ABOVE_NOTES = booleanPreferencesKey("tags_above_notes")
+
     /** Show declined events */
     val SHOW_DECLINED_EVENTS = booleanPreferencesKey("show_declined_events")
 

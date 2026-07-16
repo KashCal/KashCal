@@ -625,11 +625,15 @@ object DateTimeUtils {
             var totalMs = 0L
             var remaining = duration.substring(1) // Remove 'P'
 
+            // Use exact arithmetic throughout: an absurd (malformed) magnitude
+            // must overflow into an exception the catch below turns into null,
+            // never silently wrap to a garbage negative duration.
+
             // Handle weeks (P1W)
             val weekMatch = Regex("(\\d+)W").find(remaining)
             if (weekMatch != null) {
                 val weeks = weekMatch.groupValues[1].toLong()
-                totalMs += weeks * 7 * 24 * 60 * 60 * 1000
+                totalMs = Math.addExact(totalMs, Math.multiplyExact(weeks, 7L * 24 * 60 * 60 * 1000))
                 remaining = remaining.replace(weekMatch.value, "")
             }
 
@@ -637,7 +641,7 @@ object DateTimeUtils {
             val dayMatch = Regex("(\\d+)D").find(remaining)
             if (dayMatch != null) {
                 val days = dayMatch.groupValues[1].toLong()
-                totalMs += days * 24 * 60 * 60 * 1000
+                totalMs = Math.addExact(totalMs, Math.multiplyExact(days, 24L * 60 * 60 * 1000))
                 remaining = remaining.replace(dayMatch.value, "")
             }
 
@@ -649,7 +653,7 @@ object DateTimeUtils {
                 val hourMatch = Regex("(\\d+)H").find(remaining)
                 if (hourMatch != null) {
                     val hours = hourMatch.groupValues[1].toLong()
-                    totalMs += hours * 60 * 60 * 1000
+                    totalMs = Math.addExact(totalMs, Math.multiplyExact(hours, 60L * 60 * 1000))
                     remaining = remaining.replace(hourMatch.value, "")
                 }
 
@@ -657,7 +661,7 @@ object DateTimeUtils {
                 val minMatch = Regex("(\\d+)M").find(remaining)
                 if (minMatch != null) {
                     val minutes = minMatch.groupValues[1].toLong()
-                    totalMs += minutes * 60 * 1000
+                    totalMs = Math.addExact(totalMs, Math.multiplyExact(minutes, 60L * 1000))
                     remaining = remaining.replace(minMatch.value, "")
                 }
 
@@ -665,7 +669,7 @@ object DateTimeUtils {
                 val secMatch = Regex("(\\d+)S").find(remaining)
                 if (secMatch != null) {
                     val seconds = secMatch.groupValues[1].toLong()
-                    totalMs += seconds * 1000
+                    totalMs = Math.addExact(totalMs, Math.multiplyExact(seconds, 1000L))
                 }
             }
 

@@ -120,8 +120,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Título do evento</string>
     <string name="label_location">Localização</string>
-    <string name="label_location_hint">Morada, sala ou ligação de reunião</string>
+    <string name="label_location_hint">Endereço ou ligação</string>
     <string name="label_notes">Notas</string>
+    <string name="label_categories">Etiquetas</string>
+    <string name="tags_new">Nova etiqueta</string>
+    <string name="tags_empty_reject">Escreva um nome de etiqueta</string>
+    <string name="tags_too_long">A etiqueta é demasiado comprida</string>
+    <string name="tags_comma_reject">As etiquetas não podem conter vírgulas</string>
+    <string name="tags_hint_n_more">+%1$d mais</string>
+    <string name="tags_autocomplete_create_new">Criar \"%1$s\"</string>
+    <string name="cd_tag">Etiqueta: %1$s</string>
+    <string name="cd_tags_move_menu">Mover etiquetas</string>
+    <string name="tags_move_above_notes">Mover acima das notas</string>
+    <string name="tags_move_below_notes">Mover abaixo das notas</string>
     <string name="label_starts">Início</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Palavra-passe específica de aplicação</string>
@@ -727,6 +738,10 @@
         <item quantity="many">%1$d eventos</item>
         <item quantity="other">%1$d eventos</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d calendário</item>
+        <item quantity="other">%1$d calendários</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuto</item>
         <item quantity="many">%1$d minutos</item>
@@ -913,6 +928,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s não puderam ser sincronizados após 30 dias. A versão do servidor será utilizada. Forçar sincronização para tentar novamente.</string>
     <string name="sync_notification_expired_content_calendar">%1$s em %2$s não puderam ser sincronizados após 30 dias. A versão do servidor será utilizada. Forçar sincronização para tentar novamente.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s distribuídos por %2$s não puderam ser sincronizados após 30 dias. A versão do servidor será utilizada. Forçar sincronização para tentar novamente.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d calendário sincronizado</item>

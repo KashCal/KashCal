@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
@@ -41,6 +42,17 @@ fun EventFormRow(
     showExpandIcon: Boolean = false,
     onToggle: (() -> Unit)? = null,
     enabled: Boolean = true,
+    // Vertical alignment of the icon and content. Rows whose content is a
+    // single line stay centered (the default); a row with a tall multi-line
+    // field (e.g. Notes) passes Top so the icon lines up with the first line
+    // instead of floating to the field's vertical middle.
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
+    // Extra top offset for the icon when [verticalAlignment] is Top. Tall rows
+    // start their content below the row top by different amounts — a text
+    // field carries internal top padding, a chip/button row is centered in a
+    // taller box — so each Top-aligned row sets the offset that drops its icon
+    // onto its own first line. Ignored when centered.
+    iconTopPadding: Dp = 0.dp,
     expandedContent: (@Composable () -> Unit)? = null,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -55,21 +67,30 @@ fun EventFormRow(
                 )
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = verticalAlignment
         ) {
             if (icon != null) {
                 Icon(
                     icon,
                     contentDescription = iconContentDescription,
                     tint = iconTint,
-                    modifier = Modifier.size(24.dp)
+                    // When top-aligned, drop the icon by the row-specific
+                    // offset so it meets that row's first line (a text field's
+                    // first line, a chip row's chips, etc.).
+                    modifier = Modifier
+                        .then(
+                            if (verticalAlignment == Alignment.Top && iconTopPadding > 0.dp)
+                                Modifier.padding(top = iconTopPadding)
+                            else Modifier
+                        )
+                        .size(24.dp)
                 )
             }
 
             Row(
                 modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = verticalAlignment
             ) {
                 content()
             }

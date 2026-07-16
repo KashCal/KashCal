@@ -96,27 +96,36 @@ internal fun parseIsoDuration(duration: String): Long? {
     val datePart = if (hasTime) str.substringBefore("T") else str
     val timePart = if (hasTime) str.substringAfter("T") else ""
 
-    // Parse date part: weeks (W), days (D)
-    if (datePart.isNotEmpty()) {
-        WEEKS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
-            totalMillis += it * 7 * 24 * 60 * 60 * 1000
+    // Exact arithmetic: an absurd count must fail safe to null, never a wrapped
+    // value. Overflow that wraps NEGATIVE is caught by the `> 0` guard below, but
+    // overflow that wraps POSITIVE (e.g. P100000000000000D) would slip through as
+    // a garbage offset — so catch the overflow here and return null. This callee
+    // must not throw: ReminderConverter.isoRemindersToMinutes does not wrap it.
+    try {
+        // Parse date part: weeks (W), days (D)
+        if (datePart.isNotEmpty()) {
+            WEEKS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+                totalMillis = Math.addExact(totalMillis, Math.multiplyExact(it, 7L * 24 * 60 * 60 * 1000))
+            }
+            DAYS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+                totalMillis = Math.addExact(totalMillis, Math.multiplyExact(it, 24L * 60 * 60 * 1000))
+            }
         }
-        DAYS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
-            totalMillis += it * 24 * 60 * 60 * 1000
-        }
-    }
 
-    // Parse time part: hours (H), minutes (M), seconds (S)
-    if (timePart.isNotEmpty()) {
-        HOURS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
-            totalMillis += it * 60 * 60 * 1000
+        // Parse time part: hours (H), minutes (M), seconds (S)
+        if (timePart.isNotEmpty()) {
+            HOURS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+                totalMillis = Math.addExact(totalMillis, Math.multiplyExact(it, 60L * 60 * 1000))
+            }
+            MINUTES_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+                totalMillis = Math.addExact(totalMillis, Math.multiplyExact(it, 60L * 1000))
+            }
+            SECONDS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+                totalMillis = Math.addExact(totalMillis, Math.multiplyExact(it, 1000L))
+            }
         }
-        MINUTES_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
-            totalMillis += it * 60 * 1000
-        }
-        SECONDS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
-            totalMillis += it * 1000
-        }
+    } catch (_: ArithmeticException) {
+        return null
     }
 
     // Return null if nothing was parsed (invalid format like "PXYZ")

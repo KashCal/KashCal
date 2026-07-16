@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ଇଭେଣ୍ଟ ଶୀର୍ଷକ</string>
     <string name="label_location">ସ୍ଥାନ</string>
-    <string name="label_location_hint">ଠିକଣା, ରୁମ, ବା ମିଟିଂ ଲିଙ୍କ</string>
+    <string name="label_location_hint">ଠିକଣା କିମ୍ବା ଲିଙ୍କ</string>
     <string name="label_notes">ନୋଟସ</string>
+    <string name="label_categories">ଟ୍ୟାଗ</string>
+    <string name="tags_new">ନୂଆ ଟ୍ୟାଗ</string>
+    <string name="tags_empty_reject">ଏକ ଟ୍ୟାଗ ନାମ ଲେଖନ୍ତୁ</string>
+    <string name="tags_too_long">ଟ୍ୟାଗ ବହୁତ ଲମ୍ବା</string>
+    <string name="tags_comma_reject">ଟ୍ୟାଗରେ କମା ରହିପାରିବ ନାହିଁ</string>
+    <string name="tags_hint_n_more">+%1$d ଅଧିକ</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" ତିଆରି କରନ୍ତୁ</string>
+    <string name="cd_tag">ଟ୍ୟାଗ: %1$s</string>
+    <string name="cd_tags_move_menu">ଟ୍ୟାଗ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
+    <string name="tags_move_above_notes">ନୋଟସ ଉପରକୁ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
+    <string name="tags_move_below_notes">ନୋଟସ ତଳକୁ ସ୍ଥାନାନ୍ତର କରନ୍ତୁ</string>
     <string name="label_starts">ଆରମ୍ଭ</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ଆପ-ନିର୍ଦ୍ଦିଷ୍ଟ ପାସୱାର୍ଡ</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d ଇଭେଣ୍ଟ</item>
         <item quantity="other">%1$d ଇଭେଣ୍ଟ</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d କ୍ୟାଲେଣ୍ଡର</item>
+        <item quantity="other">%1$d କ୍ୟାଲେଣ୍ଡର</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d ମିନିଟ</item>
         <item quantity="other">%1$d ମିନିଟ</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ଦିନ ପରେ %1$s ସିଙ୍କ ହୋଇପାରିଲା ନାହିଁ। ସର୍ଭର ସଂସ୍କରଣ ବ୍ୟବହାର କରାଯିବ। ପୁନଃ ଚେଷ୍ଟା ପାଇଁ ଫୋର୍ସ ସିଙ୍କ କରନ୍ତୁ।</string>
     <string name="sync_notification_expired_content_calendar">%2$s ରେ %1$s 30 ଦିନ ପରେ ସିଙ୍କ ହୋଇପାରିଲା ନାହିଁ। ସର୍ଭର ସଂସ୍କରଣ ବ୍ୟବହାର କରାଯିବ। ପୁନଃ ଚେଷ୍ଟା ପାଇଁ ଫୋର୍ସ ସିଙ୍କ କରନ୍ତୁ।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ରେ %1$s 30 ଦିନ ପରେ ସିଙ୍କ ହୋଇପାରିଲା ନାହିଁ। ସର୍ଭର ସଂସ୍କରଣ ବ୍ୟବହାର କରାଯିବ। ପୁନଃ ଚେଷ୍ଟା ପାଇଁ ଫୋର୍ସ ସିଙ୍କ କରନ୍ତୁ।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ ହୋଇଛି</item>

@@ -122,8 +122,19 @@
     <!-- Form Labels -->
     <string name="label_event_title">Eventa titolo</string>
     <string name="label_location">Loko</string>
-    <string name="label_location_hint">Adreso, ĉambro aŭ kunvena ligilo</string>
+    <string name="label_location_hint">Adreso aŭ ligilo</string>
     <string name="label_notes">Notoj</string>
+    <string name="label_categories">Etikedoj</string>
+    <string name="tags_new">Nova etikedo</string>
+    <string name="tags_empty_reject">Enigu nomon de etikedo</string>
+    <string name="tags_too_long">La etikedo estas tro longa</string>
+    <string name="tags_comma_reject">Etikedoj ne povas enhavi komojn</string>
+    <string name="tags_hint_n_more">+%1$d pli</string>
+    <string name="tags_autocomplete_create_new">Krei «%1$s»</string>
+    <string name="cd_tag">Etikedo: %1$s</string>
+    <string name="cd_tags_move_menu">Movi etikedojn</string>
+    <string name="tags_move_above_notes">Movi super notojn</string>
+    <string name="tags_move_below_notes">Movi sub notojn</string>
     <string name="label_starts">Komenco</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Aplikaĵ-specifa pasvorto</string>
@@ -690,6 +701,10 @@
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventoj</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalendaro</item>
+        <item quantity="other">%1$d kalendaroj</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuto</item>
         <item quantity="other">%1$d minutoj</item>
@@ -887,6 +902,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ne povis esti sinkronigitaj post 30 tagoj. La servila versio estos uzata. Devigi Sinkronigon por reprovi.</string>
     <string name="sync_notification_expired_content_calendar">%1$s en %2$s ne povis esti sinkronigitaj post 30 tagoj. La servila versio estos uzata. Devigi Sinkronigon por reprovi.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s tra %2$s ne povis esti sinkronigitaj post 30 tagoj. La servila versio estos uzata. Devigi Sinkronigon por reprovi.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinkronigita %1$d kalendaro</item>

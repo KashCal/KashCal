@@ -1989,10 +1989,11 @@ private fun AgendaCard(
     val stripeColor = Color(displayEvent.calendarColor)
     val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
     val fillAlpha = displayEvent.cardFillAlpha()
-    val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, timePattern)
+
+    val resources = LocalResources.current
+    val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, resources, timePattern)
 
     // Format title with age for birthday events and optional emoji
-    val resources = LocalResources.current
     val displayTitle = remember(displayEvent, showEventEmojis) {
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
@@ -2038,46 +2039,6 @@ private fun AgendaCard(
     }
 }
 
-
-/**
- * Format time display for agenda card.
- * Uses DisplayEvent common properties for correct recurring event display.
- * Shows "Day X of Y" for multi-day events.
- */
-private fun formatAgendaCardDate(
-    displayEvent: DisplayEvent,
-    dayNumber: Int,
-    totalDays: Int,
-    timePattern: String = "h:mm a"
-): String {
-    val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
-    val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
-
-    return when {
-        totalDays > 1 -> {
-            // Multi-day event - show "Day X of Y" with context
-            val dayIndicator = "Day $dayNumber of $totalDays"
-            when {
-                displayEvent.isAllDay -> "$dayIndicator (All day)$recurringIndicator"
-                dayNumber == 1 -> {
-                    val startTime = timeFormat.format(Date(displayEvent.startTs))
-                    "$dayIndicator \u2022 Starts $startTime$recurringIndicator"
-                }
-                dayNumber == totalDays -> {
-                    val endTime = timeFormat.format(Date(displayEvent.endTs))
-                    "$dayIndicator \u2022 Ends $endTime$recurringIndicator"
-                }
-                else -> "$dayIndicator (All day)$recurringIndicator"
-            }
-        }
-        displayEvent.isAllDay -> "All day$recurringIndicator"
-        else -> {
-            val startTime = timeFormat.format(Date(displayEvent.startTs))
-            val endTime = timeFormat.format(Date(displayEvent.endTs))
-            "$startTime - $endTime$recurringIndicator"
-        }
-    }
-}
 
 /**
  * Format event time display with multi-day indicator.

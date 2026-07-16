@@ -94,8 +94,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Pamagat ng event</string>
     <string name="label_location">Lokasyon</string>
-    <string name="label_location_hint">Address, silid, o meeting link</string>
+    <string name="label_location_hint">Address o link</string>
     <string name="label_notes">Mga Tala</string>
+    <string name="label_categories">Mga Tag</string>
+    <string name="tags_new">Bagong tag</string>
+    <string name="tags_empty_reject">Maglagay ng pangalan ng tag</string>
+    <string name="tags_too_long">Masyadong mahaba ang tag</string>
+    <string name="tags_comma_reject">Hindi maaaring maglaman ng kuwit ang mga tag</string>
+    <string name="tags_hint_n_more">+%1$d pa</string>
+    <string name="tags_autocomplete_create_new">Gumawa ng \"%1$s\"</string>
+    <string name="cd_tag">Tag: %1$s</string>
+    <string name="cd_tags_move_menu">Ilipat ang mga tag</string>
+    <string name="tags_move_above_notes">Ilipat sa itaas ng mga tala</string>
+    <string name="tags_move_below_notes">Ilipat sa ibaba ng mga tala</string>
     <string name="label_starts">Nagsisimula</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App-Specific Password</string>
@@ -683,6 +694,10 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d event</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalendaryo</item>
+        <item quantity="other">%1$d kalendaryo</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuto</item>
         <item quantity="other">%1$d minuto</item>
@@ -851,6 +866,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Hindi ma-sync ang %1$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
     <string name="sync_notification_expired_content_calendar">Hindi ma-sync ang %1$s sa %2$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
+    <string name="sync_notification_expired_content_calendars">Hindi ma-sync ang %1$s sa %2$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Na-sync ang %1$d kalendaryo</item>

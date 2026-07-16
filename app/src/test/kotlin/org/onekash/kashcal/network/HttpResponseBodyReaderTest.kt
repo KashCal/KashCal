@@ -97,4 +97,40 @@ class HttpResponseBodyReaderTest {
     fun `default limit is 50 MB`() {
         assertEquals(50L * 1024 * 1024, MAX_HTTP_RESPONSE_SIZE_BYTES)
     }
+
+    @Test
+    fun `empty body decodes to empty string`() {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(""))
+        assertEquals("", get().readBoundedBody(maxBytes = 1024))
+    }
+
+    @Test
+    fun `body of exactly the limit is accepted`() {
+        // Boundary: contentLength == maxBytes must pass (the guard is strict >).
+        val payload = "z".repeat(1024)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(payload))
+        assertEquals(payload, get().readBoundedBody(maxBytes = 1024))
+    }
+
+    @Test
+    fun `over-limit body throws the specific ResponseTooLargeException`() {
+        val tooBig = "x".repeat(2048)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(tooBig))
+        assertThrows(ResponseTooLargeException::class.java) {
+            get().readBoundedBody(maxBytes = 1024)
+        }
+    }
+
+    @Test
+    fun `body with no Content-Type falls back to UTF-8`() {
+        // No Content-Type header -> charset() is null -> UTF-8 default. A
+        // multibyte char round-trips only if UTF-8 is actually used.
+        val text = "café €"
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(okio.Buffer().writeString(text, Charsets.UTF_8))
+        )
+        assertEquals(text, get().readBoundedBody(maxBytes = 1024))
+    }
 }

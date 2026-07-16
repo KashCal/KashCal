@@ -94,8 +94,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ပွဲခေါင်းစဉ်</string>
     <string name="label_location">တည်နေရာ</string>
-    <string name="label_location_hint">လိပ်စာ၊ အခန်း သို့မဟုတ် အစည်းအဝေးလင့်ခ်</string>
+    <string name="label_location_hint">လိပ်စာ သို့မဟုတ် လင့်ခ်</string>
     <string name="label_notes">မှတ်စုများ</string>
+    <string name="label_categories">အမှတ်အသားများ</string>
+    <string name="tags_new">အမှတ်အသားအသစ်</string>
+    <string name="tags_empty_reject">အမှတ်အသားအမည် ထည့်ပါ</string>
+    <string name="tags_too_long">အမှတ်အသား ရှည်လွန်းသည်</string>
+    <string name="tags_comma_reject">အမှတ်အသားများတွင် ကော်မာ မပါဝင်နိုင်ပါ</string>
+    <string name="tags_hint_n_more">+%1$d ထပ်မံ</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" ဖန်တီးပါ</string>
+    <string name="cd_tag">အမှတ်အသား: %1$s</string>
+    <string name="cd_tags_move_menu">အမှတ်အသားများ ရွှေ့ရန်</string>
+    <string name="tags_move_above_notes">မှတ်စုများ အပေါ်သို့ ရွှေ့ရန်</string>
+    <string name="tags_move_below_notes">မှတ်စုများ အောက်သို့ ရွှေ့ရန်</string>
     <string name="label_starts">စတင်</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">အက်ပ်သီးသန့် စကားဝှက်</string>
@@ -664,6 +675,9 @@
     <plurals name="event_count">
         <item quantity="other">ပွဲ %1$d ခု</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">ပြက္ခဒိန် %1$d ခု</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d မိနစ်</item>
     </plurals>
@@ -819,6 +833,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
     <string name="sync_notification_expired_content_calendar">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">ပြက္ခဒိန် %1$d ခုစင့်ခ်ပြီး</item>

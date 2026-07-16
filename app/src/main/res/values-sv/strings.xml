@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Händelsetitel</string>
     <string name="label_location">Plats</string>
-    <string name="label_location_hint">Adress, rum eller möteslänk</string>
+    <string name="label_location_hint">Adress eller länk</string>
     <string name="label_notes">Anteckningar</string>
+    <string name="label_categories">Taggar</string>
+    <string name="tags_new">Ny tagg</string>
+    <string name="tags_empty_reject">Ange ett taggnamn</string>
+    <string name="tags_too_long">Taggen är för lång</string>
+    <string name="tags_comma_reject">Taggar får inte innehålla kommatecken</string>
+    <string name="tags_hint_n_more">+%1$d till</string>
+    <string name="tags_autocomplete_create_new">Skapa \"%1$s\"</string>
+    <string name="cd_tag">Tagg: %1$s</string>
+    <string name="cd_tags_move_menu">Flytta taggar</string>
+    <string name="tags_move_above_notes">Flytta ovanför anteckningar</string>
+    <string name="tags_move_below_notes">Flytta nedanför anteckningar</string>
     <string name="label_starts">Börjar</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Appspecifikt lösenord</string>
@@ -670,6 +681,10 @@
         <item quantity="one">%1$d händelse</item>
         <item quantity="other">%1$d händelser</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalendrar</item>
+    </plurals>
 
     <plurals name="time_minutes">
         <item quantity="one">%1$d minut</item>
@@ -837,6 +852,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
     <string name="sync_notification_expired_content_calendar">%1$s i %2$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s över %2$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender synkroniserad</item>

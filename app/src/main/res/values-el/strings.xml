@@ -117,8 +117,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Τίτλος συμβάντος</string>
     <string name="label_location">Τοποθεσία</string>
-    <string name="label_location_hint">Διεύθυνση, αίθουσα ή σύνδεσμος σύσκεψης</string>
+    <string name="label_location_hint">Διεύθυνση ή σύνδεσμος</string>
     <string name="label_notes">Σημειώσεις</string>
+    <string name="label_categories">Ετικέτες</string>
+    <string name="tags_new">Νέα ετικέτα</string>
+    <string name="tags_empty_reject">Εισαγάγετε ένα όνομα ετικέτας</string>
+    <string name="tags_too_long">Η ετικέτα είναι πολύ μεγάλη</string>
+    <string name="tags_comma_reject">Οι ετικέτες δεν μπορούν να περιέχουν κόμματα</string>
+    <string name="tags_hint_n_more">+%1$d ακόμη</string>
+    <string name="tags_autocomplete_create_new">Δημιουργία «%1$s»</string>
+    <string name="cd_tag">Ετικέτα: %1$s</string>
+    <string name="cd_tags_move_menu">Μετακίνηση ετικετών</string>
+    <string name="tags_move_above_notes">Μετακίνηση πάνω από τις σημειώσεις</string>
+    <string name="tags_move_below_notes">Μετακίνηση κάτω από τις σημειώσεις</string>
     <string name="label_starts">Αρχή</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Κωδικός εφαρμογής</string>
@@ -708,6 +719,10 @@
         <item quantity="one">%1$d συμβάν</item>
         <item quantity="other">%1$d συμβάντα</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d ημερολόγιο</item>
+        <item quantity="other">%1$d ημερολόγια</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d λεπτό</item>
         <item quantity="other">%1$d λεπτά</item>
@@ -874,6 +889,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
     <string name="sync_notification_expired_content_calendar">%1$s στο %2$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s σε %2$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ημερολόγιο συγχρονίστηκε</item>

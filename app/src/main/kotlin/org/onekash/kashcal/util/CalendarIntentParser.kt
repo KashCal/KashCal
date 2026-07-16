@@ -22,7 +22,8 @@ data class CalendarIntentData(
     val startTimeMillis: Long? = null,
     val endTimeMillis: Long? = null,
     val isAllDay: Boolean = false,
-    val rrule: String? = null
+    val rrule: String? = null,
+    val categories: List<String> = emptyList()
 ) {
     /**
      * Get description with invitees appended (if present in original intent).

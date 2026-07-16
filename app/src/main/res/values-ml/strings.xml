@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ഇവന്റ് ശീർഷകം</string>
     <string name="label_location">സ്ഥലം</string>
-    <string name="label_location_hint">വിലാസം, മുറി, അല്ലെങ്കിൽ മീറ്റിംഗ് ലിങ്ക്</string>
+    <string name="label_location_hint">വിലാസം അല്ലെങ്കിൽ ലിങ്ക്</string>
     <string name="label_notes">കുറിപ്പുകൾ</string>
+    <string name="label_categories">ടാഗുകൾ</string>
+    <string name="tags_new">പുതിയ ടാഗ്</string>
+    <string name="tags_empty_reject">ഒരു ടാഗ് പേര് നൽകുക</string>
+    <string name="tags_too_long">ടാഗ് വളരെ നീളമുള്ളതാണ്</string>
+    <string name="tags_comma_reject">ടാഗുകളിൽ കോമകൾ ഉണ്ടാകരുത്</string>
+    <string name="tags_hint_n_more">+%1$d കൂടുതൽ</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" സൃഷ്ടിക്കുക</string>
+    <string name="cd_tag">ടാഗ്: %1$s</string>
+    <string name="cd_tags_move_menu">ടാഗുകൾ നീക്കുക</string>
+    <string name="tags_move_above_notes">കുറിപ്പുകൾക്ക് മുകളിൽ നീക്കുക</string>
+    <string name="tags_move_below_notes">കുറിപ്പുകൾക്ക് താഴെ നീക്കുക</string>
     <string name="label_starts">ആരംഭിക്കുന്നു</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ആപ്പ്-നിർദ്ദിഷ്ട പാസ്‌വേഡ്</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d ഇവന്റ്</item>
         <item quantity="other">%1$d ഇവന്റുകൾ</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d കലണ്ടർ</item>
+        <item quantity="other">%1$d കലണ്ടറുകൾ</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d മിനിറ്റ്</item>
         <item quantity="other">%1$d മിനിറ്റ്</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ദിവസത്തിന് ശേഷവും %1$s സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
     <string name="sync_notification_expired_content_calendar">%2$s-ലെ %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s-ൽ ഉടനീളമുള്ള %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d കലണ്ടർ സിങ്ക് ചെയ്തു</item>

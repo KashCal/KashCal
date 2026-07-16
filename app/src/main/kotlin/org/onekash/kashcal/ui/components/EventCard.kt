@@ -100,6 +100,12 @@ internal fun EventCard(
                         models = attendees
                     )
                 }
+                if (displayEvent.categories.isNotEmpty()) {
+                    org.onekash.kashcal.ui.components.category.CategoryPillRow(
+                        categories = displayEvent.categories,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
+                }
             }
         }
     }

@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ఈవెంట్ శీర్షిక</string>
     <string name="label_location">ప్రదేశం</string>
-    <string name="label_location_hint">చిరునామా, గది, లేదా మీటింగ్ లింక్</string>
+    <string name="label_location_hint">చిరునామా లేదా లింక్</string>
     <string name="label_notes">నోట్స్</string>
+    <string name="label_categories">ట్యాగ్‌లు</string>
+    <string name="tags_new">కొత్త ట్యాగ్</string>
+    <string name="tags_empty_reject">ట్యాగ్ పేరును నమోదు చేయండి</string>
+    <string name="tags_too_long">ట్యాగ్ చాలా పొడవుగా ఉంది</string>
+    <string name="tags_comma_reject">ట్యాగ్‌లలో కామాలు ఉండకూడదు</string>
+    <string name="tags_hint_n_more">+%1$d మరిన్ని</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" సృష్టించండి</string>
+    <string name="cd_tag">ట్యాగ్: %1$s</string>
+    <string name="cd_tags_move_menu">ట్యాగ్‌లను తరలించు</string>
+    <string name="tags_move_above_notes">నోట్స్ పైన తరలించు</string>
+    <string name="tags_move_below_notes">నోట్స్ కింద తరలించు</string>
     <string name="label_starts">ప్రారంభం</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">యాప్-నిర్దిష్ట పాస్‌వర్డ్</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d ఈవెంట్</item>
         <item quantity="other">%1$d ఈవెంట్‌లు</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d క్యాలెండర్</item>
+        <item quantity="other">%1$d క్యాలెండర్లు</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d నిమిషం</item>
         <item quantity="other">%1$d నిమిషాలు</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 రోజుల తర్వాత %1$s సింక్ కాలేదు. సర్వర్ వెర్షన్ ఉపయోగించబడుతుంది. మళ్ళీ ప్రయత్నించడానికి ఫోర్స్ సింక్ చేయండి.</string>
     <string name="sync_notification_expired_content_calendar">%2$s లోని %1$s 30 రోజుల తర్వాత సింక్ కాలేదు. సర్వర్ వెర్షన్ ఉపయోగించబడుతుంది. మళ్ళీ ప్రయత్నించడానికి ఫోర్స్ సింక్ చేయండి.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s అంతటా ఉన్న %1$s 30 రోజుల తర్వాత సింక్ కాలేదు. సర్వర్ వెర్షన్ ఉపయోగించబడుతుంది. మళ్ళీ ప్రయత్నించడానికి ఫోర్స్ సింక్ చేయండి.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d క్యాలెండర్ సింక్ చేయబడింది</item>

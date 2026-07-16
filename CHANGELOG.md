@@ -1,3 +1,35 @@
+## [2026.07.15]
+
+Since the beginning of time, or at least of KashCal, your events have been sorted the way a coat check sorts coats: by which calendar they were flung into, and not one thought more. This release lets you label them yourself. Meet tags. Type one in the event form, or fling a #dentist straight into Quick Add and watch it land as a smug little colored chip that then follows the event around the day, week, and agenda views like it owns the place. Tap the event open and the tags are right there in quick view, quietly confirming that yes, this is a #focus block, and no, it is not the third #standup of the day you had every right to skip. Start typing and KashCal hands back the tags you already use, which is the only known cure for "Errands" fracturing into "errands," "ERRANDS," and one deeply confident "Errnads" by Thursday. And should you decide tags belong above your notes rather than below, the row's little ⋮ menu will move it, and we will pretend that was our idea all along.
+
+While the tags moved in, the rest of the event form had a tidy-up. The location field came up to sit under the title where you reach for it first, free and busy moved to the bottom where it belongs, and a small army of stray dividers and uneven margins were shown the door. Nothing you can name, everything you can feel.
+
+Two quieter fixes matter more than they look. If you run your own server on a LAN or a VPN, sync no longer hangs forever on "Preparing to sync" because Android could not phone home to the public internet first. Reachable is now enough. And the thirty-day "your changes could not sync" warning has stopped buzzing you over and over for the same events, and now names every calendar involved instead of shrugging.
+
+Now the fine print, delivered upfront because we have no interest in being that app. Tags currently work on the events KashCal syncs itself, your iCloud and other CalDAV calendars. The device's own calendars, the Google, Samsung, and Exchange ones Android politely shoves through the door, are still tag-free for a release or two while we teach them manners. Rather than pretend otherwise and let your tags quietly vanish into the void, we simply hid the tag row on those events, which we feel is the mature response. More tags, more places, more tricks are queued up. This is version one of roughly several, and we are only telling you that so nobody accuses us of overselling a chip.
+
+A few more papercuts, since we had the tweezers out. Events with no length, the ones you pin to a single moment, used to disappear entirely in the day and week views; they now show up as the small blocks they always meant to be. Emoji in a synced description arrive as the emoji you sent instead of a puzzled little box. And a garbled duration from some other app can no longer bend an event's end time back to before it started.
+
+Small labels, better plumbing, fewer papercuts. Tag it and move on.
+
+### Everything in this release
+
+- Event tags (first release): colored chips on events, shown in day, week, and agenda views and the quick view, on iCloud and CalDAV events for now
+- Create tags from the event form with usage-ranked suggestions and inline # autocomplete in the title
+- Add tags from Quick Add by typing #tag, persisting across create and all edit scopes
+- Reorder the form tag row above or below notes from its ⋮ menu
+- Moved the location field up under the title in the event form
+- Moved free/busy to the last row of the event form
+- Tidied the event-form layout: consistent divider spacing, aligned row icons, and tighter all-day and title rows
+- Shortened the location placeholder to "Address or link"
+- Fixed self-hosted CalDAV/ICS sync hanging on "Preparing to sync" over LAN or VPN networks (#296)
+- Fixed the expired-sync notification repeatedly alerting, and it now names every affected calendar
+- Localized the agenda card date labels ("All day", "Day X of Y", "Starts", "Ends")
+- Fixed zero-duration and very short events disappearing or overlapping in the day, 3-day, and week views
+- Fixed emoji and other extended characters in synced event descriptions rendering as a stray box or wrong character
+- Fixed a malformed event duration producing an end time before the start
+- Sharpened the widget header contrast for pure white and pure black accent colors
+
 ## [2026.07.13]
 
 Your agenda finally learned to read the room. For years its top bar proudly announced "Agenda," heroically confirming that the agenda screen was, against all odds, the agenda screen. Thank you, brave label. It has now been reassigned to showing the month you are actually looking at, keeping pace as you scroll, so August becomes September without you wondering where the summer went. And there is more of it: ninety days ahead instead of thirty, because your future has a way of arriving whether we render it or not.

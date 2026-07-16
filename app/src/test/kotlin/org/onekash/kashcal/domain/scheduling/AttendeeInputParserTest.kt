@@ -101,4 +101,50 @@ class AttendeeInputParserTest {
     fun `semicolon-separated address list is rejected`() {
         assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("a@b.com;c@d.com"))
     }
+
+    @Test
+    fun `address with two at-signs is invalid`() {
+        // isEmailShaped's char class forbids an interior '@'.
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("a@@b.com"))
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("a@b@c.com"))
+    }
+
+    @Test
+    fun `missing local part or domain is invalid`() {
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("@example.com"))
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("alice@"))
+    }
+
+    @Test
+    fun `whitespace inside the address is invalid`() {
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("a @b.com"))
+        assertEquals(AttendeeInput.Invalid, AttendeeInputParser.parse("a@ b.com"))
+    }
+
+    @Test
+    fun `mailto inside the bracket form is stripped off the address`() {
+        assertEquals(
+            AttendeeInput.Valid(displayName = "Alice", email = "alice@example.com"),
+            AttendeeInputParser.parse("Alice <mailto:alice@example.com>"),
+        )
+    }
+
+    @Test
+    fun `plus-addressed local part is accepted`() {
+        assertEquals(
+            AttendeeInput.Valid(displayName = null, email = "alice+tag@example.com"),
+            AttendeeInputParser.parse("alice+tag@example.com"),
+        )
+    }
+
+    @Test
+    fun `greedy bracket match keeps the last angle group as the address`() {
+        // BRACKETED's leading `.*` is greedy, so it backtracks to the final '<':
+        // the earlier "<y>" stays in the display name and the last group is the
+        // address. Characterizes the current behavior for a doubled-bracket input.
+        assertEquals(
+            AttendeeInput.Valid(displayName = "x <y>", email = "a@b.com"),
+            AttendeeInputParser.parse("x <y> <a@b.com>"),
+        )
+    }
 }

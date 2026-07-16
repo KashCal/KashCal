@@ -253,6 +253,22 @@ class KashCalDataStoreTest {
     }
 
     @Test
+    fun `tagsAboveNotes defaults to false and round-trips`() = runTest {
+        dataStore.tagsAboveNotes.test {
+            // Tags sit below the notes/attendees block by default.
+            assertEquals(false, awaitItem())
+
+            dataStore.setTagsAboveNotes(true)
+            assertEquals(true, awaitItem())
+
+            dataStore.setTagsAboveNotes(false)
+            assertEquals(false, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `appLockEnabled defaults to false and round-trips`() = runTest {
         dataStore.appLockEnabled.test {
             // Off by default

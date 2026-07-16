@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ชื่อกิจกรรม</string>
     <string name="label_location">สถานที่</string>
-    <string name="label_location_hint">ที่อยู่ ห้องประชุม หรือลิงก์</string>
+    <string name="label_location_hint">ที่อยู่หรือลิงก์</string>
     <string name="label_notes">บันทึก</string>
+    <string name="label_categories">แท็ก</string>
+    <string name="tags_new">แท็กใหม่</string>
+    <string name="tags_empty_reject">กรอกชื่อแท็ก</string>
+    <string name="tags_too_long">แท็กยาวเกินไป</string>
+    <string name="tags_comma_reject">แท็กมีเครื่องหมายจุลภาคไม่ได้</string>
+    <string name="tags_hint_n_more">+อีก %1$d</string>
+    <string name="tags_autocomplete_create_new">สร้าง \"%1$s\"</string>
+    <string name="cd_tag">แท็ก: %1$s</string>
+    <string name="cd_tags_move_menu">ย้ายแท็ก</string>
+    <string name="tags_move_above_notes">ย้ายไว้เหนือบันทึก</string>
+    <string name="tags_move_below_notes">ย้ายไว้ใต้บันทึก</string>
     <string name="label_starts">เริ่ม</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">รหัสผ่านเฉพาะแอป</string>
@@ -630,6 +641,9 @@
     <plurals name="event_count">
         <item quantity="other">%1$d กิจกรรม</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">%1$d ปฏิทิน</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d นาที</item>
     </plurals>
@@ -783,6 +797,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
     <string name="sync_notification_expired_content_calendar">%1$s ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <string name="sync_notification_expired_content_calendars">%1$s ที่กระจายอยู่ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">ซิงค์แล้ว %1$d ปฏิทิน</item>

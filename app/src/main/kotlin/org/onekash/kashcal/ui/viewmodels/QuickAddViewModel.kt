@@ -194,6 +194,7 @@ class QuickAddViewModel @Inject constructor(
                     isAllDay = isAllDay,
                     location = result.location,
                     rrule = result.rrule,
+                    categories = result.categories.ifEmpty { null },
                     reminders = reminders,
                     dtstamp = now,
                     createdAt = now,
@@ -216,7 +217,8 @@ class QuickAddViewModel @Inject constructor(
         // defaults to (startTime == null), which would otherwise force an
         // all-day fallback whenever the user taps Expand without typing.
         val nothingParsed = result.title.isBlank() && result.startTime == null &&
-            result.location == null && result.endDate == null && result.rrule == null
+            result.location == null && result.endDate == null && result.rrule == null &&
+            result.categories.isEmpty()
         if (nothingParsed) {
             val nextHour = (LocalTime.now().hour + 1) % 24
             val startMs = result.startDate.atTime(LocalTime.of(nextHour, 0))
@@ -249,7 +251,8 @@ class QuickAddViewModel @Inject constructor(
             startTimeMillis = startTimeMillis,
             endTimeMillis = endTimeMillis,
             isAllDay = result.isAllDay,
-            rrule = result.rrule
+            rrule = result.rrule,
+            categories = result.categories
         )
     }
 

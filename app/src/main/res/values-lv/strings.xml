@@ -122,8 +122,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Notikuma nosaukums</string>
     <string name="label_location">Vieta</string>
-    <string name="label_location_hint">Adrese, telpa vai sapulces saite</string>
+    <string name="label_location_hint">Adrese vai saite</string>
     <string name="label_notes">Piezīmes</string>
+    <string name="label_categories">Birkas</string>
+    <string name="tags_new">Jauna birka</string>
+    <string name="tags_empty_reject">Ievadi birkas nosaukumu</string>
+    <string name="tags_too_long">Birka ir pārāk gara</string>
+    <string name="tags_comma_reject">Birkās nevar būt komatu</string>
+    <string name="tags_hint_n_more">+vēl %1$d</string>
+    <string name="tags_autocomplete_create_new">Izveidot “%1$s”</string>
+    <string name="cd_tag">Birka: %1$s</string>
+    <string name="cd_tags_move_menu">Pārvietot birkas</string>
+    <string name="tags_move_above_notes">Pārvietot virs piezīmēm</string>
+    <string name="tags_move_below_notes">Pārvietot zem piezīmēm</string>
     <string name="label_starts">Sākas</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Lietotnes parole</string>
@@ -722,6 +733,11 @@
         <item quantity="one">%1$d notikums</item>
         <item quantity="other">%1$d notikumi</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="zero">%1$d kalendāru</item>
+        <item quantity="one">%1$d kalendārs</item>
+        <item quantity="other">%1$d kalendāri</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="zero">%1$d minūšu</item>
         <item quantity="one">%1$d minūte</item>
@@ -884,6 +900,7 @@
     <string name="sync_notification_expired_title">Sinhronizācijas izmaiņas beidzies</string>
     <string name="sync_notification_expired_content">%1$s neizdevās sinhronizēt 30 dienu laikā. Tiks izmantota servera versija. Piespiedu sinhronizācija, lai mēģinātu vēlreiz.</string>
     <string name="sync_notification_expired_content_calendar">%1$s kalendārā %2$s neizdevās sinhronizēt 30 dienu laikā. Tiks izmantota servera versija. Piespiedu sinhronizācija, lai mēģinātu vēlreiz.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s %2$s neizdevās sinhronizēt 30 dienu laikā. Tiks izmantota servera versija. Piespiedu sinhronizācija, lai mēģinātu vēlreiz.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="zero">Sinhronizēti %1$d kalendāru</item>
         <item quantity="one">Sinhronizēts %1$d kalendārs</item>

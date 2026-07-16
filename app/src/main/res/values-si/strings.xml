@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">සිදුවීමේ මාතෘකාව</string>
     <string name="label_location">ස්ථානය</string>
-    <string name="label_location_hint">ලිපිනය, කාමරය, හෝ රැස්වීම් සබැඳිය</string>
+    <string name="label_location_hint">ලිපිනය හෝ සබැඳිය</string>
     <string name="label_notes">සටහන්</string>
+    <string name="label_categories">ටැග්</string>
+    <string name="tags_new">නව ටැගය</string>
+    <string name="tags_empty_reject">ටැග නමක් ඇතුළු කරන්න</string>
+    <string name="tags_too_long">ටැගය දිගු වැඩියි</string>
+    <string name="tags_comma_reject">ටැග් වල කොමා තිබිය නොහැක</string>
+    <string name="tags_hint_n_more">+%1$d තවත්</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" සාදන්න</string>
+    <string name="cd_tag">ටැගය: %1$s</string>
+    <string name="cd_tags_move_menu">ටැග ගෙන යන්න</string>
+    <string name="tags_move_above_notes">සටහන් ඉහළට ගෙන යන්න</string>
+    <string name="tags_move_below_notes">සටහන් පහළට ගෙන යන්න</string>
     <string name="label_starts">ආරම්භය</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">යෙදුම්-විශේෂිත මුරපදය</string>
@@ -656,6 +667,10 @@
         <item quantity="one">සිදුවීම %1$d</item>
         <item quantity="other">සිදුවීම් %1$d</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">දින දර්ශන %1$d</item>
+        <item quantity="other">දින දර්ශන %1$d</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">මිනිත්තු %1$d</item>
         <item quantity="other">මිනිත්තු %1$d</item>
@@ -821,6 +836,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">දින 30 කට පසු %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
     <string name="sync_notification_expired_content_calendar">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
+    <string name="sync_notification_expired_content_calendars">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>

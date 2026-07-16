@@ -37,7 +37,31 @@ fun accentColorScheme(seed: Int, dark: Boolean): ColorScheme =
         // AA-safe for every selectable seed (AccentSchemeTest).
         style = PaletteStyle.Content,
         contrastLevel = ACCENT_CONTRAST_LEVEL,
-    )
+    ).withCrispAchromaticContainer(seed)
+
+/**
+ * Snaps the accent-container pair to a pure black/white inverse for the two achromatic-extreme
+ * seeds, leaving every other seed (and every other role) untouched.
+ *
+ * HCT has no hue to preserve for pure white or pure black, so the tonal engine pairs the
+ * container with a mid-gray "on" tone that only scrapes WCAG AA (~4.6:1) and reads as muddy on
+ * the surface the user perceives as "the accent" — most visibly the widget header, which is
+ * backed by primaryContainer/onPrimaryContainer. Forcing the crisp inverse (black-on-white /
+ * white-on-black, a full 21:1) makes the picked color look like the color that was picked.
+ *
+ * Only the container pair is changed. In particular `primary` is left as the engine's readable
+ * gray: forcing it to pure white would make the accent invisible against the light surface
+ * (the primary/surface visibility guarantee, AccentSchemeTest).
+ */
+private fun ColorScheme.withCrispAchromaticContainer(seed: Int): ColorScheme = when (seed) {
+    PURE_WHITE_SEED -> copy(primaryContainer = Color.White, onPrimaryContainer = Color.Black)
+    PURE_BLACK_SEED -> copy(primaryContainer = Color.Black, onPrimaryContainer = Color.White)
+    else -> this
+}
+
+/** Packed ARGB for the two achromatic-extreme seeds the picker offers. */
+private const val PURE_WHITE_SEED: Int = 0xFFFFFFFF.toInt()
+private const val PURE_BLACK_SEED: Int = 0xFF000000.toInt()
 
 /**
  * HCT contrast axis, range -1.0..1.0 (0.0 = Material default). The default already keeps

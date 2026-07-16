@@ -258,6 +258,11 @@ class HomeViewModel(
         viewModelScope.launch { dataStore.setContactSuggestionsDeclined(true) }
     }
 
+    /** Persist whether the event form's tag row sits above the notes/attendees block. */
+    fun setTagsAboveNotes(above: Boolean) {
+        viewModelScope.launch { dataStore.setTagsAboveNotes(above) }
+    }
+
     /**
      * Reactive list of pending CalDAV invitations rendered by
      * `InvitationInboxSheet`. Backs both the count Flow below and the
@@ -798,6 +803,16 @@ class HomeViewModel(
         viewModelScope.launch {
             dataStore.showWeekNumbers.collect { show ->
                 _uiState.update { it.copy(showWeekNumbers = show) }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.tagsAboveNotes.collect { above ->
+                _uiState.update { it.copy(tagsAboveNotes = above) }
+            }
+        }
+        viewModelScope.launch {
+            eventReader.getRecentCategories().collect { tags ->
+                _uiState.update { it.copy(categorySuggestions = tags.toPersistentList()) }
             }
         }
     }
@@ -2901,6 +2916,7 @@ class HomeViewModel(
                                 calendarId = calendarId,
                                 transp = formState.transp,
                                 color = formState.eventColor,
+                                categories = formState.categories.ifEmpty { null },
                                 timezone = if (formState.isAllDay) null else (formState.timezone ?: master.timezone),
                                 updatedAt = System.currentTimeMillis(),
                             )
@@ -2940,6 +2956,7 @@ class HomeViewModel(
                                 calendarId = calendarId,
                                 transp = formState.transp,
                                 color = formState.eventColor,
+                                categories = formState.categories.ifEmpty { null },
                                 // Preserve these fields from master for round-trip fidelity:
                                 timezone = masterEvent.timezone,
                                 status = masterEvent.status,
@@ -2996,6 +3013,7 @@ class HomeViewModel(
                             reminders = reminders,
                             transp = formState.transp,
                             color = formState.eventColor,
+                            categories = formState.categories.ifEmpty { null },
                             updatedAt = System.currentTimeMillis()
                         )
                         eventCoordinator.updateEvent(finalEvent, attendees = attendeesArg)
@@ -3014,6 +3032,7 @@ class HomeViewModel(
                             calendarId = calendarId,
                             transp = formState.transp,
                             color = formState.eventColor,
+                            categories = formState.categories.ifEmpty { null },
                             updatedAt = System.currentTimeMillis()
                         )
                         eventCoordinator.updateEvent(updatedEvent, attendees = attendeesArg)
@@ -3037,6 +3056,7 @@ class HomeViewModel(
                         reminders = reminders,
                         transp = formState.transp,
                         color = formState.eventColor,
+                        categories = formState.categories.ifEmpty { null },
                         dtstamp = now,
                         createdAt = now,
                         updatedAt = now

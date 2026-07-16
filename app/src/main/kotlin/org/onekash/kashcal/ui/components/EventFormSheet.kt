@@ -25,7 +25,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Public
@@ -35,6 +37,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -43,6 +46,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -52,6 +56,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -62,6 +67,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -82,6 +88,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -132,6 +139,25 @@ internal const val MIN_TITLE_PREFIX = 3
 
 /** Wait this long after the last keystroke before querying the suggestion backend. */
 private const val TITLE_SUGGEST_DEBOUNCE_MS = 150L
+
+/**
+ * Test tag on the divider between the personal group (notes/tags) and the
+ * scheduling group (attendees/free-busy), so the group boundary is assertable.
+ */
+internal const val TAG_GROUP_DIVIDER = "form_group_divider"
+
+/** Test tag on the sticky Save button's top divider. */
+internal const val TAG_SAVE_DIVIDER = "form_save_divider"
+
+/** Test tag on the delete section's leading divider (edit mode only). */
+internal const val TAG_DELETE_DIVIDER = "form_delete_divider"
+
+/**
+ * Uniform breathing room above and below the content-section dividers, so their
+ * spacing doesn't depend on which row (EventFormRow at 14dp, picker rows at
+ * 8–12dp) happens to sit against them.
+ */
+private val SECTION_DIVIDER_SPACING = 6.dp
 
 internal fun shouldShowTitleSuggestions(
     currentText: String,
@@ -238,6 +264,7 @@ data class EventFormState(
     val timezone: String? = null,  // null = device default
     val transp: String = "OPAQUE",
     val eventColor: Int? = null,
+    val categories: List<String> = emptyList(),
 
     // UI state
     val calendarGroups: List<CalendarGroup> = emptyList(),
@@ -425,6 +452,7 @@ fun EventFormSheet(
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null,
     onSuggestTitles: (suspend (String) -> List<org.onekash.kashcal.data.db.dao.TitleSuggestion>)? = null,
+    categorySuggestions: List<String> = emptyList(),
     timeFormat: String = "system",
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     // Device calendar edit support
@@ -489,7 +517,11 @@ fun EventFormSheet(
     /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
     contactsDeclined: Boolean = false,
     /** Persist a permanent decline of contact suggestions ("No thanks"). */
-    onDeclineContacts: (() -> Unit)? = null
+    onDeclineContacts: (() -> Unit)? = null,
+    /** True when the tag row should render above the notes/attendees block. */
+    tagsAboveNotes: Boolean = false,
+    /** Persist a new tag-row position (above/below the notes/attendees block). */
+    onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
 ) {
     // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
     // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
@@ -540,6 +572,7 @@ fun EventFormSheet(
             onRequestNotificationPermission = onRequestNotificationPermission,
             locationSuggestionService = locationSuggestionService,
             onSuggestTitles = onSuggestTitles,
+            categorySuggestions = categorySuggestions,
             timeFormat = timeFormat,
             firstDayOfWeek = firstDayOfWeek,
             deviceEventId = deviceEventId,
@@ -561,6 +594,8 @@ fun EventFormSheet(
             onRequestContactsPermission = onRequestContactsPermission,
             contactsDeclined = contactsDeclined,
             onDeclineContacts = onDeclineContacts,
+            tagsAboveNotes = tagsAboveNotes,
+            onSetTagsAboveNotes = onSetTagsAboveNotes,
         )
     }
 }
@@ -641,6 +676,7 @@ fun EventFormContent(
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null,
     onSuggestTitles: (suspend (String) -> List<org.onekash.kashcal.data.db.dao.TitleSuggestion>)? = null,
+    categorySuggestions: List<String> = emptyList(),
     timeFormat: String = "system",
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     // Device calendar edit support
@@ -705,7 +741,11 @@ fun EventFormContent(
     /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
     contactsDeclined: Boolean = false,
     /** Persist a permanent decline of contact suggestions ("No thanks"). */
-    onDeclineContacts: (() -> Unit)? = null
+    onDeclineContacts: (() -> Unit)? = null,
+    /** True when the tag row should render above the notes/attendees block. */
+    tagsAboveNotes: Boolean = false,
+    /** Persist a new tag-row position (above/below the notes/attendees block). */
+    onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -1046,7 +1086,8 @@ fun EventFormContent(
                     isEditMode = true,
                     editingOccurrenceTs = occurrenceTs,
                     transp = event.transp,
-                    eventColor = event.color
+                    eventColor = event.color,
+                    categories = event.categories.orEmpty()
                 )
                 // Capture the loaded reminder set so the read-only path
                 // can detect "user changed reminders" via remindersChanged.
@@ -1199,7 +1240,8 @@ fun EventFormContent(
                     startMinute = startCal.get(JavaCalendar.MINUTE),
                     endHour = endCal.get(JavaCalendar.HOUR_OF_DAY),
                     endMinute = endCal.get(JavaCalendar.MINUTE),
-                    rrule = calendarIntentData.rrule
+                    rrule = calendarIntentData.rrule,
+                    categories = calendarIntentData.categories
                 )
             }
         }
@@ -1459,7 +1501,18 @@ fun EventFormContent(
                 }
                 var titleSuggestions by remember { mutableStateOf<List<org.onekash.kashcal.data.db.dao.TitleSuggestion>>(emptyList()) }
                 var titleSearchJob by remember { mutableStateOf<Job?>(null) }
-                val dropdownOpen = titleSuggestions.isNotEmpty()
+
+                // Inline "#tag" autocomplete: the in-progress "#prefix" fragment
+                // at the end of the title (null when the user isn't typing a tag).
+                var tagPrefix by remember { mutableStateOf<String?>(null) }
+                val tagMatches = remember(tagPrefix, categorySuggestions, state.categories) {
+                    val prefix = tagPrefix ?: return@remember emptyList()
+                    categorySuggestions
+                        .filter { it.startsWith(prefix, ignoreCase = true) }
+                        .filter { s -> state.categories.none { it.equals(s, ignoreCase = true) } }
+                }
+
+                val dropdownOpen = titleSuggestions.isNotEmpty() || tagPrefix != null
 
                 if (isReadOnly) {
                     // Attendee viewer: plain readable text, not a dimmed,
@@ -1488,17 +1541,30 @@ fun EventFormContent(
                             val newValue = raw.replace("\n", "")
                             state = state.copy(title = newValue)
                             titleSearchJob?.cancel()
-                            val shouldQuery = shouldShowTitleSuggestions(
-                                currentText = newValue,
-                                initialText = titleInitial.orEmpty()
-                            )
-                            if (shouldQuery && onSuggestTitles != null) {
-                                titleSearchJob = coroutineScope.launch {
-                                    delay(TITLE_SUGGEST_DEBOUNCE_MS)
-                                    titleSuggestions = onSuggestTitles(newValue)
-                                }
-                            } else {
+                            // If the user is mid-#tag, show tag autocomplete and
+                            // suppress the title-suggestion query for this keystroke.
+                            // Device-calendar events can't carry tags, so leave
+                            // "#text" as plain title text there (no extraction) —
+                            // otherwise committing it would strip the text and
+                            // then silently drop the tag on the device save path.
+                            tagPrefix = if (state.isDeviceCalendar) null
+                                else org.onekash.kashcal.domain.category.TagTokenizer
+                                    .trailingHashPrefix(newValue)
+                            if (tagPrefix != null) {
                                 titleSuggestions = emptyList()
+                            } else {
+                                val shouldQuery = shouldShowTitleSuggestions(
+                                    currentText = newValue,
+                                    initialText = titleInitial.orEmpty()
+                                )
+                                if (shouldQuery && onSuggestTitles != null) {
+                                    titleSearchJob = coroutineScope.launch {
+                                        delay(TITLE_SUGGEST_DEBOUNCE_MS)
+                                        titleSuggestions = onSuggestTitles(newValue)
+                                    }
+                                } else {
+                                    titleSuggestions = emptyList()
+                                }
                             }
                         },
                         placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
@@ -1506,7 +1572,10 @@ fun EventFormContent(
                             .fillMaxWidth()
                             .focusRequester(titleFocusRequester)
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            // Horizontal only: the field's own box already
+                            // supplies vertical padding, so an extra vertical
+                            // pad here just made the title taller than location.
+                            .padding(horizontal = 16.dp),
                         // Wrap a long title to a second line (matching the
                         // quick-view title) instead of scrolling it off the
                         // start on one line. There is no title length cap.
@@ -1521,23 +1590,165 @@ fun EventFormContent(
 
                     ExposedDropdownMenu(
                         expanded = dropdownOpen,
-                        onDismissRequest = { titleSuggestions = emptyList() }
+                        onDismissRequest = {
+                            titleSuggestions = emptyList()
+                            tagPrefix = null
+                        }
                     ) {
-                        titleSuggestions.forEach { suggestion ->
-                            DropdownMenuItem(
-                                text = { Text(suggestion.title) },
-                                onClick = {
-                                    state = state.copy(title = suggestion.title)
-                                    titleSuggestions = emptyList()
-                                },
-                                modifier = Modifier.height(48.dp)
-                            )
+                        // Commit a #tag: add it to categories and strip the
+                        // in-progress "#prefix" token from the title.
+                        val commitTag: (String) -> Unit = { name ->
+                            when (val outcome = org.onekash.kashcal.domain.category
+                                .CategoryNameValidator.validate(name, state.categories.toSet())) {
+                                is org.onekash.kashcal.domain.category.CategoryName.Valid -> {
+                                    val stripped = org.onekash.kashcal.domain.category.TagTokenizer
+                                        .stripToken(state.title, "#${tagPrefix.orEmpty()}")
+                                    val nextCategories =
+                                        if (state.categories.any { it.equals(outcome.value, ignoreCase = true) }) {
+                                            state.categories
+                                        } else {
+                                            state.categories + outcome.value
+                                        }
+                                    state = state.copy(title = stripped, categories = nextCategories)
+                                }
+                                is org.onekash.kashcal.domain.category.CategoryName.Invalid -> Unit
+                            }
+                            tagPrefix = null
+                        }
+
+                        if (tagPrefix != null) {
+                            tagMatches.forEach { match ->
+                                DropdownMenuItem(
+                                    text = { Text("#$match") },
+                                    onClick = { commitTag(match) },
+                                    modifier = Modifier.height(48.dp)
+                                )
+                            }
+                            val prefix = tagPrefix.orEmpty()
+                            val exactExists = tagMatches.any { it.equals(prefix, ignoreCase = true) }
+                            if (prefix.isNotBlank() && !exactExists) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.tags_autocomplete_create_new, prefix)) },
+                                    onClick = { commitTag(prefix) },
+                                    modifier = Modifier.height(48.dp)
+                                )
+                            }
+                        } else {
+                            titleSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion.title) },
+                                    onClick = {
+                                        state = state.copy(title = suggestion.title)
+                                        titleSuggestions = emptyList()
+                                    },
+                                    modifier = Modifier.height(48.dp)
+                                )
+                            }
                         }
                     }
                 }
                 }
 
-                HorizontalDivider()
+                // Location sits directly under the title (matching common
+                // calendar apps), above the date/time section.
+                var locationExpanded by remember { mutableStateOf(false) }
+                var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
+                var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
+                var locationSearchJob by remember { mutableStateOf<Job?>(null) }
+
+                if (shouldShowReadOnlyOptionalField(state.location, isReadOnly)) {
+                EventFormRow(
+                    icon = Icons.Default.LocationOn,
+                    iconContentDescription = stringResource(R.string.label_location)
+                ) {
+                    if (isReadOnly) {
+                        Text(
+                            text = state.location,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                    ExposedDropdownMenuBox(
+                        expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                        onExpandedChange = { locationExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = state.location,
+                            onValueChange = { raw ->
+                                // Strip newlines: with singleLine gone the
+                                // Enter key would otherwise insert one, and
+                                // a location is a single logical line.
+                                val newValue = raw.replace("\n", "")
+                                state = state.copy(location = newValue)
+                                locationSearchJob?.cancel()
+                                if (locationSuggestionService != null &&
+                                    newValue.length >= 5 &&
+                                    newValue.any { it.isLetter() }
+                                ) {
+                                    locationSearchJob = coroutineScope.launch {
+                                        delay(300)
+                                        isLoadingLocationSuggestions = true
+                                        locationSuggestions = locationSuggestionService.getSuggestions(newValue)
+                                        isLoadingLocationSuggestions = false
+                                        locationExpanded = locationSuggestions.isNotEmpty()
+                                    }
+                                } else {
+                                    locationSuggestions = emptyList()
+                                    locationExpanded = false
+                                }
+                            },
+                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                            // Wrap a long address to a second line instead of
+                            // scrolling it off the start on one line.
+                            maxLines = 2,
+                            enabled = !isReadOnly,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedContainerColor = Color.Transparent
+                            ),
+                            trailingIcon = {
+                                if (isLoadingLocationSuggestions) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
+                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+                                }
+                            }
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                            onDismissRequest = { locationExpanded = false }
+                        ) {
+                            locationSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion.displayName) },
+                                    onClick = {
+                                        state = state.copy(location = suggestion.displayName)
+                                        locationExpanded = false
+                                        locationSuggestions = emptyList()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Place, contentDescription = null)
+                                    },
+                                    modifier = Modifier.height(48.dp)
+                                )
+                            }
+                        }
+                    }
+                    }
+                }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = SECTION_DIVIDER_SPACING))
 
 
                 val toggleAllDay = { newIsAllDay: Boolean ->
@@ -1629,7 +1840,7 @@ fun EventFormContent(
                     }
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(modifier = Modifier.padding(vertical = SECTION_DIVIDER_SPACING))
 
                 CalendarPickerRow(
                     selectedCalendarId = state.selectedCalendarId,
@@ -1742,133 +1953,101 @@ fun EventFormContent(
                     firstDayOfWeek = firstDayOfWeek
                 )
 
-                EventFormRow(
-                    icon = Icons.Default.EventAvailable,
-                    iconContentDescription = stringResource(R.string.label_availability)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                HorizontalDivider(modifier = Modifier.padding(vertical = SECTION_DIVIDER_SPACING))
+
+                // The tag row can sit above or below the notes/attendees block
+                // (a persisted preference the user flips from its ⋮ menu). Its
+                // content is defined once and rendered in the chosen position.
+                var showTagsMenu by remember { mutableStateOf(false) }
+                val tagsRow: @Composable () -> Unit = {
+                    EventFormRow(
+                        icon = Icons.Default.LocalOffer,
+                        iconContentDescription = stringResource(R.string.label_categories),
+                        // Top-align so the icon and the ⋮ stay by the chip line;
+                        // otherwise engaging the picker (field + suggestion list)
+                        // floats them into the middle of the list. The small
+                        // offset centers the icon against the resting chip row.
+                        verticalAlignment = Alignment.Top,
+                        iconTopPadding = 6.dp,
                     ) {
-                        FilterChip(
-                            selected = state.transp == "OPAQUE",
-                            onClick = { if (!isReadOnly) state = state.copy(transp = "OPAQUE") },
-                            enabled = !isReadOnly,
-                            label = { Text(stringResource(R.string.label_busy)) }
-                        )
-                        FilterChip(
-                            selected = state.transp == "TRANSPARENT",
-                            onClick = { if (!isReadOnly) state = state.copy(transp = "TRANSPARENT") },
-                            enabled = !isReadOnly,
-                            label = { Text(stringResource(R.string.label_free)) }
-                        )
-                    }
-                }
-
-                HorizontalDivider()
-
-
-                var locationExpanded by remember { mutableStateOf(false) }
-                var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
-                var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
-                var locationSearchJob by remember { mutableStateOf<Job?>(null) }
-
-                if (shouldShowReadOnlyOptionalField(state.location, isReadOnly)) {
-                EventFormRow(
-                    icon = Icons.Default.LocationOn,
-                    iconContentDescription = stringResource(R.string.label_location)
-                ) {
-                    if (isReadOnly) {
-                        Text(
-                            text = state.location,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                    ExposedDropdownMenuBox(
-                        expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                        onExpandedChange = { locationExpanded = it },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = state.location,
-                            onValueChange = { raw ->
-                                // Strip newlines: with singleLine gone the
-                                // Enter key would otherwise insert one, and
-                                // a location is a single logical line.
-                                val newValue = raw.replace("\n", "")
-                                state = state.copy(location = newValue)
-                                locationSearchJob?.cancel()
-                                if (locationSuggestionService != null &&
-                                    newValue.length >= 5 &&
-                                    newValue.any { it.isLetter() }
-                                ) {
-                                    locationSearchJob = coroutineScope.launch {
-                                        delay(300)
-                                        isLoadingLocationSuggestions = true
-                                        locationSuggestions = locationSuggestionService.getSuggestions(newValue)
-                                        isLoadingLocationSuggestions = false
-                                        locationExpanded = locationSuggestions.isNotEmpty()
-                                    }
+                        org.onekash.kashcal.ui.components.category.TagChipRow(
+                            selected = state.categories.toSet(),
+                            suggestions = categorySuggestions,
+                            onToggle = { tag ->
+                                val current = state.categories
+                                state = if (current.any { it.equals(tag, ignoreCase = true) }) {
+                                    state.copy(categories = current.filterNot { it.equals(tag, ignoreCase = true) })
                                 } else {
-                                    locationSuggestions = emptyList()
-                                    locationExpanded = false
+                                    state.copy(categories = current + tag)
                                 }
                             },
-                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-                            // Wrap a long address to a second line instead of
-                            // scrolling it off the start on one line.
-                            maxLines = 2,
-                            enabled = !isReadOnly,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = Color.Transparent,
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedContainerColor = Color.Transparent
-                            ),
-                            trailingIcon = {
-                                if (isLoadingLocationSuggestions) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
-                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+                            onAdd = { tag ->
+                                if (state.categories.none { it.equals(tag, ignoreCase = true) }) {
+                                    state = state.copy(categories = state.categories + tag)
                                 }
-                            }
+                            },
+                            modifier = Modifier.weight(1f),
                         )
-
-                        ExposedDropdownMenu(
-                            expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                            onDismissRequest = { locationExpanded = false }
-                        ) {
-                            locationSuggestions.forEach { suggestion ->
-                                DropdownMenuItem(
-                                    text = { Text(suggestion.displayName) },
-                                    onClick = {
-                                        state = state.copy(location = suggestion.displayName)
-                                        locationExpanded = false
-                                        locationSuggestions = emptyList()
-                                    },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Place, contentDescription = null)
-                                    },
-                                    modifier = Modifier.height(48.dp)
-                                )
+                        if (onSetTagsAboveNotes != null) {
+                            // Mirror the left icon (24dp glyph, same 6dp top
+                            // nudge) so the ⋮ shares the chip baseline instead of
+                            // sitting low inside a 48dp button box.
+                            Box(modifier = Modifier.padding(top = 6.dp)) {
+                                CompositionLocalProvider(
+                                    LocalMinimumInteractiveComponentSize provides Dp.Unspecified
+                                ) {
+                                IconButton(
+                                    onClick = { showTagsMenu = true },
+                                    modifier = Modifier.size(24.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.MoreVert,
+                                        contentDescription = stringResource(R.string.cd_tags_move_menu),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                }
+                                DropdownMenu(
+                                    expanded = showTagsMenu,
+                                    onDismissRequest = { showTagsMenu = false },
+                                ) {
+                                    // The current position's item is disabled —
+                                    // only the move to the other position acts.
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.tags_move_above_notes)) },
+                                        enabled = !tagsAboveNotes,
+                                        onClick = {
+                                            onSetTagsAboveNotes(true)
+                                            showTagsMenu = false
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.tags_move_below_notes)) },
+                                        enabled = tagsAboveNotes,
+                                        onClick = {
+                                            onSetTagsAboveNotes(false)
+                                            showTagsMenu = false
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
-                    }
                 }
+
+                if (!isReadOnly && !state.isDeviceCalendar && tagsAboveNotes) {
+                    tagsRow()
                 }
 
                 if (shouldShowReadOnlyOptionalField(state.description, isReadOnly)) {
                 EventFormRow(
                     icon = Icons.AutoMirrored.Filled.Notes,
-                    iconContentDescription = stringResource(R.string.label_notes)
+                    iconContentDescription = stringResource(R.string.label_notes),
+                    // Notes is a multi-line field; top-align and drop the icon by
+                    // the field's own internal top padding so it meets the first
+                    // line of text rather than the field's top edge.
+                    verticalAlignment = Alignment.Top,
+                    iconTopPadding = 16.dp,
                 ) {
                     if (isReadOnly) {
                         Text(
@@ -1894,6 +2073,28 @@ fun EventFormContent(
                     )
                     }
                 }
+                }
+
+                // Tags row (default position): directly below notes, so the
+                // "personal" group (notes + tags) stays together above the
+                // "scheduling" group (attendees + free/busy). The user can flip
+                // it above notes via the row's ⋮ menu.
+                if (!isReadOnly && !state.isDeviceCalendar && !tagsAboveNotes) {
+                    tagsRow()
+                }
+
+                // Separates the personal group (notes/tags) from the scheduling
+                // group (attendees/free-busy) below. Only drawn when the
+                // personal group actually rendered something — in read-only
+                // mode with blank notes the whole group is empty, and an
+                // unconditional divider would stack against the section divider
+                // above it.
+                if (!isReadOnly || state.description.isNotBlank()) {
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .padding(vertical = SECTION_DIVIDER_SPACING)
+                            .testTag(TAG_GROUP_DIVIDER)
+                    )
                 }
 
                 // Editable organizer flow: an always-present, tappable
@@ -2087,6 +2288,33 @@ fun EventFormContent(
                     )
                 }
 
+                // Free/Busy availability — the last content row, paired with
+                // attendees in the "scheduling" group. Rendered in read-only
+                // mode too (chips disabled), so it stays outside any
+                // !isReadOnly gate.
+                EventFormRow(
+                    icon = Icons.Default.EventAvailable,
+                    iconContentDescription = stringResource(R.string.label_availability)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilterChip(
+                            selected = state.transp == "OPAQUE",
+                            onClick = { if (!isReadOnly) state = state.copy(transp = "OPAQUE") },
+                            enabled = !isReadOnly,
+                            label = { Text(stringResource(R.string.label_busy)) }
+                        )
+                        FilterChip(
+                            selected = state.transp == "TRANSPARENT",
+                            onClick = { if (!isReadOnly) state = state.copy(transp = "TRANSPARENT") },
+                            enabled = !isReadOnly,
+                            label = { Text(stringResource(R.string.label_free)) }
+                        )
+                    }
+                }
+
                 if (showColorPicker) {
                     EventColorSheet(
                         selectedArgb = state.eventColor,
@@ -2128,12 +2356,14 @@ fun EventFormContent(
                     }
                 }
 
-                HorizontalDivider()
-
-
                 val canDeleteRoom = eventId != null && onDelete != null
                 val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
                 if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
+                    // Leading separator for the delete section. Lives inside the
+                    // edit-mode guard so create mode doesn't draw a divider that
+                    // then stacks against the sticky Save button's own divider.
+                    HorizontalDivider(modifier = Modifier.testTag(TAG_DELETE_DIVIDER))
+
                     // Commits the actual delete via the host's
                     // callback. Used by both the inline-confirmation
                     // path (non-recurring) and the direct path
@@ -2240,14 +2470,15 @@ fun EventFormContent(
                             }
                         }
                     }
-                    HorizontalDivider()
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            // Sticky bottom save button
-            HorizontalDivider()
+            // Sticky bottom save button. Its own top divider separates it from
+            // whatever the scroll content ended with, so content sections must
+            // not add a trailing divider here (it would stack against this one).
+            HorizontalDivider(modifier = Modifier.testTag(TAG_SAVE_DIVIDER))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

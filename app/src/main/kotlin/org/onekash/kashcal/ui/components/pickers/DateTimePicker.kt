@@ -35,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +43,7 @@ import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.onekash.kashcal.R
@@ -229,7 +232,10 @@ fun DateTimeDisplayRow(
     } else null
 
     Column(modifier = modifier) {
-        // All-day toggle with clock icon
+        // All-day toggle with clock icon. A Switch reserves a 48dp interactive
+        // box, which inflates this row's height above the single-line rows and
+        // opens a larger gap above the label after the divider. Opt the switch
+        // out of that minimum so the row sits at the text/switch height.
         EventFormRow(
             icon = Icons.Default.Schedule,
             iconContentDescription = stringResource(R.string.label_all_day),
@@ -240,10 +246,12 @@ fun DateTimeDisplayRow(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f)
             )
-            Switch(
-                checked = isAllDay,
-                onCheckedChange = onAllDayToggle
-            )
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                Switch(
+                    checked = isAllDay,
+                    onCheckedChange = onAllDayToggle
+                )
+            }
         }
 
         // Start date/time — indented to align with text (past icon column)

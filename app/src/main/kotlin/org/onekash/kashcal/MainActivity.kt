@@ -1446,6 +1446,7 @@ class MainActivity : FragmentActivity() {
                         },
                         locationSuggestionService = locationSuggestionService,
                         onSuggestTitles = { prefix -> homeViewModel.suggestTitles(prefix) },
+                        categorySuggestions = uiState.categorySuggestions,
                         timeFormat = uiState.timeFormat,
                         firstDayOfWeek = uiState.firstDayOfWeek,
                         // Device calendar edit support
@@ -1496,7 +1497,9 @@ class MainActivity : FragmentActivity() {
                             contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
                         },
                         contactsDeclined = contactsDeclined,
-                        onDeclineContacts = { homeViewModel.declineContactSuggestions() }
+                        onDeclineContacts = { homeViewModel.declineContactSuggestions() },
+                        tagsAboveNotes = uiState.tagsAboveNotes,
+                        onSetTagsAboveNotes = { above -> homeViewModel.setTagsAboveNotes(above) }
                     )
                 }
 

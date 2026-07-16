@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Tên sự kiện</string>
     <string name="label_location">Địa điểm</string>
-    <string name="label_location_hint">Địa chỉ, phòng, hoặc liên kết họp</string>
+    <string name="label_location_hint">Địa chỉ hoặc liên kết</string>
     <string name="label_notes">Ghi chú</string>
+    <string name="label_categories">Thẻ</string>
+    <string name="tags_new">Thẻ mới</string>
+    <string name="tags_empty_reject">Nhập tên thẻ</string>
+    <string name="tags_too_long">Thẻ quá dài</string>
+    <string name="tags_comma_reject">Thẻ không được chứa dấu phẩy</string>
+    <string name="tags_hint_n_more">+%1$d nữa</string>
+    <string name="tags_autocomplete_create_new">Tạo \"%1$s\"</string>
+    <string name="cd_tag">Thẻ: %1$s</string>
+    <string name="cd_tags_move_menu">Di chuyển thẻ</string>
+    <string name="tags_move_above_notes">Di chuyển lên trên ghi chú</string>
+    <string name="tags_move_below_notes">Di chuyển xuống dưới ghi chú</string>
     <string name="label_starts">Bắt đầu</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Mật khẩu dành riêng cho ứng dụng</string>
@@ -630,6 +641,9 @@
     <plurals name="event_count">
         <item quantity="other">%1$d sự kiện</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">%1$d lịch</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d phút</item>
     </plurals>
@@ -783,6 +797,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
     <string name="sync_notification_expired_content_calendar">%1$s trong %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s trải trên %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">Đã đồng bộ %1$d lịch</item>

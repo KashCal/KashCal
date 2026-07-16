@@ -138,9 +138,31 @@
     <string name="label_event_title">Event title</string>
     <string name="label_location">Location</string>
     <!-- Hint text inside empty location field -->
-    <string name="label_location_hint">Address, room, or meeting link</string>
+    <string name="label_location_hint">Address or link</string>
     <!-- Form field: event description/notes (noun, not verb) -->
     <string name="label_notes">Notes</string>
+    <!-- Form field: event tags/categories (UI says "Tags"; RFC 5545 CATEGORIES under the hood) -->
+    <string name="label_categories">Tags</string>
+    <!-- Placeholder in the inline add-a-tag text field -->
+    <string name="tags_new">New tag</string>
+    <!-- Inline error: tag name was blank -->
+    <string name="tags_empty_reject">Enter a tag name</string>
+    <!-- Inline error: tag name exceeds the length limit -->
+    <string name="tags_too_long">Tag is too long</string>
+    <!-- Inline error: tag name contained a comma -->
+    <string name="tags_comma_reject">Tags can\'t contain commas</string>
+    <!-- Overflow badge on cards, e.g. "+2 more" tags; %1$d is the hidden count -->
+    <string name="tags_hint_n_more">+%1$d more</string>
+    <!-- Autocomplete row that creates a brand-new tag; %1$s is the typed name -->
+    <string name="tags_autocomplete_create_new">Create \"%1$s\"</string>
+    <!-- Accessibility label for a tag chip; %1$s is the tag name -->
+    <string name="cd_tag">Tag: %1$s</string>
+    <!-- Accessibility label for the overflow button that moves the tag row -->
+    <string name="cd_tags_move_menu">Move tags</string>
+    <!-- Menu action: move the tag row above the notes and attendees -->
+    <string name="tags_move_above_notes">Move above notes</string>
+    <!-- Menu action: move the tag row below the notes and attendees -->
+    <string name="tags_move_below_notes">Move below notes</string>
     <!-- Form field: event start time -->
     <string name="label_starts">Starts</string>
     <!-- Keep "Apple ID" untranslated -->
@@ -952,6 +974,10 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="other">%1$d calendars</item>
+    </plurals>
 
     <!-- Time unit plurals -->
     <plurals name="time_minutes">
@@ -1291,6 +1317,8 @@
     <string name="sync_notification_expired_content">%1$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar count text (e.g., "3 calendars") -->
+    <string name="sync_notification_expired_content_calendars">%1$s across %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synced %1$d calendar</item>

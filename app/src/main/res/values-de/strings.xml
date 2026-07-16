@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Terminname</string>
     <string name="label_location">Ort</string>
-    <string name="label_location_hint">Adresse, Raum oder Meeting-Link</string>
+    <string name="label_location_hint">Adresse oder Link</string>
     <string name="label_notes">Notizen</string>
+    <string name="label_categories">Tags</string>
+    <string name="tags_new">Neuer Tag</string>
+    <string name="tags_empty_reject">Gib einen Tag-Namen ein</string>
+    <string name="tags_too_long">Tag ist zu lang</string>
+    <string name="tags_comma_reject">Tags dürfen keine Kommas enthalten</string>
+    <string name="tags_hint_n_more">+%1$d weitere</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" erstellen</string>
+    <string name="cd_tag">Tag: %1$s</string>
+    <string name="cd_tags_move_menu">Tags verschieben</string>
+    <string name="tags_move_above_notes">Über Notizen verschieben</string>
+    <string name="tags_move_below_notes">Unter Notizen verschieben</string>
     <string name="label_starts">Beginn</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App-spezifisches Passwort</string>
@@ -670,6 +681,10 @@
         <item quantity="one">%1$d Termin</item>
         <item quantity="other">%1$d Termine</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d Kalender</item>
+        <item quantity="other">%1$d Kalender</item>
+    </plurals>
 
     <plurals name="time_minutes">
         <item quantity="one">%1$d Minute</item>
@@ -837,6 +852,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s konnten nach 30 Tagen nicht synchronisiert werden. Die Serverversion wird verwendet. Vollständige Synchronisierung zum Wiederholen.</string>
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s konnten nach 30 Tagen nicht synchronisiert werden. Die Serverversion wird verwendet. Vollständige Synchronisierung zum Wiederholen.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s über %2$s hinweg konnten nach 30 Tagen nicht synchronisiert werden. Die Serverversion wird verwendet. Vollständige Synchronisierung zum Wiederholen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d Kalender synchronisiert</item>

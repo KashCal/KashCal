@@ -365,6 +365,37 @@ class UrlUtilsTest {
     }
 
     @Test
+    fun `cleanHtmlEntities - decodes astral (supplementary) code points`() {
+        // Code points above U+FFFF need a surrogate pair; a 16-bit truncation
+        // would corrupt them. U+1F600 GRINNING FACE, U+1F4C5 CALENDAR.
+        assertEquals("😀", cleanHtmlEntities("&#128512;"))
+        assertEquals("Meeting 📅", cleanHtmlEntities("Meeting &#128197;"))
+    }
+
+    @Test
+    fun `cleanHtmlEntities - leaves invalid code points as literal text`() {
+        // Bare surrogate halves are not valid scalar values, and values above
+        // U+10FFFF are out of range — both must be left untouched, not corrupted.
+        assertEquals("&#55296;", cleanHtmlEntities("&#55296;")) // U+D800 high surrogate
+        assertEquals("&#1114112;", cleanHtmlEntities("&#1114112;")) // U+110000, out of range
+    }
+
+    @Test
+    fun `cleanHtmlEntities - decodes hexadecimal numeric entities`() {
+        // &#xHH; is the hex form of a numeric entity — at least as common as the
+        // decimal form for emoji in real HTML. Case-insensitive on the x and digits.
+        assertEquals("A", cleanHtmlEntities("&#x41;"))
+        assertEquals("😀", cleanHtmlEntities("&#x1F600;"))
+        assertEquals("😀", cleanHtmlEntities("&#X1f600;"))
+    }
+
+    @Test
+    fun `cleanHtmlEntities - leaves invalid hex code points as literal text`() {
+        assertEquals("&#xD800;", cleanHtmlEntities("&#xD800;")) // surrogate
+        assertEquals("&#x110000;", cleanHtmlEntities("&#x110000;")) // out of range
+    }
+
+    @Test
     fun `cleanHtmlEntities - case insensitive`() {
         assertEquals("&", cleanHtmlEntities("&AMP;"))
         assertEquals("<", cleanHtmlEntities("&LT;"))

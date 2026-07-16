@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">イベントのタイトル</string>
     <string name="label_location">場所</string>
-    <string name="label_location_hint">住所、会議室、またはリンク</string>
+    <string name="label_location_hint">住所またはリンク</string>
     <string name="label_notes">メモ</string>
+    <string name="label_categories">タグ</string>
+    <string name="tags_new">新しいタグ</string>
+    <string name="tags_empty_reject">タグ名を入力してください</string>
+    <string name="tags_too_long">タグが長すぎます</string>
+    <string name="tags_comma_reject">タグにカンマは使用できません</string>
+    <string name="tags_hint_n_more">他%1$d件</string>
+    <string name="tags_autocomplete_create_new">「%1$s」を作成</string>
+    <string name="cd_tag">タグ: %1$s</string>
+    <string name="cd_tags_move_menu">タグを移動</string>
+    <string name="tags_move_above_notes">メモの上に移動</string>
+    <string name="tags_move_below_notes">メモの下に移動</string>
     <string name="label_starts">開始</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App用パスワード</string>
@@ -630,6 +641,9 @@
     <plurals name="event_count">
         <item quantity="other">%1$d件のイベント</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">%1$d件のカレンダー</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d分</item>
     </plurals>
@@ -783,6 +797,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
     <string name="sync_notification_expired_content_calendar">%2$sの%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
+    <string name="sync_notification_expired_content_calendars">%2$sにまたがる%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">%1$d個のカレンダーを同期しました</item>

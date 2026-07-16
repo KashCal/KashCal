@@ -126,8 +126,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Назва падзеі</string>
     <string name="label_location">Месца</string>
-    <string name="label_location_hint">Адрас, пакой або спасылка на сустрэчу</string>
+    <string name="label_location_hint">Адрас або спасылка</string>
     <string name="label_notes">Нататкі</string>
+    <string name="label_categories">Тэгі</string>
+    <string name="tags_new">Новы тэг</string>
+    <string name="tags_empty_reject">Увядзіце назву тэга</string>
+    <string name="tags_too_long">Тэг занадта доўгі</string>
+    <string name="tags_comma_reject">Тэгі не могуць змяшчаць коскі</string>
+    <string name="tags_hint_n_more">+яшчэ %1$d</string>
+    <string name="tags_autocomplete_create_new">Стварыць «%1$s»</string>
+    <string name="cd_tag">Тэг: %1$s</string>
+    <string name="cd_tags_move_menu">Перамясціць тэгі</string>
+    <string name="tags_move_above_notes">Перамясціць над нататкамі</string>
+    <string name="tags_move_below_notes">Перамясціць пад нататкі</string>
     <string name="label_starts">Пачатак</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Пароль праграмы</string>
@@ -717,6 +728,12 @@
         <item quantity="many">%1$d падзей</item>
         <item quantity="other">%1$d падзей</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d каляндар</item>
+        <item quantity="few">%1$d календары</item>
+        <item quantity="many">%1$d календароў</item>
+        <item quantity="other">%1$d календароў</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d хвіліна</item>
         <item quantity="few">%1$d хвіліны</item>
@@ -887,6 +904,7 @@
     <string name="sync_notification_expired_title">Змены сінхранізацыі пратэрмінаваны</string>
     <string name="sync_notification_expired_content">%1$s не ўдалося сінхранізаваць за 30 дзён. Будзе выкарыстана версія сервера. Прымусовая сінхранізацыя для паўтору.</string>
     <string name="sync_notification_expired_content_calendar">%1$s у %2$s не ўдалося сінхранізаваць за 30 дзён. Будзе выкарыстана версія сервера. Прымусовая сінхранізацыя для паўтору.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s у %2$s не ўдалося сінхранізаваць за 30 дзён. Будзе выкарыстана версія сервера. Прымусовая сінхранізацыя для паўтору.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Сінхранізавана %1$d каляндар</item>
         <item quantity="few">Сінхранізавана %1$d каляндары</item>

@@ -98,6 +98,17 @@ class ReminderSchedulerParseTest {
     }
 
     @Test
+    fun `parseIsoDuration returns null on overflow instead of throwing or wrapping`() {
+        // Overflowing counts must fail safe to null — never a wrapped value and
+        // never an uncaught exception (ReminderConverter does not wrap this call
+        // in try/catch). Note P100000000000000D overflows to a POSITIVE value that
+        // the existing `totalMillis > 0` guard does NOT catch — the real defect.
+        assertNull(parseIsoDuration("P999999999999W"))      // wraps negative (already caught)
+        assertNull(parseIsoDuration("P100000000000000D"))   // wraps positive (the real bug)
+        assertNull(parseIsoDuration("PT99999999999999999H"))
+    }
+
+    @Test
     fun `parseIsoDuration returns correct millis for P2W`() {
         val result = parseIsoDuration("P2W")
         assertEquals(14 * 24 * 60 * 60 * 1000L, result)

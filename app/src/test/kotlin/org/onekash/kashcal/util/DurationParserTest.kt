@@ -98,4 +98,13 @@ class DurationParserTest {
         val result = DateTimeUtils.parseDurationToMillis("P1W")
         assertEquals(604_800_000L, result)
     }
+
+    @Test
+    fun `parseDurationToMillis returns null on overflow rather than a garbage negative`() {
+        // A week count whose millisecond total overflows Long must fail safe
+        // (null) so the caller falls back to endTs — never a negative duration
+        // that would place the event's end before its start.
+        assertNull(DateTimeUtils.parseDurationToMillis("P999999999999W"))
+        assertNull(DateTimeUtils.parseDurationToMillis("PT99999999999999999H"))
+    }
 }

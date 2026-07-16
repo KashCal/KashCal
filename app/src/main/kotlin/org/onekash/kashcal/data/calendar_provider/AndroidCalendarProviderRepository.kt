@@ -2145,11 +2145,13 @@ internal fun parseDurationMs(duration: String?, isAllDay: Boolean): Long {
             when {
                 cleaned.endsWith("W") -> {
                     val weeks = cleaned.removeSuffix("W").toLongOrNull() ?: 1
-                    weeks * 7 * 86_400_000L
+                    // Exact arithmetic: an absurd count overflows into the catch
+                    // below (→ defaultMs), never a garbage negative DTEND.
+                    Math.multiplyExact(weeks, 7 * 86_400_000L)
                 }
                 cleaned.endsWith("D") -> {
                     val days = cleaned.removeSuffix("D").toLongOrNull() ?: 1
-                    days * 86_400_000L
+                    Math.multiplyExact(days, 86_400_000L)
                 }
                 else -> defaultMs
             }

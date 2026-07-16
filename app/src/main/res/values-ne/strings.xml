@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">कार्यक्रम शीर्षक</string>
     <string name="label_location">स्थान</string>
-    <string name="label_location_hint">ठेगाना, कोठा, वा बैठक लिंक</string>
+    <string name="label_location_hint">ठेगाना वा लिङ्क</string>
     <string name="label_notes">टिप्पणीहरू</string>
+    <string name="label_categories">ट्यागहरू</string>
+    <string name="tags_new">नयाँ ट्याग</string>
+    <string name="tags_empty_reject">ट्यागको नाम प्रविष्ट गर्नुहोस्</string>
+    <string name="tags_too_long">ट्याग धेरै लामो छ</string>
+    <string name="tags_comma_reject">ट्यागहरूमा अल्पविराम राख्न मिल्दैन</string>
+    <string name="tags_hint_n_more">+%1$d थप</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" सिर्जना गर्नुहोस्</string>
+    <string name="cd_tag">ट्याग: %1$s</string>
+    <string name="cd_tags_move_menu">ट्यागहरू सार्नुहोस्</string>
+    <string name="tags_move_above_notes">टिप्पणीमाथि सार्नुहोस्</string>
+    <string name="tags_move_below_notes">टिप्पणीमुनि सार्नुहोस्</string>
     <string name="label_starts">सुरु हुन्छ</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">एप-विशिष्ट पासवर्ड</string>
@@ -656,6 +667,10 @@
         <item quantity="one">%1$d कार्यक्रम</item>
         <item quantity="other">%1$d कार्यक्रम</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d क्यालेन्डर</item>
+        <item quantity="other">%1$d क्यालेन्डर</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d मिनेट</item>
         <item quantity="other">%1$d मिनेट</item>
@@ -821,6 +836,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
     <string name="sync_notification_expired_content_calendar">%2$s मा %1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s मा %1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d क्यालेन्डर सिंक गरियो</item>

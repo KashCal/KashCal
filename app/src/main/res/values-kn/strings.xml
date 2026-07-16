@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ಈವೆಂಟ್ ಶೀರ್ಷಿಕೆ</string>
     <string name="label_location">ಸ್ಥಳ</string>
-    <string name="label_location_hint">ವಿಳಾಸ, ಕೊಠಡಿ, ಅಥವಾ ಮೀಟಿಂಗ್ ಲಿಂಕ್</string>
+    <string name="label_location_hint">ವಿಳಾಸ ಅಥವಾ ಲಿಂಕ್</string>
     <string name="label_notes">ಟಿಪ್ಪಣಿಗಳು</string>
+    <string name="label_categories">ಟ್ಯಾಗ್‌ಗಳು</string>
+    <string name="tags_new">ಹೊಸ ಟ್ಯಾಗ್</string>
+    <string name="tags_empty_reject">ಟ್ಯಾಗ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ</string>
+    <string name="tags_too_long">ಟ್ಯಾಗ್ ತುಂಬಾ ಉದ್ದವಾಗಿದೆ</string>
+    <string name="tags_comma_reject">ಟ್ಯಾಗ್‌ಗಳಲ್ಲಿ ಅಲ್ಪವಿರಾಮಗಳು ಇರುವಂತಿಲ್ಲ</string>
+    <string name="tags_hint_n_more">+%1$d ಇನ್ನಷ್ಟು</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" ರಚಿಸಿ</string>
+    <string name="cd_tag">ಟ್ಯಾಗ್: %1$s</string>
+    <string name="cd_tags_move_menu">ಟ್ಯಾಗ್‌ಗಳನ್ನು ಸರಿಸಿ</string>
+    <string name="tags_move_above_notes">ಟಿಪ್ಪಣಿಗಳ ಮೇಲೆ ಸರಿಸಿ</string>
+    <string name="tags_move_below_notes">ಟಿಪ್ಪಣಿಗಳ ಕೆಳಗೆ ಸರಿಸಿ</string>
     <string name="label_starts">ಪ್ರಾರಂಭ</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ಆ್ಯಪ್-ನಿರ್ದಿಷ್ಟ ಪಾಸ್‌ವರ್ಡ್</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d ಈವೆಂಟ್</item>
         <item quantity="other">%1$d ಈವೆಂಟ್‌ಗಳು</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d ಕ್ಯಾಲೆಂಡರ್</item>
+        <item quantity="other">%1$d ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d ನಿಮಿಷ</item>
         <item quantity="other">%1$d ನಿಮಿಷಗಳು</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 ದಿನಗಳ ನಂತರವೂ %1$s ಸಿಂಕ್ ಆಗಲಿಲ್ಲ. ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಲಾಗುವುದು. ಮರುಪ್ರಯತ್ನಿಸಲು ಫೋರ್ಸ್ ಸಿಂಕ್ ಮಾಡಿ.</string>
     <string name="sync_notification_expired_content_calendar">%2$s ನಲ್ಲಿರುವ %1$s 30 ದಿನಗಳ ನಂತರವೂ ಸಿಂಕ್ ಆಗಲಿಲ್ಲ. ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಲಾಗುವುದು. ಮರುಪ್ರಯತ್ನಿಸಲು ಫೋರ್ಸ್ ಸಿಂಕ್ ಮಾಡಿ.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ಉದ್ದಕ್ಕೂ ಇರುವ %1$s 30 ದಿನಗಳ ನಂತರವೂ ಸಿಂಕ್ ಆಗಲಿಲ್ಲ. ಸರ್ವರ್ ಆವೃತ್ತಿ ಬಳಸಲಾಗುವುದು. ಮರುಪ್ರಯತ್ನಿಸಲು ಫೋರ್ಸ್ ಸಿಂಕ್ ಮಾಡಿ.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ಕ್ಯಾಲೆಂಡರ್ ಸಿಂಕ್ ಆಯಿತು</item>

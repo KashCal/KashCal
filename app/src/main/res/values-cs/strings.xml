@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Název události</string>
     <string name="label_location">Místo</string>
-    <string name="label_location_hint">Adresa, místnost nebo odkaz na schůzku</string>
+    <string name="label_location_hint">Adresa nebo odkaz</string>
     <string name="label_notes">Poznámky</string>
+    <string name="label_categories">Štítky</string>
+    <string name="tags_new">Nový štítek</string>
+    <string name="tags_empty_reject">Zadejte název štítku</string>
+    <string name="tags_too_long">Štítek je příliš dlouhý</string>
+    <string name="tags_comma_reject">Štítky nemohou obsahovat čárky</string>
+    <string name="tags_hint_n_more">+%1$d dalších</string>
+    <string name="tags_autocomplete_create_new">Vytvořit \"%1$s\"</string>
+    <string name="cd_tag">Štítek: %1$s</string>
+    <string name="cd_tags_move_menu">Přesunout štítky</string>
+    <string name="tags_move_above_notes">Přesunout nad poznámky</string>
+    <string name="tags_move_below_notes">Přesunout pod poznámky</string>
     <string name="label_starts">Začátek</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Heslo pro aplikaci</string>
@@ -704,6 +715,11 @@
         <item quantity="many">%1$d událostí</item>
         <item quantity="other">%1$d událostí</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalendář</item>
+        <item quantity="few">%1$d kalendáře</item>
+        <item quantity="other">%1$d kalendářů</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuta</item>
         <item quantity="few">%1$d minuty</item>
@@ -890,6 +906,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s se nepodařilo synchronizovat po 30 dnech. Bude použita verze ze serveru. Vynuťte synchronizaci pro opakování.</string>
     <string name="sync_notification_expired_content_calendar">%1$s v %2$s se nepodařilo synchronizovat po 30 dnech. Bude použita verze ze serveru. Vynuťte synchronizaci pro opakování.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s napříč %2$s se nepodařilo synchronizovat po 30 dnech. Bude použita verze ze serveru. Vynuťte synchronizaci pro opakování.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synchronizován %1$d kalendář</item>

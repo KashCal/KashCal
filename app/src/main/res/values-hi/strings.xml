@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">इवेंट का शीर्षक</string>
     <string name="label_location">स्थान</string>
-    <string name="label_location_hint">पता, कमरा, या मीटिंग लिंक</string>
+    <string name="label_location_hint">पता या लिंक</string>
     <string name="label_notes">नोट्स</string>
+    <string name="label_categories">टैग</string>
+    <string name="tags_new">नया टैग</string>
+    <string name="tags_empty_reject">टैग का नाम दर्ज करें</string>
+    <string name="tags_too_long">टैग बहुत लंबा है</string>
+    <string name="tags_comma_reject">टैग में अल्पविराम नहीं हो सकते</string>
+    <string name="tags_hint_n_more">+%1$d और</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" बनाएँ</string>
+    <string name="cd_tag">टैग: %1$s</string>
+    <string name="cd_tags_move_menu">टैग ले जाएँ</string>
+    <string name="tags_move_above_notes">नोट्स के ऊपर ले जाएँ</string>
+    <string name="tags_move_below_notes">नोट्स के नीचे ले जाएँ</string>
     <string name="label_starts">शुरू</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ऐप-विशिष्ट पासवर्ड</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d इवेंट</item>
         <item quantity="other">%1$d इवेंट</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d कैलेंडर</item>
+        <item quantity="other">%1$d कैलेंडर</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d मिनट</item>
         <item quantity="other">%1$d मिनट</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 दिनों के बाद %1$s सिंक नहीं हो सके। सर्वर संस्करण उपयोग किया जाएगा। पुनः प्रयास के लिए फोर्स सिंक करें।</string>
     <string name="sync_notification_expired_content_calendar">%2$s में %1$s 30 दिनों के बाद सिंक नहीं हो सके। सर्वर संस्करण उपयोग किया जाएगा। पुनः प्रयास के लिए फोर्स सिंक करें।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s में %1$s 30 दिनों के बाद सिंक नहीं हो सके। सर्वर संस्करण उपयोग किया जाएगा। पुनः प्रयास के लिए फोर्स सिंक करें।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d कैलेंडर सिंक किया गया</item>

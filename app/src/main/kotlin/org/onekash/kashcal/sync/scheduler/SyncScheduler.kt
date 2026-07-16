@@ -3,10 +3,8 @@ package org.onekash.kashcal.sync.scheduler
 import android.content.Context
 import android.util.Log
 import androidx.work.BackoffPolicy
-import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -21,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.session.SyncTrigger
+import org.onekash.kashcal.sync.util.SyncNetworkConstraints
 import org.onekash.kashcal.sync.worker.CalDavSyncWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -121,18 +120,19 @@ class SyncScheduler @Inject constructor(
 
     /**
      * Standard network constraints for sync operations.
-     * Requires any network connection.
+     *
+     * Requires a connected, internet-capable network without requiring
+     * public-internet validation, so sync runs against self-hosted CalDAV
+     * servers on a LAN or VPN (#296). See [SyncNetworkConstraints].
      */
-    private val networkConstraints = Constraints.Builder()
-        .setRequiredNetworkType(NetworkType.CONNECTED)
+    private val networkConstraints = SyncNetworkConstraints.builder()
         .build()
 
     /**
      * Relaxed constraints for expedited work.
-     * Still requires network but runs immediately.
+     * Still requires network (same INTERNET-without-VALIDATED rule) but runs immediately.
      */
-    private val expeditedConstraints = Constraints.Builder()
-        .setRequiredNetworkType(NetworkType.CONNECTED)
+    private val expeditedConstraints = SyncNetworkConstraints.builder()
         .build()
 
     /**

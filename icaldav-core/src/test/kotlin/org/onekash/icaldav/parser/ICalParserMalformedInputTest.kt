@@ -596,5 +596,30 @@ class ICalParserMalformedInputTest {
                 assertEquals("red", events[0].color)
             }
         }
+
+        @Test
+        fun `empty category elements are dropped, not carried into the event`() {
+            // A malformed "foo,,bar" (and a trailing comma) must not yield blank
+            // categories — those would render as blank chips and round-trip back
+            // to the server on the next save.
+            val ical = """
+                BEGIN:VCALENDAR
+                VERSION:2.0
+                PRODID:-//Test//Test//EN
+                BEGIN:VEVENT
+                UID:blank-cats
+                DTSTART:20231215T100000Z
+                SUMMARY:Blank categories
+                CATEGORIES:foo,,bar,
+                END:VEVENT
+                END:VCALENDAR
+            """.trimIndent()
+
+            val result = parser.parseAllEvents(ical)
+            val events = result.getOrNull()
+            assertNotNull(events)
+            assertTrue(events!!.isNotEmpty())
+            assertEquals(listOf("foo", "bar"), events[0].categories)
+        }
     }
 }

@@ -117,8 +117,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Заглавие на събитие</string>
     <string name="label_location">Местоположение</string>
-    <string name="label_location_hint">Адрес, стая или линк за среща</string>
+    <string name="label_location_hint">Адрес или връзка</string>
     <string name="label_notes">Бележки</string>
+    <string name="label_categories">Етикети</string>
+    <string name="tags_new">Нов етикет</string>
+    <string name="tags_empty_reject">Въведете име на етикет</string>
+    <string name="tags_too_long">Етикетът е твърде дълъг</string>
+    <string name="tags_comma_reject">Етикетите не могат да съдържат запетаи</string>
+    <string name="tags_hint_n_more">+още %1$d</string>
+    <string name="tags_autocomplete_create_new">Създаване на „%1$s“</string>
+    <string name="cd_tag">Етикет: %1$s</string>
+    <string name="cd_tags_move_menu">Преместване на етикетите</string>
+    <string name="tags_move_above_notes">Преместване над бележките</string>
+    <string name="tags_move_below_notes">Преместване под бележките</string>
     <string name="label_starts">Начало</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Парола за приложение</string>
@@ -708,6 +719,10 @@
         <item quantity="one">%1$d събитие</item>
         <item quantity="other">%1$d събития</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d календар</item>
+        <item quantity="other">%1$d календара</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d минута</item>
         <item quantity="other">%1$d минути</item>
@@ -874,6 +889,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
     <string name="sync_notification_expired_content_calendar">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d календар синхронизиран</item>

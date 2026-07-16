@@ -122,8 +122,19 @@
     <!-- Form Labels -->
     <string name="label_event_title">Gertaeraren izenburua</string>
     <string name="label_location">Kokapena</string>
-    <string name="label_location_hint">Helbidea, gela edo bilera-esteka</string>
+    <string name="label_location_hint">Helbidea edo esteka</string>
     <string name="label_notes">Oharrak</string>
+    <string name="label_categories">Etiketak</string>
+    <string name="tags_new">Etiketa berria</string>
+    <string name="tags_empty_reject">Idatzi etiketa baten izena</string>
+    <string name="tags_too_long">Etiketa luzeegia da</string>
+    <string name="tags_comma_reject">Etiketek ezin dute komarik izan</string>
+    <string name="tags_hint_n_more">+%1$d gehiago</string>
+    <string name="tags_autocomplete_create_new">Sortu «%1$s»</string>
+    <string name="cd_tag">Etiketa: %1$s</string>
+    <string name="cd_tags_move_menu">Eraman etiketak</string>
+    <string name="tags_move_above_notes">Eraman oharren gainera</string>
+    <string name="tags_move_below_notes">Eraman oharren azpira</string>
     <string name="label_starts">Hasiera</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Aplikaziorako pasahitza</string>
@@ -690,6 +701,10 @@
         <item quantity="one">gertaera %1$d</item>
         <item quantity="other">%1$d gertaera</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">egutegi %1$d</item>
+        <item quantity="other">%1$d egutegi</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">minutu %1$d</item>
         <item quantity="other">%1$d minutu</item>
@@ -887,6 +902,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
     <string name="sync_notification_expired_content_calendar">%2$s egutegiko %1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s ezin izan dira %2$s-etan 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d egutegi sinkronizatu da</item>

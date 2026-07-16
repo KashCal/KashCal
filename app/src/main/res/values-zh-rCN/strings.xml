@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">事件标题</string>
     <string name="label_location">地点</string>
-    <string name="label_location_hint">地址、会议室或链接</string>
+    <string name="label_location_hint">地址或链接</string>
     <string name="label_notes">备注</string>
+    <string name="label_categories">标签</string>
+    <string name="tags_new">新建标签</string>
+    <string name="tags_empty_reject">请输入标签名称</string>
+    <string name="tags_too_long">标签过长</string>
+    <string name="tags_comma_reject">标签不能包含逗号</string>
+    <string name="tags_hint_n_more">还有 %1$d 个</string>
+    <string name="tags_autocomplete_create_new">创建“%1$s”</string>
+    <string name="cd_tag">标签：%1$s</string>
+    <string name="cd_tags_move_menu">移动标签</string>
+    <string name="tags_move_above_notes">上移到备注上方</string>
+    <string name="tags_move_below_notes">下移到备注下方</string>
     <string name="label_starts">开始</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App 专用密码</string>
@@ -630,6 +641,9 @@
     <plurals name="event_count">
         <item quantity="other">%1$d 个事件</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">%1$d 个日历</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d 分钟</item>
     </plurals>
@@ -783,6 +797,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s在30天后仍无法同步。将使用服务器版本。请尝试强制同步。</string>
     <string name="sync_notification_expired_content_calendar">%2$s中的%1$s在30天后仍无法同步。将使用服务器版本。请尝试强制同步。</string>
+    <string name="sync_notification_expired_content_calendars">跨%2$s的%1$s在30天后仍无法同步。将使用服务器版本。请尝试强制同步。</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">已同步%1$d个日历</item>

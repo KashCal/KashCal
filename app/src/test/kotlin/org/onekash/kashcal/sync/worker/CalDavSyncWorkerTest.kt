@@ -42,6 +42,7 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncError
+import org.onekash.kashcal.sync.notification.ExpiredCalendarScope
 import org.onekash.kashcal.sync.engine.SyncPhase
 import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.model.ChangeType
@@ -1039,7 +1040,7 @@ class CalDavSyncWorkerTest {
             lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
         )
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
-        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
         coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
@@ -1054,16 +1055,20 @@ class CalDavSyncWorkerTest {
 
         // Then - operation abandoned and user notified with the calendar name
         coVerify { pendingOperationsDao.abandonOperation(1L, any(), any()) }
-        verify { notificationManager.showOperationExpiredNotification(1, "Home") }
+        verify {
+            notificationManager.showOperationExpiredNotification(
+                1, ExpiredCalendarScope.Single("Home")
+            )
+        }
     }
 
     @Test
-    fun `doWork passes null calendar name when expired ops span multiple calendars`() = runTest {
+    fun `doWork reports calendar count when expired ops span multiple calendars`() = runTest {
         // Given - two expired ops resolving to two different calendars
         val op1 = PendingOperation(id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_CREATE)
         val op2 = PendingOperation(id = 2L, eventId = 200L, operation = PendingOperation.OPERATION_CREATE)
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(op1, op2)
-        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
         coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
@@ -1077,8 +1082,12 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - count-only fallback (no single calendar to name)
-        verify { notificationManager.showOperationExpiredNotification(2, null) }
+        // Then - names the number of calendars affected, not a single one
+        verify {
+            notificationManager.showOperationExpiredNotification(
+                2, ExpiredCalendarScope.Multiple(2)
+            )
+        }
     }
 
     @Test
@@ -1094,7 +1103,7 @@ class CalDavSyncWorkerTest {
             lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
         )
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
-        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
         // Event row has already moved to the target calendar (8L).
@@ -1109,15 +1118,19 @@ class CalDavSyncWorkerTest {
         worker.doWork()
 
         // Then - names the source calendar (7L), not the event's current target (8L)
-        verify { notificationManager.showOperationExpiredNotification(1, "Source Cal") }
+        verify {
+            notificationManager.showOperationExpiredNotification(
+                1, ExpiredCalendarScope.Single("Source Cal")
+            )
+        }
     }
 
     @Test
-    fun `doWork passes null calendar name when expired op event was deleted`() = runTest {
+    fun `doWork reports unknown scope when expired op event was deleted`() = runTest {
         // Given - an expired op whose event no longer exists (ops survive event deletion)
         val expiredOp = PendingOperation(id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_DELETE)
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
-        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
         coEvery { eventsDao.getById(100L) } returns null
@@ -1128,14 +1141,18 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - null event collapses to count-only fallback
-        verify { notificationManager.showOperationExpiredNotification(1, null) }
+        // Then - unresolvable event collapses to count-only fallback
+        verify {
+            notificationManager.showOperationExpiredNotification(
+                1, ExpiredCalendarScope.Unknown
+            )
+        }
     }
 
     @Test
     fun `doWork does not re-notify on second sync after operations abandoned`() = runTest {
         // The core bug: dismissing must stick. Once abandoned, the next sync's
-        // getExpiredOperations returns empty (C1 behavior), so no second notify.
+        // getExpiredOperations returns empty, so no second notify.
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
@@ -1145,7 +1162,7 @@ class CalDavSyncWorkerTest {
         // First sync finds it expired; second sync finds nothing (now ABANDONED).
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returnsMany
             listOf(listOf(expiredOp), emptyList())
-        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
         coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
@@ -1158,6 +1175,34 @@ class CalDavSyncWorkerTest {
 
         // Then - notified exactly once across both runs
         verify(exactly = 1) { notificationManager.showOperationExpiredNotification(any(), any()) }
+    }
+
+    @Test
+    fun `doWork does not notify for ops a concurrent sync already abandoned`() = runTest {
+        // getExpiredOperations is global and this block runs on every sync, so an
+        // overlapping sync can read the same expired op. abandonOperation is a
+        // compare-and-set: the run that loses the race transitions 0 rows and
+        // must stay silent instead of firing a duplicate alert on the same op.
+        val expiredOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_CREATE,
+            lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
+        )
+        // Still visible to this run's read, but already abandoned by a concurrent
+        // run — so the compare-and-set update transitions no rows.
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 7L)
+        coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L)
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        createWorker(CalDavSyncWorker.createFullSyncInput(forceFullSync = false)).doWork()
+
+        // Then - no notification, because this run abandoned nothing
+        verify(exactly = 0) { notificationManager.showOperationExpiredNotification(any(), any()) }
     }
 
     @Test

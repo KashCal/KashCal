@@ -69,6 +69,7 @@ fun EventBlock(
     // Determine what content fits based on height
     val showTime = height >= HEIGHT_THRESHOLD_TIME
     val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
+    val showTags = height >= HEIGHT_THRESHOLD_LOCATION && displayEvent.categories.isNotEmpty()
     val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
 
     // Tap and long-press-drag live in separate pointerInput modifiers so a parent
@@ -155,6 +156,13 @@ fun EventBlock(
                 )
             }
 
+            // Tags (same height gate as location; hidden when the block is short)
+            if (showTags) {
+                org.onekash.kashcal.ui.components.category.CategoryPillRow(
+                    categories = displayEvent.categories,
+                    maxVisible = 2,
+                )
+            }
         }
     }
 }

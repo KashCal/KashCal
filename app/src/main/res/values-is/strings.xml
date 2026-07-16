@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titill viðburðar</string>
     <string name="label_location">Staðsetning</string>
-    <string name="label_location_hint">Heimilisfang, herbergi eða fundartenging</string>
+    <string name="label_location_hint">Heimilisfang eða hlekkur</string>
     <string name="label_notes">Athugasemdir</string>
+    <string name="label_categories">Merki</string>
+    <string name="tags_new">Nýtt merki</string>
+    <string name="tags_empty_reject">Sláðu inn heiti merkis</string>
+    <string name="tags_too_long">Merkið er of langt</string>
+    <string name="tags_comma_reject">Merki mega ekki innihalda kommur</string>
+    <string name="tags_hint_n_more">+%1$d til viðbótar</string>
+    <string name="tags_autocomplete_create_new">Búa til \"%1$s\"</string>
+    <string name="cd_tag">Merki: %1$s</string>
+    <string name="cd_tags_move_menu">Færa merki</string>
+    <string name="tags_move_above_notes">Færa fyrir ofan athugasemdir</string>
+    <string name="tags_move_below_notes">Færa fyrir neðan athugasemdir</string>
     <string name="label_starts">Byrjar</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Sértækt lykilorð forrits</string>
@@ -670,6 +681,10 @@
         <item quantity="one">%1$d viðburður</item>
         <item quantity="other">%1$d viðburðir</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d dagatal</item>
+        <item quantity="other">%1$d dagatöl</item>
+    </plurals>
 
     <plurals name="time_minutes">
         <item quantity="one">%1$d mínúta</item>
@@ -835,8 +850,9 @@
     <string name="sync_notification_conflict_multi">Staðværar breytingar á %1$s töpuðust vegna árekstra við samstillingu. Útgáfur þjónsins verða notaðar.</string>
     <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar út</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingiðu samstillingu til að reyna aftur.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s í %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingiðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s í %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s þvert á %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d dagatal samstillt</item>

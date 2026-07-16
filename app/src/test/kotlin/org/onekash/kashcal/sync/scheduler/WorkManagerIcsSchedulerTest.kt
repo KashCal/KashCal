@@ -1,9 +1,9 @@
 package org.onekash.kashcal.sync.scheduler
 
 import android.content.Context
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.work.Configuration
-import androidx.work.NetworkType
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -12,6 +12,8 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -107,7 +109,24 @@ class WorkManagerIcsSchedulerTest {
 
         assertEquals(1, workInfos.size)
         val constraints = workInfos[0].constraints
-        assertEquals(NetworkType.CONNECTED, constraints.requiredNetworkType)
+        // A self-hosted ICS URL on a LAN/VPN reports INTERNET without VALIDATED.
+        // Refresh must run there, so the constraint requires INTERNET but not
+        // VALIDATED (#296). Do NOT assert requiredNetworkType — a custom
+        // NetworkRequest sets it to NOT_REQUIRED on SDK 34.
+        val request = constraints.requiredNetworkRequest
+        assertNotNull("ICS refresh should carry a custom NetworkRequest", request)
+        assertTrue(
+            "ICS refresh must require INTERNET",
+            request!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET),
+        )
+        assertFalse(
+            "ICS refresh must NOT require VALIDATED (would block LAN/VPN URLs, #296)",
+            request.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+        )
+        assertFalse(
+            "ICS refresh must NOT require NOT_VPN (would block VPN-only URLs, #296)",
+            request.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN),
+        )
         assertTrue("Should require battery not low", constraints.requiresBatteryNotLow())
     }
 

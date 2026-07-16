@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">நிகழ்வுத் தலைப்பு</string>
     <string name="label_location">இடம்</string>
-    <string name="label_location_hint">முகவரி, அறை, அல்லது சந்திப்பு இணைப்பு</string>
+    <string name="label_location_hint">முகவரி அல்லது இணைப்பு</string>
     <string name="label_notes">குறிப்புகள்</string>
+    <string name="label_categories">டேக்குகள்</string>
+    <string name="tags_new">புதிய டேக்</string>
+    <string name="tags_empty_reject">டேக் பெயரை உள்ளிடவும்</string>
+    <string name="tags_too_long">டேக் மிக நீளமாக உள்ளது</string>
+    <string name="tags_comma_reject">டேக்குகளில் காற்புள்ளிகள் இருக்கக்கூடாது</string>
+    <string name="tags_hint_n_more">+%1$d மேலும்</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" உருவாக்கு</string>
+    <string name="cd_tag">டேக்: %1$s</string>
+    <string name="cd_tags_move_menu">டேக்குகளை நகர்த்து</string>
+    <string name="tags_move_above_notes">குறிப்புகளுக்கு மேலே நகர்த்து</string>
+    <string name="tags_move_below_notes">குறிப்புகளுக்கு கீழே நகர்த்து</string>
     <string name="label_starts">தொடக்கம்</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">ஆப்ப்-குறிப்பிட்ட கடவுச்சொல்</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d நிகழ்வு</item>
         <item quantity="other">%1$d நிகழ்வுகள்</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d நாட்காட்டி</item>
+        <item quantity="other">%1$d நாட்காட்டிகள்</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d நிமிடம்</item>
         <item quantity="other">%1$d நிமிடங்கள்</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 நாட்களுக்குப் பிறகும் %1$s ஒத்திசைக்க முடியவில்லை. சர்வர் பதிப்பு பயன்படுத்தப்படும். மீண்டும் முயற்சிக்க ஃபோர்ஸ் சிங்க் செய்யவும்.</string>
     <string name="sync_notification_expired_content_calendar">%2$s இல் உள்ள %1$s 30 நாட்களுக்குப் பிறகும் ஒத்திசைக்க முடியவில்லை. சர்வர் பதிப்பு பயன்படுத்தப்படும். மீண்டும் முயற்சிக்க ஃபோர்ஸ் சிங்க் செய்யவும்.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s முழுவதும் உள்ள %1$s 30 நாட்களுக்குப் பிறகும் ஒத்திசைக்க முடியவில்லை. சர்வர் பதிப்பு பயன்படுத்தப்படும். மீண்டும் முயற்சிக்க ஃபோர்ஸ் சிங்க் செய்யவும்.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d நாட்காட்டி ஒத்திசைக்கப்பட்டது</item>

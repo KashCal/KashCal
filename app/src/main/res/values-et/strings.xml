@@ -117,8 +117,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Sündmuse pealkiri</string>
     <string name="label_location">Asukoht</string>
-    <string name="label_location_hint">Aadress, ruum või koosoleku link</string>
+    <string name="label_location_hint">Aadress või link</string>
     <string name="label_notes">Märkmed</string>
+    <string name="label_categories">Sildid</string>
+    <string name="tags_new">Uus silt</string>
+    <string name="tags_empty_reject">Sisesta sildi nimi</string>
+    <string name="tags_too_long">Silt on liiga pikk</string>
+    <string name="tags_comma_reject">Sildid ei tohi sisaldada komasid</string>
+    <string name="tags_hint_n_more">+veel %1$d</string>
+    <string name="tags_autocomplete_create_new">Loo „%1$s“</string>
+    <string name="cd_tag">Silt: %1$s</string>
+    <string name="cd_tags_move_menu">Teisalda sildid</string>
+    <string name="tags_move_above_notes">Teisalda märkmete kohale</string>
+    <string name="tags_move_below_notes">Teisalda märkmete alla</string>
     <string name="label_starts">Algab</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Rakendusepõhine parool</string>
@@ -698,6 +709,10 @@
         <item quantity="one">%1$d sündmus</item>
         <item quantity="other">%1$d sündmust</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalendrit</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minut</item>
         <item quantity="other">%1$d minutit</item>
@@ -848,6 +863,7 @@
     <string name="sync_notification_expired_title">Sünkroonimise muudatused aegusid</string>
     <string name="sync_notification_expired_content">%1$s ei õnnestunud 30 päeva jooksul sünkroonida. Kasutatakse serveri versiooni. Sundsünkroonimine uuesti proovimiseks.</string>
     <string name="sync_notification_expired_content_calendar">%1$s kalendris %2$s ei õnnestunud 30 päeva jooksul sünkroonida. Kasutatakse serveri versiooni. Sundsünkroonimine uuesti proovimiseks.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s %2$s ei õnnestunud 30 päeva jooksul sünkroonida. Kasutatakse serveri versiooni. Sundsünkroonimine uuesti proovimiseks.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sünkroonitud %1$d kalender</item>
         <item quantity="other">Sünkroonitud %1$d kalendrit</item>

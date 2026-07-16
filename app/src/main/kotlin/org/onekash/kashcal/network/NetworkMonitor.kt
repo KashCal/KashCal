@@ -94,14 +94,20 @@ class NetworkMonitor @Inject constructor(
      * Check current connectivity synchronously.
      * Used for initial state and non-reactive checks.
      *
-     * @return true if device has validated internet connectivity
+     * Requires only the INTERNET capability, not VALIDATED. VALIDATED means the
+     * OS confirmed a route to the public internet (its connectivity probe
+     * succeeded); a self-hosted CalDAV/ICS server on a LAN or VPN is fully
+     * reachable but has no public-internet route, so such a network reports
+     * INTERNET without VALIDATED. Requiring VALIDATED would wrongly treat it as
+     * offline and leave sync stuck forever (#296).
+     *
+     * @return true if the active network is set up to access the internet
      */
     fun checkCurrentConnectivity(): Boolean {
         val cm = connectivityManager ?: return true // Assume online if unavailable
         val network = cm.activeNetwork ?: return false
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     /**
@@ -157,10 +163,12 @@ class NetworkMonitor @Inject constructor(
                 networkCapabilities: NetworkCapabilities
             ) {
                 val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                val isValidated = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
                 val isNotMetered = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
 
-                _isOnline.value = hasInternet && isValidated
+                // Require only INTERNET, not VALIDATED — see checkCurrentConnectivity.
+                // This must match the synchronous check or the flag flickers back
+                // to offline when capabilities update on an unvalidated network.
+                _isOnline.value = hasInternet
                 _isMetered.value = !isNotMetered
 
                 Log.d(TAG, "Capabilities changed: online=${_isOnline.value}, metered=${_isMetered.value}")

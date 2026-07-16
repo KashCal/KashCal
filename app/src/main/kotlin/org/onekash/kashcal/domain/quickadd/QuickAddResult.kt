@@ -18,6 +18,7 @@ data class QuickAddResult(
     val timezone: String? = null,
     val location: String? = null,
     val rrule: String? = null,
+    val categories: List<String> = emptyList(),
     val emoji: String? = null,
     val isAllDay: Boolean = startTime == null,
     val confidence: ParseConfidence = ParseConfidence.LOW

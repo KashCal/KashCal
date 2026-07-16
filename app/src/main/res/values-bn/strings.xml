@@ -114,8 +114,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">ইভেন্টের শিরোনাম</string>
     <string name="label_location">অবস্থান</string>
-    <string name="label_location_hint">ঠিকানা, রুম, বা মিটিং লিংক</string>
+    <string name="label_location_hint">ঠিকানা বা লিঙ্ক</string>
     <string name="label_notes">নোটস</string>
+    <string name="label_categories">ট্যাগ</string>
+    <string name="tags_new">নতুন ট্যাগ</string>
+    <string name="tags_empty_reject">একটি ট্যাগের নাম লিখুন</string>
+    <string name="tags_too_long">ট্যাগটি খুব দীর্ঘ</string>
+    <string name="tags_comma_reject">ট্যাগে কমা থাকতে পারে না</string>
+    <string name="tags_hint_n_more">+%1$d আরও</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" তৈরি করুন</string>
+    <string name="cd_tag">ট্যাগ: %1$s</string>
+    <string name="cd_tags_move_menu">ট্যাগ সরান</string>
+    <string name="tags_move_above_notes">নোটসের উপরে সরান</string>
+    <string name="tags_move_below_notes">নোটসের নিচে সরান</string>
     <string name="label_starts">শুরু</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">অ্যাপ-নির্দিষ্ট পাসওয়ার্ড</string>
@@ -711,6 +722,10 @@
         <item quantity="one">%1$d ইভেন্ট</item>
         <item quantity="other">%1$d ইভেন্ট</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d ক্যালেন্ডার</item>
+        <item quantity="other">%1$d ক্যালেন্ডার</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d মিনিট</item>
         <item quantity="other">%1$d মিনিট</item>
@@ -880,6 +895,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">30 দিন পরেও %1$s সিংক হয়নি। সার্ভার সংস্করণ ব্যবহার করা হবে। পুনরায় চেষ্টা করতে ফোর্স সিংক করুন।</string>
     <string name="sync_notification_expired_content_calendar">%2$s-এ %1$s 30 দিন পরেও সিংক হয়নি। সার্ভার সংস্করণ ব্যবহার করা হবে। পুনরায় চেষ্টা করতে ফোর্স সিংক করুন।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s-এ %1$s 30 দিন পরেও সিংক হয়নি। সার্ভার সংস্করণ ব্যবহার করা হবে। পুনরায় চেষ্টা করতে ফোর্স সিংক করুন।</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d ক্যালেন্ডার সিংক হয়েছে</item>

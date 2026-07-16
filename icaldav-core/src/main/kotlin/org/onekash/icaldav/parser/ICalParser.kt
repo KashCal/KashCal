@@ -282,7 +282,10 @@ class ICalParser(
             // Parse categories
             val categoriesProps = vtodo.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                cat.value.split(",").map { it.trim() }
+                // Drop blank elements at the source — a malformed value like
+                // "foo,,bar" would otherwise carry an empty category into Room
+                // and round-trip straight back to the server.
+                cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
             // Parse ORGANIZER
@@ -490,7 +493,10 @@ class ICalParser(
             // Parse categories
             val categoriesProps = vjournal.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                cat.value.split(",").map { it.trim() }
+                // Drop blank elements at the source — a malformed value like
+                // "foo,,bar" would otherwise carry an empty category into Room
+                // and round-trip straight back to the server.
+                cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
             // Parse attachments
@@ -799,7 +805,10 @@ class ICalParser(
             // Parse categories
             val categoriesProps = vevent.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                cat.value.split(",").map { it.trim() }
+                // Drop blank elements at the source — a malformed value like
+                // "foo,,bar" would otherwise carry an empty category into Room
+                // and round-trip straight back to the server.
+                cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
             // Get simple string properties

@@ -1,0 +1,4 @@
+• Event tags: add colored #tags to events across the day, week, and agenda views
+• Add tags from the event form or by typing #tag in Quick Add
+• Fixed zero-duration and very short events vanishing in the day, 3-day, and week views
+• Fixed self-hosted CalDAV/ICS sync hanging on "Preparing to sync" over LAN or VPN

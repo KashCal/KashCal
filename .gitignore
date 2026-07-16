@@ -91,6 +91,9 @@ docker/
 # Local scripts workspace (internal tooling)
 scripts/
 
+# Local IDE inspection profiles (used by scripts/inspect-dead-code.sh)
+config/
+
 # Locally-downloaded RFC text for spec-audit reproducibility (not shipped)
 rfcs/
 releases/*.apk

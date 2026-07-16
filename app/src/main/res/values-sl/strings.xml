@@ -93,8 +93,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Naziv dogodka</string>
     <string name="label_location">Lokacija</string>
-    <string name="label_location_hint">Naslov, soba ali povezava do sestanka</string>
+    <string name="label_location_hint">Naslov ali povezava</string>
     <string name="label_notes">Opombe</string>
+    <string name="label_categories">Oznake</string>
+    <string name="tags_new">Nova oznaka</string>
+    <string name="tags_empty_reject">Vnesite ime oznake</string>
+    <string name="tags_too_long">Oznaka je predolga</string>
+    <string name="tags_comma_reject">Oznake ne smejo vsebovati vejic</string>
+    <string name="tags_hint_n_more">+%1$d več</string>
+    <string name="tags_autocomplete_create_new">Ustvari \"%1$s\"</string>
+    <string name="cd_tag">Oznaka: %1$s</string>
+    <string name="cd_tags_move_menu">Premakni oznake</string>
+    <string name="tags_move_above_notes">Premakni nad opombe</string>
+    <string name="tags_move_below_notes">Premakni pod opombe</string>
     <string name="label_starts">Začetek</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Geslo za aplikacijo</string>
@@ -704,6 +715,12 @@
         <item quantity="few">%1$d dogodki</item>
         <item quantity="other">%1$d dogodkov</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d koledar</item>
+        <item quantity="two">%1$d koledarja</item>
+        <item quantity="few">%1$d koledarji</item>
+        <item quantity="other">%1$d koledarjev</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuta</item>
         <item quantity="two">%1$d minuti</item>
@@ -890,6 +907,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ni bilo mogoče sinhronizirati po 30 dneh. Uporabljena bo različica s strežnika. Vsilite sinhronizacijo za ponovni poskus.</string>
     <string name="sync_notification_expired_content_calendar">%1$s v %2$s ni bilo mogoče sinhronizirati po 30 dneh. Uporabljena bo različica s strežnika. Vsilite sinhronizacijo za ponovni poskus.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s v %2$s ni bilo mogoče sinhronizirati po 30 dneh. Uporabljena bo različica s strežnika. Vsilite sinhronizacijo za ponovni poskus.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinhroniziran %1$d koledar</item>

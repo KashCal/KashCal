@@ -113,8 +113,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Gebeurtenistitel</string>
     <string name="label_location">Ligging</string>
-    <string name="label_location_hint">Adres, kamer of vergaderingskakel</string>
+    <string name="label_location_hint">Adres of skakel</string>
     <string name="label_notes">Notas</string>
+    <string name="label_categories">Etikette</string>
+    <string name="tags_new">Nuwe etiket</string>
+    <string name="tags_empty_reject">Voer \'n etiketnaam in</string>
+    <string name="tags_too_long">Etiket is te lank</string>
+    <string name="tags_comma_reject">Etikette kan nie kommas bevat nie</string>
+    <string name="tags_hint_n_more">+%1$d meer</string>
+    <string name="tags_autocomplete_create_new">Skep \"%1$s\"</string>
+    <string name="cd_tag">Etiket: %1$s</string>
+    <string name="cd_tags_move_menu">Skuif etikette</string>
+    <string name="tags_move_above_notes">Skuif bo notas</string>
+    <string name="tags_move_below_notes">Skuif onder notas</string>
     <string name="label_starts">Begin</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Programspesifieke Wagwoord</string>
@@ -699,6 +710,10 @@
         <item quantity="one">%1$d gebeurtenis</item>
         <item quantity="other">%1$d gebeurtenisse</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalenders</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuut</item>
         <item quantity="other">%1$d minute</item>
@@ -865,6 +880,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s oor %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender gesinkroniseer</item>

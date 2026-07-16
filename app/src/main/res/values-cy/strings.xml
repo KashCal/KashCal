@@ -142,8 +142,19 @@
     <!-- Form Labels -->
     <string name="label_event_title">Teitl y digwyddiad</string>
     <string name="label_location">Lleoliad</string>
-    <string name="label_location_hint">Cyfeiriad, ystafell, neu ddolen cyfarfod</string>
+    <string name="label_location_hint">Cyfeiriad neu ddolen</string>
     <string name="label_notes">Nodiadau</string>
+    <string name="label_categories">Tagiau</string>
+    <string name="tags_new">Tag newydd</string>
+    <string name="tags_empty_reject">Rhowch enw tag</string>
+    <string name="tags_too_long">Mae\'r tag yn rhy hir</string>
+    <string name="tags_comma_reject">Ni all tagiau gynnwys atalnodau</string>
+    <string name="tags_hint_n_more">+%1$d arall</string>
+    <string name="tags_autocomplete_create_new">Creu «%1$s»</string>
+    <string name="cd_tag">Tag: %1$s</string>
+    <string name="cd_tags_move_menu">Symud tagiau</string>
+    <string name="tags_move_above_notes">Symud uwchben nodiadau</string>
+    <string name="tags_move_below_notes">Symud islaw nodiadau</string>
     <string name="label_starts">Yn Dechrau</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Cyfrinair Penodol i Ap</string>
@@ -799,6 +810,14 @@
         <item quantity="many">%1$d digwyddiad</item>
         <item quantity="other">%1$d digwyddiad</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="zero">%1$d calendr</item>
+        <item quantity="one">%1$d calendr</item>
+        <item quantity="two">%1$d galendr</item>
+        <item quantity="few">%1$d chalendr</item>
+        <item quantity="many">%1$d chalendr</item>
+        <item quantity="other">%1$d calendr</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="zero">%1$d munud</item>
         <item quantity="one">%1$d funud</item>
@@ -1048,6 +1067,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Ni lwyddwyd i gysoni %1$s ar ôl 30 diwrnod. Defnyddir fersiwn y gweinydd. Gorfodwch gysoni i ailgeisio.</string>
     <string name="sync_notification_expired_content_calendar">Ni lwyddwyd i gysoni %1$s yn %2$s ar ôl 30 diwrnod. Defnyddir fersiwn y gweinydd. Gorfodwch gysoni i ailgeisio.</string>
+    <string name="sync_notification_expired_content_calendars">Ni lwyddwyd i gysoni %1$s ar draws %2$s ar ôl 30 diwrnod. Defnyddir fersiwn y gweinydd. Gorfodwch gysoni i ailgeisio.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="zero">Wedi cysoni %1$d calendr</item>

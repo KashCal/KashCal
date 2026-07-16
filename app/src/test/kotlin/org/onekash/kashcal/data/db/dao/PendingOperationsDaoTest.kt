@@ -921,11 +921,27 @@ class PendingOperationsDaoTest {
         val now = System.currentTimeMillis()
         val id = insertExpiredOperation()
 
-        pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+        val transitioned = pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
 
+        assertEquals("First abandon transitions the row", 1, transitioned)
         val op = pendingOpsDao.getById(id)
         assertEquals(PendingOperation.STATUS_ABANDONED, op?.status)
         assertEquals("Exceeded 30-day lifetime", op?.lastError)
+    }
+
+    @Test
+    fun `abandonOperation is a no-op on an already-abandoned row`() = runTest {
+        // Compare-and-set: only the first caller transitions the op. A concurrent
+        // sync that re-abandons the same op gets 0, so the "sync expired"
+        // notification alerts once instead of once per overlapping sync.
+        val now = System.currentTimeMillis()
+        val id = insertExpiredOperation()
+        assertEquals(1, pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now))
+
+        val secondAttempt = pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
+
+        assertEquals("Second abandon must transition nothing", 0, secondAttempt)
+        assertEquals(PendingOperation.STATUS_ABANDONED, pendingOpsDao.getById(id)?.status)
     }
 
     @Test
@@ -1011,7 +1027,7 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `hasPendingForEvent treats ABANDONED as still present`() = runTest {
-        // Documents the != 'FAILED' semantics (review F2): an event whose only op
+        // Documents the != 'FAILED' semantics: an event whose only op
         // is ABANDONED reads as "has pending". Both hasPendingForEvent and
         // operationExists are test-only today; the live queue path dedups via
         // STATUS_PENDING, so this flip is harmless. Pinned here so it's a decision.

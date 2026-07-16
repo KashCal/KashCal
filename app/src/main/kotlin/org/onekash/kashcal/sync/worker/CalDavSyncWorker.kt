@@ -29,6 +29,7 @@ import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.sync.notification.ExpiredCalendarScope
 import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.provider.ProviderRegistry
 import org.onekash.kashcal.sync.provider.icloud.ICloudUrlMigration
@@ -230,20 +231,26 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
             }
 
-            // D: Abandon operations exceeding 30-day lifetime (skipped if force sync just reset them)
+            // D: Abandon operations exceeding 30-day lifetime (skipped if force sync just reset them).
+            // getExpiredOperations is global (not scoped to this worker's account/calendar) and this
+            // block runs on every sync, so overlapping background syncs can read the same expired list.
+            // abandonOperation is a compare-and-set: only the run that actually transitions an op keeps
+            // it here, so a concurrent sync that already abandoned it won't re-notify for the same op.
             val expiredOps = pendingOperationsDao.getExpiredOperations(thirtyDaysAgo)
+            val abandonedOps = mutableListOf<PendingOperation>()
             for (op in expiredOps) {
-                pendingOperationsDao.abandonOperation(
+                val transitioned = pendingOperationsDao.abandonOperation(
                     op.id,
                     "Operation exceeded 30-day lifetime without user interaction",
                     now
                 )
+                if (transitioned > 0) abandonedOps.add(op)
             }
-            if (expiredOps.isNotEmpty()) {
-                Log.w(TAG, "Abandoned ${expiredOps.size} operations exceeding 30-day lifetime")
+            if (abandonedOps.isNotEmpty()) {
+                Log.w(TAG, "Abandoned ${abandonedOps.size} operations exceeding 30-day lifetime")
                 notificationManager.showOperationExpiredNotification(
-                    expiredOps.size,
-                    resolveSingleCalendarName(expiredOps)
+                    abandonedOps.size,
+                    resolveExpiredCalendarScope(abandonedOps)
                 )
             }
 
@@ -549,15 +556,21 @@ class CalDavSyncWorker @AssistedInject constructor(
      * synced→local DELETE has already advanced the event row to the move
      * target, but the stuck operation concerns the source calendar.
      */
-    private suspend fun resolveSingleCalendarName(expiredOps: List<PendingOperation>): String? {
+    private suspend fun resolveExpiredCalendarScope(expiredOps: List<PendingOperation>): ExpiredCalendarScope {
+        // Collect every distinct calendar so Multiple can report the true count.
+        // (No early exit on size > 1: that would cap the reported count at 2.)
         val calendarIds = mutableSetOf<Long>()
         for (op in expiredOps) {
-            val calendarId = op.sourceCalendarId ?: eventsDao.getById(op.eventId)?.calendarId ?: return null
+            val calendarId = op.sourceCalendarId ?: eventsDao.getById(op.eventId)?.calendarId
+                ?: return ExpiredCalendarScope.Unknown
             calendarIds.add(calendarId)
-            if (calendarIds.size > 1) return null
         }
-        val calendarId = calendarIds.singleOrNull() ?: return null
-        return calendarRepository.getCalendarById(calendarId)?.displayName
+        // Ops span more than one calendar: name the count rather than pick one.
+        if (calendarIds.size > 1) return ExpiredCalendarScope.Multiple(calendarIds.size)
+        val calendarId = calendarIds.singleOrNull() ?: return ExpiredCalendarScope.Unknown
+        val name = calendarRepository.getCalendarById(calendarId)?.displayName
+            ?: return ExpiredCalendarScope.Unknown
+        return ExpiredCalendarScope.Single(name)
     }
 
     /**

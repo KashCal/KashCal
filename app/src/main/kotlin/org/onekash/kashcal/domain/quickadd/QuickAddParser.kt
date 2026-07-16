@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.quickadd
 
 import org.onekash.kashcal.domain.EmojiMatcher
+import org.onekash.kashcal.domain.category.TagTokenizer
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
 import org.onekash.kashcal.domain.quickadd.rule.AbsoluteDateRule
 import org.onekash.kashcal.domain.quickadd.rule.DurationRule
@@ -51,18 +52,25 @@ object QuickAddParser {
             )
         }
 
-        val normalized = normalizer.normalize(input)
+        // Extract #tags from the RAW input first: the normalizer's character
+        // cleanup strips '#', so a parse rule downstream could never see it.
+        val (detagged, categories) = TagTokenizer.extract(input)
+
+        val normalized = normalizer.normalize(detagged)
         // Apply same transforms without lowercase, for original-case title extraction
-        val originalCased = normalizerNoLowercase.normalize(input)
+        val originalCased = normalizerNoLowercase.normalize(detagged)
         val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
 
         val tokens = WordTokenizer.tokenize(normalized, originalWords, locale)
 
         if (tokens.isEmpty()) {
+            // A tags-only input (e.g. "#work") has no remaining tokens but must
+            // still carry the extracted categories through.
             return QuickAddResult(
                 title = "",
                 startDate = reference.toLocalDate(),
                 startTime = null,
+                categories = categories,
                 confidence = ParseConfidence.LOW
             )
         }
@@ -92,6 +100,7 @@ object QuickAddParser {
             timezone = context.timezone,
             location = context.location,
             rrule = context.rrule,
+            categories = categories,
             emoji = emoji,
             confidence = confidence
         )

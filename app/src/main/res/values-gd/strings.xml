@@ -132,8 +132,19 @@
     <!-- Form Labels -->
     <string name="label_event_title">Tiotal an tachartais</string>
     <string name="label_location">Àite</string>
-    <string name="label_location_hint">Seòladh, seòmar, no ceangal coinneimh</string>
+    <string name="label_location_hint">Seòladh no ceangal</string>
     <string name="label_notes">Notaichean</string>
+    <string name="label_categories">Tagaichean</string>
+    <string name="tags_new">Taga ùr</string>
+    <string name="tags_empty_reject">Cuir a-steach ainm taga</string>
+    <string name="tags_too_long">Tha an taga ro fhada</string>
+    <string name="tags_comma_reject">Chan fhaod cromagan a bhith ann an tagaichean</string>
+    <string name="tags_hint_n_more">+%1$d eile</string>
+    <string name="tags_autocomplete_create_new">Cruthaich «%1$s»</string>
+    <string name="cd_tag">Taga: %1$s</string>
+    <string name="cd_tags_move_menu">Gluais tagaichean</string>
+    <string name="tags_move_above_notes">Gluais os cionn nan nòtaichean</string>
+    <string name="tags_move_below_notes">Gluais fo na nòtaichean</string>
     <string name="label_starts">A\' tòiseachadh</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Facal-faire Sònraichte do Aip</string>
@@ -751,6 +762,12 @@
         <item quantity="few">%1$d tachartasan</item>
         <item quantity="other">%1$d tachartas</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d mhìosachan</item>
+        <item quantity="two">%1$d mhìosachan</item>
+        <item quantity="few">%1$d mìosachain</item>
+        <item quantity="other">%1$d mìosachan</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d mhionaid</item>
         <item quantity="two">%1$d mhionaid</item>
@@ -974,6 +991,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Cha b\' urrainn %1$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
     <string name="sync_notification_expired_content_calendar">Cha b\' urrainn %1$s ann an %2$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
+    <string name="sync_notification_expired_content_calendars">Cha b\' urrainn %1$s thar %2$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Chaidh %1$d mhìosachan a shioncronachadh</item>

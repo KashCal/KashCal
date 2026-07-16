@@ -32,6 +32,11 @@ sealed interface DisplayEvent {
     val title: String
     val description: String?
     val location: String?
+    /**
+     * RFC 5545 CATEGORIES (tags). Room events carry their own; device-calendar
+     * events have none yet (device-calendar tag support is not implemented).
+     */
+    val categories: List<String>
     val startTs: Long
     val endTs: Long
     val startDay: Int
@@ -77,6 +82,7 @@ sealed interface DisplayEvent {
         override val title get() = event.title
         override val description get() = event.description
         override val location get() = event.location
+        override val categories get() = event.categories.orEmpty()
         override val startTs get() = occurrence.startTs
         override val endTs get() = occurrence.endTs
         override val startDay get() = occurrence.startDay
@@ -97,6 +103,7 @@ sealed interface DisplayEvent {
         override val title get() = instance.title
         override val description get() = instance.description
         override val location get() = instance.location
+        override val categories get() = emptyList<String>()
         override val startTs get() = instance.startTs
         override val endTs get() = instance.endTs
         override val startDay get() = instance.startDay

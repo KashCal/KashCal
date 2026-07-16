@@ -41,6 +41,19 @@ class EventReader @Inject constructor(
     private val accountsDao by lazy { database.accountsDao() }
     private val attendeesDao by lazy { database.attendeesDao() }
 
+    companion object {
+        /** Cap on tag suggestions so the autocomplete popup stays scannable. */
+        const val MAX_CATEGORY_SUGGESTIONS = 20
+
+        /**
+         * How far back one-off events are considered for tag suggestions.
+         * Recurring masters are always included regardless of age; this only
+         * bounds non-recurring events. A year keeps still-relevant tags while
+         * trimming the scan (and dropping tags the user hasn't touched since).
+         */
+        const val CATEGORY_SUGGESTION_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
+    }
+
     // ========== Event Lookups ==========
 
     /**
@@ -56,6 +69,51 @@ class EventReader @Inject constructor(
         limit: Int
     ): List<TitleSuggestion> =
         eventsDao.suggestTitlesByPrefix(prefix, sinceMs, untilMs, minFreq, limit)
+
+    /**
+     * Usage-ranked tag suggestions for the tag chip row and inline `#`
+     * autocomplete. Distinct category names across all events, ranked by
+     * frequency (desc) then most-recent use (desc), deduped case-insensitively
+     * with first-seen casing preserved, capped to [MAX_CATEGORY_SUGGESTIONS].
+     *
+     * The categories column is a JSON array, so the DAO can't split it in SQL —
+     * decode + rank happens here in Kotlin over the candidate rows. Backed by a
+     * Room [Flow] (recomputes on event-table change) with `distinctUntilChanged`
+     * so a bulk sync pull doesn't thrash recomposition.
+     */
+    fun getRecentCategories(): Flow<List<String>> {
+        val sinceMs = System.currentTimeMillis() - CATEGORY_SUGGESTION_WINDOW_MS
+        return eventsDao.observeCategoryCandidates(sinceMs)
+            .map { candidates -> rankCategories(candidates) }
+            .distinctUntilChanged()
+    }
+
+    private fun rankCategories(
+        candidates: List<org.onekash.kashcal.data.db.dao.CategoryCandidate>
+    ): List<String> {
+        // key = lowercase name; track first-seen display casing, frequency, recency.
+        data class Agg(var display: String, var count: Int, var lastUsed: Long)
+        val byKey = LinkedHashMap<String, Agg>()
+        for (candidate in candidates) {
+            val lastUsed = candidate.lastUsed
+            for (raw in candidate.categories.orEmpty()) {
+                val name = raw.trim()
+                if (name.isEmpty()) continue
+                val key = name.lowercase()
+                val agg = byKey[key]
+                if (agg == null) {
+                    byKey[key] = Agg(display = name, count = 1, lastUsed = lastUsed)
+                } else {
+                    agg.count++
+                    if (lastUsed > agg.lastUsed) agg.lastUsed = lastUsed
+                }
+            }
+        }
+        return byKey.values
+            .sortedWith(compareByDescending<Agg> { it.count }.thenByDescending { it.lastUsed })
+            .take(MAX_CATEGORY_SUGGESTIONS)
+            .map { it.display }
+    }
 
     /**
      * Get event by ID.

@@ -148,6 +148,14 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOW_WEEK_NUMBERS, show)
     }
 
+    /** Whether the event form's tag row sits above the notes/attendees block. */
+    val tagsAboveNotes: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.TAGS_ABOVE_NOTES, false)
+
+    suspend fun setTagsAboveNotes(above: Boolean) {
+        setPreference(PreferencesKeys.TAGS_ABOVE_NOTES, above)
+    }
+
     val showDeclinedEvents: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_DECLINED_EVENTS, false)
 

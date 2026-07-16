@@ -148,6 +148,183 @@ class EventPositioningTest {
         assertTrue(pos.height.value >= 20f)
     }
 
+    @Test
+    fun `zero-duration event renders at minimum height`() {
+        // A point-in-time event (start == end) must still be visible and tappable.
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 9,
+            startMinute = 0,
+            endHour = 9,
+            endMinute = 0
+        )
+
+        val events = listOf(toDisplayEvent(event, occurrence))
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
+
+        assertEquals(1, positioned.size)
+        val pos = positioned[0]
+
+        // Positioned at 9am (540dp) with the minimum visual height floor.
+        assertEquals(540f, pos.topOffset.value, 1f)
+        assertEquals(20f, pos.height.value, 1f)
+    }
+
+    @Test
+    fun `zero-duration event overlapping a timed event packs side by side`() {
+        // A zero-duration event sharing a start minute with a timed event must not
+        // draw full-width on top of it — it packs into a neighbouring slot.
+        val zeroDur = toDisplayEvent(
+            createTestEvent(id = 1, title = "Point"),
+            createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 0)
+        )
+        val timed = toDisplayEvent(
+            createTestEvent(id = 2, title = "Meeting"),
+            createTestOccurrence(eventId = 2, startHour = 9, endHour = 10)
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(zeroDur, timed), date = LocalDate.now(), dayIndex = 0
+        )
+
+        assertEquals(2, positioned.size)
+        positioned.forEach { pos ->
+            assertEquals(2, pos.overlapTotal)
+            assertEquals(0.5f, pos.widthFraction, 0.01f)
+        }
+        assertEquals(2, positioned.map { it.leftFraction }.toSet().size)
+    }
+
+    @Test
+    fun `zero-duration event abutting a prior event does not overlap it`() {
+        // An event ending at 9:00 and a point event at 9:00 merely touch — they stack.
+        val earlier = toDisplayEvent(
+            createTestEvent(id = 1, title = "Earlier"),
+            createTestOccurrence(eventId = 1, startHour = 8, endHour = 9)
+        )
+        val zeroDur = toDisplayEvent(
+            createTestEvent(id = 2, title = "Point"),
+            createTestOccurrence(eventId = 2, startHour = 9, startMinute = 0, endHour = 9, endMinute = 0)
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(earlier, zeroDur), date = LocalDate.now(), dayIndex = 0
+        )
+
+        assertEquals(2, positioned.size)
+        positioned.forEach { pos ->
+            assertEquals(1, pos.overlapTotal)
+            assertEquals(1.0f, pos.widthFraction, 0.01f)
+        }
+    }
+
+    @Test
+    fun `sub-minute event renders at minimum height`() {
+        // A positive-but-sub-minute event (e.g. a 40-second synced event) truncates
+        // to a single minute; it must still be visible, not dropped.
+        val zone = ZoneId.systemDefault()
+        val date = LocalDate.now()
+        val startTs = date.atTime(9, 0, 10).atZone(zone).toInstant().toEpochMilli()
+        val endTs = date.atTime(9, 0, 50).atZone(zone).toInstant().toEpochMilli()
+        val startDay = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+        val event = createTestEvent(id = 1, startTs = startTs, endTs = endTs)
+        val occurrence = Occurrence(
+            eventId = 1,
+            calendarId = testCalendarId,
+            startTs = startTs,
+            endTs = endTs,
+            startDay = startDay,
+            endDay = startDay,
+            isCancelled = false,
+            exceptionEventId = null
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(toDisplayEvent(event, occurrence)), date = date, dayIndex = 0
+        )
+
+        assertEquals(1, positioned.size)
+        assertEquals(540f, positioned[0].topOffset.value, 1f)
+        assertEquals(20f, positioned[0].height.value, 1f)
+    }
+
+    @Test
+    fun `two short events shorter than min height pack side by side`() {
+        // Two 5-minute events at 9:00-9:05 and 9:05-9:10 each render floored to 20dp
+        // (covering ~20 min of screen), so their drawn blocks overlap — they must
+        // pack into neighbouring slots, not stack on top of each other.
+        val first = toDisplayEvent(
+            createTestEvent(id = 1, title = "First"),
+            createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 5)
+        )
+        val second = toDisplayEvent(
+            createTestEvent(id = 2, title = "Second"),
+            createTestOccurrence(eventId = 2, startHour = 9, startMinute = 5, endHour = 9, endMinute = 10)
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(first, second), date = LocalDate.now(), dayIndex = 0
+        )
+
+        assertEquals(2, positioned.size)
+        positioned.forEach { pos ->
+            assertEquals(2, pos.overlapTotal)
+            assertEquals(0.5f, pos.widthFraction, 0.01f)
+        }
+        assertEquals(2, positioned.map { it.leftFraction }.toSet().size)
+    }
+
+    @Test
+    fun `back-to-back 30-minute meetings stay full-width at min zoom`() {
+        // At min zoom (30dp/hr) a 30-min block floors to 20dp, covering ~40 min of
+        // screen. The overlap window must NOT inflate to match, or two back-to-back
+        // 30-min meetings would force into half-width columns. They should stay
+        // full-width stacked — the user zooms in or switches view to see detail.
+        val first = toDisplayEvent(
+            createTestEvent(id = 1, title = "First"),
+            createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 30)
+        )
+        val second = toDisplayEvent(
+            createTestEvent(id = 2, title = "Second"),
+            createTestOccurrence(eventId = 2, startHour = 9, startMinute = 30, endHour = 10, endMinute = 0)
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(first, second), date = LocalDate.now(), dayIndex = 0, hourHeight = 30.dp
+        )
+
+        assertEquals(2, positioned.size)
+        positioned.forEach { pos ->
+            assertEquals(1, pos.overlapTotal)
+            assertEquals(1.0f, pos.widthFraction, 0.01f)
+        }
+    }
+
+    @Test
+    fun `zero-duration event outside the visible grid is dropped`() {
+        // A point event at 3am with a grid starting at 6am is off-screen and must
+        // not be pinned to the grid edge.
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 3,
+            startMinute = 0,
+            endHour = 3,
+            endMinute = 0
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(toDisplayEvent(event, occurrence)),
+            date = LocalDate.now(),
+            dayIndex = 0,
+            startHour = 6,
+            endHour = 24
+        )
+
+        assertTrue(positioned.isEmpty())
+    }
+
     // ==================== Overlap Tests ====================
 
     @Test

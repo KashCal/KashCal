@@ -94,8 +94,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Judul acara</string>
     <string name="label_location">Lokasi</string>
-    <string name="label_location_hint">Alamat, ruangan, atau tautan rapat</string>
+    <string name="label_location_hint">Alamat atau tautan</string>
     <string name="label_notes">Catatan</string>
+    <string name="label_categories">Tag</string>
+    <string name="tags_new">Tag baru</string>
+    <string name="tags_empty_reject">Masukkan nama tag</string>
+    <string name="tags_too_long">Tag terlalu panjang</string>
+    <string name="tags_comma_reject">Tag tidak boleh berisi koma</string>
+    <string name="tags_hint_n_more">+%1$d lainnya</string>
+    <string name="tags_autocomplete_create_new">Buat \"%1$s\"</string>
+    <string name="cd_tag">Tag: %1$s</string>
+    <string name="cd_tags_move_menu">Pindahkan tag</string>
+    <string name="tags_move_above_notes">Pindahkan ke atas catatan</string>
+    <string name="tags_move_below_notes">Pindahkan ke bawah catatan</string>
     <string name="label_starts">Mulai</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Kata Sandi Khusus Aplikasi</string>
@@ -664,6 +675,9 @@
     <plurals name="event_count">
         <item quantity="other">%1$d acara</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="other">%1$d kalender</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="other">%1$d menit</item>
     </plurals>
@@ -819,6 +833,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s tidak dapat disinkronkan setelah 30 hari. Versi server akan digunakan. Paksa Sinkronisasi untuk mencoba lagi.</string>
     <string name="sync_notification_expired_content_calendar">%1$s di %2$s tidak dapat disinkronkan setelah 30 hari. Versi server akan digunakan. Paksa Sinkronisasi untuk mencoba lagi.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s di %2$s tidak dapat disinkronkan setelah 30 hari. Versi server akan digunakan. Paksa Sinkronisasi untuk mencoba lagi.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="other">Disinkronkan %1$d kalender</item>

@@ -117,8 +117,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Tapahtuman otsikko</string>
     <string name="label_location">Paikka</string>
-    <string name="label_location_hint">Osoite, huone tai kokouksen linkki</string>
+    <string name="label_location_hint">Osoite tai linkki</string>
     <string name="label_notes">Muistiinpanot</string>
+    <string name="label_categories">Tunnisteet</string>
+    <string name="tags_new">Uusi tunniste</string>
+    <string name="tags_empty_reject">Anna tunnisteen nimi</string>
+    <string name="tags_too_long">Tunniste on liian pitkä</string>
+    <string name="tags_comma_reject">Tunnisteet eivät voi sisältää pilkkuja</string>
+    <string name="tags_hint_n_more">+%1$d lisää</string>
+    <string name="tags_autocomplete_create_new">Luo ”%1$s”</string>
+    <string name="cd_tag">Tunniste: %1$s</string>
+    <string name="cd_tags_move_menu">Siirrä tunnisteet</string>
+    <string name="tags_move_above_notes">Siirrä muistiinpanojen yläpuolelle</string>
+    <string name="tags_move_below_notes">Siirrä muistiinpanojen alapuolelle</string>
     <string name="label_starts">Alkaa</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Sovelluskohtainen salasana</string>
@@ -698,6 +709,10 @@
         <item quantity="one">%1$d tapahtuma</item>
         <item quantity="other">%1$d tapahtumaa</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalenteri</item>
+        <item quantity="other">%1$d kalenteria</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuutti</item>
         <item quantity="other">%1$d minuuttia</item>
@@ -848,6 +863,7 @@
     <string name="sync_notification_expired_title">Synkronointimuutokset vanhentuivat</string>
     <string name="sync_notification_expired_content">%1$s ei voitu synkronoida 30 päivän kuluessa. Käytetään palvelimen versiota. Pakotettu synkronointi uudelleen yritykseen.</string>
     <string name="sync_notification_expired_content_calendar">%1$s kalenterissa %2$s ei voitu synkronoida 30 päivän kuluessa. Käytetään palvelimen versiota. Pakotettu synkronointi uudelleen yritykseen.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s %2$s ei voitu synkronoida 30 päivän kuluessa. Käytetään palvelimen versiota. Pakotettu synkronointi uudelleen yritykseen.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synkronoitu %1$d kalenteri</item>
         <item quantity="other">Synkronoitu %1$d kalenteria</item>

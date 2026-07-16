@@ -113,8 +113,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Event title</string>
     <string name="label_location">Location</string>
-    <string name="label_location_hint">Address, room, or meeting link</string>
+    <string name="label_location_hint">Address or link</string>
     <string name="label_notes">Notes</string>
+    <string name="label_categories">Tags</string>
+    <string name="tags_new">New tag</string>
+    <string name="tags_empty_reject">Enter a tag name</string>
+    <string name="tags_too_long">Tag is too long</string>
+    <string name="tags_comma_reject">Tags can\'t contain commas</string>
+    <string name="tags_hint_n_more">+%1$d more</string>
+    <string name="tags_autocomplete_create_new">Create \"%1$s\"</string>
+    <string name="cd_tag">Tag: %1$s</string>
+    <string name="cd_tags_move_menu">Move tags</string>
+    <string name="tags_move_above_notes">Move above notes</string>
+    <string name="tags_move_below_notes">Move below notes</string>
     <string name="label_starts">Starts</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App-Specific Password</string>
@@ -699,6 +710,10 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="other">%1$d calendars</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minute</item>
         <item quantity="other">%1$d minutes</item>
@@ -865,6 +880,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s across %2$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Synced %1$d calendar</item>

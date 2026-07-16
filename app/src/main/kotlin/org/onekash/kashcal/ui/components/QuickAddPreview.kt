@@ -41,7 +41,8 @@ fun QuickAddPreview(
         val pattern = DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
         DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
     }
-    val hasContent = result.title.isNotBlank() || result.startTime != null || result.location != null
+    val hasContent = result.title.isNotBlank() || result.startTime != null ||
+        result.location != null || result.categories.isNotEmpty()
 
     if (!hasContent) return
 
@@ -123,6 +124,13 @@ fun QuickAddPreview(
                 text = RruleBuilder.formatForDisplay(result.rrule, rruleStrings),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (result.categories.isNotEmpty()) {
+            org.onekash.kashcal.ui.components.category.CategoryPillRow(
+                categories = result.categories,
+                maxVisible = result.categories.size,
             )
         }
     }

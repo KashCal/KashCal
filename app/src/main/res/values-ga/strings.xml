@@ -137,8 +137,19 @@
     <!-- Form Labels -->
     <string name="label_event_title">Teideal an imeachta</string>
     <string name="label_location">Suímh</string>
-    <string name="label_location_hint">Seoladh, seomra, nó nasc cruinnithe</string>
+    <string name="label_location_hint">Seoladh nó nasc</string>
     <string name="label_notes">Nótaí</string>
+    <string name="label_categories">Clibeanna</string>
+    <string name="tags_new">Clib nua</string>
+    <string name="tags_empty_reject">Cuir ainm clibe isteach</string>
+    <string name="tags_too_long">Tá an chlib rófhada</string>
+    <string name="tags_comma_reject">Ní féidir camóga a bheith i gclibeanna</string>
+    <string name="tags_hint_n_more">+%1$d eile</string>
+    <string name="tags_autocomplete_create_new">Cruthaigh «%1$s»</string>
+    <string name="cd_tag">Clib: %1$s</string>
+    <string name="cd_tags_move_menu">Bog clibeanna</string>
+    <string name="tags_move_above_notes">Bog os cionn na nótaí</string>
+    <string name="tags_move_below_notes">Bog faoi bhun na nótaí</string>
     <string name="label_starts">Tosaíonn</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Focal Faire Aip-Shonrach</string>
@@ -775,6 +786,13 @@
         <item quantity="many">%1$d n-imeacht</item>
         <item quantity="other">%1$d imeacht</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d fhéilire</item>
+        <item quantity="two">%1$d fhéilire</item>
+        <item quantity="few">%1$d fhéilire</item>
+        <item quantity="many">%1$d bhféilire</item>
+        <item quantity="other">%1$d féilire</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d nóiméad</item>
         <item quantity="two">%1$d nóiméad</item>
@@ -1011,6 +1029,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">Nír féadtar %1$s a shioncrónú tar éis 30 lá. Úsáidfear leagan an fhreastalaithe. Brúigh Sioncrónú chun atriail.</string>
     <string name="sync_notification_expired_content_calendar">Nír féadtar %1$s in %2$s a shioncrónú tar éis 30 lá. Úsáidfear leagan an fhreastalaithe. Brúigh Sioncrónú chun atriail.</string>
+    <string name="sync_notification_expired_content_calendars">Nír féadtar %1$s ar fud %2$s a shioncrónú tar éis 30 lá. Úsáidfear leagan an fhreastalaithe. Brúigh Sioncrónú chun atriail.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sioncróníodh %1$d fhéilire</item>

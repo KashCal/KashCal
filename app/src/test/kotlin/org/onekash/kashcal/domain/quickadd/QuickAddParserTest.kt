@@ -1200,4 +1200,56 @@ class QuickAddParserTest {
         val result = parse("meeting at 3 a.m. tomorrow")
         assertEquals(LocalTime.of(3, 0), result.startTime)
     }
+
+    // ==================== #tag extraction ====================
+
+    @Test
+    fun `single hashtag is extracted into categories and dropped from title`() {
+        val result = parse("#work Lunch")
+        assertEquals(listOf("work"), result.categories)
+        assertEquals("Lunch", result.title)
+    }
+
+    @Test
+    fun `multiple hashtags are all extracted`() {
+        val result = parse("Lunch #work #urgent")
+        assertEquals(listOf("work", "urgent"), result.categories)
+        assertEquals("Lunch", result.title)
+    }
+
+    @Test
+    fun `hashtag in the middle preserves surrounding title words`() {
+        val result = parse("Call #work Bob tomorrow")
+        assertEquals(listOf("work"), result.categories)
+        assertTrue(result.title.contains("Call"))
+        assertTrue(result.title.contains("Bob"))
+    }
+
+    @Test
+    fun `unicode hashtags are captured`() {
+        val result = parse("Dinner #café #日本語")
+        assertEquals(listOf("café", "日本語"), result.categories)
+    }
+
+    @Test
+    fun `bare hash is not treated as a tag`() {
+        val result = parse("Meet # now")
+        assertEquals(emptyList<String>(), result.categories)
+    }
+
+    @Test
+    fun `over-length hashtag is not silently truncated into a tag`() {
+        val long = "a".repeat(70)
+        val result = parse("Lunch #$long")
+        // Rejected by the validator, not clipped to a 64-char tag.
+        assertEquals(emptyList<String>(), result.categories)
+    }
+
+    @Test
+    fun `hashtags survive alongside date and time parsing`() {
+        val result = parse("Standup #work tomorrow at 9am")
+        assertEquals(listOf("work"), result.categories)
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+        assertTrue(result.title.contains("Standup"))
+    }
 }

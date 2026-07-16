@@ -356,9 +356,22 @@ interface PendingOperationsDao {
      * every subsequent background sync. The row is intentionally kept (not
      * deleted) so [resetAllFailed] (Force Sync) can recover it.
      *
+     * The `status IN ('PENDING','FAILED')` guard makes this a compare-and-set:
+     * only the first caller to reach a still-active row transitions it and gets
+     * a non-zero return. When two background syncs overlap (they run under
+     * different WorkManager unique-work names and are not otherwise serialized),
+     * both may read the same expired op, but only one abandons it — the other
+     * gets 0 for that op and won't count it toward its own notification. Two
+     * syncs racing over disjoint ops can still each post; the notification stays
+     * single because it reposts on a fixed id with setOnlyAlertOnce (see
+     * SyncNotificationManager). The per-run count can undercount in that race,
+     * but the user sees one silent update rather than repeated alerts.
+     *
      * @param id Operation ID to abandon
      * @param reason Human-readable reason for abandonment
      * @param now Current timestamp for updated_at
+     * @return Number of rows transitioned (1 if this call abandoned the op, 0 if
+     *   it was already terminal — e.g. abandoned by a concurrent sync).
      */
     @Query("""
         UPDATE pending_operations
@@ -366,8 +379,9 @@ interface PendingOperationsDao {
             last_error = :reason,
             updated_at = :now
         WHERE id = :id
+        AND status IN ('PENDING', 'FAILED')
     """)
-    suspend fun abandonOperation(id: Long, reason: String, now: Long)
+    suspend fun abandonOperation(id: Long, reason: String, now: Long): Int
 
     /**
      * Refresh lifetime clock when user interacts with event.

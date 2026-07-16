@@ -387,7 +387,7 @@ class SyncNotificationManagerTest {
     @Test
     fun `showOperationExpiredNotification posts on the operation-expired id`() {
         // When
-        manager.showOperationExpiredNotification(expiredCount = 3, calendarName = null)
+        manager.showOperationExpiredNotification(expiredCount = 3, scope = ExpiredCalendarScope.Unknown)
 
         // Then - posted on the dedicated operation-expired id
         assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED))
@@ -396,15 +396,19 @@ class SyncNotificationManagerTest {
     @Test
     fun `showOperationExpiredNotification does not post with zero count`() {
         // Edge case: zero count is an early return — nothing should post
-        manager.showOperationExpiredNotification(expiredCount = 0, calendarName = "Work")
+        manager.showOperationExpiredNotification(
+            expiredCount = 0, scope = ExpiredCalendarScope.Single("Work")
+        )
 
         assertNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED))
     }
 
     @Test
-    fun `showOperationExpiredNotification includes calendar name when provided`() {
+    fun `showOperationExpiredNotification includes calendar name for single scope`() {
         // When a single calendar is known, its name appears in the content
-        manager.showOperationExpiredNotification(expiredCount = 2, calendarName = "Work Calendar")
+        manager.showOperationExpiredNotification(
+            expiredCount = 2, scope = ExpiredCalendarScope.Single("Work Calendar")
+        )
 
         val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
         assertNotNull(posted)
@@ -417,9 +421,44 @@ class SyncNotificationManagerTest {
     }
 
     @Test
-    fun `showOperationExpiredNotification omits calendar name when null`() {
-        // Multi-calendar / unknown falls back to count-only wording
-        manager.showOperationExpiredNotification(expiredCount = 4, calendarName = null)
+    fun `showOperationExpiredNotification only alerts once so re-posts stay silent`() {
+        // A later sync abandoning more ops re-posts on the same fixed id; it must
+        // update silently rather than buzz/heads-up again.
+        manager.showOperationExpiredNotification(
+            expiredCount = 1, scope = ExpiredCalendarScope.Unknown
+        )
+
+        val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
+        assertNotNull(posted)
+        assertTrue(
+            "Expired notification must set FLAG_ONLY_ALERT_ONCE",
+            posted!!.notification.flags and Notification.FLAG_ONLY_ALERT_ONCE != 0
+        )
+    }
+
+    @Test
+    fun `showOperationExpiredNotification reports calendar count for multiple scope`() {
+        // Several calendars affected: name the count, not a single calendar
+        manager.showOperationExpiredNotification(
+            expiredCount = 5, scope = ExpiredCalendarScope.Multiple(3)
+        )
+
+        val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
+        assertNotNull(posted)
+        val text = posted!!.notification.extras
+            .getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
+        assertTrue(
+            "Notification should mention the calendar count: '$text'",
+            text.contains("3 calendars")
+        )
+    }
+
+    @Test
+    fun `showOperationExpiredNotification omits calendar name for unknown scope`() {
+        // Unknown falls back to count-only wording
+        manager.showOperationExpiredNotification(
+            expiredCount = 4, scope = ExpiredCalendarScope.Unknown
+        )
 
         val posted = activeById(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED)
         assertNotNull(posted)

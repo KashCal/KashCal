@@ -126,8 +126,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Įvykio pavadinimas</string>
     <string name="label_location">Vieta</string>
-    <string name="label_location_hint">Adresas, kabinetas ar susitikimo nuoroda</string>
+    <string name="label_location_hint">Adresas arba nuoroda</string>
     <string name="label_notes">Pastabos</string>
+    <string name="label_categories">Žymos</string>
+    <string name="tags_new">Nauja žyma</string>
+    <string name="tags_empty_reject">Įveskite žymos pavadinimą</string>
+    <string name="tags_too_long">Žyma per ilga</string>
+    <string name="tags_comma_reject">Žymose negali būti kablelių</string>
+    <string name="tags_hint_n_more">+dar %1$d</string>
+    <string name="tags_autocomplete_create_new">Sukurti „%1$s“</string>
+    <string name="cd_tag">Žyma: %1$s</string>
+    <string name="cd_tags_move_menu">Perkelti žymas</string>
+    <string name="tags_move_above_notes">Perkelti virš pastabų</string>
+    <string name="tags_move_below_notes">Perkelti po pastabomis</string>
     <string name="label_starts">Pradžia</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Programos slaptažodis</string>
@@ -718,6 +729,12 @@
         <item quantity="many">%1$d įvykio</item>
         <item quantity="other">%1$d įvykių</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d kalendorius</item>
+        <item quantity="few">%1$d kalendoriai</item>
+        <item quantity="many">%1$d kalendoriaus</item>
+        <item quantity="other">%1$d kalendorių</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d minutė</item>
         <item quantity="few">%1$d minutės</item>
@@ -888,6 +905,7 @@
     <string name="sync_notification_expired_title">Sinchronizacijos pakeitimai nebegalioja</string>
     <string name="sync_notification_expired_content">%1$s nepavyko sinchronizuoti per 30 dienų. Bus naudojama serverio versija. Priverstinė sinchronizacija, kad bandytumėte dar kartą.</string>
     <string name="sync_notification_expired_content_calendar">%1$s kalendoriuje %2$s nepavyko sinchronizuoti per 30 dienų. Bus naudojama serverio versija. Priverstinė sinchronizacija, kad bandytumėte dar kartą.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s iš %2$s nepavyko sinchronizuoti per 30 dienų. Bus naudojama serverio versija. Priverstinė sinchronizacija, kad bandytumėte dar kartą.</string>
     <plurals name="sync_notification_calendars">
         <item quantity="one">Sinchronizuotas %1$d kalendorius</item>
         <item quantity="few">Sinchronizuoti %1$d kalendoriai</item>

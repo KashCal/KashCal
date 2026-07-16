@@ -4,6 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.contrastRatio
@@ -115,4 +116,104 @@ class AccentSchemeTest {
             "dark primary should be seed-derived, not the Material baseline"
         }
     }
+
+    /**
+     * The two achromatic extremes are special: HCT has no hue to preserve, so the tonal
+     * engine pairs the accent container with a mid-gray "on" tone that only scrapes AA
+     * (~4.6:1) and reads as muddy on the widget header. For pure white and pure black we
+     * snap the accent-container pair to the crisp inverse (black-on-white / white-on-black,
+     * a full 21:1) in BOTH faces, so the header the user picked looks like the color they
+     * picked. Every widget/app header surface uses primaryContainer/onPrimaryContainer.
+     */
+    @Test
+    fun `pure white seed yields a pure white accent container with black text in both faces`() {
+        for (dark in listOf(false, true)) {
+            val s = accentColorScheme(0xFFFFFFFF.toInt(), dark)
+            // Pure white bg + pure black fg is exactly 21:1 by definition, so pinning the two
+            // colors pins the ratio; no separate contrast assertion needed.
+            assertEquals("white container (dark=$dark)", Color.White, s.primaryContainer)
+            assertEquals("white on-container (dark=$dark)", Color.Black, s.onPrimaryContainer)
+        }
+    }
+
+    @Test
+    fun `pure black seed yields a pure black accent container with white text in both faces`() {
+        for (dark in listOf(false, true)) {
+            val s = accentColorScheme(0xFF000000.toInt(), dark)
+            assertEquals("black container (dark=$dark)", Color.Black, s.primaryContainer)
+            assertEquals("black on-container (dark=$dark)", Color.White, s.onPrimaryContainer)
+        }
+    }
+
+    /**
+     * The achromatic snap must touch ONLY the accent-container pair. If a future change
+     * over-broadened the post-processing (e.g. rewrote the surface family or primary), a
+     * pure-white seed would silently wash out unrelated roles. Assert every role other than
+     * primaryContainer/onPrimaryContainer is byte-for-byte the raw engine output. This also
+     * pins that `primary` is untouched, so the primary/surface visibility guarantee holds.
+     */
+    @Test
+    fun `achromatic snap leaves every other role identical to the raw engine`() {
+        // Every role EXCEPT the intentionally-snapped container pair. ColorScheme has no value
+        // equality, so compare role-by-role. If a future change over-broadened the snap, one of
+        // these — surface, primary, the sibling containers — would diverge from the raw engine.
+        val untouched: List<Pair<String, (ColorScheme) -> Color>> = listOf(
+            "primary" to { it.primary },
+            "onPrimary" to { it.onPrimary },
+            "inversePrimary" to { it.inversePrimary },
+            "secondary" to { it.secondary },
+            "onSecondary" to { it.onSecondary },
+            "secondaryContainer" to { it.secondaryContainer },
+            "onSecondaryContainer" to { it.onSecondaryContainer },
+            "tertiary" to { it.tertiary },
+            "onTertiary" to { it.onTertiary },
+            "tertiaryContainer" to { it.tertiaryContainer },
+            "onTertiaryContainer" to { it.onTertiaryContainer },
+            "surface" to { it.surface },
+            "onSurface" to { it.onSurface },
+            "surfaceVariant" to { it.surfaceVariant },
+            "onSurfaceVariant" to { it.onSurfaceVariant },
+            "surfaceTint" to { it.surfaceTint },
+            "inverseSurface" to { it.inverseSurface },
+            "inverseOnSurface" to { it.inverseOnSurface },
+            "surfaceBright" to { it.surfaceBright },
+            "surfaceDim" to { it.surfaceDim },
+            "surfaceContainerLowest" to { it.surfaceContainerLowest },
+            "surfaceContainerLow" to { it.surfaceContainerLow },
+            "surfaceContainer" to { it.surfaceContainer },
+            "surfaceContainerHigh" to { it.surfaceContainerHigh },
+            "surfaceContainerHighest" to { it.surfaceContainerHighest },
+            "background" to { it.background },
+            "onBackground" to { it.onBackground },
+            "error" to { it.error },
+            "onError" to { it.onError },
+            "errorContainer" to { it.errorContainer },
+            "onErrorContainer" to { it.onErrorContainer },
+            "outline" to { it.outline },
+            "outlineVariant" to { it.outlineVariant },
+            "scrim" to { it.scrim },
+        )
+        for (seed in listOf(0xFFFFFFFF.toInt(), 0xFF000000.toInt())) {
+            for (dark in listOf(false, true)) {
+                val snapped = accentColorScheme(seed, dark)
+                val raw = rawContentScheme(seed, dark)
+                for ((role, get) in untouched) {
+                    assertEquals(
+                        "seed=${Integer.toHexString(seed)} dark=$dark: $role must be untouched",
+                        get(raw),
+                        get(snapped),
+                    )
+                }
+            }
+        }
+    }
+
+    /** The unmodified MaterialKolor scheme the production function post-processes. */
+    private fun rawContentScheme(seed: Int, dark: Boolean): ColorScheme =
+        com.materialkolor.dynamicColorScheme(
+            seedColor = Color(seed),
+            isDark = dark,
+            style = com.materialkolor.PaletteStyle.Content,
+            contrastLevel = 0.0,
+        )
 }

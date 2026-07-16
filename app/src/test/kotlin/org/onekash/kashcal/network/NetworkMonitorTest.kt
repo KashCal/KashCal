@@ -160,8 +160,10 @@ class NetworkMonitorTest {
     }
 
     @Test
-    fun `checkCurrentConnectivity returns false when internet not validated`() {
-        // Given
+    fun `checkCurrentConnectivity returns true when internet capable but not validated`() {
+        // A self-hosted CalDAV/ICS server on a LAN or VPN is reachable but the
+        // network has no public-internet route, so Android reports INTERNET
+        // without VALIDATED. Such a network must count as online (#296).
         val network = mockk<Network>()
         val capabilities = mockk<NetworkCapabilities>()
 
@@ -169,6 +171,26 @@ class NetworkMonitorTest {
         every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
         every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
         every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns false
+
+        val monitor = NetworkMonitor(context)
+
+        // When
+        val result = monitor.checkCurrentConnectivity()
+
+        // Then
+        assertTrue(result)
+    }
+
+    @Test
+    fun `checkCurrentConnectivity returns false when no internet capability`() {
+        // A network without INTERNET capability (e.g. a P2P-only Wi-Fi link) is
+        // not usable for sync.
+        val network = mockk<Network>()
+        val capabilities = mockk<NetworkCapabilities>()
+
+        every { connectivityManager.activeNetwork } returns network
+        every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns false
 
         val monitor = NetworkMonitor(context)
 
@@ -281,6 +303,61 @@ class NetworkMonitorTest {
         // Then - should not crash
         assertFalse(monitor.isMonitoring())
         verify(exactly = 0) { connectivityManager.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>()) }
+    }
+
+    @Test
+    fun `onCapabilitiesChanged sets online for internet capable but not validated network`() {
+        // The live callback is the second place online-ness is computed. It must
+        // agree with checkCurrentConnectivity: INTERNET without VALIDATED = online.
+        // Otherwise the flag flickers back to offline when capabilities update.
+        val network = mockk<Network>()
+        val initialCapabilities = mockk<NetworkCapabilities>()
+        val callbackSlot = slot<ConnectivityManager.NetworkCallback>()
+
+        // Start offline so we can observe the callback flipping it online.
+        every { connectivityManager.activeNetwork } returns null
+        every { connectivityManager.getNetworkCapabilities(network) } returns initialCapabilities
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just Runs
+
+        val monitor = NetworkMonitor(context)
+        monitor.startMonitoring()
+        assertFalse(monitor.isOnline.value)
+
+        val unvalidatedCaps = mockk<NetworkCapabilities>()
+        every { unvalidatedCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
+        every { unvalidatedCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns false
+        every { unvalidatedCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) } returns true
+
+        // When - the OS reports a connected, internet-capable but unvalidated network
+        callbackSlot.captured.onCapabilitiesChanged(network, unvalidatedCaps)
+
+        // Then
+        assertTrue(monitor.isOnline.value)
+    }
+
+    @Test
+    fun `onCapabilitiesChanged sets offline when internet capability absent`() {
+        val network = mockk<Network>()
+        val initialCapabilities = mockk<NetworkCapabilities>()
+        val callbackSlot = slot<ConnectivityManager.NetworkCallback>()
+
+        every { connectivityManager.activeNetwork } returns null
+        every { connectivityManager.getNetworkCapabilities(network) } returns initialCapabilities
+        every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just Runs
+
+        val monitor = NetworkMonitor(context)
+        monitor.startMonitoring()
+
+        val noInternetCaps = mockk<NetworkCapabilities>()
+        every { noInternetCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns false
+        every { noInternetCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns false
+        every { noInternetCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) } returns true
+
+        // When
+        callbackSlot.captured.onCapabilitiesChanged(network, noInternetCaps)
+
+        // Then
+        assertFalse(monitor.isOnline.value)
     }
 
     // ==================== Network Restore Callback Tests ====================

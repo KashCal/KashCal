@@ -16,6 +16,23 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
+ * Which calendar(s) a batch of expired sync operations belongs to, used to pick
+ * the wording of the "sync expired" notification. Modeling the three cases as a
+ * closed set (rather than a nullable name) keeps them mutually exclusive: a
+ * single named calendar, several calendars, or no resolvable calendar at all.
+ */
+sealed interface ExpiredCalendarScope {
+    /** All expired ops share one calendar with this display name. */
+    data class Single(val name: String) : ExpiredCalendarScope
+
+    /** Expired ops span [count] distinct calendars. */
+    data class Multiple(val count: Int) : ExpiredCalendarScope
+
+    /** No calendar could be resolved (event/calendar rows gone). */
+    data object Unknown : ExpiredCalendarScope
+}
+
+/**
  * Manages sync-related notifications.
  *
  * Provides:
@@ -364,18 +381,24 @@ class SyncNotificationManager @Inject constructor(
      * Alerts user that some local changes couldn't be synced.
      *
      * @param expiredCount Number of operations that were abandoned
-     * @param calendarName Name of the calendar when all expired ops share one;
-     *   null when they span multiple calendars (or the calendar is unknown),
-     *   in which case the count-only wording is used.
+     * @param scope The calendar(s) the expired ops belong to, selecting the
+     *   wording: a single named calendar, a count of calendars, or count-only.
      */
-    fun showOperationExpiredNotification(expiredCount: Int, calendarName: String?) {
+    fun showOperationExpiredNotification(expiredCount: Int, scope: ExpiredCalendarScope) {
         if (expiredCount <= 0) return
 
         val eventText = context.resources.getQuantityString(R.plurals.event_count, expiredCount, expiredCount)
-        val content = if (calendarName != null) {
-            context.getString(R.string.sync_notification_expired_content_calendar, eventText, calendarName)
-        } else {
-            context.getString(R.string.sync_notification_expired_content, eventText)
+        val content = when (scope) {
+            is ExpiredCalendarScope.Single ->
+                context.getString(R.string.sync_notification_expired_content_calendar, eventText, scope.name)
+            is ExpiredCalendarScope.Multiple -> {
+                val calendarText = context.resources.getQuantityString(
+                    R.plurals.calendar_count, scope.count, scope.count
+                )
+                context.getString(R.string.sync_notification_expired_content_calendars, eventText, calendarText)
+            }
+            ExpiredCalendarScope.Unknown ->
+                context.getString(R.string.sync_notification_expired_content, eventText)
         }
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
@@ -384,6 +407,9 @@ class SyncNotificationManager @Inject constructor(
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setAutoCancel(true)
+            // Re-posting this fixed-id notification (e.g. a later sync abandons
+            // more ops) must update silently, not buzz/heads-up again.
+            .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setContentIntent(createOpenAppIntent())

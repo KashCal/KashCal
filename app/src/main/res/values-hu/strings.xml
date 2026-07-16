@@ -117,8 +117,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Esemény címe</string>
     <string name="label_location">Helyszín</string>
-    <string name="label_location_hint">Cím, szoba vagy találkozó link</string>
+    <string name="label_location_hint">Cím vagy hivatkozás</string>
     <string name="label_notes">Jegyzetek</string>
+    <string name="label_categories">Címkék</string>
+    <string name="tags_new">Új címke</string>
+    <string name="tags_empty_reject">Adj meg egy címkenevet</string>
+    <string name="tags_too_long">A címke túl hosszú</string>
+    <string name="tags_comma_reject">A címkék nem tartalmazhatnak vesszőt</string>
+    <string name="tags_hint_n_more">+%1$d további</string>
+    <string name="tags_autocomplete_create_new">„%1$s” létrehozása</string>
+    <string name="cd_tag">Címke: %1$s</string>
+    <string name="cd_tags_move_menu">Címkék áthelyezése</string>
+    <string name="tags_move_above_notes">Áthelyezés a jegyzetek fölé</string>
+    <string name="tags_move_below_notes">Áthelyezés a jegyzetek alá</string>
     <string name="label_starts">Kezdés</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">Alkalmazásjelszó</string>
@@ -708,6 +719,10 @@
         <item quantity="one">%1$d esemény</item>
         <item quantity="other">%1$d esemény</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d naptár</item>
+        <item quantity="other">%1$d naptár</item>
+    </plurals>
     <plurals name="time_minutes">
         <item quantity="one">%1$d perc</item>
         <item quantity="other">%1$d perc</item>
@@ -874,6 +889,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
     <string name="sync_notification_expired_content_calendar">%1$s a(z) %2$s naptárban nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s a(z) %2$s között nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d naptár szinkronizálva</item>

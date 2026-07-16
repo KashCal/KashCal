@@ -77,8 +77,19 @@
     <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Titel van afspraak</string>
     <string name="label_location">Locatie</string>
-    <string name="label_location_hint">Adres, ruimte of vergaderlink</string>
+    <string name="label_location_hint">Adres of link</string>
     <string name="label_notes">Notities</string>
+    <string name="label_categories">Labels</string>
+    <string name="tags_new">Nieuw label</string>
+    <string name="tags_empty_reject">Voer een labelnaam in</string>
+    <string name="tags_too_long">Label is te lang</string>
+    <string name="tags_comma_reject">Labels mogen geen komma\'s bevatten</string>
+    <string name="tags_hint_n_more">+%1$d meer</string>
+    <string name="tags_autocomplete_create_new">\"%1$s\" aanmaken</string>
+    <string name="cd_tag">Label: %1$s</string>
+    <string name="cd_tags_move_menu">Labels verplaatsen</string>
+    <string name="tags_move_above_notes">Boven notities verplaatsen</string>
+    <string name="tags_move_below_notes">Onder notities verplaatsen</string>
     <string name="label_starts">Begint</string>
     <string name="label_apple_id">Apple ID</string>
     <string name="label_app_password">App-specifiek wachtwoord</string>
@@ -670,6 +681,10 @@
         <item quantity="one">%1$d afspraak</item>
         <item quantity="other">%1$d afspraken</item>
     </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d agenda</item>
+        <item quantity="other">%1$d agenda\'s</item>
+    </plurals>
 
     <plurals name="time_minutes">
         <item quantity="one">%1$d minuut</item>
@@ -837,6 +852,7 @@
     <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s konden niet worden gesynchroniseerd na 30 dagen. De serverversie wordt gebruikt. Forceer synchronisatie om opnieuw te proberen.</string>
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s konden niet worden gesynchroniseerd na 30 dagen. De serverversie wordt gebruikt. Forceer synchronisatie om opnieuw te proberen.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s verspreid over %2$s konden niet worden gesynchroniseerd na 30 dagen. De serverversie wordt gebruikt. Forceer synchronisatie om opnieuw te proberen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d agenda gesynchroniseerd</item>
