@@ -1011,6 +1011,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">Cal una URL</string>
     <string name="ics_url_invalid_scheme">La URL ha de començar amb http://, https://, o webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">El servidor ha retornat un error (%1$d). Comproveu la URL.</string>
+    <string name="ics_fetch_error_empty">El canal del calendari és buit.</string>
+    <string name="ics_fetch_error_not_calendar">Aquesta URL no sembla un canal de calendari.</string>
     <!-- Event confirmation snackbar -->
     <string name="cd_widget_calendar">Calendari</string>
     <string name="cd_widget_add_event">Afegeix un esdeveniment</string>

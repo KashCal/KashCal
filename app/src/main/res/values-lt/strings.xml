@@ -1012,6 +1012,11 @@
     <string name="ics_sync_weekly">Kas savaitę</string>
     <string name="ics_url_required">Reikalingas URL</string>
     <string name="ics_url_invalid_scheme">URL turi prasidėti http://, https:// arba webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Serveris grąžino klaidą (%1$d). Patikrink URL.</string>
+    <string name="ics_fetch_error_empty">Kalendoriaus srautas tuščias.</string>
+    <string name="ics_fetch_error_not_calendar">Šis URL nepanašus į kalendoriaus srautą.</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalendorius</string>

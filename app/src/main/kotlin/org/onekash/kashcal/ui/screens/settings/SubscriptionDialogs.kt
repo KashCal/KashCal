@@ -55,6 +55,7 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.util.asString
 
 /**
  * Bottom sheet for adding a new ICS calendar subscription.
@@ -444,7 +445,7 @@ private fun FetchResultFeedback(fetchState: FetchCalendarState) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    fetchState.message,
+                    fetchState.message.asString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

@@ -899,6 +899,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URLが必要です</string>
     <string name="ics_url_invalid_scheme">URLはhttp://、https://、またはwebcal://で始まる必要があります</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">サーバーがエラー（%1$d）を返しました。URLを確認してください。</string>
+    <string name="ics_fetch_error_empty">カレンダーフィードが空です。</string>
+    <string name="ics_fetch_error_not_calendar">そのURLはカレンダーフィードではないようです。</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

@@ -998,6 +998,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">Το URL είναι υποχρεωτικό</string>
     <string name="ics_url_invalid_scheme">Το URL πρέπει να ξεκινά με http://, https:// ή webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Ο διακομιστής επέστρεψε σφάλμα (%1$d). Ελέγξτε το URL.</string>
+    <string name="ics_fetch_error_empty">Η ροή ημερολογίου είναι κενή.</string>
+    <string name="ics_fetch_error_not_calendar">Αυτό το URL δεν μοιάζει με ροή ημερολογίου.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget strings -->

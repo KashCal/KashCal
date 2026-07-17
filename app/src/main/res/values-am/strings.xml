@@ -989,6 +989,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL ያስፈልጋል</string>
     <string name="ics_url_invalid_scheme">URL በhttp://፣ https://፣ ወይም webcal:// መጀመር አለበት</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">አገልጋዩ ስህተት መልሷል (%1$d)። እባክዎ URL ን ያረጋግጡ።</string>
+    <string name="ics_fetch_error_empty">የቀን መቁጠሪያ ምግቡ ባዶ ነው።</string>
+    <string name="ics_fetch_error_not_calendar">ያ URL እንደ የቀን መቁጠሪያ ምግብ አይመስልም።</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget strings -->

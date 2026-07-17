@@ -1039,6 +1039,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL je vyžadováno</string>
     <string name="ics_url_invalid_scheme">URL musí začínat http://, https:// nebo webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Server vrátil chybu (%1$d). Zkontrolujte URL.</string>
+    <string name="ics_fetch_error_empty">Kanál kalendáře je prázdný.</string>
+    <string name="ics_fetch_error_not_calendar">Tento URL nevypadá jako kanál kalendáře.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/channel strings -->

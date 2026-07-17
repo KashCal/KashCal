@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.SyncBannerState
+import org.onekash.kashcal.ui.viewmodels.AgendaUiState
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.text.SimpleDateFormat
@@ -501,11 +502,8 @@ class HomeScreenComposeTest {
     fun homeScreen_emptyAgendaShowsMessage() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(
-                    viewMode = ViewMode.AGENDA,
-                    isLoadingAgenda = false,
-                    agendaEvents = persistentListOf()
-                ),
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
+                agendaEvents = AgendaUiState(events = persistentListOf(), isLoading = false),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},
@@ -711,10 +709,8 @@ class HomeScreenComposeTest {
     fun homeScreen_agendaShowsLoadingWhenLoading() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(
-                    viewMode = ViewMode.AGENDA,
-                    isLoadingAgenda = true
-                ),
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
+                agendaEvents = AgendaUiState.LOADING,
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},

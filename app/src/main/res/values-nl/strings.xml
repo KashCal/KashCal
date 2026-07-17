@@ -961,6 +961,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL is vereist</string>
     <string name="ics_url_invalid_scheme">URL moet beginnen met http://, https:// of webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">De server gaf een foutmelding (%1$d). Controleer de URL.</string>
+    <string name="ics_fetch_error_empty">De agendafeed is leeg.</string>
+    <string name="ics_fetch_error_not_calendar">Deze URL lijkt geen agendafeed te zijn.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/Channel accessibility -->

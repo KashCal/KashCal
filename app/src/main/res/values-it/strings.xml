@@ -1044,6 +1044,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">L\'URL è obbligatorio</string>
     <string name="ics_url_invalid_scheme">L\'URL deve iniziare con http://, https:// o webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Il server ha restituito un errore (%1$d). Controlla l\'URL.</string>
+    <string name="ics_fetch_error_empty">Il feed del calendario è vuoto.</string>
+    <string name="ics_fetch_error_not_calendar">Questo URL non sembra un feed di calendario.</string>
     <!-- Event confirmation snackbar -->
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendario</string>

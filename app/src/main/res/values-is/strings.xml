@@ -961,6 +961,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL er nauðsynlegt</string>
     <string name="ics_url_invalid_scheme">URL verður að byrja á http://, https:// eða webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Netþjónninn skilaði villu (%1$d). Athugaðu URL-slóðina.</string>
+    <string name="ics_fetch_error_empty">Dagatalsstraumurinn er tómur.</string>
+    <string name="ics_fetch_error_not_calendar">Þessi URL-slóð lítur ekki út fyrir að vera dagatalsstraumur.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget and Channel strings -->

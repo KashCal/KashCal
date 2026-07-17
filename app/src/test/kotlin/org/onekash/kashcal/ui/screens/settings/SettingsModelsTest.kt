@@ -234,9 +234,13 @@ class SettingsModelsTest {
 
     @Test
     fun `FetchCalendarState Error stores message`() {
-        val state = FetchCalendarState.Error("HTTP 404: Not Found")
+        val state = FetchCalendarState.Error(
+            org.onekash.kashcal.ui.util.UiMessage.Literal("HTTP 404: Not Found"))
 
-        assertEquals("HTTP 404: Not Found", state.message)
+        assertEquals(
+            org.onekash.kashcal.ui.util.UiMessage.Literal("HTTP 404: Not Found"),
+            state.message,
+        )
     }
 
     @Test
@@ -244,7 +248,8 @@ class SettingsModelsTest {
         val idle = FetchCalendarState.Idle
         val loading = FetchCalendarState.Loading
         val success = FetchCalendarState.Success("Test", 10)
-        val error = FetchCalendarState.Error("Error")
+        val error = FetchCalendarState.Error(
+            org.onekash.kashcal.ui.util.UiMessage.Literal("Error"))
 
         assertTrue(idle is FetchCalendarState.Idle)
         assertTrue(loading is FetchCalendarState.Loading)

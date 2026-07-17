@@ -956,6 +956,11 @@
     <string name="ics_sync_weekly">Viikoittain</string>
     <string name="ics_url_required">URL vaaditaan</string>
     <string name="ics_url_invalid_scheme">URL:n on alettava http://, https:// tai webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Palvelin palautti virheen (%1$d). Tarkista URL.</string>
+    <string name="ics_fetch_error_empty">Kalenterisyöte on tyhjä.</string>
+    <string name="ics_fetch_error_not_calendar">Tämä URL ei näytä kalenterisyötteeltä.</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalenteri</string>

@@ -989,6 +989,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">I-URL iyadingeka</string>
     <string name="ics_url_invalid_scheme">I-URL kumele iqale nge-http://, https://, noma webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Iseva ibuyisele iphutha (%1$d). Sicela uhlole i-URL.</string>
+    <string name="ics_fetch_error_empty">Ifidi yekhalenda ayinalutho.</string>
+    <string name="ics_fetch_error_not_calendar">Leyo URL ayibukeki njengefidi yekhalenda.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget strings -->

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import app.cash.turbine.test
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -7,6 +8,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -1245,19 +1247,25 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
-        assertTrue(viewModel.uiState.value.agendaEvents.isEmpty())
 
-        // Switch to agenda view
-        viewModel.setViewMode(ViewMode.AGENDA)
-        advanceUntilIdle()
+        // agendaEvents is a WhileSubscribed StateFlow — Turbine-collect so its upstream runs.
+        viewModel.agendaEvents.test {
+            // Before entering agenda, the key is null → empty.
+            assertTrue(awaitItem().events.isEmpty())
 
-        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
-        assertEquals(2, viewModel.uiState.value.agendaEvents.size)
-        assertFalse(viewModel.uiState.value.isLoadingAgenda)
+            viewModel.setViewMode(ViewMode.AGENDA)
+            advanceUntilIdle()
+
+            assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
+            val loaded = expectMostRecentItem()
+            assertEquals(2, loaded.events.size)
+            assertFalse(loaded.isLoading)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
-    fun `setViewMode from AGENDA to MONTH does not reload agenda`() = runTest {
+    fun `leaving AGENDA stops querying the agenda window`() = runTest {
         val testDisplayEvents = persistentListOf(
             DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0])
         )
@@ -1266,21 +1274,24 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to agenda
-        viewModel.setViewMode(ViewMode.AGENDA)
-        advanceUntilIdle()
-        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
+        // Collect agenda so its flow is active while we're in AGENDA.
+        viewModel.agendaEvents.test {
+            skipItems(1) // initial empty
+            viewModel.setViewMode(ViewMode.AGENDA)
+            advanceUntilIdle()
+            assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
+            assertEquals(1, expectMostRecentItem().events.size)
 
-        // Clear mock call count
-        io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
+            // Clear mock call count, then leave agenda — the key nulls, so no new query.
+            io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
+            viewModel.setViewMode(ViewMode.MONTH)
+            advanceUntilIdle()
 
-        // Switch back to month
-        viewModel.setViewMode(ViewMode.MONTH)
-        advanceUntilIdle()
-
-        assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
-        // Should NOT have called getDisplayEventsForRange when going to month
-        verify(exactly = 0) { displayEventRepository.getDisplayEventsForRange(any(), any()) }
+            assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
+            // Nulling the agenda key must NOT issue a fresh range query.
+            verify(exactly = 0) { displayEventRepository.getDisplayEventsForRange(any(), any()) }
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -1294,15 +1305,17 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setViewMode(ViewMode.AGENDA)
-        advanceUntilIdle()
+        viewModel.agendaEvents.test {
+            skipItems(1) // initial empty
+            viewModel.setViewMode(ViewMode.AGENDA)
+            advanceUntilIdle()
 
-        // Verify the DisplayEventRepository range query was called with a ~90-day window
-        verify {
-            displayEventRepository.getDisplayEventsForRange(any(), any())
+            // Verify the DisplayEventRepository range query was called with a ~90-day window
+            verify { displayEventRepository.getDisplayEventsForRange(any(), any()) }
+            val ninetyDaysMs = 90L * 24 * 60 * 60 * 1000
+            assertEquals(ninetyDaysMs, endSlot.captured - startSlot.captured)
+            cancelAndIgnoreRemainingEvents()
         }
-        val ninetyDaysMs = 90L * 24 * 60 * 60 * 1000
-        assertEquals(ninetyDaysMs, endSlot.captured - startSlot.captured)
     }
 
     @Test
@@ -1338,15 +1351,17 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setViewMode(ViewMode.AGENDA)
-        advanceUntilIdle()
+        viewModel.agendaEvents.test {
+            skipItems(1) // initial empty
+            viewModel.setViewMode(ViewMode.AGENDA)
+            advanceUntilIdle()
 
-        // Should be sorted by startTs (earlier first) - DisplayEventRepository handles sorting
-        assertEquals(2, viewModel.uiState.value.agendaEvents.size)
-        assertTrue(
-            viewModel.uiState.value.agendaEvents[0].startTs <
-            viewModel.uiState.value.agendaEvents[1].startTs
-        )
+            // Should be sorted by startTs (earlier first) - DisplayEventRepository handles sorting
+            val loaded = expectMostRecentItem()
+            assertEquals(2, loaded.events.size)
+            assertTrue(loaded.events[0].startTs < loaded.events[1].startTs)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -1354,7 +1369,7 @@ class HomeViewModelTest {
         // Track loading state during the fetch
         var loadingStateDuringFetch = false
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } answers {
-            // This captures that isLoadingAgenda was true when we started fetching
+            // This captures that the agenda flow was fetching when the range was queried
             loadingStateDuringFetch = true
             flowOf(persistentListOf())
         }
@@ -1362,17 +1377,19 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially not loading
-        assertFalse(viewModel.uiState.value.isLoadingAgenda)
+        viewModel.agendaEvents.test {
+            // Initially not loading (no range yet).
+            assertFalse(awaitItem().isLoading)
 
-        viewModel.setViewMode(ViewMode.AGENDA)
-        advanceUntilIdle()
+            viewModel.setViewMode(ViewMode.AGENDA)
+            advanceUntilIdle()
 
-        // Verify loading state was set (captured during fetch)
-        assertTrue(loadingStateDuringFetch)
-
-        // After completion, loading should be false
-        assertFalse(viewModel.uiState.value.isLoadingAgenda)
+            // The range query was issued...
+            assertTrue(loadingStateDuringFetch)
+            // ...and after completion, loading is false.
+            assertFalse(expectMostRecentItem().isLoading)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     // ==================== Sync Tests ====================
@@ -4087,9 +4104,12 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Week view state should remain at defaults (no data loaded)
-        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
-        assertTrue(viewModel.uiState.value.weekViewTimedEvents.isEmpty())
+        // The default view is MONTH, so the time-grid range is never set and the
+        // reactive week surface stays empty (no time-grid data loaded).
+        viewModel.weekEvents.test {
+            assertTrue(awaitItem().timedEvents.isEmpty())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -4106,6 +4126,108 @@ class HomeViewModelTest {
         assertEquals(ViewMode.THREE_DAYS, viewModel.uiState.value.viewMode)
         // goToTodayWeek sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
         assertEquals(WeekViewUtils.CENTER_DAY_PAGE, viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    @Test
+    fun `creating event in week view after year round-trip refreshes the grid`() = runTest {
+        // Reproduces the stale-week-grid bug (#297): a view round-trip through YEAR
+        // used to leave the week grid stale after a create. The durable fix makes the
+        // grid a reactive StateFlow (viewModel.weekEvents) derived from the repository
+        // Flow, so a DB write propagates automatically with no manual reload.
+        //
+        // The repository Flow is the source of truth; emit an empty grid first, then the
+        // created event after the save, and assert weekEvents reflects the second emission.
+        //
+        // NOTE: weekEvents is a WhileSubscribed StateFlow — it only runs its upstream
+        // while it has an active collector. We Turbine-collect it (a bare .value read
+        // would pass for the wrong reason: the initial-empty value).
+        val createdEvent = testEvents[0].copy(id = 100L, title = "New Meeting")
+        val afterCreate = persistentListOf<DisplayEvent>(
+            DisplayEvent.Room(createdEvent, testOccurrences[0], testCalendars[0])
+        )
+        val gridFlow = MutableStateFlow<kotlinx.collections.immutable.ImmutableList<DisplayEvent>>(
+            persistentListOf()
+        )
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns gridFlow
+        coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
+        coEvery { eventCoordinator.createEvent(any(), any()) } coAnswers {
+            // Simulate the DB write that the reactive Flow would observe.
+            gridFlow.value = afterCreate
+            createdEvent
+        }
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Enter week view (seeds the range), round-trip through YEAR, then return to week.
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.YEAR)
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+
+        viewModel.weekEvents.test {
+            // Let the range flow settle (debounce + initial empty repo emission).
+            advanceUntilIdle()
+            assertTrue(expectMostRecentItem().timedEvents.isEmpty())
+
+            // Create an event via the public save surface (as the FAB "+" does).
+            val formState = EventFormState(
+                title = "New Meeting",
+                dateMillis = getTimestamp(2024, 11, 20, 0, 0),
+                endDateMillis = getTimestamp(2024, 11, 20, 0, 0),
+                startHour = 10,
+                startMinute = 0,
+                endHour = 11,
+                endMinute = 0,
+                selectedCalendarId = 1L,
+                reminders = listOf(15),
+                isEditMode = false
+            )
+            val result = viewModel.saveEvent(formState)
+            advanceUntilIdle()
+            assertTrue(result.isSuccess)
+
+            // The reactive grid must reflect the created event, with no manual reload.
+            val updated = expectMostRecentItem()
+            assertEquals(1, updated.timedEvents.size)
+            assertEquals("New Meeting", updated.timedEvents.first().title)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `time-grid FAB seeds today at the next hour`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+
+        val seed = java.time.Instant.ofEpochMilli(viewModel.computeTimeGridEventSeedTs())
+            .atZone(java.time.ZoneId.systemDefault())
+
+        // Today's date, at the next hour on the hour (matches the non-grid FAB).
+        assertEquals(java.time.LocalDate.now(), seed.toLocalDate())
+        assertEquals((java.time.LocalTime.now().hour + 1) % 24, seed.hour)
+        assertEquals(0, seed.minute)
+    }
+
+    @Test
+    fun `time-grid FAB seed is independent of pager navigation`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Even after paging away, the FAB still defaults to today (not the viewed day).
+        viewModel.setViewMode(ViewMode.DAY)
+        viewModel.onDayPagerPageChanged(WeekViewUtils.CENTER_DAY_PAGE + 30)
+        advanceUntilIdle()
+
+        val seedDate = java.time.Instant.ofEpochMilli(viewModel.computeTimeGridEventSeedTs())
+            .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+
+        assertEquals(java.time.LocalDate.now(), seedDate)
     }
 
     // ==================== View Picker Tests ====================
@@ -4194,26 +4316,60 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `goToToday in MONTH_FULL calls loadMonthEvents`() = runTest {
+    fun `MONTH_FULL grid re-queries reactively as the viewing month changes`() = runTest {
+        every { displayEventRepository.getDisplayEventsForDateRange(any(), any()) } returns
+            flowOf(persistentMapOf())
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to MONTH_FULL
-        viewModel.setViewMode(ViewMode.MONTH_FULL)
+        // monthEvents is a WhileSubscribed StateFlow — Turbine-collect so its upstream runs.
+        viewModel.monthEvents.test {
+            skipItems(1) // initial empty (not in MONTH_FULL yet)
+
+            viewModel.setViewMode(ViewMode.MONTH_FULL)
+            advanceUntilIdle()
+            viewModel.setViewingMonth(2027, 5)
+            advanceUntilIdle()
+            viewModel.goToToday()
+            advanceUntilIdle()
+
+            // Each distinct (year, month) key drives a fresh reactive query:
+            // MONTH_FULL entry, setViewingMonth, goToToday.
+            verify(atLeast = 3) { displayEventRepository.getDisplayEventsForDateRange(any(), any()) }
+            assertTrue(viewModel.uiState.value.pendingNavigateToToday)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `MONTH_FULL grid reflects a created event without manual reload`() = runTest {
+        val createdEvent = testEvents[0].copy(id = 200L, title = "Grid Event")
+        val gridFlow = MutableStateFlow<kotlinx.collections.immutable.ImmutableMap<Int, kotlinx.collections.immutable.ImmutableList<DisplayEvent>>>(
+            persistentMapOf()
+        )
+        every { displayEventRepository.getDisplayEventsForDateRange(any(), any()) } returns gridFlow
+
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Navigate away to a different month
-        viewModel.setViewingMonth(2027, 5)
-        advanceUntilIdle()
+        viewModel.monthEvents.test {
+            viewModel.setViewMode(ViewMode.MONTH_FULL)
+            advanceUntilIdle()
 
-        // Press Today — should trigger getDisplayEventsForDateRange again
-        viewModel.goToToday()
-        advanceUntilIdle()
+            // Simulate a DB write landing in the reactive grid Flow.
+            gridFlow.value = persistentMapOf(
+                20241217 to persistentListOf<DisplayEvent>(
+                    DisplayEvent.Room(createdEvent, testOccurrences[0], testCalendars[0])
+                )
+            )
+            advanceUntilIdle()
 
-        // Verify getDisplayEventsForDateRange was called at least twice:
-        // once for setViewMode(MONTH_FULL), once for setViewingMonth, and once for goToToday
-        verify(atLeast = 3) { displayEventRepository.getDisplayEventsForDateRange(any(), any()) }
-        assertTrue(viewModel.uiState.value.pendingNavigateToToday)
+            // Most recent emission must reflect the write, with no manual reload.
+            val updated = expectMostRecentItem()
+            assertEquals(1, updated[20241217]?.size)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

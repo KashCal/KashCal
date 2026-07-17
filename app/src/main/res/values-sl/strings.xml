@@ -1040,6 +1040,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL je obvezen</string>
     <string name="ics_url_invalid_scheme">URL se mora začeti s http://, https:// ali webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Strežnik je vrnil napako (%1$d). Preverite URL.</string>
+    <string name="ics_fetch_error_empty">Vir koledarja je prazen.</string>
+    <string name="ics_fetch_error_not_calendar">Ta URL ni videti kot vir koledarja.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/channel strings -->

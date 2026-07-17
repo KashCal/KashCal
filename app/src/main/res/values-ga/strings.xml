@@ -1159,6 +1159,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">Tá URL ag teastáil</string>
     <string name="ics_url_invalid_scheme">Caithfidh an URL tosú le http://, https://, nó webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Sheol an freastalaí earráid ar ais (%1$d). Seiceáil an URL le do thoil.</string>
+    <string name="ics_fetch_error_empty">Tá fotha an fhéilire folamh.</string>
+    <string name="ics_fetch_error_not_calendar">Ní cosúil gur fotha féilire é an URL sin.</string>
     <!-- Event confirmation snackbar -->
     <string name="cd_widget_calendar">Féilire</string>
     <string name="cd_widget_add_event">Cuir imeacht leis</string>

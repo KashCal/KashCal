@@ -65,7 +65,6 @@ import org.onekash.kashcal.ui.components.WhatsNewBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
-import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.lock.AppLockVeil
@@ -162,6 +161,9 @@ class MainActivity : FragmentActivity() {
             val accentSeed by homeViewModel.accentSeed.collectAsStateWithLifecycle(initialValue = initialAccentSeed)
             KashCalTheme(themeMode = themeMode, colorSource = colorSource, accentSeed = accentSeed) {
                 val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
+                val weekEvents by homeViewModel.weekEvents.collectAsStateWithLifecycle()
+                val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
+                val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by homeViewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
@@ -509,6 +511,9 @@ class MainActivity : FragmentActivity() {
 
                 HomeScreen(
                     uiState = uiState,
+                    weekEvents = weekEvents,
+                    agendaEvents = agendaEvents,
+                    monthEvents = monthEvents,
                     isOnline = isOnline,
                     // Navigation callbacks
                     onDateSelected = { dateMillis -> homeViewModel.selectDate(dateMillis) },
@@ -536,26 +541,9 @@ class MainActivity : FragmentActivity() {
                         if (quickAddEnabled && !uiState.viewMode.isTimeGrid) {
                             showQuickAddDialog = true
                         } else {
-                            val gridStartHour = WeekViewUtils.START_HOUR
-
-                            val eventTimestamp = if (uiState.viewMode.isTimeGrid && uiState.weekViewStartDate != 0L) {
-                                val dayIndex = uiState.weekViewPagerPosition
-                                val hourHeightPx = uiState.weekViewHourHeight * resources.displayMetrics.density
-                                val hour = WeekViewUtils.resolveVisibleStartHour(
-                                    savedPosition = uiState.weekViewScrollPosition,
-                                    hourHeightPx = hourHeightPx,
-                                    gridStartHour = gridStartHour
-                                )
-
-                                val eventCal = java.util.Calendar.getInstance().apply {
-                                    timeInMillis = uiState.weekViewStartDate
-                                    add(java.util.Calendar.DAY_OF_YEAR, dayIndex)
-                                    set(java.util.Calendar.HOUR_OF_DAY, hour)
-                                    set(java.util.Calendar.MINUTE, 0)
-                                    set(java.util.Calendar.SECOND, 0)
-                                }
-                                Log.d(TAG, "Time grid FAB: dayIndex=$dayIndex, hour=$hour, gridStartHour=$gridStartHour")
-                                eventCal.timeInMillis
+                            val eventTimestamp = if (uiState.viewMode.isTimeGrid) {
+                                // New event defaults to today at the next hour.
+                                homeViewModel.computeTimeGridEventSeedTs()
                             } else {
                                 val selectedDateMillis = if (uiState.selectedDate != 0L) {
                                     uiState.selectedDate

@@ -1044,6 +1044,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL-ul este obligatoriu</string>
     <string name="ics_url_invalid_scheme">URL-ul trebuie să înceapă cu http://, https:// sau webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Serverul a returnat o eroare (%1$d). Verifică URL-ul.</string>
+    <string name="ics_fetch_error_empty">Fluxul de calendar este gol.</string>
+    <string name="ics_fetch_error_not_calendar">Acest URL nu pare a fi un flux de calendar.</string>
     <!-- Event confirmation snackbar -->
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendar</string>

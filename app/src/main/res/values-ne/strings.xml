@@ -945,6 +945,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL आवश्यक छ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, वा webcal:// बाट सुरु हुनुपर्छ</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">सर्भरले त्रुटि फर्कायो (%1$d)। कृपया URL जाँच गर्नुहोस्।</string>
+    <string name="ics_fetch_error_empty">पात्रो फिड खाली छ।</string>
+    <string name="ics_fetch_error_not_calendar">त्यो URL पात्रो फिड जस्तो देखिँदैन।</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

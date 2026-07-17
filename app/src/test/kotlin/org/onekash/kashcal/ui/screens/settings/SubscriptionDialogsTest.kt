@@ -43,8 +43,9 @@ class SubscriptionDialogsTest {
 
     @Test
     fun `FetchCalendarState Error stores message`() {
-        val state = FetchCalendarState.Error("Network connection failed")
-        assertEquals("Network connection failed", state.message)
+        val message = org.onekash.kashcal.ui.util.UiMessage.Literal("Network connection failed")
+        val state = FetchCalendarState.Error(message)
+        assertEquals(message, state.message)
     }
 
     @Test
@@ -52,7 +53,8 @@ class SubscriptionDialogsTest {
         val idle = FetchCalendarState.Idle
         val loading = FetchCalendarState.Loading
         val success = FetchCalendarState.Success("Test", 10)
-        val error = FetchCalendarState.Error("Error")
+        val error = FetchCalendarState.Error(
+            org.onekash.kashcal.ui.util.UiMessage.Literal("Error"))
 
         assertTrue(idle is FetchCalendarState.Idle)
         assertTrue(loading is FetchCalendarState.Loading)

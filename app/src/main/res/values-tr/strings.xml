@@ -998,6 +998,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL gerekli</string>
     <string name="ics_url_invalid_scheme">URL http://, https:// veya webcal:// ile başlamalı</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Sunucu bir hata döndürdü (%1$d). Lütfen URL\'yi kontrol et.</string>
+    <string name="ics_fetch_error_empty">Takvim akışı boş.</string>
+    <string name="ics_fetch_error_not_calendar">Bu URL bir takvim akışı gibi görünmüyor.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget strings -->

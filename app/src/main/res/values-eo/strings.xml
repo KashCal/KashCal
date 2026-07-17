@@ -1011,6 +1011,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL estas postulata</string>
     <string name="ics_url_invalid_scheme">URL devas komenciĝi per http://, https://, aŭ webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">La servilo redonis eraron (%1$d). Bonvolu kontroli la URL.</string>
+    <string name="ics_fetch_error_empty">La kalendara fluo estas malplena.</string>
+    <string name="ics_fetch_error_not_calendar">Tiu URL ne aspektas kiel kalendara fluo.</string>
     <!-- Event confirmation snackbar -->
     <string name="cd_widget_calendar">Kalendaro</string>
     <string name="cd_widget_add_event">Aldoni eventon</string>

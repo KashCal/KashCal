@@ -1011,6 +1011,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL behar da</string>
     <string name="ics_url_invalid_scheme">URLa http://, https://, edo webcal:// bidez hasi behar da</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Zerbitzariak errore bat itzuli du (%1$d). Egiaztatu URLa.</string>
+    <string name="ics_fetch_error_empty">Egutegiaren jarioa hutsik dago.</string>
+    <string name="ics_fetch_error_not_calendar">URL horrek ez dirudi egutegi-jario bat.</string>
     <!-- Event confirmation snackbar -->
     <string name="cd_widget_calendar">Egutegia</string>
     <string name="cd_widget_add_event">Gehitu gertaera</string>

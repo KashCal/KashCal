@@ -998,6 +998,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL szükséges</string>
     <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">A kiszolgáló hibát adott vissza (%1$d). Ellenőrizd az URL-t.</string>
+    <string name="ics_fetch_error_empty">A naptárcsatorna üres.</string>
+    <string name="ics_fetch_error_not_calendar">Ez az URL nem tűnik naptárcsatornának.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget and Channel strings -->

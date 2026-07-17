@@ -989,6 +989,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL is verpligtend</string>
     <string name="ics_url_invalid_scheme">URL moet begin met http://, https://, of webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Bediener het \'n fout teruggestuur (%1$d). Gaan asseblief die URL na.</string>
+    <string name="ics_fetch_error_empty">Die kalendervoer is leeg.</string>
+    <string name="ics_fetch_error_not_calendar">Daardie URL lyk nie soos \'n kalendervoer nie.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/Channel accessibility -->

@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -29,10 +31,12 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -90,12 +94,78 @@ import javax.inject.Inject
 
 private const val TAG = "HomeViewModel"
 
+/** Upcoming window shown by the agenda view (90 days). */
+private const val AGENDA_WINDOW_MS = 90L * 24 * 60 * 60 * 1000
+
 private data class CalendarsSnapshot(
     val calendars: List<org.onekash.kashcal.data.db.entity.Calendar>,
     val groups: List<CalendarGroup>,
     val validatedDefault: DefaultCalendar?,
     val deviceGroups: List<CalendarGroup>
 )
+
+/**
+ * A half-open date range in epoch millis, used as the reactive key for the
+ * range-driven event StateFlows (time-grid and agenda). Null means no active
+ * range (the view is not shown), which keeps the derived Flow idle.
+ */
+data class EpochRange(val startMs: Long, val endMs: Long)
+
+/**
+ * Reactive UI state for the time-grid (week / 3-day / day) event surface.
+ * Timed and all-day events are pre-split and sorted by start.
+ */
+data class WeekEventsUiState(
+    val timedEvents: ImmutableList<DisplayEvent> = persistentListOf(),
+    val allDayEvents: ImmutableList<DisplayEvent> = persistentListOf(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+) {
+    companion object {
+        val EMPTY = WeekEventsUiState()
+
+        fun ofError(message: String?) = WeekEventsUiState(error = message ?: "Failed to load events")
+
+        fun fromEvents(events: List<DisplayEvent>): WeekEventsUiState = WeekEventsUiState(
+            timedEvents = events.filter { !it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
+            allDayEvents = events.filter { it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
+            isLoading = false,
+            error = null
+        )
+    }
+}
+
+/**
+ * Reactive UI state for the agenda (flat upcoming-events list). Unlike the
+ * time grid, agenda shows a spinner while loading, so [isLoading] is surfaced.
+ */
+data class AgendaUiState(
+    val events: ImmutableList<DisplayEvent> = persistentListOf(),
+    val isLoading: Boolean = false
+) {
+    companion object {
+        val EMPTY = AgendaUiState()
+        val LOADING = AgendaUiState(isLoading = true)
+    }
+}
+
+/** Viewing month key (0-indexed month) for the reactive full-height month grid. */
+data class MonthKey(val year: Int, val month: Int)
+
+/**
+ * Day-code range covering the viewing month +/- 1 month (with grid in/out-date
+ * padding), so adjacent month-pager pages have data mid-swipe. Returns
+ * (startDayCode, endDayCode) in YYYYMMDD form.
+ */
+private fun monthGridDayCodeRange(year: Int, month: Int): Pair<Int, Int> {
+    val prevMonth = LocalDate.of(year, month + 1, 1).minusMonths(1)
+    val startDate = prevMonth.withDayOfMonth(1).minusDays(6)
+    val nextMonth = LocalDate.of(year, month + 1, 1).plusMonths(1)
+    val endDate = nextMonth.withDayOfMonth(nextMonth.lengthOfMonth()).plusDays(13)
+    val startDayCode = startDate.year * 10000 + startDate.monthValue * 100 + startDate.dayOfMonth
+    val endDayCode = endDate.year * 10000 + endDate.monthValue * 100 + endDate.dayOfMonth
+    return startDayCode to endDayCode
+}
 
 /**
  * ViewModel for the HomeScreen (main calendar view).
@@ -350,6 +420,124 @@ class HomeViewModel(
         dayVisibleEventIds.value = ids
     }
 
+    // Time-grid (week / 3-day / day) reactive event surface.
+    //
+    // The visible date range is the single key; navigation SETS it, and the
+    // derived [weekEvents] StateFlow re-queries the reactive repository Flow
+    // whenever the key changes OR the underlying data changes. This removes the
+    // whole class of "a manual reload didn't fire" staleness (issue #297): a
+    // create/edit/delete/sync propagates automatically because
+    // [DisplayEventRepository.getDisplayEventsForRange] is itself reactive.
+    //
+    // A null key means "no time-grid range active" (the user is in another
+    // view), which keeps the upstream Flow idle — mirroring the null-key gate
+    // used by the attendee surfaces above.
+    private val timeGridRange = MutableStateFlow<EpochRange?>(null)
+
+    /** Sets/updates the visible time-grid range; null clears it (view left). */
+    private fun setTimeGridRange(range: EpochRange?) {
+        timeGridRange.value = range
+    }
+
+    /**
+     * Reactive week / 3-day / day time-grid events, split into timed and
+     * all-day and sorted by start, with error folded in. Collected by the
+     * time-grid UI; stays live while subscribed and re-emits on any DB write
+     * within the active range.
+     *
+     * Deliberately does NOT emit a loading/empty state on range change (unlike
+     * [agendaEvents]): the grid renders its structure immediately and keeps the
+     * last events visible until the new range resolves, so an intermediate
+     * empty emission would blank the grid mid-swipe.
+     */
+    @Suppress("OPT_IN_USAGE")
+    val weekEvents: StateFlow<WeekEventsUiState> =
+        timeGridRange
+            .flatMapLatest { range ->
+                if (range == null) {
+                    flowOf(WeekEventsUiState.EMPTY)
+                } else {
+                    displayEventRepository.getDisplayEventsForRange(range.startMs, range.endMs)
+                        .map { events -> WeekEventsUiState.fromEvents(events) }
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            Log.e(TAG, "Error loading time-grid events", e)
+                            emit(WeekEventsUiState.ofError(e.message))
+                        }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeekEventsUiState.EMPTY)
+
+    // Agenda reactive event surface — same range-key mechanism as the time
+    // grid, but a flat 90-day window set on entering the agenda view and
+    // nulled on leaving (so the upstream Flow — and any device-calendar query
+    // — goes idle when agenda isn't shown).
+    private val agendaRange = MutableStateFlow<EpochRange?>(null)
+
+    /** Sets/updates the agenda window; null clears it (view left). */
+    private fun setAgendaRange(range: EpochRange?) {
+        agendaRange.value = range
+    }
+
+    /**
+     * Reactive agenda events (upcoming [AGENDA_WINDOW_MS]). Emits a loading
+     * state while the query is in flight (agenda shows a spinner), then the
+     * merged Room + device list. Stays live while subscribed and re-emits on
+     * any DB write within the window.
+     */
+    @Suppress("OPT_IN_USAGE")
+    val agendaEvents: StateFlow<AgendaUiState> =
+        agendaRange
+            .flatMapLatest { range ->
+                if (range == null) {
+                    flowOf(AgendaUiState.EMPTY)
+                } else {
+                    displayEventRepository.getDisplayEventsForRange(range.startMs, range.endMs)
+                        .map { events -> AgendaUiState(events = events, isLoading = false) }
+                        .onStart { emit(AgendaUiState.LOADING) }
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            Log.e(TAG, "Error observing agenda", e)
+                            emit(AgendaUiState.EMPTY)
+                        }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AgendaUiState.EMPTY)
+
+    // Full-height month grid reactive surface — key is the viewing (year,
+    // month), set only while MONTH_FULL is active and nulled otherwise. The
+    // repository returns events already grouped by day code. The month/year
+    // event DOTS are intentionally NOT reactive here: they use a one-shot
+    // grouped-by-day query and are refreshed via reloadCurrentView.
+    private val monthGridKey = MutableStateFlow<MonthKey?>(null)
+
+    /** Sets/updates the full-height month grid key; null clears it (view left). */
+    private fun setMonthGridKey(key: MonthKey?) {
+        monthGridKey.value = key
+    }
+
+    /**
+     * Reactive full-height month grid events, grouped by day code. Stays live
+     * while subscribed and re-emits on any DB write within the 3-month window.
+     */
+    @Suppress("OPT_IN_USAGE")
+    val monthEvents: StateFlow<ImmutableMap<Int, ImmutableList<DisplayEvent>>> =
+        monthGridKey
+            .flatMapLatest { key ->
+                if (key == null) {
+                    flowOf(persistentMapOf())
+                } else {
+                    val (startDayCode, endDayCode) = monthGridDayCodeRange(key.year, key.month)
+                    displayEventRepository.getDisplayEventsForDateRange(startDayCode, endDayCode)
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            Log.e(TAG, "Error loading month grid events", e)
+                            emit(persistentMapOf())
+                        }
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), persistentMapOf())
+
     /**
      * Resolve the active event → calendar → account, run one-shot
      * `rawIcal` backfill (closes the etag-unchanged-skip gap from
@@ -436,22 +624,12 @@ class HomeViewModel(
     // Job for on-demand dots loading (cancel previous on fast swipe)
     private var loadDotsJob: Job? = null
 
-    // Job for agenda events observation (cancel previous when reopened)
-    // Uses Flow for progressive updates during sync
-    private var agendaEventsJob: Job? = null
-
     // Job for occurrence extension (cancel previous on rapid swipe)
     private var extensionJob: Job? = null
     private var occurrenceRepairDone = false
 
-    // Job for week view events observation (cancel previous when week changes)
-    private var weekEventsJob: Job? = null
-
     // Job for day events cache loading (cancel previous when cache refresh needed)
     private var dayEventsCacheJob: Job? = null
-
-    // Job for month events loading (cancel previous on month swipe)
-    private var monthEventsJob: Job? = null
 
     // Job for debounced day pager loading (cancel previous on fast swipe)
     private var dayPagerLoadJob: Job? = null
@@ -567,12 +745,15 @@ class HomeViewModel(
 
             // Load data for the default view
             when (defaultView) {
-                ViewMode.AGENDA -> loadAgendaEvents()
+                ViewMode.AGENDA -> {
+                    val now = System.currentTimeMillis()
+                    setAgendaRange(EpochRange(now, now + AGENDA_WINDOW_MS))
+                }
                 ViewMode.DAY -> {} // goToToday() below handles week initialization
                 ViewMode.THREE_DAYS -> {} // goToToday() below handles week initialization
                 ViewMode.WEEK -> {} // goToToday() below handles week initialization
                 ViewMode.MONTH -> {} // goToToday() below handles dot loading + day selection
-                ViewMode.MONTH_FULL -> loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+                ViewMode.MONTH_FULL -> setMonthGridKey(MonthKey(_uiState.value.viewingYear, _uiState.value.viewingMonth))
                 ViewMode.YEAR -> loadYearDots(_uiState.value.viewingYear)
                 ViewMode.INSIGHTS -> {}
             }
@@ -1424,7 +1605,7 @@ class HomeViewModel(
                 }
 
                 if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
-                    loadMonthEvents(year, month)
+                    setMonthGridKey(MonthKey(year, month))
                 }
 
                 selectDate(today.timeInMillis)
@@ -1516,14 +1697,14 @@ class HomeViewModel(
             )
         }
 
-        // Load dots if outside cached range (on-demand loading) — skip in MONTH_FULL mode (monthEventsMap has full data)
+        // Load dots if outside cached range (on-demand loading) — skip in MONTH_FULL mode (the month grid has full data)
         if (_uiState.value.viewMode != ViewMode.MONTH_FULL) {
             ensureDotsForMonth(year, month)
         }
 
         // Load full month events for full-height grid
         if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
-            loadMonthEvents(year, month)
+            setMonthGridKey(MonthKey(year, month))
         }
 
         // Trigger occurrence extension if navigating far into future (debounced)
@@ -1610,58 +1791,6 @@ class HomeViewModel(
         onDayPagerPageChanged(targetPage)
     }
 
-    /**
-     * Load events for the specified week.
-     * Cancels any previous load operation (handles fast navigation).
-     *
-     * Loads both timed events and all-day events separately for proper week view rendering.
-     */
-    private fun loadEventsForWeek(weekStartMs: Long) {
-        // Cancel previous load
-        weekEventsJob?.cancel()
-
-        _uiState.update { it.copy(isLoadingWeekView = true, weekViewError = null) }
-
-        // Week end is 7 days later
-        val weekEndMs = weekStartMs + (7L * 24 * 60 * 60 * 1000)
-
-        weekEventsJob = viewModelScope.launch {
-            try {
-                displayEventRepository.getDisplayEventsForRange(weekStartMs, weekEndMs)
-                    .collect { displayEvents ->
-                        // Separate timed and all-day events
-                        val timedEvents = displayEvents
-                            .filter { !it.isAllDay }
-                            .sortedBy { it.startTs }
-
-                        val allDayEvents = displayEvents
-                            .filter { it.isAllDay }
-                            .sortedBy { it.startTs }
-
-                        _uiState.update {
-                            it.copy(
-                                weekViewTimedEvents = timedEvents.toPersistentList(),
-                                weekViewAllDayEvents = allDayEvents.toPersistentList(),
-                                isLoadingWeekView = false
-                            )
-                        }
-
-                        Log.d(TAG, "Week view updated: ${timedEvents.size} timed, ${allDayEvents.size} all-day")
-                    }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading week events", e)
-                _uiState.update {
-                    it.copy(
-                        isLoadingWeekView = false,
-                        weekViewError = "Failed to load events: ${e.message}"
-                    )
-                }
-            }
-        }
-    }
-
     // ==================== Infinite Day Pager Functions ====================
 
     /**
@@ -1713,56 +1842,35 @@ class HomeViewModel(
     }
 
     /**
+     * Compute the start timestamp for a new event created from the time-grid
+     * FAB: today's date at the next hour (current hour + 1, on the hour),
+     * matching the non-time-grid FAB default. The grid's scroll position and
+     * zoom are view-state (they restore where the grid was looking) and are
+     * intentionally NOT used to seed a new event.
+     */
+    fun computeTimeGridEventSeedTs(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, (get(Calendar.HOUR_OF_DAY) + 1) % 24)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
+    /**
      * Load events for a date range (used by infinite day pager).
-     * More flexible than loadEventsForWeek - accepts any date range.
+     * Accepts any date range. Sets the reactive time-grid range key; the
+     * [weekEvents] StateFlow does the actual (reactive) loading.
      *
      * @param startDate First day to load (inclusive)
      * @param endDate Last day to load (inclusive)
      */
     private fun loadEventsForDateRange(startDate: LocalDate, endDate: LocalDate) {
-        // Cancel previous load
-        weekEventsJob?.cancel()
-
         val startMs = WeekViewUtils.dateToEpochMs(startDate)
         val endMs = WeekViewUtils.dateToEpochMs(endDate.plusDays(1)) // exclusive end
 
-        _uiState.update { it.copy(isLoadingWeekView = true, weekViewError = null) }
-
-        weekEventsJob = viewModelScope.launch {
-            try {
-                displayEventRepository.getDisplayEventsForRange(startMs, endMs)
-                    .collect { displayEvents ->
-                        // Separate timed and all-day events
-                        val timedEvents = displayEvents
-                            .filter { !it.isAllDay }
-                            .sortedBy { it.startTs }
-
-                        val allDayEvents = displayEvents
-                            .filter { it.isAllDay }
-                            .sortedBy { it.startTs }
-
-                        _uiState.update {
-                            it.copy(
-                                weekViewTimedEvents = timedEvents.toPersistentList(),
-                                weekViewAllDayEvents = allDayEvents.toPersistentList(),
-                                isLoadingWeekView = false
-                            )
-                        }
-
-                        Log.d(TAG, "Day pager updated: ${timedEvents.size} timed, ${allDayEvents.size} all-day")
-                    }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading events for date range", e)
-                _uiState.update {
-                    it.copy(
-                        isLoadingWeekView = false,
-                        weekViewError = "Failed to load events: ${e.message}"
-                    )
-                }
-            }
-        }
+        // Drive the reactive time-grid surface (weekEvents StateFlow).
+        setTimeGridRange(EpochRange(startMs, endMs))
     }
 
     /**
@@ -1986,49 +2094,6 @@ class HomeViewModel(
     }
 
     // ==================== Month Events (Full-Height Grid) ====================
-
-    /**
-     * Load events for the month grid covering viewing month +/- 1 month.
-     * Uses Flow for reactive updates when events change during sync.
-     *
-     * The 3-month range ensures adjacent HorizontalPager pages have event data
-     * during mid-swipe transitions.
-     *
-     * @param year Viewing year
-     * @param month Viewing month (0-indexed, January = 0)
-     */
-    private fun loadMonthEvents(year: Int, month: Int) {
-        monthEventsJob?.cancel()
-
-        Log.d(TAG, "Month events: loading 3-month range centered on $year-${month + 1}")
-
-        monthEventsJob = viewModelScope.launch {
-            try {
-                // Compute 3-month range via LocalDate arithmetic
-                // Previous month first day minus max InDate offset (6 days)
-                val prevMonth = LocalDate.of(year, month + 1, 1).minusMonths(1)
-                val startDate = prevMonth.withDayOfMonth(1).minusDays(6)
-                // Next month last day plus max OutDate offset (13 days)
-                val nextMonth = LocalDate.of(year, month + 1, 1).plusMonths(1)
-                val endDate = nextMonth.withDayOfMonth(nextMonth.lengthOfMonth()).plusDays(13)
-
-                val startDayCode = startDate.year * 10000 + startDate.monthValue * 100 + startDate.dayOfMonth
-                val endDayCode = endDate.year * 10000 + endDate.monthValue * 100 + endDate.dayOfMonth
-
-                displayEventRepository.getDisplayEventsForDateRange(startDayCode, endDayCode)
-                    .collect { grouped ->
-                        _uiState.update {
-                            it.copy(monthEventsMap = grouped)
-                        }
-                        Log.d(TAG, "Month events: loaded events across ${grouped.size} days")
-                    }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading month events", e)
-            }
-        }
-    }
 
     /**
      * Check if the day pager cache needs to be refreshed.
@@ -2304,49 +2369,6 @@ class HomeViewModel(
         }
     }
 
-    // ==================== Agenda ====================
-
-    /**
-     * Observe agenda events - upcoming 90 days using reactive Flow.
-     * Merges Room + device calendar events via DisplayEventRepository.
-     * Each recurring event instance is shown separately.
-     *
-     * PROGRESSIVE LOADING: Events appear as they sync because this uses Flow
-     * collection. DisplayEventRepository combines Room Flow + changeSignal.
-     */
-    private fun loadAgendaEvents() {
-        // Cancel any previous agenda observation
-        agendaEventsJob?.cancel()
-
-        _uiState.update { it.copy(isLoadingAgenda = true) }
-
-        val now = System.currentTimeMillis()
-        val windowEnd = now + (90L * 24 * 60 * 60 * 1000) // 90 days
-
-        // DisplayEventRepository merges Room + device calendar events,
-        // sorted by startTs, with SecurityException fallback to Room-only
-        agendaEventsJob = viewModelScope.launch {
-            try {
-                displayEventRepository.getDisplayEventsForRange(now, windowEnd)
-                    .collect { displayEvents ->
-                        _uiState.update {
-                            it.copy(
-                                agendaEvents = displayEvents,
-                                isLoadingAgenda = false
-                            )
-                        }
-                        Log.d(TAG, "Agenda updated: ${displayEvents.size} events")
-                    }
-            } catch (e: CancellationException) {
-                // Normal cancellation when panel closes - don't log as error
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error observing agenda", e)
-                _uiState.update { it.copy(isLoadingAgenda = false) }
-            }
-        }
-    }
-
     // ==================== UI Sheets/Dialogs ====================
 
     fun toggleAppInfoSheet() {
@@ -2494,27 +2516,34 @@ class HomeViewModel(
             }
         }
 
+        // Leaving a reactive view? Null its key so the derived Flow goes idle
+        // (no background querying while another view is shown). Entering sets
+        // it below.
+        if (mode != ViewMode.AGENDA) {
+            setAgendaRange(null)
+        }
+        if (mode != ViewMode.MONTH_FULL) {
+            setMonthGridKey(null)
+        }
+
         when (mode) {
-            ViewMode.AGENDA -> loadAgendaEvents()
+            ViewMode.AGENDA -> {
+                val now = System.currentTimeMillis()
+                setAgendaRange(EpochRange(now, now + AGENDA_WINDOW_MS))
+            }
             ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-                // Cancel agenda observation since we're leaving agenda view
-                agendaEventsJob?.cancel()
                 if (currentLoadedRange == null) {
                     goToTodayWeek()
                 }
             }
             ViewMode.MONTH -> {
-                agendaEventsJob?.cancel()
                 syncPagerToSelectedDate()
             }
             ViewMode.MONTH_FULL -> {
-                agendaEventsJob?.cancel()
                 syncPagerToSelectedDate()
-                loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+                setMonthGridKey(MonthKey(_uiState.value.viewingYear, _uiState.value.viewingMonth))
             }
             ViewMode.YEAR -> {
-                agendaEventsJob?.cancel()
-                weekEventsJob?.cancel()
                 loadYearDots(_uiState.value.viewingYear)
             }
             ViewMode.INSIGHTS -> {}
@@ -2604,8 +2633,8 @@ class HomeViewModel(
 
     /**
      * Handle app resume from background. Snaps to today if the calendar day
-     * has rolled over since the previous resume, then reloads events for
-     * THREE_DAYS/WEEK views (other views use Room Flow and auto-emit).
+     * has rolled over since the previous resume. All views are reactive
+     * (Room Flow / range-keyed StateFlows), so events auto-emit on resume.
      */
     fun onAppResume() {
         val currentDayCode = currentDayCodeProvider()
@@ -2614,10 +2643,6 @@ class HomeViewModel(
             goToToday()
         }
         lastResumeDayCode = currentDayCode
-
-        if (_uiState.value.viewMode.isTimeGrid && _uiState.value.weekViewStartDate != 0L) {
-            loadEventsForWeek(_uiState.value.weekViewStartDate)
-        }
     }
 
     /**
@@ -2630,22 +2655,13 @@ class HomeViewModel(
      */
     private fun reloadCurrentView() {
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        // Reload month events if full-height month view is active
-        if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
-            loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        }
-        // Reload day pager cache — skip in MONTH_FULL mode (uses monthEventsMap instead)
+        // Month grid is reactive (monthEvents StateFlow) — no explicit reload needed.
+        // Reload day pager cache — skip in MONTH_FULL mode (uses monthEvents instead)
         if (_uiState.value.viewMode != ViewMode.MONTH_FULL && _uiState.value.cacheRangeCenter != 0L) {
             loadEventsForDayPagerRange(_uiState.value.cacheRangeCenter)
         }
-        // Reload agenda if agenda view is active
-        if (_uiState.value.viewMode == ViewMode.AGENDA) {
-            loadAgendaEvents()
-        }
-        // Also reload week view if a time-grid view is active
-        if (_uiState.value.viewMode.isTimeGrid && _uiState.value.weekViewStartDate != 0L) {
-            loadEventsForWeek(_uiState.value.weekViewStartDate)
-        }
+        // Agenda and the time-grid are reactive (agendaEvents / weekEvents
+        // StateFlows) — no explicit reload needed.
         // Reload year dots if year view is active
         if (_uiState.value.viewMode == ViewMode.YEAR) {
             loadYearDots(_uiState.value.viewingYear)

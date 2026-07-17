@@ -961,6 +961,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL er påkrevd</string>
     <string name="ics_url_invalid_scheme">URL må starte med http://, https:// eller webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Serveren returnerte en feil (%1$d). Sjekk URL-en.</string>
+    <string name="ics_fetch_error_empty">Kalenderfeeden er tom.</string>
+    <string name="ics_fetch_error_not_calendar">Denne URL-en ser ikke ut som en kalenderfeed.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/Channel accessibility -->

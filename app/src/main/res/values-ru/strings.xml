@@ -1043,6 +1043,11 @@
     <string name="ics_sync_weekly">Еженедельно</string>
     <string name="ics_url_required">Требуется URL</string>
     <string name="ics_url_invalid_scheme">URL должен начинаться с http://, https:// или webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Сервер вернул ошибку (%1$d). Проверьте URL.</string>
+    <string name="ics_fetch_error_empty">Календарный канал пуст.</string>
+    <string name="ics_fetch_error_not_calendar">Этот URL не похож на календарный канал.</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календарь</string>

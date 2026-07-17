@@ -945,6 +945,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL ਲੋੜੀਂਦਾ ਹੈ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, ਜਾਂ webcal:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">ਸਰਵਰ ਨੇ ਇੱਕ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ (%1$d)। ਕਿਰਪਾ ਕਰਕੇ URL ਦੀ ਜਾਂਚ ਕਰੋ।</string>
+    <string name="ics_fetch_error_empty">ਕੈਲੰਡਰ ਫੀਡ ਖਾਲੀ ਹੈ।</string>
+    <string name="ics_fetch_error_not_calendar">ਉਹ URL ਕੈਲੰਡਰ ਫੀਡ ਵਰਗਾ ਨਹੀਂ ਲੱਗਦਾ।</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

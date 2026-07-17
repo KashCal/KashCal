@@ -1,3 +1,20 @@
+## [2026.07.17]
+
+A calendar is for scheduling things. So naturally, we asked our marketing team to sit with that idea for an afternoon and write up this release. Several donut holes past the point of good judgment, they came back not with scheduled thoughts but with a whole feed of ["unscheduled thoughts"](https://kashcal.onekash.org/unscheduled-thoughts): a steady drip of tiny, mostly kind notes like "You are not behind, time is just ambitious," which is, for the marketing arm of a scheduling company, either a resignation letter or a mission statement. We could not decide which, so we shipped it as a calendar you can subscribe to. It never blocks your day, it means well mostly, and yes, the "webcal://" fix in this very release is what lets you add it in one tap. Subscribe, and let a donut-addled marketing team quietly improve your week.
+
+With them safely occupied, we wrote the actual notes. A calendar has exactly one job: to tell you, without drama, what is on and what is not. So it was philosophically upsetting to find the week and 3-day views treating that as optional. Delete an event and it lingered; add one and it refused to show; the only way to force the matter was to look away, drift over to the month view, and come back, at which point the event would resolve into existence as though it had been waiting for an audience. We turned it into a small thought exercise. An event you have created but the screen will not confirm: is it scheduled, or not? For a while, in those two views, the honest answer was both, right up until you observed it. Charming for a cat in a box. Unhelpful for a Tuesday.
+
+This release collapses the waveform. Add, edit, or delete anything in day, week, or 3-day and it appears the instant you act, sync included, no detour required. Agenda and month, already well behaved, now share the same plumbing. The + button also stopped freelancing: in a time-grid view it starts a new event today at the next hour rather than some wrong day at an odd time. And that "webcal://" subscribe link, which KashCal used to answer with a network error while privately knowing exactly what it meant, now simply works, with a message in your own language on the rare feed that will not load.
+
+Everything scheduled, nothing left in the box.
+
+### Everything in this release
+
+- Fixed the week and 3-day views not showing added, edited, or deleted events until you switched views and back (#297)
+- The + button in day, week, and 3-day views now starts a new event today at the next hour, instead of the wrong day or a default hour
+- Accept webcal:// links in the "Fetch Calendar" subscription preview instead of failing with a network error
+- Localized the ICS subscription fetch error messages
+
 ## [2026.07.15]
 
 Since the beginning of time, or at least of KashCal, your events have been sorted the way a coat check sorts coats: by which calendar they were flung into, and not one thought more. This release lets you label them yourself. Meet tags. Type one in the event form, or fling a #dentist straight into Quick Add and watch it land as a smug little colored chip that then follows the event around the day, week, and agenda views like it owns the place. Tap the event open and the tags are right there in quick view, quietly confirming that yes, this is a #focus block, and no, it is not the third #standup of the day you had every right to skip. Start typing and KashCal hands back the tags you already use, which is the only known cure for "Errands" fracturing into "errands," "ERRANDS," and one deeply confident "Errnads" by Thursday. And should you decide tags belong above your notes rather than below, the row's little ⋮ menu will move it, and we will pretend that was our idea all along.

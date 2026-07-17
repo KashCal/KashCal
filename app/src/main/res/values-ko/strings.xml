@@ -899,6 +899,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL이 필요해요</string>
     <string name="ics_url_invalid_scheme">URL은 http://, https://, 또는 webcal://로 시작해야 해요</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">서버에서 오류(%1$d)를 반환했어요. URL을 확인해 주세요.</string>
+    <string name="ics_fetch_error_empty">캘린더 피드가 비어 있어요.</string>
+    <string name="ics_fetch_error_not_calendar">이 URL은 캘린더 피드가 아닌 것 같아요.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

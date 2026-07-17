@@ -998,6 +998,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL е задължителен</string>
     <string name="ics_url_invalid_scheme">URL трябва да започва с http://, https:// или webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Сървърът върна грешка (%1$d). Моля, проверете URL адреса.</string>
+    <string name="ics_fetch_error_empty">Каналът с календара е празен.</string>
+    <string name="ics_fetch_error_not_calendar">Този URL не изглежда като календарен канал.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget/channel strings -->

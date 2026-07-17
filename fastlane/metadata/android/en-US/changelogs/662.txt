@@ -1,0 +1,3 @@
+• Fixed the week and 3-day views not updating after you add, edit, or delete an event
+• The + button in time-grid views now defaults a new event to today at the next hour
+• Subscription links starting with webcal:// now work in the fetch preview

@@ -975,6 +975,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">Kinakailangan ang URL</string>
     <string name="ics_url_invalid_scheme">Ang URL ay dapat magsimula sa http://, https://, o webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Nagbalik ng error ang server (%1$d). Pakisuri ang URL.</string>
+    <string name="ics_fetch_error_empty">Walang laman ang feed ng kalendaryo.</string>
+    <string name="ics_fetch_error_not_calendar">Mukhang hindi feed ng kalendaryo ang URL na iyon.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

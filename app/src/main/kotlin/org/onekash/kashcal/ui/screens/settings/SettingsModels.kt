@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.R
 import org.onekash.kashcal.network.AiaCertificateChainCompleter
 import org.onekash.kashcal.network.readBoundedBody
 import org.onekash.kashcal.ui.util.UiMessage
@@ -123,18 +124,23 @@ sealed class FetchCalendarState {
     /** Successfully fetched calendar info */
     data class Success(val name: String, val eventCount: Int) : FetchCalendarState()
 
-    /** Fetch failed with error */
-    data class Error(val message: String) : FetchCalendarState()
+    /** Fetch failed with error. Message is a [UiMessage] so the UI localizes it. */
+    data class Error(val message: UiMessage) : FetchCalendarState()
 }
 
 /**
  * Fetch and validate an ICS calendar URL.
  * Returns calendar name and event count on success, or error message on failure.
  *
- * @param url The ICS feed URL to fetch
+ * @param rawUrl The ICS feed URL to fetch (webcal:// is accepted and rewritten to https://)
  * @return FetchCalendarState with either Success or Error
  */
-suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dispatchers.IO) {
+suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(Dispatchers.IO) {
+    // Convert webcal:// (and webcals://) to https:// before handing the URL to
+    // OkHttp, which only speaks http/https and throws on any other scheme. This
+    // matters when the field was pre-filled from a webcal:// subscription link,
+    // so the fetch matches what the save path stores.
+    val url = normalizeSubscriptionUrl(rawUrl)
     try {
         val client = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -165,26 +171,31 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
                         aiaResult.client.newCall(request).execute()
                     } catch (retryEx: Exception) {
                         Log.e("fetchCalendarInfo", "Retry after AIA failed: ${retryEx.message}", retryEx)
-                        return@withContext FetchCalendarState.Error("SSL error: ${e.message}")
+                        return@withContext FetchCalendarState.Error(
+                            UiMessage.ResId(R.string.error_network_ssl))
                     }
                 }
                 is AiaCertificateChainCompleter.Result.Failed -> {
-                    return@withContext FetchCalendarState.Error("SSL error: ${e.message}")
+                    return@withContext FetchCalendarState.Error(
+                        UiMessage.ResId(R.string.error_network_ssl))
                 }
             }
         }
 
         if (!response.isSuccessful) {
-            return@withContext FetchCalendarState.Error("HTTP ${response.code}: ${response.message}")
+            return@withContext FetchCalendarState.Error(
+                UiMessage.ResId(R.string.ics_fetch_error_http, listOf(response.code)))
         }
 
         val content = response.readBoundedBody()
         if (content.isBlank()) {
-            return@withContext FetchCalendarState.Error("Empty response")
+            return@withContext FetchCalendarState.Error(
+                UiMessage.ResId(R.string.ics_fetch_error_empty))
         }
 
         if (!content.contains("BEGIN:VCALENDAR")) {
-            return@withContext FetchCalendarState.Error("Invalid ICS format")
+            return@withContext FetchCalendarState.Error(
+                UiMessage.ResId(R.string.ics_fetch_error_not_calendar))
         }
 
         // Parse only the VCALENDAR preamble (cheap) to get the human-readable
@@ -199,7 +210,9 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
 
         FetchCalendarState.Success(name, eventCount)
     } catch (e: Exception) {
-        FetchCalendarState.Error(e.message ?: e.javaClass.simpleName)
+        // A network/parse exception: surface its own text (already a system
+        // message), via Literal since it is not an app resource.
+        FetchCalendarState.Error(UiMessage.Literal(e.message ?: e.javaClass.simpleName))
     }
 }
 

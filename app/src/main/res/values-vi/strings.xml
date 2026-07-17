@@ -899,6 +899,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">Cần có URL</string>
     <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Máy chủ trả về lỗi (%1$d). Vui lòng kiểm tra URL.</string>
+    <string name="ics_fetch_error_empty">Nguồn cấp lịch trống.</string>
+    <string name="ics_fetch_error_not_calendar">URL đó có vẻ không phải là nguồn cấp lịch.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

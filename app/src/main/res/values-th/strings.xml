@@ -899,6 +899,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">ต้องระบุ URL</string>
     <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">เซิร์ฟเวอร์แสดงข้อผิดพลาด (%1$d) โปรดตรวจสอบ URL</string>
+    <string name="ics_fetch_error_empty">ฟีดปฏิทินว่างเปล่า</string>
+    <string name="ics_fetch_error_not_calendar">URL นี้ดูเหมือนจะไม่ใช่ฟีดปฏิทิน</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

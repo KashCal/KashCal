@@ -945,6 +945,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL අවශ්‍යයි</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">සේවාදායකය දෝෂයක් ලබා දුන්නේය (%1$d). කරුණාකර URL පරීක්ෂා කරන්න.</string>
+    <string name="ics_fetch_error_empty">දින දර්ශන පෝෂකය හිස්ය.</string>
+    <string name="ics_fetch_error_not_calendar">එම URL දින දර්ශන පෝෂකයක් ලෙස නොපෙනේ.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

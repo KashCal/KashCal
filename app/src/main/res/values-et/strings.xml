@@ -956,6 +956,11 @@
     <string name="ics_sync_weekly">Iga nädal</string>
     <string name="ics_url_required">URL on nõutud</string>
     <string name="ics_url_invalid_scheme">URL peab algama http://, https:// või webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Server tagastas vea (%1$d). Kontrolli URL-i.</string>
+    <string name="ics_fetch_error_empty">Kalendrivoog on tühi.</string>
+    <string name="ics_fetch_error_not_calendar">See URL ei paista olevat kalendrivoog.</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalender</string>

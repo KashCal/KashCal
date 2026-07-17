@@ -1013,6 +1013,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL தேவை</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, அல்லது webcal:// உடன் தொடங்க வேண்டும்</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">சர்வர் ஒரு பிழையை வழங்கியது (%1$d). URL ஐ சரிபார்க்கவும்.</string>
+    <string name="ics_fetch_error_empty">காலெண்டர் ஊட்டம் காலியாக உள்ளது.</string>
+    <string name="ics_fetch_error_not_calendar">அந்த URL காலெண்டர் ஊட்டம் போல் தெரியவில்லை.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget content descriptions -->

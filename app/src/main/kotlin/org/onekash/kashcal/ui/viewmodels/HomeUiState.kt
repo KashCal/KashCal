@@ -65,15 +65,6 @@ data class HomeUiState(
     /** Formatted label for selected day (e.g., "December 17, 2024") */
     val selectedDayLabel: String = "",
 
-    // === MONTH EVENTS (for full-height month grid) ===
-    /**
-     * Events grouped by dayCode for the month grid.
-     * Key: dayCode (YYYYMMDD format, e.g., 20260315)
-     * Value: List of DisplayEvent for that day
-     * Covers viewing month +/- 1 month for smooth pager transitions.
-     */
-    val monthEventsMap: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
-
     // === DAY EVENTS CACHE (for swipe pager) ===
     /**
      * Cache of events grouped by dayCode for smooth day pager scrolling.
@@ -138,23 +129,7 @@ data class HomeUiState(
      */
     val searchDateRangeStart: Long? = null,
 
-    // === AGENDA STATE ===
-    /** Agenda occurrences - upcoming events for next 30 days (each recurring instance separate) */
-    val agendaEvents: ImmutableList<DisplayEvent> = persistentListOf(),
-    /** Loading state for agenda */
-    val isLoadingAgenda: Boolean = false,
-
     // === WEEK VIEW STATE (used by ViewMode.THREE_DAYS) ===
-    /** First day of the currently displayed week (epoch millis at midnight) */
-    val weekViewStartDate: Long = 0L,
-    /** Timed events for the week (excludes all-day) */
-    val weekViewTimedEvents: ImmutableList<DisplayEvent> = persistentListOf(),
-    /** All-day events for the week */
-    val weekViewAllDayEvents: ImmutableList<DisplayEvent> = persistentListOf(),
-    /** Loading state for week view */
-    val isLoadingWeekView: Boolean = false,
-    /** Error message if week view load fails */
-    val weekViewError: String? = null,
     /** Scroll position in week time grid (pixels) for in-session state preservation */
     val weekViewScrollPosition: Int = 0,
     /**

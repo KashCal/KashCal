@@ -989,6 +989,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL қажет</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, немесе webcal:// арқылы басталуы тиіс</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Сервер қате қайтарды (%1$d). URL мекенжайын тексеріңіз.</string>
+    <string name="ics_fetch_error_empty">Күнтізбе арнасы бос.</string>
+    <string name="ics_fetch_error_not_calendar">Бұл URL күнтізбе арнасына ұқсамайды.</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget strings -->

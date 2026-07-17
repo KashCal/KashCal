@@ -1427,6 +1427,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL is required</string>
     <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Server returned an error (%1$d). Please check the URL.</string>
+    <string name="ics_fetch_error_empty">The calendar feed is empty.</string>
+    <string name="ics_fetch_error_not_calendar">That URL doesn\'t look like a calendar feed.</string>
     <!-- Insights -->
     <string name="insights_title">Insights</string>
     <string name="insights_period_this_week">Week</string>

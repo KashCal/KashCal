@@ -76,7 +76,9 @@ fun HolidayCatalogPicker(
     var query by rememberSaveable { mutableStateOf("") }
     // URL of the entry currently being validated, or null when idle.
     var validatingUrl by remember { mutableStateOf<String?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    // A generic validation error is shown as a fixed message, so this only
+    // needs to track whether to show it (the specific cause isn't surfaced here).
+    var showValidationError by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -97,7 +99,7 @@ fun HolidayCatalogPicker(
             }
             is FetchCalendarState.Error -> {
                 validatingUrl = null
-                errorMessage = result.message
+                showValidationError = true
             }
             else -> validatingUrl = null
         }
@@ -121,7 +123,7 @@ fun HolidayCatalogPicker(
                 query = query,
                 onQueryChange = {
                     query = it
-                    errorMessage = null
+                    showValidationError = false
                 },
                 placeholder = stringResource(R.string.holiday_catalog_search_label),
                 leadingIcon = Icons.Default.Search,
@@ -131,7 +133,7 @@ fun HolidayCatalogPicker(
                     .padding(horizontal = 24.dp, vertical = 12.dp),
             )
 
-            errorMessage?.let { msg ->
+            if (showValidationError) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -163,7 +165,7 @@ fun HolidayCatalogPicker(
                             // Disable taps while any validation is in flight.
                             enabled = validatingUrl == null,
                             onClick = {
-                                errorMessage = null
+                                showValidationError = false
                                 validatingUrl = marked.entry.url
                             },
                         )

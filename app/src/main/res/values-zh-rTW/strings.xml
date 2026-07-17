@@ -899,6 +899,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">需要URL</string>
     <string name="ics_url_invalid_scheme">URL必須以http://、https://或webcal://開頭</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">伺服器傳回了錯誤（%1$d）。請檢查URL。</string>
+    <string name="ics_fetch_error_empty">此行事曆訂閱來源是空的。</string>
+    <string name="ics_fetch_error_not_calendar">這個URL似乎不是行事曆訂閱來源。</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

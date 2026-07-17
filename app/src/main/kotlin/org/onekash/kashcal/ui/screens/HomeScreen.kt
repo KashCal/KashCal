@@ -119,6 +119,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
@@ -155,8 +156,10 @@ import org.onekash.kashcal.ui.util.MonthPagerUtils
 import org.onekash.kashcal.ui.util.rememberDayPagerSyncCoordinator
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.EditScope
+import org.onekash.kashcal.ui.viewmodels.AgendaUiState
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
+import org.onekash.kashcal.ui.viewmodels.WeekEventsUiState
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -182,6 +185,9 @@ import java.util.Calendar as JavaCalendar
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
+    weekEvents: WeekEventsUiState = WeekEventsUiState.EMPTY,
+    agendaEvents: AgendaUiState = AgendaUiState.EMPTY,
+    monthEvents: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
     isOnline: Boolean = true,
     // Navigation callbacks
     onDateSelected: (Long) -> Unit,
@@ -589,7 +595,7 @@ fun HomeScreen(
 
                                 when (uiState.viewMode) {
                                     ViewMode.AGENDA -> {
-                                        if (uiState.isLoadingAgenda) {
+                                        if (agendaEvents.isLoading) {
                                             val loadingLabel = stringResource(R.string.cd_loading_events)
                                             Box(
                                                 modifier = Modifier
@@ -606,7 +612,7 @@ fun HomeScreen(
                                             }
                                         } else {
                                             AgendaContent(
-                                                events = uiState.agendaEvents,
+                                                events = agendaEvents.events,
                                                 listState = agendaListState,
                                                 showEventEmojis = uiState.showEventEmojis,
                                                 timePattern = timePattern,
@@ -622,10 +628,10 @@ fun HomeScreen(
                                     }
                                     ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                                         WeekViewContent(
-                                            timedEvents = uiState.weekViewTimedEvents,
-                                            allDayEvents = uiState.weekViewAllDayEvents,
-                                            isLoading = uiState.isLoadingWeekView,
-                                            error = uiState.weekViewError,
+                                            timedEvents = weekEvents.timedEvents,
+                                            allDayEvents = weekEvents.allDayEvents,
+                                            isLoading = weekEvents.isLoading,
+                                            error = weekEvents.error,
                                             scrollPosition = uiState.weekViewScrollPosition,
                                             savedScrollMinutes = uiState.weekViewSavedScrollMinutes,
                                             hourHeight = uiState.weekViewHourHeight,
@@ -690,7 +696,7 @@ fun HomeScreen(
                                         year = pageYear,
                                         month = pageMonth,
                                         selectedDate = uiState.selectedDate,
-                                        monthEventsMap = uiState.monthEventsMap,
+                                        monthEventsMap = monthEvents,
                                         onDateSelected = { dateMs ->
                                             onDateSelected(dateMs)
                                             onShowDayDetail(dateMs)
@@ -892,7 +898,7 @@ fun HomeScreen(
     // Week view date picker bottom sheet
     if (uiState.showWeekViewDatePicker) {
         WeekViewDatePickerSheet(
-            currentWeekStartMs = uiState.weekViewStartDate,
+            currentWeekStartMs = System.currentTimeMillis(),
             onDateSelected = onWeekDateSelected,
             onDismiss = onWeekDatePickerDismiss,
             firstDayOfWeek = uiState.firstDayOfWeek
@@ -955,7 +961,7 @@ fun HomeScreen(
     // Day events bottom sheet (month view)
     if (uiState.showDayDetailSheet) {
         val dayCode = DayPagerUtils.msToDayCode(uiState.dayDetailDate)
-        val dayEvents = uiState.monthEventsMap[dayCode] ?: persistentListOf()
+        val dayEvents = monthEvents[dayCode] ?: persistentListOf()
         DayEventsSheet(
             dateMs = uiState.dayDetailDate,
             events = dayEvents,

@@ -51,7 +51,7 @@ import java.util.Calendar as JavaCalendar
 /**
  * Full-height month grid with event title snippets in day cells.
  *
- * @param monthEventsMap Events grouped by dayCode (YYYYMMDD). Loaded by HomeViewModel.loadMonthEvents().
+ * @param monthEventsMap Events grouped by dayCode (YYYYMMDD), from HomeViewModel.monthEvents.
  * @param onDateSelected Called when a day cell is tapped, with the date as epoch millis
  */
 @Composable

@@ -1013,6 +1013,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL ଆବଶ୍ୟକ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, କିମ୍ବା webcal:// ରେ ଆରମ୍ଭ ହେବା ଉଚିତ</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">ସର୍ଭର ଏକ ତ୍ରୁଟି ଫେରାଇଲା (%1$d)। ଦୟାକରି URL ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="ics_fetch_error_empty">କ୍ୟାଲେଣ୍ଡର ଫିଡ୍ ଖାଲି ଅଛି।</string>
+    <string name="ics_fetch_error_not_calendar">ସେହି URL କ୍ୟାଲେଣ୍ଡର ଫିଡ୍ ପରି ଦେଖାଯାଉ ନାହିଁ।</string>
     <!-- Event confirmation snackbar -->
 
     <!-- Widget content descriptions -->

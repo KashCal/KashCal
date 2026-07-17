@@ -849,9 +849,14 @@ class IcsSubscriptionRepository @Inject constructor(
      * Normalize URL (webcal:// → https://).
      */
     private fun normalizeUrl(url: String): String {
-        return url.trim()
-            .replace("webcal://", "https://")
-            .replace("webcals://", "https://")
+        val trimmed = url.trim()
+        // Rewrite only the leading scheme, not every occurrence, so a webcal://
+        // literal inside a query param (e.g. ?redirect=webcal://…) is left intact.
+        return when {
+            trimmed.startsWith("webcal://") -> "https://" + trimmed.removePrefix("webcal://")
+            trimmed.startsWith("webcals://") -> "https://" + trimmed.removePrefix("webcals://")
+            else -> trimmed
+        }
     }
 
     // ========== Result Classes ==========

@@ -935,6 +935,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL diperlukan</string>
     <string name="ics_url_invalid_scheme">URL harus diawali dengan http://, https://, atau webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Server mengembalikan galat (%1$d). Silakan periksa URL.</string>
+    <string name="ics_fetch_error_empty">Umpan kalender kosong.</string>
+    <string name="ics_fetch_error_not_calendar">URL itu sepertinya bukan umpan kalender.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

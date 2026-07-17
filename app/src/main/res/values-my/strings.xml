@@ -935,6 +935,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
     <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">ဆာဗာက အမှားတစ်ခု ပြန်ပို့ခဲ့သည် (%1$d)။ URL ကို စစ်ဆေးပါ။</string>
+    <string name="ics_fetch_error_empty">ပြက္ခဒိန်ဖိဒ်သည် ဗလာဖြစ်နေသည်။</string>
+    <string name="ics_fetch_error_not_calendar">ထို URL သည် ပြက္ခဒိန်ဖိဒ်တစ်ခုနှင့် မတူပါ။</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

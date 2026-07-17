@@ -945,6 +945,11 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL inahitajika</string>
     <string name="ics_url_invalid_scheme">URL lazima ianze na http://, https://, au webcal://</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">Seva imerejesha hitilafu (%1$d). Tafadhali angalia URL.</string>
+    <string name="ics_fetch_error_empty">Mlisho wa kalenda hauna maudhui.</string>
+    <string name="ics_fetch_error_not_calendar">URL hiyo haionekani kama mlisho wa kalenda.</string>
     <!-- Event confirmation snackbar -->
 
     <plurals name="rrule_count_suffix">

@@ -124,9 +124,11 @@ fun validateSubscriptionUrl(url: String, resources: Resources): String? {
  */
 fun normalizeSubscriptionUrl(url: String): String {
     val trimmed = url.trim()
+    // Rewrite only the leading scheme, not every occurrence, so a webcal://
+    // literal inside a query param (e.g. ?redirect=webcal://…) is left intact.
     return when {
-        trimmed.startsWith("webcal://") -> trimmed.replace("webcal://", "https://")
-        trimmed.startsWith("webcals://") -> trimmed.replace("webcals://", "https://")
+        trimmed.startsWith("webcal://") -> "https://" + trimmed.removePrefix("webcal://")
+        trimmed.startsWith("webcals://") -> "https://" + trimmed.removePrefix("webcals://")
         else -> trimmed
     }
 }
