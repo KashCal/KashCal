@@ -13,12 +13,27 @@
     <string name="date_widget_description">A mai dátumot mutatja alkalmazásikon-szerűen</string>
     <string name="upcoming_widget_name">Közelgő</string>
     <string name="upcoming_widget_description">A következő 10 nap eseményeit mutatja, az üres napokat kihagyva</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Közelgő események betöltése…</string>
     <string name="widget_error_load_events">Nem sikerült betölteni az eseményeket, koppints a megnyitáshoz</string>
     <string name="widget_no_events_today">Nincs esemény ma</string>
     <string name="widget_add_event">+ Esemény hozzáadása</string>
     <string name="widget_no_events">Nincs esemény</string>
     <string name="widget_no_upcoming_events">Nincs közelgő esemény</string>
+    <string name="cd_widget_calendar">Naptár</string>
+    <string name="cd_widget_add_event">Esemény hozzáadása</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">nincsenek események</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, lemondva</string>
+    <string name="channel_event_reminders">Eseményemlékeztetők</string>
+    <string name="channel_event_reminders_desc">Értesítések a közelgő naptáreseményekről</string>
+    <string name="channel_sync_progress">Szinkronizálás folyamata</string>
+    <string name="channel_sync_progress_desc">A naptárak szinkronizálásának előrehaladását mutatja</string>
+    <string name="channel_sync_status">Szinkronizálás állapota</string>
+    <string name="channel_sync_status_desc">Értesítések a szinkronizálás befejezéséről és hibákról</string>
+    <string name="channel_event_invitations">Eseménymeghívók</string>
+    <string name="channel_event_invitations_desc">Értesítések, amikor új naptármeghívót kap</string>
+    <string name="invite_notification_body">Feladó: %1$s · Koppintson a válaszhoz</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Új esemény</string>
@@ -70,46 +85,8 @@
     <string name="action_confirm_delete">Törlés megerősítése</string>
     <string name="action_delete_event">Esemény törlése</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">A válasz a teljes sorozatra érvényes.</string>
-    <string name="invitees_host_tag">Házigazda</string>
-    <string name="invitees_summary_you_alone">Te</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d nap múlva</item>
-        <item quantity="other">%1$d nap múlva</item>
-    </plurals>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Te · %d meghívott</item>
-        <item quantity="other">Te · %d meghívott</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d meghívott</item>
-        <item quantity="other">%d meghívott</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s rendezi</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Te</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Te + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Te + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Te + %d</item>
-        <item quantity="other">Te + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · még %2$d</item>
-        <item quantity="other">%1$s · még %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Válasz módosítása</string>
-    <string name="rsvp_question_going">Mész?</string>
-    <string name="rsvp_action_yes">Igen</string>
-    <string name="rsvp_action_maybe">Talán</string>
-    <string name="rsvp_action_no">Nem</string>
-    <string name="rsvp_state_going">Mész</string>
-    <string name="rsvp_state_maybe">Talán</string>
-    <string name="rsvp_state_not_going">Nem mész</string>
-    <string name="rsvp_action_change">Módosítás</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Ezt és az összes jövőbelit</string>
@@ -147,7 +124,6 @@
     <string name="label_all_day">Egész napos</string>
     <string name="label_today">Ma</string>
     <string name="label_go_to_date">Ugrás dátumra</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">H</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -200,16 +176,16 @@
     <string name="app_lock_enabled_message">Az alkalmazászár bekapcsolva. A KashCal a következő megnyitáskor hitelesítést fog kérni.</string>
     <string name="app_lock_disable_prompt_title">Oldja fel az alkalmazászár kikapcsolásához</string>
 
-    <!-- ==================== Backup &amp; Restore ==================== -->
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Beállítások mentése</string>
     <string name="backup_settings_subtitle">A KashCal beállításainak mentése JSON fájlba</string>
     <string name="restore_settings_label">Beállítások visszaállítása</string>
     <string name="restore_settings_subtitle">A KashCal beállításainak visszaállítása mentési fájlból</string>
     <string name="restore_confirm_title">Visszaállítod a mentést?</string>
     <string name="restore_confirm_from">Mentés a KashCal %1$s verziójából, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">A beállításaid importálásra kerülnek.</string>
     <string name="action_restore">Visszaállítás</string>
     <string name="restore_success_title">Visszaállítás kész</string>
-    <string name="restore_confirm_message_prefs_only">A beállításaid importálásra kerülnek.</string>
     <string name="restore_success_message_prefs_only">Beállítások importálva.</string>
     <string name="restore_success_device_calendars_note">Ha használod az eszköz naptárait, válaszd ki őket újra.</string>
     <string name="restore_error_title">A visszaállítás sikertelen</string>
@@ -225,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Naptárad van?</string>
     <string name="onboarding_got_you">Segítünk.</string>
     <string name="onboarding_connect_prompt">Csatlakozz az iCloud-hoz, hogy itt lásd az eseményeidet</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Újdonságok</string>
+    <string name="whats_new_dismiss">Értem</string>
+    <string name="whats_new_v598_title">Segíts nyitva tartani az Androidot</string>
+    <string name="whats_new_v598_body">A Google megváltoztatja, ahogyan alkalmazásokat telepítesz a készülékedre. Szükségünk van a segítségedre.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org megnyitása</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud csatlakoztatása</string>
@@ -269,13 +252,11 @@
     <string name="error_auth_session_expired_title">Munkamenet lejárt</string>
     <string name="error_auth_session_expired">Az iCloud munkameneted lejárt. A szinkronizálás folytatásához jelentkezz be újra.</string>
     <string name="error_auth_account_locked">Az Apple ID-d zárolva van. A feloldáshoz látogass el az appleid.apple.com oldalra.</string>
-
     <string name="error_network_offline">Offline vagy. A módosítások online állapotban szinkronizálódnak.</string>
     <string name="error_network_timeout">A kapcsolat időtúllépés miatt megszakadt. Ellenőrizd az internetedet és próbáld újra.</string>
     <string name="error_network_ssl">A biztonságos kapcsolat sikertelen. Ellenőrizd a hálózati beállításaidat.</string>
     <string name="error_network_unknown_host">Nem sikerült elérni az iCloud-ot. Ellenőrizd az internetkapcsolatodat.</string>
     <string name="error_network_connection_failed">A kapcsolódás sikertelen. Próbáld újra.</string>
-
     <string name="error_server_unavailable">Az iCloud átmenetileg nem elérhető. Próbáld újra később.</string>
     <string name="error_server_rate_limited">Túl sok kérés. Várj egy kicsit és próbáld újra.</string>
     <string name="error_server_forbidden">Hozzáférés megtagadva. Lehet, hogy nincs jogosultságod ehhez a naptárhoz.</string>
@@ -284,13 +265,11 @@
     <string name="error_conflict_generic">Ez az esemény egy másik eszközön módosult. A legfrissebb verzióhoz kényszeríts szinkronizálást.</string>
     <string name="error_conflict_with_event">\"%1$s\" egy másik eszközön módosult. A legfrissebb verzióhoz kényszeríts szinkronizálást.</string>
     <string name="error_sync_token_expired">A szinkronizálási adatok lejártak. Teljes szinkronizálás…</string>
-
     <string name="error_event_not_found">Esemény nem található.</string>
     <string name="error_calendar_not_found">Naptár nem található.</string>
     <string name="error_calendar_read_only">A(z) \"%1$s\" naptárban nem módosíthatók az események (csak olvasható naptár).</string>
     <string name="error_event_invalid_data">Érvénytelen eseményadatok. Ellenőrizd a kezdő és záró időpontot.</string>
     <string name="error_event_invalid_recurrence">Érvénytelen ismétlődési minta.</string>
-
     <string name="error_display_name_exists">Már létezik \"%1$s\" nevű fiók.</string>
     <string name="icloud_error_credentials_required">Apple ID és jelszó szükséges</string>
     <string name="icloud_error_connection_timeout">A kapcsolat időtúllépést szenvedett. Próbáld újra.</string>
@@ -299,43 +278,41 @@
     <string name="caldav_error_connection_timeout">A kapcsolat időtúllépést szenvedett. Próbáld újra.</string>
     <string name="caldav_error_no_calendars">Ezen a kiszolgálón nem található naptár.</string>
     <string name="caldav_error_unexpected">Váratlan hiba. Próbáld újra.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nHa ez egy szerver a helyi hálózatodon, engedélyezd a helyi hálózati hozzáférést a csatlakozáshoz.</string>
+    <string name="local_network_banner_title">Helyi hálózati hozzáférés szükséges</string>
+    <string name="local_network_banner_body">Úgy tűnik, ez a szerver a helyi hálózatodon van. Engedélyezd a helyi hálózati hozzáférést, hogy a KashCal csatlakozhasson hozzá.</string>
+    <string name="local_network_banner_allow">Hozzáférés engedélyezése</string>
+    <string name="local_network_banner_dismiss">Most nem</string>
     <string name="password_change_error_account_not_found">Fiók nem található</string>
     <string name="password_change_error_no_credentials">Nincsenek meglévő hitelesítő adatok</string>
     <string name="password_change_error_unsupported_provider">Ez a szolgáltató nem támogatja a jelszó módosítását</string>
     <string name="password_change_error_invalid">Érvénytelen jelszó</string>
     <string name="password_change_error_network">Hálózati hiba, próbáld újra</string>
-
     <string name="error_import_file_not_found">A fájl nem található vagy nem olvasható.</string>
     <string name="error_import_invalid_format">Érvénytelen naptárfájl formátum.</string>
     <string name="error_import_partial">%1$d esemény importálva, %2$d sikertelen.</string>
     <string name="error_export_failed">Az események exportálása sikertelen.</string>
     <string name="error_export_no_events">Nincs exportálható esemény.</string>
     <string name="error_end_before_start">A befejezési időnek a kezdés után kell lennie</string>
-
     <string name="error_storage_full_title">Tárhely megtelt</string>
     <string name="error_storage_full">Nincs elég tárhely. Szabadíts fel helyet és próbáld újra.</string>
     <string name="error_database_corruption_title">Adathiba</string>
     <string name="error_database_corruption">A naptáradataid megsérülhettek. Kérjük, lépj kapcsolatba a támogatással.</string>
     <string name="error_migration_title">Frissítési hiba</string>
     <string name="error_migration_failed">Az alkalmazásadatok frissítése sikertelen. Kérjük, telepítsd újra az alkalmazást.</string>
-
     <string name="error_permission_notification_title">Értesítések engedélyezése?</string>
     <string name="error_permission_notification">A KashCal értesítési engedélyre van szüksége a közelgő eseményekre való emlékeztetéshez.</string>
     <string name="error_permission_alarm_title">Pontos riasztások engedélyezése?</string>
     <string name="error_permission_alarm">A KashCal pontos riasztási engedélyre van szüksége a precíz emlékeztetőkhöz.</string>
     <string name="error_permission_storage">Tárolási engedély szükséges az importáláshoz/exportáláshoz.</string>
-
     <string name="error_device_calendar_title">Naptárhiba</string>
     <string name="error_device_calendar_write_failed">Nem sikerült menteni az eszköz naptárába. Próbáld újra.</string>
     <string name="error_device_calendar_permission">Naptár írási engedély szükséges. Adj engedélyt a Beállításokban.</string>
     <string name="error_device_calendar_not_found">Naptár nem található. Lehet, hogy eltávolították.</string>
     <string name="error_device_event_not_found">Esemény nem található. Lehet, hogy törölték.</string>
     <string name="error_device_calendar_read_only">Ez a naptár csak olvasható.</string>
-
     <string name="error_sync_no_accounts">Nincs beállított iCloud fiók. Állítsd be az iCloud-ot a naptáraid szinkronizálásához.</string>
     <string name="error_sync_partial">%1$d naptár szinkronizálva, %2$d sikertelen.</string>
-
     <string name="error_unknown">Valami hiba történt. Próbáld újra.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -378,6 +355,7 @@
     <string name="label_password">Jelszó</string>
     <string name="label_display_name_optional">Megjelenítendő név</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Események keresése…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -462,12 +440,19 @@
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Naptárhírcsatornák</string>
     <string name="subscriptions_section_add">Hozzáadás</string>
-    <string name="subscriptions_row_hint">pl. ünnepek, sport, iskola</string>
-    <string name="subscriptions_row_label">Naptárhírcsatornák (ICS)</string>
     <string name="subscriptions_empty_ics">Nincs ICS feliratkozás</string>
     <string name="subscriptions_empty_ics_hint">Adj hozzá naptárhírcsatornát az események megtekintéséhez</string>
     <string name="subscriptions_add_ics">ICS naptár hozzáadása</string>
     <string name="qs_tile_label">Esemény</string>
+    <string name="holiday_catalog_add">Ünnepnaptár hozzáadása</string>
+    <string name="holiday_catalog_search_label">Keresés</string>
+    <string name="holiday_catalog_already_added">Hozzáadva</string>
+    <string name="holiday_catalog_empty">Nincs találat</string>
+    <string name="holiday_catalog_empty_hint">Próbálj másik nevet</string>
+    <string name="holiday_catalog_validate_error">Nem sikerült elérni ezt a naptárt. Ellenőrizd a kapcsolatot, és próbáld újra.</string>
+    <string name="holiday_catalog_attribution">Ünnepnaptárak a Mozilla Thunderbird forrásból, %1$s licenc alatt.</string>
+    <string name="subscriptions_row_label">Naptárhírcsatornák (ICS)</string>
+    <string name="subscriptions_row_hint">pl. ünnepek, sport, iskola</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Születésnapok és évfordulók</string>
@@ -486,11 +471,8 @@
     <string name="settings_contacts_permission_required">Névjegy engedély szükséges</string>
     <string name="subscriptions_cd_back">Vissza</string>
     <string name="subscriptions_cd_add">Feliratkozás hozzáadása</string>
-    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
     <string name="snackbar_subscription_removed">Előfizetés eltávolítva</string>
-    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
     <string name="snackbar_action_undo">Visszavonás</string>
-    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
     <string name="snackbar_subscription_already_exists">Már van előfizetés erre az URL-re</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
@@ -511,7 +493,6 @@
     <string name="account_detail_cd_show_password">Jelszó mutatása</string>
     <string name="account_detail_cd_hide_password">Jelszó elrejtése</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Fiók átnevezése</string>
     <string name="rename_account_label">Fiók neve</string>
@@ -528,6 +509,7 @@
     <string name="settings_device_calendars">Eszköz naptárak</string>
     <string name="settings_device_calendars_hint">Naptárak más alkalmazásokból</string>
     <string name="settings_quick_event_add">Gyors esemény hozzáadás</string>
+    <string name="settings_suggest_titles">Eseménycímek javaslata</string>
     <string name="settings_week_numbers">Hétszámok</string>
     <string name="settings_show_declined">Visszautasított események megjelenítése</string>
     <string name="settings_widget_event_limit">Widget eseménykorlát</string>
@@ -540,6 +522,8 @@
     <string name="settings_tap_to_enable">Koppints az engedélyezéshez</string>
     <string name="settings_device_calendars_enabled">%1$d engedélyezve</string>
     <string name="settings_per_day">Napi %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Mi az az alkalmazásjelszó?</string>
     <string name="caldav_trust_insecure_label">Nem biztonságos kapcsolat megbízása</string>
     <string name="action_add_another">Még egy hozzáadása</string>
@@ -601,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Értesítések az eszköz naptáreseményeiről</string>
     <string name="device_calendars_read_only_no_write">Csak olvasható (nincs írási engedély)</string>
     <string name="device_calendars_read_only_calendar">Csak olvasható (a naptár csak olvasható)</string>
-
     <string name="settings_developer_options">Fejlesztői beállítások</string>
     <string name="settings_sync_frequency">Szinkronizálási gyakoriság</string>
     <string name="settings_preview">ELŐNÉZET</string>
@@ -614,7 +597,6 @@
     <string name="drawer_device_calendars">Eszköz naptárak</string>
     <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Súgó és dokumentáció</string>
-
     <string name="event_title_fallback">Esemény</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -677,12 +659,11 @@
         <item quantity="one">%1$d esemény</item>
         <item quantity="other">%1$d esemény</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Naptár megnyitása</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">még %1$d nap</item>
         <item quantity="other">még %1$d nap</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Naptár megnyitása</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d születésnap</item>
         <item quantity="other">%1$d születésnap</item>
@@ -773,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Ez az esemény</string>
-    <string name="recurring_all_events">Összes esemény</string>
     <string name="dialog_edit_recurring_title">Módosítások mentése</string>
     <string name="dialog_delete_recurring_title">Törlés</string>
     <string name="dialog_move_recurring_title">Áthelyezés</string>
+    <string name="recurring_this_event">Ez az esemény</string>
+    <string name="recurring_all_events">Összes esemény</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Résztvevők</string>
+    <string name="attendee_search_hint">Keresés</string>
+    <string name="attendee_search_no_matches">Nincs találat</string>
+    <string name="attendee_picker_title">Résztvevők hozzáadása</string>
+    <string name="attendee_pick_add_people">Résztvevők hozzáadása</string>
+    <string name="attendee_pick_from_contacts">Név vagy e-mail</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d további</item>
+        <item quantity="other">+%1$d további</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Javasoljon embereket a névjegyekből</string>
+    <string name="attendee_invalid_email">Adjon meg egy teljes e-mail-címet</string>
+    <string name="attendee_add_typed">\"%1$s\" hozzáadása</string>
+    <string name="attendee_scheduling_unavailable">Az emberek meghívása nem érhető el ezen a fiókon</string>
+    <string name="device_attendee_local_no_delivery">Ez a naptár nem tud meghívókat küldeni. A vendégek mentve lesznek, de nem kapnak értesítést.</string>
+    <string name="action_save_and_notify">Mentés és értesítés</string>
+    <string name="attendee_section_going">Mennek</string>
+    <string name="attendee_section_maybe">Talán</string>
+    <string name="attendee_section_pending">Függőben</string>
+    <string name="attendee_section_declined">Elutasították</string>
+    <string name="attendee_section_delegated">Átadták</string>
+    <string name="invitees_host_tag">Házigazda</string>
+    <string name="invitees_summary_you_alone">Te</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Te · %d meghívott</item>
+        <item quantity="other">Te · %d meghívott</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d meghívott</item>
+        <item quantity="other">%d meghívott</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s rendezi</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Te</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Te + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Te + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Te + %d</item>
+        <item quantity="other">Te + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · még %2$d</item>
+        <item quantity="other">%1$s · még %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Válasz módosítása</string>
+    <string name="rsvp_question_going">Mész?</string>
+    <string name="rsvp_action_yes">Igen</string>
+    <string name="rsvp_action_maybe">Talán</string>
+    <string name="rsvp_action_no">Nem</string>
+    <string name="rsvp_state_going">Mész</string>
+    <string name="rsvp_state_maybe">Talán</string>
+    <string name="rsvp_state_not_going">Nem mész</string>
+    <string name="rsvp_action_change">Módosítás</string>
     <string name="empty_pick_a_day">Válassz egy napot. Ragadd meg.</string>
-    <string name="empty_no_events_day">Semmi látnivaló; menj ki a szabadba?</string>
+    <string name="cd_empty_pick_a_day">Válassz egy napot</string>
+    <string name="empty_no_events_day_1">Egy szabad nap. A világegyetem ragaszkodik hozzá, hogy pihenj.</string>
+    <string name="empty_no_events_day_2">Nincs terv. Épp ez a terv.</string>
+    <string name="empty_no_events_day_3">Egy ajándék: egy üres nap.</string>
+    <string name="empty_no_events_day_4">Naptár állapota: gyönyörűen üres.</string>
+    <string name="empty_no_events_day_5">Semmi sincs tervezve. Élvezd a nyugalmat.</string>
+    <string name="cd_empty_no_events_day">Nyugodt nap, semmi sincs betervezve</string>
     <string name="filter_date">Dátum</string>
     <string name="label_select_date">Válassz dátumot</string>
     <string name="hint_tap_date_range">Egy naphoz koppints ugyanarra, időszakhoz másik dátumra</string>
-
     <string name="cd_clear">Törlés</string>
     <string name="cd_offline">Offline</string>
+    <string name="cd_event_state_cancelled">lemondva</string>
+    <string name="cd_event_state_declined">elutasítva</string>
+    <string name="cd_event_state_past">múltbeli esemény</string>
     <string name="cd_loading_events">Események betöltése</string>
+    <string name="cd_event_untitled">Névtelen esemény</string>
     <string name="cd_open_drawer">Fiók megnyitása</string>
     <string name="cd_close_drawer">Fiók bezárása</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Naptár nézet</string>
     <string name="cd_active_view">Aktív nézet</string>
-
     <string name="view_agenda">Napirend</string>
     <string name="view_month_full">Hónap (teljes)</string>
     <string name="view_day">Nap</string>
     <string name="view_three_days">3 nap</string>
     <string name="view_year">Év</string>
     <string name="view_insights">Áttekintés</string>
-
     <string name="label_go_to_month">Ugrás hónapra</string>
-
     <string name="action_more_options">További lehetőségek</string>
     <string name="quick_add_save_failed">Nem sikerült elmenteni az eseményt</string>
-
     <string name="label_duration_days">nap</string>
     <string name="label_duration_hrs">óra</string>
     <string name="label_duration_min">perc</string>
@@ -821,211 +860,7 @@
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d új</string>
-    <string name="sync_summary_updated">%1$d frissítve</string>
-    <string name="sync_summary_removed">%1$d eltávolítva</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Körkörös görgetés engedélyezve</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Nincs emlékeztető</string>
-    <string name="reminder_at_time_of_event">Az esemény időpontjában</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s előtt</string>
-    <string name="reminder_time_after">%1$s után</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">Az esemény napján 9 AM</string>
-    <string name="reminder_day_of_event_24h">Az esemény napján 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s előtt 9 AM-kor</string>
-    <string name="reminder_before_at_24h">%1$s előtt 09:00-kor</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Ki</string>
-    <string name="reminder_short_at_event">Eseménykor</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dp</string>
-    <string name="reminder_short_hours">%1$dó</string>
-    <string name="reminder_short_days">%1$dn</string>
-    <string name="reminder_short_weeks">%1$dh</string>
-    <string name="reminder_summary_none">Nincs</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dó %2$dp</string>
-    <string name="duration_compact_short">%1$dó%2$dp</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Csak kézi</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Összes esemény</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Elhalasztás</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Most kezdődik</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Holnap, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Szinkronizálás kész</string>
-    <string name="sync_notification_partial">Szinkronizálás részben kész</string>
-    <string name="sync_notification_auth_failed">Szinkronizálás hitelesítése sikertelen</string>
-    <string name="sync_notification_auth_reauth">Kérjük, hitelesítse újra a fiókját</string>
-    <string name="sync_notification_failed">Szinkronizálás sikertelen</string>
-    <string name="sync_notification_parse_title">Néhány esemény nem szinkronizálható</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s a(z) %2$s naptárban nem szinkronizálható. Próbálja a Kényszerített szinkronizálást a Beállításokban.</string>
-    <string name="sync_notification_conflict_title">Szinkronizálási ütközés megoldva</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">A(z) \"%1$s\" helyi módosításai elvesztek szinkronizálási ütközés miatt. A szerver verziója lesz használva.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">%1$s helyi módosításai elvesztek szinkronizálási ütközések miatt. A szerver verziói lesznek használva.</string>
-    <string name="sync_notification_expired_title">Szinkronizálási változások lejártak</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s a(z) %2$s naptárban nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s a(z) %2$s között nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d naptár szinkronizálva</item>
-        <item quantity="other">%1$d naptár szinkronizálva</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d változás</item>
-        <item quantity="other">, %1$d változás</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d hiba</item>
-        <item quantity="other">, %1$d hiba</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s %2$s. születésnapja</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s születésnapja</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s %2$s. évfordulója</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s évfordulója</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d.</string>
-    <string name="ordinal_suffix_nd">%1$d.</string>
-    <string name="ordinal_suffix_rd">%1$d.</string>
-    <string name="ordinal_suffix_th">%1$d.</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Naptárak szinkronizálása…</string>
-    <string name="sync_banner_preparing">Szinkronizálás előkészítése…</string>
-    <string name="sync_banner_complete_errors">Szinkronizálás hibákkal befejeződött</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Szinkronizálás sikertelen: %1$s</string>
-    <string name="error_unknown_error">Ismeretlen hiba</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Új esemény: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d új esemény</item>
-        <item quantity="other">%1$d új esemény</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d esemény frissítve</item>
-        <item quantity="other">%1$d esemény frissítve</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d esemény eltávolítva</item>
-        <item quantity="other">%1$d esemény eltávolítva</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d naptárfrissítés</item>
-        <item quantity="other">%1$d naptárfrissítés</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">%1$d. nap / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">1. nap / %1$d · kezdés %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%1$d. nap / %2$d · vége %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Egész nap</string>
-    <string name="event_date_all_day">%1$s · Egész nap</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Egész nap)</string>
-    <string name="event_date_all_day_parens">%1$s (Egész nap)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Esemény mentése</string>
-    <!-- Badges -->
-    <string name="badge_beta">Béta</string>
-    <string name="badge_new">Új</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Piros</string>
-    <string name="color_orange">Narancssárga</string>
-    <string name="color_yellow">Sárga</string>
-    <string name="color_green">Zöld</string>
-    <string name="color_cyan">Cián</string>
-    <string name="color_blue">Kék</string>
-    <string name="color_purple">Lila</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Megbeszélés linkje: %1$s</string>
-    <string name="cd_phone_number">Telefonszám</string>
-    <string name="cd_email_link">E-mail: %1$s</string>
-    <string name="cd_web_link">Hivatkozás: %1$s</string>
-    <string name="cd_text_with_links">Szöveg %1$d hivatkozással: %2$s</string>
-    <string name="cd_text_with_link">Szöveg 1 hivatkozással: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">%1$d. nap / %2$d (Egész nap)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve</string>
-    <string name="sync_history_stats_issues">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve   ⚠ %4$d probléma</string>
-    <string name="sync_history_failed">Sikertelen</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Óránként</string>
-    <string name="ics_sync_every_n_hours">%1$d óránként</string>
-    <string name="ics_sync_daily">Naponta</string>
-    <string name="ics_sync_weekly">Hetente</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL szükséges</string>
-    <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">A kiszolgáló hibát adott vissza (%1$d). Ellenőrizd az URL-t.</string>
-    <string name="ics_fetch_error_empty">A naptárcsatorna üres.</string>
-    <string name="ics_fetch_error_not_calendar">Ez az URL nem tűnik naptárcsatornának.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget and Channel strings -->
-    <string name="cd_widget_calendar">Naptár</string>
-    <string name="cd_widget_add_event">Esemény hozzáadása</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">nincsenek események</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, lemondva</string>
-    <string name="cd_event_state_cancelled">lemondva</string>
-    <string name="cd_event_state_declined">elutasítva</string>
-    <string name="cd_event_state_past">múltbeli esemény</string>
-    <string name="cd_event_untitled">Névtelen esemény</string>
-    <string name="channel_event_reminders">Eseményemlékeztetők</string>
-    <string name="channel_event_reminders_desc">Értesítések a közelgő naptáreseményekről</string>
-    <string name="channel_sync_progress">Szinkronizálás folyamata</string>
-    <string name="channel_sync_progress_desc">A naptárak szinkronizálásának előrehaladását mutatja</string>
-    <string name="channel_sync_status">Szinkronizálás állapota</string>
-    <string name="channel_sync_status_desc">Értesítések a szinkronizálás befejezéséről és hibákról</string>
-    <string name="channel_event_invitations">Eseménymeghívók</string>
-    <string name="channel_event_invitations_desc">Értesítések, amikor új naptármeghívót kap</string>
-    <string name="invite_notification_body">Feladó: %1$s · Koppintson a válaszhoz</string>
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Nem ismétlődik</string>
     <string name="rrule_freq_daily">Naponta</string>
     <string name="rrule_freq_weekly">Hetente</string>
@@ -1041,6 +876,10 @@
     <string name="rrule_freq_on_last_day">%1$s az utolsó napon</string>
     <string name="rrule_freq_on_day_n">%1$s a %2$d. napon</string>
     <string name="rrule_ordinal_last">utolsó</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d alkalommal</item>
+        <item quantity="other">, %1$d alkalommal</item>
+    </plurals>
     <string name="rrule_until_suffix">, eddig: %1$s</string>
     <string name="rrule_freq_never">Soha</string>
     <string name="rrule_freq_custom">Egyéni</string>
@@ -1054,13 +893,146 @@
     <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
     <string name="rrule_since">%1$s · óta: %2$s</string>
 
-    <!-- Recurrence count plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d alkalommal</item>
-        <item quantity="other">, %1$d alkalommal</item>
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d új</string>
+    <string name="sync_summary_updated">%1$d frissítve</string>
+    <string name="sync_summary_removed">%1$d eltávolítva</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Körkörös görgetés engedélyezve</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Nincs emlékeztető</string>
+    <string name="reminder_at_time_of_event">Az esemény időpontjában</string>
+    <string name="reminder_time_before">%1$s előtt</string>
+    <string name="reminder_time_after">%1$s után</string>
+    <string name="reminder_day_of_event_12h">Az esemény napján 9 AM</string>
+    <string name="reminder_day_of_event_24h">Az esemény napján 09:00</string>
+    <string name="reminder_before_at_12h">%1$s előtt 9 AM-kor</string>
+    <string name="reminder_before_at_24h">%1$s előtt 09:00-kor</string>
+    <string name="reminder_short_off">Ki</string>
+    <string name="reminder_short_at_event">Eseménykor</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dp</string>
+    <string name="reminder_short_hours">%1$dó</string>
+    <string name="reminder_short_days">%1$dn</string>
+    <string name="reminder_short_weeks">%1$dh</string>
+    <string name="reminder_summary_none">Nincs</string>
+    <string name="duration_compact">%1$dó %2$dp</string>
+    <string name="duration_compact_short">%1$dó%2$dp</string>
+    <string name="sync_manual_only">Csak kézi</string>
+    <string name="sync_lookback_all">Összes esemény</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Elhalasztás</string>
+    <string name="notification_starting_now">Most kezdődik</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d nap múlva</item>
+        <item quantity="other">%1$d nap múlva</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Holnap, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Szinkronizálás kész</string>
+    <string name="sync_notification_partial">Szinkronizálás részben kész</string>
+    <string name="sync_notification_auth_failed">Szinkronizálás hitelesítése sikertelen</string>
+    <string name="sync_notification_auth_reauth">Kérjük, hitelesítse újra a fiókját</string>
+    <string name="sync_notification_failed">Szinkronizálás sikertelen</string>
+    <string name="sync_notification_parse_title">Néhány esemény nem szinkronizálható</string>
+    <string name="sync_notification_parse_content">%1$s a(z) %2$s naptárban nem szinkronizálható. Próbálja a Kényszerített szinkronizálást a Beállításokban.</string>
+    <string name="sync_notification_conflict_title">Szinkronizálási ütközés megoldva</string>
+    <string name="sync_notification_conflict_single">A(z) \"%1$s\" helyi módosításai elvesztek szinkronizálási ütközés miatt. A szerver verziója lesz használva.</string>
+    <string name="sync_notification_conflict_multi">%1$s helyi módosításai elvesztek szinkronizálási ütközések miatt. A szerver verziói lesznek használva.</string>
+    <string name="sync_notification_expired_title">Szinkronizálási változások lejártak</string>
+    <string name="sync_notification_expired_content">%1$s nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s a(z) %2$s naptárban nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s a(z) %2$s között nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d naptár szinkronizálva</item>
+        <item quantity="other">%1$d naptár szinkronizálva</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d változás</item>
+        <item quantity="other">, %1$d változás</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d hiba</item>
+        <item quantity="other">, %1$d hiba</item>
     </plurals>
 
-    <!-- Insights -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s %2$s. születésnapja</string>
+    <string name="contact_birthday">%1$s születésnapja</string>
+    <string name="contact_anniversary_with_age">%1$s %2$s. évfordulója</string>
+    <string name="contact_anniversary">%1$s évfordulója</string>
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Naptárak szinkronizálása…</string>
+    <string name="sync_banner_preparing">Szinkronizálás előkészítése…</string>
+    <string name="sync_banner_complete_errors">Szinkronizálás hibákkal befejeződött</string>
+    <string name="sync_banner_failed">Szinkronizálás sikertelen: %1$s</string>
+    <string name="error_unknown_error">Ismeretlen hiba</string>
+    <string name="sync_snackbar_new_event">Új esemény: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d új esemény</item>
+        <item quantity="other">%1$d új esemény</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d esemény frissítve</item>
+        <item quantity="other">%1$d esemény frissítve</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d esemény eltávolítva</item>
+        <item quantity="other">%1$d esemény eltávolítva</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d naptárfrissítés</item>
+        <item quantity="other">%1$d naptárfrissítés</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">%1$d. nap / %2$d</string>
+    <string name="day_starts">1. nap / %1$d · kezdés %2$s</string>
+    <string name="day_ends">%1$d. nap / %2$d · vége %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Egész nap</string>
+    <string name="event_date_all_day">%1$s · Egész nap</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Egész nap)</string>
+    <string name="event_date_all_day_parens">%1$s (Egész nap)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Esemény mentése</string>
+    <string name="badge_beta">Béta</string>
+    <string name="badge_new">Új</string>
+    <string name="color_red">Piros</string>
+    <string name="color_orange">Narancssárga</string>
+    <string name="color_yellow">Sárga</string>
+    <string name="color_green">Zöld</string>
+    <string name="color_cyan">Cián</string>
+    <string name="color_blue">Kék</string>
+    <string name="color_purple">Lila</string>
+    <string name="cd_meeting_link">Megbeszélés linkje: %1$s</string>
+    <string name="cd_phone_number">Telefonszám</string>
+    <string name="cd_email_link">E-mail: %1$s</string>
+    <string name="cd_web_link">Hivatkozás: %1$s</string>
+    <string name="cd_text_with_links">Szöveg %1$d hivatkozással: %2$s</string>
+    <string name="cd_text_with_link">Szöveg 1 hivatkozással: %1$s</string>
+    <string name="day_x_of_y_all_day">%1$d. nap / %2$d (Egész nap)</string>
+    <string name="sync_history_stats">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve</string>
+    <string name="sync_history_stats_issues">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve   ⚠ %4$d probléma</string>
+    <string name="sync_history_failed">Sikertelen</string>
+    <string name="ics_sync_every_hour">Óránként</string>
+    <string name="ics_sync_every_n_hours">%1$d óránként</string>
+    <string name="ics_sync_daily">Naponta</string>
+    <string name="ics_sync_weekly">Hetente</string>
+    <string name="ics_url_required">URL szükséges</string>
+    <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
+    <string name="ics_fetch_error_http">A kiszolgáló hibát adott vissza (%1$d). Ellenőrizd az URL-t.</string>
+    <string name="ics_fetch_error_empty">A naptárcsatorna üres.</string>
+    <string name="ics_fetch_error_not_calendar">Ez az URL nem tűnik naptárcsatornának.</string>
     <string name="insights_title">Áttekintés</string>
     <string name="insights_period_this_week">Hét</string>
     <string name="insights_period_last_week">Múlt hét</string>
@@ -1070,48 +1042,35 @@
         <item quantity="one">%d egész napos esemény</item>
         <item quantity="other">%d egész napos esemény</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s a legzsúfoltabb napod (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s volt a legzsúfoltabb napod (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s a legkönnyebb napod (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s volt a legkönnyebb napod (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Leghosszabb szabad idő: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">A leghosszabb szabad idő %1$s %2$s–%3$s volt (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">A hétvégéd szabad</string>
     <string name="insight_weekend_load_clear_past">A hétvégéd szabad volt</string>
     <string name="insight_weekend_load_light_future">%1$s tervezve a hétvégére</string>
     <string name="insight_weekend_load_light_past">%1$s volt tervezve a hétvégére</string>
     <string name="insight_weekend_load_busy_future">%1$s tervezve a hétvégére</string>
     <string name="insight_weekend_load_busy_past">%1$s volt tervezve a hétvégére</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d egymás utáni megbeszélés</string>
     <string name="insight_back_to_back_past">%1$d egymás utáni megbeszélésed volt</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s a tervezett időd %2$d%%-a</string>
     <string name="insight_calendar_dominant_past">%1$s a tervezett időd %2$d%%-a volt</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">A programod %1$d napon 8:00 előtt kezdődik</string>
     <string name="insight_early_bounds_past">A programod %1$d napon 8:00 előtt kezdődött</string>
     <string name="insight_late_bounds_future">Események 19:00 után %1$d napon</string>
     <string name="insight_late_bounds_past">Események 19:00 után voltak %1$d napon</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">%1$d megbeszélésmentes napod van</string>
     <string name="insight_meeting_free_days_past">%1$d megbeszélésmentes napod volt</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Holnap: %1$s tervezve, kezdés: %2$s</string>
     <string name="insight_tomorrow_preview_no_start">Holnap: %1$s tervezve</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s a legzsúfoltabb közelgő napod (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Következő szabad idő: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Napi eloszlás: a legzsúfoltabb nap %1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Elérhetőség</string>
     <string name="label_busy">Elfoglalt</string>
     <string name="label_free">Szabad</string>
@@ -1120,7 +1079,7 @@
     <string name="label_custom">Egyéni</string>
     <string name="cd_checkmark">Kiválasztva</string>
 
-    <!-- Color names -->
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Nyeregbarna</string>    <string name="color_tomato">Paradicsom</string>    <string name="color_darkorange">Sötétnarancs</string>
     <string name="color_gold">Arany</string>
     <string name="color_yellowgreen">Sárgászöld</string>
@@ -1130,6 +1089,7 @@
     <string name="color_hotpink">Élénk rózsaszín</string>
     <string name="color_dimgray">Halvány szürke</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Piros</string>
     <string name="hue_orange">Narancs</string>
     <string name="hue_yellow">Sárga</string>
@@ -1142,7 +1102,8 @@
     <string name="hue_neutral">Semleges</string>
     <string name="label_more_colors">További színek</string>
     <string name="label_back_to_grid">Vissza</string>
-    <string name="settings_suggest_titles">Eseménycímek javaslata</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Résztvevők</string>
     <string name="attendee_you_marker">Te</string>
     <string name="attendee_card_going">Megy</string>
@@ -1152,31 +1113,19 @@
     <string name="attendee_card_hosting">Szervezi</string>
     <string name="attendee_action_copy">E-mail másolása</string>
     <string name="attendee_action_email">E-mail küldése</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-mail másolva</string>
     <string name="attendee_no_email_app">Nincs telepítve e-mail alkalmazás</string>
     <string name="attendee_show_all">Összes résztvevő megjelenítése</string>
     <string name="attendee_status_accepted">Elfogadva</string>
     <string name="attendee_status_declined">Elutasítva</string>
     <string name="attendee_status_tentative">Bizonytalan</string>
-    <string name="attendee_picker_title">Résztvevők hozzáadása</string>
-    <string name="attendee_pick_add_people">Résztvevők hozzáadása</string>
-    <string name="attendee_pick_from_contacts">Név vagy e-mail</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d további</item>
-        <item quantity="other">+%1$d további</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Javasoljon embereket a névjegyekből</string>
-    <string name="attendee_invalid_email">Adjon meg egy teljes e-mail-címet</string>
-    <string name="attendee_add_typed">\"%1$s\" hozzáadása</string>
-    <string name="attendee_scheduling_unavailable">Az emberek meghívása nem érhető el ezen a fiókon</string>
-    <string name="device_attendee_local_no_delivery">Ez a naptár nem tud meghívókat küldeni. A vendégek mentve lesznek, de nem kapnak értesítést.</string>
-    <string name="action_save_and_notify">Mentés és értesítés</string>
     <string name="attendee_status_delegated">Átruházva</string>
     <string name="attendee_status_pending">Függő</string>
     <string name="inbox_empty_caught_up">Mindennel megvagy</string>
     <string name="inbox_organizer_suffix">(szervező)</string>
     <string name="menu_invites">Meghívók</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Ugrás dátumhoz</string>
     <string name="menu_about">Névjegy</string>
     <string name="menu_more">Egyéb menü</string>
@@ -1184,26 +1133,28 @@
         <item quantity="one">Egyéb menü, %d meghívó vár</item>
         <item quantity="other">Egyéb menü, %d meghívó vár</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Elérhetőség megosztása</string>
     <string name="share_availability_sheet_title">Elérhetőség megosztása</string>
-    <string name="share_availability_hours_label">Munkaidő: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Egész napos események foglaltként</string>
-    <string name="share_availability_share_button">Megosztás</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">A kiválasztott tartományban nincsenek legalább egy órás szabad blokkok.</string>
-    <string name="share_availability_chooser_title">Elérhetőség megosztása</string>
-    <string name="share_availability_share_failed">Nincs alkalmazás a megosztáshoz</string>
-    <string name="share_from_kashcal_footer">Megosztva a KashCal alkalmazásból</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Következő %1$d nap</item>
         <item quantity="other">Következő %1$d nap</item>
     </plurals>
+    <string name="share_availability_hours_label">Munkaidő: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Egész napos események foglaltként</string>
+    <string name="share_availability_share_button">Megosztás</string>
     <plurals name="share_availability_header">
         <item quantity="one">Szabad a következő %1$d napban (%2$s – %3$s):</item>
         <item quantity="other">Szabad a következő %1$d napban (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">A kiválasztott tartományban nincsenek legalább egy órás szabad blokkok.</string>
+    <string name="share_from_kashcal_footer">Megosztva a KashCal alkalmazásból</string>
+    <string name="share_availability_chooser_title">Elérhetőség megosztása</string>
+    <string name="share_availability_share_failed">Nincs alkalmazás a megosztáshoz</string>
     <string name="share_availability_window_section">Időszak</string>
     <string name="share_availability_hours_section">Munkaidő</string>
     <plurals name="share_availability_days_hero">
@@ -1220,25 +1171,5 @@
     <string name="share_as_card_all_day">Egész nap</string>
     <string name="share_as_card_chooser_title">Esemény megosztása</string>
     <string name="share_as_card_share_failed">A kártyát nem sikerült megosztani</string>
-    <string name="attendee_sheet_title">Résztvevők</string>
-    <string name="attendee_search_hint">Keresés</string>
-    <string name="attendee_search_no_matches">Nincs találat</string>
-    <string name="attendee_section_going">Mennek</string>
-    <string name="attendee_section_maybe">Talán</string>
-    <string name="attendee_section_pending">Függőben</string>
-    <string name="attendee_section_declined">Elutasították</string>
-    <string name="attendee_section_delegated">Átadták</string>
-    <string name="whats_new_title">Újdonságok</string>
-    <string name="whats_new_dismiss">Értem</string>
-    <string name="whats_new_v598_title">Segíts nyitva tartani az Androidot</string>
-    <string name="whats_new_v598_body">A Google megváltoztatja, ahogyan alkalmazásokat telepítesz a készülékedre. Szükségünk van a segítségedre.</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org megnyitása</string>
-    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
-    <string name="holiday_catalog_add">Ünnepnaptár hozzáadása</string>
-    <string name="holiday_catalog_search_label">Keresés</string>
-    <string name="holiday_catalog_already_added">Hozzáadva</string>
-    <string name="holiday_catalog_empty">Nincs találat</string>
-    <string name="holiday_catalog_empty_hint">Próbálj másik nevet</string>
-    <string name="holiday_catalog_validate_error">Nem sikerült elérni ezt a naptárt. Ellenőrizd a kapcsolatot, és próbáld újra.</string>
-    <string name="holiday_catalog_attribution">Ünnepnaptárak a Mozilla Thunderbird forrásból, %1$s licenc alatt.</string>
+
 </resources>

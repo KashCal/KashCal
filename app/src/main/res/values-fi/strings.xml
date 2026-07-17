@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Näyttää tämän päivän päivämäärän sovelluskuvakkeena</string>
     <string name="upcoming_widget_name">Tulevat</string>
     <string name="upcoming_widget_description">Näyttää seuraavan 10 päivän tapahtumat ohittaen tyhjät päivät</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Ladataan tapahtumia…</string>
     <string name="widget_error_load_events">Tapahtumien lataus epäonnistui, avaa napauttamalla</string>
     <string name="widget_no_events_today">Ei tapahtumia tänään</string>
     <string name="widget_add_event">+ Lisää tapahtuma</string>
     <string name="widget_no_events">Ei tapahtumia</string>
     <string name="widget_no_upcoming_events">Ei tulevia tapahtumia</string>
+    <string name="cd_widget_calendar">Kalenteri</string>
+    <string name="cd_widget_add_event">Lisää tapahtuma</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ei tapahtumia</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, peruttu</string>
+    <string name="channel_event_reminders">Tapahtumamuistutukset</string>
+    <string name="channel_event_reminders_desc">Ilmoitukset tulevista kalenteritapahtumista</string>
+    <string name="channel_sync_progress">Synkronoinnin edistyminen</string>
+    <string name="channel_sync_progress_desc">Näyttää edistymisen kalentereita synkronoitaessa</string>
+    <string name="channel_sync_status">Synkronoinnin tila</string>
+    <string name="channel_sync_status_desc">Ilmoitukset synkronoinnin valmistumisesta ja virheistä</string>
+    <string name="channel_event_invitations">Tapahtumakutsut</string>
+    <string name="channel_event_invitations_desc">Ilmoitukset uusista kalenterikutsuista</string>
+    <string name="invite_notification_body">Lähettäjä %1$s · Vastaa napauttamalla</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Uusi tapahtuma</string>
@@ -44,7 +58,6 @@
     <string name="action_hide_password">Piilota salasana</string>
     <string name="action_sign_out">Kirjaudu ulos</string>
     <string name="action_learn_more">Lisätietoja</string>
-    <string name="action_open">Avaa</string>
     <string name="action_open_apple_id">Avaa Apple ID</string>
     <string name="action_open_settings">Avaa asetukset</string>
     <string name="action_force_sync">Pakota synkronointi</string>
@@ -58,6 +71,7 @@
     <string name="action_save">Tallenna</string>
     <string name="action_add">Lisää</string>
     <string name="action_edit">Muokkaa</string>
+    <string name="action_open">Avaa</string>
     <string name="action_delete">Poista</string>
     <string name="action_confirm">Vahvista</string>
     <string name="action_discard">Hylkää</string>
@@ -71,45 +85,8 @@
     <string name="action_confirm_delete">Vahvista poistaminen</string>
     <string name="action_delete_event">Poista tapahtuma</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Vastaus koskee koko sarjaa.</string>
-    <string name="invitees_host_tag">Isäntä</string>
-    <string name="invitees_summary_you_alone">Sinä</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Sinä · %d kutsuttu</item>
-        <item quantity="other">Sinä · %d kutsuttua</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d kutsuttu</item>
-        <item quantity="other">%d kutsuttua</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s järjestää</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sinä</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Sinä + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Sinä + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Sinä + %d</item>
-        <item quantity="other">Sinä + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · vielä %2$d</item>
-        <item quantity="other">%1$s · vielä %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Vaihda vastausta</string>
-    <string name="rsvp_question_going">Tuletko?</string>
-    <string name="rsvp_action_yes">Kyllä</string>
-    <string name="rsvp_action_maybe">Ehkä</string>
-    <string name="rsvp_action_no">Ei</string>
-    <string name="rsvp_state_going">Tulet</string>
-    <string name="rsvp_state_maybe">Ehkä</string>
-    <string name="rsvp_state_not_going">Et tule</string>
-    <string name="rsvp_action_change">Muuta</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Tämä ja kaikki tulevat</string>
@@ -147,7 +124,6 @@
     <string name="label_all_day">Koko päivä</string>
     <string name="label_today">Tänään</string>
     <string name="label_go_to_date">Siirry päivämäärään</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">VK</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -200,6 +176,27 @@
     <string name="app_lock_enabled_message">Sovelluslukko on käytössä. KashCal pyytää sinua tunnistautumaan, kun avaat sen seuraavan kerran.</string>
     <string name="app_lock_disable_prompt_title">Avaa lukitus poistaaksesi sovelluslukon käytöstä</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Varmuuskopioi asetukset</string>
+    <string name="backup_settings_subtitle">Tallenna KashCalin asetukset JSON-tiedostoon</string>
+    <string name="restore_settings_label">Palauta asetukset</string>
+    <string name="restore_settings_subtitle">Palauta KashCalin asetukset varmuuskopiosta</string>
+    <string name="restore_confirm_title">Palautetaanko varmuuskopio?</string>
+    <string name="restore_confirm_from">KashCal %1$s -varmuuskopio, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Asetuksesi tuodaan.</string>
+    <string name="action_restore">Palauta</string>
+    <string name="restore_success_title">Palautus valmis</string>
+    <string name="restore_success_message_prefs_only">Asetukset tuotu.</string>
+    <string name="restore_success_device_calendars_note">Valitse laitteen kalenterit uudelleen, jos käytät tätä toimintoa.</string>
+    <string name="restore_error_title">Palautus epäonnistui</string>
+    <string name="restore_error_version_too_new">Tämä varmuuskopio on luotu uudemmalla KashCal-versiolla. Päivitä KashCal ja yritä uudelleen.</string>
+    <string name="restore_error_malformed_json">Tämä tiedosto ei ole kelvollinen KashCal-varmuuskopio.</string>
+    <string name="restore_error_invalid_value">Varmuuskopiotiedosto sisältää virheellisiä tietoja, eikä sitä voi palauttaa.</string>
+    <string name="restore_error_apply_failure">Varmuuskopion käyttöönotossa tapahtui virhe. Muutoksia ei tallennettu.</string>
+    <string name="backup_error_build_failed">Varmuuskopiointi epäonnistui</string>
+    <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui — tiedostoon ei voitu kirjoittaa</string>
+    <string name="backup_error_read_failed">Tiedostoa ei voitu lukea</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Me autamme.</string>
@@ -211,6 +208,7 @@
     <string name="whats_new_v598_title">Auta pitämään Android avoimena</string>
     <string name="whats_new_v598_body">Google muuttaa tapaa, jolla asennat sovelluksia laitteellesi. Tarvitsemme apuasi.</string>
     <string name="whats_new_v598_action_label">Vieraile keepandroidopen.org-sivustolla</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Yhdistä iCloud</string>
     <string name="signin_caldav_title">Lisää CalDAV-tili</string>
@@ -254,13 +252,11 @@
     <string name="error_auth_session_expired_title">Istunto vanhentunut</string>
     <string name="error_auth_session_expired">iCloud-istuntosi on vanhentunut. Kirjaudu uudelleen sisään jatkaaksesi synkronointia.</string>
     <string name="error_auth_account_locked">Apple ID on lukittu. Käy osoitteessa appleid.apple.com avataksesi sen.</string>
-
     <string name="error_network_offline">Olet offline-tilassa. Muutokset synkronoidaan, kun olet taas verkossa.</string>
     <string name="error_network_timeout">Yhteys aikakatkaistiin. Tarkista internetyhteytesi ja yritä uudelleen.</string>
     <string name="error_network_ssl">Suojattu yhteys epäonnistui. Tarkista verkkoasetuksesi.</string>
     <string name="error_network_unknown_host">iCloudiin ei saada yhteyttä. Tarkista internetyhteytesi.</string>
     <string name="error_network_connection_failed">Yhteys epäonnistui. Yritä uudelleen.</string>
-
     <string name="error_server_unavailable">iCloud on tilapäisesti poissa käytöstä. Yritä myöhemmin uudelleen.</string>
     <string name="error_server_rate_limited">Liian monta pyyntöä. Odota hetki ja yritä uudelleen.</string>
     <string name="error_server_forbidden">Pääsy estetty. Sinulla ei ehkä ole oikeuksia tähän kalenteriin.</string>
@@ -269,13 +265,11 @@
     <string name="error_conflict_generic">Tätä tapahtumaa muokattiin toisessa laitteessa. Pakota synkronointi saadaksesi uusimman version.</string>
     <string name="error_conflict_with_event">\"%1$s\" muokattiin toisessa laitteessa. Pakota synkronointi saadaksesi uusimman version.</string>
     <string name="error_sync_token_expired">Synkronointitiedot vanhentuneet. Suoritetaan täysi synkronointi…</string>
-
     <string name="error_event_not_found">Tapahtumaa ei löytynyt.</string>
     <string name="error_calendar_not_found">Kalenteria ei löytynyt.</string>
     <string name="error_calendar_read_only">Kalenterin \"%1$s\" tapahtumia ei voi muokata (vain luku -kalenteri).</string>
     <string name="error_event_invalid_data">Virheelliset tapahtumatiedot. Tarkista alkamis- ja päättymisajat.</string>
     <string name="error_event_invalid_recurrence">Virheellinen toistokuvio.</string>
-
     <string name="error_display_name_exists">Tili nimellä \"%1$s\" on jo olemassa.</string>
     <string name="icloud_error_credentials_required">Apple ID ja salasana vaaditaan</string>
     <string name="icloud_error_connection_timeout">Yhteys aikakatkaistiin. Yritä uudelleen.</string>
@@ -284,48 +278,45 @@
     <string name="caldav_error_connection_timeout">Yhteys aikakatkaistiin. Yritä uudelleen.</string>
     <string name="caldav_error_no_calendars">Tältä palvelimelta ei löytynyt kalentereita.</string>
     <string name="caldav_error_unexpected">Odottamaton virhe. Yritä uudelleen.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nJos tämä on palvelin lähiverkossasi, salli lähiverkon käyttö yhteyden muodostamiseksi.</string>
+    <string name="local_network_banner_title">Lähiverkon käyttöoikeus tarvitaan</string>
+    <string name="local_network_banner_body">Tämä palvelin näyttää olevan lähiverkossasi. Salli lähiverkon käyttö, jotta KashCal voi muodostaa siihen yhteyden.</string>
+    <string name="local_network_banner_allow">Salli käyttö</string>
+    <string name="local_network_banner_dismiss">Ei nyt</string>
     <string name="password_change_error_account_not_found">Tiliä ei löytynyt</string>
     <string name="password_change_error_no_credentials">Tallennettuja kirjautumistietoja ei ole</string>
     <string name="password_change_error_unsupported_provider">Tämä palveluntarjoaja ei tue salasanan vaihtoa</string>
     <string name="password_change_error_invalid">Virheellinen salasana</string>
     <string name="password_change_error_network">Verkkovirhe, yritä uudelleen</string>
-
     <string name="error_import_file_not_found">Tiedostoa ei löytynyt tai sitä ei voi lukea.</string>
     <string name="error_import_invalid_format">Virheellinen kalenteritiedoston muoto.</string>
     <string name="error_import_partial">Tuotiin %1$d tapahtumaa, %2$d epäonnistui.</string>
     <string name="error_export_failed">Tapahtumien vienti epäonnistui.</string>
     <string name="error_export_no_events">Ei vietäviä tapahtumia.</string>
     <string name="error_end_before_start">Päättymisajan on oltava alkamisajan jälkeen</string>
-
     <string name="error_storage_full_title">Tallennustila täynnä</string>
     <string name="error_storage_full">Tallennustila ei riitä. Vapauta tilaa ja yritä uudelleen.</string>
     <string name="error_database_corruption_title">Tietovirhe</string>
     <string name="error_database_corruption">Kalenteritietosi saattavat olla vaurioituneet. Ota yhteyttä tukeen.</string>
     <string name="error_migration_title">Päivitysvirhe</string>
     <string name="error_migration_failed">Sovellustietojen päivittäminen epäonnistui. Asenna sovellus uudelleen.</string>
-
     <string name="error_permission_notification_title">Ota ilmoitukset käyttöön?</string>
     <string name="error_permission_notification">KashCal tarvitsee ilmoitusluvan muistuttaakseen tulevista tapahtumista.</string>
     <string name="error_permission_alarm_title">Ota tarkat herätykset käyttöön?</string>
     <string name="error_permission_alarm">KashCal tarvitsee tarkan hälytysluvan tarkkoihin muistutuksiin.</string>
     <string name="error_permission_storage">Tallennuslupa tarvitaan tuontiin/vientiin.</string>
-
     <string name="error_device_calendar_title">Kalenterivirhe</string>
     <string name="error_device_calendar_write_failed">Laitteen kalenteriin tallentaminen epäonnistui. Yritä uudelleen.</string>
     <string name="error_device_calendar_permission">Kalenterin kirjoitusoikeus vaaditaan. Myönnä lupa asetuksissa.</string>
     <string name="error_device_calendar_not_found">Kalenteria ei löytynyt. Se on ehkä poistettu.</string>
     <string name="error_device_event_not_found">Tapahtumaa ei löytynyt. Se on ehkä poistettu.</string>
     <string name="error_device_calendar_read_only">Tämä kalenteri on vain luku -tilassa.</string>
-
     <string name="error_sync_no_accounts">iCloud-tiliä ei ole määritetty. Määritä iCloud synkronoidaksesi kalenterit.</string>
     <string name="error_sync_partial">Synkronoitiin %1$d kalenteria, %2$d epäonnistui.</string>
-
     <string name="error_unknown">Jokin meni pieleen. Yritä uudelleen.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valittu</string>
-    <string name="cd_checkmark">Valittu</string>
     <string name="cd_back">Takaisin</string>
     <string name="cd_search">Hae</string>
     <string name="cd_create_event">Luo tapahtuma</string>
@@ -364,6 +355,7 @@
     <string name="label_password">Salasana</string>
     <string name="label_display_name_optional">Näyttönimi</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Hae tapahtumia…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -451,6 +443,7 @@
     <string name="subscriptions_empty_ics">Ei ICS-tilauksia</string>
     <string name="subscriptions_empty_ics_hint">Lisää kalenterisyöte nähdäksesi tapahtumia</string>
     <string name="subscriptions_add_ics">Lisää ICS-kalenteri</string>
+    <string name="qs_tile_label">Tapahtuma</string>
     <string name="holiday_catalog_add">Lisää juhlapäiväkalenteri</string>
     <string name="holiday_catalog_search_label">Hae</string>
     <string name="holiday_catalog_already_added">Lisätty</string>
@@ -479,8 +472,8 @@
     <string name="subscriptions_cd_back">Siirry takaisin</string>
     <string name="subscriptions_cd_add">Lisää tilaus</string>
     <string name="snackbar_subscription_removed">Tilaus poistettu</string>
-    <string name="snackbar_subscription_already_exists">Tämä URL on jo tilattu</string>
     <string name="snackbar_action_undo">Kumoa</string>
+    <string name="snackbar_subscription_already_exists">Tämä URL on jo tilattu</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNKRONOINTI</string>
@@ -500,7 +493,6 @@
     <string name="account_detail_cd_show_password">Näytä salasana</string>
     <string name="account_detail_cd_hide_password">Piilota salasana</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nimeä tili uudelleen</string>
     <string name="rename_account_label">Tilin nimi</string>
@@ -517,6 +509,7 @@
     <string name="settings_device_calendars">Laitteen kalenterit</string>
     <string name="settings_device_calendars_hint">Muiden sovellusten kalenterit</string>
     <string name="settings_quick_event_add">Nopea tapahtuman lisäys</string>
+    <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
     <string name="settings_week_numbers">Viikkonumerot</string>
     <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="settings_widget_event_limit">Widgetin tapahtumaraja</string>
@@ -529,6 +522,8 @@
     <string name="settings_tap_to_enable">Napauta ottaaksesi käyttöön</string>
     <string name="settings_device_calendars_enabled">%1$d käytössä</string>
     <string name="settings_per_day">%1$d päivässä</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Mikä on sovelluskohtainen salasana?</string>
     <string name="caldav_trust_insecure_label">Luota turvattomaan yhteyteen</string>
     <string name="action_add_another">Lisää toinen</string>
@@ -590,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Saa ilmoituksia laitteen kalenteritapahtumista</string>
     <string name="device_calendars_read_only_no_write">Vain luku (ei kirjoitusoikeutta)</string>
     <string name="device_calendars_read_only_calendar">Vain luku (kalenteri on vain luku -tilassa)</string>
-
     <string name="settings_developer_options">Kehittäjäasetukset</string>
     <string name="settings_sync_frequency">Synkronointitiheys</string>
     <string name="settings_preview">ESIKATSELU</string>
@@ -603,7 +597,6 @@
     <string name="drawer_device_calendars">Laitteen kalenterit</string>
     <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Ohje ja dokumentit</string>
-
     <string name="event_title_fallback">Tapahtuma</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -630,7 +623,6 @@
     <string name="dialog_sign_out_message">Olet kirjautunut sisään käyttäjänä %1$s. Uloskirjautuminen poistaa synkronoidut kalenterit tästä laitteesta.</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Finnish: one (1), other (everything else) -->
     <plurals name="accounts_count">
         <item quantity="one">%1$d tili</item>
         <item quantity="other">%1$d tiliä</item>
@@ -667,12 +659,11 @@
         <item quantity="one">%1$d tapahtuma</item>
         <item quantity="other">%1$d tapahtumaa</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Avaa kalenteri</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">vielä %1$d päivä</item>
         <item quantity="other">vielä %1$d päivää</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Avaa kalenteri</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d syntymäpäivä</item>
         <item quantity="other">%1$d syntymäpäivää</item>
@@ -763,43 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Tämä tapahtuma</string>
-    <string name="recurring_all_events">Kaikki tapahtumat</string>
     <string name="dialog_edit_recurring_title">Tallenna muutokset</string>
     <string name="dialog_delete_recurring_title">Poista</string>
     <string name="dialog_move_recurring_title">Siirrä</string>
+    <string name="recurring_this_event">Tämä tapahtuma</string>
+    <string name="recurring_all_events">Kaikki tapahtumat</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Osallistujat</string>
+    <string name="attendee_search_hint">Hae</string>
+    <string name="attendee_search_no_matches">Ei tuloksia</string>
+    <string name="attendee_picker_title">Lisää osallistujia</string>
+    <string name="attendee_pick_add_people">Lisää osallistujia</string>
+    <string name="attendee_pick_from_contacts">Nimi tai sähköposti</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d muuta</item>
+        <item quantity="other">+%1$d muuta</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Ehdota henkilöitä yhteystiedoistasi</string>
+    <string name="attendee_invalid_email">Anna koko sähköpostiosoite</string>
+    <string name="attendee_add_typed">Lisää \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ihmisten kutsuminen ei ole käytettävissä tällä tilillä</string>
+    <string name="device_attendee_local_no_delivery">Tämä kalenteri ei voi lähettää kutsuja. Vieraat tallennetaan, mutta heille ei ilmoiteta.</string>
+    <string name="action_save_and_notify">Tallenna ja ilmoita</string>
+    <string name="attendee_section_going">Tulevat</string>
+    <string name="attendee_section_maybe">Ehkä</string>
+    <string name="attendee_section_pending">Odottaa</string>
+    <string name="attendee_section_declined">Kieltäytyivät</string>
+    <string name="attendee_section_delegated">Delegoivat</string>
+    <string name="invitees_host_tag">Isäntä</string>
+    <string name="invitees_summary_you_alone">Sinä</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sinä · %d kutsuttu</item>
+        <item quantity="other">Sinä · %d kutsuttua</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d kutsuttu</item>
+        <item quantity="other">%d kutsuttua</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s järjestää</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sinä</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sinä + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sinä + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sinä + %d</item>
+        <item quantity="other">Sinä + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · vielä %2$d</item>
+        <item quantity="other">%1$s · vielä %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Vaihda vastausta</string>
+    <string name="rsvp_question_going">Tuletko?</string>
+    <string name="rsvp_action_yes">Kyllä</string>
+    <string name="rsvp_action_maybe">Ehkä</string>
+    <string name="rsvp_action_no">Ei</string>
+    <string name="rsvp_state_going">Tulet</string>
+    <string name="rsvp_state_maybe">Ehkä</string>
+    <string name="rsvp_state_not_going">Et tule</string>
+    <string name="rsvp_action_change">Muuta</string>
     <string name="empty_pick_a_day">Valitse päivä. Tartu siihen.</string>
-    <string name="empty_no_events_day">Täällä ei ole mitään; menisit ulos?</string>
+    <string name="cd_empty_pick_a_day">Valitse päivä</string>
+    <string name="empty_no_events_day_1">Vapaa päivä. Maailmankaikkeus vaatii sinua lepäämään.</string>
+    <string name="empty_no_events_day_2">Ei suunnitelmia. Se on suunnitelma.</string>
+    <string name="empty_no_events_day_3">Lahja: tyhjä päivä.</string>
+    <string name="empty_no_events_day_4">Kalenterin tila: ihanan tyhjä.</string>
+    <string name="empty_no_events_day_5">Mitään ei ole suunniteltu. Nauti rauhasta.</string>
+    <string name="cd_empty_no_events_day">Rauhallinen päivä, ei mitään suunniteltua</string>
     <string name="filter_date">Päivämäärä</string>
     <string name="label_select_date">Valitse päivämäärä</string>
     <string name="hint_tap_date_range">Napauta samaa päivää yhden päivän valintaan tai toista päivää ajanjaksolle</string>
-
     <string name="cd_clear">Tyhjennä</string>
     <string name="cd_offline">Offline</string>
     <string name="cd_event_state_cancelled">peruttu</string>
     <string name="cd_event_state_declined">hylätty</string>
     <string name="cd_event_state_past">mennyt tapahtuma</string>
-    <string name="cd_event_untitled">Nimetön tapahtuma</string>
     <string name="cd_loading_events">Ladataan tapahtumia</string>
+    <string name="cd_event_untitled">Nimetön tapahtuma</string>
     <string name="cd_open_drawer">Avaa valikko</string>
     <string name="cd_close_drawer">Sulje valikko</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Kalenterinäkymä</string>
     <string name="cd_active_view">Aktiivinen näkymä</string>
-
     <string name="view_agenda">Päiväjärjestys</string>
     <string name="view_month_full">Kuukausi (koko)</string>
-    <string name="view_three_days">3 päivää</string>
     <string name="view_day">Päivä</string>
+    <string name="view_three_days">3 päivää</string>
     <string name="view_year">Vuosi</string>
     <string name="view_insights">Tilastot</string>
-
     <string name="label_go_to_month">Siirry kuukauteen</string>
-
     <string name="action_more_options">Lisää vaihtoehtoja</string>
     <string name="quick_add_save_failed">Tapahtuman tallennus epäonnistui</string>
-
     <string name="label_duration_days">pv</string>
     <string name="label_duration_hrs">t</string>
     <string name="label_duration_min">min</string>
@@ -813,6 +859,39 @@
     <string name="ordinal_3rd">3.</string>
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">Ei toistu</string>
+    <string name="rrule_freq_daily">Päivittäin</string>
+    <string name="rrule_freq_weekly">Viikoittain</string>
+    <string name="rrule_freq_monthly">Kuukausittain</string>
+    <string name="rrule_freq_yearly">Vuosittain</string>
+    <string name="rrule_repeats">Toistuu</string>
+    <string name="rrule_every_n_days">Joka %1$d. päivä</string>
+    <string name="rrule_every_n_weeks">Joka %1$d. viikko</string>
+    <string name="rrule_every_n_months">Joka %1$d. kuukausi</string>
+    <string name="rrule_every_n_years">Joka %1$d. vuosi</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s viimeisenä päivänä</string>
+    <string name="rrule_freq_on_day_n">%1$s päivänä %2$d</string>
+    <string name="rrule_ordinal_last">viimeinen</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d kerran</item>
+        <item quantity="other">, %1$d kertaa</item>
+    </plurals>
+    <string name="rrule_until_suffix">, kunnes %1$s</string>
+    <string name="rrule_freq_never">Ei koskaan</string>
+    <string name="rrule_freq_custom">Mukautettu</string>
+    <string name="label_repeat_every">Toista joka</string>
+    <string name="rrule_unit_day">Päivä</string>
+    <string name="rrule_unit_week">Viikko</string>
+    <string name="rrule_unit_month">Kuukausi</string>
+    <string name="rrule_unit_year">Vuosi</string>
+    <string name="cd_decrease_interval">Pienennä väliä</string>
+    <string name="cd_increase_interval">Suurenna väliä</string>
+    <string name="rrule_starting">%1$s alkaen %2$s%3$s</string>
+    <string name="rrule_since">%1$s · lähtien %2$s</string>
 
     <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d uutta</string>
@@ -848,6 +927,10 @@
     <!-- ==================== i18n: Notification Strings ==================== -->
     <string name="action_snooze">Torkuta</string>
     <string name="notification_starting_now">Alkaa nyt</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d päivän kuluttua</item>
+        <item quantity="other">%1$d päivän kuluttua</item>
+    </plurals>
     <string name="notification_tomorrow_time">Huomenna, %1$s</string>
     <string name="notification_date_time">%1$s, %2$s</string>
     <string name="sync_notification_complete">Synkronointi valmis</string>
@@ -931,15 +1014,6 @@
     <string name="color_cyan">Syaani</string>
     <string name="color_blue">Sininen</string>
     <string name="color_purple">Violetti</string>
-    <string name="color_saddlebrown">Satulanruskea</string>
-    <string name="color_tomato">Tomaatti</string>    <string name="color_darkorange">Tummanoranssi</string>
-    <string name="color_gold">Kulta</string>
-    <string name="color_yellowgreen">Keltavihreä</string>
-    <string name="color_limegreen">Limetinvihreä</string>    <string name="color_lightseagreen">Vaalea merenvihreä</string>
-    <string name="color_dodgerblue">Kirkas sininen</string>
-    <string name="color_royalblue">Kuninkaallinen sininen</string>    <string name="color_mediumorchid">Orkidea</string>
-    <string name="color_hotpink">Kirkkaanpinkki</string>
-    <string name="color_dimgray">Tumman harmaa</string>
     <string name="cd_meeting_link">Kokouksen linkki: %1$s</string>
     <string name="cd_phone_number">Puhelinnumero</string>
     <string name="cd_email_link">Sähköposti: %1$s</string>
@@ -956,64 +1030,9 @@
     <string name="ics_sync_weekly">Viikoittain</string>
     <string name="ics_url_required">URL vaaditaan</string>
     <string name="ics_url_invalid_scheme">URL:n on alettava http://, https:// tai webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Palvelin palautti virheen (%1$d). Tarkista URL.</string>
     <string name="ics_fetch_error_empty">Kalenterisyöte on tyhjä.</string>
     <string name="ics_fetch_error_not_calendar">Tämä URL ei näytä kalenterisyötteeltä.</string>
-
-    <!-- Widget and Channel strings -->
-    <string name="cd_widget_calendar">Kalenteri</string>
-    <string name="cd_widget_add_event">Lisää tapahtuma</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">ei tapahtumia</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, peruttu</string>
-    <string name="channel_event_reminders">Tapahtumamuistutukset</string>
-    <string name="channel_event_reminders_desc">Ilmoitukset tulevista kalenteritapahtumista</string>
-    <string name="channel_sync_progress">Synkronoinnin edistyminen</string>
-    <string name="channel_sync_progress_desc">Näyttää edistymisen kalentereita synkronoitaessa</string>
-    <string name="channel_sync_status">Synkronoinnin tila</string>
-    <string name="channel_sync_status_desc">Ilmoitukset synkronoinnin valmistumisesta ja virheistä</string>
-    <string name="channel_event_invitations">Tapahtumakutsut</string>
-    <string name="channel_event_invitations_desc">Ilmoitukset uusista kalenterikutsuista</string>
-    <string name="invite_notification_body">Lähettäjä %1$s · Vastaa napauttamalla</string>
-
-    <!-- Recurrence strings -->
-    <string name="rrule_does_not_repeat">Ei toistu</string>
-    <string name="rrule_freq_daily">Päivittäin</string>
-    <string name="rrule_freq_weekly">Viikoittain</string>
-    <string name="rrule_freq_monthly">Kuukausittain</string>
-    <string name="rrule_freq_yearly">Vuosittain</string>
-    <string name="rrule_repeats">Toistuu</string>
-    <string name="rrule_every_n_days">Joka %1$d. päivä</string>
-    <string name="rrule_every_n_weeks">Joka %1$d. viikko</string>
-    <string name="rrule_every_n_months">Joka %1$d. kuukausi</string>
-    <string name="rrule_every_n_years">Joka %1$d. vuosi</string>
-    <string name="rrule_freq_on_days">%1$s %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s viimeisenä päivänä</string>
-    <string name="rrule_freq_on_day_n">%1$s päivänä %2$d</string>
-    <string name="rrule_ordinal_last">viimeinen</string>
-    <string name="rrule_until_suffix">, kunnes %1$s</string>
-    <string name="rrule_freq_never">Ei koskaan</string>
-    <string name="rrule_freq_custom">Mukautettu</string>
-    <string name="label_repeat_every">Toista joka</string>
-    <string name="rrule_unit_day">Päivä</string>
-    <string name="rrule_unit_week">Viikko</string>
-    <string name="rrule_unit_month">Kuukausi</string>
-    <string name="rrule_unit_year">Vuosi</string>
-    <string name="cd_decrease_interval">Pienennä väliä</string>
-    <string name="cd_increase_interval">Suurenna väliä</string>
-    <string name="rrule_starting">%1$s alkaen %2$s%3$s</string>
-    <string name="rrule_since">%1$s · lähtien %2$s</string>
-
-    <!-- Recurrence count plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d kerran</item>
-        <item quantity="other">, %1$d kertaa</item>
-    </plurals>
-
-    <!-- ==================== Insights ==================== -->
     <string name="insights_title">Tilastot</string>
     <string name="insights_period_this_week">Viikko</string>
     <string name="insights_period_last_week">Edellinen vko</string>
@@ -1050,13 +1069,28 @@
     <string name="insight_heaviest_upcoming">%1$s on kiireisin tuleva päivä (%2$s)</string>
     <string name="insight_next_free_block">Seuraava vapaa jakso: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Jakauma päivittäin: kiireisin päivä on %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Saatavuus</string>
     <string name="label_busy">Varattu</string>
     <string name="label_free">Vapaa</string>
     <string name="label_event_color">Tapahtuman väri</string>
     <string name="label_calendar_default">Kalenterin oletus</string>
     <string name="label_custom">Mukautettu</string>
+    <string name="cd_checkmark">Valittu</string>
 
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Satulanruskea</string>
+    <string name="color_tomato">Tomaatti</string>    <string name="color_darkorange">Tummanoranssi</string>
+    <string name="color_gold">Kulta</string>
+    <string name="color_yellowgreen">Keltavihreä</string>
+    <string name="color_limegreen">Limetinvihreä</string>    <string name="color_lightseagreen">Vaalea merenvihreä</string>
+    <string name="color_dodgerblue">Kirkas sininen</string>
+    <string name="color_royalblue">Kuninkaallinen sininen</string>    <string name="color_mediumorchid">Orkidea</string>
+    <string name="color_hotpink">Kirkkaanpinkki</string>
+    <string name="color_dimgray">Tumman harmaa</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Punainen</string>
     <string name="hue_orange">Oranssi</string>
     <string name="hue_yellow">Keltainen</string>
@@ -1069,29 +1103,8 @@
     <string name="hue_neutral">Neutraali</string>
     <string name="label_more_colors">Lisää värejä</string>
     <string name="label_back_to_grid">Takaisin</string>
-    <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Varmuuskopioi asetukset</string>
-    <string name="backup_settings_subtitle">Tallenna KashCalin asetukset JSON-tiedostoon</string>
-    <string name="restore_settings_label">Palauta asetukset</string>
-    <string name="restore_settings_subtitle">Palauta KashCalin asetukset varmuuskopiosta</string>
-    <string name="restore_confirm_title">Palautetaanko varmuuskopio?</string>
-    <string name="restore_confirm_from">KashCal %1$s -varmuuskopio, %2$s</string>
-    <string name="action_restore">Palauta</string>
-    <string name="restore_success_title">Palautus valmis</string>
-    <string name="restore_success_device_calendars_note">Valitse laitteen kalenterit uudelleen, jos käytät tätä toimintoa.</string>
-    <string name="restore_confirm_message_prefs_only">Asetuksesi tuodaan.</string>
-    <string name="restore_success_message_prefs_only">Asetukset tuotu.</string>
-    <string name="restore_error_title">Palautus epäonnistui</string>
-    <string name="restore_error_version_too_new">Tämä varmuuskopio on luotu uudemmalla KashCal-versiolla. Päivitä KashCal ja yritä uudelleen.</string>
-    <string name="restore_error_malformed_json">Tämä tiedosto ei ole kelvollinen KashCal-varmuuskopio.</string>
-    <string name="restore_error_invalid_value">Varmuuskopiotiedosto sisältää virheellisiä tietoja, eikä sitä voi palauttaa.</string>
-    <string name="restore_error_apply_failure">Varmuuskopion käyttöönotossa tapahtui virhe. Muutoksia ei tallennettu.</string>
-    <string name="backup_error_build_failed">Varmuuskopiointi epäonnistui</string>
-    <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui — tiedostoon ei voitu kirjoittaa</string>
-    <string name="backup_error_read_failed">Tiedostoa ei voitu lukea</string>
-    <!-- Attendees (B4) -->
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Osallistujat</string>
     <string name="attendee_you_marker">Sinä</string>
     <string name="attendee_card_going">Tulossa</string>
@@ -1101,6 +1114,8 @@
     <string name="attendee_card_hosting">Järjestää</string>
     <string name="attendee_action_copy">Kopioi sähköposti</string>
     <string name="attendee_action_email">Lähetä sähköposti</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Sähköposti kopioitu</string>
     <string name="attendee_no_email_app">Sähköpostisovellusta ei ole asennettu</string>
     <string name="attendee_show_all">Näytä kaikki osallistujat</string>
@@ -1112,7 +1127,6 @@
     <string name="inbox_empty_caught_up">Kaikki katsottu</string>
     <string name="inbox_organizer_suffix">(järjestäjä)</string>
     <string name="menu_invites">Kutsut</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Siirry päivämäärään</string>
     <string name="menu_about">Tietoja</string>
     <string name="menu_more">Lisää-valikko</string>
@@ -1139,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Valitulla aikavälillä ei ole vähintään tunnin pituisia vapaita lohkoja.</string>
+    <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
     <string name="share_availability_chooser_title">Jaa saatavuus</string>
     <string name="share_availability_share_failed">Ei jakamiseen sopivaa sovellusta</string>
     <string name="share_availability_window_section">Ikkuna</string>
@@ -1157,31 +1172,5 @@
     <string name="share_as_card_all_day">Koko päivä</string>
     <string name="share_as_card_chooser_title">Jaa tapahtuma</string>
     <string name="share_as_card_share_failed">Korttia ei voitu jakaa</string>
-    <string name="share_from_kashcal_footer">Jaettu KashCal-sovelluksesta</string>
-    <string name="attendee_sheet_title">Osallistujat</string>
-    <string name="attendee_search_hint">Hae</string>
-    <string name="attendee_search_no_matches">Ei tuloksia</string>
-    <string name="attendee_section_going">Tulevat</string>
-    <string name="attendee_section_maybe">Ehkä</string>
-    <string name="attendee_section_pending">Odottaa</string>
-    <string name="attendee_section_declined">Kieltäytyivät</string>
-    <string name="attendee_section_delegated">Delegoivat</string>
-    <string name="attendee_picker_title">Lisää osallistujia</string>
-    <string name="attendee_pick_add_people">Lisää osallistujia</string>
-    <string name="attendee_pick_from_contacts">Nimi tai sähköposti</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d muuta</item>
-        <item quantity="other">+%1$d muuta</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Ehdota henkilöitä yhteystiedoistasi</string>
-    <string name="attendee_invalid_email">Anna koko sähköpostiosoite</string>
-    <string name="attendee_add_typed">Lisää \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Ihmisten kutsuminen ei ole käytettävissä tällä tilillä</string>
-    <string name="device_attendee_local_no_delivery">Tämä kalenteri ei voi lähettää kutsuja. Vieraat tallennetaan, mutta heille ei ilmoiteta.</string>
-    <string name="action_save_and_notify">Tallenna ja ilmoita</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d päivän kuluttua</item>
-        <item quantity="other">%1$d päivän kuluttua</item>
-    </plurals>
-    <string name="qs_tile_label">Tapahtuma</string>
+
 </resources>

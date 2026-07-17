@@ -55,7 +55,10 @@ import org.onekash.kashcal.sync.scheduler.IcsScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.permission.PermissionChecker
+import org.onekash.kashcal.ui.permission.reconcileOnResume
+import org.onekash.kashcal.ui.permission.shouldShowLanHintOnFailure
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
@@ -271,6 +274,22 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
+
+    // Local-network permission (Android 17+): resolved by the Activity (needs
+    // rationale read) and pushed here so the sign-in sheet can proactively ask
+    // for LAN servers. Defaults to NotRequired so pre-37 OS never shows anything.
+    private val _localNetworkPermissionState =
+        MutableStateFlow<LocalNetworkPermissionState>(LocalNetworkPermissionState.NotRequired)
+    val localNetworkPermissionState: StateFlow<LocalNetworkPermissionState> =
+        _localNetworkPermissionState.asStateFlow()
+
+    // Set when a discovery attempt fails in a way that looks like a blocked LAN
+    // socket (permission required-but-ungranted). Drives the sign-in banner even
+    // when the URL string isn't recognizably local (bare hostname / custom
+    // domain), so the user still gets the Allow-access affordance, not just an
+    // error message. Reset at the start of each discovery attempt.
+    private val _localNetworkHintActive = MutableStateFlow(false)
+    val localNetworkHintActive: StateFlow<Boolean> = _localNetworkHintActive.asStateFlow()
 
     // Device Calendars
     private val _deviceCalendarsEnabled = MutableStateFlow(false)
@@ -1079,6 +1098,7 @@ class AccountSettingsViewModel @Inject constructor(
         calDavDiscoveredPrincipalUrl = null
         calDavDiscoveredCalendarHomeUrl = null
         calDavDiscoveredCalendars = emptyList()
+        _localNetworkHintActive.value = false
 
         _uiState.update {
             it.copy(
@@ -1230,6 +1250,10 @@ class AccountSettingsViewModel @Inject constructor(
     fun onCalDavDiscover() {
         viewModelScope.launch {
             Log.i(TAG, "Starting CalDAV discovery for: ${calDavUsername.take(3)}***")
+
+            // Clear any prior blocked-LAN signal; re-set only if this attempt
+            // fails the same way.
+            _localNetworkHintActive.value = false
 
             // Snapshot input buffer so closure captures stable values, not mutable fields.
             val snappedServerUrl = calDavServerUrl
@@ -1442,6 +1466,12 @@ class AccountSettingsViewModel @Inject constructor(
 
                 discoveryResult is DiscoveryResult.Error -> {
                     Log.e(TAG, "CalDAV discovery failed: ${discoveryResult.message}")
+                    // A blocked local-network socket surfaces here; arm the
+                    // Allow-access banner so the user has an action, not just the
+                    // hint text (covers bare hostnames isLanHost can't classify).
+                    if (isDiscoveryFailureBlockedLan()) {
+                        _localNetworkHintActive.value = true
+                    }
                     val errorField = when {
                         discoveryResult.message.contains("URL", ignoreCase = true) ||
                         discoveryResult.message.contains("server", ignoreCase = true) ->
@@ -1451,7 +1481,7 @@ class AccountSettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             calDavState = calDavNotConnectedWith(
-                                UiMessage.Literal(discoveryResult.message),
+                                withLanHintIfBlocked(discoveryResult.message),
                                 errorField
                             )
                         )
@@ -2080,6 +2110,60 @@ class AccountSettingsViewModel @Inject constructor(
     fun refreshContactsPermission() {
         checkContactsPermission()
     }
+
+    /**
+     * Push the resolved local-network permission state from the Activity (which
+     * owns the rationale read + request launcher). Called on open and after a
+     * permission request returns. See [shouldShowLanBanner].
+     */
+    fun updateLocalNetworkPermissionState(state: LocalNetworkPermissionState) {
+        _localNetworkPermissionState.value = state
+        // A granted permission makes the blocked-LAN hint moot.
+        if (state == LocalNetworkPermissionState.Granted) {
+            _localNetworkHintActive.value = false
+        }
+    }
+
+    /**
+     * Reconcile permission state on resume (e.g. after the user changed it in
+     * system Settings). Upgrade-only: a fresh live read can never represent
+     * PermanentlyDenied (that's set only by the rationale-flip classifier after
+     * a request), so it must not overwrite a PermanentlyDenied with a
+     * banner-showing state — otherwise the banner would nag again on the next
+     * app resume. Applies a detected grant; otherwise leaves the state as-is.
+     */
+    fun reconcileLocalNetworkPermissionOnResume(resolved: LocalNetworkPermissionState) {
+        _localNetworkPermissionState.value =
+            reconcileOnResume(_localNetworkPermissionState.value, resolved)
+    }
+
+    /**
+     * Wrap a failed-discovery message with the local-network hint when the
+     * permission is required-but-ungranted, so a blocked LAN server (including
+     * bare-hostname ones [isLanHost] can't classify) is explained. Additive:
+     * the server's real message is preserved as an arg, so a genuinely-down
+     * public server is not mislabeled.
+     */
+    private fun withLanHintIfBlocked(serverMessage: String): UiMessage =
+        if (isDiscoveryFailureBlockedLan()) {
+            UiMessage.ResId(R.string.caldav_error_with_lan_hint, listOf(serverMessage))
+        } else {
+            UiMessage.Literal(serverMessage)
+        }
+
+    /**
+     * True when a just-failed discovery looks like a blocked local-network
+     * socket: the permission is required (API 37+) but not granted. Pure read
+     * of the current permission state — no side effects.
+     */
+    private fun isDiscoveryFailureBlockedLan(): Boolean {
+        val state = _localNetworkPermissionState.value
+        return shouldShowLanHintOnFailure(
+            permissionRequired = state != LocalNetworkPermissionState.NotRequired,
+            granted = state == LocalNetworkPermissionState.Granted,
+        )
+    }
+
 
     // ==================== Sync Logs ====================
 

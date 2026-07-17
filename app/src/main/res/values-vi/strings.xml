@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Hiển thị ngày hôm nay như biểu tượng ứng dụng</string>
     <string name="upcoming_widget_name">Sắp tới</string>
     <string name="upcoming_widget_description">Hiển thị sự kiện trong 10 ngày tới, bỏ qua ngày trống</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Đang tải sự kiện sắp tới…</string>
     <string name="widget_error_load_events">Không tải được sự kiện, nhấn để mở</string>
     <string name="widget_no_events_today">Hôm nay không có sự kiện</string>
     <string name="widget_add_event">+ Thêm sự kiện</string>
     <string name="widget_no_events">Không có sự kiện</string>
     <string name="widget_no_upcoming_events">Không có sự kiện sắp tới</string>
+    <string name="cd_widget_calendar">Lịch</string>
+    <string name="cd_widget_add_event">Thêm sự kiện</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">không có sự kiện</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, đã hủy</string>
+    <string name="channel_event_reminders">Nhắc nhở sự kiện</string>
+    <string name="channel_event_reminders_desc">Thông báo cho các sự kiện lịch sắp tới</string>
+    <string name="channel_sync_progress">Tiến trình đồng bộ</string>
+    <string name="channel_sync_progress_desc">Hiển thị tiến trình khi đồng bộ lịch</string>
+    <string name="channel_sync_status">Trạng thái đồng bộ</string>
+    <string name="channel_sync_status_desc">Thông báo về hoàn thành đồng bộ và lỗi</string>
+    <string name="channel_event_invitations">Lời mời sự kiện</string>
+    <string name="channel_event_invitations_desc">Thông báo khi bạn nhận được lời mời lịch mới</string>
+    <string name="invite_notification_body">Từ %1$s · Nhấn để phản hồi</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Sự kiện mới</string>
@@ -71,6 +85,9 @@
     <string name="action_confirm_delete">Xác nhận xóa</string>
     <string name="action_delete_event">Xóa sự kiện</string>
 
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">Phản hồi của bạn áp dụng cho toàn bộ chuỗi sự kiện.</string>
+
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Lần này và tất cả sau đó</string>
 
@@ -107,7 +124,6 @@
     <string name="label_all_day">Cả ngày</string>
     <string name="label_today">Hôm nay</string>
     <string name="label_go_to_date">Đi tới ngày</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">Tu</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -160,6 +176,27 @@
     <string name="app_lock_enabled_message">Đã bật Khóa ứng dụng. KashCal sẽ yêu cầu bạn xác thực vào lần mở tiếp theo.</string>
     <string name="app_lock_disable_prompt_title">Mở khóa để tắt Khóa ứng dụng</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Sao lưu cài đặt</string>
+    <string name="backup_settings_subtitle">Lưu cấu hình KashCal vào tệp JSON</string>
+    <string name="restore_settings_label">Khôi phục cài đặt</string>
+    <string name="restore_settings_subtitle">Khôi phục cấu hình KashCal từ tệp sao lưu</string>
+    <string name="restore_confirm_title">Khôi phục bản sao lưu?</string>
+    <string name="restore_confirm_from">Bản sao lưu từ KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Tùy chọn của bạn sẽ được nhập.</string>
+    <string name="action_restore">Khôi phục</string>
+    <string name="restore_success_title">Khôi phục hoàn tất</string>
+    <string name="restore_success_message_prefs_only">Đã nhập tùy chọn.</string>
+    <string name="restore_success_device_calendars_note">Hãy chọn lại lịch thiết bị nếu bạn dùng tính năng đó.</string>
+    <string name="restore_error_title">Khôi phục thất bại</string>
+    <string name="restore_error_version_too_new">Bản sao lưu này được tạo bằng phiên bản KashCal mới hơn. Vui lòng cập nhật KashCal và thử lại.</string>
+    <string name="restore_error_malformed_json">Tệp này không phải là bản sao lưu KashCal hợp lệ.</string>
+    <string name="restore_error_invalid_value">Tệp sao lưu này chứa dữ liệu không hợp lệ và không thể khôi phục.</string>
+    <string name="restore_error_apply_failure">Đã xảy ra lỗi khi áp dụng bản sao lưu. Không có thay đổi nào được lưu.</string>
+    <string name="backup_error_build_failed">Sao lưu không thành công</string>
+    <string name="backup_error_write_failed">Sao lưu không thành công — không thể ghi vào tệp</string>
+    <string name="backup_error_read_failed">Không thể đọc tệp</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Dùng Apple Calendar?</string>
     <string name="onboarding_got_you">Để đây lo.</string>
@@ -171,6 +208,7 @@
     <string name="whats_new_v598_title">Hãy giúp giữ Android luôn mở</string>
     <string name="whats_new_v598_body">Google đang thay đổi cách bạn cài đặt ứng dụng trên thiết bị của mình. Chúng tôi cần sự giúp đỡ của bạn.</string>
     <string name="whats_new_v598_action_label">Truy cập keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Kết nối iCloud</string>
     <string name="signin_caldav_title">Thêm tài khoản CalDAV</string>
@@ -214,13 +252,11 @@
     <string name="error_auth_session_expired_title">Phiên đã hết hạn</string>
     <string name="error_auth_session_expired">Phiên iCloud đã hết hạn. Vui lòng đăng nhập lại để tiếp tục đồng bộ.</string>
     <string name="error_auth_account_locked">Apple ID đã bị khóa. Vui lòng truy cập appleid.apple.com để mở khóa.</string>
-
     <string name="error_network_offline">Hiện đang ngoại tuyến. Thay đổi sẽ được đồng bộ khi có mạng trở lại.</string>
     <string name="error_network_timeout">Kết nối đã hết thời gian. Vui lòng kiểm tra internet và thử lại.</string>
     <string name="error_network_ssl">Kết nối bảo mật thất bại. Vui lòng kiểm tra cài đặt mạng.</string>
     <string name="error_network_unknown_host">Không thể kết nối tới iCloud. Vui lòng kiểm tra kết nối internet.</string>
     <string name="error_network_connection_failed">Kết nối thất bại. Vui lòng thử lại.</string>
-
     <string name="error_server_unavailable">iCloud tạm thời không khả dụng. Vui lòng thử lại sau.</string>
     <string name="error_server_rate_limited">Quá nhiều yêu cầu. Vui lòng chờ một lát rồi thử lại.</string>
     <string name="error_server_forbidden">Truy cập bị từ chối. Có thể không có quyền truy cập lịch này.</string>
@@ -229,13 +265,11 @@
     <string name="error_conflict_generic">Sự kiện này đã được sửa trên thiết bị khác. Đồng bộ toàn bộ để lấy phiên bản mới nhất.</string>
     <string name="error_conflict_with_event">\"%1$s\" đã được sửa trên thiết bị khác. Đồng bộ toàn bộ để lấy phiên bản mới nhất.</string>
     <string name="error_sync_token_expired">Dữ liệu đồng bộ đã hết hạn. Đang thực hiện đồng bộ toàn bộ…</string>
-
     <string name="error_event_not_found">Không tìm thấy sự kiện.</string>
     <string name="error_calendar_not_found">Không tìm thấy lịch.</string>
     <string name="error_calendar_read_only">Không thể chỉnh sửa sự kiện trong \"%1$s\" (lịch chỉ đọc).</string>
     <string name="error_event_invalid_data">Dữ liệu sự kiện không hợp lệ. Vui lòng kiểm tra thời gian bắt đầu và kết thúc.</string>
     <string name="error_event_invalid_recurrence">Mẫu lặp lại không hợp lệ.</string>
-
     <string name="error_display_name_exists">Tài khoản có tên \"%1$s\" đã tồn tại.</string>
     <string name="icloud_error_credentials_required">Cần có Apple ID và mật khẩu</string>
     <string name="icloud_error_connection_timeout">Hết thời gian kết nối. Vui lòng thử lại.</string>
@@ -244,42 +278,41 @@
     <string name="caldav_error_connection_timeout">Hết thời gian kết nối. Vui lòng thử lại.</string>
     <string name="caldav_error_no_calendars">Không tìm thấy lịch trên máy chủ này.</string>
     <string name="caldav_error_unexpected">Lỗi không mong muốn. Vui lòng thử lại.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nNếu đây là máy chủ trên mạng nội bộ của bạn, hãy cho phép truy cập mạng nội bộ để kết nối.</string>
+    <string name="local_network_banner_title">Cần quyền truy cập mạng nội bộ</string>
+    <string name="local_network_banner_body">Máy chủ này có vẻ nằm trên mạng nội bộ của bạn. Hãy cho phép truy cập mạng nội bộ để KashCal có thể kết nối.</string>
+    <string name="local_network_banner_allow">Cho phép truy cập</string>
+    <string name="local_network_banner_dismiss">Để sau</string>
     <string name="password_change_error_account_not_found">Không tìm thấy tài khoản</string>
     <string name="password_change_error_no_credentials">Không có thông tin đăng nhập hiện có</string>
     <string name="password_change_error_unsupported_provider">Nhà cung cấp này không hỗ trợ đổi mật khẩu</string>
     <string name="password_change_error_invalid">Mật khẩu không hợp lệ</string>
     <string name="password_change_error_network">Lỗi mạng, vui lòng thử lại</string>
-
     <string name="error_import_file_not_found">Không tìm thấy tệp hoặc không thể đọc.</string>
     <string name="error_import_invalid_format">Định dạng tệp lịch không hợp lệ.</string>
     <string name="error_import_partial">Đã nhập %1$d sự kiện, %2$d thất bại.</string>
     <string name="error_export_failed">Xuất sự kiện thất bại.</string>
     <string name="error_export_no_events">Không có sự kiện để xuất.</string>
     <string name="error_end_before_start">Thời gian kết thúc phải sau thời gian bắt đầu</string>
-
     <string name="error_storage_full_title">Bộ nhớ đầy</string>
     <string name="error_storage_full">Không đủ dung lượng lưu trữ. Vui lòng giải phóng dung lượng và thử lại.</string>
     <string name="error_database_corruption_title">Lỗi dữ liệu</string>
     <string name="error_database_corruption">Dữ liệu lịch có thể bị hỏng. Vui lòng liên hệ hỗ trợ.</string>
     <string name="error_migration_title">Lỗi cập nhật</string>
     <string name="error_migration_failed">Cập nhật dữ liệu ứng dụng thất bại. Vui lòng cài đặt lại ứng dụng.</string>
-
     <string name="error_permission_notification_title">Bật thông báo?</string>
     <string name="error_permission_notification">KashCal cần quyền thông báo để nhắc nhở về sự kiện sắp tới.</string>
     <string name="error_permission_alarm_title">Bật báo thức chính xác?</string>
     <string name="error_permission_alarm">KashCal cần quyền báo thức chính xác để nhắc nhở đúng giờ.</string>
     <string name="error_permission_storage">Cần quyền truy cập bộ nhớ để nhập/xuất.</string>
-
     <string name="error_device_calendar_title">Lỗi lịch</string>
     <string name="error_device_calendar_write_failed">Lưu vào lịch thiết bị thất bại. Vui lòng thử lại.</string>
     <string name="error_device_calendar_permission">Cần quyền ghi lịch. Vui lòng cấp quyền trong Cài đặt.</string>
     <string name="error_device_calendar_not_found">Không tìm thấy lịch. Có thể đã bị xóa.</string>
     <string name="error_device_event_not_found">Không tìm thấy sự kiện. Có thể đã bị xóa.</string>
     <string name="error_device_calendar_read_only">Lịch này chỉ cho phép đọc.</string>
-
     <string name="error_sync_no_accounts">Chưa cấu hình tài khoản iCloud. Thiết lập iCloud để đồng bộ lịch.</string>
     <string name="error_sync_partial">Đã đồng bộ %1$d lịch, %2$d thất bại.</string>
-
     <string name="error_unknown">Đã xảy ra lỗi. Vui lòng thử lại.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -322,6 +355,7 @@
     <string name="label_password">Mật khẩu</string>
     <string name="label_display_name_optional">Tên hiển thị</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Tìm kiếm sự kiện…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -405,12 +439,20 @@
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Nguồn cấp lịch</string>
-    <string name="subscriptions_row_label">Nguồn cấp lịch (ICS)</string>
-    <string name="subscriptions_row_hint">vd. ngày lễ, thể thao, trường học</string>
     <string name="subscriptions_section_add">Thêm</string>
     <string name="subscriptions_empty_ics">Chưa có đăng ký ICS nào</string>
     <string name="subscriptions_empty_ics_hint">Thêm nguồn cấp lịch để xem sự kiện</string>
     <string name="subscriptions_add_ics">Thêm lịch ICS</string>
+    <string name="qs_tile_label">Thêm sự kiện</string>
+    <string name="holiday_catalog_add">Thêm lịch ngày lễ</string>
+    <string name="holiday_catalog_search_label">Tìm kiếm</string>
+    <string name="holiday_catalog_already_added">Đã thêm</string>
+    <string name="holiday_catalog_empty">Không tìm thấy quốc gia nào</string>
+    <string name="holiday_catalog_empty_hint">Hãy thử một tên khác</string>
+    <string name="holiday_catalog_validate_error">Không thể kết nối tới lịch này. Hãy kiểm tra kết nối và thử lại.</string>
+    <string name="holiday_catalog_attribution">Lịch ngày lễ từ Mozilla Thunderbird, được cấp phép theo %1$s.</string>
+    <string name="subscriptions_row_label">Nguồn cấp lịch (ICS)</string>
+    <string name="subscriptions_row_hint">vd. ngày lễ, thể thao, trường học</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Sinh nhật &amp; Kỷ niệm</string>
@@ -430,8 +472,8 @@
     <string name="subscriptions_cd_back">Quay lại</string>
     <string name="subscriptions_cd_add">Thêm đăng ký</string>
     <string name="snackbar_subscription_removed">Đã xóa đăng ký</string>
-    <string name="snackbar_subscription_already_exists">Đã đăng ký URL này</string>
     <string name="snackbar_action_undo">Hoàn tác</string>
+    <string name="snackbar_subscription_already_exists">Đã đăng ký URL này</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ĐỒNG BỘ</string>
@@ -451,7 +493,6 @@
     <string name="account_detail_cd_show_password">Hiển thị mật khẩu</string>
     <string name="account_detail_cd_hide_password">Ẩn mật khẩu</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Đổi tên tài khoản</string>
     <string name="rename_account_label">Tên tài khoản</string>
@@ -468,6 +509,7 @@
     <string name="settings_device_calendars">Lịch thiết bị</string>
     <string name="settings_device_calendars_hint">Lịch từ các ứng dụng khác</string>
     <string name="settings_quick_event_add">Thêm nhanh sự kiện</string>
+    <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
     <string name="settings_week_numbers">Số tuần</string>
     <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
     <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
@@ -481,6 +523,7 @@
     <string name="settings_device_calendars_enabled">%1$d đã bật</string>
     <string name="settings_per_day">%1$d mỗi ngày</string>
 
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Mật khẩu dành riêng cho ứng dụng là gì?</string>
     <string name="caldav_trust_insecure_label">Tin cậy kết nối không an toàn</string>
     <string name="action_add_another">Thêm tài khoản khác</string>
@@ -521,6 +564,9 @@
     <string name="label_found_events">Tìm thấy: %1$d sự kiện</string>
     <string name="label_open_debug_menu">Mở menu gỡ lỗi</string>
     <string name="placeholder_search">Tìm kiếm…</string>
+    <string name="settings_search_placeholder">Tìm kiếm cài đặt…</string>
+    <string name="settings_search_no_results">Không tìm thấy cài đặt nào cho \"%1$s\"</string>
+    <string name="cd_search_settings">Tìm kiếm cài đặt</string>
     <string name="status_sync_paused">Đã tạm dừng đồng bộ</string>
     <string name="status_not_synced">Chưa đồng bộ</string>
     <string name="status_sync_error">Lỗi đồng bộ</string>
@@ -539,15 +585,11 @@
     <string name="device_calendars_reminders_desc">Nhận thông báo cho sự kiện lịch thiết bị</string>
     <string name="device_calendars_read_only_no_write">Chỉ đọc (không có quyền ghi)</string>
     <string name="device_calendars_read_only_calendar">Chỉ đọc (lịch chỉ đọc)</string>
-
     <string name="settings_developer_options">Tùy chọn nhà phát triển</string>
     <string name="settings_sync_frequency">Tần suất đồng bộ</string>
     <string name="settings_preview">XEM TRƯỚC</string>
     <string name="settings_n_events">%1$d sự kiện</string>
     <string name="settings_n_events_default">%1$d sự kiện (mặc định)</string>
-    <string name="settings_search_placeholder">Tìm kiếm cài đặt…</string>
-    <string name="settings_search_no_results">Không tìm thấy cài đặt nào cho \"%1$s\"</string>
-    <string name="cd_search_settings">Tìm kiếm cài đặt</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Lịch</string>
@@ -555,7 +597,6 @@
     <string name="drawer_device_calendars">Lịch thiết bị</string>
     <string name="drawer_account_offline">Ngoại tuyến</string>
     <string name="drawer_share_feedback">Trợ giúp &amp; tài liệu</string>
-
     <string name="event_title_fallback">Sự kiện</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -609,11 +650,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d sự kiện</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Mở lịch</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">Thêm %1$d ngày</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Mở lịch</string>
     <plurals name="birthday_count">
         <item quantity="other">%1$d sinh nhật</item>
     </plurals>
@@ -682,39 +722,92 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Chỉ sự kiện này</string>
-    <string name="recurring_all_events">Tất cả sự kiện</string>
     <string name="dialog_edit_recurring_title">Lưu thay đổi vào</string>
     <string name="dialog_delete_recurring_title">Xóa</string>
     <string name="dialog_move_recurring_title">Di chuyển</string>
+    <string name="recurring_this_event">Chỉ sự kiện này</string>
+    <string name="recurring_all_events">Tất cả sự kiện</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Người tham dự</string>
+    <string name="attendee_search_hint">Tìm kiếm</string>
+    <string name="attendee_search_no_matches">Không có kết quả</string>
+    <string name="attendee_picker_title">Thêm người tham dự</string>
+    <string name="attendee_pick_add_people">Thêm người tham dự</string>
+    <string name="attendee_pick_from_contacts">Tên hoặc email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d nữa</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Gợi ý mọi người từ danh bạ của bạn</string>
+    <string name="attendee_invalid_email">Nhập địa chỉ email đầy đủ</string>
+    <string name="attendee_add_typed">Thêm \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Không thể mời người khác trên tài khoản này</string>
+    <string name="device_attendee_local_no_delivery">Lịch này không thể gửi lời mời. Khách sẽ được lưu nhưng không được thông báo.</string>
+    <string name="action_save_and_notify">Lưu &amp; thông báo</string>
+    <string name="attendee_section_going">Tham gia</string>
+    <string name="attendee_section_maybe">Có thể</string>
+    <string name="attendee_section_pending">Chờ phản hồi</string>
+    <string name="attendee_section_declined">Từ chối</string>
+    <string name="attendee_section_delegated">Ủy quyền</string>
+    <string name="invitees_host_tag">Chủ trì</string>
+    <string name="invitees_summary_you_alone">Bạn</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">Bạn · Đã mời %d người</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">Đã mời %d người</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s tổ chức</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Bạn</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · Bạn + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">Bạn + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · còn %2$d người nữa</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Thay đổi phản hồi</string>
+    <string name="rsvp_question_going">Bạn đi không?</string>
+    <string name="rsvp_action_yes">Có</string>
+    <string name="rsvp_action_maybe">Có thể</string>
+    <string name="rsvp_action_no">Không</string>
+    <string name="rsvp_state_going">Bạn sẽ đi</string>
+    <string name="rsvp_state_maybe">Có thể</string>
+    <string name="rsvp_state_not_going">Bạn không đi</string>
+    <string name="rsvp_action_change">Thay đổi</string>
     <string name="empty_pick_a_day">Chọn một ngày. Tận hưởng nào.</string>
-    <string name="empty_no_events_day">Không có gì ở đây; ra ngoài đi dạo đi?</string>
+    <string name="cd_empty_pick_a_day">Chọn một ngày</string>
+    <string name="empty_no_events_day_1">Một ngày trống. Vũ trụ nhất quyết bắt bạn nghỉ ngơi.</string>
+    <string name="empty_no_events_day_2">Không kế hoạch. Đó chính là kế hoạch.</string>
+    <string name="empty_no_events_day_3">Một món quà: một ngày trống trải.</string>
+    <string name="empty_no_events_day_4">Trạng thái lịch: trống trải một cách tuyệt vời.</string>
+    <string name="empty_no_events_day_5">Không có gì để làm. Tận hưởng sự yên bình nhé.</string>
+    <string name="cd_empty_no_events_day">Ngày thảnh thơi, không có lịch hẹn</string>
     <string name="filter_date">Ngày</string>
     <string name="label_select_date">Chọn ngày</string>
     <string name="hint_tap_date_range">Nhấn cùng ngày cho một ngày, hoặc nhấn ngày khác cho khoảng thời gian</string>
-
     <string name="cd_clear">Xóa</string>
     <string name="cd_offline">Ngoại tuyến</string>
+    <string name="cd_event_state_cancelled">Đã hủy</string>
+    <string name="cd_event_state_declined">Đã từ chối</string>
+    <string name="cd_event_state_past">Sự kiện đã qua</string>
     <string name="cd_loading_events">Đang tải sự kiện</string>
+    <string name="cd_event_untitled">Sự kiện không có tiêu đề</string>
     <string name="cd_open_drawer">Mở ngăn kéo</string>
     <string name="cd_close_drawer">Đóng ngăn kéo</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Chế độ xem lịch</string>
     <string name="cd_active_view">Chế độ xem đang dùng</string>
-
     <string name="view_agenda">Lịch trình</string>
     <string name="view_month_full">Tháng (đầy đủ)</string>
     <string name="view_day">Ngày</string>
     <string name="view_three_days">3 ngày</string>
     <string name="view_year">Năm</string>
     <string name="view_insights">Phân tích</string>
-
     <string name="label_go_to_month">Đi tới tháng</string>
-
     <string name="action_more_options">Tùy chọn khác</string>
     <string name="quick_add_save_failed">Không thể lưu sự kiện</string>
-
     <string name="label_duration_days">ngày</string>
     <string name="label_duration_hrs">giờ</string>
     <string name="label_duration_min">phút</string>
@@ -729,202 +822,7 @@
     <string name="ordinal_4th">4</string>
     <string name="ordinal_nth">%1$d</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d mới</string>
-    <string name="sync_summary_updated">%1$d đã cập nhật</string>
-    <string name="sync_summary_removed">%1$d đã xóa</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Đã bật cuộn vòng</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Không nhắc nhở</string>
-    <string name="reminder_at_time_of_event">Khi sự kiện bắt đầu</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">Trước %1$s</string>
-    <string name="reminder_time_after">Sau %1$s</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM ngày diễn ra</string>
-    <string name="reminder_day_of_event_24h">09:00 ngày diễn ra</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">Trước %1$s lúc 9 AM</string>
-    <string name="reminder_before_at_24h">Trước %1$s lúc 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Tắt</string>
-    <string name="reminder_short_at_event">Khi bắt đầu</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$d phút</string>
-    <string name="reminder_short_hours">%1$d giờ</string>
-    <string name="reminder_short_days">%1$d ngày</string>
-    <string name="reminder_short_weeks">%1$d tuần</string>
-    <string name="reminder_summary_none">Không</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$d giờ %2$d phút</string>
-    <string name="duration_compact_short">%1$dg%2$dp</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Chỉ thủ công</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Tất cả sự kiện</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Nhắc sau</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Sắp bắt đầu</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Ngày mai, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Đồng bộ hoàn tất</string>
-    <string name="sync_notification_partial">Đồng bộ hoàn tất một phần</string>
-    <string name="sync_notification_auth_failed">Xác thực đồng bộ thất bại</string>
-    <string name="sync_notification_auth_reauth">Vui lòng xác thực lại tài khoản</string>
-    <string name="sync_notification_failed">Đồng bộ thất bại</string>
-    <string name="sync_notification_parse_title">Một số sự kiện không thể đồng bộ</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s trong %2$s không thể đồng bộ. Hãy thử Buộc đồng bộ trong Cài đặt.</string>
-    <string name="sync_notification_conflict_title">Xung đột đồng bộ đã được giải quyết</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Các thay đổi cục bộ của \"%1$s\" đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Các thay đổi cục bộ của %1$s đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
-    <string name="sync_notification_expired_title">Các thay đổi đồng bộ đã hết hạn</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s trong %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s trải trên %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="other">Đã đồng bộ %1$d lịch</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="other">, %1$d thay đổi</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="other">, %1$d lỗi</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">Sinh nhật thứ %2$s của %1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Sinh nhật của %1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">Kỷ niệm thứ %2$s của %1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">Ngày kỷ niệm của %1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">thứ %1$d</string>
-    <string name="ordinal_suffix_nd">thứ %1$d</string>
-    <string name="ordinal_suffix_rd">thứ %1$d</string>
-    <string name="ordinal_suffix_th">thứ %1$d</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Đang đồng bộ lịch…</string>
-    <string name="sync_banner_preparing">Đang chuẩn bị đồng bộ…</string>
-    <string name="sync_banner_complete_errors">Đồng bộ hoàn tất với lỗi</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Đồng bộ thất bại: %1$s</string>
-    <string name="error_unknown_error">Lỗi không xác định</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Sự kiện mới: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="other">%1$d sự kiện mới</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="other">%1$d sự kiện đã cập nhật</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="other">%1$d sự kiện đã xóa</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="other">%1$d cập nhật lịch</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Ngày %1$d/%2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ngày 1/%1$d · bắt đầu %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ngày %1$d/%2$d · kết thúc %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Cả ngày</string>
-    <string name="event_date_all_day">%1$s · Cả ngày</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Cả ngày)</string>
-    <string name="event_date_all_day_parens">%1$s (Cả ngày)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Lưu sự kiện</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Mới</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Đỏ</string>
-    <string name="color_orange">Cam</string>
-    <string name="color_yellow">Vàng</string>
-    <string name="color_green">Xanh lá</string>
-    <string name="color_cyan">Lục lam</string>
-    <string name="color_blue">Xanh dương</string>
-    <string name="color_purple">Tím</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Liên kết cuộc họp: %1$s</string>
-    <string name="cd_phone_number">Số điện thoại</string>
-    <string name="cd_email_link">Email: %1$s</string>
-    <string name="cd_web_link">Liên kết: %1$s</string>
-    <string name="cd_text_with_links">Văn bản có %1$d liên kết: %2$s</string>
-    <string name="cd_text_with_link">Văn bản có 1 liên kết: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Ngày %1$d/%2$d (Cả ngày)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo</string>
-    <string name="sync_history_stats_issues">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo   ⚠ %4$d vấn đề</string>
-    <string name="sync_history_failed">Thất bại</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Mỗi giờ</string>
-    <string name="ics_sync_every_n_hours">Mỗi %1$d giờ</string>
-    <string name="ics_sync_daily">Hàng ngày</string>
-    <string name="ics_sync_weekly">Hàng tuần</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">Cần có URL</string>
-    <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Máy chủ trả về lỗi (%1$d). Vui lòng kiểm tra URL.</string>
-    <string name="ics_fetch_error_empty">Nguồn cấp lịch trống.</string>
-    <string name="ics_fetch_error_not_calendar">URL đó có vẻ không phải là nguồn cấp lịch.</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="other">, %1$d lần</item>
-    </plurals>
-
-    <!-- Missing translations -->
-    <string name="cd_widget_calendar">Lịch</string>
-    <string name="cd_widget_add_event">Thêm sự kiện</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">không có sự kiện</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, đã hủy</string>
-    <string name="channel_event_reminders">Nhắc nhở sự kiện</string>
-    <string name="channel_event_reminders_desc">Thông báo cho các sự kiện lịch sắp tới</string>
-    <string name="channel_sync_progress">Tiến trình đồng bộ</string>
-    <string name="channel_sync_progress_desc">Hiển thị tiến trình khi đồng bộ lịch</string>
-    <string name="channel_sync_status">Trạng thái đồng bộ</string>
-    <string name="channel_sync_status_desc">Thông báo về hoàn thành đồng bộ và lỗi</string>
-    <string name="channel_event_invitations">Lời mời sự kiện</string>
-    <string name="channel_event_invitations_desc">Thông báo khi bạn nhận được lời mời lịch mới</string>
-    <string name="invite_notification_body">Từ %1$s · Nhấn để phản hồi</string>
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Không lặp lại</string>
     <string name="rrule_freq_daily">Hàng ngày</string>
     <string name="rrule_freq_weekly">Hàng tuần</string>
@@ -940,6 +838,9 @@
     <string name="rrule_freq_on_last_day">%1$s vào ngày cuối</string>
     <string name="rrule_freq_on_day_n">%1$s vào ngày %2$d</string>
     <string name="rrule_ordinal_last">cuối</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d lần</item>
+    </plurals>
     <string name="rrule_until_suffix">, cho đến %1$s</string>
     <string name="rrule_freq_never">Không bao giờ</string>
     <string name="rrule_freq_custom">Tùy chỉnh</string>
@@ -953,7 +854,138 @@
     <string name="rrule_starting">%1$s bắt đầu %2$s%3$s</string>
     <string name="rrule_since">%1$s · kể từ %2$s</string>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d mới</string>
+    <string name="sync_summary_updated">%1$d đã cập nhật</string>
+    <string name="sync_summary_removed">%1$d đã xóa</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Đã bật cuộn vòng</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Không nhắc nhở</string>
+    <string name="reminder_at_time_of_event">Khi sự kiện bắt đầu</string>
+    <string name="reminder_time_before">Trước %1$s</string>
+    <string name="reminder_time_after">Sau %1$s</string>
+    <string name="reminder_day_of_event_12h">9 AM ngày diễn ra</string>
+    <string name="reminder_day_of_event_24h">09:00 ngày diễn ra</string>
+    <string name="reminder_before_at_12h">Trước %1$s lúc 9 AM</string>
+    <string name="reminder_before_at_24h">Trước %1$s lúc 09:00</string>
+    <string name="reminder_short_off">Tắt</string>
+    <string name="reminder_short_at_event">Khi bắt đầu</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d phút</string>
+    <string name="reminder_short_hours">%1$d giờ</string>
+    <string name="reminder_short_days">%1$d ngày</string>
+    <string name="reminder_short_weeks">%1$d tuần</string>
+    <string name="reminder_summary_none">Không</string>
+    <string name="duration_compact">%1$d giờ %2$d phút</string>
+    <string name="duration_compact_short">%1$dg%2$dp</string>
+    <string name="sync_manual_only">Chỉ thủ công</string>
+    <string name="sync_lookback_all">Tất cả sự kiện</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Nhắc sau</string>
+    <string name="notification_starting_now">Sắp bắt đầu</string>
+    <plurals name="reminder_in_days">
+        <item quantity="other">Trong %1$d ngày nữa</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Ngày mai, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Đồng bộ hoàn tất</string>
+    <string name="sync_notification_partial">Đồng bộ hoàn tất một phần</string>
+    <string name="sync_notification_auth_failed">Xác thực đồng bộ thất bại</string>
+    <string name="sync_notification_auth_reauth">Vui lòng xác thực lại tài khoản</string>
+    <string name="sync_notification_failed">Đồng bộ thất bại</string>
+    <string name="sync_notification_parse_title">Một số sự kiện không thể đồng bộ</string>
+    <string name="sync_notification_parse_content">%1$s trong %2$s không thể đồng bộ. Hãy thử Buộc đồng bộ trong Cài đặt.</string>
+    <string name="sync_notification_conflict_title">Xung đột đồng bộ đã được giải quyết</string>
+    <string name="sync_notification_conflict_single">Các thay đổi cục bộ của \"%1$s\" đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
+    <string name="sync_notification_conflict_multi">Các thay đổi cục bộ của %1$s đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
+    <string name="sync_notification_expired_title">Các thay đổi đồng bộ đã hết hạn</string>
+    <string name="sync_notification_expired_content">%1$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s trong %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s trải trên %2$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">Đã đồng bộ %1$d lịch</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d thay đổi</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d lỗi</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">Sinh nhật thứ %2$s của %1$s</string>
+    <string name="contact_birthday">Sinh nhật của %1$s</string>
+    <string name="contact_anniversary_with_age">Kỷ niệm thứ %2$s của %1$s</string>
+    <string name="contact_anniversary">Ngày kỷ niệm của %1$s</string>
+    <string name="ordinal_suffix_st">thứ %1$d</string>
+    <string name="ordinal_suffix_nd">thứ %1$d</string>
+    <string name="ordinal_suffix_rd">thứ %1$d</string>
+    <string name="ordinal_suffix_th">thứ %1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Đang đồng bộ lịch…</string>
+    <string name="sync_banner_preparing">Đang chuẩn bị đồng bộ…</string>
+    <string name="sync_banner_complete_errors">Đồng bộ hoàn tất với lỗi</string>
+    <string name="sync_banner_failed">Đồng bộ thất bại: %1$s</string>
+    <string name="error_unknown_error">Lỗi không xác định</string>
+    <string name="sync_snackbar_new_event">Sự kiện mới: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d sự kiện mới</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d sự kiện đã cập nhật</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d sự kiện đã xóa</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d cập nhật lịch</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Ngày %1$d/%2$d</string>
+    <string name="day_starts">Ngày 1/%1$d · bắt đầu %2$s</string>
+    <string name="day_ends">Ngày %1$d/%2$d · kết thúc %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Cả ngày</string>
+    <string name="event_date_all_day">%1$s · Cả ngày</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Cả ngày)</string>
+    <string name="event_date_all_day_parens">%1$s (Cả ngày)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Lưu sự kiện</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Mới</string>
+    <string name="color_red">Đỏ</string>
+    <string name="color_orange">Cam</string>
+    <string name="color_yellow">Vàng</string>
+    <string name="color_green">Xanh lá</string>
+    <string name="color_cyan">Lục lam</string>
+    <string name="color_blue">Xanh dương</string>
+    <string name="color_purple">Tím</string>
+    <string name="cd_meeting_link">Liên kết cuộc họp: %1$s</string>
+    <string name="cd_phone_number">Số điện thoại</string>
+    <string name="cd_email_link">Email: %1$s</string>
+    <string name="cd_web_link">Liên kết: %1$s</string>
+    <string name="cd_text_with_links">Văn bản có %1$d liên kết: %2$s</string>
+    <string name="cd_text_with_link">Văn bản có 1 liên kết: %1$s</string>
+    <string name="day_x_of_y_all_day">Ngày %1$d/%2$d (Cả ngày)</string>
+    <string name="sync_history_stats">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo</string>
+    <string name="sync_history_stats_issues">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo   ⚠ %4$d vấn đề</string>
+    <string name="sync_history_failed">Thất bại</string>
+    <string name="ics_sync_every_hour">Mỗi giờ</string>
+    <string name="ics_sync_every_n_hours">Mỗi %1$d giờ</string>
+    <string name="ics_sync_daily">Hàng ngày</string>
+    <string name="ics_sync_weekly">Hàng tuần</string>
+    <string name="ics_url_required">Cần có URL</string>
+    <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
+    <string name="ics_fetch_error_http">Máy chủ trả về lỗi (%1$d). Vui lòng kiểm tra URL.</string>
+    <string name="ics_fetch_error_empty">Nguồn cấp lịch trống.</string>
+    <string name="ics_fetch_error_not_calendar">URL đó có vẻ không phải là nguồn cấp lịch.</string>
     <string name="insights_title">Phân tích</string>
     <string name="insights_period_this_week">Tuần</string>
     <string name="insights_period_last_week">Tuần trước</string>
@@ -989,6 +1021,8 @@
     <string name="insight_heaviest_upcoming">%1$s là ngày bận nhất sắp tới (%2$s)</string>
     <string name="insight_next_free_block">Khoảng trống tiếp theo: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Phân bổ hàng ngày: ngày bận nhất là %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Trạng thái rảnh/bận</string>
     <string name="label_busy">Bận</string>
     <string name="label_free">Rảnh</string>
@@ -996,10 +1030,8 @@
     <string name="label_calendar_default">Mặc định lịch</string>
     <string name="label_custom">Tùy chỉnh</string>
     <string name="cd_checkmark">Đã chọn</string>
-    <string name="cd_event_state_cancelled">Đã hủy</string>
-    <string name="cd_event_state_declined">Đã từ chối</string>
-    <string name="cd_event_state_past">Sự kiện đã qua</string>
-    <string name="cd_event_untitled">Sự kiện không có tiêu đề</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Nâu yên ngựa</string>    <string name="color_tomato">Đỏ cà chua</string>    <string name="color_darkorange">Cam đậm</string>
     <string name="color_gold">Vàng kim</string>
     <string name="color_yellowgreen">Vàng lục</string>
@@ -1008,6 +1040,8 @@
     <string name="color_royalblue">Xanh hoàng gia</string>    <string name="color_mediumorchid">Tím lan trung</string>
     <string name="color_hotpink">Hồng đậm</string>
     <string name="color_dimgray">Xám mờ</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Đỏ</string>
     <string name="hue_orange">Cam</string>
     <string name="hue_yellow">Vàng</string>
@@ -1020,42 +1054,10 @@
     <string name="hue_neutral">Trung tính</string>
     <string name="label_more_colors">Thêm màu</string>
     <string name="label_back_to_grid">Quay lại</string>
-    <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Sao lưu cài đặt</string>
-    <string name="backup_settings_subtitle">Lưu cấu hình KashCal vào tệp JSON</string>
-    <string name="restore_settings_label">Khôi phục cài đặt</string>
-    <string name="restore_settings_subtitle">Khôi phục cấu hình KashCal từ tệp sao lưu</string>
-    <string name="restore_confirm_title">Khôi phục bản sao lưu?</string>
-    <string name="restore_confirm_from">Bản sao lưu từ KashCal %1$s, %2$s</string>
-    <string name="restore_confirm_message_prefs_only">Tùy chọn của bạn sẽ được nhập.</string>
-    <string name="action_restore">Khôi phục</string>
-    <string name="restore_success_title">Khôi phục hoàn tất</string>
-    <string name="restore_success_message_prefs_only">Đã nhập tùy chọn.</string>
-    <string name="restore_success_device_calendars_note">Hãy chọn lại lịch thiết bị nếu bạn dùng tính năng đó.</string>
-    <string name="restore_error_title">Khôi phục thất bại</string>
-    <string name="restore_error_version_too_new">Bản sao lưu này được tạo bằng phiên bản KashCal mới hơn. Vui lòng cập nhật KashCal và thử lại.</string>
-    <string name="restore_error_malformed_json">Tệp này không phải là bản sao lưu KashCal hợp lệ.</string>
-    <string name="restore_error_invalid_value">Tệp sao lưu này chứa dữ liệu không hợp lệ và không thể khôi phục.</string>
-    <string name="restore_error_apply_failure">Đã xảy ra lỗi khi áp dụng bản sao lưu. Không có thay đổi nào được lưu.</string>
-    <string name="backup_error_build_failed">Sao lưu không thành công</string>
-    <string name="backup_error_write_failed">Sao lưu không thành công — không thể ghi vào tệp</string>
-    <string name="backup_error_read_failed">Không thể đọc tệp</string>
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Người tham dự</string>
     <string name="attendee_you_marker">Bạn</string>
-    <string name="attendee_picker_title">Thêm người tham dự</string>
-    <string name="attendee_pick_add_people">Thêm người tham dự</string>
-    <string name="attendee_pick_from_contacts">Tên hoặc email</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="other">+%1$d nữa</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Gợi ý mọi người từ danh bạ của bạn</string>
-    <string name="attendee_invalid_email">Nhập địa chỉ email đầy đủ</string>
-    <string name="attendee_add_typed">Thêm \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Không thể mời người khác trên tài khoản này</string>
-    <string name="device_attendee_local_no_delivery">Lịch này không thể gửi lời mời. Khách sẽ được lưu nhưng không được thông báo.</string>
-    <string name="action_save_and_notify">Lưu &amp; thông báo</string>
     <string name="attendee_card_going">Tham dự</string>
     <string name="attendee_card_pending">Chưa phản hồi</string>
     <string name="attendee_card_declined">Từ chối</string>
@@ -1063,6 +1065,8 @@
     <string name="attendee_card_hosting">Chủ trì</string>
     <string name="attendee_action_copy">Sao chép email</string>
     <string name="attendee_action_email">Gửi email</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Đã sao chép email</string>
     <string name="attendee_no_email_app">Không có ứng dụng email nào được cài đặt</string>
     <string name="attendee_show_all">Hiển thị tất cả người tham dự</string>
@@ -1071,68 +1075,40 @@
     <string name="attendee_status_tentative">Có thể</string>
     <string name="attendee_status_delegated">Đã ủy quyền</string>
     <string name="attendee_status_pending">Chưa phản hồi</string>
-    <string name="rsvp_series_disclosure">Phản hồi của bạn áp dụng cho toàn bộ chuỗi sự kiện.</string>
-    <string name="attendee_sheet_title">Người tham dự</string>
-    <string name="attendee_search_hint">Tìm kiếm</string>
-    <string name="attendee_search_no_matches">Không có kết quả</string>
-    <string name="attendee_section_going">Tham gia</string>
-    <string name="attendee_section_maybe">Có thể</string>
-    <string name="attendee_section_pending">Chờ phản hồi</string>
-    <string name="attendee_section_declined">Từ chối</string>
-    <string name="attendee_section_delegated">Ủy quyền</string>
-    <string name="invitees_host_tag">Chủ trì</string>
-    <string name="invitees_summary_you_alone">Bạn</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="other">Bạn · Đã mời %d người</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="other">Đã mời %d người</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s tổ chức</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Bạn</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="other">%1$s (%2$s) · Bạn + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="other">Bạn + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="other">%1$s · còn %2$d người nữa</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Thay đổi phản hồi</string>
-    <string name="rsvp_question_going">Bạn đi không?</string>
-    <string name="rsvp_action_yes">Có</string>
-    <string name="rsvp_action_maybe">Có thể</string>
-    <string name="rsvp_action_no">Không</string>
-    <string name="rsvp_state_going">Bạn sẽ đi</string>
-    <string name="rsvp_state_maybe">Có thể</string>
-    <string name="rsvp_state_not_going">Bạn không đi</string>
-    <string name="rsvp_action_change">Thay đổi</string>
-
-
     <string name="inbox_empty_caught_up">Đã xử lý xong tất cả</string>
     <string name="inbox_organizer_suffix">(người tổ chức)</string>
     <string name="menu_invites">Lời mời</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Đến ngày</string>
     <string name="menu_about">Giới thiệu</string>
     <string name="menu_more">Menu khác</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">Menu khác, %d lời mời đang chờ</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Chia sẻ thời gian rảnh</string>
     <string name="share_availability_sheet_title">Chia sẻ thời gian rảnh</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">%1$d ngày tới</item>
+    </plurals>
     <string name="share_availability_hours_label">Giờ làm việc: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">Sự kiện cả ngày là bận</string>
     <string name="share_availability_share_button">Chia sẻ</string>
+    <plurals name="share_availability_header">
+        <item quantity="other">Rảnh trong %1$d ngày tới (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Không có khoảng trống ít nhất một giờ trong phạm vi đã chọn.</string>
+    <string name="share_from_kashcal_footer">Chia sẻ từ KashCal</string>
     <string name="share_availability_chooser_title">Chia sẻ thời gian rảnh</string>
     <string name="share_availability_share_failed">Không có ứng dụng để chia sẻ</string>
     <string name="share_availability_window_section">Khoảng thời gian</string>
     <string name="share_availability_hours_section">Giờ làm việc</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d ngày</item>
+    </plurals>
     <string name="share_availability_days_through">Đến %1$s</string>
     <string name="share_availability_window_duration">Khung %1$s giờ</string>
     <string name="share_as_card_action">Chia sẻ dưới dạng thẻ</string>
@@ -1143,25 +1119,5 @@
     <string name="share_as_card_all_day">Cả ngày</string>
     <string name="share_as_card_chooser_title">Chia sẻ sự kiện</string>
     <string name="share_as_card_share_failed">Không thể chia sẻ thẻ</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="other">%1$d ngày</item>
-    </plurals>
-    <string name="share_from_kashcal_footer">Chia sẻ từ KashCal</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="other">%1$d ngày tới</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="other">Rảnh trong %1$d ngày tới (%2$s – %3$s):</item>
-    </plurals>
-    <plurals name="reminder_in_days">
-        <item quantity="other">Trong %1$d ngày nữa</item>
-    </plurals>
-    <string name="holiday_catalog_add">Thêm lịch ngày lễ</string>
-    <string name="holiday_catalog_search_label">Tìm kiếm</string>
-    <string name="holiday_catalog_already_added">Đã thêm</string>
-    <string name="holiday_catalog_empty">Không tìm thấy quốc gia nào</string>
-    <string name="holiday_catalog_empty_hint">Hãy thử một tên khác</string>
-    <string name="holiday_catalog_validate_error">Không thể kết nối tới lịch này. Hãy kiểm tra kết nối và thử lại.</string>
-    <string name="holiday_catalog_attribution">Lịch ngày lễ từ Mozilla Thunderbird, được cấp phép theo %1$s.</string>
-    <string name="qs_tile_label">Thêm sự kiện</string>
+
 </resources>

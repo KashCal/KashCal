@@ -13,12 +13,27 @@
     <string name="date_widget_description">Паказвае сённяшнюю дату як значок</string>
     <string name="upcoming_widget_name">Будучыя</string>
     <string name="upcoming_widget_description">Паказвае падзеі на наступныя 10 дзён, прапускаючы пустыя</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Загрузка падзей…</string>
     <string name="widget_error_load_events">Не ўдалося загрузіць падзеі, націсніце, каб адкрыць</string>
     <string name="widget_no_events_today">Няма падзей на сёння</string>
     <string name="widget_add_event">+ Дадаць падзею</string>
     <string name="widget_no_events">Няма падзей</string>
     <string name="widget_no_upcoming_events">Няма будучых падзей</string>
+    <string name="cd_widget_calendar">Каляндар</string>
+    <string name="cd_widget_add_event">Дадаць падзею</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">няма падзей</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, скасавана</string>
+    <string name="channel_event_reminders">Напамінанні пра падзеі</string>
+    <string name="channel_event_reminders_desc">Паведамленні пра надыходныя падзеі ў календары</string>
+    <string name="channel_sync_progress">Ход сінхранізацыі</string>
+    <string name="channel_sync_progress_desc">Паказвае прагрэс падчас сінхранізацыі календароў</string>
+    <string name="channel_sync_status">Статус сінхранізацыі</string>
+    <string name="channel_sync_status_desc">Паведамленні пра завяршэнне сінхранізацыі і памылкі</string>
+    <string name="channel_event_invitations">Запрашэнні на падзеі</string>
+    <string name="channel_event_invitations_desc">Паведамленні пра новыя запрашэнні ў календары</string>
+    <string name="invite_notification_body">Ад %1$s · Націсніце, каб адказаць</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Новая падзея</string>
@@ -43,7 +58,6 @@
     <string name="action_hide_password">Схаваць пароль</string>
     <string name="action_sign_out">Выйсці</string>
     <string name="action_learn_more">Падрабязней</string>
-    <string name="action_open">Адкрыць</string>
     <string name="action_open_apple_id">Адкрыць Apple ID</string>
     <string name="action_open_settings">Адкрыць налады</string>
     <string name="action_force_sync">Прымусовая сінхранізацыя</string>
@@ -57,6 +71,7 @@
     <string name="action_save">Захаваць</string>
     <string name="action_add">Дадаць</string>
     <string name="action_edit">Змяніць</string>
+    <string name="action_open">Адкрыць</string>
     <string name="action_delete">Выдаліць</string>
     <string name="action_confirm">Пацвердзіць</string>
     <string name="action_discard">Адхіліць</string>
@@ -70,55 +85,8 @@
     <string name="action_confirm_delete">Пацвердзіць выдаленне</string>
     <string name="action_delete_event">Выдаліць падзею</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Адказ распаўсюджваецца на ўсю серыю.</string>
-    <string name="invitees_host_tag">Гаспадар</string>
-    <string name="invitees_summary_you_alone">Ты</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Ты · %d запрошаны</item>
-        <item quantity="few">Ты · %d запрошаных</item>
-        <item quantity="many">Ты · %d запрошаных</item>
-        <item quantity="other">Ты · %d запрошаных</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d запрошаны</item>
-        <item quantity="few">%d запрошаных</item>
-        <item quantity="many">%d запрошаных</item>
-        <item quantity="other">%d запрошаных</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s арганізуе</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ты</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Ты + %3$d</item>
-        <item quantity="few">%1$s (%2$s) · Ты + %3$d</item>
-        <item quantity="many">%1$s (%2$s) · Ты + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Ты + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Ты + %d</item>
-        <item quantity="few">Ты + %d</item>
-        <item quantity="many">Ты + %d</item>
-        <item quantity="other">Ты + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · яшчэ %2$d</item>
-        <item quantity="few">%1$s · яшчэ %2$d</item>
-        <item quantity="many">%1$s · яшчэ %2$d</item>
-        <item quantity="other">%1$s · яшчэ %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Змяніць адказ</string>
-    <string name="rsvp_question_going">Пойдзеш?</string>
-    <string name="rsvp_action_yes">Так</string>
-    <string name="rsvp_action_maybe">Магчыма</string>
-    <string name="rsvp_action_no">Не</string>
-    <string name="rsvp_state_going">Ты ідзеш</string>
-    <string name="rsvp_state_maybe">Магчыма</string>
-    <string name="rsvp_state_not_going">Ты не ідзеш</string>
-    <string name="rsvp_action_change">Змяніць</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Гэта і ўсе наступныя</string>
@@ -156,7 +124,6 @@
     <string name="label_all_day">Увесь дзень</string>
     <string name="label_today">Сёння</string>
     <string name="label_go_to_date">Перайсці да даты</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">Т</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -209,6 +176,27 @@
     <string name="app_lock_enabled_message">Блакіроўка праграмы ўключана. KashCal папросіць прайсці аўтэнтыфікацыю пры наступным адкрыцці.</string>
     <string name="app_lock_disable_prompt_title">Разблакіруйце, каб адключыць блакіроўку праграмы</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Захаваць налады</string>
+    <string name="backup_settings_subtitle">Захаваць канфігурацыю KashCal у файл JSON</string>
+    <string name="restore_settings_label">Аднавіць налады</string>
+    <string name="restore_settings_subtitle">Аднавіць канфігурацыю KashCal з рэзервовай копіі</string>
+    <string name="restore_confirm_title">Аднавіць рэзервовую копію?</string>
+    <string name="restore_confirm_from">Рэзервовая копія KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Вашы налады будуць імпартаваны.</string>
+    <string name="action_restore">Аднавіць</string>
+    <string name="restore_success_title">Аднаўленне завершана</string>
+    <string name="restore_success_message_prefs_only">Налады імпартаваны.</string>
+    <string name="restore_success_device_calendars_note">Выберы календары прылады зноў, калі карыстаешся гэтай функцыяй.</string>
+    <string name="restore_error_title">Не ўдалося аднавіць</string>
+    <string name="restore_error_version_too_new">Гэтая рэзервовая копія створана ў навейшай версіі KashCal. Абнаві KashCal і паспрабуй зноў.</string>
+    <string name="restore_error_malformed_json">Гэта не падобна на рэзервовую копію KashCal.</string>
+    <string name="restore_error_invalid_value">У файле рэзервовай копіі няправільныя даныя, яго нельга аднавіць.</string>
+    <string name="restore_error_apply_failure">Пры аднаўленні нешта пайшло не так. Змены не захаваны.</string>
+    <string name="backup_error_build_failed">Не ўдалося стварыць рэзервную копію</string>
+    <string name="backup_error_write_failed">Не ўдалося стварыць рэзервную копію — не ўдалося запісаць у файл</string>
+    <string name="backup_error_read_failed">Не ўдалося прачытаць файл</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Каляндар Apple?</string>
     <string name="onboarding_got_you">Мы дапаможам.</string>
@@ -220,6 +208,7 @@
     <string name="whats_new_v598_title">Дапамажы захаваць Android адкрытым</string>
     <string name="whats_new_v598_body">Google змяняе спосаб усталявання праграм на прыладзе. Нам патрэбна твая дапамога.</string>
     <string name="whats_new_v598_action_label">Перайсці на keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Падключыць iCloud</string>
     <string name="signin_caldav_title">Дадаць уліковы запіс CalDAV</string>
@@ -263,13 +252,11 @@
     <string name="error_auth_session_expired_title">Сесія скончылася</string>
     <string name="error_auth_session_expired">Сесія iCloud скончылася. Увайдзіце зноў для працягу сінхранізацыі.</string>
     <string name="error_auth_account_locked">Ваш Apple ID заблакіраваны. Перайдзіце на appleid.apple.com для разблакіроўкі.</string>
-
     <string name="error_network_offline">Няма сеткі. Змены сінхранізуюцца пры падключэнні.</string>
     <string name="error_network_timeout">Час чакання скончыўся. Праверце інтэрнэт і паспрабуйце зноў.</string>
     <string name="error_network_ssl">Памылка бяспечнага злучэння. Праверце налады сеткі.</string>
     <string name="error_network_unknown_host">Не ўдалося падключыцца да iCloud. Праверце інтэрнэт-злучэнне.</string>
     <string name="error_network_connection_failed">Памылка падключэння. Паспрабуйце зноў.</string>
-
     <string name="error_server_unavailable">iCloud часова недаступны. Паспрабуйце пазней.</string>
     <string name="error_server_rate_limited">Занадта шмат запытаў. Пачакайце і паспрабуйце зноў.</string>
     <string name="error_server_forbidden">Доступ забаронены. Магчыма, у вас няма правоў на гэты каляндар.</string>
@@ -278,13 +265,11 @@
     <string name="error_conflict_generic">Гэта падзея была зменена на іншай прыладзе. Выканайце поўную сінхранізацыю для атрымання актуальнай версіі.</string>
     <string name="error_conflict_with_event">«%1$s» была зменена на іншай прыладзе. Выканайце поўную сінхранізацыю для атрымання актуальнай версіі.</string>
     <string name="error_sync_token_expired">Дадзеныя сінхранізацыі састарэлі. Выконваецца поўная сінхранізацыя…</string>
-
     <string name="error_event_not_found">Падзея не знойдзена.</string>
     <string name="error_calendar_not_found">Каляндар не знойдзены.</string>
     <string name="error_calendar_read_only">Нельга змяняць падзеі ў «%1$s» (каляндар толькі для чытання).</string>
     <string name="error_event_invalid_data">Няправільныя дадзеныя падзеі. Праверце час пачатку і заканчэння.</string>
     <string name="error_event_invalid_recurrence">Няправільны шаблон паўтарэння.</string>
-
     <string name="error_display_name_exists">Уліковы запіс «%1$s» ужо існуе.</string>
     <string name="icloud_error_credentials_required">Патрабуюцца Apple ID і пароль</string>
     <string name="icloud_error_connection_timeout">Час чакання злучэння вычарпаны. Паспрабуйце зноў.</string>
@@ -293,48 +278,45 @@
     <string name="caldav_error_connection_timeout">Час чакання злучэння вычарпаны. Паспрабуйце зноў.</string>
     <string name="caldav_error_no_calendars">Каляндары на гэтым серверы не знойдзены.</string>
     <string name="caldav_error_unexpected">Нечаканая памылка. Паспрабуйце зноў.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nКалі гэта сервер у лакальнай сетцы, дазволь доступ да лакальнай сеткі для падлучэння.</string>
+    <string name="local_network_banner_title">Патрэбны доступ да лакальнай сеткі</string>
+    <string name="local_network_banner_body">Падобна, што гэты сервер у тваёй лакальнай сетцы. Дазволь доступ да лакальнай сеткі, каб KashCal мог да яго падлучыцца.</string>
+    <string name="local_network_banner_allow">Дазволіць доступ</string>
+    <string name="local_network_banner_dismiss">Не зараз</string>
     <string name="password_change_error_account_not_found">Уліковы запіс не знойдзены</string>
     <string name="password_change_error_no_credentials">Няма захаваных уліковых даных</string>
     <string name="password_change_error_unsupported_provider">Гэты правайдэр не падтрымлівае змену пароля</string>
     <string name="password_change_error_invalid">Няправільны пароль</string>
     <string name="password_change_error_network">Памылка сеткі, паспрабуйце зноў</string>
-
     <string name="error_import_file_not_found">Файл не знойдзены або не можа быць прачытаны.</string>
     <string name="error_import_invalid_format">Няправільны фармат файла календара.</string>
     <string name="error_import_partial">Імпартавана падзей: %1$d, памылак: %2$d.</string>
     <string name="error_export_failed">Не ўдалося экспартаваць падзеі.</string>
     <string name="error_export_no_events">Няма падзей для экспарту.</string>
     <string name="error_end_before_start">Час заканчэння павінен быць пазней за час пачатку</string>
-
     <string name="error_storage_full_title">Сховішча запоўнена</string>
     <string name="error_storage_full">Недастаткова месца. Вызваліце месца і паспрабуйце зноў.</string>
     <string name="error_database_corruption_title">Памылка дадзеных</string>
     <string name="error_database_corruption">Дадзеныя календара могуць быць пашкоджаны. Звярніцеся ў падтрымку.</string>
     <string name="error_migration_title">Памылка абнаўлення</string>
     <string name="error_migration_failed">Не ўдалося абнавіць дадзеныя. Пераўсталюйце праграму.</string>
-
     <string name="error_permission_notification_title">Уключыць апавяшчэнні?</string>
     <string name="error_permission_notification">KashCal патрабуе дазвол на апавяшчэнні для напамінанняў пра падзеі.</string>
     <string name="error_permission_alarm_title">Уключыць дакладныя будзільнікі?</string>
     <string name="error_permission_alarm">KashCal патрабуе дазвол на дакладныя будзільнікі для своечасовых напамінанняў.</string>
     <string name="error_permission_storage">Для імпарту/экспарту патрэбен дазвол на доступ да сховішча.</string>
-
     <string name="error_device_calendar_title">Памылка календара</string>
     <string name="error_device_calendar_write_failed">Не ўдалося захаваць у каляндар прылады. Паспрабуйце зноў.</string>
     <string name="error_device_calendar_permission">Патрэбен дазвол на запіс у каляндар. Дайце доступ у наладах.</string>
     <string name="error_device_calendar_not_found">Каляндар не знойдзены. Магчыма, ён быў выдалены.</string>
     <string name="error_device_event_not_found">Падзея не знойдзена. Магчыма, яна была выдалена.</string>
     <string name="error_device_calendar_read_only">Гэты каляндар толькі для чытання.</string>
-
     <string name="error_sync_no_accounts">Уліковы запіс iCloud не наладжаны. Наладзьце iCloud для сінхранізацыі календароў.</string>
     <string name="error_sync_partial">Сінхранізавана календароў: %1$d, памылак: %2$d.</string>
-
     <string name="error_unknown">Нешта пайшло не так. Паспрабуйце зноў.</string>
 
-    <!-- ==================== Content Descriptions ==================== -->
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Выбрана</string>
-    <string name="cd_checkmark">Выбрана</string>
     <string name="cd_back">Назад</string>
     <string name="cd_search">Пошук</string>
     <string name="cd_create_event">Стварыць падзею</string>
@@ -373,16 +355,20 @@
     <string name="label_password">Пароль</string>
     <string name="label_display_name_optional">Імя для адлюстравання</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Шукаць падзеі…</string>
 
+    <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">Па змаўчанні выкарыстоўваецца https://</string>
     <string name="hint_name_shown_in_settings">Імя, якое адлюстроўваецца ў наладах</string>
     <string name="caldav_trust_insecure_subtitle">Для самападпісаных сертыфікатаў або лакальных HTTP-сервераў</string>
 
+    <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">Пасля</string>
     <string name="label_recurrence_occurrences">паўтарэнняў</string>
     <string name="label_recurrence_on_date">Да даты</string>
 
+    <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">Бачныя календары</string>
     <string name="settings_default_calendar">Каляндар па змаўчанні</string>
     <string name="settings_default_event_length">Працягласць падзеі па змаўчанні</string>
@@ -390,6 +376,7 @@
     <string name="settings_notifications">Апавяшчэнні</string>
     <string name="settings_new_events">Новыя падзеі</string>
 
+    <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Сістэмнае</string>
     <string name="option_light">Светлая</string>
     <string name="option_dark">Цёмная</string>
@@ -399,19 +386,24 @@
     <string name="option_monday">Панядзелак</string>
     <string name="option_saturday">Субота</string>
 
+    <!-- ==================== Empty States ==================== -->
     <string name="empty_no_events_found">Падзей не знойдзена</string>
     <string name="empty_no_upcoming_events">Няма будучых падзей</string>
     <string name="empty_no_calendars">Няма даступных календароў</string>
 
+    <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">Падключэнне…</string>
     <string name="status_fetching">Загрузка…</string>
 
+    <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Загрузіць каляндар</string>
     <string name="action_import_from_file">Імпартаваць падзеі з файла</string>
     <string name="action_export_local_calendar">Экспартаваць лакальны каляндар</string>
 
+    <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
 
+    <!-- ==================== Help Text ==================== -->
     <string name="help_app_password_description">Паролі праграм дазваляюць уваходзіць у старонніх праграмах, не раскрываючы асноўны пароль Apple ID.</string>
     <string name="help_app_password_steps_header">Каб стварыць пароль:</string>
     <string name="help_app_password_step_1">1. Перайдзіце на appleid.apple.com</string>
@@ -420,9 +412,11 @@
     <string name="help_app_password_step_4">4. Націсніце «Паролі праграм»</string>
     <string name="help_app_password_step_5">5. Націсніце «Стварыць» і скапіруйце пароль сюды</string>
 
+    <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal патрабуе дазвол на апавяшчэнні для напамінанняў пра падзеі.</string>
     <string name="dialog_notification_permission_settings_hint">Гэта можна змяніць пазней у наладах.</string>
 
+    <!-- ==================== Accounts Screen ==================== -->
     <string name="accounts_title">Уліковыя запісы</string>
     <string name="accounts_section_connected">Падключаныя</string>
     <string name="accounts_section_add">Дадаць уліковы запіс</string>
@@ -443,11 +437,13 @@
     <string name="accounts_sync_issue">Праблема сінхранізацыі</string>
     <string name="accounts_cd_sync_warning">Папярэджанне сінхранізацыі</string>
 
+    <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Стужкі календара</string>
     <string name="subscriptions_section_add">Дадаць</string>
     <string name="subscriptions_empty_ics">Няма падпісак ICS</string>
     <string name="subscriptions_empty_ics_hint">Дадайце стужку календара для прагляду падзей</string>
     <string name="subscriptions_add_ics">Дадаць каляндар ICS</string>
+    <string name="qs_tile_label">Падзея</string>
     <string name="holiday_catalog_add">Дадаць каляндар святаў</string>
     <string name="holiday_catalog_search_label">Пошук</string>
     <string name="holiday_catalog_already_added">Дададзена</string>
@@ -458,6 +454,7 @@
     <string name="subscriptions_row_label">Стужкі календара (ICS)</string>
     <string name="subscriptions_row_hint">напр. святы, спорт, школа</string>
 
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Дні нараджэння і гадавіны</string>
     <string name="birthdays_anniversaries_row_hint">З кантактаў тэлефона</string>
     <string name="birthdays_section_title">Дні нараджэння</string>
@@ -475,9 +472,10 @@
     <string name="subscriptions_cd_back">Назад</string>
     <string name="subscriptions_cd_add">Дадаць падпіску</string>
     <string name="snackbar_subscription_removed">Падпіска выдалена</string>
-    <string name="snackbar_subscription_already_exists">Падпіска на гэты URL ужо існуе</string>
     <string name="snackbar_action_undo">Адмяніць</string>
+    <string name="snackbar_subscription_already_exists">Падпіска на гэты URL ужо існуе</string>
 
+    <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">СІНХРАНІЗАЦЫЯ</string>
     <string name="account_detail_section_calendars">КАЛЕНДАРЫ</string>
     <string name="account_detail_section_account">УЛІКОВЫ ЗАПІС</string>
@@ -495,19 +493,23 @@
     <string name="account_detail_cd_show_password">Паказаць пароль</string>
     <string name="account_detail_cd_hide_password">Схаваць пароль</string>
 
-
+    <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Перайменаваць уліковы запіс</string>
     <string name="rename_account_label">Назва ўліковага запісу</string>
 
+    <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">Змяніць пароль</string>
     <string name="change_password_label_icloud">Пароль праграмы</string>
     <string name="change_password_label_default">Пароль</string>
 
+    <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
 
+    <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календары прылады</string>
     <string name="settings_device_calendars_hint">Календары з іншых праграм</string>
     <string name="settings_quick_event_add">Хуткае даданне</string>
+    <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
     <string name="settings_week_numbers">Нумары тыдняў</string>
     <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="settings_widget_event_limit">Ліміт падзей у віджэце</string>
@@ -520,6 +522,8 @@
     <string name="settings_tap_to_enable">Націсніце для ўключэння</string>
     <string name="settings_device_calendars_enabled">Уключана: %1$d</string>
     <string name="settings_per_day">%1$d за дзень</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Што такое пароль праграмы?</string>
     <string name="caldav_trust_insecure_label">Давяраць небяспечнаму злучэнню</string>
     <string name="action_add_another">Дадаць яшчэ</string>
@@ -542,6 +546,7 @@
     <string name="cd_warning">Папярэджанне</string>
     <string name="cd_refresh_calendars">Абнавіць календары</string>
 
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Па днях</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчваецца</string>
@@ -568,6 +573,7 @@
     <string name="status_minutes_ago">%1$d хв таму</string>
     <string name="status_hours_ago">%1$d гадз таму</string>
 
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_description">Паказваць падзеі з іншых каляндарных праграм на прыладзе.</string>
     <string name="device_calendars_permission_required">Патрэбен дазвол на доступ да календара. Націсніце «Уключыць» для дадання доступу.</string>
     <string name="device_calendars_read_only_access">Толькі чытанне</string>
@@ -579,24 +585,25 @@
     <string name="device_calendars_reminders_desc">Атрымліваць апавяшчэнні пра падзеі з календара прылады</string>
     <string name="device_calendars_read_only_no_write">Толькі чытанне (няма дазволу на запіс)</string>
     <string name="device_calendars_read_only_calendar">Толькі чытанне (каляндар толькі для чытання)</string>
-
     <string name="settings_developer_options">Для распрацоўнікаў</string>
     <string name="settings_sync_frequency">Частата сінхранізацыі</string>
     <string name="settings_preview">ПАПЯРЭДНІ ПРАГЛЯД</string>
     <string name="settings_n_events">Падзей: %1$d</string>
     <string name="settings_n_events_default">Падзей: %1$d (па змаўчанні)</string>
 
+    <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Календары</string>
     <string name="drawer_contacts">Кантакты</string>
     <string name="drawer_device_calendars">Календары прылады</string>
     <string name="drawer_account_offline">Няма сеткі</string>
     <string name="drawer_share_feedback">Даведка і дакументы</string>
-
     <string name="event_title_fallback">Падзея</string>
 
+    <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Для вас, а не для вашых дадзеных.</string>
     <string name="action_keep_it_that_way">Падтрымаць праект</string>
 
+    <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">Ужо сінхранізавана</string>
     <string name="status_warnings">Папярэджанні</string>
     <string name="sync_history_events_failed">Падзей з памылкай</string>
@@ -605,9 +612,13 @@
     <string name="sync_history_duration">Працягласць</string>
     <string name="sync_history_already_synced_count">%1$d ужо сінхранізавана</string>
 
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
     <string name="day_events_no_events">Няма падзей</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
     <string name="status_youre_offline">Няма сеткі</string>
 
+    <!-- ==================== i18n: Sign Out ==================== -->
     <string name="dialog_sign_out_title">Выйсці з %1$s?</string>
     <string name="dialog_sign_out_message">Вы ўвайшлі як %1$s. Пры выхадзе сінхранізаваныя календары будуць выдалены з гэтай прылады.</string>
 
@@ -666,14 +677,13 @@
         <item quantity="many">%1$d падзей</item>
         <item quantity="other">%1$d падзей</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Адкрыць каляндар</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">яшчэ %1$d дзень</item>
         <item quantity="few">яшчэ %1$d дні</item>
         <item quantity="many">яшчэ %1$d дзён</item>
         <item quantity="other">яшчэ %1$d дзён</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Адкрыць каляндар</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d дзень нараджэння</item>
         <item quantity="few">%1$d дні нараджэння</item>
@@ -808,46 +818,115 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Гэта падзея</string>
-    <string name="recurring_all_events">Усе падзеі</string>
     <string name="dialog_edit_recurring_title">Захаваць змены ў</string>
     <string name="dialog_delete_recurring_title">Выдаліць</string>
     <string name="dialog_move_recurring_title">Перамясціць</string>
+    <string name="recurring_this_event">Гэта падзея</string>
+    <string name="recurring_all_events">Усе падзеі</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Удзельнікі</string>
+    <string name="attendee_search_hint">Пошук</string>
+    <string name="attendee_search_no_matches">Нічога не знойдзена</string>
+    <string name="attendee_picker_title">Дадаць удзельнікаў</string>
+    <string name="attendee_pick_add_people">Дадаць удзельнікаў</string>
+    <string name="attendee_pick_from_contacts">Імя або эл. пошта</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d яшчэ</item>
+        <item quantity="few">+%1$d яшчэ</item>
+        <item quantity="many">+%1$d яшчэ</item>
+        <item quantity="other">+%1$d яшчэ</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Прапаноўваць людзей з кантактаў</string>
+    <string name="attendee_invalid_email">Увядзіце поўны адрас e-mail</string>
+    <string name="attendee_add_typed">Дадаць \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Запрашэнне людзей недаступнае ў гэтым уліковым запісе</string>
+    <string name="device_attendee_local_no_delivery">Гэты каляндар не можа дасылаць запрашэнні. Госці захаваныя, але не атрымаюць апавяшчэнняў.</string>
+    <string name="action_save_and_notify">Захаваць і паведаміць</string>
+    <string name="attendee_section_going">Ідуць</string>
+    <string name="attendee_section_maybe">Магчыма</string>
+    <string name="attendee_section_pending">Чакаюць</string>
+    <string name="attendee_section_declined">Адмовіліся</string>
+    <string name="attendee_section_delegated">Дэлегавалі</string>
+    <string name="invitees_host_tag">Гаспадар</string>
+    <string name="invitees_summary_you_alone">Ты</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ты · %d запрошаны</item>
+        <item quantity="few">Ты · %d запрошаных</item>
+        <item quantity="many">Ты · %d запрошаных</item>
+        <item quantity="other">Ты · %d запрошаных</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d запрошаны</item>
+        <item quantity="few">%d запрошаных</item>
+        <item quantity="many">%d запрошаных</item>
+        <item quantity="other">%d запрошаных</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s арганізуе</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ты</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ты + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Ты + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Ты + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ты + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ты + %d</item>
+        <item quantity="few">Ты + %d</item>
+        <item quantity="many">Ты + %d</item>
+        <item quantity="other">Ты + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · яшчэ %2$d</item>
+        <item quantity="few">%1$s · яшчэ %2$d</item>
+        <item quantity="many">%1$s · яшчэ %2$d</item>
+        <item quantity="other">%1$s · яшчэ %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Змяніць адказ</string>
+    <string name="rsvp_question_going">Пойдзеш?</string>
+    <string name="rsvp_action_yes">Так</string>
+    <string name="rsvp_action_maybe">Магчыма</string>
+    <string name="rsvp_action_no">Не</string>
+    <string name="rsvp_state_going">Ты ідзеш</string>
+    <string name="rsvp_state_maybe">Магчыма</string>
+    <string name="rsvp_state_not_going">Ты не ідзеш</string>
+    <string name="rsvp_action_change">Змяніць</string>
     <string name="empty_pick_a_day">Выберы дзень. Пражыві яго.</string>
-    <string name="empty_no_events_day">Нічога няма — можа, прагуляцца?</string>
+    <string name="cd_empty_pick_a_day">Выберы дзень</string>
+    <string name="empty_no_events_day_1">Вольны дзень. Сусвет патрабуе, каб ты адпачыў.</string>
+    <string name="empty_no_events_day_2">Ніякіх планаў. У гэтым і план.</string>
+    <string name="empty_no_events_day_3">Падарунак: пусты дзень.</string>
+    <string name="empty_no_events_day_4">Статус календара: цудоўна пуста.</string>
+    <string name="empty_no_events_day_5">Нічога не запланавана. Атрымлівай асалоду ад спакою.</string>
+    <string name="cd_empty_no_events_day">Спакойны дзень, нічога не запланавана</string>
     <string name="filter_date">Дата</string>
     <string name="label_select_date">Выбраць дату</string>
     <string name="hint_tap_date_range">Націсніце на тую ж дату для аднаго дня або на іншую для дыяпазону</string>
-
     <string name="cd_clear">Ачысціць</string>
     <string name="cd_offline">Няма сеткі</string>
     <string name="cd_event_state_cancelled">скасавана</string>
     <string name="cd_event_state_declined">адхілена</string>
     <string name="cd_event_state_past">мінулая падзея</string>
-    <string name="cd_event_untitled">Падзея без назвы</string>
     <string name="cd_loading_events">Загрузка падзей</string>
+    <string name="cd_event_untitled">Падзея без назвы</string>
     <string name="cd_open_drawer">Адкрыць меню</string>
     <string name="cd_close_drawer">Закрыць меню</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Выгляд календара</string>
     <string name="cd_active_view">Актыўны выгляд</string>
-
     <string name="view_agenda">Парадак дня</string>
     <string name="view_month_full">Месяц (поўны)</string>
-    <string name="view_three_days">3 дні</string>
     <string name="view_day">Дзень</string>
+    <string name="view_three_days">3 дні</string>
     <string name="view_year">Год</string>
     <string name="view_insights">Аналітыка</string>
-
     <string name="label_go_to_month">Перайсці да месяца</string>
     <string name="action_more_options">Яшчэ</string>
     <string name="quick_add_save_failed">Не ўдалося захаваць падзею</string>
-
     <string name="label_duration_days">дзён</string>
     <string name="label_duration_hrs">гадз</string>
     <string name="label_duration_min">хв</string>
 
+    <!-- ==================== RecurrencePicker ==================== -->
     <string name="recurrence_on_day">%1$d лік</string>
     <string name="recurrence_on_last_day">У апошні дзень месяца</string>
     <string name="recurrence_on_nth_weekday">У %1$s %2$s</string>
@@ -857,10 +936,47 @@
     <string name="ordinal_4th">4-ы</string>
     <string name="ordinal_nth">%1$d-ы</string>
 
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">Не паўтараецца</string>
+    <string name="rrule_freq_daily">Штодня</string>
+    <string name="rrule_freq_weekly">Штотыдзень</string>
+    <string name="rrule_freq_monthly">Штомесяц</string>
+    <string name="rrule_freq_yearly">Штогод</string>
+    <string name="rrule_repeats">Паўтараецца</string>
+    <string name="rrule_every_n_days">Кожныя %1$d дз.</string>
+    <string name="rrule_every_n_weeks">Кожныя %1$d тыд.</string>
+    <string name="rrule_every_n_months">Кожныя %1$d мес.</string>
+    <string name="rrule_every_n_years">Кожныя %1$d г.</string>
+    <string name="rrule_freq_on_days">%1$s у %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s у %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s апошні дзень</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d-га ліку</string>
+    <string name="rrule_ordinal_last">апошні</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d раз</item>
+        <item quantity="few">, %1$d разы</item>
+        <item quantity="many">, %1$d разоў</item>
+        <item quantity="other">, %1$d разоў</item>
+    </plurals>
+    <string name="rrule_until_suffix">, да %1$s</string>
+    <string name="rrule_freq_never">Ніколі</string>
+    <string name="rrule_freq_custom">Свой</string>
+    <string name="label_repeat_every">Паўтараць кожныя</string>
+    <string name="rrule_unit_day">Дзень</string>
+    <string name="rrule_unit_week">Тыдзень</string>
+    <string name="rrule_unit_month">Месяц</string>
+    <string name="rrule_unit_year">Год</string>
+    <string name="cd_decrease_interval">Паменшыць інтэрвал</string>
+    <string name="cd_increase_interval">Павялічыць інтэрвал</string>
+    <string name="rrule_starting">%1$s пачынаючы з %2$s%3$s</string>
+    <string name="rrule_since">%1$s · з %2$s</string>
+
+    <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d новых</string>
     <string name="sync_summary_updated">%1$d абноўлена</string>
     <string name="sync_summary_removed">%1$d выдалена</string>
 
+    <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Цыклічная пракрутка ўключана</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -889,6 +1005,12 @@
     <!-- ==================== i18n: Notification Strings ==================== -->
     <string name="action_snooze">Адкласці</string>
     <string name="notification_starting_now">Пачынаецца зараз</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Праз %1$d дзень</item>
+        <item quantity="few">Праз %1$d дні</item>
+        <item quantity="many">Праз %1$d дзён</item>
+        <item quantity="other">Праз %1$d дня</item>
+    </plurals>
     <string name="notification_tomorrow_time">Заўтра, %1$s</string>
     <string name="notification_date_time">%1$s, %2$s</string>
     <string name="sync_notification_complete">Сінхранізацыя завершана</string>
@@ -986,15 +1108,6 @@
     <string name="color_cyan">Блакітны</string>
     <string name="color_blue">Сіні</string>
     <string name="color_purple">Фіялетавы</string>
-    <string name="color_saddlebrown">Шакаладны</string>
-    <string name="color_tomato">Таматны</string>    <string name="color_darkorange">Цёмна-аранжавы</string>
-    <string name="color_gold">Залаты</string>
-    <string name="color_yellowgreen">Жоўта-зялёны</string>
-    <string name="color_limegreen">Лаймавы</string>    <string name="color_lightseagreen">Светлы марскі зялёны</string>
-    <string name="color_dodgerblue">Яркі сіні</string>
-    <string name="color_royalblue">Каралеўскі сіні</string>    <string name="color_mediumorchid">Архідны</string>
-    <string name="color_hotpink">Ярка-ружовы</string>
-    <string name="color_dimgray">Цёмна-шэры</string>
     <string name="cd_meeting_link">Спасылка на сустрэчу: %1$s</string>
     <string name="cd_phone_number">Нумар тэлефона</string>
     <string name="cd_email_link">Эл. пошта: %1$s</string>
@@ -1011,64 +1124,9 @@
     <string name="ics_sync_weekly">Штотыдзень</string>
     <string name="ics_url_required">Патрабуецца URL</string>
     <string name="ics_url_invalid_scheme">URL павінен пачынацца з http://, https:// або webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Сервер вярнуў памылку (%1$d). Праверце URL.</string>
     <string name="ics_fetch_error_empty">Каляндарны канал пусты.</string>
     <string name="ics_fetch_error_not_calendar">Гэты URL не падобны на каляндарны канал.</string>
-
-    <!-- Widget/channel strings -->
-    <string name="cd_widget_calendar">Каляндар</string>
-    <string name="cd_widget_add_event">Дадаць падзею</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">няма падзей</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, скасавана</string>
-    <string name="channel_event_reminders">Напамінанні пра падзеі</string>
-    <string name="channel_event_reminders_desc">Паведамленні пра надыходныя падзеі ў календары</string>
-    <string name="channel_sync_progress">Ход сінхранізацыі</string>
-    <string name="channel_sync_progress_desc">Паказвае прагрэс падчас сінхранізацыі календароў</string>
-    <string name="channel_sync_status">Статус сінхранізацыі</string>
-    <string name="channel_sync_status_desc">Паведамленні пра завяршэнне сінхранізацыі і памылкі</string>
-    <string name="channel_event_invitations">Запрашэнні на падзеі</string>
-    <string name="channel_event_invitations_desc">Паведамленні пра новыя запрашэнні ў календары</string>
-    <string name="invite_notification_body">Ад %1$s · Націсніце, каб адказаць</string>
-
-    <!-- Recurrence strings -->
-    <string name="rrule_does_not_repeat">Не паўтараецца</string>
-    <string name="rrule_freq_daily">Штодня</string>
-    <string name="rrule_freq_weekly">Штотыдзень</string>
-    <string name="rrule_freq_monthly">Штомесяц</string>
-    <string name="rrule_freq_yearly">Штогод</string>
-    <string name="rrule_repeats">Паўтараецца</string>
-    <string name="rrule_every_n_days">Кожныя %1$d дз.</string>
-    <string name="rrule_every_n_weeks">Кожныя %1$d тыд.</string>
-    <string name="rrule_every_n_months">Кожныя %1$d мес.</string>
-    <string name="rrule_every_n_years">Кожныя %1$d г.</string>
-    <string name="rrule_freq_on_days">%1$s у %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s у %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s апошні дзень</string>
-    <string name="rrule_freq_on_day_n">%1$s %2$d-га ліку</string>
-    <string name="rrule_ordinal_last">апошні</string>
-    <string name="rrule_until_suffix">, да %1$s</string>
-    <string name="rrule_freq_never">Ніколі</string>
-    <string name="rrule_freq_custom">Свой</string>
-    <string name="label_repeat_every">Паўтараць кожныя</string>
-    <string name="rrule_unit_day">Дзень</string>
-    <string name="rrule_unit_week">Тыдзень</string>
-    <string name="rrule_unit_month">Месяц</string>
-    <string name="rrule_unit_year">Год</string>
-    <string name="cd_decrease_interval">Паменшыць інтэрвал</string>
-    <string name="cd_increase_interval">Павялічыць інтэрвал</string>
-    <string name="rrule_starting">%1$s пачынаючы з %2$s%3$s</string>
-    <string name="rrule_since">%1$s · з %2$s</string>
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d раз</item>
-        <item quantity="few">, %1$d разы</item>
-        <item quantity="many">, %1$d разоў</item>
-        <item quantity="other">, %1$d разоў</item>
-    </plurals>
-
-    <!-- ==================== Insights ==================== -->
     <string name="insights_title">Аналітыка</string>
     <string name="insights_period_this_week">Тыдзень</string>
     <string name="insights_period_last_week">Мін. тыдзень</string>
@@ -1107,12 +1165,28 @@
     <string name="insight_heaviest_upcoming">%1$s — самы загружаны будучы дзень (%2$s)</string>
     <string name="insight_next_free_block">Наступны вольны блок: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Размеркаванне па днях: самы загружаны дзень — %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Даступнасць</string>
     <string name="label_busy">Заняты</string>
     <string name="label_free">Вольны</string>
     <string name="label_event_color">Колер падзеі</string>
     <string name="label_calendar_default">Па змаўчанні</string>
     <string name="label_custom">Уласны</string>
+    <string name="cd_checkmark">Выбрана</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Шакаладны</string>
+    <string name="color_tomato">Таматны</string>    <string name="color_darkorange">Цёмна-аранжавы</string>
+    <string name="color_gold">Залаты</string>
+    <string name="color_yellowgreen">Жоўта-зялёны</string>
+    <string name="color_limegreen">Лаймавы</string>    <string name="color_lightseagreen">Светлы марскі зялёны</string>
+    <string name="color_dodgerblue">Яркі сіні</string>
+    <string name="color_royalblue">Каралеўскі сіні</string>    <string name="color_mediumorchid">Архідны</string>
+    <string name="color_hotpink">Ярка-ружовы</string>
+    <string name="color_dimgray">Цёмна-шэры</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Чырвоны</string>
     <string name="hue_orange">Аранжавы</string>
     <string name="hue_yellow">Жоўты</string>
@@ -1125,29 +1199,8 @@
     <string name="hue_neutral">Нейтральны</string>
     <string name="label_more_colors">Больш колераў</string>
     <string name="label_back_to_grid">Назад</string>
-    <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Захаваць налады</string>
-    <string name="backup_settings_subtitle">Захаваць канфігурацыю KashCal у файл JSON</string>
-    <string name="restore_settings_label">Аднавіць налады</string>
-    <string name="restore_settings_subtitle">Аднавіць канфігурацыю KashCal з рэзервовай копіі</string>
-    <string name="restore_confirm_title">Аднавіць рэзервовую копію?</string>
-    <string name="restore_confirm_from">Рэзервовая копія KashCal %1$s, %2$s</string>
-    <string name="action_restore">Аднавіць</string>
-    <string name="restore_success_title">Аднаўленне завершана</string>
-    <string name="restore_success_device_calendars_note">Выберы календары прылады зноў, калі карыстаешся гэтай функцыяй.</string>
-    <string name="restore_confirm_message_prefs_only">Вашы налады будуць імпартаваны.</string>
-    <string name="restore_success_message_prefs_only">Налады імпартаваны.</string>
-    <string name="restore_error_title">Не ўдалося аднавіць</string>
-    <string name="restore_error_version_too_new">Гэтая рэзервовая копія створана ў навейшай версіі KashCal. Абнаві KashCal і паспрабуй зноў.</string>
-    <string name="restore_error_malformed_json">Гэта не падобна на рэзервовую копію KashCal.</string>
-    <string name="restore_error_invalid_value">У файле рэзервовай копіі няправільныя даныя, яго нельга аднавіць.</string>
-    <string name="restore_error_apply_failure">Пры аднаўленні нешта пайшло не так. Змены не захаваны.</string>
-    <string name="backup_error_build_failed">Не ўдалося стварыць рэзервную копію</string>
-    <string name="backup_error_write_failed">Не ўдалося стварыць рэзервную копію — не ўдалося запісаць у файл</string>
-    <string name="backup_error_read_failed">Не ўдалося прачытаць файл</string>
-    <!-- Attendees (B4) -->
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Удзельнікі</string>
     <string name="attendee_you_marker">Ты</string>
     <string name="attendee_card_going">Прыняў</string>
@@ -1157,6 +1210,8 @@
     <string name="attendee_card_hosting">Арганізатар</string>
     <string name="attendee_action_copy">Скапіяваць e-mail</string>
     <string name="attendee_action_email">Адправіць ліст</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-mail скапіяваны</string>
     <string name="attendee_no_email_app">Праграма для e-mail не ўсталявана</string>
     <string name="attendee_show_all">Паказаць усіх удзельнікаў</string>
@@ -1168,7 +1223,6 @@
     <string name="inbox_empty_caught_up">Усё прагледжана</string>
     <string name="inbox_organizer_suffix">(арганізатар)</string>
     <string name="menu_invites">Запрашэнні</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Перайсці да даты</string>
     <string name="menu_about">Пра праграму</string>
     <string name="menu_more">Меню «Яшчэ»</string>
@@ -1201,6 +1255,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">У выбраным дыяпазоне няма свабодных блокаў ад гадзіны.</string>
+    <string name="share_from_kashcal_footer">Адпраўлена з KashCal</string>
     <string name="share_availability_chooser_title">Падзяліцца даступнасцю</string>
     <string name="share_availability_share_failed">Няма праграмы для абмену</string>
     <string name="share_availability_window_section">Акно</string>
@@ -1221,35 +1276,5 @@
     <string name="share_as_card_all_day">Увесь дзень</string>
     <string name="share_as_card_chooser_title">Падзяліцца падзеяй</string>
     <string name="share_as_card_share_failed">Не ўдалося падзяліцца карткай</string>
-    <string name="share_from_kashcal_footer">Адпраўлена з KashCal</string>
-    <string name="attendee_sheet_title">Удзельнікі</string>
-    <string name="attendee_search_hint">Пошук</string>
-    <string name="attendee_search_no_matches">Нічога не знойдзена</string>
-    <string name="attendee_section_going">Ідуць</string>
-    <string name="attendee_section_maybe">Магчыма</string>
-    <string name="attendee_section_pending">Чакаюць</string>
-    <string name="attendee_section_declined">Адмовіліся</string>
-    <string name="attendee_section_delegated">Дэлегавалі</string>
-    <string name="attendee_picker_title">Дадаць удзельнікаў</string>
-    <string name="attendee_pick_add_people">Дадаць удзельнікаў</string>
-    <string name="attendee_pick_from_contacts">Імя або эл. пошта</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d яшчэ</item>
-        <item quantity="few">+%1$d яшчэ</item>
-        <item quantity="many">+%1$d яшчэ</item>
-        <item quantity="other">+%1$d яшчэ</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Прапаноўваць людзей з кантактаў</string>
-    <string name="attendee_invalid_email">Увядзіце поўны адрас e-mail</string>
-    <string name="attendee_add_typed">Дадаць \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Запрашэнне людзей недаступнае ў гэтым уліковым запісе</string>
-    <string name="device_attendee_local_no_delivery">Гэты каляндар не можа дасылаць запрашэнні. Госці захаваныя, але не атрымаюць апавяшчэнняў.</string>
-    <string name="action_save_and_notify">Захаваць і паведаміць</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Праз %1$d дзень</item>
-        <item quantity="few">Праз %1$d дні</item>
-        <item quantity="many">Праз %1$d дзён</item>
-        <item quantity="other">Праз %1$d дня</item>
-    </plurals>
-    <string name="qs_tile_label">Падзея</string>
+
 </resources>

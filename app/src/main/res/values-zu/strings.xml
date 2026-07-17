@@ -13,12 +13,27 @@
     <string name="date_widget_description">Ibonisa usuku lwanamuhla njengesithonjana se-app</string>
     <string name="upcoming_widget_name">Okuzayo</string>
     <string name="upcoming_widget_description">Ibonisa imicimbi yezinsuku eziyi-10 ezilandelayo, iyeqa izinsuku ezingenalutho</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Ilayisha imicimbi ezayo…</string>
     <string name="widget_error_load_events">Ayikwazanga ukulayisha imicimbi, thepha ukuze uvule</string>
     <string name="widget_no_events_today">Ayikho imicimbi namuhla</string>
     <string name="widget_add_event">+ Engeza umcimbi</string>
     <string name="widget_no_events">Ayikho imicimbi</string>
     <string name="widget_no_upcoming_events">Ayikho imicimbi ezayo</string>
+    <string name="cd_widget_calendar">Ikhalenda</string>
+    <string name="cd_widget_add_event">Engeza umcimbi</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ayikho imicimbi</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, kukhanseliwe</string>
+    <string name="channel_event_reminders">Izikhumbuzi Zemicimbi</string>
+    <string name="channel_event_reminders_desc">Izaziso zemicimbi yekhalenda ezayo</string>
+    <string name="channel_sync_progress">Inqubekela Phambili Yokuvumelanisa</string>
+    <string name="channel_sync_progress_desc">Ikhombisa inqubekela phambili ngenkathi kuvumelaniswa amakhalenda</string>
+    <string name="channel_sync_status">Isimo Sokuvumelanisa</string>
+    <string name="channel_sync_status_desc">Izaziso mayelana nokuqedwa nokungalungi kokuvumelanisa</string>
+    <string name="channel_event_invitations">Izimemo Zemicimbi</string>
+    <string name="channel_event_invitations_desc">Izaziso uma uthola isimemo esisha sekhalenda</string>
+    <string name="invite_notification_body">Kusukela ku-%1$s · Thepha ukuze uphendule</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Umcimbi Omusha</string>
@@ -35,6 +50,8 @@
     <string name="action_close">Vala</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Hhayi Manje</string>
+    <string name="action_allow">Vumela</string>
+    <string name="action_no_thanks">Cha ngiyabonga</string>
     <string name="action_sign_in">Ngena</string>
     <string name="action_select">Khetha</string>
     <string name="action_show_password">Bonisa iphasiwedi</string>
@@ -59,8 +76,6 @@
     <string name="action_confirm">Qinisekisa</string>
     <string name="action_discard">Lahla</string>
     <string name="action_dismiss">Chitha</string>
-    <string name="action_allow">Vumela</string>
-    <string name="action_no_thanks">Cha ngiyabonga</string>
     <string name="action_show_all">Bonisa Konke</string>
     <string name="action_connect">Xhuma</string>
     <string name="action_duplicate">Phinda</string>
@@ -70,42 +85,8 @@
     <string name="action_confirm_delete">Qinisekisa Ukususa</string>
     <string name="action_delete_event">Susa Umcimbi</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Impendulo yakho isebenza kochungechunge lonke.</string>
-    <string name="invitees_host_tag">Umsingathi</string>
-    <string name="invitees_summary_you_alone">Wena</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Wena · %d omenyiwe</item>
-        <item quantity="other">Wena · %d abamenyiwe</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d omenyiwe</item>
-        <item quantity="other">%d abamenyiwe</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ungumsingathi</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Wena</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Wena + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Wena + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Wena + %d</item>
-        <item quantity="other">Wena + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d okwengeziwe</item>
-        <item quantity="other">%1$s · %2$d okwengeziwe</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Shintsha impendulo</string>
-    <string name="rsvp_question_going">Uyaya?</string>
-    <string name="rsvp_action_yes">Yebo</string>
-    <string name="rsvp_action_maybe">Mhlawumbe</string>
-    <string name="rsvp_action_no">Cha</string>
-    <string name="rsvp_state_going">Uyaya</string>
-    <string name="rsvp_state_maybe">Mhlawumbe</string>
-    <string name="rsvp_state_not_going">Awuyi</string>
-    <string name="rsvp_action_change">Shintsha</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Lona nayo yonke ezayo</string>
@@ -143,7 +124,6 @@
     <string name="label_all_day">Usuku lonke</string>
     <string name="label_today">Namuhla</string>
     <string name="label_go_to_date">Iya osukwini</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">Iv</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -164,9 +144,6 @@
     <string name="app_icon_label_calendar">Ikhalenda</string>
     <string name="app_icon_support_cta">Sekela KashCal</string>
     <string name="app_icon_switch_note">Ukushintsha isithonjana kungase kuqale kabusha uhlelo lokusebenza. Izaziso zihlala zisebenzisa isithonjana negama okuzenzakalelayo.</string>
-    <string name="settings_search_placeholder">Sesha izilungiselelo…</string>
-    <string name="settings_search_no_results">Azikho izilungiselelo ezitholakele ze-\"%1$s\"</string>
-    <string name="cd_search_settings">Sesha izilungiselelo</string>
     <string name="settings_time_format">Ifomethi Yesikhathi</string>
     <string name="settings_start_week_on">Qala Isonto Ngo</string>
     <string name="settings_event_emojis">Ama-Emoji Omcimbi</string>
@@ -181,7 +158,7 @@
     <string name="settings_use_device_timezone">Sebenzisa indawo yesikhathi yedivayisi</string>
     <string name="settings_section_calendars">Amakhalenda</string>
     <string name="settings_section_appearance">Ukubonakala</string>
-    <string name="settings_section_creating_events">Ukudala izehlakalo</string>
+    <string name="settings_section_creating_events">Ukudala imicimbi</string>
     <string name="settings_section_sync">Vumelanisa</string>
     <string name="settings_section_data">Isipele &amp; Ukubuyisela</string>
     <string name="settings_section_privacy">Ubumfihlo</string>
@@ -199,6 +176,7 @@
     <string name="app_lock_enabled_message">Ukukhiya uhlelo lokusebenza kuvuliwe. I-KashCal izokucela ukuthi uqinisekise ngokulandelayo lapho uvula.</string>
     <string name="app_lock_disable_prompt_title">Vula ukuze uvale Ukukhiya uhlelo lokusebenza</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Yenza isipele sezilungiselelo</string>
     <string name="backup_settings_subtitle">Gcina ukumiswa kwe-KashCal efayeleni le-JSON</string>
     <string name="restore_settings_label">Buyisela izilungiselelo</string>
@@ -223,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Sikutholile.</string>
     <string name="onboarding_connect_prompt">Xhuma iCloud ukuze ubone imicimbi yakho lapha</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Yini entsha</string>
+    <string name="whats_new_dismiss">Ngizwile</string>
+    <string name="whats_new_v598_title">Siza ukugcina i-Android ivuliwe</string>
+    <string name="whats_new_v598_body">I-Google iyashintsha indlela ofaka ngayo izinhlelo zokusebenza ku-divayisi yakho. Sidinga usizo lwakho.</string>
+    <string name="whats_new_v598_action_label">Vakashela i-keepandroidopen.org</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Xhuma iCloud</string>
@@ -267,13 +252,11 @@
     <string name="error_auth_session_expired_title">Iseshini Iphelelwe Yisikhathi</string>
     <string name="error_auth_session_expired">Iseshini yakho ye-iCloud iphelelwe yisikhathi. Sicela ungene futhi ukuze uqhubeke nokuvumelanisa.</string>
     <string name="error_auth_account_locked">I-Apple ID yakho ivaliwe. Sicela uvakashele appleid.apple.com ukuze uyivule.</string>
-
     <string name="error_network_offline">Awukho ku-inthanethi. Izinguquko zizovumelaniselwa uma uphindela ku-inthanethi.</string>
     <string name="error_network_timeout">Ukuxhumana kuphelelwe yisikhathi. Sicela uhlole i-inthanethi yakho bese uzama futhi.</string>
     <string name="error_network_ssl">Ukuxhumana okuvikelekile kwehlulekile. Sicela uhlole izilungiselelo zenethiwekhi yakho.</string>
     <string name="error_network_unknown_host">Ayikwazanga ukufinyelela ku-iCloud. Sicela uhlole ukuxhumana kwakho ne-inthanethi.</string>
     <string name="error_network_connection_failed">Ukuxhumana kwehlulekile. Sicela uzame futhi.</string>
-
     <string name="error_server_unavailable">iCloud ayitholakalanga okwesikhashana. Sicela uzame futhi ngemuva kwesikhathi.</string>
     <string name="error_server_rate_limited">Izicelo eziningi kakhulu. Sicela ulinde umzuzwana bese uzama futhi.</string>
     <string name="error_server_forbidden">Ukufinyelela kwenqatshiwe. Ungase ungabi nemvume yaleli khalenda.</string>
@@ -282,13 +265,11 @@
     <string name="error_conflict_generic">Lo mcimbi ushintshiwe kwesinye isixhobo. Phoqelela ukuvumelanisa ukuze uthole inguqulo yakamuva.</string>
     <string name="error_conflict_with_event">\"%1$s\" ushintshiwe kwesinye isixhobo. Phoqelela ukuvumelanisa ukuze uthole inguqulo yakamuva.</string>
     <string name="error_sync_token_expired">Idatha yokuvumelanisa iphelelwe yisikhathi. Kwenziwa ukuvumelanisa okugcwele…</string>
-
     <string name="error_event_not_found">Umcimbi awutholakalanga.</string>
     <string name="error_calendar_not_found">Ikhalenda ayitholakalanga.</string>
     <string name="error_calendar_read_only">Ayikwazi ukuguqula imicimbi ku-\"%1$s\" (ikhalenda yokufunda kuphela).</string>
     <string name="error_event_invalid_data">Idatha yomcimbi engalungile. Sicela uhlole izikhathi zokuqala nezokuphela.</string>
     <string name="error_event_invalid_recurrence">Iphethini yokuphinda engalungile.</string>
-
     <string name="error_display_name_exists">I-akhawunti ebizwa ngokuthi \"%1$s\" isivele ikhona.</string>
     <string name="icloud_error_credentials_required">I-Apple ID nephasiwedi kuyadingeka</string>
     <string name="icloud_error_connection_timeout">Ukuxhumana kuphele isikhathi. Sicela uzame futhi.</string>
@@ -297,46 +278,44 @@
     <string name="caldav_error_connection_timeout">Ukuxhumana kuphele isikhathi. Sicela uzame futhi.</string>
     <string name="caldav_error_no_calendars">Akukho amakhalenda atholakele kule seva.</string>
     <string name="caldav_error_unexpected">Iphutha elingalindelekile. Sicela uzame futhi.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nUma le seva ikwinethiwekhi yakho yendawo, vumela ukufinyelela kwinethiwekhi yendawo ukuze uxhume.</string>
+    <string name="local_network_banner_title">Kudingeka ukufinyelela kwinethiwekhi yendawo</string>
+    <string name="local_network_banner_body">Le seva ibukeka ingathi ikwinethiwekhi yakho yendawo. Vumela ukufinyelela kwinethiwekhi yendawo ukuze i-KashCal ikwazi ukuxhuma kuyo.</string>
+    <string name="local_network_banner_allow">Vumela ukufinyelela</string>
+    <string name="local_network_banner_dismiss">Hhayi manje</string>
     <string name="password_change_error_account_not_found">I-akhawunti ayitholakali</string>
     <string name="password_change_error_no_credentials">Akukho ziqinisekiso ezikhona</string>
     <string name="password_change_error_unsupported_provider">Lo mhlinzeki akakusekeli ukushintsha iphasiwedi</string>
     <string name="password_change_error_invalid">Iphasiwedi engalungile</string>
     <string name="password_change_error_network">Iphutha lenethiwekhi, sicela uzame futhi</string>
-
     <string name="error_import_file_not_found">Ifayela alitholakalanga noma alikwazi ukufundwa.</string>
     <string name="error_import_invalid_format">Ifomethi yefayela lekhalenda engalungile.</string>
     <string name="error_import_partial">Imicimbi engu-%1$d ingenisiwe, engu-%2$d yehlulekile.</string>
     <string name="error_export_failed">Ukuthumela imicimbi kwehlulekile.</string>
     <string name="error_export_no_events">Ayikho imicimbi yokuthumela.</string>
     <string name="error_end_before_start">Isikhathi sokuphela kumele sibe ngemva kwesikhathi sokuqala</string>
-
     <string name="error_storage_full_title">Isitoreji Sigcwele</string>
     <string name="error_storage_full">Ayikho indawo yokugcina eyanele. Sicela ukhulule indawo bese uzama futhi.</string>
     <string name="error_database_corruption_title">Iphutha Ledatha</string>
     <string name="error_database_corruption">Idatha yakho yekhalenda ingase yonakale. Sicela uxhumane nosizo.</string>
     <string name="error_migration_title">Iphutha Lokubuyekeza</string>
     <string name="error_migration_failed">Yehlulekile ukubuyekeza idatha ye-app. Sicela ufake kabusha i-app.</string>
-
     <string name="error_permission_notification_title">Nika Amandla Izaziso?</string>
     <string name="error_permission_notification">KashCal idinga imvume yezaziso ukuze ikikhumbuze ngemicimbi ezayo.</string>
     <string name="error_permission_alarm_title">Nika Amandla Ama-Alamu Anembayo?</string>
     <string name="error_permission_alarm">KashCal idinga imvume ye-alamu enembayo yezikhumbuzi ezinembayo.</string>
     <string name="error_permission_storage">Imvume yesitoreji iyadingeka yokungenisa/yokuthumela.</string>
-
     <string name="error_device_calendar_title">Iphutha Lekhalenda</string>
     <string name="error_device_calendar_write_failed">Yehlulekile ukulondoloza ekhalendeni yedivayisi. Sicela uzame futhi.</string>
     <string name="error_device_calendar_permission">Imvume yokubhala ekhalendeni iyadingeka. Sicela unikeze imvume kuZilungiselelo.</string>
     <string name="error_device_calendar_not_found">Ikhalenda ayitholakalanga. Ingase isusiwe.</string>
     <string name="error_device_event_not_found">Umcimbi awutholakalanga. Ungase ususwe.</string>
     <string name="error_device_calendar_read_only">Leli khalenda lifundeka kuphela.</string>
-
     <string name="error_sync_no_accounts">Ayikho i-akhawunti ye-iCloud ehlelwe. Lungiselela iCloud ukuze uvumelanise amakhalenda akho.</string>
     <string name="error_sync_partial">Amakhalenda angu-%1$d avumelaniselwe, angu-%2$d ehlulekile.</string>
-
     <string name="error_unknown">Kukhona okungahambanga kahle. Sicela uzame futhi.</string>
 
-    <!-- ==================== Content Descriptions ==================== -->
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Kukhethiwe</string>
     <string name="cd_back">Emuva</string>
     <string name="cd_search">Sesha</string>
@@ -376,6 +355,7 @@
     <string name="label_password">Iphasiwedi</string>
     <string name="label_display_name_optional">Igama Lokubonisa</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Sesha imicimbi…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -463,6 +443,14 @@
     <string name="subscriptions_empty_ics">Akukho okubhaliselwe kwe-ICS</string>
     <string name="subscriptions_empty_ics_hint">Engeza ifidi yekhalenda ukuze ubone imicimbi</string>
     <string name="subscriptions_add_ics">Engeza Ikhalenda ye-ICS</string>
+    <string name="qs_tile_label">Engeza</string>
+    <string name="holiday_catalog_add">Engeza ikhalenda yamaholide</string>
+    <string name="holiday_catalog_search_label">Sesha</string>
+    <string name="holiday_catalog_already_added">Kungeziwe</string>
+    <string name="holiday_catalog_empty">Awekho amazwe atholakele</string>
+    <string name="holiday_catalog_empty_hint">Zama elinye igama</string>
+    <string name="holiday_catalog_validate_error">Ayikwazanga ukufinyelela le khalenda. Hlola uxhumano lwakho bese uzama futhi.</string>
+    <string name="holiday_catalog_attribution">Amakhalenda amaholide avela ku-Mozilla Thunderbird, alayisensiwe ngaphansi kwe-%1$s.</string>
     <string name="subscriptions_row_label">Amafidi Wekhalenda (ICS)</string>
     <string name="subscriptions_row_hint">isib. amaholide, ezemidlalo, isikole</string>
 
@@ -505,7 +493,6 @@
     <string name="account_detail_cd_show_password">Bonisa iphasiwedi</string>
     <string name="account_detail_cd_hide_password">Fihla iphasiwedi</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Qamba I-Akhawunti Kabusha</string>
     <string name="rename_account_label">Igama Le-Akhawunti</string>
@@ -522,6 +509,7 @@
     <string name="settings_device_calendars">Amakhalenda Edivayisi</string>
     <string name="settings_device_calendars_hint">Amakhalenda asuka kwezinye izinhlelo</string>
     <string name="settings_quick_event_add">Ukwengeza Umcimbi Ngokushesha</string>
+    <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
     <string name="settings_week_numbers">Izinombolo Zamasonto</string>
     <string name="settings_show_declined">Bonisa imicimbi enqatshelwe</string>
     <string name="settings_widget_event_limit">Umkhawulo Womcimbi We-Widget</string>
@@ -534,6 +522,8 @@
     <string name="settings_tap_to_enable">Thepha ukuze unike amandla</string>
     <string name="settings_device_calendars_enabled">%1$d okunikwe amandla</string>
     <string name="settings_per_day">%1$d ngosuku</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Iyini iphasiwedi eqondene ne-app?</string>
     <string name="caldav_trust_insecure_label">Themba ukuxhumana okungaphephile</string>
     <string name="action_add_another">Engeza Okunye</string>
@@ -574,6 +564,9 @@
     <string name="label_found_events">Kutholwe: imicimbi engu-%1$d</string>
     <string name="label_open_debug_menu">Vula imenyu yokulungisa</string>
     <string name="placeholder_search">Sesha…</string>
+    <string name="settings_search_placeholder">Sesha izilungiselelo…</string>
+    <string name="settings_search_no_results">Azikho izilungiselelo ezitholakele ze-\"%1$s\"</string>
+    <string name="cd_search_settings">Sesha izilungiselelo</string>
     <string name="status_sync_paused">Ukuvumelanisa kumisiwe</string>
     <string name="status_not_synced">Akuvumelaniselwe</string>
     <string name="status_sync_error">Iphutha lokuvumelanisa</string>
@@ -592,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Thola izaziso zemicimbi yekhalenda yedivayisi</string>
     <string name="device_calendars_read_only_no_write">Ukufunda kuphela (ayikho imvume yokubhala)</string>
     <string name="device_calendars_read_only_calendar">Ukufunda kuphela (ikhalenda ifundeka kuphela)</string>
-
     <string name="settings_developer_options">Izinketho Zomthuthukisi</string>
     <string name="settings_sync_frequency">Ukuvamisa Kokuvumelanisa</string>
     <string name="settings_preview">UKUBUKA KUQALA</string>
@@ -605,7 +597,6 @@
     <string name="drawer_device_calendars">Amakhalenda edivayisi</string>
     <string name="drawer_account_offline">Ngaphandle kwe-inthanethi</string>
     <string name="drawer_share_feedback">Usizo &amp; amadokhumenti</string>
-
     <string name="event_title_fallback">Umcimbi</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -668,12 +659,11 @@
         <item quantity="one">%1$d umcimbi</item>
         <item quantity="other">%1$d imicimbi</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Vula ikhalenda</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d usuku olungeziwe</item>
         <item quantity="other">%1$d izinsuku ezingeziwe</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Vula ikhalenda</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d usuku lokuzalwa</item>
         <item quantity="other">%1$d izinsuku zokuzalwa</item>
@@ -764,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Lo mcimbi</string>
-    <string name="recurring_all_events">Yonke imicimbi</string>
     <string name="dialog_edit_recurring_title">Londoloza izinguquko</string>
     <string name="dialog_delete_recurring_title">Susa</string>
     <string name="dialog_move_recurring_title">Hambisa</string>
+    <string name="recurring_this_event">Lo mcimbi</string>
+    <string name="recurring_all_events">Yonke imicimbi</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Abazohambela</string>
+    <string name="attendee_search_hint">Sesha</string>
+    <string name="attendee_search_no_matches">Awekho amabhalwa</string>
+    <string name="attendee_picker_title">Engeza ababambe iqhaza</string>
+    <string name="attendee_pick_add_people">Engeza ababambe iqhaza</string>
+    <string name="attendee_pick_from_contacts">Igama noma i-imeyili</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d okwengeziwe</item>
+        <item quantity="other">+%1$d okwengeziwe</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Phakamisa abantu koxhumana nabo</string>
+    <string name="attendee_invalid_email">Faka ikheli le-imeyili eligcwele</string>
+    <string name="attendee_add_typed">Engeza \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ukumema abantu akutholakali kule akhawunti</string>
+    <string name="device_attendee_local_no_delivery">Le khalenda ayikwazi ukuthumela izimemo. Izivakashi ziyalondolozwa kodwa ngeke zaziswe.</string>
+    <string name="action_save_and_notify">Londoloza &amp; wazise</string>
+    <string name="attendee_section_going">Bayaya</string>
+    <string name="attendee_section_maybe">Mhlawumbe</string>
+    <string name="attendee_section_pending">Kulindiwe</string>
+    <string name="attendee_section_declined">Banqabile</string>
+    <string name="attendee_section_delegated">Bedluliselwe</string>
+    <string name="invitees_host_tag">Umsingathi</string>
+    <string name="invitees_summary_you_alone">Wena</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Wena · %d omenyiwe</item>
+        <item quantity="other">Wena · %d abamenyiwe</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d omenyiwe</item>
+        <item quantity="other">%d abamenyiwe</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ungumsingathi</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Wena</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Wena + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Wena + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Wena + %d</item>
+        <item quantity="other">Wena + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d okwengeziwe</item>
+        <item quantity="other">%1$s · %2$d okwengeziwe</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Shintsha impendulo</string>
+    <string name="rsvp_question_going">Uyaya?</string>
+    <string name="rsvp_action_yes">Yebo</string>
+    <string name="rsvp_action_maybe">Mhlawumbe</string>
+    <string name="rsvp_action_no">Cha</string>
+    <string name="rsvp_state_going">Uyaya</string>
+    <string name="rsvp_state_maybe">Mhlawumbe</string>
+    <string name="rsvp_state_not_going">Awuyi</string>
+    <string name="rsvp_action_change">Shintsha</string>
     <string name="empty_pick_a_day">Khetha usuku. Lubambe.</string>
-    <string name="empty_no_events_day">Akukho lutho lapha; hamba uphumule?</string>
+    <string name="cd_empty_pick_a_day">Khetha usuku</string>
+    <string name="empty_no_events_day_1">Usuku oluvulekile. Umkhathi uphikelela ukuthi uphumule.</string>
+    <string name="empty_no_events_day_2">Awekho amacebo. Yilelo icebo.</string>
+    <string name="empty_no_events_day_3">Isipho: usuku olungenalutho.</string>
+    <string name="empty_no_events_day_4">Isimo sekhalenda: singenalutho ngendlela emnandi.</string>
+    <string name="empty_no_events_day_5">Akukho okuhleliwe. Jabulela ukuthula.</string>
+    <string name="cd_empty_no_events_day">Usuku oluthulile, akukho okuhleliwe</string>
     <string name="filter_date">Usuku</string>
     <string name="label_select_date">Khetha usuku</string>
     <string name="hint_tap_date_range">Thepha usuku olufanayo losuku olulodwa, noma olunye usuku lebanga</string>
-
     <string name="cd_clear">Sula</string>
     <string name="cd_offline">Ngaphandle kwe-inthanethi</string>
+    <string name="cd_event_state_cancelled">kukhanseliwe</string>
+    <string name="cd_event_state_declined">kwaliwe</string>
+    <string name="cd_event_state_past">umcimbi odlule</string>
     <string name="cd_loading_events">Ilayisha imicimbi</string>
+    <string name="cd_event_untitled">Umcimbi ongenasihloko</string>
     <string name="cd_open_drawer">Vula idrawer</string>
     <string name="cd_close_drawer">Vala idrawer</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Ukubuka kwekhalenda</string>
     <string name="cd_active_view">Ukubuka okusebenzayo</string>
-
     <string name="view_agenda">I-Agenda</string>
     <string name="view_month_full">Inyanga (Ephelele)</string>
-    <string name="view_three_days">Izinsuku Ezi-3</string>
     <string name="view_day">Usuku</string>
+    <string name="view_three_days">Izinsuku Ezi-3</string>
     <string name="view_year">Unyaka</string>
     <string name="view_insights">Ukuqonda</string>
-
     <string name="label_go_to_month">Iya enyangeni</string>
-
     <string name="action_more_options">Ezinye izinketho</string>
-    <string name="quick_add_save_failed">Yehlulekile ukugcina isenzakalo</string>
-
+    <string name="quick_add_save_failed">Yehlulekile ukugcina umcimbi</string>
     <string name="label_duration_days">izinsuku</string>
     <string name="label_duration_hrs">amahora</string>
     <string name="label_duration_min">min</string>
@@ -812,207 +860,7 @@
     <string name="ordinal_4th">yesi-4</string>
     <string name="ordinal_nth">yesi-%1$d</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d okusha</string>
-    <string name="sync_summary_updated">%1$d okubuyekezwe</string>
-    <string name="sync_summary_removed">%1$d okususwe</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Ukuskrola okuyisiyingelezi kunikwe amandla</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Asikho isikhumbuzi</string>
-    <string name="reminder_at_time_of_event">Ngesikhathi somcimbi</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s ngaphambi</string>
-    <string name="reminder_time_after">%1$s ngemuva</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM usuku lomcimbi</string>
-    <string name="reminder_day_of_event_24h">09:00 usuku lomcimbi</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s ngaphambi ngo-9 AM</string>
-    <string name="reminder_before_at_24h">%1$s ngaphambi ngo-09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Valiwe</string>
-    <string name="reminder_short_at_event">Emcimbini</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dm</string>
-    <string name="reminder_short_hours">%1$dh</string>
-    <string name="reminder_short_days">%1$dz</string>
-    <string name="reminder_short_weeks">%1$dv</string>
-    <string name="reminder_summary_none">Lutho</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dh %2$dm</string>
-    <string name="duration_compact_short">%1$dh%2$dm</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Ngezandla kuphela</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Yonke imicimbi</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Hlehlisa</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Iqala manje</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Kusasa, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Ukuvumelanisa kuphelile</string>
-    <string name="sync_notification_partial">Ukuvumelanisa kuphelile ngokwengxenye</string>
-    <string name="sync_notification_auth_failed">Ukuqinisekisa ukuvumelanisa kuhlulekile</string>
-    <string name="sync_notification_auth_reauth">Sicela uqinisekise i-akhawunti yakho kabusha</string>
-    <string name="sync_notification_failed">Ukuvumelanisa kuhlulekile</string>
-    <string name="sync_notification_parse_title">Eminye imicimbi ayikwazanga ukuvumelaniselwa</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s ku-%2$s ayikwazanga ukuvumelaniselwa. Zama Ukuvumelanisa Okuphoqiwe kuzilungiselelo.</string>
-    <string name="sync_notification_conflict_title">Ukungqubuzana kokuvumelanisa kuxazululiwe</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Izinguquko zendawo ku-\"%1$s\" zilahlekile ngenxa yokungqubuzana kokuvumelanisa. Uhlobo lweseva luzosetshenziswa.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Izinguquko zendawo ku-%1$s zilahlekile ngenxa yokungqubuzana kokuvumelanisa. Izinhlobo zeseva zizosetshenziswa.</string>
-    <string name="sync_notification_expired_title">Izinguquko zokuvumelanisa ziphelelwe yisikhathi</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s ku-%2$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s kuwo wonke u-%2$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">Ikhalenda elingu-%1$d livumelaniselwe</item>
-        <item quantity="other">Amakhalenda angu-%1$d avumelaniselwe</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, uguquko olungu-%1$d</item>
-        <item quantity="other">, izinguquko ezingu-%1$d</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, isiphazamiso esingu-%1$d</item>
-        <item quantity="other">, iziphazamiso ezingu-%1$d</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">Usuku lokuzalwa luka-%1$s lwe-%2$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Usuku lokuzalwa luka-%1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">Usuku olumqoka luka-%1$s lwe-%2$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">Usuku olumqoka luka-%1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">ka-%1$d</string>
-    <string name="ordinal_suffix_nd">ka-%1$d</string>
-    <string name="ordinal_suffix_rd">ka-%1$d</string>
-    <string name="ordinal_suffix_th">ka-%1$d</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Amakhalenda ayavumelaniselwa…</string>
-    <string name="sync_banner_preparing">Kulungiselelwa ukuvumelanisa…</string>
-    <string name="sync_banner_complete_errors">Ukuvumelanisa kuphelile kuneziphazamiso</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Ukuvumelanisa kuhlulekile: %1$s</string>
-    <string name="error_unknown_error">Isiphazamiso esingaziwa</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Umcimbi omusha: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">Umcimbi omusha ongu-%1$d</item>
-        <item quantity="other">Imicimbi emisha engu-%1$d</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">Umcimbi ongu-%1$d ubuyekezwe</item>
-        <item quantity="other">Imicimbi engu-%1$d ibuyekezwe</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">Umcimbi ongu-%1$d ususwe</item>
-        <item quantity="other">Imicimbi engu-%1$d isiswe</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">Ukubuyekezwa kwekhalenda okungu-%1$d</item>
-        <item quantity="other">Ukubuyekezwa kwamakhalenda okungu-%1$d</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Usuku %1$d ku-%2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Usuku 1 ku-%1$d · iqala %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Usuku %1$d ku-%2$d · iphela %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Usuku lonke</string>
-    <string name="event_date_all_day">%1$s · Usuku lonke</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Usuku lonke)</string>
-    <string name="event_date_all_day_parens">%1$s (Usuku lonke)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Gcina Umcimbi</string>
-    <!-- Badges -->
-    <string name="badge_beta">Ibhethha</string>
-    <string name="badge_new">Okusha</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Okubomvu</string>
-    <string name="color_orange">Okusawolintshi</string>
-    <string name="color_yellow">Okuphuzi</string>
-    <string name="color_green">Okuluhlaza okotshani</string>
-    <string name="color_cyan">Okuluhlaza okwesibhakabhaka okukhanyayo</string>
-    <string name="color_blue">Okuluhlaza okwesibhakabhaka</string>
-    <string name="color_purple">Okumfusa</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Isixhumanisi somhlangano: %1$s</string>
-    <string name="cd_phone_number">Inombolo yocingo</string>
-    <string name="cd_email_link">I-imeyili: %1$s</string>
-    <string name="cd_web_link">Isixhumanisi: %1$s</string>
-    <string name="cd_text_with_links">Umbhalo onezixhumanisi ezingu-%1$d: %2$s</string>
-    <string name="cd_text_with_link">Umbhalo onesixhumanisi esingu-1: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Usuku %1$d ku-%2$d (Usuku lonke)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ukuvumelanisa   ↑%2$d okugciniwe   ↓%3$d okutholwe</string>
-    <string name="sync_history_stats_issues">%1$d ukuvumelanisa   ↑%2$d okugciniwe   ↓%3$d okutholwe   ⚠ %4$d izinkinga</string>
-    <string name="sync_history_failed">Kuhlulekile</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Njalo ngehora</string>
-    <string name="ics_sync_every_n_hours">Njalo emahora angu-%1$d</string>
-    <string name="ics_sync_daily">Nsuku zonke</string>
-    <string name="ics_sync_weekly">Njalo ngeviki</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">I-URL iyadingeka</string>
-    <string name="ics_url_invalid_scheme">I-URL kumele iqale nge-http://, https://, noma webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Iseva ibuyisele iphutha (%1$d). Sicela uhlole i-URL.</string>
-    <string name="ics_fetch_error_empty">Ifidi yekhalenda ayinalutho.</string>
-    <string name="ics_fetch_error_not_calendar">Leyo URL ayibukeki njengefidi yekhalenda.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget strings -->
-    <string name="cd_widget_calendar">Ikhalenda</string>
-    <string name="cd_widget_add_event">Engeza umcimbi</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">ayikho imicimbi</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, kukhanseliwe</string>
-    <string name="channel_event_reminders">Izikhumbuzi Zemicimbi</string>
-    <string name="channel_event_reminders_desc">Izaziso zemicimbi yekhalenda ezayo</string>
-    <string name="channel_sync_progress">Inqubekela Phambili Yokuvumelanisa</string>
-    <string name="channel_sync_progress_desc">Ikhombisa inqubekela phambili ngenkathi kuvumelaniswa amakhalenda</string>
-    <string name="channel_sync_status">Isimo Sokuvumelanisa</string>
-    <string name="channel_sync_status_desc">Izaziso mayelana nokuqedwa nokungalungi kokuvumelanisa</string>
-    <string name="channel_event_invitations">Izimemo Zemicimbi</string>
-    <string name="channel_event_invitations_desc">Izaziso uma uthola isimemo esisha sekhalenda</string>
-    <string name="invite_notification_body">Kusukela ku-%1$s · Thepha ukuze uphendule</string>
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Ayiphindi</string>
     <string name="rrule_freq_daily">Nsuku zonke</string>
     <string name="rrule_freq_weekly">Masonto onke</string>
@@ -1028,6 +876,10 @@
     <string name="rrule_freq_on_last_day">%1$s ngosuku lokugcina</string>
     <string name="rrule_freq_on_day_n">%1$s ngosuku %2$d</string>
     <string name="rrule_ordinal_last">okokugcina</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, izikhathi ezingu-%1$d</item>
+        <item quantity="other">, izikhathi ezingu-%1$d</item>
+    </plurals>
     <string name="rrule_until_suffix">, kuze kube ngu-%1$s</string>
     <string name="rrule_freq_never">Akusoze</string>
     <string name="rrule_freq_custom">Ngokwezifiso</string>
@@ -1041,13 +893,146 @@
     <string name="rrule_starting">%1$s kuqala ngo-%2$s%3$s</string>
     <string name="rrule_since">%1$s · kusukela ngo-%2$s</string>
 
-    <!-- Recurrence plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, izikhathi ezingu-%1$d</item>
-        <item quantity="other">, izikhathi ezingu-%1$d</item>
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d okusha</string>
+    <string name="sync_summary_updated">%1$d okubuyekezwe</string>
+    <string name="sync_summary_removed">%1$d okususwe</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Ukuskrola okuyisiyingelezi kunikwe amandla</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Asikho isikhumbuzi</string>
+    <string name="reminder_at_time_of_event">Ngesikhathi somcimbi</string>
+    <string name="reminder_time_before">%1$s ngaphambi</string>
+    <string name="reminder_time_after">%1$s ngemuva</string>
+    <string name="reminder_day_of_event_12h">9 AM usuku lomcimbi</string>
+    <string name="reminder_day_of_event_24h">09:00 usuku lomcimbi</string>
+    <string name="reminder_before_at_12h">%1$s ngaphambi ngo-9 AM</string>
+    <string name="reminder_before_at_24h">%1$s ngaphambi ngo-09:00</string>
+    <string name="reminder_short_off">Valiwe</string>
+    <string name="reminder_short_at_event">Emcimbini</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$dh</string>
+    <string name="reminder_short_days">%1$dz</string>
+    <string name="reminder_short_weeks">%1$dv</string>
+    <string name="reminder_summary_none">Lutho</string>
+    <string name="duration_compact">%1$dh %2$dm</string>
+    <string name="duration_compact_short">%1$dh%2$dm</string>
+    <string name="sync_manual_only">Ngezandla kuphela</string>
+    <string name="sync_lookback_all">Yonke imicimbi</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Hlehlisa</string>
+    <string name="notification_starting_now">Iqala manje</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Ezinsukwini ezingu-%1$d</item>
+        <item quantity="other">Ezinsukwini ezingu-%1$d</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Kusasa, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Ukuvumelanisa kuphelile</string>
+    <string name="sync_notification_partial">Ukuvumelanisa kuphelile ngokwengxenye</string>
+    <string name="sync_notification_auth_failed">Ukuqinisekisa ukuvumelanisa kuhlulekile</string>
+    <string name="sync_notification_auth_reauth">Sicela uqinisekise i-akhawunti yakho kabusha</string>
+    <string name="sync_notification_failed">Ukuvumelanisa kuhlulekile</string>
+    <string name="sync_notification_parse_title">Eminye imicimbi ayikwazanga ukuvumelaniselwa</string>
+    <string name="sync_notification_parse_content">%1$s ku-%2$s ayikwazanga ukuvumelaniselwa. Zama Ukuvumelanisa Okuphoqiwe kuzilungiselelo.</string>
+    <string name="sync_notification_conflict_title">Ukungqubuzana kokuvumelanisa kuxazululiwe</string>
+    <string name="sync_notification_conflict_single">Izinguquko zendawo ku-\"%1$s\" zilahlekile ngenxa yokungqubuzana kokuvumelanisa. Uhlobo lweseva luzosetshenziswa.</string>
+    <string name="sync_notification_conflict_multi">Izinguquko zendawo ku-%1$s zilahlekile ngenxa yokungqubuzana kokuvumelanisa. Izinhlobo zeseva zizosetshenziswa.</string>
+    <string name="sync_notification_expired_title">Izinguquko zokuvumelanisa ziphelelwe yisikhathi</string>
+    <string name="sync_notification_expired_content">%1$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s ku-%2$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s kuwo wonke u-%2$s ayikwazanga ukuvumelaniselwa phakathi nezinsuku ezingu-30. Uhlobo lweseva luzosetshenziswa. Phoqa Ukuvumelanisa ukuzama kabusha.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Ikhalenda elingu-%1$d livumelaniselwe</item>
+        <item quantity="other">Amakhalenda angu-%1$d avumelaniselwe</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, uguquko olungu-%1$d</item>
+        <item quantity="other">, izinguquko ezingu-%1$d</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, isiphazamiso esingu-%1$d</item>
+        <item quantity="other">, iziphazamiso ezingu-%1$d</item>
     </plurals>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">Usuku lokuzalwa luka-%1$s lwe-%2$s</string>
+    <string name="contact_birthday">Usuku lokuzalwa luka-%1$s</string>
+    <string name="contact_anniversary_with_age">Usuku olumqoka luka-%1$s lwe-%2$s</string>
+    <string name="contact_anniversary">Usuku olumqoka luka-%1$s</string>
+    <string name="ordinal_suffix_st">ka-%1$d</string>
+    <string name="ordinal_suffix_nd">ka-%1$d</string>
+    <string name="ordinal_suffix_rd">ka-%1$d</string>
+    <string name="ordinal_suffix_th">ka-%1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Amakhalenda ayavumelaniselwa…</string>
+    <string name="sync_banner_preparing">Kulungiselelwa ukuvumelanisa…</string>
+    <string name="sync_banner_complete_errors">Ukuvumelanisa kuphelile kuneziphazamiso</string>
+    <string name="sync_banner_failed">Ukuvumelanisa kuhlulekile: %1$s</string>
+    <string name="error_unknown_error">Isiphazamiso esingaziwa</string>
+    <string name="sync_snackbar_new_event">Umcimbi omusha: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">Umcimbi omusha ongu-%1$d</item>
+        <item quantity="other">Imicimbi emisha engu-%1$d</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">Umcimbi ongu-%1$d ubuyekezwe</item>
+        <item quantity="other">Imicimbi engu-%1$d ibuyekezwe</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">Umcimbi ongu-%1$d ususwe</item>
+        <item quantity="other">Imicimbi engu-%1$d isiswe</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">Ukubuyekezwa kwekhalenda okungu-%1$d</item>
+        <item quantity="other">Ukubuyekezwa kwamakhalenda okungu-%1$d</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Usuku %1$d ku-%2$d</string>
+    <string name="day_starts">Usuku 1 ku-%1$d · iqala %2$s</string>
+    <string name="day_ends">Usuku %1$d ku-%2$d · iphela %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Usuku lonke</string>
+    <string name="event_date_all_day">%1$s · Usuku lonke</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Usuku lonke)</string>
+    <string name="event_date_all_day_parens">%1$s (Usuku lonke)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Gcina Umcimbi</string>
+    <string name="badge_beta">Ibhethha</string>
+    <string name="badge_new">Okusha</string>
+    <string name="color_red">Okubomvu</string>
+    <string name="color_orange">Okusawolintshi</string>
+    <string name="color_yellow">Okuphuzi</string>
+    <string name="color_green">Okuluhlaza okotshani</string>
+    <string name="color_cyan">Okuluhlaza okwesibhakabhaka okukhanyayo</string>
+    <string name="color_blue">Okuluhlaza okwesibhakabhaka</string>
+    <string name="color_purple">Okumfusa</string>
+    <string name="cd_meeting_link">Isixhumanisi somhlangano: %1$s</string>
+    <string name="cd_phone_number">Inombolo yocingo</string>
+    <string name="cd_email_link">I-imeyili: %1$s</string>
+    <string name="cd_web_link">Isixhumanisi: %1$s</string>
+    <string name="cd_text_with_links">Umbhalo onezixhumanisi ezingu-%1$d: %2$s</string>
+    <string name="cd_text_with_link">Umbhalo onesixhumanisi esingu-1: %1$s</string>
+    <string name="day_x_of_y_all_day">Usuku %1$d ku-%2$d (Usuku lonke)</string>
+    <string name="sync_history_stats">%1$d ukuvumelanisa   ↑%2$d okugciniwe   ↓%3$d okutholwe</string>
+    <string name="sync_history_stats_issues">%1$d ukuvumelanisa   ↑%2$d okugciniwe   ↓%3$d okutholwe   ⚠ %4$d izinkinga</string>
+    <string name="sync_history_failed">Kuhlulekile</string>
+    <string name="ics_sync_every_hour">Njalo ngehora</string>
+    <string name="ics_sync_every_n_hours">Njalo emahora angu-%1$d</string>
+    <string name="ics_sync_daily">Nsuku zonke</string>
+    <string name="ics_sync_weekly">Njalo ngeviki</string>
+    <string name="ics_url_required">I-URL iyadingeka</string>
+    <string name="ics_url_invalid_scheme">I-URL kumele iqale nge-http://, https://, noma webcal://</string>
+    <string name="ics_fetch_error_http">Iseva ibuyisele iphutha (%1$d). Sicela uhlole i-URL.</string>
+    <string name="ics_fetch_error_empty">Ifidi yekhalenda ayinalutho.</string>
+    <string name="ics_fetch_error_not_calendar">Leyo URL ayibukeki njengefidi yekhalenda.</string>
     <string name="insights_title">Ukuqonda</string>
     <string name="insights_period_this_week">Isonto</string>
     <string name="insights_period_last_week">Isonto eledlule</string>
@@ -1057,61 +1042,42 @@
         <item quantity="one">%d umcimbi wosuku lonke</item>
         <item quantity="other">%d imicimbi yosuku lonke</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s usuku lwakho olumatasa kakhulu (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s kwakungusuku lwakho olumatasa kakhulu (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s usuku lwakho olulula kakhulu (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s kwakungusuku lwakho olulula kakhulu (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Isikhathi eside esikhululekile: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">Isikhathi eside esikhululekile sasingu-%1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Impelasonto yakho ikhululekile</string>
     <string name="insight_weekend_load_clear_past">Impelasonto yakho yayikhululekile</string>
     <string name="insight_weekend_load_light_future">%1$s kuhlelwe empelasonto</string>
     <string name="insight_weekend_load_light_past">%1$s yayihlelwe empelasonto</string>
     <string name="insight_weekend_load_busy_future">%1$s kuhlelwe empelasonto</string>
     <string name="insight_weekend_load_busy_past">%1$s yayihlelwe empelasonto</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d imihlangano elandelanayo</string>
     <string name="insight_back_to_back_past">Ubunemihlangano engu-%1$d elandelanayo</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s ingu-%2$d%% yesikhathi sakho esihlelwe</string>
     <string name="insight_calendar_dominant_past">%1$s yayingu-%2$d%% yesikhathi sakho esihlelwe</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">Isheduli yakho iqala ngaphambi kuka-8 ekuseni ngezinsuku ezingu-%1$d</string>
     <string name="insight_early_bounds_past">Isheduli yakho yayiqala ngaphambi kuka-8 ekuseni ngezinsuku ezingu-%1$d</string>
     <string name="insight_late_bounds_future">Imicimbi ngemuva kuka-7 ntambama ngezinsuku ezingu-%1$d</string>
     <string name="insight_late_bounds_past">Imicimbi yedlulile ngemva kuka-7 ntambama ngezinsuku ezingu-%1$d</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">Unezinsuku ezingu-%1$d ezingenayo imihlangano</string>
     <string name="insight_meeting_free_days_past">Ubunezinsuku ezingu-%1$d ezingenayo imihlangano</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Kusasa: %1$s kuhlelwe, kuqala ngo-%2$s</string>
     <string name="insight_tomorrow_preview_no_start">Kusasa: %1$s kuhlelwe</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s usuku lwakho oluzayo olumatasa kakhulu (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Isikhathi esikhululekile esilandelayo: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Ukusabalala kwansuku zonke: usuku olumatasa kakhulu ngu-%1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Ukutholakala</string>
     <string name="label_busy">Matasa</string>
     <string name="label_free">Khululekile</string>
     <string name="label_event_color">Umbala womcimbi</string>
     <string name="label_calendar_default">Okuzenzakalelayo kwekhalenda</string>
     <string name="label_custom">Ngokwezifiso</string>
-
     <string name="cd_checkmark">Kukhethiwe</string>
-
-    <string name="cd_event_state_cancelled">kukhanseliwe</string>
-    <string name="cd_event_state_declined">kwaliwe</string>
-    <string name="cd_event_state_past">umcimbi odlule</string>
-    <string name="cd_event_untitled">Umcimbi ongenasihloko</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Insundu Yesihlalo</string>
@@ -1123,6 +1089,8 @@
     <string name="color_royalblue">Iluhlaza okwesibhakabhaka sasebukhosini</string>    <string name="color_mediumorchid">I-Orchid Ephakathi</string>
     <string name="color_hotpink">Phinki Eshisayo</string>
     <string name="color_dimgray">Impunga efiphele</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Okubomvu</string>
     <string name="hue_orange">Okuwolintshi</string>
     <string name="hue_yellow">Okuphuzi</string>
@@ -1135,7 +1103,8 @@
     <string name="hue_neutral">Okungathathi hlangothi</string>
     <string name="label_more_colors">Eminye imibala</string>
     <string name="label_back_to_grid">Emuva</string>
-    <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Ababambe iqhaza</string>
     <string name="attendee_you_marker">Wena</string>
     <string name="attendee_card_going">Uyaya</string>
@@ -1145,6 +1114,8 @@
     <string name="attendee_card_hosting">Ubamba iqhaza</string>
     <string name="attendee_action_copy">Kopisha i-imeyili</string>
     <string name="attendee_action_email">Thumela i-imeyili</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">I-imeyili ikopishelwe</string>
     <string name="attendee_no_email_app">Akukho uhlelo lokusebenza lwe-imeyili olufakiwe</string>
     <string name="attendee_show_all">Bonisa bonke ababambe iqhaza</string>
@@ -1153,23 +1124,9 @@
     <string name="attendee_status_tentative">Kungenzeka</string>
     <string name="attendee_status_delegated">Kuthunyiwe</string>
     <string name="attendee_status_pending">Kulindile</string>
-    <string name="attendee_picker_title">Engeza ababambe iqhaza</string>
-    <string name="attendee_pick_add_people">Engeza ababambe iqhaza</string>
-    <string name="attendee_pick_from_contacts">Igama noma i-imeyili</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d okwengeziwe</item>
-        <item quantity="other">+%1$d okwengeziwe</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Phakamisa abantu koxhumana nabo</string>
-    <string name="attendee_invalid_email">Faka ikheli le-imeyili eligcwele</string>
-    <string name="attendee_add_typed">Engeza \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Ukumema abantu akutholakali kule akhawunti</string>
-    <string name="device_attendee_local_no_delivery">Le khalenda ayikwazi ukuthumela izimemo. Izivakashi ziyalondolozwa kodwa ngeke zaziswe.</string>
-    <string name="action_save_and_notify">Londoloza &amp; wazise</string>
     <string name="inbox_empty_caught_up">Konke kuphethiwe</string>
     <string name="inbox_organizer_suffix">(umhleli)</string>
     <string name="menu_invites">Izimemo</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Iya kusuku</string>
     <string name="menu_about">Mayelana</string>
     <string name="menu_more">Imenyu eyengeziwe</string>
@@ -1177,6 +1134,8 @@
         <item quantity="one">Imenyu eyengeziwe, isimemo esingu-%d silindile</item>
         <item quantity="other">Imenyu eyengeziwe, izimemo ezingu-%d zilindile</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Yabelana ngokutholakala</string>
     <string name="share_availability_sheet_title">Yabelana ngokutholakala</string>
     <plurals name="share_availability_days_label">
@@ -1194,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Azikho izikhala ezikhululekile zehora elilodwa okungenani enanini elikhethiwe.</string>
+    <string name="share_from_kashcal_footer">Kwabelwane kusuka ku-KashCal</string>
     <string name="share_availability_chooser_title">Yabelana ngokutholakala</string>
     <string name="share_availability_share_failed">Akukho uhlelo lokusebenza lokwabelana</string>
     <string name="share_availability_window_section">Iwindi</string>
@@ -1212,30 +1172,5 @@
     <string name="share_as_card_all_day">Usuku lonke</string>
     <string name="share_as_card_chooser_title">Yabelana ngomcimbi</string>
     <string name="share_as_card_share_failed">Ayikwazanga ukwabelana ngekhadi</string>
-    <string name="share_from_kashcal_footer">Kwabelwane kusuka ku-KashCal</string>
-    <string name="attendee_sheet_title">Abazohambela</string>
-    <string name="attendee_search_hint">Sesha</string>
-    <string name="attendee_search_no_matches">Awekho amabhalwa</string>
-    <string name="attendee_section_going">Bayaya</string>
-    <string name="attendee_section_maybe">Mhlawumbe</string>
-    <string name="attendee_section_pending">Kulindiwe</string>
-    <string name="attendee_section_declined">Banqabile</string>
-    <string name="attendee_section_delegated">Bedluliselwe</string>
-    <string name="whats_new_title">Yini entsha</string>
-    <string name="whats_new_dismiss">Ngizwile</string>
-    <string name="whats_new_v598_title">Siza ukugcina i-Android ivuliwe</string>
-    <string name="whats_new_v598_body">I-Google iyashintsha indlela ofaka ngayo izinhlelo zokusebenza ku-divayisi yakho. Sidinga usizo lwakho.</string>
-    <string name="whats_new_v598_action_label">Vakashela i-keepandroidopen.org</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Ezinsukwini ezingu-%1$d</item>
-        <item quantity="other">Ezinsukwini ezingu-%1$d</item>
-    </plurals>
-    <string name="holiday_catalog_add">Engeza ikhalenda yamaholide</string>
-    <string name="holiday_catalog_search_label">Sesha</string>
-    <string name="holiday_catalog_already_added">Kungeziwe</string>
-    <string name="holiday_catalog_empty">Awekho amazwe atholakele</string>
-    <string name="holiday_catalog_empty_hint">Zama elinye igama</string>
-    <string name="holiday_catalog_validate_error">Ayikwazanga ukufinyelela le khalenda. Hlola uxhumano lwakho bese uzama futhi.</string>
-    <string name="holiday_catalog_attribution">Amakhalenda amaholide avela ku-Mozilla Thunderbird, alayisensiwe ngaphansi kwe-%1$s.</string>
-    <string name="qs_tile_label">Engeza</string>
+
 </resources>

@@ -1,33 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
     <string name="widget_name">今日の予定</string>
-    <string name="widget_description">今日のカレンダーイベントを表示します</string>
+    <string name="widget_description">今日のカレンダー予定を表示します</string>
     <string name="week_widget_name">週表示</string>
-    <string name="week_widget_description">7日間のカレンダーイベントを表示します</string>
+    <string name="week_widget_description">7日間のカレンダー予定を表示します</string>
     <string name="month_widget_name">月表示</string>
-    <string name="month_widget_description">イベントドット付きの月カレンダーグリッドを表示します</string>
+    <string name="month_widget_description">予定ドット付きの月カレンダーグリッドを表示します</string>
     <string name="date_widget_name">日付</string>
     <string name="date_widget_description">アプリアイコンのように今日の日付を表示します</string>
     <string name="upcoming_widget_name">予定</string>
     <string name="upcoming_widget_description">今後10日間の予定を、空の日を省いて表示します</string>
+    <string name="upcoming_widget_day_with_date">%1$s（%2$s）</string>
     <string name="widget_loading_upcoming">今後の予定を読み込み中…</string>
     <string name="widget_error_load_events">予定を読み込めませんでした。タップして開く</string>
     <string name="widget_no_events_today">今日の予定はありません</string>
-    <string name="widget_add_event">+ イベントを追加</string>
+    <string name="widget_add_event">+ 予定を追加</string>
     <string name="widget_no_events">予定なし</string>
     <string name="widget_no_upcoming_events">今後の予定なし</string>
+    <string name="cd_widget_calendar">カレンダー</string>
+    <string name="cd_widget_add_event">予定を追加</string>
+    <string name="cd_widget_day_cell">%1$s、%2$s</string>
+    <string name="cd_widget_no_events">予定なし</string>
+    <string name="cd_widget_event_cancelled">%1$s、%2$s、中止</string>
+    <string name="channel_event_reminders">予定のリマインダー</string>
+    <string name="channel_event_reminders_desc">今後のカレンダー予定の通知</string>
+    <string name="channel_sync_progress">同期の進行状況</string>
+    <string name="channel_sync_progress_desc">カレンダーの同期中に進行状況を表示</string>
+    <string name="channel_sync_status">同期ステータス</string>
+    <string name="channel_sync_status_desc">同期の完了とエラーに関する通知</string>
+    <string name="channel_event_invitations">予定への招待</string>
+    <string name="channel_event_invitations_desc">新しいカレンダー招待を受け取ったときの通知</string>
+    <string name="invite_notification_body">送信元: %1$s · タップして返信</string>
 
     <!-- ==================== App Shortcuts ==================== -->
-    <string name="shortcut_new_event">新しいイベント</string>
-    <string name="shortcut_new_event_long">新しいイベントを作成</string>
+    <string name="shortcut_new_event">新しい予定</string>
+    <string name="shortcut_new_event_long">新しい予定を作成</string>
     <string name="shortcut_today">今日</string>
     <string name="shortcut_today_long">今日に移動</string>
     <string name="shortcut_search">検索</string>
-    <string name="shortcut_search_long">イベントを検索</string>
+    <string name="shortcut_search_long">予定を検索</string>
 
     <!-- ==================== Common Actions ==================== -->
     <string name="action_retry">再試行</string>
@@ -69,13 +83,16 @@
     <string name="action_share_as_text">テキストとして共有</string>
     <string name="action_export_ics">.icsとしてエクスポート</string>
     <string name="action_confirm_delete">削除を確認</string>
-    <string name="action_delete_event">イベントを削除</string>
+    <string name="action_delete_event">予定を削除</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">回答はシリーズ全体に適用されます。</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">これ以降のすべて</string>
 
     <!-- ==================== Form Labels ==================== -->
-    <string name="label_event_title">イベントのタイトル</string>
+    <string name="label_event_title">予定のタイトル</string>
     <string name="label_location">場所</string>
     <string name="label_location_hint">住所またはリンク</string>
     <string name="label_notes">メモ</string>
@@ -107,7 +124,6 @@
     <string name="label_all_day">終日</string>
     <string name="label_today">今日</string>
     <string name="label_go_to_date">日付に移動</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">週</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
 
@@ -130,19 +146,19 @@
     <string name="app_icon_switch_note">アイコンを変更するとアプリが再起動することがあります。通知では常にデフォルトのアイコンと名前が使用されます。</string>
     <string name="settings_time_format">時間の形式</string>
     <string name="settings_start_week_on">週の開始日</string>
-    <string name="settings_event_emojis">イベント絵文字</string>
-    <string name="settings_emoji_subtitle">イベントタイトルに基づいて絵文字を表示</string>
+    <string name="settings_event_emojis">予定絵文字</string>
+    <string name="settings_emoji_subtitle">予定タイトルに基づいて絵文字を表示</string>
     <string name="settings_force_sync">フル同期を実行</string>
     <string name="settings_force_sync_subtitle">すべてのカレンダーデータを再ダウンロード</string>
     <string name="settings_sync_history">同期履歴</string>
     <string name="settings_sync_history_subtitle">同期セッションを表示（過去48時間）</string>
-    <string name="settings_import_subtitle">ICSファイルのイベントを任意のカレンダーに追加します</string>
-    <string name="settings_export_subtitle">ICSファイルにイベントを保存します</string>
+    <string name="settings_import_subtitle">ICSファイルの予定を任意のカレンダーに追加します</string>
+    <string name="settings_export_subtitle">ICSファイルに予定を保存します</string>
     <string name="settings_birthday_reminder">誕生日リマインダー</string>
     <string name="settings_use_device_timezone">デバイスのタイムゾーンを使用</string>
     <string name="settings_section_calendars">カレンダー</string>
     <string name="settings_section_appearance">外観</string>
-    <string name="settings_section_creating_events">イベントの作成</string>
+    <string name="settings_section_creating_events">予定の作成</string>
     <string name="settings_section_sync">同期</string>
     <string name="settings_section_data">バックアップと復元</string>
     <string name="settings_section_privacy">プライバシー</string>
@@ -160,10 +176,31 @@
     <string name="app_lock_enabled_message">アプリロックがオンになりました。次回KashCalを開くときに認証を求められます。</string>
     <string name="app_lock_disable_prompt_title">ロックを解除してアプリロックをオフにする</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">設定をバックアップ</string>
+    <string name="backup_settings_subtitle">KashCalの設定をJSONファイルに保存します</string>
+    <string name="restore_settings_label">設定を復元</string>
+    <string name="restore_settings_subtitle">バックアップファイルからKashCalの設定を復元します</string>
+    <string name="restore_confirm_title">バックアップを復元しますか？</string>
+    <string name="restore_confirm_from">KashCal %1$s のバックアップ、%2$s</string>
+    <string name="restore_confirm_message_prefs_only">設定がインポートされます。</string>
+    <string name="action_restore">復元</string>
+    <string name="restore_success_title">復元が完了しました</string>
+    <string name="restore_success_message_prefs_only">設定をインポートしました。</string>
+    <string name="restore_success_device_calendars_note">デバイスのカレンダー機能を使用している場合は、再度選択してください。</string>
+    <string name="restore_error_title">復元に失敗しました</string>
+    <string name="restore_error_version_too_new">このバックアップは新しいバージョンのKashCalで作成されています。KashCalを更新してからもう一度お試しください。</string>
+    <string name="restore_error_malformed_json">このファイルは有効なKashCalのバックアップではありません。</string>
+    <string name="restore_error_invalid_value">このバックアップファイルには無効なデータが含まれており、復元できません。</string>
+    <string name="restore_error_apply_failure">バックアップの適用中に問題が発生しました。変更は保存されていません。</string>
+    <string name="backup_error_build_failed">バックアップに失敗しました</string>
+    <string name="backup_error_write_failed">バックアップに失敗しました：ファイルに書き込めませんでした</string>
+    <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Appleカレンダーをお使いですか？</string>
     <string name="onboarding_got_you">お任せください。</string>
-    <string name="onboarding_connect_prompt">iCloudに接続してイベントを表示</string>
+    <string name="onboarding_connect_prompt">iCloudに接続して予定を表示</string>
 
     <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_title">新着情報</string>
@@ -171,14 +208,15 @@
     <string name="whats_new_v598_title">Androidをオープンに保つお手伝いを</string>
     <string name="whats_new_v598_body">Googleは、あなたが端末にアプリをインストールする方法を変更しようとしています。皆さんのご協力が必要です。</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org を開く</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloudに接続</string>
     <string name="signin_caldav_title">CalDAVアカウントを追加</string>
     <string name="signin_connected_to">%1$sに接続済み</string>
 
     <!-- ==================== Dialogs ==================== -->
-    <string name="dialog_new_event_title">新しいイベント</string>
-    <string name="dialog_edit_event_title">イベントを編集</string>
+    <string name="dialog_new_event_title">新しい予定</string>
+    <string name="dialog_edit_event_title">予定を編集</string>
     <string name="dialog_force_sync_title">フル同期を実行しますか？</string>
     <string name="dialog_force_sync_message">サーバーからすべてのカレンダーデータを再ダウンロードします。ローカルの変更は保持されます。</string>
     <string name="dialog_enable_notifications">通知を有効にしますか？</string>
@@ -194,7 +232,7 @@
     <string name="status_more_events">+%1$d件</string>
     <string name="status_no_sync_sessions">同期セッションはまだありません。\n\nカレンダー画面で下にスワイプして同期を開始してください。</string>
     <string name="status_no_writable_calendars">書き込み可能なカレンダーがありません</string>
-    <string name="status_events_count">%1$d件のイベント</string>
+    <string name="status_events_count">%1$d件の予定</string>
     <string name="status_sync_changes">同期の変更</string>
     <string name="status_sync_history">同期履歴</string>
     <string name="status_parse_failures">解析エラー</string>
@@ -214,28 +252,24 @@
     <string name="error_auth_session_expired_title">セッション期限切れ</string>
     <string name="error_auth_session_expired">iCloudセッションの期限が切れました。同期を続けるにはもう一度サインインしてください。</string>
     <string name="error_auth_account_locked">Apple IDがロックされています。appleid.apple.comでロックを解除してください。</string>
-
     <string name="error_network_offline">オフラインです。オンラインに戻ったら変更が同期されます。</string>
     <string name="error_network_timeout">接続がタイムアウトしました。インターネット接続を確認してもう一度お試しください。</string>
     <string name="error_network_ssl">安全な接続に失敗しました。ネットワーク設定を確認してください。</string>
     <string name="error_network_unknown_host">iCloudに接続できません。インターネット接続を確認してください。</string>
     <string name="error_network_connection_failed">接続に失敗しました。もう一度お試しください。</string>
-
     <string name="error_server_unavailable">iCloudは一時的に利用できません。後でもう一度お試しください。</string>
     <string name="error_server_rate_limited">リクエストが多すぎます。しばらくしてからもう一度お試しください。</string>
     <string name="error_server_forbidden">アクセスが拒否されました。このカレンダーへのアクセス権がない可能性があります。</string>
     <string name="error_server_not_found">リクエストされた項目がサーバー上に見つかりませんでした。</string>
     <string name="error_conflict_title">同期の競合</string>
-    <string name="error_conflict_generic">このイベントは別のデバイスで変更されました。強制同期で最新版を取得してください。</string>
+    <string name="error_conflict_generic">この予定は別のデバイスで変更されました。強制同期で最新版を取得してください。</string>
     <string name="error_conflict_with_event">\"%1$s\"は別のデバイスで変更されました。強制同期で最新版を取得してください。</string>
     <string name="error_sync_token_expired">同期データの有効期限が切れました。フル同期を実行中…</string>
-
-    <string name="error_event_not_found">イベントが見つかりません。</string>
+    <string name="error_event_not_found">予定が見つかりません。</string>
     <string name="error_calendar_not_found">カレンダーが見つかりません。</string>
-    <string name="error_calendar_read_only">\"%1$s\"のイベントは変更できません（読み取り専用カレンダー）。</string>
-    <string name="error_event_invalid_data">イベントデータが無効です。開始時間と終了時間を確認してください。</string>
+    <string name="error_calendar_read_only">\"%1$s\"の予定は変更できません（読み取り専用カレンダー）。</string>
+    <string name="error_event_invalid_data">予定データが無効です。開始時間と終了時間を確認してください。</string>
     <string name="error_event_invalid_recurrence">繰り返しパターンが無効です。</string>
-
     <string name="error_display_name_exists">\"%1$s\"という名前のアカウントは既に存在します。</string>
     <string name="icloud_error_credentials_required">Apple IDとパスワードが必要です</string>
     <string name="icloud_error_connection_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
@@ -244,49 +278,48 @@
     <string name="caldav_error_connection_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
     <string name="caldav_error_no_calendars">このサーバーでカレンダーが見つかりませんでした。</string>
     <string name="caldav_error_unexpected">予期しないエラーが発生しました。もう一度お試しください。</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nこのサーバーがローカルネットワーク上にある場合は、接続するためにローカルネットワークへのアクセスを許可してください。</string>
+    <string name="local_network_banner_title">ローカルネットワークへのアクセスが必要です</string>
+    <string name="local_network_banner_body">このサーバーはローカルネットワーク上にあるようです。KashCal が接続できるように、ローカルネットワークへのアクセスを許可してください。</string>
+    <string name="local_network_banner_allow">アクセスを許可</string>
+    <string name="local_network_banner_dismiss">後で</string>
     <string name="password_change_error_account_not_found">アカウントが見つかりません</string>
     <string name="password_change_error_no_credentials">既存の認証情報がありません</string>
     <string name="password_change_error_unsupported_provider">このプロバイダーはパスワード変更に対応していません</string>
     <string name="password_change_error_invalid">パスワードが無効です</string>
     <string name="password_change_error_network">ネットワークエラーが発生しました。もう一度お試しください。</string>
-
     <string name="error_import_file_not_found">ファイルが見つからないか、読み取れません。</string>
     <string name="error_import_invalid_format">無効なカレンダーファイル形式です。</string>
-    <string name="error_import_partial">%1$d件のイベントをインポート、%2$d件が失敗しました。</string>
-    <string name="error_export_failed">イベントのエクスポートに失敗しました。</string>
-    <string name="error_export_no_events">エクスポートするイベントがありません。</string>
+    <string name="error_import_partial">%1$d件の予定をインポート、%2$d件が失敗しました。</string>
+    <string name="error_export_failed">予定のエクスポートに失敗しました。</string>
+    <string name="error_export_no_events">エクスポートする予定がありません。</string>
     <string name="error_end_before_start">終了時間は開始時間より後でなければなりません</string>
-
     <string name="error_storage_full_title">ストレージ不足</string>
     <string name="error_storage_full">ストレージの空き容量が不足しています。空き容量を確保してもう一度お試しください。</string>
     <string name="error_database_corruption_title">データエラー</string>
     <string name="error_database_corruption">カレンダーデータが破損している可能性があります。サポートにお問い合わせください。</string>
     <string name="error_migration_title">アップデートエラー</string>
     <string name="error_migration_failed">アプリデータの更新に失敗しました。アプリを再インストールしてください。</string>
-
     <string name="error_permission_notification_title">通知を有効にしますか？</string>
-    <string name="error_permission_notification">KashCalは今後のイベントをお知らせするために通知の許可が必要です。</string>
+    <string name="error_permission_notification">KashCalは今後の予定をお知らせするために通知の許可が必要です。</string>
     <string name="error_permission_alarm_title">正確なアラームを有効にしますか？</string>
     <string name="error_permission_alarm">KashCalは正確なリマインダーのために正確なアラームの許可が必要です。</string>
     <string name="error_permission_storage">インポート／エクスポートにはストレージの許可が必要です。</string>
-
     <string name="error_device_calendar_title">カレンダーエラー</string>
     <string name="error_device_calendar_write_failed">デバイスカレンダーへの保存に失敗しました。もう一度お試しください。</string>
     <string name="error_device_calendar_permission">カレンダーの書き込み許可が必要です。設定で許可してください。</string>
     <string name="error_device_calendar_not_found">カレンダーが見つかりません。削除された可能性があります。</string>
-    <string name="error_device_event_not_found">イベントが見つかりません。削除された可能性があります。</string>
+    <string name="error_device_event_not_found">予定が見つかりません。削除された可能性があります。</string>
     <string name="error_device_calendar_read_only">このカレンダーは読み取り専用です。</string>
-
     <string name="error_sync_no_accounts">iCloudアカウントが設定されていません。カレンダーを同期するにはiCloudを設定してください。</string>
     <string name="error_sync_partial">%1$d件のカレンダーを同期、%2$d件が失敗しました。</string>
-
     <string name="error_unknown">問題が発生しました。もう一度お試しください。</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">選択済み</string>
     <string name="cd_back">戻る</string>
     <string name="cd_search">検索</string>
-    <string name="cd_create_event">イベントを作成</string>
+    <string name="cd_create_event">予定を作成</string>
     <string name="cd_delete">削除</string>
     <string name="cd_refresh">更新</string>
     <string name="cd_more_options">その他のオプション</string>
@@ -315,14 +348,15 @@
     <string name="label_color">色:</string>
     <string name="label_repeat">繰り返し</string>
     <string name="label_sync_interval">同期間隔:</string>
-    <string name="label_scheduled_events">予定されたイベント</string>
-    <string name="label_all_day_events">終日イベント</string>
+    <string name="label_scheduled_events">予定一覧</string>
+    <string name="label_all_day_events">終日予定</string>
     <string name="label_server_url">サーバーURL</string>
     <string name="label_username">ユーザー名</string>
     <string name="label_password">パスワード</string>
     <string name="label_display_name_optional">表示名</string>
 
-    <string name="placeholder_search_events">イベントを検索…</string>
+    <!-- ==================== Placeholders (Additional) ==================== -->
+    <string name="placeholder_search_events">予定を検索…</string>
 
     <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">指定しない場合はhttps://がデフォルトです</string>
@@ -337,10 +371,10 @@
     <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">表示するカレンダー</string>
     <string name="settings_default_calendar">デフォルトカレンダー</string>
-    <string name="settings_default_event_length">デフォルトのイベント時間</string>
+    <string name="settings_default_event_length">デフォルトの予定時間</string>
     <string name="settings_default_alerts">デフォルトのアラート</string>
     <string name="settings_notifications">通知</string>
-    <string name="settings_new_events">新しいイベント</string>
+    <string name="settings_new_events">新しい予定</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">システムの既定値</string>
@@ -353,7 +387,7 @@
     <string name="option_saturday">土曜日</string>
 
     <!-- ==================== Empty States ==================== -->
-    <string name="empty_no_events_found">イベントが見つかりません</string>
+    <string name="empty_no_events_found">予定が見つかりません</string>
     <string name="empty_no_upcoming_events">今後の予定はありません</string>
     <string name="empty_no_calendars">利用可能なカレンダーがありません</string>
 
@@ -363,7 +397,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">カレンダーを取得</string>
-    <string name="action_import_from_file">ファイルからイベントをインポート</string>
+    <string name="action_import_from_file">ファイルから予定をインポート</string>
     <string name="action_export_local_calendar">ローカルカレンダーをエクスポート</string>
 
     <!-- ==================== Providers ==================== -->
@@ -379,7 +413,7 @@
     <string name="help_app_password_step_5">5. 生成をクリックしてここにコピー</string>
 
     <!-- ==================== Notification Permission Dialog ==================== -->
-    <string name="dialog_notification_permission_message">KashCalは今後のイベントをお知らせするために通知の許可が必要です。</string>
+    <string name="dialog_notification_permission_message">KashCalは今後の予定をお知らせするために通知の許可が必要です。</string>
     <string name="dialog_notification_permission_settings_hint">後から設定で変更できます。</string>
 
     <!-- ==================== Accounts Screen ==================== -->
@@ -405,12 +439,20 @@
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">カレンダーフィード</string>
-    <string name="subscriptions_row_label">カレンダーフィード (ICS)</string>
-    <string name="subscriptions_row_hint">例: 祝日、スポーツ、学校</string>
     <string name="subscriptions_section_add">追加</string>
     <string name="subscriptions_empty_ics">ICS購読はありません</string>
-    <string name="subscriptions_empty_ics_hint">カレンダーフィードを追加してイベントを表示</string>
+    <string name="subscriptions_empty_ics_hint">カレンダーフィードを追加して予定を表示</string>
     <string name="subscriptions_add_ics">ICSカレンダーを追加</string>
+    <string name="qs_tile_label">予定を追加</string>
+    <string name="holiday_catalog_add">祝日カレンダーを追加</string>
+    <string name="holiday_catalog_search_label">検索</string>
+    <string name="holiday_catalog_already_added">追加済み</string>
+    <string name="holiday_catalog_empty">該当する国が見つかりません</string>
+    <string name="holiday_catalog_empty_hint">別の名前で試してください</string>
+    <string name="holiday_catalog_validate_error">このカレンダーに接続できませんでした。接続を確認してもう一度お試しください。</string>
+    <string name="holiday_catalog_attribution">祝日カレンダーは Mozilla Thunderbird より提供され、%1$s の下でライセンスされています。</string>
+    <string name="subscriptions_row_label">カレンダーフィード (ICS)</string>
+    <string name="subscriptions_row_hint">例: 祝日、スポーツ、学校</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">誕生日と記念日</string>
@@ -418,9 +460,9 @@
     <string name="birthdays_section_title">誕生日</string>
     <string name="anniversaries_section_title">記念日</string>
     <string name="settings_contact_birthdays">連絡先の誕生日</string>
-    <string name="settings_contact_birthdays_description">連絡先の誕生日を終日カレンダーイベントとして表示します。</string>
+    <string name="settings_contact_birthdays_description">連絡先の誕生日を終日カレンダー予定として表示します。</string>
     <string name="settings_contact_anniversaries">連絡先の記念日</string>
-    <string name="settings_contact_anniversaries_description">連絡先の記念日を終日カレンダーイベントとして表示します。</string>
+    <string name="settings_contact_anniversaries_description">連絡先の記念日を終日カレンダー予定として表示します。</string>
     <string name="settings_anniversary_reminder">記念日リマインダー</string>
     <string name="settings_calendar_color">カレンダーの色</string>
     <string name="settings_default_reminder">デフォルトのリマインダー</string>
@@ -430,8 +472,8 @@
     <string name="subscriptions_cd_back">戻る</string>
     <string name="subscriptions_cd_add">購読を追加</string>
     <string name="snackbar_subscription_removed">購読を削除しました</string>
-    <string name="snackbar_subscription_already_exists">このURLは既に購読しています</string>
     <string name="snackbar_action_undo">元に戻す</string>
+    <string name="snackbar_subscription_already_exists">このURLは既に購読しています</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">同期</string>
@@ -451,7 +493,6 @@
     <string name="account_detail_cd_show_password">パスワードを表示</string>
     <string name="account_detail_cd_hide_password">パスワードを隠す</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">アカウント名を変更</string>
     <string name="rename_account_label">アカウント名</string>
@@ -467,13 +508,14 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">デバイスカレンダー</string>
     <string name="settings_device_calendars_hint">他のアプリのカレンダー</string>
-    <string name="settings_quick_event_add">クイックイベント追加</string>
+    <string name="settings_quick_event_add">クイック予定追加</string>
+    <string name="settings_suggest_titles">予定のタイトルを提案</string>
     <string name="settings_week_numbers">週番号</string>
-    <string name="settings_show_declined">辞退したイベントを表示</string>
-    <string name="settings_widget_event_limit">ウィジェットのイベント上限</string>
+    <string name="settings_show_declined">辞退した予定を表示</string>
+    <string name="settings_widget_event_limit">ウィジェットの予定上限</string>
     <string name="settings_sync_lookback">同期の遡り期間</string>
     <string name="settings_auto_detect_emojis">絵文字を自動検出</string>
-    <string name="settings_events_per_day">1日あたりのイベント数</string>
+    <string name="settings_events_per_day">1日あたりの予定数</string>
     <string name="settings_not_set">未設定</string>
     <string name="settings_on">オン</string>
     <string name="settings_off">オフ</string>
@@ -481,11 +523,12 @@
     <string name="settings_device_calendars_enabled">%1$d件が有効</string>
     <string name="settings_per_day">1日%1$d件</string>
 
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">App用パスワードとは？</string>
     <string name="caldav_trust_insecure_label">安全でない接続を信頼</string>
     <string name="action_add_another">別のアカウントを追加</string>
     <string name="account_connected_found_calendars">%2$sの%1$d件のカレンダーが見つかりました。</string>
-    <string name="account_connected_syncing_hint">同期中です — まもなくイベントが表示されます。</string>
+    <string name="account_connected_syncing_hint">同期中です — まもなく予定が表示されます。</string>
     <string name="settings_time_format_currently_24h">現在: 24時間 (%1$s)</string>
     <string name="settings_time_format_currently_12h">現在: 12時間 (%1$s)</string>
     <string name="settings_time_format_example">例: %1$s</string>
@@ -514,13 +557,16 @@
     <string name="label_tomorrow">明日</string>
     <string name="label_yesterday">昨日</string>
     <string name="label_device_calendars">デバイスカレンダー</string>
-    <string name="label_default_calendar_hint">新しいイベントはこのカレンダーに作成されます</string>
+    <string name="label_default_calendar_hint">新しい予定はこのカレンダーに作成されます</string>
     <string name="label_visible_count">%1$d / %2$d 表示中</string>
     <string name="label_enabled_count">%1$d / %2$d 有効</string>
     <string name="label_reminders_truncated">%1$d件が非表示（合計%2$d件、最大%3$d件まで編集可能）</string>
-    <string name="label_found_events">検出: %1$d件のイベント</string>
+    <string name="label_found_events">検出: %1$d件の予定</string>
     <string name="label_open_debug_menu">デバッグメニューを開く</string>
     <string name="placeholder_search">検索…</string>
+    <string name="settings_search_placeholder">設定を検索…</string>
+    <string name="settings_search_no_results">\"%1$s\" に一致する設定はありません</string>
+    <string name="cd_search_settings">設定を検索</string>
     <string name="status_sync_paused">同期一時停止中</string>
     <string name="status_not_synced">未同期</string>
     <string name="status_sync_error">同期エラー</string>
@@ -528,26 +574,22 @@
     <string name="status_hours_ago">%1$d時間前</string>
 
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
-    <string name="device_calendars_description">デバイス上の他のカレンダーアプリのイベントを表示します（同期アダプター、ローカルカレンダー）。</string>
+    <string name="device_calendars_description">デバイス上の他のカレンダーアプリの予定を表示します（同期アダプター、ローカルカレンダー）。</string>
     <string name="device_calendars_permission_required">カレンダーのアクセス許可が必要です。有効をタップして許可してください。</string>
     <string name="device_calendars_read_only_access">読み取り専用アクセス</string>
-    <string name="device_calendars_grant_write">デバイスカレンダーのイベントを編集するには書き込み許可が必要です</string>
+    <string name="device_calendars_grant_write">デバイスカレンダーの予定を編集するには書き込み許可が必要です</string>
     <string name="device_calendars_grant">許可</string>
     <string name="device_calendars_none_found">デバイスカレンダーが見つかりません。</string>
     <string name="device_calendars_local">ローカル</string>
     <string name="device_calendars_reminders">リマインダー</string>
-    <string name="device_calendars_reminders_desc">デバイスカレンダーのイベント通知を受け取る</string>
+    <string name="device_calendars_reminders_desc">デバイスカレンダーの予定通知を受け取る</string>
     <string name="device_calendars_read_only_no_write">読み取り専用（書き込み許可なし）</string>
     <string name="device_calendars_read_only_calendar">読み取り専用（カレンダーが読み取り専用）</string>
-
     <string name="settings_developer_options">開発者オプション</string>
     <string name="settings_sync_frequency">同期頻度</string>
     <string name="settings_preview">プレビュー</string>
-    <string name="settings_n_events">%1$d件のイベント</string>
-    <string name="settings_n_events_default">%1$d件のイベント（デフォルト）</string>
-    <string name="settings_search_placeholder">設定を検索…</string>
-    <string name="settings_search_no_results">\"%1$s\" に一致する設定はありません</string>
-    <string name="cd_search_settings">設定を検索</string>
+    <string name="settings_n_events">%1$d件の予定</string>
+    <string name="settings_n_events_default">%1$d件の予定（デフォルト）</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">カレンダー</string>
@@ -555,7 +597,6 @@
     <string name="drawer_device_calendars">デバイスカレンダー</string>
     <string name="drawer_account_offline">オフライン</string>
     <string name="drawer_share_feedback">ヘルプとドキュメント</string>
-
     <string name="event_title_fallback">予定</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -565,9 +606,9 @@
     <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">同期済み</string>
     <string name="status_warnings">警告</string>
-    <string name="sync_history_events_failed">失敗したイベント</string>
+    <string name="sync_history_events_failed">失敗した予定</string>
     <string name="sync_history_abandoned_max_retries">放棄（最大再試行回数到達）</string>
-    <string name="sync_history_events_skipped">スキップされたイベント</string>
+    <string name="sync_history_events_skipped">スキップされた予定</string>
     <string name="sync_history_duration">所要時間</string>
     <string name="sync_history_already_synced_count">%1$d件は同期済み</string>
 
@@ -607,13 +648,12 @@
         <item quantity="other">%1$d件のカレンダー（%2$d件が新規）</item>
     </plurals>
     <plurals name="widget_event_count_plural">
-        <item quantity="other">%1$d件のイベント</item>
+        <item quantity="other">%1$d件の予定</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">カレンダーを開く</string>
-    <string name="upcoming_widget_day_with_date">%1$s（%2$s）</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">他%1$d日</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">カレンダーを開く</string>
     <plurals name="birthday_count">
         <item quantity="other">%1$d件の誕生日</item>
     </plurals>
@@ -624,7 +664,7 @@
         <item quantity="other">+ 他%1$d件</item>
     </plurals>
     <plurals name="import_events_title">
-        <item quantity="other">%1$d件のイベントをインポート</item>
+        <item quantity="other">%1$d件の予定をインポート</item>
     </plurals>
     <plurals name="import_events_button">
         <item quantity="other">インポート</item>
@@ -633,13 +673,13 @@
         <item quantity="other">…他%1$d件</item>
     </plurals>
     <plurals name="imported_events">
-        <item quantity="other">%1$d件のイベントをインポートしました</item>
+        <item quantity="other">%1$d件の予定をインポートしました</item>
     </plurals>
     <plurals name="exported_events">
-        <item quantity="other">%1$d件のイベントをエクスポートしました</item>
+        <item quantity="other">%1$d件の予定をエクスポートしました</item>
     </plurals>
     <plurals name="event_count">
-        <item quantity="other">%1$d件のイベント</item>
+        <item quantity="other">%1$d件の予定</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d件のカレンダー</item>
@@ -682,368 +722,16 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">このイベントのみ</string>
-    <string name="recurring_all_events">すべてのイベント</string>
     <string name="dialog_edit_recurring_title">変更の適用先</string>
     <string name="dialog_delete_recurring_title">削除</string>
     <string name="dialog_move_recurring_title">移動</string>
-    <string name="empty_pick_a_day">日付を選んで、一日をつかもう。</string>
-    <string name="empty_no_events_day">予定はありません。外に出てみませんか？</string>
-    <string name="filter_date">日付</string>
-    <string name="label_select_date">日付を選択</string>
-    <string name="hint_tap_date_range">同じ日付をタップで1日、別の日付で範囲を選択</string>
+    <string name="recurring_this_event">この予定のみ</string>
+    <string name="recurring_all_events">すべての予定</string>
 
-    <string name="cd_clear">クリア</string>
-    <string name="cd_offline">オフライン</string>
-    <string name="cd_loading_events">予定を読み込み中</string>
-    <string name="cd_open_drawer">ドロワーを開く</string>
-    <string name="cd_close_drawer">ドロワーを閉じる</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <string name="cd_calendar_view">カレンダー表示</string>
-    <string name="cd_active_view">アクティブな表示</string>
-
-    <string name="view_agenda">アジェンダ</string>
-    <string name="view_month_full">月（フル）</string>
-    <string name="view_day">日</string>
-    <string name="view_three_days">3日間</string>
-    <string name="view_year">年</string>
-    <string name="view_insights">インサイト</string>
-
-    <string name="label_go_to_month">月に移動</string>
-
-    <string name="action_more_options">その他のオプション</string>
-    <string name="quick_add_save_failed">イベントを保存できませんでした</string>
-
-    <string name="label_duration_days">日</string>
-    <string name="label_duration_hrs">時間</string>
-    <string name="label_duration_min">分</string>
-
-    <!-- ==================== RecurrencePicker ==================== -->
-    <string name="recurrence_on_day">毎月%1$d日</string>
-    <string name="recurrence_on_last_day">毎月最終日</string>
-    <string name="recurrence_on_nth_weekday">第%1$s %2$s</string>
-    <string name="ordinal_1st">1</string>
-    <string name="ordinal_2nd">2</string>
-    <string name="ordinal_3rd">3</string>
-    <string name="ordinal_4th">4</string>
-    <string name="ordinal_nth">%1$d</string>
-
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d件の新規</string>
-    <string name="sync_summary_updated">%1$d件の更新</string>
-    <string name="sync_summary_removed">%1$d件の削除</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">循環スクロールが有効</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">リマインダーなし</string>
-    <string name="reminder_at_time_of_event">イベント開始時</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s前</string>
-    <string name="reminder_time_after">%1$s後</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">当日 9 AM</string>
-    <string name="reminder_day_of_event_24h">当日 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s前の9 AM</string>
-    <string name="reminder_before_at_24h">%1$s前の09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">オフ</string>
-    <string name="reminder_short_at_event">開始時</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$d分</string>
-    <string name="reminder_short_hours">%1$d時間</string>
-    <string name="reminder_short_days">%1$d日</string>
-    <string name="reminder_short_weeks">%1$d週</string>
-    <string name="reminder_summary_none">なし</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$d時間%2$d分</string>
-    <string name="duration_compact_short">%1$d時%2$d分</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">手動のみ</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">すべてのイベント</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">スヌーズ</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">まもなく開始</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">明日 %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">同期完了</string>
-    <string name="sync_notification_partial">同期が一部完了</string>
-    <string name="sync_notification_auth_failed">同期の認証に失敗</string>
-    <string name="sync_notification_auth_reauth">アカウントを再認証してください</string>
-    <string name="sync_notification_failed">同期に失敗</string>
-    <string name="sync_notification_parse_title">一部のイベントを同期できませんでした</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$sの%1$sを同期できませんでした。設定から強制同期をお試しください。</string>
-    <string name="sync_notification_conflict_title">同期の競合が解決されました</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">「%1$s」のローカル変更が同期の競合により失われました。サーバー版が使用されます。</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">%1$sのローカル変更が同期の競合により失われました。サーバー版が使用されます。</string>
-    <string name="sync_notification_expired_title">同期の変更が期限切れです</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
-    <string name="sync_notification_expired_content_calendar">%2$sの%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
-    <string name="sync_notification_expired_content_calendars">%2$sにまたがる%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="other">%1$d個のカレンダーを同期しました</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="other">、%1$d件の変更</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="other">、%1$d件のエラー</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$sの%2$s歳の誕生日</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$sの誕生日</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$sの%2$s周年記念日</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$sの記念日</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">第%1$d</string>
-    <string name="ordinal_suffix_nd">第%1$d</string>
-    <string name="ordinal_suffix_rd">第%1$d</string>
-    <string name="ordinal_suffix_th">第%1$d</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">カレンダーを同期中…</string>
-    <string name="sync_banner_preparing">同期を準備中…</string>
-    <string name="sync_banner_complete_errors">同期完了（エラーあり）</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">同期に失敗: %1$s</string>
-    <string name="error_unknown_error">不明なエラー</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">新しいイベント: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="other">%1$d件の新しいイベント</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="other">%1$d件のイベントを更新</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="other">%1$d件のイベントを削除</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="other">%1$d件のカレンダー更新</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">%2$d日中%1$d日目</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">%1$d日中1日目 · %2$s開始</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%2$d日中%1$d日目 · %3$s終了</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · 終日</string>
-    <string name="event_date_all_day">%1$s · 終日</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s（終日）</string>
-    <string name="event_date_all_day_parens">%1$s（終日）</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">イベントを保存</string>
-    <!-- Badges -->
-    <string name="badge_beta">ベータ</string>
-    <string name="badge_new">新規</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">赤</string>
-    <string name="color_orange">オレンジ</string>
-    <string name="color_yellow">黄</string>
-    <string name="color_green">緑</string>
-    <string name="color_cyan">シアン</string>
-    <string name="color_blue">青</string>
-    <string name="color_purple">紫</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">会議リンク: %1$s</string>
-    <string name="cd_phone_number">電話番号</string>
-    <string name="cd_email_link">メール: %1$s</string>
-    <string name="cd_web_link">リンク: %1$s</string>
-    <string name="cd_text_with_links">%1$d個のリンク付きテキスト: %2$s</string>
-    <string name="cd_text_with_link">1個のリンク付きテキスト: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">%2$d日中%1$d日目（終日）</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル</string>
-    <string name="sync_history_stats_issues">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル   ⚠ %4$d件の問題</string>
-    <string name="sync_history_failed">失敗</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">1時間ごと</string>
-    <string name="ics_sync_every_n_hours">%1$d時間ごと</string>
-    <string name="ics_sync_daily">毎日</string>
-    <string name="ics_sync_weekly">毎週</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URLが必要です</string>
-    <string name="ics_url_invalid_scheme">URLはhttp://、https://、またはwebcal://で始まる必要があります</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">サーバーがエラー（%1$d）を返しました。URLを確認してください。</string>
-    <string name="ics_fetch_error_empty">カレンダーフィードが空です。</string>
-    <string name="ics_fetch_error_not_calendar">そのURLはカレンダーフィードではないようです。</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="other">、%1$d回</item>
-    </plurals>
-
-    <!-- Missing translations -->
-    <string name="cd_widget_calendar">カレンダー</string>
-    <string name="cd_widget_add_event">予定を追加</string>
-    <string name="cd_widget_day_cell">%1$s、%2$s</string>
-    <string name="cd_widget_no_events">予定なし</string>
-    <string name="cd_widget_event_cancelled">%1$s、%2$s、中止</string>
-    <string name="channel_event_reminders">予定のリマインダー</string>
-    <string name="channel_event_reminders_desc">今後のカレンダー予定の通知</string>
-    <string name="channel_sync_progress">同期の進行状況</string>
-    <string name="channel_sync_progress_desc">カレンダーの同期中に進行状況を表示</string>
-    <string name="channel_sync_status">同期ステータス</string>
-    <string name="channel_sync_status_desc">同期の完了とエラーに関する通知</string>
-    <string name="channel_event_invitations">予定への招待</string>
-    <string name="channel_event_invitations_desc">新しいカレンダー招待を受け取ったときの通知</string>
-    <string name="invite_notification_body">送信元: %1$s · タップして返信</string>
-    <string name="rrule_does_not_repeat">繰り返さない</string>
-    <string name="rrule_freq_daily">毎日</string>
-    <string name="rrule_freq_weekly">毎週</string>
-    <string name="rrule_freq_monthly">毎月</string>
-    <string name="rrule_freq_yearly">毎年</string>
-    <string name="rrule_repeats">繰り返し</string>
-    <string name="rrule_every_n_days">%1$d日ごと</string>
-    <string name="rrule_every_n_weeks">%1$d週間ごと</string>
-    <string name="rrule_every_n_months">%1$d か月ごと</string>
-    <string name="rrule_every_n_years">%1$d年ごと</string>
-    <string name="rrule_freq_on_days">%1$s %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s 最終日</string>
-    <string name="rrule_freq_on_day_n">%1$s %2$d日</string>
-    <string name="rrule_ordinal_last">最後</string>
-    <string name="rrule_until_suffix">、%1$sまで</string>
-    <string name="rrule_freq_never">なし</string>
-    <string name="rrule_freq_custom">カスタム</string>
-    <string name="label_repeat_every">繰り返し間隔</string>
-    <string name="rrule_unit_day">日</string>
-    <string name="rrule_unit_week">週</string>
-    <string name="rrule_unit_month">月</string>
-    <string name="rrule_unit_year">年</string>
-    <string name="cd_decrease_interval">間隔を減らす</string>
-    <string name="cd_increase_interval">間隔を増やす</string>
-    <string name="rrule_starting">%1$s %2$s開始%3$s</string>
-    <string name="rrule_since">%1$s · %2$s以降</string>
-
-    <!-- ==================== Insights ==================== -->
-    <string name="insights_title">インサイト</string>
-    <string name="insights_period_this_week">週</string>
-    <string name="insights_period_last_week">先週</string>
-    <string name="insights_period_this_month">月</string>
-    <string name="insights_empty_state">今週の予定はありません</string>
-    <plurals name="insights_all_day_count">
-        <item quantity="other">%d件の終日イベント</item>
-    </plurals>
-    <string name="insight_busiest_day_future">%1$sが最も忙しい日です（%2$s）</string>
-    <string name="insight_busiest_day_past">%1$sが最も忙しい日でした（%2$s）</string>
-    <string name="insight_lightest_day_future">%1$sが最も余裕のある日です（%2$s）</string>
-    <string name="insight_lightest_day_past">%1$sが最も余裕のある日でした（%2$s）</string>
-    <string name="insight_longest_free_future">最長の空き時間: %1$s %2$s–%3$s（%4$s）</string>
-    <string name="insight_longest_free_past">最長の空き時間は%1$s %2$s–%3$sでした（%4$s）</string>
-    <string name="insight_weekend_load_clear_future">週末は空いています</string>
-    <string name="insight_weekend_load_clear_past">週末は空いていました</string>
-    <string name="insight_weekend_load_light_future">週末に%1$sの予定があります</string>
-    <string name="insight_weekend_load_light_past">週末に%1$sの予定がありました</string>
-    <string name="insight_weekend_load_busy_future">週末に%1$sの予定があります</string>
-    <string name="insight_weekend_load_busy_past">週末に%1$sの予定がありました</string>
-    <string name="insight_back_to_back_future">%1$d件の連続ミーティング</string>
-    <string name="insight_back_to_back_past">%1$d件の連続ミーティングがありました</string>
-    <string name="insight_calendar_dominant_future">%1$sが予定時間の%2$d%%を占めています</string>
-    <string name="insight_calendar_dominant_past">%1$sが予定時間の%2$d%%を占めていました</string>
-    <string name="insight_early_bounds_future">%1$d日間、午前8時より前に予定が始まります</string>
-    <string name="insight_early_bounds_past">%1$d日間、午前8時より前に予定が始まっていました</string>
-    <string name="insight_late_bounds_future">%1$d日間、19時以降にイベントがあります</string>
-    <string name="insight_late_bounds_past">%1$d日間、19時以降にイベントがありました</string>
-    <string name="insight_meeting_free_days_future">%1$d日間のミーティングなしの日があります</string>
-    <string name="insight_meeting_free_days_past">%1$d日間のミーティングなしの日がありました</string>
-    <string name="insight_tomorrow_preview">明日: %1$sの予定、%2$sに開始</string>
-    <string name="insight_tomorrow_preview_no_start">明日: %1$sの予定</string>
-    <string name="insight_heaviest_upcoming">%1$sが最も忙しい予定の日です（%2$s）</string>
-    <string name="insight_next_free_block">次の空き時間: %1$s %2$s–%3$s（%4$s）</string>
-    <string name="insights_cd_daily_chart">日別分布: 最も忙しい日は%1$s</string>
-    <string name="label_availability">空き状況</string>
-    <string name="label_busy">予定あり</string>
-    <string name="label_free">空き</string>
-    <string name="label_event_color">予定の色</string>
-    <string name="label_calendar_default">カレンダーの既定</string>
-    <string name="label_custom">カスタム</string>
-    <string name="cd_checkmark">選択済み</string>
-    <string name="cd_event_state_cancelled">キャンセル済み</string>
-    <string name="cd_event_state_declined">辞退済み</string>
-    <string name="cd_event_state_past">過去の予定</string>
-    <string name="cd_event_untitled">無題の予定</string>
-    <string name="color_saddlebrown">サドルブラウン</string>    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
-    <string name="color_gold">ゴールド</string>
-    <string name="color_yellowgreen">イエローグリーン</string>
-    <string name="color_limegreen">ライムグリーン</string>    <string name="color_lightseagreen">ライトシーグリーン</string>
-    <string name="color_dodgerblue">ドジャーブルー</string>
-    <string name="color_royalblue">ロイヤルブルー</string>    <string name="color_mediumorchid">ミディアムオーキッド</string>
-    <string name="color_hotpink">ホットピンク</string>
-    <string name="color_dimgray">ディムグレー</string>
-    <string name="hue_red">赤</string>
-    <string name="hue_orange">オレンジ</string>
-    <string name="hue_yellow">黄</string>
-    <string name="hue_green">緑</string>
-    <string name="hue_teal">青緑</string>
-    <string name="hue_blue">青</string>
-    <string name="hue_purple">紫</string>
-    <string name="hue_pink">ピンク</string>
-    <string name="hue_brown">茶</string>
-    <string name="hue_neutral">ニュートラル</string>
-    <string name="label_more_colors">その他の色</string>
-    <string name="label_back_to_grid">戻る</string>
-    <string name="settings_suggest_titles">イベントのタイトルを提案</string>
-
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">設定をバックアップ</string>
-    <string name="backup_settings_subtitle">KashCalの設定をJSONファイルに保存します</string>
-    <string name="restore_settings_label">設定を復元</string>
-    <string name="restore_settings_subtitle">バックアップファイルからKashCalの設定を復元します</string>
-    <string name="restore_confirm_title">バックアップを復元しますか？</string>
-    <string name="restore_confirm_from">KashCal %1$s のバックアップ、%2$s</string>
-    <string name="restore_confirm_message_prefs_only">設定がインポートされます。</string>
-    <string name="action_restore">復元</string>
-    <string name="restore_success_title">復元が完了しました</string>
-    <string name="restore_success_message_prefs_only">設定をインポートしました。</string>
-    <string name="restore_success_device_calendars_note">デバイスのカレンダー機能を使用している場合は、再度選択してください。</string>
-    <string name="restore_error_title">復元に失敗しました</string>
-    <string name="restore_error_version_too_new">このバックアップは新しいバージョンのKashCalで作成されています。KashCalを更新してからもう一度お試しください。</string>
-    <string name="restore_error_malformed_json">このファイルは有効なKashCalのバックアップではありません。</string>
-    <string name="restore_error_invalid_value">このバックアップファイルには無効なデータが含まれており、復元できません。</string>
-    <string name="restore_error_apply_failure">バックアップの適用中に問題が発生しました。変更は保存されていません。</string>
-    <string name="backup_error_build_failed">バックアップに失敗しました</string>
-    <string name="backup_error_write_failed">バックアップに失敗しました：ファイルに書き込めませんでした</string>
-    <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
-    <string name="label_attendees">参加者</string>
-    <string name="attendee_you_marker">あなた</string>
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">出席者</string>
+    <string name="attendee_search_hint">検索</string>
+    <string name="attendee_search_no_matches">該当なし</string>
     <string name="attendee_picker_title">参加者を追加</string>
     <string name="attendee_pick_add_people">参加者を追加</string>
     <string name="attendee_pick_from_contacts">名前またはメール</string>
@@ -1056,25 +744,6 @@
     <string name="attendee_scheduling_unavailable">このアカウントではユーザーを招待できません</string>
     <string name="device_attendee_local_no_delivery">このカレンダーは招待状を送信できません。ゲストは保存されますが通知されません。</string>
     <string name="action_save_and_notify">保存して通知</string>
-    <string name="attendee_card_going">参加</string>
-    <string name="attendee_card_pending">保留</string>
-    <string name="attendee_card_declined">辞退</string>
-    <string name="attendee_card_tentative">未定</string>
-    <string name="attendee_card_hosting">主催</string>
-    <string name="attendee_action_copy">メールアドレスをコピー</string>
-    <string name="attendee_action_email">メールを送信</string>
-    <string name="attendee_email_copied">メールアドレスをコピーしました</string>
-    <string name="attendee_no_email_app">メールアプリが未インストール</string>
-    <string name="attendee_show_all">すべての出席者を表示</string>
-    <string name="attendee_status_accepted">承諾</string>
-    <string name="attendee_status_declined">辞退</string>
-    <string name="attendee_status_tentative">未定</string>
-    <string name="attendee_status_delegated">委任</string>
-    <string name="attendee_status_pending">保留</string>
-    <string name="rsvp_series_disclosure">回答はシリーズ全体に適用されます。</string>
-    <string name="attendee_sheet_title">出席者</string>
-    <string name="attendee_search_hint">検索</string>
-    <string name="attendee_search_no_matches">該当なし</string>
     <string name="attendee_section_going">参加</string>
     <string name="attendee_section_maybe">たぶん</string>
     <string name="attendee_section_pending">保留中</string>
@@ -1108,31 +777,338 @@
     <string name="rsvp_state_maybe">たぶん</string>
     <string name="rsvp_state_not_going">参加しません</string>
     <string name="rsvp_action_change">変更</string>
+    <string name="empty_pick_a_day">日付を選んで、一日をつかもう。</string>
+    <string name="cd_empty_pick_a_day">日付を選ぶ</string>
+    <string name="empty_no_events_day_1">予定のない一日。宇宙が「休みなさい」と言っています。</string>
+    <string name="empty_no_events_day_2">予定なし。それこそが今日の予定です。</string>
+    <string name="empty_no_events_day_3">贈り物です。何もない一日。</string>
+    <string name="empty_no_events_day_4">カレンダーの状態：見事に空っぽです。</string>
+    <string name="empty_no_events_day_5">予定はありません。この静けさを楽しみましょう。</string>
+    <string name="cd_empty_no_events_day">穏やかな一日、予定なし</string>
+    <string name="filter_date">日付</string>
+    <string name="label_select_date">日付を選択</string>
+    <string name="hint_tap_date_range">同じ日付をタップで1日、別の日付で範囲を選択</string>
+    <string name="cd_clear">クリア</string>
+    <string name="cd_offline">オフライン</string>
+    <string name="cd_event_state_cancelled">キャンセル済み</string>
+    <string name="cd_event_state_declined">辞退済み</string>
+    <string name="cd_event_state_past">過去の予定</string>
+    <string name="cd_loading_events">予定を読み込み中</string>
+    <string name="cd_event_untitled">無題の予定</string>
+    <string name="cd_open_drawer">ドロワーを開く</string>
+    <string name="cd_close_drawer">ドロワーを閉じる</string>
+    <string name="cd_calendar_view">カレンダー表示</string>
+    <string name="cd_active_view">アクティブな表示</string>
+    <string name="view_agenda">アジェンダ</string>
+    <string name="view_month_full">月（フル）</string>
+    <string name="view_day">日</string>
+    <string name="view_three_days">3日間</string>
+    <string name="view_year">年</string>
+    <string name="view_insights">インサイト</string>
+    <string name="label_go_to_month">月に移動</string>
+    <string name="action_more_options">その他のオプション</string>
+    <string name="quick_add_save_failed">予定を保存できませんでした</string>
+    <string name="label_duration_days">日</string>
+    <string name="label_duration_hrs">時間</string>
+    <string name="label_duration_min">分</string>
 
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">毎月%1$d日</string>
+    <string name="recurrence_on_last_day">毎月最終日</string>
+    <string name="recurrence_on_nth_weekday">第%1$s %2$s</string>
+    <string name="ordinal_1st">1</string>
+    <string name="ordinal_2nd">2</string>
+    <string name="ordinal_3rd">3</string>
+    <string name="ordinal_4th">4</string>
+    <string name="ordinal_nth">%1$d</string>
 
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">繰り返さない</string>
+    <string name="rrule_freq_daily">毎日</string>
+    <string name="rrule_freq_weekly">毎週</string>
+    <string name="rrule_freq_monthly">毎月</string>
+    <string name="rrule_freq_yearly">毎年</string>
+    <string name="rrule_repeats">繰り返し</string>
+    <string name="rrule_every_n_days">%1$d日ごと</string>
+    <string name="rrule_every_n_weeks">%1$d週間ごと</string>
+    <string name="rrule_every_n_months">%1$d か月ごと</string>
+    <string name="rrule_every_n_years">%1$d年ごと</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s 最終日</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d日</string>
+    <string name="rrule_ordinal_last">最後</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">、%1$d回</item>
+    </plurals>
+    <string name="rrule_until_suffix">、%1$sまで</string>
+    <string name="rrule_freq_never">なし</string>
+    <string name="rrule_freq_custom">カスタム</string>
+    <string name="label_repeat_every">繰り返し間隔</string>
+    <string name="rrule_unit_day">日</string>
+    <string name="rrule_unit_week">週</string>
+    <string name="rrule_unit_month">月</string>
+    <string name="rrule_unit_year">年</string>
+    <string name="cd_decrease_interval">間隔を減らす</string>
+    <string name="cd_increase_interval">間隔を増やす</string>
+    <string name="rrule_starting">%1$s %2$s開始%3$s</string>
+    <string name="rrule_since">%1$s · %2$s以降</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d件の新規</string>
+    <string name="sync_summary_updated">%1$d件の更新</string>
+    <string name="sync_summary_removed">%1$d件の削除</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">循環スクロールが有効</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">リマインダーなし</string>
+    <string name="reminder_at_time_of_event">予定開始時</string>
+    <string name="reminder_time_before">%1$s前</string>
+    <string name="reminder_time_after">%1$s後</string>
+    <string name="reminder_day_of_event_12h">当日 9 AM</string>
+    <string name="reminder_day_of_event_24h">当日 09:00</string>
+    <string name="reminder_before_at_12h">%1$s前の9 AM</string>
+    <string name="reminder_before_at_24h">%1$s前の09:00</string>
+    <string name="reminder_short_off">オフ</string>
+    <string name="reminder_short_at_event">開始時</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d分</string>
+    <string name="reminder_short_hours">%1$d時間</string>
+    <string name="reminder_short_days">%1$d日</string>
+    <string name="reminder_short_weeks">%1$d週</string>
+    <string name="reminder_summary_none">なし</string>
+    <string name="duration_compact">%1$d時間%2$d分</string>
+    <string name="duration_compact_short">%1$d時%2$d分</string>
+    <string name="sync_manual_only">手動のみ</string>
+    <string name="sync_lookback_all">すべての予定</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">スヌーズ</string>
+    <string name="notification_starting_now">まもなく開始</string>
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d日後</item>
+    </plurals>
+    <string name="notification_tomorrow_time">明日 %1$s</string>
+    <string name="notification_date_time">%1$s %2$s</string>
+    <string name="sync_notification_complete">同期完了</string>
+    <string name="sync_notification_partial">同期が一部完了</string>
+    <string name="sync_notification_auth_failed">同期の認証に失敗</string>
+    <string name="sync_notification_auth_reauth">アカウントを再認証してください</string>
+    <string name="sync_notification_failed">同期に失敗</string>
+    <string name="sync_notification_parse_title">一部の予定を同期できませんでした</string>
+    <string name="sync_notification_parse_content">%2$sの%1$sを同期できませんでした。設定から強制同期をお試しください。</string>
+    <string name="sync_notification_conflict_title">同期の競合が解決されました</string>
+    <string name="sync_notification_conflict_single">「%1$s」のローカル変更が同期の競合により失われました。サーバー版が使用されます。</string>
+    <string name="sync_notification_conflict_multi">%1$sのローカル変更が同期の競合により失われました。サーバー版が使用されます。</string>
+    <string name="sync_notification_expired_title">同期の変更が期限切れです</string>
+    <string name="sync_notification_expired_content">%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
+    <string name="sync_notification_expired_content_calendar">%2$sの%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
+    <string name="sync_notification_expired_content_calendars">%2$sにまたがる%1$sは30日経過しても同期できませんでした。サーバー版が使用されます。強制同期で再試行してください。</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">%1$d個のカレンダーを同期しました</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">、%1$d件の変更</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">、%1$d件のエラー</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$sの%2$s歳の誕生日</string>
+    <string name="contact_birthday">%1$sの誕生日</string>
+    <string name="contact_anniversary_with_age">%1$sの%2$s周年記念日</string>
+    <string name="contact_anniversary">%1$sの記念日</string>
+    <string name="ordinal_suffix_st">第%1$d</string>
+    <string name="ordinal_suffix_nd">第%1$d</string>
+    <string name="ordinal_suffix_rd">第%1$d</string>
+    <string name="ordinal_suffix_th">第%1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">カレンダーを同期中…</string>
+    <string name="sync_banner_preparing">同期を準備中…</string>
+    <string name="sync_banner_complete_errors">同期完了（エラーあり）</string>
+    <string name="sync_banner_failed">同期に失敗: %1$s</string>
+    <string name="error_unknown_error">不明なエラー</string>
+    <string name="sync_snackbar_new_event">新しい予定: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d件の新しい予定</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d件の予定を更新</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d件の予定を削除</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d件のカレンダー更新</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">%2$d日中%1$d日目</string>
+    <string name="day_starts">%1$d日中1日目 · %2$s開始</string>
+    <string name="day_ends">%2$d日中%1$d日目 · %3$s終了</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · 終日</string>
+    <string name="event_date_all_day">%1$s · 終日</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s（終日）</string>
+    <string name="event_date_all_day_parens">%1$s（終日）</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">予定を保存</string>
+    <string name="badge_beta">ベータ</string>
+    <string name="badge_new">新規</string>
+    <string name="color_red">赤</string>
+    <string name="color_orange">オレンジ</string>
+    <string name="color_yellow">黄</string>
+    <string name="color_green">緑</string>
+    <string name="color_cyan">シアン</string>
+    <string name="color_blue">青</string>
+    <string name="color_purple">紫</string>
+    <string name="cd_meeting_link">会議リンク: %1$s</string>
+    <string name="cd_phone_number">電話番号</string>
+    <string name="cd_email_link">メール: %1$s</string>
+    <string name="cd_web_link">リンク: %1$s</string>
+    <string name="cd_text_with_links">%1$d個のリンク付きテキスト: %2$s</string>
+    <string name="cd_text_with_link">1個のリンク付きテキスト: %1$s</string>
+    <string name="day_x_of_y_all_day">%2$d日中%1$d日目（終日）</string>
+    <string name="sync_history_stats">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル</string>
+    <string name="sync_history_stats_issues">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル   ⚠ %4$d件の問題</string>
+    <string name="sync_history_failed">失敗</string>
+    <string name="ics_sync_every_hour">1時間ごと</string>
+    <string name="ics_sync_every_n_hours">%1$d時間ごと</string>
+    <string name="ics_sync_daily">毎日</string>
+    <string name="ics_sync_weekly">毎週</string>
+    <string name="ics_url_required">URLが必要です</string>
+    <string name="ics_url_invalid_scheme">URLはhttp://、https://、またはwebcal://で始まる必要があります</string>
+    <string name="ics_fetch_error_http">サーバーがエラー（%1$d）を返しました。URLを確認してください。</string>
+    <string name="ics_fetch_error_empty">カレンダーフィードが空です。</string>
+    <string name="ics_fetch_error_not_calendar">そのURLはカレンダーフィードではないようです。</string>
+    <string name="insights_title">インサイト</string>
+    <string name="insights_period_this_week">週</string>
+    <string name="insights_period_last_week">先週</string>
+    <string name="insights_period_this_month">月</string>
+    <string name="insights_empty_state">今週の予定はありません</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">%d件の終日予定</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$sが最も忙しい日です（%2$s）</string>
+    <string name="insight_busiest_day_past">%1$sが最も忙しい日でした（%2$s）</string>
+    <string name="insight_lightest_day_future">%1$sが最も余裕のある日です（%2$s）</string>
+    <string name="insight_lightest_day_past">%1$sが最も余裕のある日でした（%2$s）</string>
+    <string name="insight_longest_free_future">最長の空き時間: %1$s %2$s–%3$s（%4$s）</string>
+    <string name="insight_longest_free_past">最長の空き時間は%1$s %2$s–%3$sでした（%4$s）</string>
+    <string name="insight_weekend_load_clear_future">週末は空いています</string>
+    <string name="insight_weekend_load_clear_past">週末は空いていました</string>
+    <string name="insight_weekend_load_light_future">週末に%1$sの予定があります</string>
+    <string name="insight_weekend_load_light_past">週末に%1$sの予定がありました</string>
+    <string name="insight_weekend_load_busy_future">週末に%1$sの予定があります</string>
+    <string name="insight_weekend_load_busy_past">週末に%1$sの予定がありました</string>
+    <string name="insight_back_to_back_future">%1$d件の連続ミーティング</string>
+    <string name="insight_back_to_back_past">%1$d件の連続ミーティングがありました</string>
+    <string name="insight_calendar_dominant_future">%1$sが予定時間の%2$d%%を占めています</string>
+    <string name="insight_calendar_dominant_past">%1$sが予定時間の%2$d%%を占めていました</string>
+    <string name="insight_early_bounds_future">%1$d日間、午前8時より前に予定が始まります</string>
+    <string name="insight_early_bounds_past">%1$d日間、午前8時より前に予定が始まっていました</string>
+    <string name="insight_late_bounds_future">%1$d日間、19時以降に予定があります</string>
+    <string name="insight_late_bounds_past">%1$d日間、19時以降に予定がありました</string>
+    <string name="insight_meeting_free_days_future">%1$d日間のミーティングなしの日があります</string>
+    <string name="insight_meeting_free_days_past">%1$d日間のミーティングなしの日がありました</string>
+    <string name="insight_tomorrow_preview">明日: %1$sの予定、%2$sに開始</string>
+    <string name="insight_tomorrow_preview_no_start">明日: %1$sの予定</string>
+    <string name="insight_heaviest_upcoming">%1$sが最も忙しい予定の日です（%2$s）</string>
+    <string name="insight_next_free_block">次の空き時間: %1$s %2$s–%3$s（%4$s）</string>
+    <string name="insights_cd_daily_chart">日別分布: 最も忙しい日は%1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">空き状況</string>
+    <string name="label_busy">予定あり</string>
+    <string name="label_free">空き</string>
+    <string name="label_event_color">予定の色</string>
+    <string name="label_calendar_default">カレンダーの既定</string>
+    <string name="label_custom">カスタム</string>
+    <string name="cd_checkmark">選択済み</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">サドルブラウン</string>    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
+    <string name="color_gold">ゴールド</string>
+    <string name="color_yellowgreen">イエローグリーン</string>
+    <string name="color_limegreen">ライムグリーン</string>    <string name="color_lightseagreen">ライトシーグリーン</string>
+    <string name="color_dodgerblue">ドジャーブルー</string>
+    <string name="color_royalblue">ロイヤルブルー</string>    <string name="color_mediumorchid">ミディアムオーキッド</string>
+    <string name="color_hotpink">ホットピンク</string>
+    <string name="color_dimgray">ディムグレー</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <string name="hue_red">赤</string>
+    <string name="hue_orange">オレンジ</string>
+    <string name="hue_yellow">黄</string>
+    <string name="hue_green">緑</string>
+    <string name="hue_teal">青緑</string>
+    <string name="hue_blue">青</string>
+    <string name="hue_purple">紫</string>
+    <string name="hue_pink">ピンク</string>
+    <string name="hue_brown">茶</string>
+    <string name="hue_neutral">ニュートラル</string>
+    <string name="label_more_colors">その他の色</string>
+    <string name="label_back_to_grid">戻る</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <string name="label_attendees">参加者</string>
+    <string name="attendee_you_marker">あなた</string>
+    <string name="attendee_card_going">参加</string>
+    <string name="attendee_card_pending">保留</string>
+    <string name="attendee_card_declined">辞退</string>
+    <string name="attendee_card_tentative">未定</string>
+    <string name="attendee_card_hosting">主催</string>
+    <string name="attendee_action_copy">メールアドレスをコピー</string>
+    <string name="attendee_action_email">メールを送信</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <string name="attendee_email_copied">メールアドレスをコピーしました</string>
+    <string name="attendee_no_email_app">メールアプリが未インストール</string>
+    <string name="attendee_show_all">すべての出席者を表示</string>
+    <string name="attendee_status_accepted">承諾</string>
+    <string name="attendee_status_declined">辞退</string>
+    <string name="attendee_status_tentative">未定</string>
+    <string name="attendee_status_delegated">委任</string>
+    <string name="attendee_status_pending">保留</string>
     <string name="inbox_empty_caught_up">すべて確認済みです</string>
     <string name="inbox_organizer_suffix">(主催者)</string>
     <string name="menu_invites">招待</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">日付へ移動</string>
     <string name="menu_about">このアプリについて</string>
     <string name="menu_more">その他のメニュー</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">その他のメニュー、%d 件保留中</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">空き状況を共有</string>
     <string name="share_availability_sheet_title">空き状況を共有</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">次の %1$d 日間</item>
+    </plurals>
     <string name="share_availability_hours_label">勤務時間: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">終日イベントを予定ありとして扱う</string>
+    <string name="share_availability_all_day_toggle_title">終日の予定を予定ありとして扱う</string>
     <string name="share_availability_share_button">共有</string>
+    <plurals name="share_availability_header">
+        <item quantity="other">次の %1$d 日間（%2$s – %3$s）の空き時間：</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">選択した範囲に1時間以上の空きブロックがありません。</string>
+    <string name="share_from_kashcal_footer">KashCalから共有</string>
     <string name="share_availability_chooser_title">空き状況を共有</string>
     <string name="share_availability_share_failed">共有できるアプリがありません</string>
     <string name="share_availability_window_section">期間</string>
     <string name="share_availability_hours_section">勤務時間</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d 日間</item>
+    </plurals>
     <string name="share_availability_days_through">%1$s まで</string>
     <string name="share_availability_window_duration">%1$s 時間の枠</string>
     <string name="share_as_card_action">カードとして共有</string>
@@ -1143,25 +1119,5 @@
     <string name="share_as_card_all_day">終日</string>
     <string name="share_as_card_chooser_title">予定を共有</string>
     <string name="share_as_card_share_failed">カードを共有できませんでした</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="other">%1$d 日間</item>
-    </plurals>
-    <string name="share_from_kashcal_footer">KashCalから共有</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="other">次の %1$d 日間</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="other">次の %1$d 日間（%2$s – %3$s）の空き時間：</item>
-    </plurals>
-    <plurals name="reminder_in_days">
-        <item quantity="other">%1$d日後</item>
-    </plurals>
-    <string name="holiday_catalog_add">祝日カレンダーを追加</string>
-    <string name="holiday_catalog_search_label">検索</string>
-    <string name="holiday_catalog_already_added">追加済み</string>
-    <string name="holiday_catalog_empty">該当する国が見つかりません</string>
-    <string name="holiday_catalog_empty_hint">別の名前で試してください</string>
-    <string name="holiday_catalog_validate_error">このカレンダーに接続できませんでした。接続を確認してもう一度お試しください。</string>
-    <string name="holiday_catalog_attribution">祝日カレンダーは Mozilla Thunderbird より提供され、%1$s の下でライセンスされています。</string>
-    <string name="qs_tile_label">予定を追加</string>
+
 </resources>

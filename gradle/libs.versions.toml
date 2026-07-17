@@ -5,13 +5,13 @@ kotlin = "2.3.21"
 ksp = "2.3.7"
 
 # AndroidX
-coreKtx = "1.18.0"
-lifecycleRuntimeKtx = "2.10.0"
+coreKtx = "1.19.0"
+lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 biometric = "1.1.0"
 
 # Compose
-composeBom = "2026.04.01"
+composeBom = "2026.06.00"
 
 # Room (2.8.x has kotlinx.serialization incompatibility with KSP - https://issuetracker.google.com/issues/478659001)
 room = "2.7.2"

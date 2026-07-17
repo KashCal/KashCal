@@ -38,7 +38,7 @@ val localProps = Properties().apply {
 
 android {
     namespace = "org.onekash.kashcal"
-    compileSdk = 36
+    compileSdk = 37
 
     // Disable encrypted dependency metadata (only Google can read it)
     // Required for F-Droid/IzzyOnDroid transparency
@@ -50,7 +50,7 @@ android {
     defaultConfig {
         applicationId = "org.onekash.kashcal"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 37
         versionCode = versionProps.getProperty("VERSION_CODE").toInt()
         versionName = versionProps.getProperty("VERSION_NAME")
 

@@ -13,12 +13,27 @@
     <string name="date_widget_description">ਅੱਜ ਦੀ ਮਿਤੀ ਐਪ ਆਈਕਨ ਵਾਂਗ ਦਿਖਾਉਂਦਾ ਹੈ</string>
     <string name="upcoming_widget_name">ਆਉਣ ਵਾਲੇ</string>
     <string name="upcoming_widget_description">ਅਗਲੇ 10 ਦਿਨਾਂ ਦੀਆਂ ਘਟਨਾਵਾਂ ਦਿਖਾਉਂਦਾ ਹੈ, ਖਾਲੀ ਦਿਨ ਛੱਡ ਦਿੰਦਾ ਹੈ</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">ਆਉਣ ਵਾਲੀਆਂ ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…</string>
     <string name="widget_error_load_events">ਘਟਨਾਵਾਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ, ਖੋਲ੍ਹਣ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="widget_no_events_today">ਅੱਜ ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="widget_add_event">+ ਘਟਨਾ ਜੋੜੋ</string>
     <string name="widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="widget_no_upcoming_events">ਕੋਈ ਆਉਣ ਵਾਲੀ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="cd_widget_calendar">ਕੈਲੰਡਰ</string>
+    <string name="cd_widget_add_event">ਘਟਨਾ ਜੋੜੋ</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
+    <string name="channel_event_reminders">ਘਟਨਾ ਯਾਦ-ਦਹਾਨੀਆਂ</string>
+    <string name="channel_event_reminders_desc">ਆਉਣ ਵਾਲੀਆਂ ਕੈਲੰਡਰ ਘਟਨਾਵਾਂ ਲਈ ਸੂਚਨਾਵਾਂ</string>
+    <string name="channel_sync_progress">ਸਿੰਕ ਪ੍ਰਗਤੀ</string>
+    <string name="channel_sync_progress_desc">ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਦੇ ਸਮੇਂ ਪ੍ਰਗਤੀ ਦਿਖਾਉਂਦਾ ਹੈ</string>
+    <string name="channel_sync_status">ਸਿੰਕ ਸਥਿਤੀ</string>
+    <string name="channel_sync_status_desc">ਸਿੰਕ ਪੂਰਾ ਹੋਣ ਅਤੇ ਗਲਤੀਆਂ ਬਾਰੇ ਸੂਚਨਾਵਾਂ</string>
+    <string name="channel_event_invitations">ਘਟਨਾ ਸੱਦੇ</string>
+    <string name="channel_event_invitations_desc">ਜਦੋਂ ਤੁਹਾਨੂੰ ਨਵਾਂ ਕੈਲੰਡਰ ਸੱਦਾ ਮਿਲਦਾ ਹੈ ਤਾਂ ਸੂਚਨਾਵਾਂ</string>
+    <string name="invite_notification_body">%1$s ਤੋਂ · ਜਵਾਬ ਦੇਣ ਲਈ ਟੈਪ ਕਰੋ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ਨਵੀਂ ਘਟਨਾ</string>
@@ -45,7 +60,6 @@
     <string name="action_learn_more">ਹੋਰ ਜਾਣੋ</string>
     <string name="action_open_apple_id">Apple ID ਖੋਲ੍ਹੋ</string>
     <string name="action_open_settings">ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ</string>
-    <string name="action_open">ਖੋਲ੍ਹੋ</string>
     <string name="action_force_sync">ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ</string>
     <string name="action_sync_now">ਹੁਣੇ ਸਿੰਕ ਕਰੋ</string>
     <string name="action_details">ਵੇਰਵੇ</string>
@@ -57,6 +71,7 @@
     <string name="action_save">ਸੇਵ ਕਰੋ</string>
     <string name="action_add">ਜੋੜੋ</string>
     <string name="action_edit">ਸੰਪਾਦਨ</string>
+    <string name="action_open">ਖੋਲ੍ਹੋ</string>
     <string name="action_delete">ਮਿਟਾਓ</string>
     <string name="action_confirm">ਪੁਸ਼ਟੀ ਕਰੋ</string>
     <string name="action_discard">ਰੱਦ ਕਰੋ</string>
@@ -70,21 +85,7 @@
     <string name="action_confirm_delete">ਮਿਟਾਉਣ ਦੀ ਪੁਸ਼ਟੀ</string>
     <string name="action_delete_event">ਘਟਨਾ ਮਿਟਾਓ</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="invitees_host_tag">ਮੇਜ਼ਬਾਨ</string>
-    <string name="rsvp_question_going">ਜਾ ਰਹੇ ਹੋ?</string>
-    <string name="rsvp_action_yes">ਹਾਂ</string>
-    <string name="rsvp_action_maybe">ਸ਼ਾਇਦ</string>
-    <string name="rsvp_action_no">ਨਹੀਂ</string>
-    <string name="rsvp_state_going">ਤੁਸੀਂ ਜਾ ਰਹੇ ਹੋ</string>
-    <string name="rsvp_state_maybe">ਸ਼ਾਇਦ</string>
-    <string name="rsvp_state_not_going">ਤੁਸੀਂ ਨਹੀਂ ਜਾ ਰਹੇ</string>
-    <string name="rsvp_action_change">ਬਦਲੋ</string>
-
-
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">ਇਹ ਜਵਾਬ ਪੂਰੀ ਲੜੀ \'ਤੇ ਲਾਗੂ ਹੁੰਦਾ ਹੈ।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
@@ -123,7 +124,6 @@
     <string name="label_all_day">ਸਾਰਾ ਦਿਨ</string>
     <string name="label_today">ਅੱਜ</string>
     <string name="label_go_to_date">ਮਿਤੀ \'ਤੇ ਜਾਓ</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">ਹ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -144,9 +144,6 @@
     <string name="app_icon_label_calendar">ਕੈਲੰਡਰ</string>
     <string name="app_icon_support_cta">KashCal ਦਾ ਸਮਰਥਨ ਕਰੋ</string>
     <string name="app_icon_switch_note">ਆਈਕਨ ਬਦਲਣ ਨਾਲ ਐਪ ਮੁੜ ਚਾਲੂ ਹੋ ਸਕਦੀ ਹੈ। ਸੂਚਨਾਵਾਂ ਹਮੇਸ਼ਾ ਮੂਲ ਆਈਕਨ ਅਤੇ ਨਾਮ ਵਰਤਦੀਆਂ ਹਨ।</string>
-    <string name="settings_search_placeholder">ਸੈਟਿੰਗਾਂ ਖੋਜੋ…</string>
-    <string name="settings_search_no_results">\"%1$s\" ਲਈ ਕੋਈ ਸੈਟਿੰਗ ਨਹੀਂ ਮਿਲੀ</string>
-    <string name="cd_search_settings">ਸੈਟਿੰਗਾਂ ਖੋਜੋ</string>
     <string name="settings_time_format">ਸਮਾਂ ਫ਼ਾਰਮੈਟ</string>
     <string name="settings_start_week_on">ਹਫ਼ਤਾ ਸ਼ੁਰੂ ਕਰੋ</string>
     <string name="settings_event_emojis">ਘਟਨਾ ਇਮੋਜੀ</string>
@@ -161,10 +158,12 @@
     <string name="settings_use_device_timezone">ਡਿਵਾਈਸ ਟਾਈਮਜ਼ੋਨ ਵਰਤੋ</string>
     <string name="settings_section_calendars">ਕੈਲੰਡਰ</string>
     <string name="settings_section_appearance">ਦਿੱਖ</string>
-    <string name="settings_section_creating_events">ਇਵੈਂਟ ਬਣਾਉਣਾ</string>
+    <string name="settings_section_creating_events">ਘਟਨਾ ਬਣਾਉਣਾ</string>
     <string name="settings_section_sync">ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
     <string name="settings_section_privacy">ਪਰਦੇਦਾਰੀ</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ਐਪ ਲਾਕ</string>
     <string name="app_lock_subtitle_off">KashCal ਖੋਲ੍ਹਣ ਲਈ ਅਣਲਾਕ ਲਾਜ਼ਮੀ ਕਰੋ</string>
     <string name="app_lock_subtitle_on">ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰੇ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ ਨਾਲ ਅਣਲਾਕ ਕਰੋ</string>
@@ -184,9 +183,9 @@
     <string name="restore_settings_subtitle">ਬੈਕਅੱਪ ਫ਼ਾਈਲ ਤੋਂ KashCal ਸੰਰਚਨਾ ਰੀਸਟੋਰ ਕਰੋ</string>
     <string name="restore_confirm_title">ਬੈਕਅੱਪ ਰੀਸਟੋਰ ਕਰਨਾ ਹੈ?</string>
     <string name="restore_confirm_from">KashCal %1$s, %2$s ਤੋਂ ਬੈਕਅੱਪ</string>
+    <string name="restore_confirm_message_prefs_only">ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</string>
     <string name="action_restore">ਰੀਸਟੋਰ</string>
     <string name="restore_success_title">ਰੀਸਟੋਰ ਮੁਕੰਮਲ</string>
-    <string name="restore_confirm_message_prefs_only">ਤੁਹਾਡੀਆਂ ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਜਾਣਗੀਆਂ।</string>
     <string name="restore_success_message_prefs_only">ਤਰਜੀਹਾਂ ਆਯਾਤ ਕੀਤੀਆਂ ਗਈਆਂ।</string>
     <string name="restore_success_device_calendars_note">ਜੇ ਤੁਸੀਂ ਉਹ ਫੀਚਰ ਵਰਤਦੇ ਹੋ ਤਾਂ ਆਪਣੇ ਡਿਵਾਈਸ ਦੇ ਕੈਲੰਡਰ ਦੁਬਾਰਾ ਚੁਣੋ।</string>
     <string name="restore_error_title">ਰੀਸਟੋਰ ਅਸਫਲ</string>
@@ -202,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">ਅਸੀਂ ਤੁਹਾਡੀ ਮਦਦ ਕਰਾਂਗੇ।</string>
     <string name="onboarding_connect_prompt">ਆਪਣੀਆਂ ਘਟਨਾਵਾਂ ਇੱਥੇ ਦੇਖਣ ਲਈ iCloud ਨਾਲ ਜੋੜੋ</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">ਨਵਾਂ ਕੀ ਹੈ</string>
+    <string name="whats_new_dismiss">ਸਮਝ ਗਿਆ</string>
+    <string name="whats_new_v598_title">Android ਨੂੰ ਖੁੱਲ੍ਹਾ ਰੱਖਣ ਵਿੱਚ ਮਦਦ ਕਰੋ</string>
+    <string name="whats_new_v598_body">Google ਤੁਹਾਡੇ ਡਿਵਾਈਸ \'ਤੇ ਐਪਾਂ ਇੰਸਟਾਲ ਕਰਨ ਦਾ ਤਰੀਕਾ ਬਦਲ ਰਿਹਾ ਹੈ। ਸਾਨੂੰ ਤੁਹਾਡੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org \'ਤੇ ਜਾਓ</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud ਨਾਲ ਜੋੜੋ</string>
@@ -246,13 +252,11 @@
     <string name="error_auth_session_expired_title">ਸੈਸ਼ਨ ਸਮਾਪਤ</string>
     <string name="error_auth_session_expired">ਤੁਹਾਡਾ iCloud ਸੈਸ਼ਨ ਸਮਾਪਤ ਹੋ ਗਿਆ ਹੈ। ਸਿੰਕ ਜਾਰੀ ਰੱਖਣ ਲਈ ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ।</string>
     <string name="error_auth_account_locked">ਤੁਹਾਡਾ Apple ID ਲੌਕ ਹੋ ਗਿਆ ਹੈ। ਅਨਲੌਕ ਕਰਨ ਲਈ appleid.apple.com \'ਤੇ ਜਾਓ।</string>
-
     <string name="error_network_offline">ਤੁਸੀਂ ਆਫ਼ਲਾਈਨ ਹੋ। ਆਨਲਾਈਨ ਹੋਣ \'ਤੇ ਬਦਲਾਅ ਸਿੰਕ ਹੋਣਗੇ।</string>
     <string name="error_network_timeout">ਕਨੈਕਸ਼ਨ ਸਮਾਂ ਸਮਾਪਤ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_network_ssl">ਸੁਰੱਖਿਅਤ ਕਨੈਕਸ਼ਨ ਅਸਫ਼ਲ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੀਆਂ ਨੈੱਟਵਰਕ ਸੈਟਿੰਗਾਂ ਜਾਂਚੋ।</string>
     <string name="error_network_unknown_host">iCloud ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ।</string>
     <string name="error_network_connection_failed">ਕਨੈਕਸ਼ਨ ਅਸਫ਼ਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
-
     <string name="error_server_unavailable">iCloud ਅਸਥਾਈ ਤੌਰ \'ਤੇ ਉਪਲਬਧ ਨਹੀਂ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_server_rate_limited">ਬਹੁਤ ਜ਼ਿਆਦਾ ਬੇਨਤੀਆਂ। ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਪਲ ਉਡੀਕੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_server_forbidden">ਪਹੁੰਚ ਤੋਂ ਇਨਕਾਰ। ਤੁਹਾਡੇ ਕੋਲ ਇਸ ਕੈਲੰਡਰ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੋ ਸਕਦੀ।</string>
@@ -261,13 +265,11 @@
     <string name="error_conflict_generic">ਇਹ ਘਟਨਾ ਕਿਸੇ ਹੋਰ ਡਿਵਾਈਸ \'ਤੇ ਬਦਲੀ ਗਈ ਸੀ। ਨਵੀਨਤਮ ਸੰਸਕਰਣ ਲੈਣ ਲਈ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ ਕਰੋ।</string>
     <string name="error_conflict_with_event">\"%1$s\" ਕਿਸੇ ਹੋਰ ਡਿਵਾਈਸ \'ਤੇ ਬਦਲੀ ਗਈ ਸੀ। ਨਵੀਨਤਮ ਸੰਸਕਰਣ ਲੈਣ ਲਈ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ ਕਰੋ।</string>
     <string name="error_sync_token_expired">ਸਿੰਕ ਡਾਟਾ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਪੂਰਾ ਸਿੰਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…</string>
-
     <string name="error_event_not_found">ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ।</string>
     <string name="error_calendar_not_found">ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ।</string>
     <string name="error_calendar_read_only">\"%1$s\" ਵਿੱਚ ਘਟਨਾਵਾਂ ਬਦਲੀਆਂ ਨਹੀਂ ਜਾ ਸਕਦੀਆਂ (ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਕੈਲੰਡਰ)।</string>
     <string name="error_event_invalid_data">ਗਲਤ ਘਟਨਾ ਡਾਟਾ। ਕਿਰਪਾ ਕਰਕੇ ਸ਼ੁਰੂ ਅਤੇ ਅੰਤ ਸਮੇਂ ਜਾਂਚੋ।</string>
     <string name="error_event_invalid_recurrence">ਗਲਤ ਦੁਹਰਾਓ ਪੈਟਰਨ।</string>
-
     <string name="error_display_name_exists">\"%1$s\" ਨਾਮ ਦਾ ਖਾਤਾ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।</string>
     <string name="icloud_error_credentials_required">Apple ID ਅਤੇ ਪਾਸਵਰਡ ਲੋੜੀਂਦੇ ਹਨ</string>
     <string name="icloud_error_connection_timeout">ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
@@ -276,42 +278,41 @@
     <string name="caldav_error_connection_timeout">ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="caldav_error_no_calendars">ਇਸ ਸਰਵਰ \'ਤੇ ਕੋਈ ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ।</string>
     <string name="caldav_error_unexpected">ਅਣਕਿਆਸੀ ਗਲਤੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nਜੇ ਇਹ ਤੁਹਾਡੇ ਲੋਕਲ ਨੈੱਟਵਰਕ ਦਾ ਸਰਵਰ ਹੈ, ਤਾਂ ਕਨੈਕਟ ਕਰਨ ਲਈ ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
+    <string name="local_network_banner_title">ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਲੋੜ ਹੈ</string>
+    <string name="local_network_banner_body">ਇਹ ਸਰਵਰ ਤੁਹਾਡੇ ਲੋਕਲ ਨੈੱਟਵਰਕ ਉੱਤੇ ਜਾਪਦਾ ਹੈ। KashCal ਇਸ ਨਾਲ ਕਨੈਕਟ ਕਰ ਸਕੇ, ਇਸ ਲਈ ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
+    <string name="local_network_banner_allow">ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ</string>
+    <string name="local_network_banner_dismiss">ਹੁਣੇ ਨਹੀਂ</string>
     <string name="password_change_error_account_not_found">ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ</string>
     <string name="password_change_error_no_credentials">ਕੋਈ ਮੌਜੂਦਾ ਪ੍ਰਮਾਣ-ਪੱਤਰ ਨਹੀਂ</string>
     <string name="password_change_error_unsupported_provider">ਇਹ ਪ੍ਰਦਾਤਾ ਪਾਸਵਰਡ ਬਦਲਣ ਦਾ ਸਮਰਥਨ ਨਹੀਂ ਕਰਦਾ</string>
     <string name="password_change_error_invalid">ਗਲਤ ਪਾਸਵਰਡ</string>
     <string name="password_change_error_network">ਨੈੱਟਵਰਕ ਗਲਤੀ, ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
-
     <string name="error_import_file_not_found">ਫ਼ਾਈਲ ਨਹੀਂ ਮਿਲੀ ਜਾਂ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ।</string>
     <string name="error_import_invalid_format">ਗਲਤ ਕੈਲੰਡਰ ਫ਼ਾਈਲ ਫ਼ਾਰਮੈਟ।</string>
     <string name="error_import_partial">%1$d ਘਟਨਾਵਾਂ ਇੰਪੋਰਟ ਹੋਈਆਂ, %2$d ਅਸਫ਼ਲ।</string>
     <string name="error_export_failed">ਘਟਨਾਵਾਂ ਐਕਸਪੋਰਟ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ।</string>
     <string name="error_export_no_events">ਐਕਸਪੋਰਟ ਕਰਨ ਲਈ ਕੋਈ ਘਟਨਾ ਨਹੀਂ।</string>
     <string name="error_end_before_start">ਅੰਤ ਸਮਾਂ ਸ਼ੁਰੂ ਸਮੇਂ ਤੋਂ ਬਾਅਦ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
-
     <string name="error_storage_full_title">ਸਟੋਰੇਜ ਭਰ ਗਈ</string>
     <string name="error_storage_full">ਲੋੜੀਂਦੀ ਸਟੋਰੇਜ ਜਗ੍ਹਾ ਨਹੀਂ। ਕਿਰਪਾ ਕਰਕੇ ਥਾਂ ਖਾਲੀ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_database_corruption_title">ਡਾਟਾ ਗਲਤੀ</string>
     <string name="error_database_corruption">ਤੁਹਾਡਾ ਕੈਲੰਡਰ ਡਾਟਾ ਖ਼ਰਾਬ ਹੋ ਸਕਦਾ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਸਹਾਇਤਾ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।</string>
     <string name="error_migration_title">ਅੱਪਡੇਟ ਗਲਤੀ</string>
     <string name="error_migration_failed">ਐਪ ਡਾਟਾ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ। ਕਿਰਪਾ ਕਰਕੇ ਐਪ ਦੁਬਾਰਾ ਇੰਸਟਾਲ ਕਰੋ।</string>
-
     <string name="error_permission_notification_title">ਸੂਚਨਾਵਾਂ ਚਾਲੂ ਕਰੋ?</string>
     <string name="error_permission_notification">KashCal ਨੂੰ ਆਉਣ ਵਾਲੀਆਂ ਘਟਨਾਵਾਂ ਬਾਰੇ ਯਾਦ ਦਿਵਾਉਣ ਲਈ ਸੂਚਨਾ ਇਜਾਜ਼ਤ ਚਾਹੀਦੀ ਹੈ।</string>
     <string name="error_permission_alarm_title">ਸਟੀਕ ਅਲਾਰਮ ਚਾਲੂ ਕਰੋ?</string>
     <string name="error_permission_alarm">KashCal ਨੂੰ ਸਟੀਕ ਯਾਦ-ਦਹਾਨੀਆਂ ਲਈ ਸਟੀਕ ਅਲਾਰਮ ਇਜਾਜ਼ਤ ਚਾਹੀਦੀ ਹੈ।</string>
     <string name="error_permission_storage">ਇੰਪੋਰਟ/ਐਕਸਪੋਰਟ ਲਈ ਸਟੋਰੇਜ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ।</string>
-
     <string name="error_device_calendar_title">ਕੈਲੰਡਰ ਗਲਤੀ</string>
     <string name="error_device_calendar_write_failed">ਡਿਵਾਈਸ ਕੈਲੰਡਰ ਵਿੱਚ ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_device_calendar_permission">ਕੈਲੰਡਰ ਲਿਖਣ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
     <string name="error_device_calendar_not_found">ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ। ਹਟਾਇਆ ਗਿਆ ਹੋ ਸਕਦਾ ਹੈ।</string>
     <string name="error_device_event_not_found">ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ। ਮਿਟਾਈ ਗਈ ਹੋ ਸਕਦੀ ਹੈ।</string>
     <string name="error_device_calendar_read_only">ਇਹ ਕੈਲੰਡਰ ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਹੈ।</string>
-
     <string name="error_sync_no_accounts">ਕੋਈ iCloud ਖਾਤਾ ਕੌਂਫ਼ਿਗਰ ਨਹੀਂ ਹੈ। ਆਪਣੇ ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਨ ਲਈ iCloud ਸੈੱਟ ਅੱਪ ਕਰੋ।</string>
     <string name="error_sync_partial">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਏ, %2$d ਅਸਫ਼ਲ।</string>
-
     <string name="error_unknown">ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -354,16 +355,20 @@
     <string name="label_password">ਪਾਸਵਰਡ</string>
     <string name="label_display_name_optional">ਡਿਸਪਲੇ ਨਾਮ</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">ਘਟਨਾਵਾਂ ਖੋਜੋ…</string>
 
+    <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">ਨਿਰਧਾਰਤ ਨਾ ਕੀਤੇ ਜਾਣ \'ਤੇ https:// ਡਿਫ਼ੌਲਟ</string>
     <string name="hint_name_shown_in_settings">ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਦਿਖਾਇਆ ਜਾਣ ਵਾਲਾ ਨਾਮ</string>
     <string name="caldav_trust_insecure_subtitle">Self-signed ਸਰਟੀਫ਼ਿਕੇਟਾਂ ਜਾਂ ਸਥਾਨਕ HTTP ਸਰਵਰਾਂ ਲਈ</string>
 
+    <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">ਤੋਂ ਬਾਅਦ</string>
     <string name="label_recurrence_occurrences">ਘਟਨਾਵਾਂ</string>
     <string name="label_recurrence_on_date">ਮਿਤੀ \'ਤੇ</string>
 
+    <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">ਦਿੱਸਣਯੋਗ ਕੈਲੰਡਰ</string>
     <string name="settings_default_calendar">ਡਿਫ਼ੌਲਟ ਕੈਲੰਡਰ</string>
     <string name="settings_default_event_length">ਡਿਫ਼ੌਲਟ ਘਟਨਾ ਸਮਾਂ</string>
@@ -371,6 +376,7 @@
     <string name="settings_notifications">ਸੂਚਨਾਵਾਂ</string>
     <string name="settings_new_events">ਨਵੀਆਂ ਘਟਨਾਵਾਂ</string>
 
+    <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">ਸਿਸਟਮ ਡਿਫ਼ੌਲਟ</string>
     <string name="option_light">ਹਲਕਾ</string>
     <string name="option_dark">ਗੂੜ੍ਹਾ</string>
@@ -380,19 +386,24 @@
     <string name="option_monday">ਸੋਮਵਾਰ</string>
     <string name="option_saturday">ਸ਼ਨੀਵਾਰ</string>
 
+    <!-- ==================== Empty States ==================== -->
     <string name="empty_no_events_found">ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ</string>
     <string name="empty_no_upcoming_events">ਕੋਈ ਆਉਣ ਵਾਲੀ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="empty_no_calendars">ਕੋਈ ਕੈਲੰਡਰ ਉਪਲਬਧ ਨਹੀਂ</string>
 
+    <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">ਕਨੈਕਟ ਹੋ ਰਿਹਾ ਹੈ…</string>
     <string name="status_fetching">ਲਿਆ ਰਿਹਾ ਹੈ…</string>
 
+    <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">ਕੈਲੰਡਰ ਲਿਆਓ</string>
     <string name="action_import_from_file">ਫ਼ਾਈਲ ਤੋਂ ਘਟਨਾਵਾਂ ਇੰਪੋਰਟ</string>
     <string name="action_export_local_calendar">ਸਥਾਨਕ ਕੈਲੰਡਰ ਐਕਸਪੋਰਟ</string>
 
+    <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
 
+    <!-- ==================== Help Text ==================== -->
     <string name="help_app_password_description">ਐਪ-ਵਿਸ਼ੇਸ਼ ਪਾਸਵਰਡ ਤੁਹਾਨੂੰ ਆਪਣਾ ਮੁੱਖ Apple ID ਪਾਸਵਰਡ ਸਾਂਝਾ ਕੀਤੇ ਬਿਨਾਂ ਤੀਜੀ-ਧਿਰ ਐਪਾਂ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰਨ ਦਿੰਦੇ ਹਨ।</string>
     <string name="help_app_password_steps_header">ਬਣਾਉਣ ਲਈ:</string>
     <string name="help_app_password_step_1">1. appleid.apple.com \'ਤੇ ਜਾਓ</string>
@@ -401,9 +412,11 @@
     <string name="help_app_password_step_4">4. App-Specific Passwords \'ਤੇ ਕਲਿੱਕ ਕਰੋ</string>
     <string name="help_app_password_step_5">5. Generate \'ਤੇ ਕਲਿੱਕ ਕਰੋ ਅਤੇ ਇੱਥੇ ਕਾਪੀ ਕਰੋ</string>
 
+    <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal ਨੂੰ ਆਉਣ ਵਾਲੀਆਂ ਘਟਨਾਵਾਂ ਬਾਰੇ ਯਾਦ ਦਿਵਾਉਣ ਲਈ ਸੂਚਨਾ ਇਜਾਜ਼ਤ ਚਾਹੀਦੀ ਹੈ।</string>
     <string name="dialog_notification_permission_settings_hint">ਤੁਸੀਂ ਬਾਅਦ ਵਿੱਚ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਇਹ ਬਦਲ ਸਕਦੇ ਹੋ।</string>
 
+    <!-- ==================== Accounts Screen ==================== -->
     <string name="accounts_title">ਖਾਤੇ</string>
     <string name="accounts_section_connected">ਜੁੜੇ ਹੋਏ</string>
     <string name="accounts_section_add">ਖਾਤਾ ਜੋੜੋ</string>
@@ -424,14 +437,24 @@
     <string name="accounts_sync_issue">ਸਿੰਕ ਸਮੱਸਿਆ</string>
     <string name="accounts_cd_sync_warning">ਸਿੰਕ ਚੇਤਾਵਨੀ</string>
 
+    <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">ਕੈਲੰਡਰ ਫ਼ੀਡ</string>
     <string name="subscriptions_section_add">ਜੋੜੋ</string>
     <string name="subscriptions_empty_ics">ਕੋਈ ICS ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਨਹੀਂ</string>
     <string name="subscriptions_empty_ics_hint">ਘਟਨਾਵਾਂ ਦੇਖਣ ਲਈ ਕੈਲੰਡਰ ਫ਼ੀਡ ਜੋੜੋ</string>
     <string name="subscriptions_add_ics">ICS ਕੈਲੰਡਰ ਜੋੜੋ</string>
+    <string name="qs_tile_label">ਇਵੈਂਟ ਜੋੜੋ</string>
+    <string name="holiday_catalog_add">ਛੁੱਟੀ ਕੈਲੰਡਰ ਜੋੜੋ</string>
+    <string name="holiday_catalog_search_label">ਖੋਜ</string>
+    <string name="holiday_catalog_already_added">ਜੋੜਿਆ ਗਿਆ</string>
+    <string name="holiday_catalog_empty">ਕੋਈ ਦੇਸ਼ ਨਹੀਂ ਮਿਲਿਆ</string>
+    <string name="holiday_catalog_empty_hint">ਕੋਈ ਹੋਰ ਨਾਮ ਅਜ਼ਮਾਓ</string>
+    <string name="holiday_catalog_validate_error">ਇਸ ਕੈਲੰਡਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird ਤੋਂ ਛੁੱਟੀ ਕੈਲੰਡਰ, %1$s ਅਧੀਨ ਲਾਇਸੰਸਸ਼ੁਦਾ।</string>
     <string name="subscriptions_row_label">ਕੈਲੰਡਰ ਫ਼ੀਡ (ICS)</string>
     <string name="subscriptions_row_hint">ਜਿਵੇਂ ਛੁੱਟੀਆਂ, ਖੇਡਾਂ, ਸਕੂਲ</string>
 
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ਜਨਮਦਿਨ &amp; ਵਰ੍ਹੇਗੰਢਾਂ</string>
     <string name="birthdays_anniversaries_row_hint">ਤੁਹਾਡੇ ਫ਼ੋਨ ਸੰਪਰਕਾਂ ਤੋਂ</string>
     <string name="birthdays_section_title">ਜਨਮਦਿਨ</string>
@@ -449,9 +472,10 @@
     <string name="subscriptions_cd_back">ਪਿੱਛੇ ਜਾਓ</string>
     <string name="subscriptions_cd_add">ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਜੋੜੋ</string>
     <string name="snackbar_subscription_removed">ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਹਟਾ ਦਿੱਤੀ ਗਈ</string>
-    <string name="snackbar_subscription_already_exists">ਇਸ URL ਦੀ ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਪਹਿਲਾਂ ਹੀ ਹੈ</string>
     <string name="snackbar_action_undo">ਅਣਕੀਤਾ</string>
+    <string name="snackbar_subscription_already_exists">ਇਸ URL ਦੀ ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਪਹਿਲਾਂ ਹੀ ਹੈ</string>
 
+    <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ਸਿੰਕ</string>
     <string name="account_detail_section_calendars">ਕੈਲੰਡਰ</string>
     <string name="account_detail_section_account">ਖਾਤਾ</string>
@@ -469,19 +493,23 @@
     <string name="account_detail_cd_show_password">ਪਾਸਵਰਡ ਦਿਖਾਓ</string>
     <string name="account_detail_cd_hide_password">ਪਾਸਵਰਡ ਲੁਕਾਓ</string>
 
-
+    <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">ਖਾਤਾ ਨਾਮ ਬਦਲੋ</string>
     <string name="rename_account_label">ਖਾਤਾ ਨਾਮ</string>
 
+    <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">ਪਾਸਵਰਡ ਬਦਲੋ</string>
     <string name="change_password_label_icloud">ਐਪ-ਵਿਸ਼ੇਸ਼ ਪਾਸਵਰਡ</string>
     <string name="change_password_label_default">ਪਾਸਵਰਡ</string>
 
+    <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
 
+    <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="settings_device_calendars_hint">ਹੋਰ ਐਪਾਂ ਦੇ ਕੈਲੰਡਰ</string>
     <string name="settings_quick_event_add">ਤੁਰੰਤ ਘਟਨਾ ਜੋੜੋ</string>
+    <string name="settings_suggest_titles">ਘਟਨਾ ਟਾਇਟਲ ਸੁਝਾਓ</string>
     <string name="settings_week_numbers">ਹਫ਼ਤਾ ਨੰਬਰ</string>
     <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
     <string name="settings_widget_event_limit">ਵਿਜੇਟ ਘਟਨਾ ਸੀਮਾ</string>
@@ -494,6 +522,8 @@
     <string name="settings_tap_to_enable">ਸਮਰੱਥ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="settings_device_calendars_enabled">%1$d ਸਮਰੱਥ</string>
     <string name="settings_per_day">%1$d ਪ੍ਰਤੀ ਦਿਨ</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">ਐਪ-ਵਿਸ਼ੇਸ਼ ਪਾਸਵਰਡ ਕੀ ਹੈ?</string>
     <string name="caldav_trust_insecure_label">ਅਸੁਰੱਖਿਅਤ ਕਨੈਕਸ਼ਨ \'ਤੇ ਭਰੋਸਾ ਕਰੋ</string>
     <string name="action_add_another">ਹੋਰ ਜੋੜੋ</string>
@@ -513,13 +543,10 @@
     <string name="cd_next_month">ਅਗਲਾ ਮਹੀਨਾ</string>
     <string name="cd_month_year_picker">ਮਹੀਨਾ ਅਤੇ ਸਾਲ ਚੋਣਕਾਰ</string>
     <string name="cd_remove_alert">ਚੇਤਾਵਨੀ ਹਟਾਓ</string>
-    <string name="cd_event_state_cancelled">ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
-    <string name="cd_event_state_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
-    <string name="cd_event_state_past">ਬੀਤਿਆ ਸਮਾਗਮ</string>
-    <string name="cd_event_untitled">ਬਿਨਾਂ ਸਿਰਲੇਖ ਸਮਾਗਮ</string>
     <string name="cd_warning">ਚੇਤਾਵਨੀ</string>
     <string name="cd_refresh_calendars">ਕੈਲੰਡਰ ਰਿਫ਼ਰੈਸ਼</string>
 
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">ਦਿਨਾਂ \'ਤੇ</string>
     <string name="label_pattern">ਪੈਟਰਨ</string>
     <string name="label_ends">ਖ਼ਤਮ ਹੁੰਦਾ ਹੈ</string>
@@ -537,12 +564,16 @@
     <string name="label_found_events">ਮਿਲੀਆਂ: %1$d ਘਟਨਾਵਾਂ</string>
     <string name="label_open_debug_menu">ਡੀਬੱਗ ਮੈਨੂ ਖੋਲ੍ਹੋ</string>
     <string name="placeholder_search">ਖੋਜੋ…</string>
+    <string name="settings_search_placeholder">ਸੈਟਿੰਗਾਂ ਖੋਜੋ…</string>
+    <string name="settings_search_no_results">\"%1$s\" ਲਈ ਕੋਈ ਸੈਟਿੰਗ ਨਹੀਂ ਮਿਲੀ</string>
+    <string name="cd_search_settings">ਸੈਟਿੰਗਾਂ ਖੋਜੋ</string>
     <string name="status_sync_paused">ਸਿੰਕ ਰੁਕਿਆ</string>
     <string name="status_not_synced">ਸਿੰਕ ਨਹੀਂ ਹੋਇਆ</string>
     <string name="status_sync_error">ਸਿੰਕ ਗਲਤੀ</string>
     <string name="status_minutes_ago">%1$d ਮਿੰਟ ਪਹਿਲਾਂ</string>
     <string name="status_hours_ago">%1$d ਘੰਟੇ ਪਹਿਲਾਂ</string>
 
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_description">ਤੁਹਾਡੀ ਡਿਵਾਈਸ \'ਤੇ ਹੋਰ ਕੈਲੰਡਰ ਐਪਾਂ ਤੋਂ ਘਟਨਾਵਾਂ ਦਿਖਾਓ (ਸਿੰਕ ਅਡੈਪਟਰ, ਸਥਾਨਕ ਕੈਲੰਡਰ)।</string>
     <string name="device_calendars_permission_required">ਕੈਲੰਡਰ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ। ਪਹੁੰਚ ਦੇਣ ਲਈ ਸਮਰੱਥ ਟੈਪ ਕਰੋ।</string>
     <string name="device_calendars_read_only_access">ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਪਹੁੰਚ</string>
@@ -554,24 +585,25 @@
     <string name="device_calendars_reminders_desc">ਡਿਵਾਈਸ ਕੈਲੰਡਰ ਘਟਨਾਵਾਂ ਲਈ ਸੂਚਿਤ ਕੀਤਾ ਜਾਓ</string>
     <string name="device_calendars_read_only_no_write">ਸਿਰਫ਼ ਪੜ੍ਹਨ (ਲਿਖਣ ਇਜਾਜ਼ਤ ਨਹੀਂ)</string>
     <string name="device_calendars_read_only_calendar">ਸਿਰਫ਼ ਪੜ੍ਹਨ (ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਕੈਲੰਡਰ)</string>
-
     <string name="settings_developer_options">ਡਿਵੈਲਪਰ ਵਿਕਲਪ</string>
     <string name="settings_sync_frequency">ਸਿੰਕ ਵਾਰਵਾਰਤਾ</string>
     <string name="settings_preview">ਪ੍ਰੀਵਿਊ</string>
     <string name="settings_n_events">%1$d ਘਟਨਾਵਾਂ</string>
     <string name="settings_n_events_default">%1$d ਘਟਨਾਵਾਂ (ਡਿਫ਼ੌਲਟ)</string>
 
+    <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ਕੈਲੰਡਰ</string>
     <string name="drawer_contacts">ਸੰਪਰਕ</string>
     <string name="drawer_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="drawer_account_offline">ਆਫ਼ਲਾਈਨ</string>
     <string name="drawer_share_feedback">ਮਦਦ ਅਤੇ ਦਸਤਾਵੇਜ਼</string>
-
     <string name="event_title_fallback">ਘਟਨਾ</string>
 
+    <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">ਤੁਹਾਡੇ ਲਈ, ਤੁਹਾਡੇ ਡਾਟੇ ਲਈ ਨਹੀਂ।</string>
     <string name="action_keep_it_that_way">ਇਸੇ ਤਰ੍ਹਾਂ ਰੱਖੋ</string>
 
+    <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">ਪਹਿਲਾਂ ਹੀ ਸਿੰਕ ਹੋਇਆ</string>
     <string name="status_warnings">ਚੇਤਾਵਨੀਆਂ</string>
     <string name="sync_history_events_failed">ਘਟਨਾਵਾਂ ਅਸਫ਼ਲ</string>
@@ -580,15 +612,17 @@
     <string name="sync_history_duration">ਸਮਾਂ</string>
     <string name="sync_history_already_synced_count">%1$d ਪਹਿਲਾਂ ਹੀ ਸਿੰਕ ਹੋਏ</string>
 
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
     <string name="day_events_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
 
+    <!-- ==================== i18n: Error / Offline ==================== -->
     <string name="status_youre_offline">ਤੁਸੀਂ ਆਫ਼ਲਾਈਨ ਹੋ</string>
 
+    <!-- ==================== i18n: Sign Out ==================== -->
     <string name="dialog_sign_out_title">%1$s ਤੋਂ ਸਾਈਨ ਆਊਟ?</string>
     <string name="dialog_sign_out_message">ਤੁਸੀਂ %1$s ਵਜੋਂ ਸਾਈਨ ਇਨ ਹੋ। ਸਾਈਨ ਆਊਟ ਕਰਨ ਨਾਲ ਸਿੰਕ ਕੀਤੇ ਕੈਲੰਡਰ ਇਸ ਡਿਵਾਈਸ ਤੋਂ ਹਟ ਜਾਣਗੇ।</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Punjabi: one, other -->
     <plurals name="accounts_count">
         <item quantity="one">%1$d ਖਾਤਾ</item>
         <item quantity="other">%1$d ਖਾਤੇ</item>
@@ -625,12 +659,11 @@
         <item quantity="one">%1$d ਘਟਨਾ</item>
         <item quantity="other">%1$d ਘਟਨਾਵਾਂ</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">ਕੈਲੰਡਰ ਖੋਲ੍ਹੋ</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d ਹੋਰ ਦਿਨ</item>
         <item quantity="other">%1$d ਹੋਰ ਦਿਨ</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ਕੈਲੰਡਰ ਖੋਲ੍ਹੋ</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ਜਨਮਦਿਨ</item>
         <item quantity="other">%1$d ਜਨਮਦਿਨ</item>
@@ -721,387 +754,16 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">ਇਹ ਘਟਨਾ</string>
-    <string name="recurring_all_events">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
     <string name="dialog_edit_recurring_title">ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ</string>
     <string name="dialog_delete_recurring_title">ਮਿਟਾਓ</string>
     <string name="dialog_move_recurring_title">ਮੂਵ ਕਰੋ</string>
-    <string name="empty_pick_a_day">ਇੱਕ ਦਿਨ ਚੁਣੋ। ਮੌਕਾ ਫੜੋ।</string>
-    <string name="empty_no_events_day">ਇੱਥੇ ਕੁਝ ਨਹੀਂ; ਬਾਹਰ ਘੁੰਮੋ?</string>
-    <string name="filter_date">ਮਿਤੀ</string>
-    <string name="label_select_date">ਮਿਤੀ ਚੁਣੋ</string>
-    <string name="hint_tap_date_range">ਇੱਕ ਦਿਨ ਲਈ ਉਹੀ ਮਿਤੀ ਟੈਪ ਕਰੋ, ਜਾਂ ਸੀਮਾ ਲਈ ਹੋਰ ਮਿਤੀ</string>
+    <string name="recurring_this_event">ਇਹ ਘਟਨਾ</string>
+    <string name="recurring_all_events">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
 
-    <string name="cd_clear">ਸਾਫ਼</string>
-    <string name="cd_offline">ਆਫ਼ਲਾਈਨ</string>
-    <string name="cd_loading_events">ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ</string>
-    <string name="cd_open_drawer">ਡ੍ਰਾਅਰ ਖੋਲ੍ਹੋ</string>
-    <string name="cd_close_drawer">ਡ੍ਰਾਅਰ ਬੰਦ ਕਰੋ</string>
-    <string name="cd_calendar_view">ਕੈਲੰਡਰ ਦ੍ਰਿਸ਼</string>
-    <string name="cd_active_view">ਸਰਗਰਮ ਦ੍ਰਿਸ਼</string>
-
-    <string name="view_agenda">ਏਜੰਡਾ</string>
-    <string name="view_month_full">ਮਹੀਨਾ (ਪੂਰਾ)</string>
-    <string name="view_three_days">3 ਦਿਨ</string>
-    <string name="view_day">ਦਿਨ</string>
-    <string name="view_year">ਸਾਲ</string>
-    <string name="view_insights">ਸੂਝ</string>
-
-    <string name="label_go_to_month">ਮਹੀਨੇ \'ਤੇ ਜਾਓ</string>
-
-    <string name="action_more_options">ਹੋਰ ਵਿਕਲਪ</string>
-    <string name="quick_add_save_failed">ਇਵੈਂਟ ਸੁਰੱਖਿਅਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ</string>
-
-    <string name="label_duration_days">ਦਿਨ</string>
-    <string name="label_duration_hrs">ਘੰ</string>
-    <string name="label_duration_min">ਮਿੰ</string>
-
-    <string name="recurrence_on_day">ਦਿਨ %1$d \'ਤੇ</string>
-    <string name="recurrence_on_last_day">ਮਹੀਨੇ ਦੇ ਆਖ਼ਰੀ ਦਿਨ</string>
-    <string name="recurrence_on_nth_weekday">%1$s %2$s ਨੂੰ</string>
-    <string name="ordinal_1st">ਪਹਿਲੇ</string>
-    <string name="ordinal_2nd">ਦੂਜੇ</string>
-    <string name="ordinal_3rd">ਤੀਜੇ</string>
-    <string name="ordinal_4th">ਚੌਥੇ</string>
-    <string name="ordinal_nth">%1$dਵੇਂ</string>
-
-    <string name="sync_summary_new">%1$d ਨਵਾਂ</string>
-    <string name="sync_summary_updated">%1$d ਅੱਪਡੇਟ ਹੋਇਆ</string>
-    <string name="sync_summary_removed">%1$d ਹਟਾਇਆ ਗਿਆ</string>
-
-    <string name="cd_circular_scrolling">ਗੋਲ ਸਕ੍ਰੋਲਿੰਗ ਸਮਰੱਥ</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">ਕੋਈ ਯਾਦ-ਦਹਾਨੀ ਨਹੀਂ</string>
-    <string name="reminder_at_time_of_event">ਘਟਨਾ ਦੇ ਸਮੇਂ</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s ਪਹਿਲਾਂ</string>
-    <string name="reminder_time_after">%1$s ਬਾਅਦ</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">ਘਟਨਾ ਦੇ ਦਿਨ ਸਵੇਰੇ 9 ਵਜੇ</string>
-    <string name="reminder_day_of_event_24h">ਘਟਨਾ ਦੇ ਦਿਨ 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s ਪਹਿਲਾਂ ਸਵੇਰੇ 9 ਵਜੇ</string>
-    <string name="reminder_before_at_24h">%1$s ਪਹਿਲਾਂ 09:00 ਵਜੇ</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">ਬੰਦ</string>
-    <string name="reminder_short_at_event">ਘਟਨਾ ਤੇ</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dਮਿ</string>
-    <string name="reminder_short_hours">%1$dਘੰ</string>
-    <string name="reminder_short_days">%1$dਦਿ</string>
-    <string name="reminder_short_weeks">%1$dਹ</string>
-    <string name="reminder_summary_none">ਕੋਈ ਨਹੀਂ</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dਘੰ %2$dਮਿ</string>
-    <string name="duration_compact_short">%1$dਘੰ%2$dਮਿ</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">ਸਿਰਫ਼ ਹੱਥੀਂ</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">ਸਨੂਜ਼</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">ਹੁਣੇ ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ</string>
-    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d ਦਿਨ ਵਿੱਚ</item>
-        <item quantity="other">%1$d ਦਿਨਾਂ ਵਿੱਚ</item>
-    </plurals>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">ਕੱਲ੍ਹ, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">ਸਿੰਕ ਪੂਰਾ ਹੋਇਆ</string>
-    <string name="sync_notification_partial">ਸਿੰਕ ਅੰਸ਼ਕ ਤੌਰ ਤੇ ਪੂਰਾ ਹੋਇਆ</string>
-    <string name="sync_notification_auth_failed">ਸਿੰਕ ਪ੍ਰਮਾਣਿਕਤਾ ਅਸਫ਼ਲ</string>
-    <string name="sync_notification_auth_reauth">ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਖਾਤੇ ਨੂੰ ਦੁਬਾਰਾ ਪ੍ਰਮਾਣਿਤ ਕਰੋ</string>
-    <string name="sync_notification_failed">ਸਿੰਕ ਅਸਫ਼ਲ</string>
-    <string name="sync_notification_parse_title">ਕੁਝ ਘਟਨਾਵਾਂ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੀਆਂ</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s ਵਿੱਚ %1$s ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ Force Sync ਅਜ਼ਮਾਓ।</string>
-    <string name="sync_notification_conflict_title">ਸਿੰਕ ਵਿਵਾਦ ਹੱਲ ਹੋਇਆ</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">ਸਿੰਕ ਵਿਵਾਦ ਕਰਕੇ \"%1$s\" ਦੀਆਂ ਸਥਾਨਕ ਤਬਦੀਲੀਆਂ ਗੁੰਮ ਹੋ ਗਈਆਂ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ।</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">ਸਿੰਕ ਵਿਵਾਦਾਂ ਕਰਕੇ %1$s ਦੀਆਂ ਸਥਾਨਕ ਤਬਦੀਲੀਆਂ ਗੁੰਮ ਹੋ ਗਈਆਂ। ਸਰਵਰ ਵਰਜਨ ਵਰਤੇ ਜਾਣਗੇ।</string>
-    <string name="sync_notification_expired_title">ਸਿੰਕ ਤਬਦੀਲੀਆਂ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
-    <string name="sync_notification_expired_content_calendar">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
-    <string name="sync_notification_expired_content_calendars">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਇਆ</item>
-        <item quantity="other">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਏ</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d ਤਬਦੀਲੀ</item>
-        <item quantity="other">, %1$d ਤਬਦੀਲੀਆਂ</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d ਗਲਤੀ</item>
-        <item quantity="other">, %1$d ਗਲਤੀਆਂ</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s ਦਾ %2$s ਵਾਂ ਜਨਮਦਿਨ</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s ਦਾ ਜਨਮਦਿਨ</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s ਦੀ %2$s ਵੀਂ ਵਰ੍ਹੇਗੰਢ</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s ਦੀ ਵਰ੍ਹੇਗੰਢ</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d ਵਾਂ</string>
-    <string name="ordinal_suffix_nd">%1$d ਵਾਂ</string>
-    <string name="ordinal_suffix_rd">%1$d ਵਾਂ</string>
-    <string name="ordinal_suffix_th">%1$d ਵਾਂ</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">ਕੈਲੰਡਰ ਸਿੰਕ ਹੋ ਰਹੇ ਹਨ…</string>
-    <string name="sync_banner_preparing">ਸਿੰਕ ਦੀ ਤਿਆਰੀ…</string>
-    <string name="sync_banner_complete_errors">ਸਿੰਕ ਪੂਰਾ ਹੋਇਆ ਗਲਤੀਆਂ ਨਾਲ</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">ਸਿੰਕ ਅਸਫ਼ਲ: %1$s</string>
-    <string name="error_unknown_error">ਅਣਜਾਣ ਗਲਤੀ</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">ਨਵੀਂ ਘਟਨਾ: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d ਨਵੀਂ ਘਟਨਾ</item>
-        <item quantity="other">%1$d ਨਵੀਆਂ ਘਟਨਾਵਾਂ</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d ਘਟਨਾ ਅੱਪਡੇਟ ਹੋਈ</item>
-        <item quantity="other">%1$d ਘਟਨਾਵਾਂ ਅੱਪਡੇਟ ਹੋਈਆਂ</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d ਘਟਨਾ ਹਟਾਈ ਗਈ</item>
-        <item quantity="other">%1$d ਘਟਨਾਵਾਂ ਹਟਾਈਆਂ ਗਈਆਂ</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d ਕੈਲੰਡਰ ਅੱਪਡੇਟ</item>
-        <item quantity="other">%1$d ਕੈਲੰਡਰ ਅੱਪਡੇਟ</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">ਦਿਨ %1$d / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ਦਿਨ 1 / %1$d · ਸ਼ੁਰੂ %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ਦਿਨ %1$d / %2$d · ਅੰਤ %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · ਸਾਰਾ ਦਿਨ</string>
-    <string name="event_date_all_day">%1$s · ਸਾਰਾ ਦਿਨ</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (ਸਾਰਾ ਦਿਨ)</string>
-    <string name="event_date_all_day_parens">%1$s (ਸਾਰਾ ਦਿਨ)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">ਘਟਨਾ ਸੁਰੱਖਿਅਤ ਕਰੋ</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">ਨਵਾਂ</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">ਲਾਲ</string>
-    <string name="color_orange">ਸੰਤਰੀ</string>
-    <string name="color_yellow">ਪੀਲਾ</string>
-    <string name="color_green">ਹਰਾ</string>
-    <string name="color_cyan">ਸਿਆਨ</string>
-    <string name="color_blue">ਨੀਲਾ</string>
-    <string name="color_purple">ਜਾਮਣੀ</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">ਮੀਟਿੰਗ ਲਿੰਕ: %1$s</string>
-    <string name="cd_phone_number">ਫ਼ੋਨ ਨੰਬਰ</string>
-    <string name="cd_email_link">ਈਮੇਲ: %1$s</string>
-    <string name="cd_web_link">ਲਿੰਕ: %1$s</string>
-    <string name="cd_text_with_links">%1$d ਲਿੰਕਾਂ ਵਾਲਾ ਟੈਕਸਟ: %2$s</string>
-    <string name="cd_text_with_link">1 ਲਿੰਕ ਵਾਲਾ ਟੈਕਸਟ: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">ਦਿਨ %1$d / %2$d (ਸਾਰਾ ਦਿਨ)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ਸਿੰਕ   ↑%2$d ਪੁਸ਼   ↓%3$d ਪੁੱਲ</string>
-    <string name="sync_history_stats_issues">%1$d ਸਿੰਕ   ↑%2$d ਪੁਸ਼   ↓%3$d ਪੁੱਲ   ⚠ %4$d ਸਮੱਸਿਆਵਾਂ</string>
-    <string name="sync_history_failed">ਅਸਫ਼ਲ</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">ਹਰ ਘੰਟੇ</string>
-    <string name="ics_sync_every_n_hours">ਹਰ %1$d ਘੰਟੇ</string>
-    <string name="ics_sync_daily">ਰੋਜ਼ਾਨਾ</string>
-    <string name="ics_sync_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL ਲੋੜੀਂਦਾ ਹੈ</string>
-    <string name="ics_url_invalid_scheme">URL http://, https://, ਜਾਂ webcal:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">ਸਰਵਰ ਨੇ ਇੱਕ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ (%1$d)। ਕਿਰਪਾ ਕਰਕੇ URL ਦੀ ਜਾਂਚ ਕਰੋ।</string>
-    <string name="ics_fetch_error_empty">ਕੈਲੰਡਰ ਫੀਡ ਖਾਲੀ ਹੈ।</string>
-    <string name="ics_fetch_error_not_calendar">ਉਹ URL ਕੈਲੰਡਰ ਫੀਡ ਵਰਗਾ ਨਹੀਂ ਲੱਗਦਾ।</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d ਵਾਰ</item>
-        <item quantity="other">, %1$d ਵਾਰ</item>
-    </plurals>
-
-    <!-- Widget content descriptions -->
-    <string name="cd_widget_calendar">ਕੈਲੰਡਰ</string>
-    <string name="cd_widget_add_event">ਘਟਨਾ ਜੋੜੋ</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
-
-    <!-- Notification channels -->
-    <string name="channel_event_reminders">ਘਟਨਾ ਯਾਦ-ਦਹਾਨੀਆਂ</string>
-    <string name="channel_event_reminders_desc">ਆਉਣ ਵਾਲੀਆਂ ਕੈਲੰਡਰ ਘਟਨਾਵਾਂ ਲਈ ਸੂਚਨਾਵਾਂ</string>
-    <string name="channel_sync_progress">ਸਿੰਕ ਪ੍ਰਗਤੀ</string>
-    <string name="channel_sync_progress_desc">ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਦੇ ਸਮੇਂ ਪ੍ਰਗਤੀ ਦਿਖਾਉਂਦਾ ਹੈ</string>
-    <string name="channel_sync_status">ਸਿੰਕ ਸਥਿਤੀ</string>
-    <string name="channel_sync_status_desc">ਸਿੰਕ ਪੂਰਾ ਹੋਣ ਅਤੇ ਗਲਤੀਆਂ ਬਾਰੇ ਸੂਚਨਾਵਾਂ</string>
-    <string name="channel_event_invitations">ਘਟਨਾ ਸੱਦੇ</string>
-    <string name="channel_event_invitations_desc">ਜਦੋਂ ਤੁਹਾਨੂੰ ਨਵਾਂ ਕੈਲੰਡਰ ਸੱਦਾ ਮਿਲਦਾ ਹੈ ਤਾਂ ਸੂਚਨਾਵਾਂ</string>
-    <string name="invite_notification_body">%1$s ਤੋਂ · ਜਵਾਬ ਦੇਣ ਲਈ ਟੈਪ ਕਰੋ</string>
-
-    <!-- Recurrence rules -->
-    <string name="rrule_does_not_repeat">ਦੁਹਰਾਉਂਦਾ ਨਹੀਂ</string>
-    <string name="rrule_freq_daily">ਰੋਜ਼ਾਨਾ</string>
-    <string name="rrule_freq_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
-    <string name="rrule_freq_monthly">ਮਹੀਨਾਵਾਰ</string>
-    <string name="rrule_freq_yearly">ਸਾਲਾਨਾ</string>
-    <string name="rrule_repeats">ਦੁਹਰਾਉਂਦਾ ਹੈ</string>
-    <string name="rrule_every_n_days">ਹਰ %1$d ਦਿਨ</string>
-    <string name="rrule_every_n_weeks">ਹਰ %1$d ਹਫ਼ਤੇ</string>
-    <string name="rrule_every_n_months">ਹਰ %1$d ਮਹੀਨੇ</string>
-    <string name="rrule_every_n_years">ਹਰ %1$d ਸਾਲ</string>
-    <string name="rrule_freq_on_days">%2$s ਨੂੰ %1$s</string>
-    <string name="rrule_freq_on_ordinal_day">%2$s %3$s ਨੂੰ %1$s</string>
-    <string name="rrule_freq_on_last_day">ਆਖਰੀ ਦਿਨ %1$s</string>
-    <string name="rrule_freq_on_day_n">ਦਿਨ %2$d ਨੂੰ %1$s</string>
-    <string name="rrule_ordinal_last">ਆਖਰੀ</string>
-    <string name="rrule_until_suffix">, %1$s ਤੱਕ</string>
-    <string name="rrule_freq_never">ਕਦੇ ਨਹੀਂ</string>
-    <string name="rrule_freq_custom">ਕਸਟਮ</string>
-    <string name="label_repeat_every">ਹਰ ਵਾਰ ਦੁਹਰਾਓ</string>
-    <string name="rrule_unit_day">ਦਿਨ</string>
-    <string name="rrule_unit_week">ਹਫ਼ਤਾ</string>
-    <string name="rrule_unit_month">ਮਹੀਨਾ</string>
-    <string name="rrule_unit_year">ਸਾਲ</string>
-    <string name="cd_decrease_interval">ਅੰਤਰਾਲ ਘਟਾਓ</string>
-    <string name="cd_increase_interval">ਅੰਤਰਾਲ ਵਧਾਓ</string>
-    <string name="rrule_starting">%1$s %2$s ਤੋਂ ਸ਼ੁਰੂ%3$s</string>
-    <string name="rrule_since">%1$s · %2$s ਤੋਂ</string>
-
-    <!-- Insights -->
-    <string name="insights_title">ਸੂਝ</string>
-    <string name="insights_period_this_week">ਹਫ਼ਤਾ</string>
-    <string name="insights_period_last_week">ਪਿਛਲਾ ਹਫ਼ਤਾ</string>
-    <string name="insights_period_this_month">ਮਹੀਨਾ</string>
-    <string name="insights_empty_state">ਇਸ ਹਫ਼ਤੇ ਕੋਈ ਸਮਾਗਮ ਨਿਰਧਾਰਤ ਨਹੀਂ ਹੈ</string>
-    <plurals name="insights_all_day_count">
-        <item quantity="one">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
-        <item quantity="other">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
-    </plurals>
-
-    <!-- Insight text: Busiest Day -->
-    <string name="insight_busiest_day_future">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ ਹੈ (%2$s)</string>
-    <string name="insight_busiest_day_past">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ ਸੀ (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
-    <string name="insight_lightest_day_future">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਹਲਕਾ ਦਿਨ ਹੈ (%2$s)</string>
-    <string name="insight_lightest_day_past">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਹਲਕਾ ਦਿਨ ਸੀ (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">ਸਭ ਤੋਂ ਲੰਬਾ ਖਾਲੀ ਸਮਾਂ: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">ਸਭ ਤੋਂ ਲੰਬਾ ਖਾਲੀ ਸਮਾਂ %1$s %2$s–%3$s (%4$s) ਸੀ</string>
-    <!-- Insight text: Weekend Load -->
-    <string name="insight_weekend_load_clear_future">ਤੁਹਾਡਾ ਹਫ਼ਤੇ ਦਾ ਅੰਤ ਖਾਲੀ ਹੈ</string>
-    <string name="insight_weekend_load_clear_past">ਤੁਹਾਡਾ ਹਫ਼ਤੇ ਦਾ ਅੰਤ ਖਾਲੀ ਸੀ</string>
-    <string name="insight_weekend_load_light_future">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਹੈ</string>
-    <string name="insight_weekend_load_light_past">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਸੀ</string>
-    <string name="insight_weekend_load_busy_future">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਹੈ</string>
-    <string name="insight_weekend_load_busy_past">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਸੀ</string>
-    <!-- Insight text: Back to Back -->
-    <string name="insight_back_to_back_future">%1$d ਲਗਾਤਾਰ ਮੀਟਿੰਗਾਂ</string>
-    <string name="insight_back_to_back_past">ਤੁਹਾਡੀਆਂ %1$d ਲਗਾਤਾਰ ਮੀਟਿੰਗਾਂ ਸਨ</string>
-    <!-- Insight text: Calendar Dominant -->
-    <string name="insight_calendar_dominant_future">%1$s ਤੁਹਾਡੇ ਨਿਰਧਾਰਤ ਸਮੇਂ ਦਾ %2$d%% ਹੈ</string>
-    <string name="insight_calendar_dominant_past">%1$s ਤੁਹਾਡੇ ਨਿਰਧਾਰਤ ਸਮੇਂ ਦਾ %2$d%% ਸੀ</string>
-    <!-- Insight text: Early/Late Bounds -->
-    <string name="insight_early_bounds_future">ਤੁਹਾਡਾ ਸਮਾਂ-ਸਾਰਨੀ %1$d ਦਿਨ ਸਵੇਰੇ 8 ਵਜੇ ਤੋਂ ਪਹਿਲਾਂ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ</string>
-    <string name="insight_early_bounds_past">ਤੁਹਾਡਾ ਸਮਾਂ-ਸਾਰਨੀ %1$d ਦਿਨ ਸਵੇਰੇ 8 ਵਜੇ ਤੋਂ ਪਹਿਲਾਂ ਸ਼ੁਰੂ ਹੋਇਆ</string>
-    <string name="insight_late_bounds_future">%1$d ਦਿਨ ਸ਼ਾਮ 7 ਵਜੇ ਤੋਂ ਬਾਅਦ ਸਮਾਗਮ</string>
-    <string name="insight_late_bounds_past">%1$d ਦਿਨ ਸ਼ਾਮ 7 ਵਜੇ ਤੋਂ ਬਾਅਦ ਸਮਾਗਮ ਹੋਏ</string>
-    <!-- Insight text: Meeting-Free Days -->
-    <string name="insight_meeting_free_days_future">ਤੁਹਾਡੇ ਕੋਲ %1$d ਮੀਟਿੰਗ-ਮੁਕਤ ਦਿਨ ਹਨ</string>
-    <string name="insight_meeting_free_days_past">ਤੁਹਾਡੇ ਕੋਲ %1$d ਮੀਟਿੰਗ-ਮੁਕਤ ਦਿਨ ਸਨ</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
-    <string name="insight_tomorrow_preview">ਕੱਲ੍ਹ: %1$s ਨਿਰਧਾਰਤ, %2$s \'ਤੇ ਸ਼ੁਰੂ</string>
-    <string name="insight_tomorrow_preview_no_start">ਕੱਲ੍ਹ: %1$s ਨਿਰਧਾਰਤ</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
-    <string name="insight_heaviest_upcoming">%1$s ਤੁਹਾਡਾ ਆਉਣ ਵਾਲਾ ਸਭ ਤੋਂ ਭਾਰੀ ਦਿਨ ਹੈ (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">ਅਗਲਾ ਖਾਲੀ ਸਮਾਂ: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
-    <string name="insights_cd_daily_chart">ਰੋਜ਼ਾਨਾ ਵੰਡ: ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ %1$s ਹੈ</string>
-
-    <!-- ==================== Event Form: Availability & Color ==================== -->
-    <string name="label_availability">ਉਪਲਬਧਤਾ</string>
-    <string name="label_busy">ਰੁੱਝਿਆ</string>
-    <string name="label_free">ਖਾਲੀ</string>
-    <string name="label_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
-    <string name="label_calendar_default">ਕੈਲੰਡਰ ਡਿਫ਼ੌਲਟ</string>
-    <string name="label_custom">ਕਸਟਮ</string>
-    <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
-    <string name="color_saddlebrown">ਕਾਠੀ ਭੂਰਾ</string>
-    <string name="color_tomato">ਟਮਾਟਰ</string>    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
-    <string name="color_gold">ਸੁਨਹਿਰੀ</string>
-    <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>
-    <string name="color_limegreen">ਨਿੰਬੂ ਹਰਾ</string>    <string name="color_lightseagreen">ਹਲਕਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
-    <string name="color_dodgerblue">ਡੌਜਰ ਨੀਲਾ</string>
-    <string name="color_royalblue">ਸ਼ਾਹੀ ਨੀਲਾ</string>    <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
-    <string name="color_hotpink">ਚਮਕਦਾਰ ਗੁਲਾਬੀ</string>
-    <string name="color_dimgray">ਮੱਧਮ ਸੁਰਮਈ</string>
-
-    <string name="hue_red">ਲਾਲ</string>
-    <string name="hue_orange">ਸੰਤਰੀ</string>
-    <string name="hue_yellow">ਪੀਲਾ</string>
-    <string name="hue_green">ਹਰਾ</string>
-    <string name="hue_teal">ਨੀਲਾ-ਹਰਾ</string>
-    <string name="hue_blue">ਨੀਲਾ</string>
-    <string name="hue_purple">ਜਾਮਨੀ</string>
-    <string name="hue_pink">ਗੁਲਾਬੀ</string>
-    <string name="hue_brown">ਭੂਰਾ</string>
-    <string name="hue_neutral">ਨਿਰਪੱਖ</string>
-    <string name="label_more_colors">ਹੋਰ ਰੰਗ</string>
-    <string name="label_back_to_grid">ਵਾਪਸ</string>
-    <string name="settings_suggest_titles">ਇਵੈਂਟ ਟਾਇਟਲ ਸੁਝਾਓ</string>
-    <string name="label_attendees">ਹਾਜ਼ਰੀਨ</string>
-    <string name="attendee_you_marker">ਤੁਸੀਂ</string>
-    <string name="attendee_card_going">ਜਾ ਰਹੇ ਹਨ</string>
-    <string name="attendee_card_pending">ਉਡੀਕ ਵਿੱਚ</string>
-    <string name="attendee_card_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
-    <string name="attendee_card_tentative">ਅਨਿਸ਼ਚਿਤ</string>
-    <string name="attendee_card_hosting">ਮੇਜ਼ਬਾਨੀ</string>
-    <string name="attendee_action_copy">ਈਮੇਲ ਕਾਪੀ ਕਰੋ</string>
-    <string name="attendee_action_email">ਈਮੇਲ ਭੇਜੋ</string>
-    <string name="attendee_email_copied">ਈਮੇਲ ਕਾਪੀ ਹੋ ਗਈ</string>
-    <string name="attendee_no_email_app">ਕੋਈ ਈਮੇਲ ਐਪ ਸਥਾਪਤ ਨਹੀਂ ਹੈ</string>
-    <string name="attendee_show_all">ਸਾਰੇ ਹਾਜ਼ਰੀਨ ਦਿਖਾਓ</string>
-    <string name="attendee_status_accepted">ਸਵੀਕਾਰ ਕੀਤਾ</string>
-    <string name="attendee_status_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
-    <string name="attendee_status_tentative">ਅਨਿਸ਼ਚਿਤ</string>
-    <string name="attendee_status_delegated">ਸੌਂਪਿਆ ਗਿਆ</string>
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">ਹਾਜ਼ਰੀਨ</string>
+    <string name="attendee_search_hint">ਖੋਜੋ</string>
+    <string name="attendee_search_no_matches">ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ</string>
     <string name="attendee_picker_title">ਹਾਜ਼ਰੀਨ ਸ਼ਾਮਲ ਕਰੋ</string>
     <string name="attendee_pick_add_people">ਹਾਜ਼ਰੀਨ ਸ਼ਾਮਲ ਕਰੋ</string>
     <string name="attendee_pick_from_contacts">ਨਾਮ ਜਾਂ ਈਮੇਲ</string>
@@ -1115,62 +777,12 @@
     <string name="attendee_scheduling_unavailable">ਇਸ ਖਾਤੇ \'ਤੇ ਲੋਕਾਂ ਨੂੰ ਸੱਦਾ ਦੇਣਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ</string>
     <string name="device_attendee_local_no_delivery">ਇਹ ਕੈਲੰਡਰ ਸੱਦੇ ਨਹੀਂ ਭੇਜ ਸਕਦਾ। ਮਹਿਮਾਨ ਸੰਭਾਲੇ ਜਾਂਦੇ ਹਨ ਪਰ ਸੂਚਿਤ ਨਹੀਂ ਕੀਤੇ ਜਾਣਗੇ।</string>
     <string name="action_save_and_notify">ਸੰਭਾਲੋ ਅਤੇ ਸੂਚਿਤ ਕਰੋ</string>
-    <string name="attendee_status_pending">ਉਡੀਕ ਵਿੱਚ</string>
-    <string name="inbox_empty_caught_up">ਸਭ ਨਿਪਟਾ ਲਿਆ</string>
-    <string name="inbox_organizer_suffix">(ਪ੍ਰਬੰਧਕ)</string>
-    <string name="menu_invites">ਸੱਦੇ</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ਮਿਤੀ ਤੇ ਜਾਓ</string>
-    <string name="menu_about">ਬਾਰੇ</string>
-    <string name="menu_more">ਹੋਰ ਮੀਨੂ</string>
-    <plurals name="menu_more_with_invites">
-        <item quantity="one">ਹੋਰ ਮੀਨੂ, %d ਸੱਦਾ ਬਕਾਇਆ</item>
-        <item quantity="other">ਹੋਰ ਮੀਨੂ, %d ਸੱਦੇ ਬਕਾਇਆ</item>
-    </plurals>
-    <string name="share_availability_rail_label">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
-    <string name="share_availability_sheet_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
-    <string name="share_availability_hours_label">ਕੰਮ ਦੇ ਘੰਟੇ: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟ ਰੁੱਝੇ ਵਜੋਂ</string>
-    <string name="share_availability_share_button">ਸਾਂਝਾ ਕਰੋ</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">ਚੁਣੀ ਗਈ ਰੇਂਜ ਵਿੱਚ ਘੱਟੋ ਘੱਟ ਇੱਕ ਘੰਟੇ ਦੇ ਕੋਈ ਖਾਲੀ ਬਲਾਕ ਨਹੀਂ ਹਨ।</string>
-    <string name="share_availability_chooser_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
-    <string name="share_availability_share_failed">ਸਾਂਝਾ ਕਰਨ ਲਈ ਕੋਈ ਐਪ ਉਪਲਬਧ ਨਹੀਂ</string>
-    <string name="share_from_kashcal_footer">KashCal ਤੋਂ ਸਾਂਝਾ ਕੀਤਾ</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="one">ਅਗਲਾ %1$d ਦਿਨ</item>
-        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨ</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="one">ਅਗਲੇ %1$d ਦਿਨ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
-        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨਾਂ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
-    </plurals>
-    <string name="share_availability_window_section">ਵਿੰਡੋ</string>
-    <string name="share_availability_hours_section">ਕੰਮ ਦੇ ਘੰਟੇ</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="one">%1$d ਦਿਨ</item>
-        <item quantity="other">%1$d ਦਿਨ</item>
-    </plurals>
-    <string name="share_availability_days_through">%1$s ਤੱਕ</string>
-    <string name="share_availability_window_duration">%1$s ਘੰਟੇ ਦੀ ਵਿੰਡੋ</string>
-    <string name="share_as_card_action">ਕਾਰਡ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ</string>
-    <string name="share_as_card_chip_standard">ਮਿਆਰੀ</string>
-    <string name="share_as_card_chip_celebration">ਜਸ਼ਨ</string>
-    <string name="share_as_card_send">ਭੇਜੋ</string>
-    <string name="share_as_card_attribution">KashCal ਨਾਲ ਬਣਾਇਆ</string>
-    <string name="share_as_card_all_day">ਸਾਰਾ ਦਿਨ</string>
-    <string name="share_as_card_chooser_title">ਸਮਾਗਮ ਸਾਂਝਾ ਕਰੋ</string>
-    <string name="share_as_card_share_failed">ਕਾਰਡ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ</string>
-    <string name="attendee_sheet_title">ਹਾਜ਼ਰੀਨ</string>
-    <string name="attendee_search_hint">ਖੋਜੋ</string>
-    <string name="attendee_search_no_matches">ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ</string>
     <string name="attendee_section_going">ਜਾ ਰਹੇ</string>
     <string name="attendee_section_maybe">ਸ਼ਾਇਦ</string>
     <string name="attendee_section_pending">ਬਕਾਇਆ</string>
     <string name="attendee_section_declined">ਅਸਵੀਕਾਰ</string>
     <string name="attendee_section_delegated">ਸੌਂਪਿਆ</string>
+    <string name="invitees_host_tag">ਮੇਜ਼ਬਾਨ</string>
     <string name="invitees_summary_you_alone">ਤੁਸੀਂ</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">ਤੁਸੀਂ · %d ਸੱਦੇ ਗਏ</item>
@@ -1195,17 +807,370 @@
         <item quantity="other">%1$s · ਹੋਰ %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">ਜਵਾਬ ਬਦਲੋ</string>
-    <string name="whats_new_title">ਨਵਾਂ ਕੀ ਹੈ</string>
-    <string name="whats_new_dismiss">ਸਮਝ ਗਿਆ</string>
-    <string name="whats_new_v598_title">Android ਨੂੰ ਖੁੱਲ੍ਹਾ ਰੱਖਣ ਵਿੱਚ ਮਦਦ ਕਰੋ</string>
-    <string name="whats_new_v598_body">Google ਤੁਹਾਡੇ ਡਿਵਾਈਸ \'ਤੇ ਐਪਾਂ ਇੰਸਟਾਲ ਕਰਨ ਦਾ ਤਰੀਕਾ ਬਦਲ ਰਿਹਾ ਹੈ। ਸਾਨੂੰ ਤੁਹਾਡੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org \'ਤੇ ਜਾਓ</string>
-    <string name="holiday_catalog_add">ਛੁੱਟੀ ਕੈਲੰਡਰ ਜੋੜੋ</string>
-    <string name="holiday_catalog_search_label">ਖੋਜ</string>
-    <string name="holiday_catalog_already_added">ਜੋੜਿਆ ਗਿਆ</string>
-    <string name="holiday_catalog_empty">ਕੋਈ ਦੇਸ਼ ਨਹੀਂ ਮਿਲਿਆ</string>
-    <string name="holiday_catalog_empty_hint">ਕੋਈ ਹੋਰ ਨਾਮ ਅਜ਼ਮਾਓ</string>
-    <string name="holiday_catalog_validate_error">ਇਸ ਕੈਲੰਡਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird ਤੋਂ ਛੁੱਟੀ ਕੈਲੰਡਰ, %1$s ਅਧੀਨ ਲਾਇਸੰਸਸ਼ੁਦਾ।</string>
-    <string name="qs_tile_label">ਇਵੈਂਟ ਜੋੜੋ</string>
+    <string name="rsvp_question_going">ਜਾ ਰਹੇ ਹੋ?</string>
+    <string name="rsvp_action_yes">ਹਾਂ</string>
+    <string name="rsvp_action_maybe">ਸ਼ਾਇਦ</string>
+    <string name="rsvp_action_no">ਨਹੀਂ</string>
+    <string name="rsvp_state_going">ਤੁਸੀਂ ਜਾ ਰਹੇ ਹੋ</string>
+    <string name="rsvp_state_maybe">ਸ਼ਾਇਦ</string>
+    <string name="rsvp_state_not_going">ਤੁਸੀਂ ਨਹੀਂ ਜਾ ਰਹੇ</string>
+    <string name="rsvp_action_change">ਬਦਲੋ</string>
+    <string name="empty_pick_a_day">ਇੱਕ ਦਿਨ ਚੁਣੋ। ਮੌਕਾ ਫੜੋ।</string>
+    <string name="cd_empty_pick_a_day">ਇੱਕ ਦਿਨ ਚੁਣੋ</string>
+    <string name="empty_no_events_day_1">ਖਾਲੀ ਦਿਨ। ਬ੍ਰਹਿਮੰਡ ਤੁਹਾਨੂੰ ਆਰਾਮ ਕਰਨ ਲਈ ਕਹਿ ਰਿਹਾ ਹੈ।</string>
+    <string name="empty_no_events_day_2">ਕੋਈ ਯੋਜਨਾ ਨਹੀਂ। ਇਹੀ ਤਾਂ ਯੋਜਨਾ ਹੈ।</string>
+    <string name="empty_no_events_day_3">ਇੱਕ ਤੋਹਫ਼ਾ: ਖਾਲੀ ਦਿਨ।</string>
+    <string name="empty_no_events_day_4">ਕੈਲੰਡਰ ਦੀ ਹਾਲਤ: ਸ਼ਾਨਦਾਰ ਢੰਗ ਨਾਲ ਖਾਲੀ।</string>
+    <string name="empty_no_events_day_5">ਕੁਝ ਵੀ ਯੋਜਨਾਬੱਧ ਨਹੀਂ। ਸ਼ਾਂਤੀ ਦਾ ਆਨੰਦ ਲਓ।</string>
+    <string name="cd_empty_no_events_day">ਸ਼ਾਂਤ ਦਿਨ, ਕੁਝ ਵੀ ਨਿਰਧਾਰਤ ਨਹੀਂ</string>
+    <string name="filter_date">ਮਿਤੀ</string>
+    <string name="label_select_date">ਮਿਤੀ ਚੁਣੋ</string>
+    <string name="hint_tap_date_range">ਇੱਕ ਦਿਨ ਲਈ ਉਹੀ ਮਿਤੀ ਟੈਪ ਕਰੋ, ਜਾਂ ਸੀਮਾ ਲਈ ਹੋਰ ਮਿਤੀ</string>
+    <string name="cd_clear">ਸਾਫ਼</string>
+    <string name="cd_offline">ਆਫ਼ਲਾਈਨ</string>
+    <string name="cd_event_state_cancelled">ਰੱਦ ਕੀਤਾ ਗਿਆ</string>
+    <string name="cd_event_state_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
+    <string name="cd_event_state_past">ਬੀਤਿਆ ਸਮਾਗਮ</string>
+    <string name="cd_loading_events">ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ</string>
+    <string name="cd_event_untitled">ਬਿਨਾਂ ਸਿਰਲੇਖ ਸਮਾਗਮ</string>
+    <string name="cd_open_drawer">ਡ੍ਰਾਅਰ ਖੋਲ੍ਹੋ</string>
+    <string name="cd_close_drawer">ਡ੍ਰਾਅਰ ਬੰਦ ਕਰੋ</string>
+    <string name="cd_calendar_view">ਕੈਲੰਡਰ ਦ੍ਰਿਸ਼</string>
+    <string name="cd_active_view">ਸਰਗਰਮ ਦ੍ਰਿਸ਼</string>
+    <string name="view_agenda">ਏਜੰਡਾ</string>
+    <string name="view_month_full">ਮਹੀਨਾ (ਪੂਰਾ)</string>
+    <string name="view_day">ਦਿਨ</string>
+    <string name="view_three_days">3 ਦਿਨ</string>
+    <string name="view_year">ਸਾਲ</string>
+    <string name="view_insights">ਸੂਝ</string>
+    <string name="label_go_to_month">ਮਹੀਨੇ \'ਤੇ ਜਾਓ</string>
+    <string name="action_more_options">ਹੋਰ ਵਿਕਲਪ</string>
+    <string name="quick_add_save_failed">ਘਟਨਾ ਸੁਰੱਖਿਅਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ</string>
+    <string name="label_duration_days">ਦਿਨ</string>
+    <string name="label_duration_hrs">ਘੰ</string>
+    <string name="label_duration_min">ਮਿੰ</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">ਦਿਨ %1$d \'ਤੇ</string>
+    <string name="recurrence_on_last_day">ਮਹੀਨੇ ਦੇ ਆਖ਼ਰੀ ਦਿਨ</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s ਨੂੰ</string>
+    <string name="ordinal_1st">ਪਹਿਲੇ</string>
+    <string name="ordinal_2nd">ਦੂਜੇ</string>
+    <string name="ordinal_3rd">ਤੀਜੇ</string>
+    <string name="ordinal_4th">ਚੌਥੇ</string>
+    <string name="ordinal_nth">%1$dਵੇਂ</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">ਦੁਹਰਾਉਂਦਾ ਨਹੀਂ</string>
+    <string name="rrule_freq_daily">ਰੋਜ਼ਾਨਾ</string>
+    <string name="rrule_freq_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
+    <string name="rrule_freq_monthly">ਮਹੀਨਾਵਾਰ</string>
+    <string name="rrule_freq_yearly">ਸਾਲਾਨਾ</string>
+    <string name="rrule_repeats">ਦੁਹਰਾਉਂਦਾ ਹੈ</string>
+    <string name="rrule_every_n_days">ਹਰ %1$d ਦਿਨ</string>
+    <string name="rrule_every_n_weeks">ਹਰ %1$d ਹਫ਼ਤੇ</string>
+    <string name="rrule_every_n_months">ਹਰ %1$d ਮਹੀਨੇ</string>
+    <string name="rrule_every_n_years">ਹਰ %1$d ਸਾਲ</string>
+    <string name="rrule_freq_on_days">%2$s ਨੂੰ %1$s</string>
+    <string name="rrule_freq_on_ordinal_day">%2$s %3$s ਨੂੰ %1$s</string>
+    <string name="rrule_freq_on_last_day">ਆਖਰੀ ਦਿਨ %1$s</string>
+    <string name="rrule_freq_on_day_n">ਦਿਨ %2$d ਨੂੰ %1$s</string>
+    <string name="rrule_ordinal_last">ਆਖਰੀ</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d ਵਾਰ</item>
+        <item quantity="other">, %1$d ਵਾਰ</item>
+    </plurals>
+    <string name="rrule_until_suffix">, %1$s ਤੱਕ</string>
+    <string name="rrule_freq_never">ਕਦੇ ਨਹੀਂ</string>
+    <string name="rrule_freq_custom">ਕਸਟਮ</string>
+    <string name="label_repeat_every">ਹਰ ਵਾਰ ਦੁਹਰਾਓ</string>
+    <string name="rrule_unit_day">ਦਿਨ</string>
+    <string name="rrule_unit_week">ਹਫ਼ਤਾ</string>
+    <string name="rrule_unit_month">ਮਹੀਨਾ</string>
+    <string name="rrule_unit_year">ਸਾਲ</string>
+    <string name="cd_decrease_interval">ਅੰਤਰਾਲ ਘਟਾਓ</string>
+    <string name="cd_increase_interval">ਅੰਤਰਾਲ ਵਧਾਓ</string>
+    <string name="rrule_starting">%1$s %2$s ਤੋਂ ਸ਼ੁਰੂ%3$s</string>
+    <string name="rrule_since">%1$s · %2$s ਤੋਂ</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d ਨਵਾਂ</string>
+    <string name="sync_summary_updated">%1$d ਅੱਪਡੇਟ ਹੋਇਆ</string>
+    <string name="sync_summary_removed">%1$d ਹਟਾਇਆ ਗਿਆ</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">ਗੋਲ ਸਕ੍ਰੋਲਿੰਗ ਸਮਰੱਥ</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">ਕੋਈ ਯਾਦ-ਦਹਾਨੀ ਨਹੀਂ</string>
+    <string name="reminder_at_time_of_event">ਘਟਨਾ ਦੇ ਸਮੇਂ</string>
+    <string name="reminder_time_before">%1$s ਪਹਿਲਾਂ</string>
+    <string name="reminder_time_after">%1$s ਬਾਅਦ</string>
+    <string name="reminder_day_of_event_12h">ਘਟਨਾ ਦੇ ਦਿਨ ਸਵੇਰੇ 9 ਵਜੇ</string>
+    <string name="reminder_day_of_event_24h">ਘਟਨਾ ਦੇ ਦਿਨ 09:00</string>
+    <string name="reminder_before_at_12h">%1$s ਪਹਿਲਾਂ ਸਵੇਰੇ 9 ਵਜੇ</string>
+    <string name="reminder_before_at_24h">%1$s ਪਹਿਲਾਂ 09:00 ਵਜੇ</string>
+    <string name="reminder_short_off">ਬੰਦ</string>
+    <string name="reminder_short_at_event">ਘਟਨਾ ਤੇ</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dਮਿ</string>
+    <string name="reminder_short_hours">%1$dਘੰ</string>
+    <string name="reminder_short_days">%1$dਦਿ</string>
+    <string name="reminder_short_weeks">%1$dਹ</string>
+    <string name="reminder_summary_none">ਕੋਈ ਨਹੀਂ</string>
+    <string name="duration_compact">%1$dਘੰ %2$dਮਿ</string>
+    <string name="duration_compact_short">%1$dਘੰ%2$dਮਿ</string>
+    <string name="sync_manual_only">ਸਿਰਫ਼ ਹੱਥੀਂ</string>
+    <string name="sync_lookback_all">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">ਸਨੂਜ਼</string>
+    <string name="notification_starting_now">ਹੁਣੇ ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ਦਿਨ ਵਿੱਚ</item>
+        <item quantity="other">%1$d ਦਿਨਾਂ ਵਿੱਚ</item>
+    </plurals>
+    <string name="notification_tomorrow_time">ਕੱਲ੍ਹ, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">ਸਿੰਕ ਪੂਰਾ ਹੋਇਆ</string>
+    <string name="sync_notification_partial">ਸਿੰਕ ਅੰਸ਼ਕ ਤੌਰ ਤੇ ਪੂਰਾ ਹੋਇਆ</string>
+    <string name="sync_notification_auth_failed">ਸਿੰਕ ਪ੍ਰਮਾਣਿਕਤਾ ਅਸਫ਼ਲ</string>
+    <string name="sync_notification_auth_reauth">ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਖਾਤੇ ਨੂੰ ਦੁਬਾਰਾ ਪ੍ਰਮਾਣਿਤ ਕਰੋ</string>
+    <string name="sync_notification_failed">ਸਿੰਕ ਅਸਫ਼ਲ</string>
+    <string name="sync_notification_parse_title">ਕੁਝ ਘਟਨਾਵਾਂ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੀਆਂ</string>
+    <string name="sync_notification_parse_content">%2$s ਵਿੱਚ %1$s ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸੈਟਿੰਗਾਂ ਵਿੱਚ Force Sync ਅਜ਼ਮਾਓ।</string>
+    <string name="sync_notification_conflict_title">ਸਿੰਕ ਵਿਵਾਦ ਹੱਲ ਹੋਇਆ</string>
+    <string name="sync_notification_conflict_single">ਸਿੰਕ ਵਿਵਾਦ ਕਰਕੇ \"%1$s\" ਦੀਆਂ ਸਥਾਨਕ ਤਬਦੀਲੀਆਂ ਗੁੰਮ ਹੋ ਗਈਆਂ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ।</string>
+    <string name="sync_notification_conflict_multi">ਸਿੰਕ ਵਿਵਾਦਾਂ ਕਰਕੇ %1$s ਦੀਆਂ ਸਥਾਨਕ ਤਬਦੀਲੀਆਂ ਗੁੰਮ ਹੋ ਗਈਆਂ। ਸਰਵਰ ਵਰਜਨ ਵਰਤੇ ਜਾਣਗੇ।</string>
+    <string name="sync_notification_expired_title">ਸਿੰਕ ਤਬਦੀਲੀਆਂ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ</string>
+    <string name="sync_notification_expired_content">%1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ਵਿੱਚ %1$s 30 ਦਿਨਾਂ ਬਾਅਦ ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕੇ। ਸਰਵਰ ਵਰਜਨ ਵਰਤਿਆ ਜਾਵੇਗਾ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ Force Sync ਕਰੋ।</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਇਆ</item>
+        <item quantity="other">%1$d ਕੈਲੰਡਰ ਸਿੰਕ ਹੋਏ</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d ਤਬਦੀਲੀ</item>
+        <item quantity="other">, %1$d ਤਬਦੀਲੀਆਂ</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d ਗਲਤੀ</item>
+        <item quantity="other">, %1$d ਗਲਤੀਆਂ</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s ਦਾ %2$s ਵਾਂ ਜਨਮਦਿਨ</string>
+    <string name="contact_birthday">%1$s ਦਾ ਜਨਮਦਿਨ</string>
+    <string name="contact_anniversary_with_age">%1$s ਦੀ %2$s ਵੀਂ ਵਰ੍ਹੇਗੰਢ</string>
+    <string name="contact_anniversary">%1$s ਦੀ ਵਰ੍ਹੇਗੰਢ</string>
+    <string name="ordinal_suffix_st">%1$d ਵਾਂ</string>
+    <string name="ordinal_suffix_nd">%1$d ਵਾਂ</string>
+    <string name="ordinal_suffix_rd">%1$d ਵਾਂ</string>
+    <string name="ordinal_suffix_th">%1$d ਵਾਂ</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">ਕੈਲੰਡਰ ਸਿੰਕ ਹੋ ਰਹੇ ਹਨ…</string>
+    <string name="sync_banner_preparing">ਸਿੰਕ ਦੀ ਤਿਆਰੀ…</string>
+    <string name="sync_banner_complete_errors">ਸਿੰਕ ਪੂਰਾ ਹੋਇਆ ਗਲਤੀਆਂ ਨਾਲ</string>
+    <string name="sync_banner_failed">ਸਿੰਕ ਅਸਫ਼ਲ: %1$s</string>
+    <string name="error_unknown_error">ਅਣਜਾਣ ਗਲਤੀ</string>
+    <string name="sync_snackbar_new_event">ਨਵੀਂ ਘਟਨਾ: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d ਨਵੀਂ ਘਟਨਾ</item>
+        <item quantity="other">%1$d ਨਵੀਆਂ ਘਟਨਾਵਾਂ</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d ਘਟਨਾ ਅੱਪਡੇਟ ਹੋਈ</item>
+        <item quantity="other">%1$d ਘਟਨਾਵਾਂ ਅੱਪਡੇਟ ਹੋਈਆਂ</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d ਘਟਨਾ ਹਟਾਈ ਗਈ</item>
+        <item quantity="other">%1$d ਘਟਨਾਵਾਂ ਹਟਾਈਆਂ ਗਈਆਂ</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d ਕੈਲੰਡਰ ਅੱਪਡੇਟ</item>
+        <item quantity="other">%1$d ਕੈਲੰਡਰ ਅੱਪਡੇਟ</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">ਦਿਨ %1$d / %2$d</string>
+    <string name="day_starts">ਦਿਨ 1 / %1$d · ਸ਼ੁਰੂ %2$s</string>
+    <string name="day_ends">ਦਿਨ %1$d / %2$d · ਅੰਤ %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · ਸਾਰਾ ਦਿਨ</string>
+    <string name="event_date_all_day">%1$s · ਸਾਰਾ ਦਿਨ</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (ਸਾਰਾ ਦਿਨ)</string>
+    <string name="event_date_all_day_parens">%1$s (ਸਾਰਾ ਦਿਨ)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">ਘਟਨਾ ਸੁਰੱਖਿਅਤ ਕਰੋ</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">ਨਵਾਂ</string>
+    <string name="color_red">ਲਾਲ</string>
+    <string name="color_orange">ਸੰਤਰੀ</string>
+    <string name="color_yellow">ਪੀਲਾ</string>
+    <string name="color_green">ਹਰਾ</string>
+    <string name="color_cyan">ਸਿਆਨ</string>
+    <string name="color_blue">ਨੀਲਾ</string>
+    <string name="color_purple">ਜਾਮਣੀ</string>
+    <string name="cd_meeting_link">ਮੀਟਿੰਗ ਲਿੰਕ: %1$s</string>
+    <string name="cd_phone_number">ਫ਼ੋਨ ਨੰਬਰ</string>
+    <string name="cd_email_link">ਈਮੇਲ: %1$s</string>
+    <string name="cd_web_link">ਲਿੰਕ: %1$s</string>
+    <string name="cd_text_with_links">%1$d ਲਿੰਕਾਂ ਵਾਲਾ ਟੈਕਸਟ: %2$s</string>
+    <string name="cd_text_with_link">1 ਲਿੰਕ ਵਾਲਾ ਟੈਕਸਟ: %1$s</string>
+    <string name="day_x_of_y_all_day">ਦਿਨ %1$d / %2$d (ਸਾਰਾ ਦਿਨ)</string>
+    <string name="sync_history_stats">%1$d ਸਿੰਕ   ↑%2$d ਪੁਸ਼   ↓%3$d ਪੁੱਲ</string>
+    <string name="sync_history_stats_issues">%1$d ਸਿੰਕ   ↑%2$d ਪੁਸ਼   ↓%3$d ਪੁੱਲ   ⚠ %4$d ਸਮੱਸਿਆਵਾਂ</string>
+    <string name="sync_history_failed">ਅਸਫ਼ਲ</string>
+    <string name="ics_sync_every_hour">ਹਰ ਘੰਟੇ</string>
+    <string name="ics_sync_every_n_hours">ਹਰ %1$d ਘੰਟੇ</string>
+    <string name="ics_sync_daily">ਰੋਜ਼ਾਨਾ</string>
+    <string name="ics_sync_weekly">ਹਫ਼ਤਾਵਾਰੀ</string>
+    <string name="ics_url_required">URL ਲੋੜੀਂਦਾ ਹੈ</string>
+    <string name="ics_url_invalid_scheme">URL http://, https://, ਜਾਂ webcal:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
+    <string name="ics_fetch_error_http">ਸਰਵਰ ਨੇ ਇੱਕ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ (%1$d)। ਕਿਰਪਾ ਕਰਕੇ URL ਦੀ ਜਾਂਚ ਕਰੋ।</string>
+    <string name="ics_fetch_error_empty">ਕੈਲੰਡਰ ਫੀਡ ਖਾਲੀ ਹੈ।</string>
+    <string name="ics_fetch_error_not_calendar">ਉਹ URL ਕੈਲੰਡਰ ਫੀਡ ਵਰਗਾ ਨਹੀਂ ਲੱਗਦਾ।</string>
+    <string name="insights_title">ਸੂਝ</string>
+    <string name="insights_period_this_week">ਹਫ਼ਤਾ</string>
+    <string name="insights_period_last_week">ਪਿਛਲਾ ਹਫ਼ਤਾ</string>
+    <string name="insights_period_this_month">ਮਹੀਨਾ</string>
+    <string name="insights_empty_state">ਇਸ ਹਫ਼ਤੇ ਕੋਈ ਸਮਾਗਮ ਨਿਰਧਾਰਤ ਨਹੀਂ ਹੈ</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
+        <item quantity="other">%d ਸਾਰਾ-ਦਿਨ ਸਮਾਗਮ</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ ਹੈ (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ ਸੀ (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਹਲਕਾ ਦਿਨ ਹੈ (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ਤੁਹਾਡਾ ਸਭ ਤੋਂ ਹਲਕਾ ਦਿਨ ਸੀ (%2$s)</string>
+    <string name="insight_longest_free_future">ਸਭ ਤੋਂ ਲੰਬਾ ਖਾਲੀ ਸਮਾਂ: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ਸਭ ਤੋਂ ਲੰਬਾ ਖਾਲੀ ਸਮਾਂ %1$s %2$s–%3$s (%4$s) ਸੀ</string>
+    <string name="insight_weekend_load_clear_future">ਤੁਹਾਡਾ ਹਫ਼ਤੇ ਦਾ ਅੰਤ ਖਾਲੀ ਹੈ</string>
+    <string name="insight_weekend_load_clear_past">ਤੁਹਾਡਾ ਹਫ਼ਤੇ ਦਾ ਅੰਤ ਖਾਲੀ ਸੀ</string>
+    <string name="insight_weekend_load_light_future">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਹੈ</string>
+    <string name="insight_weekend_load_light_past">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਸੀ</string>
+    <string name="insight_weekend_load_busy_future">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਹੈ</string>
+    <string name="insight_weekend_load_busy_past">ਹਫ਼ਤੇ ਦੇ ਅੰਤ \'ਤੇ %1$s ਨਿਰਧਾਰਤ ਸੀ</string>
+    <string name="insight_back_to_back_future">%1$d ਲਗਾਤਾਰ ਮੀਟਿੰਗਾਂ</string>
+    <string name="insight_back_to_back_past">ਤੁਹਾਡੀਆਂ %1$d ਲਗਾਤਾਰ ਮੀਟਿੰਗਾਂ ਸਨ</string>
+    <string name="insight_calendar_dominant_future">%1$s ਤੁਹਾਡੇ ਨਿਰਧਾਰਤ ਸਮੇਂ ਦਾ %2$d%% ਹੈ</string>
+    <string name="insight_calendar_dominant_past">%1$s ਤੁਹਾਡੇ ਨਿਰਧਾਰਤ ਸਮੇਂ ਦਾ %2$d%% ਸੀ</string>
+    <string name="insight_early_bounds_future">ਤੁਹਾਡਾ ਸਮਾਂ-ਸਾਰਨੀ %1$d ਦਿਨ ਸਵੇਰੇ 8 ਵਜੇ ਤੋਂ ਪਹਿਲਾਂ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ</string>
+    <string name="insight_early_bounds_past">ਤੁਹਾਡਾ ਸਮਾਂ-ਸਾਰਨੀ %1$d ਦਿਨ ਸਵੇਰੇ 8 ਵਜੇ ਤੋਂ ਪਹਿਲਾਂ ਸ਼ੁਰੂ ਹੋਇਆ</string>
+    <string name="insight_late_bounds_future">%1$d ਦਿਨ ਸ਼ਾਮ 7 ਵਜੇ ਤੋਂ ਬਾਅਦ ਸਮਾਗਮ</string>
+    <string name="insight_late_bounds_past">%1$d ਦਿਨ ਸ਼ਾਮ 7 ਵਜੇ ਤੋਂ ਬਾਅਦ ਸਮਾਗਮ ਹੋਏ</string>
+    <string name="insight_meeting_free_days_future">ਤੁਹਾਡੇ ਕੋਲ %1$d ਮੀਟਿੰਗ-ਮੁਕਤ ਦਿਨ ਹਨ</string>
+    <string name="insight_meeting_free_days_past">ਤੁਹਾਡੇ ਕੋਲ %1$d ਮੀਟਿੰਗ-ਮੁਕਤ ਦਿਨ ਸਨ</string>
+    <string name="insight_tomorrow_preview">ਕੱਲ੍ਹ: %1$s ਨਿਰਧਾਰਤ, %2$s \'ਤੇ ਸ਼ੁਰੂ</string>
+    <string name="insight_tomorrow_preview_no_start">ਕੱਲ੍ਹ: %1$s ਨਿਰਧਾਰਤ</string>
+    <string name="insight_heaviest_upcoming">%1$s ਤੁਹਾਡਾ ਆਉਣ ਵਾਲਾ ਸਭ ਤੋਂ ਭਾਰੀ ਦਿਨ ਹੈ (%2$s)</string>
+    <string name="insight_next_free_block">ਅਗਲਾ ਖਾਲੀ ਸਮਾਂ: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_daily_chart">ਰੋਜ਼ਾਨਾ ਵੰਡ: ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ %1$s ਹੈ</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">ਉਪਲਬਧਤਾ</string>
+    <string name="label_busy">ਰੁੱਝਿਆ</string>
+    <string name="label_free">ਖਾਲੀ</string>
+    <string name="label_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
+    <string name="label_calendar_default">ਕੈਲੰਡਰ ਡਿਫ਼ੌਲਟ</string>
+    <string name="label_custom">ਕਸਟਮ</string>
+    <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">ਕਾਠੀ ਭੂਰਾ</string>
+    <string name="color_tomato">ਟਮਾਟਰ</string>    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
+    <string name="color_gold">ਸੁਨਹਿਰੀ</string>
+    <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>
+    <string name="color_limegreen">ਨਿੰਬੂ ਹਰਾ</string>    <string name="color_lightseagreen">ਹਲਕਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
+    <string name="color_dodgerblue">ਡੌਜਰ ਨੀਲਾ</string>
+    <string name="color_royalblue">ਸ਼ਾਹੀ ਨੀਲਾ</string>    <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
+    <string name="color_hotpink">ਚਮਕਦਾਰ ਗੁਲਾਬੀ</string>
+    <string name="color_dimgray">ਮੱਧਮ ਸੁਰਮਈ</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <string name="hue_red">ਲਾਲ</string>
+    <string name="hue_orange">ਸੰਤਰੀ</string>
+    <string name="hue_yellow">ਪੀਲਾ</string>
+    <string name="hue_green">ਹਰਾ</string>
+    <string name="hue_teal">ਨੀਲਾ-ਹਰਾ</string>
+    <string name="hue_blue">ਨੀਲਾ</string>
+    <string name="hue_purple">ਜਾਮਨੀ</string>
+    <string name="hue_pink">ਗੁਲਾਬੀ</string>
+    <string name="hue_brown">ਭੂਰਾ</string>
+    <string name="hue_neutral">ਨਿਰਪੱਖ</string>
+    <string name="label_more_colors">ਹੋਰ ਰੰਗ</string>
+    <string name="label_back_to_grid">ਵਾਪਸ</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <string name="label_attendees">ਹਾਜ਼ਰੀਨ</string>
+    <string name="attendee_you_marker">ਤੁਸੀਂ</string>
+    <string name="attendee_card_going">ਜਾ ਰਹੇ ਹਨ</string>
+    <string name="attendee_card_pending">ਉਡੀਕ ਵਿੱਚ</string>
+    <string name="attendee_card_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
+    <string name="attendee_card_tentative">ਅਨਿਸ਼ਚਿਤ</string>
+    <string name="attendee_card_hosting">ਮੇਜ਼ਬਾਨੀ</string>
+    <string name="attendee_action_copy">ਈਮੇਲ ਕਾਪੀ ਕਰੋ</string>
+    <string name="attendee_action_email">ਈਮੇਲ ਭੇਜੋ</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <string name="attendee_email_copied">ਈਮੇਲ ਕਾਪੀ ਹੋ ਗਈ</string>
+    <string name="attendee_no_email_app">ਕੋਈ ਈਮੇਲ ਐਪ ਸਥਾਪਤ ਨਹੀਂ ਹੈ</string>
+    <string name="attendee_show_all">ਸਾਰੇ ਹਾਜ਼ਰੀਨ ਦਿਖਾਓ</string>
+    <string name="attendee_status_accepted">ਸਵੀਕਾਰ ਕੀਤਾ</string>
+    <string name="attendee_status_declined">ਇਨਕਾਰ ਕੀਤਾ</string>
+    <string name="attendee_status_tentative">ਅਨਿਸ਼ਚਿਤ</string>
+    <string name="attendee_status_delegated">ਸੌਂਪਿਆ ਗਿਆ</string>
+    <string name="attendee_status_pending">ਉਡੀਕ ਵਿੱਚ</string>
+    <string name="inbox_empty_caught_up">ਸਭ ਨਿਪਟਾ ਲਿਆ</string>
+    <string name="inbox_organizer_suffix">(ਪ੍ਰਬੰਧਕ)</string>
+    <string name="menu_invites">ਸੱਦੇ</string>
+    <string name="jump_to_date">ਮਿਤੀ ਤੇ ਜਾਓ</string>
+    <string name="menu_about">ਬਾਰੇ</string>
+    <string name="menu_more">ਹੋਰ ਮੀਨੂ</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">ਹੋਰ ਮੀਨੂ, %d ਸੱਦਾ ਬਕਾਇਆ</item>
+        <item quantity="other">ਹੋਰ ਮੀਨੂ, %d ਸੱਦੇ ਬਕਾਇਆ</item>
+    </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <string name="share_availability_sheet_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ਅਗਲਾ %1$d ਦਿਨ</item>
+        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨ</item>
+    </plurals>
+    <string name="share_availability_hours_label">ਕੰਮ ਦੇ ਘੰਟੇ: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">ਪੂਰੇ ਦਿਨ ਦੇ ਇਵੈਂਟ ਰੁੱਝੇ ਵਜੋਂ</string>
+    <string name="share_availability_share_button">ਸਾਂਝਾ ਕਰੋ</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">ਅਗਲੇ %1$d ਦਿਨ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
+        <item quantity="other">ਅਗਲੇ %1$d ਦਿਨਾਂ ਵਿੱਚ ਖਾਲੀ (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ਚੁਣੀ ਗਈ ਰੇਂਜ ਵਿੱਚ ਘੱਟੋ ਘੱਟ ਇੱਕ ਘੰਟੇ ਦੇ ਕੋਈ ਖਾਲੀ ਬਲਾਕ ਨਹੀਂ ਹਨ।</string>
+    <string name="share_from_kashcal_footer">KashCal ਤੋਂ ਸਾਂਝਾ ਕੀਤਾ</string>
+    <string name="share_availability_chooser_title">ਉਪਲਬਧਤਾ ਸਾਂਝੀ ਕਰੋ</string>
+    <string name="share_availability_share_failed">ਸਾਂਝਾ ਕਰਨ ਲਈ ਕੋਈ ਐਪ ਉਪਲਬਧ ਨਹੀਂ</string>
+    <string name="share_availability_window_section">ਵਿੰਡੋ</string>
+    <string name="share_availability_hours_section">ਕੰਮ ਦੇ ਘੰਟੇ</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ਦਿਨ</item>
+        <item quantity="other">%1$d ਦਿਨ</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s ਤੱਕ</string>
+    <string name="share_availability_window_duration">%1$s ਘੰਟੇ ਦੀ ਵਿੰਡੋ</string>
+    <string name="share_as_card_action">ਕਾਰਡ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ</string>
+    <string name="share_as_card_chip_standard">ਮਿਆਰੀ</string>
+    <string name="share_as_card_chip_celebration">ਜਸ਼ਨ</string>
+    <string name="share_as_card_send">ਭੇਜੋ</string>
+    <string name="share_as_card_attribution">KashCal ਨਾਲ ਬਣਾਇਆ</string>
+    <string name="share_as_card_all_day">ਸਾਰਾ ਦਿਨ</string>
+    <string name="share_as_card_chooser_title">ਸਮਾਗਮ ਸਾਂਝਾ ਕਰੋ</string>
+    <string name="share_as_card_share_failed">ਕਾਰਡ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ</string>
+
 </resources>

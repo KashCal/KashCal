@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">แสดงวันที่ของวันนี้เหมือนไอคอนแอป</string>
     <string name="upcoming_widget_name">กิจกรรมถัดไป</string>
     <string name="upcoming_widget_description">แสดงกิจกรรมใน 10 วันข้างหน้า โดยข้ามวันที่ไม่มีกิจกรรม</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">กำลังโหลดกิจกรรมถัดไป…</string>
     <string name="widget_error_load_events">โหลดกิจกรรมไม่สำเร็จ แตะเพื่อเปิด</string>
     <string name="widget_no_events_today">วันนี้ไม่มีกิจกรรม</string>
     <string name="widget_add_event">+ เพิ่มกิจกรรม</string>
     <string name="widget_no_events">ไม่มีกิจกรรม</string>
     <string name="widget_no_upcoming_events">ไม่มีกิจกรรมที่จะมาถึง</string>
+    <string name="cd_widget_calendar">ปฏิทิน</string>
+    <string name="cd_widget_add_event">เพิ่มกิจกรรม</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ไม่มีกิจกรรม</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, ยกเลิกแล้ว</string>
+    <string name="channel_event_reminders">การแจ้งเตือนกิจกรรม</string>
+    <string name="channel_event_reminders_desc">การแจ้งเตือนสำหรับกิจกรรมในปฏิทินที่กำลังจะมาถึง</string>
+    <string name="channel_sync_progress">ความคืบหน้าการซิงค์</string>
+    <string name="channel_sync_progress_desc">แสดงความคืบหน้าขณะซิงค์ปฏิทิน</string>
+    <string name="channel_sync_status">สถานะการซิงค์</string>
+    <string name="channel_sync_status_desc">การแจ้งเตือนเกี่ยวกับการซิงค์เสร็จสมบูรณ์และข้อผิดพลาด</string>
+    <string name="channel_event_invitations">คำเชิญกิจกรรม</string>
+    <string name="channel_event_invitations_desc">การแจ้งเตือนเมื่อได้รับคำเชิญปฏิทินใหม่</string>
+    <string name="invite_notification_body">จาก %1$s · แตะเพื่อตอบกลับ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">กิจกรรมใหม่</string>
@@ -71,6 +85,9 @@
     <string name="action_confirm_delete">ยืนยันการลบ</string>
     <string name="action_delete_event">ลบกิจกรรม</string>
 
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">การตอบกลับของคุณจะใช้กับกิจกรรมทั้งหมดในชุดนี้</string>
+
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">ครั้งนี้และทั้งหมดในอนาคต</string>
 
@@ -107,7 +124,6 @@
     <string name="label_all_day">ทั้งวัน</string>
     <string name="label_today">วันนี้</string>
     <string name="label_go_to_date">ไปที่วันที่</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">ส</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -160,6 +176,27 @@
     <string name="app_lock_enabled_message">เปิดการล็อกแอปแล้ว KashCal จะขอให้คุณยืนยันตัวตนในครั้งถัดไปที่คุณเปิดแอป</string>
     <string name="app_lock_disable_prompt_title">ปลดล็อกเพื่อปิดการล็อกแอป</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">สำรองข้อมูลการตั้งค่า</string>
+    <string name="backup_settings_subtitle">บันทึกการตั้งค่า KashCal เป็นไฟล์ JSON</string>
+    <string name="restore_settings_label">กู้คืนการตั้งค่า</string>
+    <string name="restore_settings_subtitle">กู้คืนการตั้งค่า KashCal จากไฟล์สำรอง</string>
+    <string name="restore_confirm_title">กู้คืนข้อมูลสำรองหรือไม่?</string>
+    <string name="restore_confirm_from">ข้อมูลสำรองจาก KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">การตั้งค่าของคุณจะถูกนำเข้า</string>
+    <string name="action_restore">กู้คืน</string>
+    <string name="restore_success_title">กู้คืนสำเร็จ</string>
+    <string name="restore_success_message_prefs_only">นำเข้าการตั้งค่าแล้ว</string>
+    <string name="restore_success_device_calendars_note">หากคุณใช้ฟีเจอร์ปฏิทินของอุปกรณ์ โปรดเลือกอีกครั้ง</string>
+    <string name="restore_error_title">กู้คืนไม่สำเร็จ</string>
+    <string name="restore_error_version_too_new">ข้อมูลสำรองนี้สร้างด้วย KashCal เวอร์ชันที่ใหม่กว่า โปรดอัปเดต KashCal แล้วลองอีกครั้ง</string>
+    <string name="restore_error_malformed_json">ไฟล์นี้ไม่ใช่ไฟล์สำรอง KashCal ที่ถูกต้อง</string>
+    <string name="restore_error_invalid_value">ไฟล์สำรองนี้มีข้อมูลที่ไม่ถูกต้องและไม่สามารถกู้คืนได้</string>
+    <string name="restore_error_apply_failure">เกิดข้อผิดพลาดขณะใช้ข้อมูลสำรอง ไม่มีการบันทึกการเปลี่ยนแปลงใดๆ</string>
+    <string name="backup_error_build_failed">สำรองข้อมูลไม่สำเร็จ</string>
+    <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ — เขียนลงไฟล์ไม่ได้</string>
+    <string name="backup_error_read_failed">อ่านไฟล์ไม่ได้</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">ใช้ Apple Calendar อยู่?</string>
     <string name="onboarding_got_you">เราช่วยได้</string>
@@ -171,6 +208,7 @@
     <string name="whats_new_v598_title">ช่วยให้ Android ยังคงเปิดกว้าง</string>
     <string name="whats_new_v598_body">Google กำลังเปลี่ยนวิธีที่คุณติดตั้งแอปบนอุปกรณ์ของคุณ เราต้องการความช่วยเหลือจากคุณ</string>
     <string name="whats_new_v598_action_label">ไปที่ keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">เชื่อมต่อ iCloud</string>
     <string name="signin_caldav_title">เพิ่มบัญชี CalDAV</string>
@@ -214,13 +252,11 @@
     <string name="error_auth_session_expired_title">เซสชันหมดอายุ</string>
     <string name="error_auth_session_expired">เซสชัน iCloud หมดอายุแล้ว กรุณาลงชื่อเข้าใช้อีกครั้งเพื่อซิงค์ต่อ</string>
     <string name="error_auth_account_locked">Apple ID ของคุณถูกล็อก กรุณาไปที่ appleid.apple.com เพื่อปลดล็อก</string>
-
     <string name="error_network_offline">คุณออฟไลน์อยู่ การเปลี่ยนแปลงจะซิงค์เมื่อกลับมาออนไลน์</string>
     <string name="error_network_timeout">การเชื่อมต่อหมดเวลา กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง</string>
     <string name="error_network_ssl">การเชื่อมต่อปลอดภัยล้มเหลว กรุณาตรวจสอบการตั้งค่าเครือข่าย</string>
     <string name="error_network_unknown_host">ไม่สามารถเชื่อมต่อ iCloud ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</string>
     <string name="error_network_connection_failed">การเชื่อมต่อล้มเหลว กรุณาลองอีกครั้ง</string>
-
     <string name="error_server_unavailable">iCloud ไม่พร้อมใช้งานชั่วคราว กรุณาลองอีกครั้งในภายหลัง</string>
     <string name="error_server_rate_limited">คำขอมากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง</string>
     <string name="error_server_forbidden">การเข้าถึงถูกปฏิเสธ คุณอาจไม่มีสิทธิ์เข้าถึงปฏิทินนี้</string>
@@ -229,13 +265,11 @@
     <string name="error_conflict_generic">กิจกรรมนี้ถูกแก้ไขบนอุปกรณ์อื่น บังคับซิงค์เพื่อรับเวอร์ชันล่าสุด</string>
     <string name="error_conflict_with_event">\"%1$s\" ถูกแก้ไขบนอุปกรณ์อื่น บังคับซิงค์เพื่อรับเวอร์ชันล่าสุด</string>
     <string name="error_sync_token_expired">ข้อมูลซิงค์หมดอายุ กำลังซิงค์ทั้งหมด…</string>
-
     <string name="error_event_not_found">ไม่พบกิจกรรม</string>
     <string name="error_calendar_not_found">ไม่พบปฏิทิน</string>
     <string name="error_calendar_read_only">ไม่สามารถแก้ไขกิจกรรมใน \"%1$s\" (ปฏิทินอ่านอย่างเดียว)</string>
     <string name="error_event_invalid_data">ข้อมูลกิจกรรมไม่ถูกต้อง กรุณาตรวจสอบเวลาเริ่มต้นและสิ้นสุด</string>
     <string name="error_event_invalid_recurrence">รูปแบบการเกิดซ้ำไม่ถูกต้อง</string>
-
     <string name="error_display_name_exists">บัญชีชื่อ \"%1$s\" มีอยู่แล้ว</string>
     <string name="icloud_error_credentials_required">ต้องระบุ Apple ID และรหัสผ่าน</string>
     <string name="icloud_error_connection_timeout">หมดเวลาการเชื่อมต่อ โปรดลองอีกครั้ง</string>
@@ -244,42 +278,41 @@
     <string name="caldav_error_connection_timeout">หมดเวลาการเชื่อมต่อ โปรดลองอีกครั้ง</string>
     <string name="caldav_error_no_calendars">ไม่พบปฏิทินบนเซิร์ฟเวอร์นี้</string>
     <string name="caldav_error_unexpected">เกิดข้อผิดพลาดที่ไม่คาดคิด โปรดลองอีกครั้ง</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nหากนี่คือเซิร์ฟเวอร์บนเครือข่ายภายในของคุณ ให้อนุญาตการเข้าถึงเครือข่ายภายในเพื่อเชื่อมต่อ</string>
+    <string name="local_network_banner_title">ต้องอนุญาตการเข้าถึงเครือข่ายภายใน</string>
+    <string name="local_network_banner_body">เซิร์ฟเวอร์นี้ดูเหมือนจะอยู่บนเครือข่ายภายในของคุณ อนุญาตการเข้าถึงเครือข่ายภายในเพื่อให้ KashCal เชื่อมต่อได้</string>
+    <string name="local_network_banner_allow">อนุญาตการเข้าถึง</string>
+    <string name="local_network_banner_dismiss">ไว้ทีหลัง</string>
     <string name="password_change_error_account_not_found">ไม่พบบัญชี</string>
     <string name="password_change_error_no_credentials">ไม่มีข้อมูลรับรองที่มีอยู่</string>
     <string name="password_change_error_unsupported_provider">ผู้ให้บริการนี้ไม่รองรับการเปลี่ยนรหัสผ่าน</string>
     <string name="password_change_error_invalid">รหัสผ่านไม่ถูกต้อง</string>
     <string name="password_change_error_network">เกิดข้อผิดพลาดของเครือข่าย โปรดลองอีกครั้ง</string>
-
     <string name="error_import_file_not_found">ไม่พบไฟล์หรืออ่านไม่ได้</string>
     <string name="error_import_invalid_format">รูปแบบไฟล์ปฏิทินไม่ถูกต้อง</string>
     <string name="error_import_partial">นำเข้า %1$d กิจกรรม, %2$d ไม่สำเร็จ</string>
     <string name="error_export_failed">ส่งออกกิจกรรมไม่สำเร็จ</string>
     <string name="error_export_no_events">ไม่มีกิจกรรมให้ส่งออก</string>
     <string name="error_end_before_start">เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น</string>
-
     <string name="error_storage_full_title">พื้นที่เก็บข้อมูลเต็ม</string>
     <string name="error_storage_full">พื้นที่เก็บข้อมูลไม่เพียงพอ กรุณาเพิ่มพื้นที่ว่างแล้วลองอีกครั้ง</string>
     <string name="error_database_corruption_title">ข้อมูลผิดพลาด</string>
     <string name="error_database_corruption">ข้อมูลปฏิทินของคุณอาจเสียหาย กรุณาติดต่อฝ่ายสนับสนุน</string>
     <string name="error_migration_title">อัปเดตผิดพลาด</string>
     <string name="error_migration_failed">อัปเดตข้อมูลแอปไม่สำเร็จ กรุณาติดตั้งแอปใหม่</string>
-
     <string name="error_permission_notification_title">เปิดการแจ้งเตือน?</string>
     <string name="error_permission_notification">KashCal ต้องการสิทธิ์การแจ้งเตือนเพื่อเตือนกิจกรรมที่จะมาถึง</string>
     <string name="error_permission_alarm_title">เปิดการตั้งเตือนที่แม่นยำ?</string>
     <string name="error_permission_alarm">KashCal ต้องการสิทธิ์การตั้งเตือนที่แม่นยำเพื่อการเตือนที่แม่นยำ</string>
     <string name="error_permission_storage">ต้องการสิทธิ์พื้นที่เก็บข้อมูลสำหรับนำเข้า/ส่งออก</string>
-
     <string name="error_device_calendar_title">ข้อผิดพลาดของปฏิทิน</string>
     <string name="error_device_calendar_write_failed">บันทึกลงปฏิทินอุปกรณ์ไม่สำเร็จ กรุณาลองอีกครั้ง</string>
     <string name="error_device_calendar_permission">ต้องการสิทธิ์เขียนปฏิทิน กรุณาอนุญาตในการตั้งค่า</string>
     <string name="error_device_calendar_not_found">ไม่พบปฏิทิน อาจถูกลบไปแล้ว</string>
     <string name="error_device_event_not_found">ไม่พบกิจกรรม อาจถูกลบไปแล้ว</string>
     <string name="error_device_calendar_read_only">ปฏิทินนี้เป็นแบบอ่านอย่างเดียว</string>
-
     <string name="error_sync_no_accounts">ยังไม่ได้ตั้งค่าบัญชี iCloud ตั้งค่า iCloud เพื่อซิงค์ปฏิทิน</string>
     <string name="error_sync_partial">ซิงค์ %1$d ปฏิทิน, %2$d ไม่สำเร็จ</string>
-
     <string name="error_unknown">มีบางอย่างผิดพลาด กรุณาลองอีกครั้ง</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -322,6 +355,7 @@
     <string name="label_password">รหัสผ่าน</string>
     <string name="label_display_name_optional">ชื่อที่แสดง</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">ค้นหากิจกรรม…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -405,12 +439,20 @@
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">ฟีดปฏิทิน</string>
-    <string name="subscriptions_row_label">ฟีดปฏิทิน (ICS)</string>
-    <string name="subscriptions_row_hint">เช่น วันหยุด กีฬา โรงเรียน</string>
     <string name="subscriptions_section_add">เพิ่ม</string>
     <string name="subscriptions_empty_ics">ไม่มีการสมัครรับ ICS</string>
     <string name="subscriptions_empty_ics_hint">เพิ่มฟีดปฏิทินเพื่อดูกิจกรรม</string>
     <string name="subscriptions_add_ics">เพิ่มปฏิทิน ICS</string>
+    <string name="qs_tile_label">เพิ่มกิจกรรม</string>
+    <string name="holiday_catalog_add">เพิ่มปฏิทินวันหยุด</string>
+    <string name="holiday_catalog_search_label">ค้นหา</string>
+    <string name="holiday_catalog_already_added">เพิ่มแล้ว</string>
+    <string name="holiday_catalog_empty">ไม่พบประเทศ</string>
+    <string name="holiday_catalog_empty_hint">ลองใช้ชื่ออื่น</string>
+    <string name="holiday_catalog_validate_error">ไม่สามารถเชื่อมต่อปฏิทินนี้ได้ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
+    <string name="holiday_catalog_attribution">ปฏิทินวันหยุดจาก Mozilla Thunderbird อยู่ภายใต้สัญญาอนุญาต %1$s</string>
+    <string name="subscriptions_row_label">ฟีดปฏิทิน (ICS)</string>
+    <string name="subscriptions_row_hint">เช่น วันหยุด กีฬา โรงเรียน</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">วันเกิดและวันครบรอบ</string>
@@ -430,8 +472,8 @@
     <string name="subscriptions_cd_back">ย้อนกลับ</string>
     <string name="subscriptions_cd_add">เพิ่มการสมัครรับ</string>
     <string name="snackbar_subscription_removed">ลบการสมัครรับแล้ว</string>
-    <string name="snackbar_subscription_already_exists">สมัครรับ URL นี้แล้ว</string>
     <string name="snackbar_action_undo">เลิกทำ</string>
+    <string name="snackbar_subscription_already_exists">สมัครรับ URL นี้แล้ว</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ซิงค์</string>
@@ -451,7 +493,6 @@
     <string name="account_detail_cd_show_password">แสดงรหัสผ่าน</string>
     <string name="account_detail_cd_hide_password">ซ่อนรหัสผ่าน</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">เปลี่ยนชื่อบัญชี</string>
     <string name="rename_account_label">ชื่อบัญชี</string>
@@ -468,6 +509,7 @@
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="settings_device_calendars_hint">ปฏิทินจากแอปอื่น</string>
     <string name="settings_quick_event_add">เพิ่มกิจกรรมด่วน</string>
+    <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
     <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
     <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
@@ -481,6 +523,7 @@
     <string name="settings_device_calendars_enabled">%1$d เปิดใช้</string>
     <string name="settings_per_day">%1$d ต่อวัน</string>
 
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">รหัสผ่านเฉพาะแอปคืออะไร?</string>
     <string name="caldav_trust_insecure_label">เชื่อถือการเชื่อมต่อที่ไม่ปลอดภัย</string>
     <string name="action_add_another">เพิ่มบัญชีอื่น</string>
@@ -521,6 +564,9 @@
     <string name="label_found_events">พบ: %1$d กิจกรรม</string>
     <string name="label_open_debug_menu">เปิดเมนูดีบัก</string>
     <string name="placeholder_search">ค้นหา…</string>
+    <string name="settings_search_placeholder">ค้นหาการตั้งค่า…</string>
+    <string name="settings_search_no_results">ไม่พบการตั้งค่าสำหรับ \"%1$s\"</string>
+    <string name="cd_search_settings">ค้นหาการตั้งค่า</string>
     <string name="status_sync_paused">หยุดซิงค์ชั่วคราว</string>
     <string name="status_not_synced">ไม่ได้ซิงค์</string>
     <string name="status_sync_error">ซิงค์ผิดพลาด</string>
@@ -539,15 +585,11 @@
     <string name="device_calendars_reminders_desc">รับแจ้งเตือนกิจกรรมปฏิทินอุปกรณ์</string>
     <string name="device_calendars_read_only_no_write">อ่านอย่างเดียว (ไม่มีสิทธิ์เขียน)</string>
     <string name="device_calendars_read_only_calendar">อ่านอย่างเดียว (ปฏิทินอ่านอย่างเดียว)</string>
-
     <string name="settings_developer_options">ตัวเลือกนักพัฒนา</string>
     <string name="settings_sync_frequency">ความถี่การซิงค์</string>
     <string name="settings_preview">ตัวอย่าง</string>
     <string name="settings_n_events">%1$d กิจกรรม</string>
     <string name="settings_n_events_default">%1$d กิจกรรม (ค่าเริ่มต้น)</string>
-    <string name="settings_search_placeholder">ค้นหาการตั้งค่า…</string>
-    <string name="settings_search_no_results">ไม่พบการตั้งค่าสำหรับ \"%1$s\"</string>
-    <string name="cd_search_settings">ค้นหาการตั้งค่า</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ปฏิทิน</string>
@@ -555,7 +597,6 @@
     <string name="drawer_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="drawer_account_offline">ออฟไลน์</string>
     <string name="drawer_share_feedback">ความช่วยเหลือและเอกสาร</string>
-
     <string name="event_title_fallback">กิจกรรม</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -609,11 +650,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d กิจกรรม</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">เปิดปฏิทิน</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">อีก %1$d วัน</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">เปิดปฏิทิน</string>
     <plurals name="birthday_count">
         <item quantity="other">%1$d วันเกิด</item>
     </plurals>
@@ -682,39 +722,92 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">กิจกรรมนี้เท่านั้น</string>
-    <string name="recurring_all_events">กิจกรรมทั้งหมด</string>
     <string name="dialog_edit_recurring_title">บันทึกการเปลี่ยนแปลงที่</string>
     <string name="dialog_delete_recurring_title">ลบ</string>
     <string name="dialog_move_recurring_title">ย้าย</string>
+    <string name="recurring_this_event">กิจกรรมนี้เท่านั้น</string>
+    <string name="recurring_all_events">กิจกรรมทั้งหมด</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">ผู้เข้าร่วม</string>
+    <string name="attendee_search_hint">ค้นหา</string>
+    <string name="attendee_search_no_matches">ไม่พบ</string>
+    <string name="attendee_picker_title">เพิ่มผู้เข้าร่วม</string>
+    <string name="attendee_pick_add_people">เพิ่มผู้เข้าร่วม</string>
+    <string name="attendee_pick_from_contacts">ชื่อหรืออีเมล</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+อีก %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">แนะนำผู้คนจากรายชื่อติดต่อของคุณ</string>
+    <string name="attendee_invalid_email">ป้อนที่อยู่อีเมลแบบเต็ม</string>
+    <string name="attendee_add_typed">เพิ่ม \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">ไม่สามารถเชิญบุคคลในบัญชีนี้ได้</string>
+    <string name="device_attendee_local_no_delivery">ปฏิทินนี้ส่งคำเชิญไม่ได้ ระบบจะบันทึกผู้เข้าร่วมแต่จะไม่แจ้งเตือนพวกเขา</string>
+    <string name="action_save_and_notify">บันทึกและแจ้งเตือน</string>
+    <string name="attendee_section_going">ไป</string>
+    <string name="attendee_section_maybe">อาจจะ</string>
+    <string name="attendee_section_pending">รอตอบรับ</string>
+    <string name="attendee_section_declined">ปฏิเสธ</string>
+    <string name="attendee_section_delegated">มอบหมาย</string>
+    <string name="invitees_host_tag">เจ้าภาพ</string>
+    <string name="invitees_summary_you_alone">คุณ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">คุณ · เชิญแล้ว %d คน</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">เชิญแล้ว %d คน</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s เป็นเจ้าภาพ</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · คุณ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · คุณ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">คุณ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · อีก %2$d คน</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">เปลี่ยนคำตอบ</string>
+    <string name="rsvp_question_going">จะไปไหม?</string>
+    <string name="rsvp_action_yes">ไป</string>
+    <string name="rsvp_action_maybe">อาจจะ</string>
+    <string name="rsvp_action_no">ไม่ไป</string>
+    <string name="rsvp_state_going">คุณจะไป</string>
+    <string name="rsvp_state_maybe">อาจจะ</string>
+    <string name="rsvp_state_not_going">คุณไม่ไป</string>
+    <string name="rsvp_action_change">เปลี่ยน</string>
     <string name="empty_pick_a_day">เลือกวัน แล้วคว้ามันไว้</string>
-    <string name="empty_no_events_day">ไม่มีอะไรที่นี่ ออกไปเดินเล่นดีไหม?</string>
+    <string name="cd_empty_pick_a_day">เลือกวัน</string>
+    <string name="empty_no_events_day_1">วันว่าง ๆ จักรวาลยืนกรานให้คุณได้พัก</string>
+    <string name="empty_no_events_day_2">ไม่มีแผน นั่นแหละคือแผน</string>
+    <string name="empty_no_events_day_3">ของขวัญ: วันว่าง ๆ หนึ่งวัน</string>
+    <string name="empty_no_events_day_4">สถานะปฏิทิน: ว่างสุด ๆ อย่างน่ายินดี</string>
+    <string name="empty_no_events_day_5">ไม่มีอะไรต้องทำ เพลิดเพลินกับความสงบเถอะ</string>
+    <string name="cd_empty_no_events_day">วันสบาย ๆ ไม่มีนัดหมาย</string>
     <string name="filter_date">วันที่</string>
     <string name="label_select_date">เลือกวันที่</string>
     <string name="hint_tap_date_range">แตะวันเดียวกันสำหรับวันเดียว หรือแตะวันอื่นสำหรับช่วงเวลา</string>
-
     <string name="cd_clear">ล้าง</string>
     <string name="cd_offline">ออฟไลน์</string>
+    <string name="cd_event_state_cancelled">ยกเลิกแล้ว</string>
+    <string name="cd_event_state_declined">ปฏิเสธแล้ว</string>
+    <string name="cd_event_state_past">กิจกรรมที่ผ่านมา</string>
     <string name="cd_loading_events">กำลังโหลดกิจกรรม</string>
+    <string name="cd_event_untitled">กิจกรรมที่ไม่มีชื่อ</string>
     <string name="cd_open_drawer">เปิดลิ้นชัก</string>
     <string name="cd_close_drawer">ปิดลิ้นชัก</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">มุมมองปฏิทิน</string>
     <string name="cd_active_view">มุมมองที่ใช้งาน</string>
-
     <string name="view_agenda">กำหนดการ</string>
     <string name="view_month_full">เดือน (เต็ม)</string>
     <string name="view_day">วัน</string>
     <string name="view_three_days">3 วัน</string>
     <string name="view_year">ปี</string>
     <string name="view_insights">วิเคราะห์</string>
-
     <string name="label_go_to_month">ไปที่เดือน</string>
-
     <string name="action_more_options">ตัวเลือกเพิ่มเติม</string>
     <string name="quick_add_save_failed">บันทึกกิจกรรมไม่สำเร็จ</string>
-
     <string name="label_duration_days">วัน</string>
     <string name="label_duration_hrs">ชม.</string>
     <string name="label_duration_min">นาที</string>
@@ -729,202 +822,7 @@
     <string name="ordinal_4th">4</string>
     <string name="ordinal_nth">%1$d</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d ใหม่</string>
-    <string name="sync_summary_updated">%1$d อัปเดต</string>
-    <string name="sync_summary_removed">%1$d ลบ</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">เปิดการเลื่อนวนรอบ</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">ไม่มีการแจ้งเตือน</string>
-    <string name="reminder_at_time_of_event">เมื่อเริ่มกิจกรรม</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s ก่อน</string>
-    <string name="reminder_time_after">%1$s หลัง</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM วันที่มีกิจกรรม</string>
-    <string name="reminder_day_of_event_24h">09:00 วันที่มีกิจกรรม</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s ก่อน เวลา 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s ก่อน เวลา 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">ปิด</string>
-    <string name="reminder_short_at_event">เมื่อเริ่ม</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$d นาที</string>
-    <string name="reminder_short_hours">%1$d ชม.</string>
-    <string name="reminder_short_days">%1$d วัน</string>
-    <string name="reminder_short_weeks">%1$d สัปดาห์</string>
-    <string name="reminder_summary_none">ไม่มี</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$d ชม. %2$d นาที</string>
-    <string name="duration_compact_short">%1$dชม.%2$dนาที</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">ซิงค์เองเท่านั้น</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">กิจกรรมทั้งหมด</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">เลื่อนแจ้งเตือน</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">กำลังจะเริ่ม</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">พรุ่งนี้ %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">ซิงค์เสร็จสมบูรณ์</string>
-    <string name="sync_notification_partial">ซิงค์เสร็จบางส่วน</string>
-    <string name="sync_notification_auth_failed">การยืนยันตัวตนในการซิงค์ล้มเหลว</string>
-    <string name="sync_notification_auth_reauth">กรุณายืนยันตัวตนบัญชีอีกครั้ง</string>
-    <string name="sync_notification_failed">ซิงค์ล้มเหลว</string>
-    <string name="sync_notification_parse_title">บางกิจกรรมไม่สามารถซิงค์ได้</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s ใน %2$s ไม่สามารถซิงค์ได้ ลองบังคับซิงค์ในการตั้งค่า</string>
-    <string name="sync_notification_conflict_title">ข้อขัดแย้งในการซิงค์ได้รับการแก้ไขแล้ว</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">การแก้ไขในเครื่องของ \"%1$s\" สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">การแก้ไขในเครื่องของ %1$s สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
-    <string name="sync_notification_expired_title">การเปลี่ยนแปลงการซิงค์หมดอายุ</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
-    <string name="sync_notification_expired_content_calendar">%1$s ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
-    <string name="sync_notification_expired_content_calendars">%1$s ที่กระจายอยู่ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="other">ซิงค์แล้ว %1$d ปฏิทิน</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="other">, %1$d การเปลี่ยนแปลง</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="other">, %1$d ข้อผิดพลาด</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">วันเกิดปีที่ %2$s ของ%1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">วันเกิดของ%1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">ครบรอบปีที่ %2$s ของ%1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">วันครบรอบของ%1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">ที่ %1$d</string>
-    <string name="ordinal_suffix_nd">ที่ %1$d</string>
-    <string name="ordinal_suffix_rd">ที่ %1$d</string>
-    <string name="ordinal_suffix_th">ที่ %1$d</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">กำลังซิงค์ปฏิทิน…</string>
-    <string name="sync_banner_preparing">กำลังเตรียมซิงค์…</string>
-    <string name="sync_banner_complete_errors">ซิงค์เสร็จ มีข้อผิดพลาด</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">ซิงค์ล้มเหลว: %1$s</string>
-    <string name="error_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">กิจกรรมใหม่: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="other">%1$d กิจกรรมใหม่</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="other">%1$d กิจกรรมอัปเดต</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="other">%1$d กิจกรรมถูกลบ</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="other">%1$d การอัปเดตปฏิทิน</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">วันที่ %1$d จาก %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">วันที่ 1 จาก %1$d · เริ่ม %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">วันที่ %1$d จาก %2$d · สิ้นสุด %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · ทั้งวัน</string>
-    <string name="event_date_all_day">%1$s · ทั้งวัน</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (ทั้งวัน)</string>
-    <string name="event_date_all_day_parens">%1$s (ทั้งวัน)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">บันทึกกิจกรรม</string>
-    <!-- Badges -->
-    <string name="badge_beta">เบต้า</string>
-    <string name="badge_new">ใหม่</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">แดง</string>
-    <string name="color_orange">ส้ม</string>
-    <string name="color_yellow">เหลือง</string>
-    <string name="color_green">เขียว</string>
-    <string name="color_cyan">ฟ้า</string>
-    <string name="color_blue">น้ำเงิน</string>
-    <string name="color_purple">ม่วง</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">ลิงก์ประชุม: %1$s</string>
-    <string name="cd_phone_number">หมายเลขโทรศัพท์</string>
-    <string name="cd_email_link">อีเมล: %1$s</string>
-    <string name="cd_web_link">ลิงก์: %1$s</string>
-    <string name="cd_text_with_links">ข้อความที่มี %1$d ลิงก์: %2$s</string>
-    <string name="cd_text_with_link">ข้อความที่มี 1 ลิงก์: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">วันที่ %1$d จาก %2$d (ทั้งวัน)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล</string>
-    <string name="sync_history_stats_issues">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล   ⚠ %4$d ปัญหา</string>
-    <string name="sync_history_failed">ล้มเหลว</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">ทุกชั่วโมง</string>
-    <string name="ics_sync_every_n_hours">ทุก %1$d ชั่วโมง</string>
-    <string name="ics_sync_daily">ทุกวัน</string>
-    <string name="ics_sync_weekly">ทุกสัปดาห์</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">ต้องระบุ URL</string>
-    <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">เซิร์ฟเวอร์แสดงข้อผิดพลาด (%1$d) โปรดตรวจสอบ URL</string>
-    <string name="ics_fetch_error_empty">ฟีดปฏิทินว่างเปล่า</string>
-    <string name="ics_fetch_error_not_calendar">URL นี้ดูเหมือนจะไม่ใช่ฟีดปฏิทิน</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="other">, %1$d ครั้ง</item>
-    </plurals>
-
-    <!-- Missing translations -->
-    <string name="cd_widget_calendar">ปฏิทิน</string>
-    <string name="cd_widget_add_event">เพิ่มกิจกรรม</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">ไม่มีกิจกรรม</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, ยกเลิกแล้ว</string>
-    <string name="channel_event_reminders">การแจ้งเตือนกิจกรรม</string>
-    <string name="channel_event_reminders_desc">การแจ้งเตือนสำหรับกิจกรรมในปฏิทินที่กำลังจะมาถึง</string>
-    <string name="channel_sync_progress">ความคืบหน้าการซิงค์</string>
-    <string name="channel_sync_progress_desc">แสดงความคืบหน้าขณะซิงค์ปฏิทิน</string>
-    <string name="channel_sync_status">สถานะการซิงค์</string>
-    <string name="channel_sync_status_desc">การแจ้งเตือนเกี่ยวกับการซิงค์เสร็จสมบูรณ์และข้อผิดพลาด</string>
-    <string name="channel_event_invitations">คำเชิญกิจกรรม</string>
-    <string name="channel_event_invitations_desc">การแจ้งเตือนเมื่อได้รับคำเชิญปฏิทินใหม่</string>
-    <string name="invite_notification_body">จาก %1$s · แตะเพื่อตอบกลับ</string>
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">ไม่ซ้ำ</string>
     <string name="rrule_freq_daily">ทุกวัน</string>
     <string name="rrule_freq_weekly">ทุกสัปดาห์</string>
@@ -940,6 +838,9 @@
     <string name="rrule_freq_on_last_day">%1$s ในวันสุดท้าย</string>
     <string name="rrule_freq_on_day_n">%1$s ในวันที่ %2$d</string>
     <string name="rrule_ordinal_last">สุดท้าย</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d ครั้ง</item>
+    </plurals>
     <string name="rrule_until_suffix">, จนถึง%1$s</string>
     <string name="rrule_freq_never">ไม่เคย</string>
     <string name="rrule_freq_custom">กำหนดเอง</string>
@@ -953,7 +854,138 @@
     <string name="rrule_starting">%1$s เริ่ม%2$s%3$s</string>
     <string name="rrule_since">%1$s · ตั้งแต่%2$s</string>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d ใหม่</string>
+    <string name="sync_summary_updated">%1$d อัปเดต</string>
+    <string name="sync_summary_removed">%1$d ลบ</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">เปิดการเลื่อนวนรอบ</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">ไม่มีการแจ้งเตือน</string>
+    <string name="reminder_at_time_of_event">เมื่อเริ่มกิจกรรม</string>
+    <string name="reminder_time_before">%1$s ก่อน</string>
+    <string name="reminder_time_after">%1$s หลัง</string>
+    <string name="reminder_day_of_event_12h">9 AM วันที่มีกิจกรรม</string>
+    <string name="reminder_day_of_event_24h">09:00 วันที่มีกิจกรรม</string>
+    <string name="reminder_before_at_12h">%1$s ก่อน เวลา 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s ก่อน เวลา 09:00</string>
+    <string name="reminder_short_off">ปิด</string>
+    <string name="reminder_short_at_event">เมื่อเริ่ม</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d นาที</string>
+    <string name="reminder_short_hours">%1$d ชม.</string>
+    <string name="reminder_short_days">%1$d วัน</string>
+    <string name="reminder_short_weeks">%1$d สัปดาห์</string>
+    <string name="reminder_summary_none">ไม่มี</string>
+    <string name="duration_compact">%1$d ชม. %2$d นาที</string>
+    <string name="duration_compact_short">%1$dชม.%2$dนาที</string>
+    <string name="sync_manual_only">ซิงค์เองเท่านั้น</string>
+    <string name="sync_lookback_all">กิจกรรมทั้งหมด</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">เลื่อนแจ้งเตือน</string>
+    <string name="notification_starting_now">กำลังจะเริ่ม</string>
+    <plurals name="reminder_in_days">
+        <item quantity="other">ในอีก %1$d วัน</item>
+    </plurals>
+    <string name="notification_tomorrow_time">พรุ่งนี้ %1$s</string>
+    <string name="notification_date_time">%1$s %2$s</string>
+    <string name="sync_notification_complete">ซิงค์เสร็จสมบูรณ์</string>
+    <string name="sync_notification_partial">ซิงค์เสร็จบางส่วน</string>
+    <string name="sync_notification_auth_failed">การยืนยันตัวตนในการซิงค์ล้มเหลว</string>
+    <string name="sync_notification_auth_reauth">กรุณายืนยันตัวตนบัญชีอีกครั้ง</string>
+    <string name="sync_notification_failed">ซิงค์ล้มเหลว</string>
+    <string name="sync_notification_parse_title">บางกิจกรรมไม่สามารถซิงค์ได้</string>
+    <string name="sync_notification_parse_content">%1$s ใน %2$s ไม่สามารถซิงค์ได้ ลองบังคับซิงค์ในการตั้งค่า</string>
+    <string name="sync_notification_conflict_title">ข้อขัดแย้งในการซิงค์ได้รับการแก้ไขแล้ว</string>
+    <string name="sync_notification_conflict_single">การแก้ไขในเครื่องของ \"%1$s\" สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
+    <string name="sync_notification_conflict_multi">การแก้ไขในเครื่องของ %1$s สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
+    <string name="sync_notification_expired_title">การเปลี่ยนแปลงการซิงค์หมดอายุ</string>
+    <string name="sync_notification_expired_content">%1$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <string name="sync_notification_expired_content_calendar">%1$s ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <string name="sync_notification_expired_content_calendars">%1$s ที่กระจายอยู่ใน %2$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">ซิงค์แล้ว %1$d ปฏิทิน</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d การเปลี่ยนแปลง</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d ข้อผิดพลาด</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">วันเกิดปีที่ %2$s ของ%1$s</string>
+    <string name="contact_birthday">วันเกิดของ%1$s</string>
+    <string name="contact_anniversary_with_age">ครบรอบปีที่ %2$s ของ%1$s</string>
+    <string name="contact_anniversary">วันครบรอบของ%1$s</string>
+    <string name="ordinal_suffix_st">ที่ %1$d</string>
+    <string name="ordinal_suffix_nd">ที่ %1$d</string>
+    <string name="ordinal_suffix_rd">ที่ %1$d</string>
+    <string name="ordinal_suffix_th">ที่ %1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">กำลังซิงค์ปฏิทิน…</string>
+    <string name="sync_banner_preparing">กำลังเตรียมซิงค์…</string>
+    <string name="sync_banner_complete_errors">ซิงค์เสร็จ มีข้อผิดพลาด</string>
+    <string name="sync_banner_failed">ซิงค์ล้มเหลว: %1$s</string>
+    <string name="error_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
+    <string name="sync_snackbar_new_event">กิจกรรมใหม่: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d กิจกรรมใหม่</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d กิจกรรมอัปเดต</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d กิจกรรมถูกลบ</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d การอัปเดตปฏิทิน</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">วันที่ %1$d จาก %2$d</string>
+    <string name="day_starts">วันที่ 1 จาก %1$d · เริ่ม %2$s</string>
+    <string name="day_ends">วันที่ %1$d จาก %2$d · สิ้นสุด %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · ทั้งวัน</string>
+    <string name="event_date_all_day">%1$s · ทั้งวัน</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (ทั้งวัน)</string>
+    <string name="event_date_all_day_parens">%1$s (ทั้งวัน)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">บันทึกกิจกรรม</string>
+    <string name="badge_beta">เบต้า</string>
+    <string name="badge_new">ใหม่</string>
+    <string name="color_red">แดง</string>
+    <string name="color_orange">ส้ม</string>
+    <string name="color_yellow">เหลือง</string>
+    <string name="color_green">เขียว</string>
+    <string name="color_cyan">ฟ้า</string>
+    <string name="color_blue">น้ำเงิน</string>
+    <string name="color_purple">ม่วง</string>
+    <string name="cd_meeting_link">ลิงก์ประชุม: %1$s</string>
+    <string name="cd_phone_number">หมายเลขโทรศัพท์</string>
+    <string name="cd_email_link">อีเมล: %1$s</string>
+    <string name="cd_web_link">ลิงก์: %1$s</string>
+    <string name="cd_text_with_links">ข้อความที่มี %1$d ลิงก์: %2$s</string>
+    <string name="cd_text_with_link">ข้อความที่มี 1 ลิงก์: %1$s</string>
+    <string name="day_x_of_y_all_day">วันที่ %1$d จาก %2$d (ทั้งวัน)</string>
+    <string name="sync_history_stats">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล</string>
+    <string name="sync_history_stats_issues">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล   ⚠ %4$d ปัญหา</string>
+    <string name="sync_history_failed">ล้มเหลว</string>
+    <string name="ics_sync_every_hour">ทุกชั่วโมง</string>
+    <string name="ics_sync_every_n_hours">ทุก %1$d ชั่วโมง</string>
+    <string name="ics_sync_daily">ทุกวัน</string>
+    <string name="ics_sync_weekly">ทุกสัปดาห์</string>
+    <string name="ics_url_required">ต้องระบุ URL</string>
+    <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
+    <string name="ics_fetch_error_http">เซิร์ฟเวอร์แสดงข้อผิดพลาด (%1$d) โปรดตรวจสอบ URL</string>
+    <string name="ics_fetch_error_empty">ฟีดปฏิทินว่างเปล่า</string>
+    <string name="ics_fetch_error_not_calendar">URL นี้ดูเหมือนจะไม่ใช่ฟีดปฏิทิน</string>
     <string name="insights_title">วิเคราะห์</string>
     <string name="insights_period_this_week">สัปดาห์</string>
     <string name="insights_period_last_week">สัปดาห์ก่อน</string>
@@ -989,6 +1021,8 @@
     <string name="insight_heaviest_upcoming">%1$s เป็นวันที่ยุ่งที่สุดที่จะมาถึง (%2$s)</string>
     <string name="insight_next_free_block">ช่วงว่างถัดไป: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">การกระจายรายวัน: วันที่ยุ่งที่สุดคือ %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">สถานะว่าง/ไม่ว่าง</string>
     <string name="label_busy">ไม่ว่าง</string>
     <string name="label_free">ว่าง</string>
@@ -996,10 +1030,8 @@
     <string name="label_calendar_default">ค่าเริ่มต้นปฏิทิน</string>
     <string name="label_custom">กำหนดเอง</string>
     <string name="cd_checkmark">เลือกแล้ว</string>
-    <string name="cd_event_state_cancelled">ยกเลิกแล้ว</string>
-    <string name="cd_event_state_declined">ปฏิเสธแล้ว</string>
-    <string name="cd_event_state_past">กิจกรรมที่ผ่านมา</string>
-    <string name="cd_event_untitled">กิจกรรมที่ไม่มีชื่อ</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">น้ำตาลอานม้า</string>    <string name="color_tomato">มะเขือเทศ</string>    <string name="color_darkorange">ส้มเข้ม</string>
     <string name="color_gold">ทอง</string>
     <string name="color_yellowgreen">เหลืองอมเขียว</string>
@@ -1008,6 +1040,8 @@
     <string name="color_royalblue">น้ำเงินรอยัล</string>    <string name="color_mediumorchid">ม่วงกล้วยไม้กลาง</string>
     <string name="color_hotpink">ชมพูสด</string>
     <string name="color_dimgray">เทาเข้ม</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">แดง</string>
     <string name="hue_orange">ส้ม</string>
     <string name="hue_yellow">เหลือง</string>
@@ -1020,42 +1054,10 @@
     <string name="hue_neutral">สีกลาง</string>
     <string name="label_more_colors">สีเพิ่มเติม</string>
     <string name="label_back_to_grid">กลับ</string>
-    <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">สำรองข้อมูลการตั้งค่า</string>
-    <string name="backup_settings_subtitle">บันทึกการตั้งค่า KashCal เป็นไฟล์ JSON</string>
-    <string name="restore_settings_label">กู้คืนการตั้งค่า</string>
-    <string name="restore_settings_subtitle">กู้คืนการตั้งค่า KashCal จากไฟล์สำรอง</string>
-    <string name="restore_confirm_title">กู้คืนข้อมูลสำรองหรือไม่?</string>
-    <string name="restore_confirm_from">ข้อมูลสำรองจาก KashCal %1$s, %2$s</string>
-    <string name="restore_confirm_message_prefs_only">การตั้งค่าของคุณจะถูกนำเข้า</string>
-    <string name="action_restore">กู้คืน</string>
-    <string name="restore_success_title">กู้คืนสำเร็จ</string>
-    <string name="restore_success_message_prefs_only">นำเข้าการตั้งค่าแล้ว</string>
-    <string name="restore_success_device_calendars_note">หากคุณใช้ฟีเจอร์ปฏิทินของอุปกรณ์ โปรดเลือกอีกครั้ง</string>
-    <string name="restore_error_title">กู้คืนไม่สำเร็จ</string>
-    <string name="restore_error_version_too_new">ข้อมูลสำรองนี้สร้างด้วย KashCal เวอร์ชันที่ใหม่กว่า โปรดอัปเดต KashCal แล้วลองอีกครั้ง</string>
-    <string name="restore_error_malformed_json">ไฟล์นี้ไม่ใช่ไฟล์สำรอง KashCal ที่ถูกต้อง</string>
-    <string name="restore_error_invalid_value">ไฟล์สำรองนี้มีข้อมูลที่ไม่ถูกต้องและไม่สามารถกู้คืนได้</string>
-    <string name="restore_error_apply_failure">เกิดข้อผิดพลาดขณะใช้ข้อมูลสำรอง ไม่มีการบันทึกการเปลี่ยนแปลงใดๆ</string>
-    <string name="backup_error_build_failed">สำรองข้อมูลไม่สำเร็จ</string>
-    <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ — เขียนลงไฟล์ไม่ได้</string>
-    <string name="backup_error_read_failed">อ่านไฟล์ไม่ได้</string>
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">ผู้เข้าร่วม</string>
     <string name="attendee_you_marker">คุณ</string>
-    <string name="attendee_picker_title">เพิ่มผู้เข้าร่วม</string>
-    <string name="attendee_pick_add_people">เพิ่มผู้เข้าร่วม</string>
-    <string name="attendee_pick_from_contacts">ชื่อหรืออีเมล</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="other">+อีก %1$d</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">แนะนำผู้คนจากรายชื่อติดต่อของคุณ</string>
-    <string name="attendee_invalid_email">ป้อนที่อยู่อีเมลแบบเต็ม</string>
-    <string name="attendee_add_typed">เพิ่ม \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">ไม่สามารถเชิญบุคคลในบัญชีนี้ได้</string>
-    <string name="device_attendee_local_no_delivery">ปฏิทินนี้ส่งคำเชิญไม่ได้ ระบบจะบันทึกผู้เข้าร่วมแต่จะไม่แจ้งเตือนพวกเขา</string>
-    <string name="action_save_and_notify">บันทึกและแจ้งเตือน</string>
     <string name="attendee_card_going">ไป</string>
     <string name="attendee_card_pending">รอดำเนินการ</string>
     <string name="attendee_card_declined">ปฏิเสธ</string>
@@ -1063,6 +1065,8 @@
     <string name="attendee_card_hosting">เจ้าภาพ</string>
     <string name="attendee_action_copy">คัดลอกอีเมล</string>
     <string name="attendee_action_email">ส่งอีเมล</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">คัดลอกอีเมลแล้ว</string>
     <string name="attendee_no_email_app">ไม่ได้ติดตั้งแอปอีเมล</string>
     <string name="attendee_show_all">แสดงผู้เข้าร่วมทั้งหมด</string>
@@ -1071,68 +1075,40 @@
     <string name="attendee_status_tentative">ไม่แน่ใจ</string>
     <string name="attendee_status_delegated">มอบหมาย</string>
     <string name="attendee_status_pending">รอดำเนินการ</string>
-    <string name="rsvp_series_disclosure">การตอบกลับของคุณจะใช้กับกิจกรรมทั้งหมดในชุดนี้</string>
-    <string name="attendee_sheet_title">ผู้เข้าร่วม</string>
-    <string name="attendee_search_hint">ค้นหา</string>
-    <string name="attendee_search_no_matches">ไม่พบ</string>
-    <string name="attendee_section_going">ไป</string>
-    <string name="attendee_section_maybe">อาจจะ</string>
-    <string name="attendee_section_pending">รอตอบรับ</string>
-    <string name="attendee_section_declined">ปฏิเสธ</string>
-    <string name="attendee_section_delegated">มอบหมาย</string>
-    <string name="invitees_host_tag">เจ้าภาพ</string>
-    <string name="invitees_summary_you_alone">คุณ</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="other">คุณ · เชิญแล้ว %d คน</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="other">เชิญแล้ว %d คน</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s เป็นเจ้าภาพ</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · คุณ</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="other">%1$s (%2$s) · คุณ + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="other">คุณ + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="other">%1$s · อีก %2$d คน</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">เปลี่ยนคำตอบ</string>
-    <string name="rsvp_question_going">จะไปไหม?</string>
-    <string name="rsvp_action_yes">ไป</string>
-    <string name="rsvp_action_maybe">อาจจะ</string>
-    <string name="rsvp_action_no">ไม่ไป</string>
-    <string name="rsvp_state_going">คุณจะไป</string>
-    <string name="rsvp_state_maybe">อาจจะ</string>
-    <string name="rsvp_state_not_going">คุณไม่ไป</string>
-    <string name="rsvp_action_change">เปลี่ยน</string>
-
-
     <string name="inbox_empty_caught_up">จัดการครบทุกรายการแล้ว</string>
     <string name="inbox_organizer_suffix">(ผู้จัด)</string>
     <string name="menu_invites">คำเชิญ</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">ไปยังวันที่</string>
     <string name="menu_about">เกี่ยวกับ</string>
     <string name="menu_more">เมนูเพิ่มเติม</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">เมนูเพิ่มเติม มีคำเชิญรอดำเนินการ %d รายการ</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">แชร์เวลาว่าง</string>
     <string name="share_availability_sheet_title">แชร์เวลาว่าง</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">%1$d วันถัดไป</item>
+    </plurals>
     <string name="share_availability_hours_label">เวลาทำงาน: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">กิจกรรมตลอดวันถือว่าไม่ว่าง</string>
     <string name="share_availability_share_button">แชร์</string>
+    <plurals name="share_availability_header">
+        <item quantity="other">ว่างใน %1$d วันถัดไป (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">ไม่มีช่วงเวลาว่างอย่างน้อยหนึ่งชั่วโมงในช่วงที่เลือก</string>
+    <string name="share_from_kashcal_footer">แชร์จาก KashCal</string>
     <string name="share_availability_chooser_title">แชร์เวลาว่าง</string>
     <string name="share_availability_share_failed">ไม่มีแอปสำหรับแชร์</string>
     <string name="share_availability_window_section">ช่วงเวลา</string>
     <string name="share_availability_hours_section">เวลาทำงาน</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d วัน</item>
+    </plurals>
     <string name="share_availability_days_through">ถึง %1$s</string>
     <string name="share_availability_window_duration">ช่วง %1$s ชั่วโมง</string>
     <string name="share_as_card_action">แชร์เป็นการ์ด</string>
@@ -1143,25 +1119,5 @@
     <string name="share_as_card_all_day">ทั้งวัน</string>
     <string name="share_as_card_chooser_title">แชร์กิจกรรม</string>
     <string name="share_as_card_share_failed">ไม่สามารถแชร์การ์ดได้</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="other">%1$d วัน</item>
-    </plurals>
-    <string name="share_from_kashcal_footer">แชร์จาก KashCal</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="other">%1$d วันถัดไป</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="other">ว่างใน %1$d วันถัดไป (%2$s – %3$s):</item>
-    </plurals>
-    <plurals name="reminder_in_days">
-        <item quantity="other">ในอีก %1$d วัน</item>
-    </plurals>
-    <string name="holiday_catalog_add">เพิ่มปฏิทินวันหยุด</string>
-    <string name="holiday_catalog_search_label">ค้นหา</string>
-    <string name="holiday_catalog_already_added">เพิ่มแล้ว</string>
-    <string name="holiday_catalog_empty">ไม่พบประเทศ</string>
-    <string name="holiday_catalog_empty_hint">ลองใช้ชื่ออื่น</string>
-    <string name="holiday_catalog_validate_error">ไม่สามารถเชื่อมต่อปฏิทินนี้ได้ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
-    <string name="holiday_catalog_attribution">ปฏิทินวันหยุดจาก Mozilla Thunderbird อยู่ภายใต้สัญญาอนุญาต %1$s</string>
-    <string name="qs_tile_label">เพิ่มกิจกรรม</string>
+
 </resources>

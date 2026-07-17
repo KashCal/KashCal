@@ -13,12 +13,27 @@
     <string name="date_widget_description">Rodo šiandienos datą kaip piktogramą</string>
     <string name="upcoming_widget_name">Artėjantys</string>
     <string name="upcoming_widget_description">Rodo artimiausių 10 dienų įvykius, praleidžiant tuščias dienas</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Įkeliami įvykiai…</string>
     <string name="widget_error_load_events">Nepavyko įkelti įvykių, palieskite, kad atidarytumėte</string>
     <string name="widget_no_events_today">Šiandien įvykių nėra</string>
     <string name="widget_add_event">+ Pridėti įvykį</string>
     <string name="widget_no_events">Įvykių nėra</string>
     <string name="widget_no_upcoming_events">Artėjančių įvykių nėra</string>
+    <string name="cd_widget_calendar">Kalendorius</string>
+    <string name="cd_widget_add_event">Pridėti įvykį</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">įvykių nėra</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, atšaukta</string>
+    <string name="channel_event_reminders">Įvykių priminimai</string>
+    <string name="channel_event_reminders_desc">Pranešimai apie artėjančius kalendoriaus įvykius</string>
+    <string name="channel_sync_progress">Sinchronizavimo eiga</string>
+    <string name="channel_sync_progress_desc">Rodo eigą sinchronizuojant kalendorius</string>
+    <string name="channel_sync_status">Sinchronizavimo būsena</string>
+    <string name="channel_sync_status_desc">Pranešimai apie sinchronizavimo užbaigimą ir klaidas</string>
+    <string name="channel_event_invitations">Įvykių kvietimai</string>
+    <string name="channel_event_invitations_desc">Pranešimai, kai gaunate naują kalendoriaus kvietimą</string>
+    <string name="invite_notification_body">Nuo %1$s · Bakstelėkite, kad atsakytumėte</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Naujas įvykis</string>
@@ -43,7 +58,6 @@
     <string name="action_hide_password">Slėpti slaptažodį</string>
     <string name="action_sign_out">Atsijungti</string>
     <string name="action_learn_more">Sužinoti daugiau</string>
-    <string name="action_open">Atidaryti</string>
     <string name="action_open_apple_id">Atidaryti Apple ID</string>
     <string name="action_open_settings">Atidaryti nustatymus</string>
     <string name="action_force_sync">Priverstinis sinchronizavimas</string>
@@ -57,6 +71,7 @@
     <string name="action_save">Išsaugoti</string>
     <string name="action_add">Pridėti</string>
     <string name="action_edit">Redaguoti</string>
+    <string name="action_open">Atidaryti</string>
     <string name="action_delete">Ištrinti</string>
     <string name="action_confirm">Patvirtinti</string>
     <string name="action_discard">Atmesti</string>
@@ -70,55 +85,8 @@
     <string name="action_confirm_delete">Patvirtinti trynimą</string>
     <string name="action_delete_event">Ištrinti įvykį</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Atsakymas taikomas visai serijai.</string>
-    <string name="invitees_host_tag">Šeimininkas</string>
-    <string name="invitees_summary_you_alone">Tu</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Tu · %d pakviestas</item>
-        <item quantity="few">Tu · %d pakviesti</item>
-        <item quantity="many">Tu · %d pakviesta</item>
-        <item quantity="other">Tu · %d pakviestų</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d pakviestas</item>
-        <item quantity="few">%d pakviesti</item>
-        <item quantity="many">%d pakviesta</item>
-        <item quantity="other">%d pakviestų</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizuoja</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
-        <item quantity="few">%1$s (%2$s) · Tu + %3$d</item>
-        <item quantity="many">%1$s (%2$s) · Tu + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Tu + %d</item>
-        <item quantity="few">Tu + %d</item>
-        <item quantity="many">Tu + %d</item>
-        <item quantity="other">Tu + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · dar %2$d</item>
-        <item quantity="few">%1$s · dar %2$d</item>
-        <item quantity="many">%1$s · dar %2$d</item>
-        <item quantity="other">%1$s · dar %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Keisti atsakymą</string>
-    <string name="rsvp_question_going">Eisi?</string>
-    <string name="rsvp_action_yes">Taip</string>
-    <string name="rsvp_action_maybe">Galbūt</string>
-    <string name="rsvp_action_no">Ne</string>
-    <string name="rsvp_state_going">Eini</string>
-    <string name="rsvp_state_maybe">Galbūt</string>
-    <string name="rsvp_state_not_going">Neini</string>
-    <string name="rsvp_action_change">Keisti</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Šį ir visus būsimus</string>
@@ -156,7 +124,6 @@
     <string name="label_all_day">Visa diena</string>
     <string name="label_today">Šiandien</string>
     <string name="label_go_to_date">Eiti į datą</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -209,6 +176,27 @@
     <string name="app_lock_enabled_message">Programos užraktas įjungtas. Kitą kartą atidarius KashCal paprašys patvirtinti tapatybę.</string>
     <string name="app_lock_disable_prompt_title">Atrakinkite, kad išjungtumėte programos užraktą</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Sukurti atsarginę kopiją</string>
+    <string name="backup_settings_subtitle">Išsaugoti KashCal konfigūraciją į JSON failą</string>
+    <string name="restore_settings_label">Atkurti nustatymus</string>
+    <string name="restore_settings_subtitle">Atkurti KashCal konfigūraciją iš atsarginės kopijos failo</string>
+    <string name="restore_confirm_title">Atkurti atsarginę kopiją?</string>
+    <string name="restore_confirm_from">KashCal atsarginė kopija %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Jūsų nuostatos bus importuotos.</string>
+    <string name="action_restore">Atkurti</string>
+    <string name="restore_success_title">Atkūrimas baigtas</string>
+    <string name="restore_success_message_prefs_only">Nuostatos importuotos.</string>
+    <string name="restore_success_device_calendars_note">Pasirink įrenginio kalendorius iš naujo, jei naudojiesi šia funkcija.</string>
+    <string name="restore_error_title">Atkurti nepavyko</string>
+    <string name="restore_error_version_too_new">Ši atsarginė kopija sukurta naujesne KashCal versija. Atnaujink KashCal ir bandyk dar kartą.</string>
+    <string name="restore_error_malformed_json">Šis failas nėra tinkama KashCal atsarginė kopija.</string>
+    <string name="restore_error_invalid_value">Atsarginės kopijos faile yra netinkamų duomenų, jo atkurti negalima.</string>
+    <string name="restore_error_apply_failure">Taikant atsarginę kopiją įvyko klaida. Jokie pakeitimai neišsaugoti.</string>
+    <string name="backup_error_build_failed">Nepavyko sukurti atsarginės kopijos</string>
+    <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos — nepavyko įrašyti į failą</string>
+    <string name="backup_error_read_failed">Nepavyko perskaityti failo</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple kalendorius?</string>
     <string name="onboarding_got_you">Mes padėsime.</string>
@@ -220,6 +208,7 @@
     <string name="whats_new_v598_title">Padėk išlaikyti Android atvirą</string>
     <string name="whats_new_v598_body">Google keičia tai, kaip diegi programėles savo įrenginyje. Mums reikia tavo pagalbos.</string>
     <string name="whats_new_v598_action_label">Apsilankyti keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Prijungti iCloud</string>
     <string name="signin_caldav_title">Pridėti CalDAV paskyrą</string>
@@ -263,13 +252,11 @@
     <string name="error_auth_session_expired_title">Sesija pasibaigė</string>
     <string name="error_auth_session_expired">iCloud sesija pasibaigė. Prisijunkite iš naujo, kad tęstumėte sinchronizavimą.</string>
     <string name="error_auth_account_locked">Jūsų Apple ID užrakintas. Apsilankykite appleid.apple.com, kad atrakintumėte.</string>
-
     <string name="error_network_offline">Nėra ryšio. Pakeitimai sinchronizuosis prisijungus.</string>
     <string name="error_network_timeout">Baigėsi ryšio laikas. Patikrinkite internetą ir bandykite dar kartą.</string>
     <string name="error_network_ssl">Saugaus ryšio klaida. Patikrinkite tinklo nustatymus.</string>
     <string name="error_network_unknown_host">Nepavyko pasiekti iCloud. Patikrinkite interneto ryšį.</string>
     <string name="error_network_connection_failed">Ryšio klaida. Bandykite dar kartą.</string>
-
     <string name="error_server_unavailable">iCloud laikinai nepasiekiamas. Bandykite vėliau.</string>
     <string name="error_server_rate_limited">Per daug užklausų. Palaukite ir bandykite dar kartą.</string>
     <string name="error_server_forbidden">Prieiga uždrausta. Gali būti, kad neturite teisių į šį kalendorių.</string>
@@ -278,13 +265,11 @@
     <string name="error_conflict_generic">Šis įvykis buvo pakeistas kitame įrenginyje. Atlikite pilną sinchronizavimą naujausiai versijai gauti.</string>
     <string name="error_conflict_with_event">„%1$s" buvo pakeistas kitame įrenginyje. Atlikite pilną sinchronizavimą naujausiai versijai gauti.</string>
     <string name="error_sync_token_expired">Sinchronizavimo duomenys pasenę. Atliekamas pilnas sinchronizavimas…</string>
-
     <string name="error_event_not_found">Įvykis nerastas.</string>
     <string name="error_calendar_not_found">Kalendorius nerastas.</string>
     <string name="error_calendar_read_only">Negalima keisti įvykių „%1$s" (tik skaitomas kalendorius).</string>
     <string name="error_event_invalid_data">Neteisingi įvykio duomenys. Patikrinkite pradžios ir pabaigos laiką.</string>
     <string name="error_event_invalid_recurrence">Neteisingas kartojimo šablonas.</string>
-
     <string name="error_display_name_exists">Paskyra „%1$s" jau egzistuoja.</string>
     <string name="icloud_error_credentials_required">Reikia Apple ID ir slaptažodžio</string>
     <string name="icloud_error_connection_timeout">Baigėsi prisijungimo laikas. Bandykite dar kartą.</string>
@@ -293,48 +278,45 @@
     <string name="caldav_error_connection_timeout">Baigėsi prisijungimo laikas. Bandykite dar kartą.</string>
     <string name="caldav_error_no_calendars">Šiame serveryje kalendorių nerasta.</string>
     <string name="caldav_error_unexpected">Netikėta klaida. Bandykite dar kartą.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nJei tai serveris tavo vietiniame tinkle, leisk prieigą prie vietinio tinklo, kad galėtum prisijungti.</string>
+    <string name="local_network_banner_title">Reikia vietinio tinklo prieigos</string>
+    <string name="local_network_banner_body">Panašu, kad šis serveris yra tavo vietiniame tinkle. Leisk prieigą prie vietinio tinklo, kad KashCal galėtų prie jo prisijungti.</string>
+    <string name="local_network_banner_allow">Leisti prieigą</string>
+    <string name="local_network_banner_dismiss">Ne dabar</string>
     <string name="password_change_error_account_not_found">Paskyra nerasta</string>
     <string name="password_change_error_no_credentials">Nėra išsaugotų prisijungimo duomenų</string>
     <string name="password_change_error_unsupported_provider">Šis tiekėjas nepalaiko slaptažodžio keitimo</string>
     <string name="password_change_error_invalid">Neteisingas slaptažodis</string>
     <string name="password_change_error_network">Tinklo klaida, bandykite dar kartą</string>
-
     <string name="error_import_file_not_found">Failas nerastas arba negali būti perskaitytas.</string>
     <string name="error_import_invalid_format">Neteisingas kalendoriaus failo formatas.</string>
     <string name="error_import_partial">Importuota įvykių: %1$d, nepavyko: %2$d.</string>
     <string name="error_export_failed">Nepavyko eksportuoti įvykių.</string>
     <string name="error_export_no_events">Nėra įvykių eksportavimui.</string>
     <string name="error_end_before_start">Pabaigos laikas turi būti vėlesnis nei pradžios laikas</string>
-
     <string name="error_storage_full_title">Saugykla pilna</string>
     <string name="error_storage_full">Nepakanka vietos. Atlaisvinkite vietos ir bandykite dar kartą.</string>
     <string name="error_database_corruption_title">Duomenų klaida</string>
     <string name="error_database_corruption">Kalendoriaus duomenys gali būti pažeisti. Susisiekite su palaikymu.</string>
     <string name="error_migration_title">Atnaujinimo klaida</string>
     <string name="error_migration_failed">Nepavyko atnaujinti duomenų. Įdiekite programą iš naujo.</string>
-
     <string name="error_permission_notification_title">Įjungti pranešimus?</string>
     <string name="error_permission_notification">KashCal reikia pranešimų leidimo, kad galėtų priminti apie įvykius.</string>
     <string name="error_permission_alarm_title">Leisti tikslius signalus?</string>
     <string name="error_permission_alarm">KashCal reikia tikslių signalų leidimo tiksliems priminimams.</string>
     <string name="error_permission_storage">Importavimui/eksportavimui reikalingas saugyklos leidimas.</string>
-
     <string name="error_device_calendar_title">Kalendoriaus klaida</string>
     <string name="error_device_calendar_write_failed">Nepavyko išsaugoti į įrenginio kalendorių. Bandykite dar kartą.</string>
     <string name="error_device_calendar_permission">Reikalingas rašymo į kalendorių leidimas. Suteikite prieigą nustatymuose.</string>
     <string name="error_device_calendar_not_found">Kalendorius nerastas. Gali būti, kad jis buvo ištrintas.</string>
     <string name="error_device_event_not_found">Įvykis nerastas. Gali būti, kad jis buvo ištrintas.</string>
     <string name="error_device_calendar_read_only">Šis kalendorius yra tik skaitomas.</string>
-
     <string name="error_sync_no_accounts">iCloud paskyra nesukonfigūruota. Nustatykite iCloud kalendoriams sinchronizuoti.</string>
     <string name="error_sync_partial">Sinchronizuota kalendorių: %1$d, nepavyko: %2$d.</string>
-
     <string name="error_unknown">Kažkas nutiko ne taip. Bandykite dar kartą.</string>
 
-    <!-- ==================== Content Descriptions ==================== -->
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Pasirinkta</string>
-    <string name="cd_checkmark">Pasirinkta</string>
     <string name="cd_back">Atgal</string>
     <string name="cd_search">Paieška</string>
     <string name="cd_create_event">Sukurti įvykį</string>
@@ -373,16 +355,20 @@
     <string name="label_password">Slaptažodis</string>
     <string name="label_display_name_optional">Rodomas vardas</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Ieškoti įvykių…</string>
 
+    <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">Numatytasis https://, jei nenurodyta</string>
     <string name="hint_name_shown_in_settings">Vardas, rodomas nustatymuose</string>
     <string name="caldav_trust_insecure_subtitle">Savaiminiams sertifikatams ar vietiniams HTTP serveriams</string>
 
+    <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">Po</string>
     <string name="label_recurrence_occurrences">kartojimų</string>
     <string name="label_recurrence_on_date">Iki datos</string>
 
+    <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">Matomi kalendoriai</string>
     <string name="settings_default_calendar">Numatytasis kalendorius</string>
     <string name="settings_default_event_length">Numatytoji įvykio trukmė</string>
@@ -390,6 +376,7 @@
     <string name="settings_notifications">Pranešimai</string>
     <string name="settings_new_events">Nauji įvykiai</string>
 
+    <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistemos numatytasis</string>
     <string name="option_light">Šviesi</string>
     <string name="option_dark">Tamsi</string>
@@ -399,19 +386,24 @@
     <string name="option_monday">Pirmadienis</string>
     <string name="option_saturday">Šeštadienis</string>
 
+    <!-- ==================== Empty States ==================== -->
     <string name="empty_no_events_found">Įvykių nerasta</string>
     <string name="empty_no_upcoming_events">Artėjančių įvykių nėra</string>
     <string name="empty_no_calendars">Nėra pasiekiamų kalendorių</string>
 
+    <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">Jungiamasi…</string>
     <string name="status_fetching">Gaunama…</string>
 
+    <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Gauti kalendorių</string>
     <string name="action_import_from_file">Importuoti įvykius iš failo</string>
     <string name="action_export_local_calendar">Eksportuoti vietinį kalendorių</string>
 
+    <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
 
+    <!-- ==================== Help Text ==================== -->
     <string name="help_app_password_description">Programų slaptažodžiai leidžia prisijungti prie trečiųjų šalių programų neatskleisdami pagrindinio Apple ID slaptažodžio.</string>
     <string name="help_app_password_steps_header">Kaip sukurti:</string>
     <string name="help_app_password_step_1">1. Eikite į appleid.apple.com</string>
@@ -420,9 +412,11 @@
     <string name="help_app_password_step_4">4. Spauskite „Programų slaptažodžiai"</string>
     <string name="help_app_password_step_5">5. Spauskite „Generuoti" ir nukopijuokite čia</string>
 
+    <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal reikia pranešimų leidimo, kad primintų apie įvykius.</string>
     <string name="dialog_notification_permission_settings_hint">Tai galėsite pakeisti vėliau nustatymuose.</string>
 
+    <!-- ==================== Accounts Screen ==================== -->
     <string name="accounts_title">Paskyros</string>
     <string name="accounts_section_connected">Prijungtos</string>
     <string name="accounts_section_add">Pridėti paskyrą</string>
@@ -443,11 +437,13 @@
     <string name="accounts_sync_issue">Sinchronizavimo problema</string>
     <string name="accounts_cd_sync_warning">Sinchronizavimo įspėjimas</string>
 
+    <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Kalendoriaus srautai</string>
     <string name="subscriptions_section_add">Pridėti</string>
     <string name="subscriptions_empty_ics">Nėra ICS prenumeratų</string>
     <string name="subscriptions_empty_ics_hint">Pridėkite kalendoriaus srautą, kad matytumėte įvykius</string>
     <string name="subscriptions_add_ics">Pridėti ICS kalendorių</string>
+    <string name="qs_tile_label">Įvykis</string>
     <string name="holiday_catalog_add">Pridėti švenčių kalendorių</string>
     <string name="holiday_catalog_search_label">Paieška</string>
     <string name="holiday_catalog_already_added">Pridėta</string>
@@ -458,6 +454,7 @@
     <string name="subscriptions_row_label">Kalendoriaus srautai (ICS)</string>
     <string name="subscriptions_row_hint">pvz. šventės, sportas, mokykla</string>
 
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Gimtadieniai ir sukaktys</string>
     <string name="birthdays_anniversaries_row_hint">Iš telefono kontaktų</string>
     <string name="birthdays_section_title">Gimtadieniai</string>
@@ -475,9 +472,10 @@
     <string name="subscriptions_cd_back">Atgal</string>
     <string name="subscriptions_cd_add">Pridėti prenumeratą</string>
     <string name="snackbar_subscription_removed">Prenumerata pašalinta</string>
-    <string name="snackbar_subscription_already_exists">Šis URL jau prenumeruojamas</string>
     <string name="snackbar_action_undo">Atšaukti</string>
+    <string name="snackbar_subscription_already_exists">Šis URL jau prenumeruojamas</string>
 
+    <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINCHRONIZAVIMAS</string>
     <string name="account_detail_section_calendars">KALENDORIAI</string>
     <string name="account_detail_section_account">PASKYRA</string>
@@ -495,19 +493,23 @@
     <string name="account_detail_cd_show_password">Rodyti slaptažodį</string>
     <string name="account_detail_cd_hide_password">Slėpti slaptažodį</string>
 
-
+    <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Pervadinti paskyrą</string>
     <string name="rename_account_label">Paskyros pavadinimas</string>
 
+    <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">Keisti slaptažodį</string>
     <string name="change_password_label_icloud">Programos slaptažodis</string>
     <string name="change_password_label_default">Slaptažodis</string>
 
+    <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
 
+    <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Įrenginio kalendoriai</string>
     <string name="settings_device_calendars_hint">Kalendoriai iš kitų programų</string>
     <string name="settings_quick_event_add">Greitas pridėjimas</string>
+    <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
     <string name="settings_week_numbers">Savaitės numeriai</string>
     <string name="settings_show_declined">Rodyti atmestus įvykius</string>
     <string name="settings_widget_event_limit">Valdiklio įvykių limitas</string>
@@ -520,6 +522,8 @@
     <string name="settings_tap_to_enable">Bakstelėkite įjungti</string>
     <string name="settings_device_calendars_enabled">Įjungta: %1$d</string>
     <string name="settings_per_day">%1$d per dieną</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Kas yra programos slaptažodis?</string>
     <string name="caldav_trust_insecure_label">Pasitikėti nesaugiu ryšiu</string>
     <string name="action_add_another">Pridėti dar</string>
@@ -542,6 +546,7 @@
     <string name="cd_warning">Įspėjimas</string>
     <string name="cd_refresh_calendars">Atnaujinti kalendorius</string>
 
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Dienomis</string>
     <string name="label_pattern">Šablonas</string>
     <string name="label_ends">Baigiasi</string>
@@ -568,6 +573,7 @@
     <string name="status_minutes_ago">prieš %1$d min.</string>
     <string name="status_hours_ago">prieš %1$d val.</string>
 
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_description">Rodyti įvykius iš kitų kalendoriaus programų jūsų įrenginyje.</string>
     <string name="device_calendars_permission_required">Reikalingas kalendoriaus leidimas. Bakstelėkite „Įjungti" suteikti prieigą.</string>
     <string name="device_calendars_read_only_access">Tik skaitymas</string>
@@ -579,24 +585,25 @@
     <string name="device_calendars_reminders_desc">Gauti pranešimus apie įrenginio kalendoriaus įvykius</string>
     <string name="device_calendars_read_only_no_write">Tik skaitymas (nėra rašymo leidimo)</string>
     <string name="device_calendars_read_only_calendar">Tik skaitymas (kalendorius tik skaitomas)</string>
-
     <string name="settings_developer_options">Kūrėjo parinktys</string>
     <string name="settings_sync_frequency">Sinchronizavimo dažnumas</string>
     <string name="settings_preview">PERŽIŪRA</string>
     <string name="settings_n_events">Įvykių: %1$d</string>
     <string name="settings_n_events_default">Įvykių: %1$d (numatytasis)</string>
 
+    <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendoriai</string>
     <string name="drawer_contacts">Kontaktai</string>
     <string name="drawer_device_calendars">Įrenginio kalendoriai</string>
     <string name="drawer_account_offline">Nėra ryšio</string>
     <string name="drawer_share_feedback">Pagalba ir dokumentai</string>
-
     <string name="event_title_fallback">Įvykis</string>
 
+    <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Jums, ne jūsų duomenims.</string>
     <string name="action_keep_it_that_way">Palaikykite tai</string>
 
+    <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">Jau sinchronizuota</string>
     <string name="status_warnings">Įspėjimai</string>
     <string name="sync_history_events_failed">Nepavykusių įvykių</string>
@@ -605,14 +612,17 @@
     <string name="sync_history_duration">Trukmė</string>
     <string name="sync_history_already_synced_count">%1$d jau sinchronizuota</string>
 
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
     <string name="day_events_no_events">Įvykių nėra</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
     <string name="status_youre_offline">Nėra ryšio</string>
 
+    <!-- ==================== i18n: Sign Out ==================== -->
     <string name="dialog_sign_out_title">Atsijungti nuo %1$s?</string>
     <string name="dialog_sign_out_message">Esate prisijungę kaip %1$s. Atsijungus sinchronizuoti kalendoriai bus pašalinti iš šio įrenginio.</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Lithuanian: one (1,21,31...), few (2-9,22-29...), many (fractional), other (default) -->
     <plurals name="accounts_count">
         <item quantity="one">%1$d paskyra</item>
         <item quantity="few">%1$d paskyros</item>
@@ -667,14 +677,13 @@
         <item quantity="many">%1$d įvykio</item>
         <item quantity="other">%1$d įvykių</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Atidaryti kalendorių</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">dar %1$d diena</item>
         <item quantity="few">dar %1$d dienos</item>
         <item quantity="many">dar %1$d dienos</item>
         <item quantity="other">dar %1$d dienų</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Atidaryti kalendorių</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d gimtadienis</item>
         <item quantity="few">%1$d gimtadieniai</item>
@@ -809,46 +818,115 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Šis įvykis</string>
-    <string name="recurring_all_events">Visi įvykiai</string>
     <string name="dialog_edit_recurring_title">Įrašyti pakeitimus į</string>
     <string name="dialog_delete_recurring_title">Ištrinti</string>
     <string name="dialog_move_recurring_title">Perkelti</string>
+    <string name="recurring_this_event">Šis įvykis</string>
+    <string name="recurring_all_events">Visi įvykiai</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Dalyviai</string>
+    <string name="attendee_search_hint">Ieškoti</string>
+    <string name="attendee_search_no_matches">Nėra rezultatų</string>
+    <string name="attendee_picker_title">Pridėti dalyvių</string>
+    <string name="attendee_pick_add_people">Pridėti dalyvių</string>
+    <string name="attendee_pick_from_contacts">Vardas arba el. paštas</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d daugiau</item>
+        <item quantity="few">+%1$d daugiau</item>
+        <item quantity="many">+%1$d daugiau</item>
+        <item quantity="other">+%1$d daugiau</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Siūlyti žmones iš kontaktų</string>
+    <string name="attendee_invalid_email">Įveskite visą el. pašto adresą</string>
+    <string name="attendee_add_typed">Pridėti \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Žmonių kvietimas šioje paskyroje negalimas</string>
+    <string name="device_attendee_local_no_delivery">Šis kalendorius negali siųsti kvietimų. Svečiai išsaugomi, bet jiems nebus pranešta.</string>
+    <string name="action_save_and_notify">Įrašyti ir pranešti</string>
+    <string name="attendee_section_going">Eina</string>
+    <string name="attendee_section_maybe">Galbūt</string>
+    <string name="attendee_section_pending">Laukiantys</string>
+    <string name="attendee_section_declined">Atsisakė</string>
+    <string name="attendee_section_delegated">Delegavo</string>
+    <string name="invitees_host_tag">Šeimininkas</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tu · %d pakviestas</item>
+        <item quantity="few">Tu · %d pakviesti</item>
+        <item quantity="many">Tu · %d pakviesta</item>
+        <item quantity="other">Tu · %d pakviestų</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d pakviestas</item>
+        <item quantity="few">%d pakviesti</item>
+        <item quantity="many">%d pakviesta</item>
+        <item quantity="other">%d pakviestų</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizuoja</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="few">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="many">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tu + %d</item>
+        <item quantity="few">Tu + %d</item>
+        <item quantity="many">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · dar %2$d</item>
+        <item quantity="few">%1$s · dar %2$d</item>
+        <item quantity="many">%1$s · dar %2$d</item>
+        <item quantity="other">%1$s · dar %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Keisti atsakymą</string>
+    <string name="rsvp_question_going">Eisi?</string>
+    <string name="rsvp_action_yes">Taip</string>
+    <string name="rsvp_action_maybe">Galbūt</string>
+    <string name="rsvp_action_no">Ne</string>
+    <string name="rsvp_state_going">Eini</string>
+    <string name="rsvp_state_maybe">Galbūt</string>
+    <string name="rsvp_state_not_going">Neini</string>
+    <string name="rsvp_action_change">Keisti</string>
     <string name="empty_pick_a_day">Pasirink dieną. Pagauk akimirką.</string>
-    <string name="empty_no_events_day">Nieko čia nėra — gal pasivaikščioti?</string>
+    <string name="cd_empty_pick_a_day">Pasirink dieną</string>
+    <string name="empty_no_events_day_1">Laisva diena. Visata reikalauja, kad pailsėtum.</string>
+    <string name="empty_no_events_day_2">Jokių planų. Toks ir yra planas.</string>
+    <string name="empty_no_events_day_3">Dovana: tuščia diena.</string>
+    <string name="empty_no_events_day_4">Kalendoriaus būsena: nuostabiai tuščia.</string>
+    <string name="empty_no_events_day_5">Nieko nesuplanuota. Mėgaukis ramybe.</string>
+    <string name="cd_empty_no_events_day">Rami diena, nieko nesuplanuota</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Pasirinkti datą</string>
     <string name="hint_tap_date_range">Bakstelėkite tą pačią datą vienai dienai arba kitą datą intervalui</string>
-
     <string name="cd_clear">Išvalyti</string>
     <string name="cd_offline">Nėra ryšio</string>
     <string name="cd_event_state_cancelled">atšauktas</string>
     <string name="cd_event_state_declined">atmestas</string>
     <string name="cd_event_state_past">praėjęs įvykis</string>
-    <string name="cd_event_untitled">Įvykis be pavadinimo</string>
     <string name="cd_loading_events">Įkeliami įvykiai</string>
+    <string name="cd_event_untitled">Įvykis be pavadinimo</string>
     <string name="cd_open_drawer">Atidaryti meniu</string>
     <string name="cd_close_drawer">Uždaryti meniu</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Kalendoriaus vaizdas</string>
     <string name="cd_active_view">Aktyvus vaizdas</string>
-
     <string name="view_agenda">Darbotvarkė</string>
     <string name="view_month_full">Mėnuo (pilnas)</string>
-    <string name="view_three_days">3 dienos</string>
     <string name="view_day">Diena</string>
+    <string name="view_three_days">3 dienos</string>
     <string name="view_year">Metai</string>
     <string name="view_insights">Statistika</string>
-
     <string name="label_go_to_month">Eiti į mėnesį</string>
     <string name="action_more_options">Daugiau</string>
     <string name="quick_add_save_failed">Nepavyko išsaugoti įvykio</string>
-
     <string name="label_duration_days">d.</string>
     <string name="label_duration_hrs">val.</string>
     <string name="label_duration_min">min.</string>
 
+    <!-- ==================== RecurrencePicker ==================== -->
     <string name="recurrence_on_day">%1$d dieną</string>
     <string name="recurrence_on_last_day">Paskutinę mėnesio dieną</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
@@ -858,10 +936,47 @@
     <string name="ordinal_4th">4-ą</string>
     <string name="ordinal_nth">%1$d-ą</string>
 
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">Nesikartoja</string>
+    <string name="rrule_freq_daily">Kasdien</string>
+    <string name="rrule_freq_weekly">Kas savaitę</string>
+    <string name="rrule_freq_monthly">Kas mėnesį</string>
+    <string name="rrule_freq_yearly">Kasmet</string>
+    <string name="rrule_repeats">Kartojasi</string>
+    <string name="rrule_every_n_days">Kas %1$d d.</string>
+    <string name="rrule_every_n_weeks">Kas %1$d sav.</string>
+    <string name="rrule_every_n_months">Kas %1$d mėn.</string>
+    <string name="rrule_every_n_years">Kas %1$d metus</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s paskutinę dieną</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d dieną</string>
+    <string name="rrule_ordinal_last">paskutinis</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d kartą</item>
+        <item quantity="few">, %1$d kartus</item>
+        <item quantity="many">, %1$d kartų</item>
+        <item quantity="other">, %1$d kartų</item>
+    </plurals>
+    <string name="rrule_until_suffix">, iki %1$s</string>
+    <string name="rrule_freq_never">Niekada</string>
+    <string name="rrule_freq_custom">Pasirinktinis</string>
+    <string name="label_repeat_every">Kartoti kas</string>
+    <string name="rrule_unit_day">Diena</string>
+    <string name="rrule_unit_week">Savaitė</string>
+    <string name="rrule_unit_month">Mėnuo</string>
+    <string name="rrule_unit_year">Metai</string>
+    <string name="cd_decrease_interval">Sumažinti intervalą</string>
+    <string name="cd_increase_interval">Padidinti intervalą</string>
+    <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
+    <string name="rrule_since">%1$s · nuo %2$s</string>
+
+    <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d naujų</string>
     <string name="sync_summary_updated">%1$d atnaujinta</string>
     <string name="sync_summary_removed">%1$d pašalinta</string>
 
+    <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Ciklinis slinkimas įjungtas</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -890,6 +1005,12 @@
     <!-- ==================== i18n: Notification Strings ==================== -->
     <string name="action_snooze">Atidėti</string>
     <string name="notification_starting_now">Prasideda dabar</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Po %1$d dienos</item>
+        <item quantity="few">Po %1$d dienų</item>
+        <item quantity="many">Po %1$d dienos</item>
+        <item quantity="other">Po %1$d dienų</item>
+    </plurals>
     <string name="notification_tomorrow_time">Rytoj, %1$s</string>
     <string name="notification_date_time">%1$s, %2$s</string>
     <string name="sync_notification_complete">Sinchronizacija baigta</string>
@@ -987,15 +1108,6 @@
     <string name="color_cyan">Žydra</string>
     <string name="color_blue">Mėlyna</string>
     <string name="color_purple">Violetinė</string>
-    <string name="color_saddlebrown">Balno ruda</string>
-    <string name="color_tomato">Pomidorų</string>    <string name="color_darkorange">Tamsiai oranžinė</string>
-    <string name="color_gold">Auksinė</string>
-    <string name="color_yellowgreen">Geltonai žalia</string>
-    <string name="color_limegreen">Žalsvai gelsva</string>    <string name="color_lightseagreen">Šviesi jūrinė žalia</string>
-    <string name="color_dodgerblue">Ryški mėlyna</string>
-    <string name="color_royalblue">Karališka mėlyna</string>    <string name="color_mediumorchid">Orchidėjų</string>
-    <string name="color_hotpink">Ryškiai rožinė</string>
-    <string name="color_dimgray">Tamsiai pilka</string>
     <string name="cd_meeting_link">Susitikimo nuoroda: %1$s</string>
     <string name="cd_phone_number">Telefono numeris</string>
     <string name="cd_email_link">El. paštas: %1$s</string>
@@ -1012,66 +1124,9 @@
     <string name="ics_sync_weekly">Kas savaitę</string>
     <string name="ics_url_required">Reikalingas URL</string>
     <string name="ics_url_invalid_scheme">URL turi prasidėti http://, https:// arba webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Serveris grąžino klaidą (%1$d). Patikrink URL.</string>
     <string name="ics_fetch_error_empty">Kalendoriaus srautas tuščias.</string>
     <string name="ics_fetch_error_not_calendar">Šis URL nepanašus į kalendoriaus srautą.</string>
-
-    <!-- Widget and Channel strings -->
-    <string name="cd_widget_calendar">Kalendorius</string>
-    <string name="cd_widget_add_event">Pridėti įvykį</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">įvykių nėra</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, atšaukta</string>
-    <string name="channel_event_reminders">Įvykių priminimai</string>
-    <string name="channel_event_reminders_desc">Pranešimai apie artėjančius kalendoriaus įvykius</string>
-    <string name="channel_sync_progress">Sinchronizavimo eiga</string>
-    <string name="channel_sync_progress_desc">Rodo eigą sinchronizuojant kalendorius</string>
-    <string name="channel_sync_status">Sinchronizavimo būsena</string>
-    <string name="channel_sync_status_desc">Pranešimai apie sinchronizavimo užbaigimą ir klaidas</string>
-    <string name="channel_event_invitations">Įvykių kvietimai</string>
-    <string name="channel_event_invitations_desc">Pranešimai, kai gaunate naują kalendoriaus kvietimą</string>
-    <string name="invite_notification_body">Nuo %1$s · Bakstelėkite, kad atsakytumėte</string>
-
-    <!-- Recurrence strings -->
-    <string name="rrule_does_not_repeat">Nesikartoja</string>
-    <string name="rrule_freq_daily">Kasdien</string>
-    <string name="rrule_freq_weekly">Kas savaitę</string>
-    <string name="rrule_freq_monthly">Kas mėnesį</string>
-    <string name="rrule_freq_yearly">Kasmet</string>
-    <string name="rrule_repeats">Kartojasi</string>
-    <string name="rrule_every_n_days">Kas %1$d d.</string>
-    <string name="rrule_every_n_weeks">Kas %1$d sav.</string>
-    <string name="rrule_every_n_months">Kas %1$d mėn.</string>
-    <string name="rrule_every_n_years">Kas %1$d metus</string>
-    <string name="rrule_freq_on_days">%1$s %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s paskutinę dieną</string>
-    <string name="rrule_freq_on_day_n">%1$s %2$d dieną</string>
-    <string name="rrule_ordinal_last">paskutinis</string>
-    <string name="rrule_until_suffix">, iki %1$s</string>
-    <string name="rrule_freq_never">Niekada</string>
-    <string name="rrule_freq_custom">Pasirinktinis</string>
-    <string name="label_repeat_every">Kartoti kas</string>
-    <string name="rrule_unit_day">Diena</string>
-    <string name="rrule_unit_week">Savaitė</string>
-    <string name="rrule_unit_month">Mėnuo</string>
-    <string name="rrule_unit_year">Metai</string>
-    <string name="cd_decrease_interval">Sumažinti intervalą</string>
-    <string name="cd_increase_interval">Padidinti intervalą</string>
-    <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
-    <string name="rrule_since">%1$s · nuo %2$s</string>
-
-    <!-- Recurrence count plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d kartą</item>
-        <item quantity="few">, %1$d kartus</item>
-        <item quantity="many">, %1$d kartų</item>
-        <item quantity="other">, %1$d kartų</item>
-    </plurals>
-
-    <!-- ==================== Insights ==================== -->
     <string name="insights_title">Statistika</string>
     <string name="insights_period_this_week">Savaitė</string>
     <string name="insights_period_last_week">Praėjusi sav.</string>
@@ -1110,13 +1165,28 @@
     <string name="insight_heaviest_upcoming">%1$s — užimčiausia artėjanti diena (%2$s)</string>
     <string name="insight_next_free_block">Kitas laisvas blokas: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Pasiskirstymas pagal dienas: užimčiausia diena — %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Prieinamumas</string>
     <string name="label_busy">Užimtas</string>
     <string name="label_free">Laisvas</string>
     <string name="label_event_color">Įvykio spalva</string>
     <string name="label_calendar_default">Kalendoriaus numatytoji</string>
     <string name="label_custom">Pasirinktinė</string>
+    <string name="cd_checkmark">Pasirinkta</string>
 
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Balno ruda</string>
+    <string name="color_tomato">Pomidorų</string>    <string name="color_darkorange">Tamsiai oranžinė</string>
+    <string name="color_gold">Auksinė</string>
+    <string name="color_yellowgreen">Geltonai žalia</string>
+    <string name="color_limegreen">Žalsvai gelsva</string>    <string name="color_lightseagreen">Šviesi jūrinė žalia</string>
+    <string name="color_dodgerblue">Ryški mėlyna</string>
+    <string name="color_royalblue">Karališka mėlyna</string>    <string name="color_mediumorchid">Orchidėjų</string>
+    <string name="color_hotpink">Ryškiai rožinė</string>
+    <string name="color_dimgray">Tamsiai pilka</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Raudona</string>
     <string name="hue_orange">Oranžinė</string>
     <string name="hue_yellow">Geltona</string>
@@ -1129,29 +1199,8 @@
     <string name="hue_neutral">Neutrali</string>
     <string name="label_more_colors">Daugiau spalvų</string>
     <string name="label_back_to_grid">Atgal</string>
-    <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Sukurti atsarginę kopiją</string>
-    <string name="backup_settings_subtitle">Išsaugoti KashCal konfigūraciją į JSON failą</string>
-    <string name="restore_settings_label">Atkurti nustatymus</string>
-    <string name="restore_settings_subtitle">Atkurti KashCal konfigūraciją iš atsarginės kopijos failo</string>
-    <string name="restore_confirm_title">Atkurti atsarginę kopiją?</string>
-    <string name="restore_confirm_from">KashCal atsarginė kopija %1$s, %2$s</string>
-    <string name="action_restore">Atkurti</string>
-    <string name="restore_success_title">Atkūrimas baigtas</string>
-    <string name="restore_success_device_calendars_note">Pasirink įrenginio kalendorius iš naujo, jei naudojiesi šia funkcija.</string>
-    <string name="restore_confirm_message_prefs_only">Jūsų nuostatos bus importuotos.</string>
-    <string name="restore_success_message_prefs_only">Nuostatos importuotos.</string>
-    <string name="restore_error_title">Atkurti nepavyko</string>
-    <string name="restore_error_version_too_new">Ši atsarginė kopija sukurta naujesne KashCal versija. Atnaujink KashCal ir bandyk dar kartą.</string>
-    <string name="restore_error_malformed_json">Šis failas nėra tinkama KashCal atsarginė kopija.</string>
-    <string name="restore_error_invalid_value">Atsarginės kopijos faile yra netinkamų duomenų, jo atkurti negalima.</string>
-    <string name="restore_error_apply_failure">Taikant atsarginę kopiją įvyko klaida. Jokie pakeitimai neišsaugoti.</string>
-    <string name="backup_error_build_failed">Nepavyko sukurti atsarginės kopijos</string>
-    <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos — nepavyko įrašyti į failą</string>
-    <string name="backup_error_read_failed">Nepavyko perskaityti failo</string>
-    <!-- Attendees (B4) -->
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Dalyviai</string>
     <string name="attendee_you_marker">Jūs</string>
     <string name="attendee_card_going">Dalyvauja</string>
@@ -1161,6 +1210,8 @@
     <string name="attendee_card_hosting">Organizuoja</string>
     <string name="attendee_action_copy">Kopijuoti el. paštą</string>
     <string name="attendee_action_email">Siųsti el. laišką</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">El. paštas nukopijuotas</string>
     <string name="attendee_no_email_app">Nėra įdiegtos el. pašto programos</string>
     <string name="attendee_show_all">Rodyti visus dalyvius</string>
@@ -1172,7 +1223,6 @@
     <string name="inbox_empty_caught_up">Viskas peržiūrėta</string>
     <string name="inbox_organizer_suffix">(organizatorius)</string>
     <string name="menu_invites">Kvietimai</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Eiti į datą</string>
     <string name="menu_about">Apie</string>
     <string name="menu_more">Meniu „Daugiau“</string>
@@ -1205,6 +1255,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Pasirinktame intervale nėra laisvų bent valandos blokų.</string>
+    <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
     <string name="share_availability_chooser_title">Bendrinti pasiekiamumą</string>
     <string name="share_availability_share_failed">Nėra programėlės, kuria galima dalintis</string>
     <string name="share_availability_window_section">Langas</string>
@@ -1225,35 +1276,5 @@
     <string name="share_as_card_all_day">Visa diena</string>
     <string name="share_as_card_chooser_title">Bendrinti įvykį</string>
     <string name="share_as_card_share_failed">Nepavyko bendrinti kortelės</string>
-    <string name="share_from_kashcal_footer">Bendrinama iš KashCal</string>
-    <string name="attendee_sheet_title">Dalyviai</string>
-    <string name="attendee_search_hint">Ieškoti</string>
-    <string name="attendee_search_no_matches">Nėra rezultatų</string>
-    <string name="attendee_section_going">Eina</string>
-    <string name="attendee_section_maybe">Galbūt</string>
-    <string name="attendee_section_pending">Laukiantys</string>
-    <string name="attendee_section_declined">Atsisakė</string>
-    <string name="attendee_section_delegated">Delegavo</string>
-    <string name="attendee_picker_title">Pridėti dalyvių</string>
-    <string name="attendee_pick_add_people">Pridėti dalyvių</string>
-    <string name="attendee_pick_from_contacts">Vardas arba el. paštas</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d daugiau</item>
-        <item quantity="few">+%1$d daugiau</item>
-        <item quantity="many">+%1$d daugiau</item>
-        <item quantity="other">+%1$d daugiau</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Siūlyti žmones iš kontaktų</string>
-    <string name="attendee_invalid_email">Įveskite visą el. pašto adresą</string>
-    <string name="attendee_add_typed">Pridėti \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Žmonių kvietimas šioje paskyroje negalimas</string>
-    <string name="device_attendee_local_no_delivery">Šis kalendorius negali siųsti kvietimų. Svečiai išsaugomi, bet jiems nebus pranešta.</string>
-    <string name="action_save_and_notify">Įrašyti ir pranešti</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Po %1$d dienos</item>
-        <item quantity="few">Po %1$d dienų</item>
-        <item quantity="many">Po %1$d dienos</item>
-        <item quantity="other">Po %1$d dienų</item>
-    </plurals>
-    <string name="qs_tile_label">Įvykis</string>
+
 </resources>

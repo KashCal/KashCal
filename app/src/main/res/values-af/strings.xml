@@ -13,12 +13,27 @@
     <string name="date_widget_description">Wys vandag se datum soos \'n programikoon</string>
     <string name="upcoming_widget_name">Kom tans</string>
     <string name="upcoming_widget_description">Wys die volgende 10 dae se gebeurtenisse en slaan leë dae oor</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Laai komende gebeurtenisse…</string>
     <string name="widget_error_load_events">Kon nie gebeurtenisse laai nie, tik om te open</string>
     <string name="widget_no_events_today">Geen gebeurtenisse vandag nie</string>
     <string name="widget_add_event">+ Voeg gebeurtenis by</string>
     <string name="widget_no_events">Geen gebeurtenisse</string>
     <string name="widget_no_upcoming_events">Geen komende gebeurtenisse nie</string>
+    <string name="cd_widget_calendar">Kalender</string>
+    <string name="cd_widget_add_event">Voeg gebeurtenis by</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">geen gebeurtenisse</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, gekanselleer</string>
+    <string name="channel_event_reminders">Gebeurtenisherinneringe</string>
+    <string name="channel_event_reminders_desc">Kennisgewings vir komende kalendergebeurtenisse</string>
+    <string name="channel_sync_progress">Sinkronisasievordering</string>
+    <string name="channel_sync_progress_desc">Wys vordering terwyl kalenders sinkroniseer</string>
+    <string name="channel_sync_status">Sinkronisasietoestand</string>
+    <string name="channel_sync_status_desc">Kennisgewings oor sinkronisasievoltooiing en foute</string>
+    <string name="channel_event_invitations">Gebeurtenisuitnodigings</string>
+    <string name="channel_event_invitations_desc">Kennisgewings wanneer jy \'n nuwe kalenderuitnodiging ontvang</string>
+    <string name="invite_notification_body">Van %1$s · Tik om te reageer</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nuwe Gebeurtenis</string>
@@ -35,6 +50,8 @@
     <string name="action_close">Sluit</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Nie Nou Nie</string>
+    <string name="action_allow">Laat toe</string>
+    <string name="action_no_thanks">Nee, dankie</string>
     <string name="action_sign_in">Meld Aan</string>
     <string name="action_select">Kies</string>
     <string name="action_show_password">Wys wagwoord</string>
@@ -59,8 +76,6 @@
     <string name="action_confirm">Bevestig</string>
     <string name="action_discard">Gooi Weg</string>
     <string name="action_dismiss">Maak Toe</string>
-    <string name="action_allow">Laat toe</string>
-    <string name="action_no_thanks">Nee, dankie</string>
     <string name="action_show_all">Wys Alles</string>
     <string name="action_connect">Koppel</string>
     <string name="action_duplicate">Dupliseer</string>
@@ -70,42 +85,8 @@
     <string name="action_confirm_delete">Bevestig Verwydering</string>
     <string name="action_delete_event">Verwyder Gebeurtenis</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Jou antwoord geld vir die hele reeks.</string>
-    <string name="invitees_host_tag">Gasheer</string>
-    <string name="invitees_summary_you_alone">Jy</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Jy · %d genooi</item>
-        <item quantity="other">Jy · %d genooi</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d genooi</item>
-        <item quantity="other">%d genooi</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s reël</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Jy</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Jy + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Jy + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Jy + %d</item>
-        <item quantity="other">Jy + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d meer</item>
-        <item quantity="other">%1$s · %2$d meer</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Verander antwoord</string>
-    <string name="rsvp_question_going">Gaan jy?</string>
-    <string name="rsvp_action_yes">Ja</string>
-    <string name="rsvp_action_maybe">Miskien</string>
-    <string name="rsvp_action_no">Nee</string>
-    <string name="rsvp_state_going">Jy gaan</string>
-    <string name="rsvp_state_maybe">Miskien</string>
-    <string name="rsvp_state_not_going">Jy gaan nie</string>
-    <string name="rsvp_action_change">Verander</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Hierdie en alle toekomstige</string>
@@ -143,7 +124,6 @@
     <string name="label_all_day">Heeldag</string>
     <string name="label_today">Vandag</string>
     <string name="label_go_to_date">Gaan na datum</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -164,9 +144,6 @@
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">Ondersteun KashCal</string>
     <string name="app_icon_switch_note">Die verandering van die ikoon kan die program herbegin. Kennisgewings gebruik altyd die verstekikoon en -naam.</string>
-    <string name="settings_search_placeholder">Soek instellings…</string>
-    <string name="settings_search_no_results">Geen instellings gevind vir \"%1$s\" nie</string>
-    <string name="cd_search_settings">Soek instellings</string>
     <string name="settings_time_format">Tydformaat</string>
     <string name="settings_start_week_on">Begin Week Op</string>
     <string name="settings_event_emojis">Gebeurtenis-emojis</string>
@@ -199,6 +176,7 @@
     <string name="app_lock_enabled_message">Toeslot is aan. KashCal sal jou vra om te verifieer wanneer jy dit volgende keer oopmaak.</string>
     <string name="app_lock_disable_prompt_title">Ontsluit om Toeslot af te skakel</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Rugsteuninstellings</string>
     <string name="backup_settings_subtitle">Stoor KashCal-konfigurasie na \'n JSON-lêer</string>
     <string name="restore_settings_label">Herstel instellings</string>
@@ -223,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
     <string name="onboarding_got_you">Ons help jou.</string>
     <string name="onboarding_connect_prompt">Koppel iCloud om jou gebeurtenisse hier te sien</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Wat\'s nuut</string>
+    <string name="whats_new_dismiss">Verstaan</string>
+    <string name="whats_new_v598_title">Help om Android oop te hou</string>
+    <string name="whats_new_v598_body">Google verander die manier waarop jy programme op jou toestel installeer. Ons het jou hulp nodig.</string>
+    <string name="whats_new_v598_action_label">Besoek keepandroidopen.org</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Koppel iCloud</string>
@@ -267,13 +252,11 @@
     <string name="error_auth_session_expired_title">Sessie Verval</string>
     <string name="error_auth_session_expired">Jou iCloud-sessie het verval. Meld asseblief weer aan om sinkronisering voort te sit.</string>
     <string name="error_auth_account_locked">Jou Apple ID is gesluit. Besoek asseblief appleid.apple.com om dit te ontsluit.</string>
-
     <string name="error_network_offline">Jy is vanlyn. Veranderinge sal sinkroniseer wanneer jy weer aanlyn is.</string>
     <string name="error_network_timeout">Verbinding het uitgetel. Kontroleer asseblief jou internet en probeer weer.</string>
     <string name="error_network_ssl">Veilige verbinding het misluk. Kontroleer asseblief jou netwerkinstellings.</string>
     <string name="error_network_unknown_host">Kon nie iCloud bereik nie. Kontroleer asseblief jou internetverbinding.</string>
     <string name="error_network_connection_failed">Verbinding het misluk. Probeer asseblief weer.</string>
-
     <string name="error_server_unavailable">iCloud is tydelik onbeskikbaar. Probeer asseblief later weer.</string>
     <string name="error_server_rate_limited">Te veel versoeke. Wag asseblief \'n oomblik en probeer weer.</string>
     <string name="error_server_forbidden">Toegang geweier. Jy het dalk nie toestemming vir hierdie kalender nie.</string>
@@ -282,13 +265,11 @@
     <string name="error_conflict_generic">Hierdie gebeurtenis is op \'n ander toestel gewysig. Forseer sinkronisering om die nuutste weergawe te kry.</string>
     <string name="error_conflict_with_event">\"%1$s\" is op \'n ander toestel gewysig. Forseer sinkronisering om die nuutste weergawe te kry.</string>
     <string name="error_sync_token_expired">Sinkroniseringsdata het verval. Volle sinkronisering word uitgevoer…</string>
-
     <string name="error_event_not_found">Gebeurtenis nie gevind nie.</string>
     <string name="error_calendar_not_found">Kalender nie gevind nie.</string>
     <string name="error_calendar_read_only">Kan nie gebeurtenisse in \"%1$s\" wysig nie (leesalleen-kalender).</string>
     <string name="error_event_invalid_data">Ongeldige gebeurtenisdata. Kontroleer asseblief begin- en eindtye.</string>
     <string name="error_event_invalid_recurrence">Ongeldige herhalingspatroon.</string>
-
     <string name="error_display_name_exists">\'n Rekening met die naam \"%1$s\" bestaan reeds.</string>
     <string name="icloud_error_credentials_required">Apple ID en wagwoord word vereis</string>
     <string name="icloud_error_connection_timeout">Verbinding het uitgetel. Probeer asseblief weer.</string>
@@ -297,46 +278,44 @@
     <string name="caldav_error_connection_timeout">Verbinding het uitgetel. Probeer asseblief weer.</string>
     <string name="caldav_error_no_calendars">Geen kalenders op hierdie bediener gevind nie.</string>
     <string name="caldav_error_unexpected">Onverwagte fout. Probeer asseblief weer.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nAs dit \'n bediener op jou plaaslike netwerk is, laat plaaslike netwerktoegang toe om te verbind.</string>
+    <string name="local_network_banner_title">Plaaslike netwerktoegang benodig</string>
+    <string name="local_network_banner_body">Hierdie bediener lyk of dit op jou plaaslike netwerk is. Laat plaaslike netwerktoegang toe sodat KashCal daaraan kan verbind.</string>
+    <string name="local_network_banner_allow">Laat toegang toe</string>
+    <string name="local_network_banner_dismiss">Nie nou nie</string>
     <string name="password_change_error_account_not_found">Rekening nie gevind nie</string>
     <string name="password_change_error_no_credentials">Geen bestaande geloofsbriewe nie</string>
     <string name="password_change_error_unsupported_provider">Hierdie verskaffer ondersteun nie wagwoordverandering nie</string>
     <string name="password_change_error_invalid">Ongeldige wagwoord</string>
     <string name="password_change_error_network">Netwerkfout, probeer asseblief weer</string>
-
     <string name="error_import_file_not_found">Lêer nie gevind nie of kan nie gelees word nie.</string>
     <string name="error_import_invalid_format">Ongeldige kalenderlêerformaat.</string>
     <string name="error_import_partial">%1$d gebeurtenisse ingevoer, %2$d het misluk.</string>
     <string name="error_export_failed">Kon nie gebeurtenisse uitvoer nie.</string>
     <string name="error_export_no_events">Geen gebeurtenisse om uit te voer nie.</string>
     <string name="error_end_before_start">Eindtyd moet na begintyd wees</string>
-
     <string name="error_storage_full_title">Berging Vol</string>
     <string name="error_storage_full">Nie genoeg bergingspasie nie. Maak asseblief spasie oop en probeer weer.</string>
     <string name="error_database_corruption_title">Datafout</string>
     <string name="error_database_corruption">Jou kalenderdata is moontlik beskadig. Kontak asseblief ondersteuning.</string>
     <string name="error_migration_title">Opdateringsfout</string>
     <string name="error_migration_failed">Kon nie programdata opdateer nie. Herinstalleer asseblief die program.</string>
-
     <string name="error_permission_notification_title">Aktiveer Kennisgewings?</string>
     <string name="error_permission_notification">KashCal benodig kennisgewingstoestemming om jou aan komende gebeurtenisse te herinner.</string>
     <string name="error_permission_alarm_title">Aktiveer Presiese Alarms?</string>
     <string name="error_permission_alarm">KashCal benodig presiese alarmtoestemming vir presiese herinneringe.</string>
     <string name="error_permission_storage">Bergingstoestemming benodig vir invoer/uitvoer.</string>
-
     <string name="error_device_calendar_title">Kalenderfout</string>
     <string name="error_device_calendar_write_failed">Kon nie na toestelkalender stoor nie. Probeer asseblief weer.</string>
     <string name="error_device_calendar_permission">Kalenderskryftoestemming benodig. Verleen asseblief toestemming in Instellings.</string>
     <string name="error_device_calendar_not_found">Kalender nie gevind nie. Dit is dalk verwyder.</string>
     <string name="error_device_event_not_found">Gebeurtenis nie gevind nie. Dit is dalk verwyder.</string>
     <string name="error_device_calendar_read_only">Hierdie kalender is leesalleen.</string>
-
     <string name="error_sync_no_accounts">Geen iCloud-rekening opgestel nie. Stel iCloud op om jou kalenders te sinkroniseer.</string>
     <string name="error_sync_partial">%1$d kalenders gesinkroniseer, %2$d het misluk.</string>
-
     <string name="error_unknown">Iets het verkeerd gegaan. Probeer asseblief weer.</string>
 
-    <!-- ==================== Content Descriptions ==================== -->
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Gekies</string>
     <string name="cd_back">Terug</string>
     <string name="cd_search">Soek</string>
@@ -376,6 +355,7 @@
     <string name="label_password">Wagwoord</string>
     <string name="label_display_name_optional">Vertoonnaam</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Soek gebeurtenisse…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -463,6 +443,14 @@
     <string name="subscriptions_empty_ics">Geen ICS-intekeninge nie</string>
     <string name="subscriptions_empty_ics_hint">Voeg \'n kalendervoer by om gebeurtenisse te sien</string>
     <string name="subscriptions_add_ics">Voeg ICS-kalender By</string>
+    <string name="qs_tile_label">Voeg by</string>
+    <string name="holiday_catalog_add">Voeg vakansiekalender by</string>
+    <string name="holiday_catalog_search_label">Soek</string>
+    <string name="holiday_catalog_already_added">Bygevoeg</string>
+    <string name="holiday_catalog_empty">Geen lande gevind nie</string>
+    <string name="holiday_catalog_empty_hint">Probeer \'n ander naam</string>
+    <string name="holiday_catalog_validate_error">Kon nie hierdie kalender bereik nie. Gaan jou verbinding na en probeer weer.</string>
+    <string name="holiday_catalog_attribution">Vakansiekalenders van Mozilla Thunderbird, gelisensieer onder %1$s.</string>
     <string name="subscriptions_row_label">Kalendervoere (ICS)</string>
     <string name="subscriptions_row_hint">bv. vakansies, sport, skool</string>
 
@@ -505,7 +493,6 @@
     <string name="account_detail_cd_show_password">Wys wagwoord</string>
     <string name="account_detail_cd_hide_password">Versteek wagwoord</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Hernoem Rekening</string>
     <string name="rename_account_label">Rekeningnaam</string>
@@ -522,6 +509,7 @@
     <string name="settings_device_calendars">Toestelkalenders</string>
     <string name="settings_device_calendars_hint">Kalenders vanuit ander programme</string>
     <string name="settings_quick_event_add">Vinnige Gebeurtenis Byvoeging</string>
+    <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
     <string name="settings_week_numbers">Weeknommers</string>
     <string name="settings_show_declined">Wys afgewysde gebeurtenisse</string>
     <string name="settings_widget_event_limit">Widget-gebeurtenislimiet</string>
@@ -534,6 +522,8 @@
     <string name="settings_tap_to_enable">Tik om te aktiveer</string>
     <string name="settings_device_calendars_enabled">%1$d geaktiveer</string>
     <string name="settings_per_day">%1$d per dag</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Wat is \'n programspesifieke wagwoord?</string>
     <string name="caldav_trust_insecure_label">Vertrou onveilige verbinding</string>
     <string name="action_add_another">Voeg Nog Een By</string>
@@ -574,6 +564,9 @@
     <string name="label_found_events">Gevind: %1$d gebeurtenisse</string>
     <string name="label_open_debug_menu">Open ontfoutkieslys</string>
     <string name="placeholder_search">Soek…</string>
+    <string name="settings_search_placeholder">Soek instellings…</string>
+    <string name="settings_search_no_results">Geen instellings gevind vir \"%1$s\" nie</string>
+    <string name="cd_search_settings">Soek instellings</string>
     <string name="status_sync_paused">Sinkronisering onderbreek</string>
     <string name="status_not_synced">Nie gesinkroniseer nie</string>
     <string name="status_sync_error">Sinkroniseringsfout</string>
@@ -592,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Word in kennis gestel vir toestelkalendergebeurtenisse</string>
     <string name="device_calendars_read_only_no_write">Leesalleen (geen skryftoestemming)</string>
     <string name="device_calendars_read_only_calendar">Leesalleen (kalender is leesalleen)</string>
-
     <string name="settings_developer_options">Ontwikkelaaropsies</string>
     <string name="settings_sync_frequency">Sinkroniseringsfrekwensie</string>
     <string name="settings_preview">VOORSKOU</string>
@@ -605,7 +597,6 @@
     <string name="drawer_device_calendars">Toestelkalenders</string>
     <string name="drawer_account_offline">Vanlyn</string>
     <string name="drawer_share_feedback">Hulp &amp; dokumente</string>
-
     <string name="event_title_fallback">Gebeurtenis</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -668,12 +659,11 @@
         <item quantity="one">%1$d gebeurtenis</item>
         <item quantity="other">%1$d gebeurtenisse</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Maak kalender oop</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d dag meer</item>
         <item quantity="other">%1$d dae meer</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Maak kalender oop</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d verjaarsdag</item>
         <item quantity="other">%1$d verjaarsdae</item>
@@ -764,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Hierdie gebeurtenis</string>
-    <string name="recurring_all_events">Alle gebeurtenisse</string>
     <string name="dialog_edit_recurring_title">Stoor veranderinge na</string>
     <string name="dialog_delete_recurring_title">Vee uit</string>
     <string name="dialog_move_recurring_title">Skuif</string>
+    <string name="recurring_this_event">Hierdie gebeurtenis</string>
+    <string name="recurring_all_events">Alle gebeurtenisse</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Bywoners</string>
+    <string name="attendee_search_hint">Soek</string>
+    <string name="attendee_search_no_matches">Geen resultate</string>
+    <string name="attendee_picker_title">Voeg genooides by</string>
+    <string name="attendee_pick_add_people">Voeg genooides by</string>
+    <string name="attendee_pick_from_contacts">Naam of e-pos</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d meer</item>
+        <item quantity="other">+%1$d meer</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Stel mense uit jou kontakte voor</string>
+    <string name="attendee_invalid_email">Voer \'n volledige e-posadres in</string>
+    <string name="attendee_add_typed">Voeg \"%1$s\" by</string>
+    <string name="attendee_scheduling_unavailable">Mense nooi is nie op hierdie rekening beskikbaar nie</string>
+    <string name="device_attendee_local_no_delivery">Hierdie kalender kan nie uitnodigings stuur nie. Gaste word gestoor, maar sal nie in kennis gestel word nie.</string>
+    <string name="action_save_and_notify">Stoor &amp; stel in kennis</string>
+    <string name="attendee_section_going">Gaan</string>
+    <string name="attendee_section_maybe">Miskien</string>
+    <string name="attendee_section_pending">Hangend</string>
+    <string name="attendee_section_declined">Geweier</string>
+    <string name="attendee_section_delegated">Gedelegeer</string>
+    <string name="invitees_host_tag">Gasheer</string>
+    <string name="invitees_summary_you_alone">Jy</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Jy · %d genooi</item>
+        <item quantity="other">Jy · %d genooi</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d genooi</item>
+        <item quantity="other">%d genooi</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s reël</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Jy</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Jy + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Jy + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Jy + %d</item>
+        <item quantity="other">Jy + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d meer</item>
+        <item quantity="other">%1$s · %2$d meer</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Verander antwoord</string>
+    <string name="rsvp_question_going">Gaan jy?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Miskien</string>
+    <string name="rsvp_action_no">Nee</string>
+    <string name="rsvp_state_going">Jy gaan</string>
+    <string name="rsvp_state_maybe">Miskien</string>
+    <string name="rsvp_state_not_going">Jy gaan nie</string>
+    <string name="rsvp_action_change">Verander</string>
     <string name="empty_pick_a_day">Kies \'n dag. Gryp dit.</string>
-    <string name="empty_no_events_day">Niks om hier te sien nie; gaan bietjie buite?</string>
+    <string name="cd_empty_pick_a_day">Kies \'n dag</string>
+    <string name="empty_no_events_day_1">\'n Oop dag. Die heelal dring aan dat jy rus.</string>
+    <string name="empty_no_events_day_2">Geen planne nie. Dít is die plan.</string>
+    <string name="empty_no_events_day_3">\'n Geskenk: \'n leë dag.</string>
+    <string name="empty_no_events_day_4">Kalenderstatus: heerlik leeg.</string>
+    <string name="empty_no_events_day_5">Niks beplan nie. Geniet die kalmte.</string>
+    <string name="cd_empty_no_events_day">Kalm dag, niks geskeduleer nie</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Kies \'n datum</string>
     <string name="hint_tap_date_range">Tik dieselfde datum vir \'n enkele dag, of \'n ander datum vir reeks</string>
-
     <string name="cd_clear">Maak skoon</string>
     <string name="cd_offline">Vanlyn</string>
+    <string name="cd_event_state_cancelled">gekanselleer</string>
+    <string name="cd_event_state_declined">afgewys</string>
+    <string name="cd_event_state_past">afgelope gebeurtenis</string>
     <string name="cd_loading_events">Laai gebeurtenisse</string>
+    <string name="cd_event_untitled">Gebeurtenis sonder titel</string>
     <string name="cd_open_drawer">Open laai</string>
     <string name="cd_close_drawer">Sluit laai</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Kalenderaansig</string>
     <string name="cd_active_view">Aktiewe aansig</string>
-
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Maand (Vol)</string>
-    <string name="view_three_days">3 Dae</string>
     <string name="view_day">Dag</string>
+    <string name="view_three_days">3 Dae</string>
     <string name="view_year">Jaar</string>
     <string name="view_insights">Insigte</string>
-
     <string name="label_go_to_month">Gaan na maand</string>
-
     <string name="action_more_options">Meer opsies</string>
     <string name="quick_add_save_failed">Kon nie gebeurtenis stoor nie</string>
-
     <string name="label_duration_days">dae</string>
     <string name="label_duration_hrs">ure</string>
     <string name="label_duration_min">min</string>
@@ -812,207 +860,7 @@
     <string name="ordinal_4th">4de</string>
     <string name="ordinal_nth">%1$dde</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nuut</string>
-    <string name="sync_summary_updated">%1$d opgedateer</string>
-    <string name="sync_summary_removed">%1$d verwyder</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Sirkulere blaai geaktiveer</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Geen herinnering</string>
-    <string name="reminder_at_time_of_event">Op tyd van gebeurtenis</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s voor</string>
-    <string name="reminder_time_after">%1$s na</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 VM dag van gebeurtenis</string>
-    <string name="reminder_day_of_event_24h">09:00 dag van gebeurtenis</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s voor om 9 VM</string>
-    <string name="reminder_before_at_24h">%1$s voor om 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Af</string>
-    <string name="reminder_short_at_event">By gebeurtenis</string>
-    <string name="reminder_short_9am_12h">9VM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dm</string>
-    <string name="reminder_short_hours">%1$du</string>
-    <string name="reminder_short_days">%1$dd</string>
-    <string name="reminder_short_weeks">%1$dw</string>
-    <string name="reminder_summary_none">Geen</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$du %2$dm</string>
-    <string name="duration_compact_short">%1$du%2$dm</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Slegs handmatig</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Alle gebeurtenisse</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Sluimer</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Begin nou</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Mre, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Sinkronisering voltooi</string>
-    <string name="sync_notification_partial">Sinkronisering gedeeltelik voltooi</string>
-    <string name="sync_notification_auth_failed">Sinkronisering-verifikasie het misluk</string>
-    <string name="sync_notification_auth_reauth">Verifieer asseblief jou rekening weer</string>
-    <string name="sync_notification_failed">Sinkronisering het misluk</string>
-    <string name="sync_notification_parse_title">Sommige gebeurtenisse kon nie gesinkroniseer word nie</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s in %2$s kon nie gesinkroniseer word nie. Probeer Gedwonge Sinkronisering in Instellings.</string>
-    <string name="sync_notification_conflict_title">Sinkroniseringskonflik opgelos</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Plaaslike veranderinge aan \"%1$s\" is verloor weens sinkroniseringskonflik. Bedienerweergawe sal gebruik word.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Plaaslike veranderinge aan %1$s is verloor weens sinkroniseringskonflikte. Bedienerweergawes sal gebruik word.</string>
-    <string name="sync_notification_expired_title">Sinkroniseringsveranderinge het verval</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s in %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s oor %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d kalender gesinkroniseer</item>
-        <item quantity="other">%1$d kalenders gesinkroniseer</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d verandering</item>
-        <item quantity="other">, %1$d veranderinge</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d fout</item>
-        <item quantity="other">, %1$d foute</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s se %2$s Verjaarsdag</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s se Verjaarsdag</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s se %2$s Herdenking</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s se Herdenking</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$dste</string>
-    <string name="ordinal_suffix_nd">%1$dde</string>
-    <string name="ordinal_suffix_rd">%1$dde</string>
-    <string name="ordinal_suffix_th">%1$dde</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Kalenders word gesinkroniseer…</string>
-    <string name="sync_banner_preparing">Berei voor om te sinkroniseer…</string>
-    <string name="sync_banner_complete_errors">Sinkronisering voltooi met foute</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Sinkronisering misluk: %1$s</string>
-    <string name="error_unknown_error">Onbekende fout</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Nuwe gebeurtenis: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d nuwe gebeurtenis</item>
-        <item quantity="other">%1$d nuwe gebeurtenisse</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d gebeurtenis bygewerk</item>
-        <item quantity="other">%1$d gebeurtenisse bygewerk</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d gebeurtenis verwyder</item>
-        <item quantity="other">%1$d gebeurtenisse verwyder</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d kalenderbywerking</item>
-        <item quantity="other">%1$d kalenderbywerkings</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Dag %1$d van %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 van %1$d · begin %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d van %2$d · eindig %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Heeldag</string>
-    <string name="event_date_all_day">%1$s · Heeldag</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Heeldag)</string>
-    <string name="event_date_all_day_parens">%1$s (Heeldag)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Stoor Gebeurtenis</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Nuut</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Rooi</string>
-    <string name="color_orange">Oranje</string>
-    <string name="color_yellow">Geel</string>
-    <string name="color_green">Groen</string>
-    <string name="color_cyan">Siaan</string>
-    <string name="color_blue">Blou</string>
-    <string name="color_purple">Pers</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Vergaderingskakel: %1$s</string>
-    <string name="cd_phone_number">Telefoonnommer</string>
-    <string name="cd_email_link">E-pos: %1$s</string>
-    <string name="cd_web_link">Skakel: %1$s</string>
-    <string name="cd_text_with_links">Teks met %1$d skakels: %2$s</string>
-    <string name="cd_text_with_link">Teks met 1 skakel: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Dag %1$d van %2$d (Heeldag)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek</string>
-    <string name="sync_history_stats_issues">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek   ⚠ %4$d probleme</string>
-    <string name="sync_history_failed">Misluk</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Elke uur</string>
-    <string name="ics_sync_every_n_hours">Elke %1$d ure</string>
-    <string name="ics_sync_daily">Daagliks</string>
-    <string name="ics_sync_weekly">Weekliks</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL is verpligtend</string>
-    <string name="ics_url_invalid_scheme">URL moet begin met http://, https://, of webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Bediener het \'n fout teruggestuur (%1$d). Gaan asseblief die URL na.</string>
-    <string name="ics_fetch_error_empty">Die kalendervoer is leeg.</string>
-    <string name="ics_fetch_error_not_calendar">Daardie URL lyk nie soos \'n kalendervoer nie.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget/Channel accessibility -->
-    <string name="cd_widget_calendar">Kalender</string>
-    <string name="cd_widget_add_event">Voeg gebeurtenis by</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">geen gebeurtenisse</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, gekanselleer</string>
-    <string name="channel_event_reminders">Gebeurtenisherinneringe</string>
-    <string name="channel_event_reminders_desc">Kennisgewings vir komende kalendergebeurtenisse</string>
-    <string name="channel_sync_progress">Sinkronisasievordering</string>
-    <string name="channel_sync_progress_desc">Wys vordering terwyl kalenders sinkroniseer</string>
-    <string name="channel_sync_status">Sinkronisasietoestand</string>
-    <string name="channel_sync_status_desc">Kennisgewings oor sinkronisasievoltooiing en foute</string>
-    <string name="channel_event_invitations">Gebeurtenisuitnodigings</string>
-    <string name="channel_event_invitations_desc">Kennisgewings wanneer jy \'n nuwe kalenderuitnodiging ontvang</string>
-    <string name="invite_notification_body">Van %1$s · Tik om te reageer</string>
-
-    <!-- Recurrence rules -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Herhaal nie</string>
     <string name="rrule_freq_daily">Daagliks</string>
     <string name="rrule_freq_weekly">Weekliks</string>
@@ -1028,6 +876,10 @@
     <string name="rrule_freq_on_last_day">%1$s op laaste dag</string>
     <string name="rrule_freq_on_day_n">%1$s op dag %2$d</string>
     <string name="rrule_ordinal_last">laaste</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d keer</item>
+        <item quantity="other">, %1$d keer</item>
+    </plurals>
     <string name="rrule_until_suffix">, tot %1$s</string>
     <string name="rrule_freq_never">Nooit</string>
     <string name="rrule_freq_custom">Aangepas</string>
@@ -1040,12 +892,147 @@
     <string name="cd_increase_interval">Verhoog interval</string>
     <string name="rrule_starting">%1$s vanaf %2$s%3$s</string>
     <string name="rrule_since">%1$s · sedert %2$s</string>
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d keer</item>
-        <item quantity="other">, %1$d keer</item>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d nuut</string>
+    <string name="sync_summary_updated">%1$d opgedateer</string>
+    <string name="sync_summary_removed">%1$d verwyder</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Sirkulere blaai geaktiveer</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Geen herinnering</string>
+    <string name="reminder_at_time_of_event">Op tyd van gebeurtenis</string>
+    <string name="reminder_time_before">%1$s voor</string>
+    <string name="reminder_time_after">%1$s na</string>
+    <string name="reminder_day_of_event_12h">9 VM dag van gebeurtenis</string>
+    <string name="reminder_day_of_event_24h">09:00 dag van gebeurtenis</string>
+    <string name="reminder_before_at_12h">%1$s voor om 9 VM</string>
+    <string name="reminder_before_at_24h">%1$s voor om 09:00</string>
+    <string name="reminder_short_off">Af</string>
+    <string name="reminder_short_at_event">By gebeurtenis</string>
+    <string name="reminder_short_9am_12h">9VM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$du</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_summary_none">Geen</string>
+    <string name="duration_compact">%1$du %2$dm</string>
+    <string name="duration_compact_short">%1$du%2$dm</string>
+    <string name="sync_manual_only">Slegs handmatig</string>
+    <string name="sync_lookback_all">Alle gebeurtenisse</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Sluimer</string>
+    <string name="notification_starting_now">Begin nou</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Oor %1$d dag</item>
+        <item quantity="other">Oor %1$d dae</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Mre, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Sinkronisering voltooi</string>
+    <string name="sync_notification_partial">Sinkronisering gedeeltelik voltooi</string>
+    <string name="sync_notification_auth_failed">Sinkronisering-verifikasie het misluk</string>
+    <string name="sync_notification_auth_reauth">Verifieer asseblief jou rekening weer</string>
+    <string name="sync_notification_failed">Sinkronisering het misluk</string>
+    <string name="sync_notification_parse_title">Sommige gebeurtenisse kon nie gesinkroniseer word nie</string>
+    <string name="sync_notification_parse_content">%1$s in %2$s kon nie gesinkroniseer word nie. Probeer Gedwonge Sinkronisering in Instellings.</string>
+    <string name="sync_notification_conflict_title">Sinkroniseringskonflik opgelos</string>
+    <string name="sync_notification_conflict_single">Plaaslike veranderinge aan \"%1$s\" is verloor weens sinkroniseringskonflik. Bedienerweergawe sal gebruik word.</string>
+    <string name="sync_notification_conflict_multi">Plaaslike veranderinge aan %1$s is verloor weens sinkroniseringskonflikte. Bedienerweergawes sal gebruik word.</string>
+    <string name="sync_notification_expired_title">Sinkroniseringsveranderinge het verval</string>
+    <string name="sync_notification_expired_content">%1$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s in %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s oor %2$s kon nie binne 30 dae gesinkroniseer word nie. Die bedienerweergawe sal gebruik word. Gedwonge Sinkronisering om weer te probeer.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d kalender gesinkroniseer</item>
+        <item quantity="other">%1$d kalenders gesinkroniseer</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d verandering</item>
+        <item quantity="other">, %1$d veranderinge</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d fout</item>
+        <item quantity="other">, %1$d foute</item>
     </plurals>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s se %2$s Verjaarsdag</string>
+    <string name="contact_birthday">%1$s se Verjaarsdag</string>
+    <string name="contact_anniversary_with_age">%1$s se %2$s Herdenking</string>
+    <string name="contact_anniversary">%1$s se Herdenking</string>
+    <string name="ordinal_suffix_st">%1$dste</string>
+    <string name="ordinal_suffix_nd">%1$dde</string>
+    <string name="ordinal_suffix_rd">%1$dde</string>
+    <string name="ordinal_suffix_th">%1$dde</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Kalenders word gesinkroniseer…</string>
+    <string name="sync_banner_preparing">Berei voor om te sinkroniseer…</string>
+    <string name="sync_banner_complete_errors">Sinkronisering voltooi met foute</string>
+    <string name="sync_banner_failed">Sinkronisering misluk: %1$s</string>
+    <string name="error_unknown_error">Onbekende fout</string>
+    <string name="sync_snackbar_new_event">Nuwe gebeurtenis: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d nuwe gebeurtenis</item>
+        <item quantity="other">%1$d nuwe gebeurtenisse</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d gebeurtenis bygewerk</item>
+        <item quantity="other">%1$d gebeurtenisse bygewerk</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d gebeurtenis verwyder</item>
+        <item quantity="other">%1$d gebeurtenisse verwyder</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d kalenderbywerking</item>
+        <item quantity="other">%1$d kalenderbywerkings</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Dag %1$d van %2$d</string>
+    <string name="day_starts">Dag 1 van %1$d · begin %2$s</string>
+    <string name="day_ends">Dag %1$d van %2$d · eindig %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Heeldag</string>
+    <string name="event_date_all_day">%1$s · Heeldag</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Heeldag)</string>
+    <string name="event_date_all_day_parens">%1$s (Heeldag)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Stoor Gebeurtenis</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Nuut</string>
+    <string name="color_red">Rooi</string>
+    <string name="color_orange">Oranje</string>
+    <string name="color_yellow">Geel</string>
+    <string name="color_green">Groen</string>
+    <string name="color_cyan">Siaan</string>
+    <string name="color_blue">Blou</string>
+    <string name="color_purple">Pers</string>
+    <string name="cd_meeting_link">Vergaderingskakel: %1$s</string>
+    <string name="cd_phone_number">Telefoonnommer</string>
+    <string name="cd_email_link">E-pos: %1$s</string>
+    <string name="cd_web_link">Skakel: %1$s</string>
+    <string name="cd_text_with_links">Teks met %1$d skakels: %2$s</string>
+    <string name="cd_text_with_link">Teks met 1 skakel: %1$s</string>
+    <string name="day_x_of_y_all_day">Dag %1$d van %2$d (Heeldag)</string>
+    <string name="sync_history_stats">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek</string>
+    <string name="sync_history_stats_issues">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek   ⚠ %4$d probleme</string>
+    <string name="sync_history_failed">Misluk</string>
+    <string name="ics_sync_every_hour">Elke uur</string>
+    <string name="ics_sync_every_n_hours">Elke %1$d ure</string>
+    <string name="ics_sync_daily">Daagliks</string>
+    <string name="ics_sync_weekly">Weekliks</string>
+    <string name="ics_url_required">URL is verpligtend</string>
+    <string name="ics_url_invalid_scheme">URL moet begin met http://, https://, of webcal://</string>
+    <string name="ics_fetch_error_http">Bediener het \'n fout teruggestuur (%1$d). Gaan asseblief die URL na.</string>
+    <string name="ics_fetch_error_empty">Die kalendervoer is leeg.</string>
+    <string name="ics_fetch_error_not_calendar">Daardie URL lyk nie soos \'n kalendervoer nie.</string>
     <string name="insights_title">Insigte</string>
     <string name="insights_period_this_week">Week</string>
     <string name="insights_period_last_week">Verlede week</string>
@@ -1055,61 +1042,42 @@
         <item quantity="one">%d heeldag-gebeurtenis</item>
         <item quantity="other">%d heeldag-gebeurtenisse</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s is jou besigste dag (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s was jou besigste dag (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s is jou ligste dag (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s was jou ligste dag (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Langste vrye blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">Langste vrye blok was %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Jou naweek is oop</string>
     <string name="insight_weekend_load_clear_past">Jou naweek was oop</string>
     <string name="insight_weekend_load_light_future">%1$s geskeduleer vir die naweek</string>
     <string name="insight_weekend_load_light_past">%1$s was geskeduleer vir die naweek</string>
     <string name="insight_weekend_load_busy_future">%1$s geskeduleer vir die naweek</string>
     <string name="insight_weekend_load_busy_past">%1$s was geskeduleer vir die naweek</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d agtereenvolgende vergaderings</string>
     <string name="insight_back_to_back_past">Jy het %1$d agtereenvolgende vergaderings gehad</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s is %2$d%% van jou geskeduleerde tyd</string>
     <string name="insight_calendar_dominant_past">%1$s was %2$d%% van jou geskeduleerde tyd</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">Jou skedule begin voor 8 VM op %1$d dae</string>
     <string name="insight_early_bounds_past">Jou skedule het voor 8 VM begin op %1$d dae</string>
     <string name="insight_late_bounds_future">Gebeurtenisse na 7 NM op %1$d dae</string>
     <string name="insight_late_bounds_past">Gebeurtenisse het na 7 NM gegaan op %1$d dae</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">Jy het %1$d vergaderingvrye dae</string>
     <string name="insight_meeting_free_days_past">Jy het %1$d vergaderingvrye dae gehad</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Môre: %1$s geskeduleer, begin om %2$s</string>
     <string name="insight_tomorrow_preview_no_start">Môre: %1$s geskeduleer</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s is jou swaarste komende dag (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Volgende vrye blok: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Daaglikse verspreiding: besigste dag is %1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Beskikbaarheid</string>
     <string name="label_busy">Besig</string>
     <string name="label_free">Vry</string>
     <string name="label_event_color">Gebeurteniskleur</string>
     <string name="label_calendar_default">Kalenderverstek</string>
     <string name="label_custom">Aangepas</string>
-
     <string name="cd_checkmark">Gekies</string>
-
-    <string name="cd_event_state_cancelled">gekanselleer</string>
-    <string name="cd_event_state_declined">afgewys</string>
-    <string name="cd_event_state_past">afgelope gebeurtenis</string>
-    <string name="cd_event_untitled">Gebeurtenis sonder titel</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Saalbruin</string>
@@ -1121,6 +1089,8 @@
     <string name="color_royalblue">Koninklikblou</string>    <string name="color_mediumorchid">Medium orgidee</string>
     <string name="color_hotpink">Warmpienk</string>
     <string name="color_dimgray">Dowwe grys</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Rooi</string>
     <string name="hue_orange">Oranje</string>
     <string name="hue_yellow">Geel</string>
@@ -1133,7 +1103,8 @@
     <string name="hue_neutral">Neutraal</string>
     <string name="label_more_colors">Meer kleure</string>
     <string name="label_back_to_grid">Terug</string>
-    <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Bywoners</string>
     <string name="attendee_you_marker">Jy</string>
     <string name="attendee_card_going">Gaan</string>
@@ -1143,6 +1114,8 @@
     <string name="attendee_card_hosting">Aanbieder</string>
     <string name="attendee_action_copy">Kopieer e-pos</string>
     <string name="attendee_action_email">Stuur e-pos</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-pos gekopieer</string>
     <string name="attendee_no_email_app">Geen e-pos-toepassing geïnstalleer nie</string>
     <string name="attendee_show_all">Wys alle genooides</string>
@@ -1151,23 +1124,9 @@
     <string name="attendee_status_tentative">Voorlopig</string>
     <string name="attendee_status_delegated">Gedelegeer</string>
     <string name="attendee_status_pending">Hangende</string>
-    <string name="attendee_picker_title">Voeg genooides by</string>
-    <string name="attendee_pick_add_people">Voeg genooides by</string>
-    <string name="attendee_pick_from_contacts">Naam of e-pos</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d meer</item>
-        <item quantity="other">+%1$d meer</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Stel mense uit jou kontakte voor</string>
-    <string name="attendee_invalid_email">Voer \'n volledige e-posadres in</string>
-    <string name="attendee_add_typed">Voeg \"%1$s\" by</string>
-    <string name="attendee_scheduling_unavailable">Mense nooi is nie op hierdie rekening beskikbaar nie</string>
-    <string name="device_attendee_local_no_delivery">Hierdie kalender kan nie uitnodigings stuur nie. Gaste word gestoor, maar sal nie in kennis gestel word nie.</string>
-    <string name="action_save_and_notify">Stoor &amp; stel in kennis</string>
     <string name="inbox_empty_caught_up">Alles op datum</string>
     <string name="inbox_organizer_suffix">(reëlaar)</string>
     <string name="menu_invites">Uitnodigings</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Gaan na datum</string>
     <string name="menu_about">Aangaande</string>
     <string name="menu_more">Meer-kieslys</string>
@@ -1175,6 +1134,8 @@
         <item quantity="one">Meer-kieslys, %d uitnodiging hangende</item>
         <item quantity="other">Meer-kieslys, %d uitnodigings hangende</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Deel beskikbaarheid</string>
     <string name="share_availability_sheet_title">Deel beskikbaarheid</string>
     <plurals name="share_availability_days_label">
@@ -1192,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Geen vry blokke van ten minste een uur in die geselekteerde reeks nie.</string>
+    <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
     <string name="share_availability_chooser_title">Deel beskikbaarheid</string>
     <string name="share_availability_share_failed">Geen app beskikbaar om te deel nie</string>
     <string name="share_availability_window_section">Venster</string>
@@ -1210,30 +1172,5 @@
     <string name="share_as_card_all_day">Heeldag</string>
     <string name="share_as_card_chooser_title">Deel gebeurtenis</string>
     <string name="share_as_card_share_failed">Kon nie kaart deel nie</string>
-    <string name="share_from_kashcal_footer">Gedeel vanaf KashCal</string>
-    <string name="attendee_sheet_title">Bywoners</string>
-    <string name="attendee_search_hint">Soek</string>
-    <string name="attendee_search_no_matches">Geen resultate</string>
-    <string name="attendee_section_going">Gaan</string>
-    <string name="attendee_section_maybe">Miskien</string>
-    <string name="attendee_section_pending">Hangend</string>
-    <string name="attendee_section_declined">Geweier</string>
-    <string name="attendee_section_delegated">Gedelegeer</string>
-    <string name="whats_new_title">Wat\'s nuut</string>
-    <string name="whats_new_dismiss">Verstaan</string>
-    <string name="whats_new_v598_title">Help om Android oop te hou</string>
-    <string name="whats_new_v598_body">Google verander die manier waarop jy programme op jou toestel installeer. Ons het jou hulp nodig.</string>
-    <string name="whats_new_v598_action_label">Besoek keepandroidopen.org</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Oor %1$d dag</item>
-        <item quantity="other">Oor %1$d dae</item>
-    </plurals>
-    <string name="holiday_catalog_add">Voeg vakansiekalender by</string>
-    <string name="holiday_catalog_search_label">Soek</string>
-    <string name="holiday_catalog_already_added">Bygevoeg</string>
-    <string name="holiday_catalog_empty">Geen lande gevind nie</string>
-    <string name="holiday_catalog_empty_hint">Probeer \'n ander naam</string>
-    <string name="holiday_catalog_validate_error">Kon nie hierdie kalender bereik nie. Gaan jou verbinding na en probeer weer.</string>
-    <string name="holiday_catalog_attribution">Vakansiekalenders van Mozilla Thunderbird, gelisensieer onder %1$s.</string>
-    <string name="qs_tile_label">Voeg by</string>
+
 </resources>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Kuvab tänast kuupäeva rakenduseikoonina</string>
     <string name="upcoming_widget_name">Eelseisvad</string>
     <string name="upcoming_widget_description">Kuvab järgmise 10 päeva sündmusi, jättes tühjad päevad vahele</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Sündmuste laadimine…</string>
     <string name="widget_error_load_events">Sündmuste laadimine ebaõnnestus, puuduta avamiseks</string>
     <string name="widget_no_events_today">Täna sündmusi pole</string>
     <string name="widget_add_event">+ Lisa sündmus</string>
     <string name="widget_no_events">Sündmusi pole</string>
     <string name="widget_no_upcoming_events">Eelseisvaid sündmusi pole</string>
+    <string name="cd_widget_calendar">Kalender</string>
+    <string name="cd_widget_add_event">Lisa sündmus</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">sündmusi pole</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, tühistatud</string>
+    <string name="channel_event_reminders">Sündmuste meeldetuletused</string>
+    <string name="channel_event_reminders_desc">Teated eelseisvate kalendrisündmuste kohta</string>
+    <string name="channel_sync_progress">Sünkroonimise edenemine</string>
+    <string name="channel_sync_progress_desc">Näitab kalendrite sünkroonimise edenemist</string>
+    <string name="channel_sync_status">Sünkroonimise olek</string>
+    <string name="channel_sync_status_desc">Teated sünkroonimise lõpetamise ja vigade kohta</string>
+    <string name="channel_event_invitations">Sündmuste kutsed</string>
+    <string name="channel_event_invitations_desc">Teated uute kalendrikutsete saamise kohta</string>
+    <string name="invite_notification_body">Saatja: %1$s · Puuduta, et vastata</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Uus sündmus</string>
@@ -44,7 +58,6 @@
     <string name="action_hide_password">Peida parool</string>
     <string name="action_sign_out">Logi välja</string>
     <string name="action_learn_more">Lisateave</string>
-    <string name="action_open">Ava</string>
     <string name="action_open_apple_id">Ava Apple ID</string>
     <string name="action_open_settings">Ava seaded</string>
     <string name="action_force_sync">Sundige sünkroonima</string>
@@ -58,6 +71,7 @@
     <string name="action_save">Salvesta</string>
     <string name="action_add">Lisa</string>
     <string name="action_edit">Muuda</string>
+    <string name="action_open">Ava</string>
     <string name="action_delete">Kustuta</string>
     <string name="action_confirm">Kinnita</string>
     <string name="action_discard">Loobu</string>
@@ -71,45 +85,8 @@
     <string name="action_confirm_delete">Kinnita kustutamine</string>
     <string name="action_delete_event">Kustuta sündmus</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Vastus kehtib kogu seeriale.</string>
-    <string name="invitees_host_tag">Võõrustaja</string>
-    <string name="invitees_summary_you_alone">Sina</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Sina · %d kutsutud</item>
-        <item quantity="other">Sina · %d kutsutud</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d kutsutud</item>
-        <item quantity="other">%d kutsutud</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s korraldab</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sina</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Sina + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Sina + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Sina + %d</item>
-        <item quantity="other">Sina + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · veel %2$d</item>
-        <item quantity="other">%1$s · veel %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Muuda vastust</string>
-    <string name="rsvp_question_going">Tuled?</string>
-    <string name="rsvp_action_yes">Jah</string>
-    <string name="rsvp_action_maybe">Võib-olla</string>
-    <string name="rsvp_action_no">Ei</string>
-    <string name="rsvp_state_going">Sa tuled</string>
-    <string name="rsvp_state_maybe">Võib-olla</string>
-    <string name="rsvp_state_not_going">Sa ei tule</string>
-    <string name="rsvp_action_change">Muuda</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">See ja kõik tulevased</string>
@@ -147,7 +124,6 @@
     <string name="label_all_day">Terve päev</string>
     <string name="label_today">Täna</string>
     <string name="label_go_to_date">Mine kuupäevale</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">N</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -200,6 +176,27 @@
     <string name="app_lock_enabled_message">Rakenduse lukk on sees. KashCal palub sul järgmisel avamisel autentida.</string>
     <string name="app_lock_disable_prompt_title">Ava, et rakenduse lukk välja lülitada</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Varunda sätted</string>
+    <string name="backup_settings_subtitle">Salvesta KashCali seadistus JSON-faili</string>
+    <string name="restore_settings_label">Taasta sätted</string>
+    <string name="restore_settings_subtitle">Taasta KashCali seadistus varundusfailist</string>
+    <string name="restore_confirm_title">Kas taastada varukoopia?</string>
+    <string name="restore_confirm_from">KashCali %1$s varukoopia, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Sinu eelistused imporditakse.</string>
+    <string name="action_restore">Taasta</string>
+    <string name="restore_success_title">Taastamine lõpetatud</string>
+    <string name="restore_success_message_prefs_only">Eelistused imporditi.</string>
+    <string name="restore_success_device_calendars_note">Vali seadme kalendrid uuesti, kui kasutad seda funktsiooni.</string>
+    <string name="restore_error_title">Taastamine ebaõnnestus</string>
+    <string name="restore_error_version_too_new">See varukoopia on loodud uuema KashCali versiooniga. Uuenda KashCal ja proovi uuesti.</string>
+    <string name="restore_error_malformed_json">See fail ei ole kehtiv KashCali varukoopia.</string>
+    <string name="restore_error_invalid_value">Varundusfail sisaldab vigaseid andmeid ja seda ei saa taastada.</string>
+    <string name="restore_error_apply_failure">Varukoopia rakendamisel tekkis tõrge. Muudatusi ei salvestatud.</string>
+    <string name="backup_error_build_failed">Varukoopia ebaõnnestus</string>
+    <string name="backup_error_write_failed">Varukoopia ebaõnnestus — faili ei saanud kirjutada</string>
+    <string name="backup_error_read_failed">Faili ei saanud lugeda</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Meil on lahendus.</string>
@@ -211,6 +208,7 @@
     <string name="whats_new_v598_title">Aita hoida Android avatuna</string>
     <string name="whats_new_v598_body">Google muudab seda, kuidas sa rakendusi seadmesse paigaldad. Vajame sinu abi.</string>
     <string name="whats_new_v598_action_label">Külasta keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ühenda iCloud</string>
     <string name="signin_caldav_title">Lisa CalDAV konto</string>
@@ -254,13 +252,11 @@
     <string name="error_auth_session_expired_title">Seanss aegunud</string>
     <string name="error_auth_session_expired">Teie iCloud seanss on aegunud. Palun logige uuesti sisse, et jätkata sünkroonimist.</string>
     <string name="error_auth_account_locked">Teie Apple ID on lukus. Palun külastage appleid.apple.com, et see avada.</string>
-
     <string name="error_network_offline">Oled võrguühenduseta. Muudatused sünkroonitakse, kui oled jälle võrgus.</string>
     <string name="error_network_timeout">Ühenduse ajalõpp. Palun kontrollige internetiühendust ja proovige uuesti.</string>
     <string name="error_network_ssl">Turvaline ühendus ebaõnnestus. Palun kontrollige võrguseadeid.</string>
     <string name="error_network_unknown_host">Ei suudetud iCloudi ühenduda. Palun kontrollige internetiühendust.</string>
     <string name="error_network_connection_failed">Ühendus ebaõnnestus. Palun proovige uuesti.</string>
-
     <string name="error_server_unavailable">iCloud on ajutiselt kättesaamatu. Palun proovige hiljem uuesti.</string>
     <string name="error_server_rate_limited">Liiga palju päringuid. Palun oodake hetk ja proovige uuesti.</string>
     <string name="error_server_forbidden">Juurdepääs keelatud. Teil ei pruugi olla selle kalendri õigusi.</string>
@@ -269,13 +265,11 @@
     <string name="error_conflict_generic">Seda sündmust muudeti teises seadmes. Sundige sünkroonima, et saada uusim versioon.</string>
     <string name="error_conflict_with_event">\"%1$s\" muudeti teises seadmes. Sundige sünkroonima, et saada uusim versioon.</string>
     <string name="error_sync_token_expired">Sünkroonimise andmed aegunud. Tehakse täielik sünkroonimine…</string>
-
     <string name="error_event_not_found">Sündmust ei leitud.</string>
     <string name="error_calendar_not_found">Kalendrit ei leitud.</string>
     <string name="error_calendar_read_only">Kalendris \"%1$s\" ei saa sündmusi muuta (kirjutuskaitstud kalender).</string>
     <string name="error_event_invalid_data">Vigased sündmuse andmed. Palun kontrollige algus- ja lõpuaegu.</string>
     <string name="error_event_invalid_recurrence">Vigane kordusmuster.</string>
-
     <string name="error_display_name_exists">Konto nimega \"%1$s\" on juba olemas.</string>
     <string name="icloud_error_credentials_required">Vajalikud on Apple ID ja parool</string>
     <string name="icloud_error_connection_timeout">Ühenduse ajalõpp. Proovige uuesti.</string>
@@ -284,48 +278,45 @@
     <string name="caldav_error_connection_timeout">Ühenduse ajalõpp. Proovige uuesti.</string>
     <string name="caldav_error_no_calendars">Sellel serveril kalendreid ei leitud.</string>
     <string name="caldav_error_unexpected">Ootamatu viga. Proovige uuesti.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nKui see on server sinu kohtvõrgus, luba juurdepääs kohtvõrgule, et ühendus luua.</string>
+    <string name="local_network_banner_title">Vajalik on juurdepääs kohtvõrgule</string>
+    <string name="local_network_banner_body">Tundub, et see server on sinu kohtvõrgus. Luba juurdepääs kohtvõrgule, et KashCal saaks sellega ühenduse luua.</string>
+    <string name="local_network_banner_allow">Luba juurdepääs</string>
+    <string name="local_network_banner_dismiss">Mitte praegu</string>
     <string name="password_change_error_account_not_found">Kontot ei leitud</string>
     <string name="password_change_error_no_credentials">Salvestatud sisselogimisandmeid pole</string>
     <string name="password_change_error_unsupported_provider">See teenusepakkuja ei toeta parooli muutmist</string>
     <string name="password_change_error_invalid">Vale parool</string>
     <string name="password_change_error_network">Võrguviga, proovi uuesti</string>
-
     <string name="error_import_file_not_found">Faili ei leitud või ei saa lugeda.</string>
     <string name="error_import_invalid_format">Vigane kalendrifaili vorming.</string>
     <string name="error_import_partial">Imporditud %1$d sündmust, %2$d ebaõnnestus.</string>
     <string name="error_export_failed">Sündmuste eksport ebaõnnestus.</string>
     <string name="error_export_no_events">Eksporditavaid sündmusi pole.</string>
     <string name="error_end_before_start">Lõpuaeg peab olema pärast algusaega</string>
-
     <string name="error_storage_full_title">Mälu täis</string>
     <string name="error_storage_full">Mäluruumi pole piisavalt. Palun vabastage ruumi ja proovige uuesti.</string>
     <string name="error_database_corruption_title">Andmeviga</string>
     <string name="error_database_corruption">Teie kalendriandmed võivad olla rikutud. Palun võtke ühendust toega.</string>
     <string name="error_migration_title">Värskenduse viga</string>
     <string name="error_migration_failed">Rakenduse andmete värskendamine ebaõnnestus. Palun installige rakendus uuesti.</string>
-
     <string name="error_permission_notification_title">Luba teavitused?</string>
     <string name="error_permission_notification">KashCal vajab teavituste luba, et teavitada tulevastest sündmustest.</string>
     <string name="error_permission_alarm_title">Luba täpsed äratused?</string>
     <string name="error_permission_alarm">KashCal vajab täpsete äratuste luba täpseteks meeldetuletusteks.</string>
     <string name="error_permission_storage">Impordi/ekspordi jaoks on vaja mälu luba.</string>
-
     <string name="error_device_calendar_title">Kalendri viga</string>
     <string name="error_device_calendar_write_failed">Seadme kalendrisse salvestamine ebaõnnestus. Palun proovige uuesti.</string>
     <string name="error_device_calendar_permission">Kalendri kirjutamisõigus on vajalik. Palun andke luba seadetes.</string>
     <string name="error_device_calendar_not_found">Kalendrit ei leitud. See võib olla eemaldatud.</string>
     <string name="error_device_event_not_found">Sündmust ei leitud. See võib olla kustutatud.</string>
     <string name="error_device_calendar_read_only">See kalender on kirjutuskaitstud.</string>
-
     <string name="error_sync_no_accounts">iCloud kontot pole seadistatud. Seadistage iCloud, et kalendreid sünkroonida.</string>
     <string name="error_sync_partial">Sünkrooniti %1$d kalendrit, %2$d ebaõnnestus.</string>
-
     <string name="error_unknown">Midagi läks valesti. Palun proovige uuesti.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valitud</string>
-    <string name="cd_checkmark">Valitud</string>
     <string name="cd_back">Tagasi</string>
     <string name="cd_search">Otsi</string>
     <string name="cd_create_event">Loo sündmus</string>
@@ -364,6 +355,7 @@
     <string name="label_password">Parool</string>
     <string name="label_display_name_optional">Kuvatav nimi</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Otsi sündmusi…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -451,6 +443,7 @@
     <string name="subscriptions_empty_ics">ICS-tellimusi pole</string>
     <string name="subscriptions_empty_ics_hint">Lisage kalendrivoog, et näha sündmusi</string>
     <string name="subscriptions_add_ics">Lisa ICS-kalender</string>
+    <string name="qs_tile_label">Sündmus</string>
     <string name="holiday_catalog_add">Lisa pühade kalender</string>
     <string name="holiday_catalog_search_label">Otsi</string>
     <string name="holiday_catalog_already_added">Lisatud</string>
@@ -479,8 +472,8 @@
     <string name="subscriptions_cd_back">Mine tagasi</string>
     <string name="subscriptions_cd_add">Lisa tellimus</string>
     <string name="snackbar_subscription_removed">Tellimus eemaldatud</string>
-    <string name="snackbar_subscription_already_exists">See URL on juba tellitud</string>
     <string name="snackbar_action_undo">Võta tagasi</string>
+    <string name="snackbar_subscription_already_exists">See URL on juba tellitud</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SÜNKROONIMINE</string>
@@ -500,7 +493,6 @@
     <string name="account_detail_cd_show_password">Kuva parool</string>
     <string name="account_detail_cd_hide_password">Peida parool</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nimeta konto ümber</string>
     <string name="rename_account_label">Konto nimi</string>
@@ -517,6 +509,7 @@
     <string name="settings_device_calendars">Seadme kalendrid</string>
     <string name="settings_device_calendars_hint">Kalendrid teistest rakendustest</string>
     <string name="settings_quick_event_add">Kiire sündmuse lisamine</string>
+    <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
     <string name="settings_week_numbers">Nädalanumbrid</string>
     <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
     <string name="settings_widget_event_limit">Vidina sündmuste limiit</string>
@@ -529,6 +522,8 @@
     <string name="settings_tap_to_enable">Puudutage lubamiseks</string>
     <string name="settings_device_calendars_enabled">%1$d lubatud</string>
     <string name="settings_per_day">%1$d päevas</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Mis on rakendusepõhine parool?</string>
     <string name="caldav_trust_insecure_label">Usalda ebaturvalist ühendust</string>
     <string name="action_add_another">Lisa veel</string>
@@ -590,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Saa teavitusi seadme kalendri sündmuste kohta</string>
     <string name="device_calendars_read_only_no_write">Ainult lugemine (kirjutamisõigus puudub)</string>
     <string name="device_calendars_read_only_calendar">Ainult lugemine (kalender on kirjutuskaitstud)</string>
-
     <string name="settings_developer_options">Arendaja valikud</string>
     <string name="settings_sync_frequency">Sünkroonimise sagedus</string>
     <string name="settings_preview">EELVAADE</string>
@@ -603,7 +597,6 @@
     <string name="drawer_device_calendars">Seadme kalendrid</string>
     <string name="drawer_account_offline">Võrguühenduseta</string>
     <string name="drawer_share_feedback">Abi ja dokumendid</string>
-
     <string name="event_title_fallback">Sündmus</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -630,7 +623,6 @@
     <string name="dialog_sign_out_message">Olete sisse logitud kui %1$s. Väljalogimine eemaldab sünkroonitud kalendrid sellest seadmest.</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Estonian: one (1), other (everything else) -->
     <plurals name="accounts_count">
         <item quantity="one">%1$d konto</item>
         <item quantity="other">%1$d kontot</item>
@@ -667,12 +659,11 @@
         <item quantity="one">%1$d sündmus</item>
         <item quantity="other">%1$d sündmust</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Ava kalender</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">veel %1$d päev</item>
         <item quantity="other">veel %1$d päeva</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Ava kalender</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d sünnipäev</item>
         <item quantity="other">%1$d sünnipäeva</item>
@@ -763,43 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">See sündmus</string>
-    <string name="recurring_all_events">Kõik sündmused</string>
     <string name="dialog_edit_recurring_title">Salvesta muudatused</string>
     <string name="dialog_delete_recurring_title">Kustuta</string>
     <string name="dialog_move_recurring_title">Liiguta</string>
+    <string name="recurring_this_event">See sündmus</string>
+    <string name="recurring_all_events">Kõik sündmused</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Osalejad</string>
+    <string name="attendee_search_hint">Otsi</string>
+    <string name="attendee_search_no_matches">Tulemusi pole</string>
+    <string name="attendee_picker_title">Lisa osalejaid</string>
+    <string name="attendee_pick_add_people">Lisa osalejaid</string>
+    <string name="attendee_pick_from_contacts">Nimi või e-post</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d veel</item>
+        <item quantity="other">+%1$d veel</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Soovita inimesi sinu kontaktidest</string>
+    <string name="attendee_invalid_email">Sisesta täielik e-posti aadress</string>
+    <string name="attendee_add_typed">Lisa \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Inimeste kutsumine pole selles kontos saadaval</string>
+    <string name="device_attendee_local_no_delivery">See kalender ei saa kutseid saata. Külalised salvestatakse, kuid neid ei teavitata.</string>
+    <string name="action_save_and_notify">Salvesta ja teavita</string>
+    <string name="attendee_section_going">Tulevad</string>
+    <string name="attendee_section_maybe">Võib-olla</string>
+    <string name="attendee_section_pending">Ootel</string>
+    <string name="attendee_section_declined">Keeldusid</string>
+    <string name="attendee_section_delegated">Delegeerisid</string>
+    <string name="invitees_host_tag">Võõrustaja</string>
+    <string name="invitees_summary_you_alone">Sina</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sina · %d kutsutud</item>
+        <item quantity="other">Sina · %d kutsutud</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d kutsutud</item>
+        <item quantity="other">%d kutsutud</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s korraldab</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sina</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sina + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sina + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sina + %d</item>
+        <item quantity="other">Sina + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · veel %2$d</item>
+        <item quantity="other">%1$s · veel %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Muuda vastust</string>
+    <string name="rsvp_question_going">Tuled?</string>
+    <string name="rsvp_action_yes">Jah</string>
+    <string name="rsvp_action_maybe">Võib-olla</string>
+    <string name="rsvp_action_no">Ei</string>
+    <string name="rsvp_state_going">Sa tuled</string>
+    <string name="rsvp_state_maybe">Võib-olla</string>
+    <string name="rsvp_state_not_going">Sa ei tule</string>
+    <string name="rsvp_action_change">Muuda</string>
     <string name="empty_pick_a_day">Vali päev. Haara sellest kinni.</string>
-    <string name="empty_no_events_day">Siin pole midagi; mine jaluta?</string>
+    <string name="cd_empty_pick_a_day">Vali päev</string>
+    <string name="empty_no_events_day_1">Vaba päev. Universum nõuab, et sa puhkaksid.</string>
+    <string name="empty_no_events_day_2">Mingeid plaane pole. See ongi plaan.</string>
+    <string name="empty_no_events_day_3">Kingitus: tühi päev.</string>
+    <string name="empty_no_events_day_4">Kalendri seis: imeliselt tühi.</string>
+    <string name="empty_no_events_day_5">Midagi pole plaanis. Naudi rahu.</string>
+    <string name="cd_empty_no_events_day">Rahulik päev, midagi pole plaanis</string>
     <string name="filter_date">Kuupäev</string>
     <string name="label_select_date">Vali kuupäev</string>
     <string name="hint_tap_date_range">Puudutage sama kuupäeva ühe päeva jaoks või teist kuupäeva vahemiku jaoks</string>
-
     <string name="cd_clear">Tühjenda</string>
     <string name="cd_offline">Võrguühenduseta</string>
     <string name="cd_event_state_cancelled">tühistatud</string>
     <string name="cd_event_state_declined">tagasi lükatud</string>
     <string name="cd_event_state_past">möödunud sündmus</string>
-    <string name="cd_event_untitled">Pealkirjata sündmus</string>
     <string name="cd_loading_events">Sündmuste laadimine</string>
+    <string name="cd_event_untitled">Pealkirjata sündmus</string>
     <string name="cd_open_drawer">Ava menüü</string>
     <string name="cd_close_drawer">Sulge menüü</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Kalendrivaade</string>
     <string name="cd_active_view">Aktiivne vaade</string>
-
     <string name="view_agenda">Päevakord</string>
     <string name="view_month_full">Kuu (täis)</string>
-    <string name="view_three_days">3 päeva</string>
     <string name="view_day">Päev</string>
+    <string name="view_three_days">3 päeva</string>
     <string name="view_year">Aasta</string>
     <string name="view_insights">Statistika</string>
-
     <string name="label_go_to_month">Mine kuule</string>
-
     <string name="action_more_options">Rohkem valikuid</string>
     <string name="quick_add_save_failed">Sündmuse salvestamine ebaõnnestus</string>
-
     <string name="label_duration_days">päeva</string>
     <string name="label_duration_hrs">t</string>
     <string name="label_duration_min">min</string>
@@ -813,6 +859,39 @@
     <string name="ordinal_3rd">3.</string>
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">Ei korda</string>
+    <string name="rrule_freq_daily">Iga päev</string>
+    <string name="rrule_freq_weekly">Iga nädal</string>
+    <string name="rrule_freq_monthly">Iga kuu</string>
+    <string name="rrule_freq_yearly">Igal aastal</string>
+    <string name="rrule_repeats">Kordub</string>
+    <string name="rrule_every_n_days">Iga %1$d päeva järel</string>
+    <string name="rrule_every_n_weeks">Iga %1$d nädala järel</string>
+    <string name="rrule_every_n_months">Iga %1$d kuu järel</string>
+    <string name="rrule_every_n_years">Iga %1$d aasta järel</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s viimasel päeval</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d. päeval</string>
+    <string name="rrule_ordinal_last">viimane</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d kord</item>
+        <item quantity="other">, %1$d korda</item>
+    </plurals>
+    <string name="rrule_until_suffix">, kuni %1$s</string>
+    <string name="rrule_freq_never">Mitte kunagi</string>
+    <string name="rrule_freq_custom">Kohandatud</string>
+    <string name="label_repeat_every">Korda iga</string>
+    <string name="rrule_unit_day">Päev</string>
+    <string name="rrule_unit_week">Nädal</string>
+    <string name="rrule_unit_month">Kuu</string>
+    <string name="rrule_unit_year">Aasta</string>
+    <string name="cd_decrease_interval">Vähenda intervalli</string>
+    <string name="cd_increase_interval">Suurenda intervalli</string>
+    <string name="rrule_starting">%1$s alates %2$s%3$s</string>
+    <string name="rrule_since">%1$s · alates %2$s</string>
 
     <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d uut</string>
@@ -848,6 +927,10 @@
     <!-- ==================== i18n: Notification Strings ==================== -->
     <string name="action_snooze">Edasi lükka</string>
     <string name="notification_starting_now">Algab nüüd</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d päeva pärast</item>
+        <item quantity="other">%1$d päeva pärast</item>
+    </plurals>
     <string name="notification_tomorrow_time">Homme, %1$s</string>
     <string name="notification_date_time">%1$s, %2$s</string>
     <string name="sync_notification_complete">Sünkroonimine lõpetatud</string>
@@ -931,15 +1014,6 @@
     <string name="color_cyan">Tsüaan</string>
     <string name="color_blue">Sinine</string>
     <string name="color_purple">Lilla</string>
-    <string name="color_saddlebrown">Sadulapruun</string>
-    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Tumeoranž</string>
-    <string name="color_gold">Kuldne</string>
-    <string name="color_yellowgreen">Kollakasroheline</string>
-    <string name="color_limegreen">Laimiroheline</string>    <string name="color_lightseagreen">Hele meriroheline</string>
-    <string name="color_dodgerblue">Erksinine</string>
-    <string name="color_royalblue">Kuninglik sinine</string>    <string name="color_mediumorchid">Orhidee</string>
-    <string name="color_hotpink">Erkroosa</string>
-    <string name="color_dimgray">Hall tuhm</string>
     <string name="cd_meeting_link">Koosoleku link: %1$s</string>
     <string name="cd_phone_number">Telefoninumber</string>
     <string name="cd_email_link">E-post: %1$s</string>
@@ -956,64 +1030,9 @@
     <string name="ics_sync_weekly">Iga nädal</string>
     <string name="ics_url_required">URL on nõutud</string>
     <string name="ics_url_invalid_scheme">URL peab algama http://, https:// või webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Server tagastas vea (%1$d). Kontrolli URL-i.</string>
     <string name="ics_fetch_error_empty">Kalendrivoog on tühi.</string>
     <string name="ics_fetch_error_not_calendar">See URL ei paista olevat kalendrivoog.</string>
-
-    <!-- Widget and Channel strings -->
-    <string name="cd_widget_calendar">Kalender</string>
-    <string name="cd_widget_add_event">Lisa sündmus</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">sündmusi pole</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, tühistatud</string>
-    <string name="channel_event_reminders">Sündmuste meeldetuletused</string>
-    <string name="channel_event_reminders_desc">Teated eelseisvate kalendrisündmuste kohta</string>
-    <string name="channel_sync_progress">Sünkroonimise edenemine</string>
-    <string name="channel_sync_progress_desc">Näitab kalendrite sünkroonimise edenemist</string>
-    <string name="channel_sync_status">Sünkroonimise olek</string>
-    <string name="channel_sync_status_desc">Teated sünkroonimise lõpetamise ja vigade kohta</string>
-    <string name="channel_event_invitations">Sündmuste kutsed</string>
-    <string name="channel_event_invitations_desc">Teated uute kalendrikutsete saamise kohta</string>
-    <string name="invite_notification_body">Saatja: %1$s · Puuduta, et vastata</string>
-
-    <!-- Recurrence strings -->
-    <string name="rrule_does_not_repeat">Ei korda</string>
-    <string name="rrule_freq_daily">Iga päev</string>
-    <string name="rrule_freq_weekly">Iga nädal</string>
-    <string name="rrule_freq_monthly">Iga kuu</string>
-    <string name="rrule_freq_yearly">Igal aastal</string>
-    <string name="rrule_repeats">Kordub</string>
-    <string name="rrule_every_n_days">Iga %1$d päeva järel</string>
-    <string name="rrule_every_n_weeks">Iga %1$d nädala järel</string>
-    <string name="rrule_every_n_months">Iga %1$d kuu järel</string>
-    <string name="rrule_every_n_years">Iga %1$d aasta järel</string>
-    <string name="rrule_freq_on_days">%1$s %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s viimasel päeval</string>
-    <string name="rrule_freq_on_day_n">%1$s %2$d. päeval</string>
-    <string name="rrule_ordinal_last">viimane</string>
-    <string name="rrule_until_suffix">, kuni %1$s</string>
-    <string name="rrule_freq_never">Mitte kunagi</string>
-    <string name="rrule_freq_custom">Kohandatud</string>
-    <string name="label_repeat_every">Korda iga</string>
-    <string name="rrule_unit_day">Päev</string>
-    <string name="rrule_unit_week">Nädal</string>
-    <string name="rrule_unit_month">Kuu</string>
-    <string name="rrule_unit_year">Aasta</string>
-    <string name="cd_decrease_interval">Vähenda intervalli</string>
-    <string name="cd_increase_interval">Suurenda intervalli</string>
-    <string name="rrule_starting">%1$s alates %2$s%3$s</string>
-    <string name="rrule_since">%1$s · alates %2$s</string>
-
-    <!-- Recurrence count plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d kord</item>
-        <item quantity="other">, %1$d korda</item>
-    </plurals>
-
-    <!-- ==================== Insights ==================== -->
     <string name="insights_title">Statistika</string>
     <string name="insights_period_this_week">Nädal</string>
     <string name="insights_period_last_week">Eelmine nädal</string>
@@ -1050,13 +1069,28 @@
     <string name="insight_heaviest_upcoming">%1$s on kõige tihedam eelseisev päev (%2$s)</string>
     <string name="insight_next_free_block">Järgmine vaba aeg: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Jaotus päevade kaupa: kõige tihedam päev on %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Saadavus</string>
     <string name="label_busy">Hõivatud</string>
     <string name="label_free">Vaba</string>
     <string name="label_event_color">Sündmuse värvus</string>
     <string name="label_calendar_default">Kalendri vaikeväärtus</string>
     <string name="label_custom">Kohandatud</string>
+    <string name="cd_checkmark">Valitud</string>
 
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Sadulapruun</string>
+    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Tumeoranž</string>
+    <string name="color_gold">Kuldne</string>
+    <string name="color_yellowgreen">Kollakasroheline</string>
+    <string name="color_limegreen">Laimiroheline</string>    <string name="color_lightseagreen">Hele meriroheline</string>
+    <string name="color_dodgerblue">Erksinine</string>
+    <string name="color_royalblue">Kuninglik sinine</string>    <string name="color_mediumorchid">Orhidee</string>
+    <string name="color_hotpink">Erkroosa</string>
+    <string name="color_dimgray">Hall tuhm</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Punane</string>
     <string name="hue_orange">Oranž</string>
     <string name="hue_yellow">Kollane</string>
@@ -1069,29 +1103,8 @@
     <string name="hue_neutral">Neutraalne</string>
     <string name="label_more_colors">Rohkem värve</string>
     <string name="label_back_to_grid">Tagasi</string>
-    <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Varunda sätted</string>
-    <string name="backup_settings_subtitle">Salvesta KashCali seadistus JSON-faili</string>
-    <string name="restore_settings_label">Taasta sätted</string>
-    <string name="restore_settings_subtitle">Taasta KashCali seadistus varundusfailist</string>
-    <string name="restore_confirm_title">Kas taastada varukoopia?</string>
-    <string name="restore_confirm_from">KashCali %1$s varukoopia, %2$s</string>
-    <string name="action_restore">Taasta</string>
-    <string name="restore_success_title">Taastamine lõpetatud</string>
-    <string name="restore_success_device_calendars_note">Vali seadme kalendrid uuesti, kui kasutad seda funktsiooni.</string>
-    <string name="restore_confirm_message_prefs_only">Sinu eelistused imporditakse.</string>
-    <string name="restore_success_message_prefs_only">Eelistused imporditi.</string>
-    <string name="restore_error_title">Taastamine ebaõnnestus</string>
-    <string name="restore_error_version_too_new">See varukoopia on loodud uuema KashCali versiooniga. Uuenda KashCal ja proovi uuesti.</string>
-    <string name="restore_error_malformed_json">See fail ei ole kehtiv KashCali varukoopia.</string>
-    <string name="restore_error_invalid_value">Varundusfail sisaldab vigaseid andmeid ja seda ei saa taastada.</string>
-    <string name="restore_error_apply_failure">Varukoopia rakendamisel tekkis tõrge. Muudatusi ei salvestatud.</string>
-    <string name="backup_error_build_failed">Varukoopia ebaõnnestus</string>
-    <string name="backup_error_write_failed">Varukoopia ebaõnnestus — faili ei saanud kirjutada</string>
-    <string name="backup_error_read_failed">Faili ei saanud lugeda</string>
-    <!-- Attendees (B4) -->
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Osalejad</string>
     <string name="attendee_you_marker">Sina</string>
     <string name="attendee_card_going">Tuleb</string>
@@ -1101,6 +1114,8 @@
     <string name="attendee_card_hosting">Korraldab</string>
     <string name="attendee_action_copy">Kopeeri e-post</string>
     <string name="attendee_action_email">Saada e-kiri</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-post kopeeritud</string>
     <string name="attendee_no_email_app">E-posti rakendust pole installitud</string>
     <string name="attendee_show_all">Kuva kõik osalejad</string>
@@ -1112,7 +1127,6 @@
     <string name="inbox_empty_caught_up">Kõik vaadatud</string>
     <string name="inbox_organizer_suffix">(korraldaja)</string>
     <string name="menu_invites">Kutsed</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Mine kuupäevale</string>
     <string name="menu_about">Teave</string>
     <string name="menu_more">Menüü „Veel“</string>
@@ -1139,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Valitud vahemikus pole vähemalt tunniseid vabu plokke.</string>
+    <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
     <string name="share_availability_chooser_title">Jaga saadavust</string>
     <string name="share_availability_share_failed">Pole rakendust jagamiseks</string>
     <string name="share_availability_window_section">Aken</string>
@@ -1157,31 +1172,5 @@
     <string name="share_as_card_all_day">Terve päev</string>
     <string name="share_as_card_chooser_title">Jaga sündmust</string>
     <string name="share_as_card_share_failed">Kaarti ei saanud jagada</string>
-    <string name="share_from_kashcal_footer">Jagatud rakendusest KashCal</string>
-    <string name="attendee_sheet_title">Osalejad</string>
-    <string name="attendee_search_hint">Otsi</string>
-    <string name="attendee_search_no_matches">Tulemusi pole</string>
-    <string name="attendee_section_going">Tulevad</string>
-    <string name="attendee_section_maybe">Võib-olla</string>
-    <string name="attendee_section_pending">Ootel</string>
-    <string name="attendee_section_declined">Keeldusid</string>
-    <string name="attendee_section_delegated">Delegeerisid</string>
-    <string name="attendee_picker_title">Lisa osalejaid</string>
-    <string name="attendee_pick_add_people">Lisa osalejaid</string>
-    <string name="attendee_pick_from_contacts">Nimi või e-post</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d veel</item>
-        <item quantity="other">+%1$d veel</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Soovita inimesi sinu kontaktidest</string>
-    <string name="attendee_invalid_email">Sisesta täielik e-posti aadress</string>
-    <string name="attendee_add_typed">Lisa \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Inimeste kutsumine pole selles kontos saadaval</string>
-    <string name="device_attendee_local_no_delivery">See kalender ei saa kutseid saata. Külalised salvestatakse, kuid neid ei teavitata.</string>
-    <string name="action_save_and_notify">Salvesta ja teavita</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d päeva pärast</item>
-        <item quantity="other">%1$d päeva pärast</item>
-    </plurals>
-    <string name="qs_tile_label">Sündmus</string>
+
 </resources>

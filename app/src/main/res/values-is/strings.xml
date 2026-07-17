@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Sýnir daginn í dag eins og forritatákn</string>
     <string name="upcoming_widget_name">Framundan</string>
     <string name="upcoming_widget_description">Sýnir viðburði næstu 10 daga og sleppir tómum dögum</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Hleður komandi viðburðum…</string>
     <string name="widget_error_load_events">Ekki tókst að hlaða viðburðum, ýttu til að opna</string>
     <string name="widget_no_events_today">Engir viðburðir í dag</string>
     <string name="widget_add_event">+ Bæta við viðburði</string>
     <string name="widget_no_events">Engir viðburðir</string>
     <string name="widget_no_upcoming_events">Engir væntanlegir viðburðir</string>
+    <string name="cd_widget_calendar">Dagatal</string>
+    <string name="cd_widget_add_event">Bæta við viðburði</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">engir viðburðir</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, aflýst</string>
+    <string name="channel_event_reminders">Viðburðaáminningar</string>
+    <string name="channel_event_reminders_desc">Tilkynningar um væntanlega dagatalsviðburði</string>
+    <string name="channel_sync_progress">Samstillingarframvinda</string>
+    <string name="channel_sync_progress_desc">Sýnir framvindu við samstillingu dagatala</string>
+    <string name="channel_sync_status">Samstillingarstaða</string>
+    <string name="channel_sync_status_desc">Tilkynningar um lok samstillingar og villur</string>
+    <string name="channel_event_invitations">Viðburðaboð</string>
+    <string name="channel_event_invitations_desc">Tilkynningar þegar þú færð nýtt dagatalsboð</string>
+    <string name="invite_notification_body">Frá %1$s · Ýttu til að svara</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nýr viðburður</string>
@@ -35,9 +49,9 @@
     <string name="action_cancel">Hætta við</string>
     <string name="action_close">Loka</string>
     <string name="action_ok">Í lagi</string>
+    <string name="action_not_now">Ekki núna</string>
     <string name="action_allow">Heimila</string>
     <string name="action_no_thanks">Nei takk</string>
-    <string name="action_not_now">Ekki núna</string>
     <string name="action_sign_in">Skrá inn</string>
     <string name="action_select">Velja</string>
     <string name="action_show_password">Sýna lykilorð</string>
@@ -70,6 +84,9 @@
     <string name="action_export_ics">Flytja út sem .ics</string>
     <string name="action_confirm_delete">Staðfesta eyðingu</string>
     <string name="action_delete_event">Eyða viðburði</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">Svarið gildir fyrir alla röðina.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Þennan og alla framtíðar</string>
@@ -107,9 +124,7 @@
     <string name="label_all_day">Allan daginn</string>
     <string name="label_today">Í dag</string>
     <string name="label_go_to_date">Fara á dagsetningu</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">V</string>
-    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -137,8 +152,8 @@
     <string name="settings_force_sync_subtitle">Hlaða niður öllum dagatalsupplýsingum aftur</string>
     <string name="settings_sync_history">Samstillingarsaga</string>
     <string name="settings_sync_history_subtitle">Skoða samstillingarlotur (síðustu 48 klukkustundir)</string>
-    <string name="settings_import_subtitle">Bæta atburðum úr ICS-skrá við hvaða dagatal sem er</string>
-    <string name="settings_export_subtitle">Vista atburði í ICS-skrá</string>
+    <string name="settings_import_subtitle">Bæta viðburðum úr ICS-skrá við hvaða dagatal sem er</string>
+    <string name="settings_export_subtitle">Vista viðburði í ICS-skrá</string>
     <string name="settings_birthday_reminder">Afmælisáminning</string>
     <string name="settings_use_device_timezone">Nota tímabelti tækis</string>
     <string name="settings_section_calendars">Dagatöl</string>
@@ -168,9 +183,9 @@
     <string name="restore_settings_subtitle">Endurheimta KashCal-stillingar úr öryggisafritaskrá</string>
     <string name="restore_confirm_title">Endurheimta öryggisafrit?</string>
     <string name="restore_confirm_from">Öryggisafrit úr KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Stillingarnar þínar verða fluttar inn.</string>
     <string name="action_restore">Endurheimta</string>
     <string name="restore_success_title">Endurheimt lokið</string>
-    <string name="restore_confirm_message_prefs_only">Stillingarnar þínar verða fluttar inn.</string>
     <string name="restore_success_message_prefs_only">Stillingar fluttar inn.</string>
     <string name="restore_success_device_calendars_note">Veldu dagatöl tækisins þíns aftur ef þú notar þá aðgerð.</string>
     <string name="restore_error_title">Endurheimt mistókst</string>
@@ -187,12 +202,13 @@
     <string name="onboarding_got_you">Við sjáum um þig.</string>
     <string name="onboarding_connect_prompt">Tengdu iCloud til að sjá viðburðina þína hér</string>
 
-    <!-- ==================== Nýjungar ==================== -->
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_title">Nýjungar</string>
     <string name="whats_new_dismiss">Í lagi</string>
     <string name="whats_new_v598_title">Hjálpaðu til við að halda Android opnu</string>
     <string name="whats_new_v598_body">Google er að breyta því hvernig þú setur upp forrit í tækinu þínu. Við þurfum hjálp þína.</string>
     <string name="whats_new_v598_action_label">Heimsækja keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Tengja iCloud</string>
     <string name="signin_caldav_title">Bæta við CalDAV-reikningi</string>
@@ -236,13 +252,11 @@
     <string name="error_auth_session_expired_title">Lota útrunnin</string>
     <string name="error_auth_session_expired">iCloud-lotan þín er útrunnin. Skráðu þig inn aftur til að halda áfram samstillingu.</string>
     <string name="error_auth_account_locked">Apple ID-ið þitt er læst. Farðu á appleid.apple.com til að aflæsa því.</string>
-
     <string name="error_network_offline">Þú ert ónettengt/ur. Breytingar verða samstilltar þegar þú tengist aftur.</string>
     <string name="error_network_timeout">Tenging rann út á tíma. Athugaðu nettengingu og reyndu aftur.</string>
     <string name="error_network_ssl">Örugg tenging mistókst. Athugaðu netstillingar.</string>
     <string name="error_network_unknown_host">Næ ekki til iCloud. Athugaðu nettengingu.</string>
     <string name="error_network_connection_failed">Tenging mistókst. Reyndu aftur.</string>
-
     <string name="error_server_unavailable">iCloud er tímabundið óaðgengilegt. Reyndu aftur síðar.</string>
     <string name="error_server_rate_limited">Of margar beiðnir. Bíddu aðeins og reyndu aftur.</string>
     <string name="error_server_forbidden">Aðgangur bannaður. Þú hefur hugsanlega ekki aðgang að þessu dagatali.</string>
@@ -251,13 +265,11 @@
     <string name="error_conflict_generic">Þessum viðburði var breytt á öðru tæki. Þvingaðu samstillingu til að sækja nýjustu útgáfu.</string>
     <string name="error_conflict_with_event">\"%1$s\" var breytt á öðru tæki. Þvingaðu samstillingu til að sækja nýjustu útgáfu.</string>
     <string name="error_sync_token_expired">Samstillingargögn útrunnin. Framkvæmi fullkomna samstillingu…</string>
-
     <string name="error_event_not_found">Viðburður fannst ekki.</string>
     <string name="error_calendar_not_found">Dagatal fannst ekki.</string>
     <string name="error_calendar_read_only">Ekki hægt að breyta viðburðum í \"%1$s\" (skrifvarið dagatal).</string>
     <string name="error_event_invalid_data">Ógild viðburðargögn. Athugaðu upphafs- og lokatíma.</string>
     <string name="error_event_invalid_recurrence">Ógilt endurtekningarmynstur.</string>
-
     <string name="error_display_name_exists">Reikningur með nafninu \"%1$s\" er þegar til.</string>
     <string name="icloud_error_credentials_required">Apple ID og lykilorð eru nauðsynleg</string>
     <string name="icloud_error_connection_timeout">Tenging rann út. Reyndu aftur.</string>
@@ -266,47 +278,45 @@
     <string name="caldav_error_connection_timeout">Tenging rann út. Reyndu aftur.</string>
     <string name="caldav_error_no_calendars">Engin dagatöl fundust á þessum þjóni.</string>
     <string name="caldav_error_unexpected">Óvænt villa. Reyndu aftur.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nEf þetta er þjónn á staðarnetinu þínu skaltu leyfa aðgang að staðarneti til að tengjast.</string>
+    <string name="local_network_banner_title">Aðgangur að staðarneti nauðsynlegur</string>
+    <string name="local_network_banner_body">Þessi þjónn virðist vera á staðarnetinu þínu. Leyfðu aðgang að staðarneti svo KashCal geti tengst honum.</string>
+    <string name="local_network_banner_allow">Leyfa aðgang</string>
+    <string name="local_network_banner_dismiss">Ekki núna</string>
     <string name="password_change_error_account_not_found">Reikningur fannst ekki</string>
     <string name="password_change_error_no_credentials">Engin innskráningargögn til staðar</string>
     <string name="password_change_error_unsupported_provider">Þessi þjónustuaðili styður ekki breytingu á lykilorði</string>
     <string name="password_change_error_invalid">Ógilt lykilorð</string>
     <string name="password_change_error_network">Netvilla, reyndu aftur</string>
-
     <string name="error_import_file_not_found">Skrá fannst ekki eða verður ekki lesin.</string>
     <string name="error_import_invalid_format">Ógilt dagatalsskráarsnið.</string>
     <string name="error_import_partial">%1$d viðburðir fluttir inn, %2$d mistókust.</string>
     <string name="error_export_failed">Útflutningur viðburða mistókst.</string>
     <string name="error_export_no_events">Engir viðburðir til að flytja út.</string>
     <string name="error_end_before_start">Lokatími verður að vera eftir upphafstíma</string>
-
     <string name="error_storage_full_title">Geymsla full</string>
     <string name="error_storage_full">Ekki nóg geymslupláss. Losaðu um pláss og reyndu aftur.</string>
     <string name="error_database_corruption_title">Gagnavilla</string>
     <string name="error_database_corruption">Dagatalsgögnin þín kunna að vera skemmd. Hafðu samband við þjónustuver.</string>
     <string name="error_migration_title">Uppfærsluvilla</string>
     <string name="error_migration_failed">Uppfærsla á forritagögnum mistókst. Settu forritið upp aftur.</string>
-
     <string name="error_permission_notification_title">Virkja tilkynningar?</string>
     <string name="error_permission_notification">KashCal þarf tilkynningaheimild til að minna þig á komandi viðburði.</string>
     <string name="error_permission_alarm_title">Virkja nákvæma vekjara?</string>
     <string name="error_permission_alarm">KashCal þarf heimild fyrir nákvæma vekjara fyrir nákvæmar áminningar.</string>
     <string name="error_permission_storage">Geymsluheimild nauðsynleg fyrir inn-/útflutning.</string>
-
     <string name="error_device_calendar_title">Dagatalsvilla</string>
     <string name="error_device_calendar_write_failed">Mistókst að vista í dagatal tækis. Reyndu aftur.</string>
     <string name="error_device_calendar_permission">Dagatalsheimild nauðsynleg. Veittu heimild í Stillingum.</string>
     <string name="error_device_calendar_not_found">Dagatal fannst ekki. Það gæti hafa verið fjarlægt.</string>
     <string name="error_device_event_not_found">Viðburður fannst ekki. Honum gæti hafa verið eytt.</string>
     <string name="error_device_calendar_read_only">Þetta dagatal er skrifvarið.</string>
-
     <string name="error_sync_no_accounts">Enginn iCloud-reikningur stilltur. Settu upp iCloud til að samstilla dagatölin þín.</string>
     <string name="error_sync_partial">%1$d dagatöl samstillt, %2$d mistókust.</string>
-
     <string name="error_unknown">Eitthvað fór úrskeiðis. Reyndu aftur.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valið</string>
-    <string name="cd_checkmark">Valið</string>
     <string name="cd_back">Til baka</string>
     <string name="cd_search">Leita</string>
     <string name="cd_create_event">Búa til viðburð</string>
@@ -386,7 +396,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Sækja dagatal</string>
-    <string name="action_import_from_file">Flytja atburði inn úr skrá</string>
+    <string name="action_import_from_file">Flytja viðburði inn úr skrá</string>
     <string name="action_export_local_calendar">Flytja út staðbundið dagatal</string>
 
     <!-- ==================== Providers ==================== -->
@@ -427,13 +437,21 @@
     <string name="accounts_cd_sync_warning">Samstillingarviðvörun</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_row_label">Dagatalsstraumar (ICS)</string>
-    <string name="subscriptions_row_hint">t.d. frídagar, íþróttir, skóli</string>
     <string name="subscriptions_title">Dagatalsstraumar</string>
     <string name="subscriptions_section_add">Bæta við</string>
     <string name="subscriptions_empty_ics">Engar ICS-áskriftir</string>
     <string name="subscriptions_empty_ics_hint">Bættu við dagatalsstraumi til að sjá viðburði</string>
     <string name="subscriptions_add_ics">Bæta við ICS-dagatali</string>
+    <string name="qs_tile_label">Bæta við</string>
+    <string name="holiday_catalog_add">Bæta við frídagadagatali</string>
+    <string name="holiday_catalog_search_label">Leita</string>
+    <string name="holiday_catalog_already_added">Bætt við</string>
+    <string name="holiday_catalog_empty">Engin lönd fundust</string>
+    <string name="holiday_catalog_empty_hint">Prófaðu annað heiti</string>
+    <string name="holiday_catalog_validate_error">Ekki tókst að ná í þetta dagatal. Athugaðu nettenginguna og reyndu aftur.</string>
+    <string name="holiday_catalog_attribution">Frídagadagatöl frá Mozilla Thunderbird, með leyfi samkvæmt %1$s.</string>
+    <string name="subscriptions_row_label">Dagatalsstraumar (ICS)</string>
+    <string name="subscriptions_row_hint">t.d. frídagar, íþróttir, skóli</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Afmæli &amp; árdagar</string>
@@ -453,8 +471,8 @@
     <string name="subscriptions_cd_back">Til baka</string>
     <string name="subscriptions_cd_add">Bæta við áskrift</string>
     <string name="snackbar_subscription_removed">Áskrift fjarlægð</string>
-    <string name="snackbar_subscription_already_exists">Þegar í áskrift að þessari vefslóð</string>
     <string name="snackbar_action_undo">Afturkalla</string>
+    <string name="snackbar_subscription_already_exists">Þegar í áskrift að þessari vefslóð</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SAMSTILLING</string>
@@ -474,7 +492,6 @@
     <string name="account_detail_cd_show_password">Sýna lykilorð</string>
     <string name="account_detail_cd_hide_password">Fela lykilorð</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Endurnefna reikning</string>
     <string name="rename_account_label">Heiti reiknings</string>
@@ -491,6 +508,7 @@
     <string name="settings_device_calendars">Dagatöl tækis</string>
     <string name="settings_device_calendars_hint">Dagatöl úr öðrum forritum</string>
     <string name="settings_quick_event_add">Flýtiskráning viðburðar</string>
+    <string name="settings_suggest_titles">Stinga upp á heiti viðburða</string>
     <string name="settings_week_numbers">Vikunúmer</string>
     <string name="settings_show_declined">Sýna höfnuð atvik</string>
     <string name="settings_widget_event_limit">Viðburðahámark græju</string>
@@ -503,6 +521,8 @@
     <string name="settings_tap_to_enable">Ýttu til að virkja</string>
     <string name="settings_device_calendars_enabled">%1$d virk</string>
     <string name="settings_per_day">%1$d á dag</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Hvað er sértækt lykilorð forrits?</string>
     <string name="caldav_trust_insecure_label">Treysta óöruggri tengingu</string>
     <string name="action_add_another">Bæta við öðru</string>
@@ -564,7 +584,6 @@
     <string name="device_calendars_reminders_desc">Fá tilkynningar fyrir viðburði í dagatölum tækis</string>
     <string name="device_calendars_read_only_no_write">Skrifvarið (engin skrifheimild)</string>
     <string name="device_calendars_read_only_calendar">Skrifvarið (dagatalið er skrifvarið)</string>
-
     <string name="settings_developer_options">Þróunarvalkostir</string>
     <string name="settings_sync_frequency">Samstillingartíðni</string>
     <string name="settings_preview">FORSKOÐUN</string>
@@ -639,12 +658,11 @@
         <item quantity="one">%1$d viðburður</item>
         <item quantity="other">%1$d viðburðir</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Opna dagatal</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d dagur til viðbótar</item>
         <item quantity="other">%1$d dagar til viðbótar</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Opna dagatal</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d afmæli</item>
         <item quantity="other">%1$d afmæli</item>
@@ -685,7 +703,6 @@
         <item quantity="one">%1$d dagatal</item>
         <item quantity="other">%1$d dagatöl</item>
     </plurals>
-
     <plurals name="time_minutes">
         <item quantity="one">%1$d mínúta</item>
         <item quantity="other">%1$d mínútur</item>
@@ -718,7 +735,6 @@
         <item quantity="one">%1$d sek</item>
         <item quantity="other">%1$d sek</item>
     </plurals>
-
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d mínútu áður</item>
         <item quantity="other">%1$d mínútum áður</item>
@@ -737,39 +753,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Þennan viðburð</string>
-    <string name="recurring_all_events">Alla viðburði</string>
     <string name="dialog_edit_recurring_title">Vista breytingar á</string>
     <string name="dialog_delete_recurring_title">Eyða</string>
     <string name="dialog_move_recurring_title">Flytja</string>
+    <string name="recurring_this_event">Þennan viðburð</string>
+    <string name="recurring_all_events">Alla viðburði</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Þátttakendur</string>
+    <string name="attendee_search_hint">Leita</string>
+    <string name="attendee_search_no_matches">Engar niðurstöður</string>
+    <string name="attendee_picker_title">Bæta við þátttakendum</string>
+    <string name="attendee_pick_add_people">Bæta við þátttakendum</string>
+    <string name="attendee_pick_from_contacts">Nafn eða tölvupóstur</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d til viðbótar</item>
+        <item quantity="other">+%1$d til viðbótar</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Stinga upp á fólki úr tengiliðunum þínum</string>
+    <string name="attendee_invalid_email">Sláðu inn fullt tölvupóstfang</string>
+    <string name="attendee_add_typed">Bæta við \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ekki er hægt að bjóða fólki á þessum reikningi</string>
+    <string name="device_attendee_local_no_delivery">Þetta dagatal getur ekki sent boð. Gestir eru vistaðir en fá enga tilkynningu.</string>
+    <string name="action_save_and_notify">Vista &amp; tilkynna</string>
+    <string name="attendee_section_going">Mæta</string>
+    <string name="attendee_section_maybe">Kannski</string>
+    <string name="attendee_section_pending">Bíður</string>
+    <string name="attendee_section_declined">Hafnað</string>
+    <string name="attendee_section_delegated">Áframsent</string>
+    <string name="invitees_host_tag">Gestgjafi</string>
+    <string name="invitees_summary_you_alone">Þú</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Þú · %d boðið</item>
+        <item quantity="other">Þú · %d boðnir</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d boðið</item>
+        <item quantity="other">%d boðnir</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s skipuleggur</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Þú</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Þú + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Þú + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Þú + %d</item>
+        <item quantity="other">Þú + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d til viðbótar</item>
+        <item quantity="other">%1$s · %2$d til viðbótar</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Breyta svari</string>
+    <string name="rsvp_question_going">Mætir þú?</string>
+    <string name="rsvp_action_yes">Já</string>
+    <string name="rsvp_action_maybe">Kannski</string>
+    <string name="rsvp_action_no">Nei</string>
+    <string name="rsvp_state_going">Þú mætir</string>
+    <string name="rsvp_state_maybe">Kannski</string>
+    <string name="rsvp_state_not_going">Þú mætir ekki</string>
+    <string name="rsvp_action_change">Breyta</string>
     <string name="empty_pick_a_day">Veldu dag. Gríptu hann.</string>
-    <string name="empty_no_events_day">Ekkert hér; farðu út í gott veður?</string>
+    <string name="cd_empty_pick_a_day">Veldu dag</string>
+    <string name="empty_no_events_day_1">Frjáls dagur. Alheimurinn krefst þess að þú hvílist.</string>
+    <string name="empty_no_events_day_2">Engar áætlanir. Það er áætlunin.</string>
+    <string name="empty_no_events_day_3">Gjöf: auður dagur.</string>
+    <string name="empty_no_events_day_4">Staða dagatals: dásamlega auð.</string>
+    <string name="empty_no_events_day_5">Ekkert á dagskrá. Njóttu kyrrðarinnar.</string>
+    <string name="cd_empty_no_events_day">Rólegur dagur, ekkert á dagskrá</string>
     <string name="filter_date">Dagsetning</string>
     <string name="label_select_date">Velja dagsetningu</string>
     <string name="hint_tap_date_range">Ýttu á sömu dagsetningu fyrir einn dag, eða aðra dagsetningu fyrir tímabil</string>
-
     <string name="cd_clear">Hreinsa</string>
     <string name="cd_offline">Ónettengdur</string>
-    <string name="cd_loading_events">Hleður atburðum</string>
+    <string name="cd_event_state_cancelled">aflýst</string>
+    <string name="cd_event_state_declined">hafnað</string>
+    <string name="cd_event_state_past">liðinn viðburður</string>
+    <string name="cd_loading_events">Hleður viðburðum</string>
+    <string name="cd_event_untitled">Viðburður án titils</string>
     <string name="cd_open_drawer">Opna valmynd</string>
     <string name="cd_close_drawer">Loka valmynd</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Dagatalssýn</string>
     <string name="cd_active_view">Virk sýn</string>
-
     <string name="view_agenda">Dagskrá</string>
     <string name="view_month_full">Mánuður (Heill)</string>
     <string name="view_day">Dagur</string>
     <string name="view_three_days">3 dagar</string>
     <string name="view_year">Ár</string>
     <string name="view_insights">Yfirlit</string>
-
     <string name="label_go_to_month">Fara á mánuð</string>
-
     <string name="action_more_options">Fleiri valkostir</string>
     <string name="quick_add_save_failed">Ekki tókst að vista viðburð</string>
-
     <string name="label_duration_days">dagar</string>
     <string name="label_duration_hrs">klst</string>
     <string name="label_duration_min">mín</string>
@@ -784,221 +859,7 @@
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nýir</string>
-    <string name="sync_summary_updated">%1$d uppfærðir</string>
-    <string name="sync_summary_removed">%1$d fjarlægðir</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Hringlaga flettun virk</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Engin áminning</string>
-    <string name="reminder_at_time_of_event">Á tíma viðburðarins</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s áður</string>
-    <string name="reminder_time_after">%1$s eftir</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM á degi viðburðarins</string>
-    <string name="reminder_day_of_event_24h">09:00 á degi viðburðarins</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s áður kl. 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s áður kl. 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Af</string>
-    <string name="reminder_short_at_event">Við viðburð</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dm</string>
-    <string name="reminder_short_hours">%1$dklst</string>
-    <string name="reminder_short_days">%1$dd</string>
-    <string name="reminder_short_weeks">%1$dv</string>
-    <string name="reminder_summary_none">Engin</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dklst %2$dmín</string>
-    <string name="duration_compact_short">%1$dklst%2$dmín</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Aðeins handvirkt</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Allir viðburðir</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Fresta</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Byrjar núna</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Á morgun, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Samstilling lokið</string>
-    <string name="sync_notification_partial">Samstilling að hluta lokið</string>
-    <string name="sync_notification_auth_failed">Samstilling: Auðkenning mistókst</string>
-    <string name="sync_notification_auth_reauth">Skráðu þig inn á reikninginn þinn aftur</string>
-    <string name="sync_notification_failed">Samstilling mistókst</string>
-    <string name="sync_notification_parse_title">Sumir viðburðir getið ekki samstillst</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s í %2$s getið ekki samstillst. Prófaðu fulla samstillingu í Stillingum.</string>
-    <string name="sync_notification_conflict_title">Árekstri við samstillingu leyst</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Staðværar breytingar á \"%1$s\" töpuðust vegna áreksturs við samstillingu. Útgáfa þjónsins verður notuð.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Staðværar breytingar á %1$s töpuðust vegna árekstra við samstillingu. Útgáfur þjónsins verða notaðar.</string>
-    <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar út</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s í %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s þvert á %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d dagatal samstillt</item>
-        <item quantity="other">%1$d dagatöl samstillt</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d breyting</item>
-        <item quantity="other">, %1$d breytingar</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d villa</item>
-        <item quantity="other">, %1$d villur</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%2$s afmælisdagur %1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Afmælisdagur %1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%2$s áfangadagur %1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">Áfangadagur %1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d.</string>
-    <string name="ordinal_suffix_nd">%1$d.</string>
-    <string name="ordinal_suffix_rd">%1$d.</string>
-    <string name="ordinal_suffix_th">%1$d.</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Samstilli dagatöl…</string>
-    <string name="sync_banner_preparing">Undirbý samstillingu…</string>
-    <string name="sync_banner_complete_errors">Samstillingu lokið með villum</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Samstilling mistókst: %1$s</string>
-    <string name="error_unknown_error">Óþekkt villa</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Nýr viðburður: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d nýr viðburður</item>
-        <item quantity="other">%1$d nýjir viðburðir</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d viðburður uppfærður</item>
-        <item quantity="other">%1$d viðburðir uppfærðir</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d viðburður fjarlægður</item>
-        <item quantity="other">%1$d viðburðir fjarlægðir</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d dagatalappdatering</item>
-        <item quantity="other">%1$d dagatalappdateringar</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Dagur %1$d af %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dagur 1 af %1$d · byrjar %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dagur %1$d af %2$d · endar %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Allan daginn</string>
-    <string name="event_date_all_day">%1$s · Allan daginn</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Allan daginn)</string>
-    <string name="event_date_all_day_parens">%1$s (Allan daginn)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Vista viðburð</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Nýtt</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Rauður</string>
-    <string name="color_orange">Appelsínugulur</string>
-    <string name="color_yellow">Gulur</string>
-    <string name="color_green">Grænn</string>
-    <string name="color_cyan">Blágrænn</string>
-    <string name="color_blue">Blár</string>
-    <string name="color_purple">Fjólubrár</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Fundarhlekk: %1$s</string>
-    <string name="cd_phone_number">Símanúmer</string>
-    <string name="cd_email_link">Tölvupóstur: %1$s</string>
-    <string name="cd_web_link">Hlekkur: %1$s</string>
-    <string name="cd_text_with_links">Texti með %1$d hlekkjum: %2$s</string>
-    <string name="cd_text_with_link">Texti með 1 hlekk: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Dagur %1$d af %2$d (Allan daginn)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið</string>
-    <string name="sync_history_stats_issues">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið   ⚠ %4$d vandæmi</string>
-    <string name="sync_history_failed">Mistókst</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Á hverri klukkustund</string>
-    <string name="ics_sync_every_n_hours">Á %1$d klukkustunda fresti</string>
-    <string name="ics_sync_daily">Daglega</string>
-    <string name="ics_sync_weekly">Vikulega</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL er nauðsynlegt</string>
-    <string name="ics_url_invalid_scheme">URL verður að byrja á http://, https:// eða webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Netþjónninn skilaði villu (%1$d). Athugaðu URL-slóðina.</string>
-    <string name="ics_fetch_error_empty">Dagatalsstraumurinn er tómur.</string>
-    <string name="ics_fetch_error_not_calendar">Þessi URL-slóð lítur ekki út fyrir að vera dagatalsstraumur.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget and Channel strings -->
-    <string name="cd_widget_calendar">Dagatal</string>
-    <string name="cd_widget_add_event">Bæta við atburði</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, aflýst</string>
-    <string name="cd_widget_no_events">engir atburðir</string>
-    <string name="channel_event_reminders">Atburðaáminningar</string>
-    <string name="channel_event_reminders_desc">Tilkynningar um væntanlega dagatalsatburði</string>
-    <string name="channel_sync_progress">Samstillingarframvinda</string>
-    <string name="channel_sync_progress_desc">Sýnir framvindu við samstillingu dagatala</string>
-    <string name="channel_sync_status">Samstillingarstaða</string>
-    <string name="channel_sync_status_desc">Tilkynningar um lok samstillingar og villur</string>
-    <string name="channel_event_invitations">Viðburðaboð</string>
-    <string name="channel_event_invitations_desc">Tilkynningar þegar þú færð nýtt dagatalsboð</string>
-    <string name="invite_notification_body">Frá %1$s · Ýttu til að svara</string>
-
-    <!-- RSVP Actions -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
-    <string name="rsvp_series_disclosure">Svarið gildir fyrir alla röðina.</string>
-    <string name="invitees_host_tag">Gestgjafi</string>
-    <string name="rsvp_question_going">Mætir þú?</string>
-    <string name="rsvp_action_yes">Já</string>
-    <string name="rsvp_action_maybe">Kannski</string>
-    <string name="rsvp_action_no">Nei</string>
-    <string name="rsvp_state_going">Þú mætir</string>
-    <string name="rsvp_state_maybe">Kannski</string>
-    <string name="rsvp_state_not_going">Þú mætir ekki</string>
-    <string name="rsvp_action_change">Breyta</string>
-
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Endurtekur sig ekki</string>
     <string name="rrule_freq_daily">Daglega</string>
     <string name="rrule_freq_weekly">Vikulega</string>
@@ -1014,6 +875,10 @@
     <string name="rrule_freq_on_last_day">%1$s síðasta dag</string>
     <string name="rrule_freq_on_day_n">%1$s dag %2$d</string>
     <string name="rrule_ordinal_last">síðasti</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d sinni</item>
+        <item quantity="other">, %1$d sinnum</item>
+    </plurals>
     <string name="rrule_until_suffix">, til %1$s</string>
     <string name="rrule_freq_never">Aldrei</string>
     <string name="rrule_freq_custom">Sérsniðið</string>
@@ -1027,13 +892,146 @@
     <string name="rrule_starting">%1$s frá %2$s%3$s</string>
     <string name="rrule_since">%1$s · síðan %2$s</string>
 
-    <!-- Recurrence count plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d sinni</item>
-        <item quantity="other">, %1$d sinnum</item>
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d nýir</string>
+    <string name="sync_summary_updated">%1$d uppfærðir</string>
+    <string name="sync_summary_removed">%1$d fjarlægðir</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Hringlaga flettun virk</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Engin áminning</string>
+    <string name="reminder_at_time_of_event">Á tíma viðburðarins</string>
+    <string name="reminder_time_before">%1$s áður</string>
+    <string name="reminder_time_after">%1$s eftir</string>
+    <string name="reminder_day_of_event_12h">9 AM á degi viðburðarins</string>
+    <string name="reminder_day_of_event_24h">09:00 á degi viðburðarins</string>
+    <string name="reminder_before_at_12h">%1$s áður kl. 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s áður kl. 09:00</string>
+    <string name="reminder_short_off">Af</string>
+    <string name="reminder_short_at_event">Við viðburð</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$dklst</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$dv</string>
+    <string name="reminder_summary_none">Engin</string>
+    <string name="duration_compact">%1$dklst %2$dmín</string>
+    <string name="duration_compact_short">%1$dklst%2$dmín</string>
+    <string name="sync_manual_only">Aðeins handvirkt</string>
+    <string name="sync_lookback_all">Allir viðburðir</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Fresta</string>
+    <string name="notification_starting_now">Byrjar núna</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Eftir %1$d dag</item>
+        <item quantity="other">Eftir %1$d daga</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Á morgun, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Samstilling lokið</string>
+    <string name="sync_notification_partial">Samstilling að hluta lokið</string>
+    <string name="sync_notification_auth_failed">Samstilling: Auðkenning mistókst</string>
+    <string name="sync_notification_auth_reauth">Skráðu þig inn á reikninginn þinn aftur</string>
+    <string name="sync_notification_failed">Samstilling mistókst</string>
+    <string name="sync_notification_parse_title">Sumir viðburðir getið ekki samstillst</string>
+    <string name="sync_notification_parse_content">%1$s í %2$s getið ekki samstillst. Prófaðu fulla samstillingu í Stillingum.</string>
+    <string name="sync_notification_conflict_title">Árekstri við samstillingu leyst</string>
+    <string name="sync_notification_conflict_single">Staðværar breytingar á \"%1$s\" töpuðust vegna áreksturs við samstillingu. Útgáfa þjónsins verður notuð.</string>
+    <string name="sync_notification_conflict_multi">Staðværar breytingar á %1$s töpuðust vegna árekstra við samstillingu. Útgáfur þjónsins verða notaðar.</string>
+    <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar út</string>
+    <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s í %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s þvert á %2$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingaðu samstillingu til að reyna aftur.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d dagatal samstillt</item>
+        <item quantity="other">%1$d dagatöl samstillt</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d breyting</item>
+        <item quantity="other">, %1$d breytingar</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d villa</item>
+        <item quantity="other">, %1$d villur</item>
     </plurals>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%2$s afmælisdagur %1$s</string>
+    <string name="contact_birthday">Afmælisdagur %1$s</string>
+    <string name="contact_anniversary_with_age">%2$s áfangadagur %1$s</string>
+    <string name="contact_anniversary">Áfangadagur %1$s</string>
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Samstilli dagatöl…</string>
+    <string name="sync_banner_preparing">Undirbý samstillingu…</string>
+    <string name="sync_banner_complete_errors">Samstillingu lokið með villum</string>
+    <string name="sync_banner_failed">Samstilling mistókst: %1$s</string>
+    <string name="error_unknown_error">Óþekkt villa</string>
+    <string name="sync_snackbar_new_event">Nýr viðburður: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d nýr viðburður</item>
+        <item quantity="other">%1$d nýjir viðburðir</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d viðburður uppfærður</item>
+        <item quantity="other">%1$d viðburðir uppfærðir</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d viðburður fjarlægður</item>
+        <item quantity="other">%1$d viðburðir fjarlægðir</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d dagatalappdatering</item>
+        <item quantity="other">%1$d dagatalappdateringar</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Dagur %1$d af %2$d</string>
+    <string name="day_starts">Dagur 1 af %1$d · byrjar %2$s</string>
+    <string name="day_ends">Dagur %1$d af %2$d · endar %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Allan daginn</string>
+    <string name="event_date_all_day">%1$s · Allan daginn</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Allan daginn)</string>
+    <string name="event_date_all_day_parens">%1$s (Allan daginn)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Vista viðburð</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Nýtt</string>
+    <string name="color_red">Rauður</string>
+    <string name="color_orange">Appelsínugulur</string>
+    <string name="color_yellow">Gulur</string>
+    <string name="color_green">Grænn</string>
+    <string name="color_cyan">Blágrænn</string>
+    <string name="color_blue">Blár</string>
+    <string name="color_purple">Fjólubrár</string>
+    <string name="cd_meeting_link">Fundarhlekk: %1$s</string>
+    <string name="cd_phone_number">Símanúmer</string>
+    <string name="cd_email_link">Tölvupóstur: %1$s</string>
+    <string name="cd_web_link">Hlekkur: %1$s</string>
+    <string name="cd_text_with_links">Texti með %1$d hlekkjum: %2$s</string>
+    <string name="cd_text_with_link">Texti með 1 hlekk: %1$s</string>
+    <string name="day_x_of_y_all_day">Dagur %1$d af %2$d (Allan daginn)</string>
+    <string name="sync_history_stats">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið</string>
+    <string name="sync_history_stats_issues">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið   ⚠ %4$d vandæmi</string>
+    <string name="sync_history_failed">Mistókst</string>
+    <string name="ics_sync_every_hour">Á hverri klukkustund</string>
+    <string name="ics_sync_every_n_hours">Á %1$d klukkustunda fresti</string>
+    <string name="ics_sync_daily">Daglega</string>
+    <string name="ics_sync_weekly">Vikulega</string>
+    <string name="ics_url_required">URL er nauðsynlegt</string>
+    <string name="ics_url_invalid_scheme">URL verður að byrja á http://, https:// eða webcal://</string>
+    <string name="ics_fetch_error_http">Netþjónninn skilaði villu (%1$d). Athugaðu URL-slóðina.</string>
+    <string name="ics_fetch_error_empty">Dagatalsstraumurinn er tómur.</string>
+    <string name="ics_fetch_error_not_calendar">Þessi URL-slóð lítur ekki út fyrir að vera dagatalsstraumur.</string>
     <string name="insights_title">Yfirlit</string>
     <string name="insights_period_this_week">Vika</string>
     <string name="insights_period_last_week">Síðasta vika</string>
@@ -1071,17 +1069,16 @@
     <string name="insight_next_free_block">Næsti frji tími: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Dagleg dreifing: ánniðsamasti dagur er %1$s</string>
 
-    <!-- ==================== Event Color / Availability ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Framboð</string>
     <string name="label_busy">Upptekinn</string>
     <string name="label_free">Laus</string>
     <string name="label_event_color">Litur viðburðar</string>
     <string name="label_calendar_default">Sjálfgefið dagatals</string>
     <string name="label_custom">Sérsniðið</string>
-    <string name="cd_event_state_cancelled">aflýst</string>
-    <string name="cd_event_state_declined">hafnað</string>
-    <string name="cd_event_state_past">liðinn viðburður</string>
-    <string name="cd_event_untitled">Viðburður án titils</string>
+    <string name="cd_checkmark">Valið</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Hnakkbrúnn</string>
     <string name="color_tomato">Tómatur</string>    <string name="color_darkorange">Dökkappelsínugulur</string>
     <string name="color_gold">Gull</string>
@@ -1091,6 +1088,8 @@
     <string name="color_royalblue">Konungsblár</string>    <string name="color_mediumorchid">Orkideulitur</string>
     <string name="color_hotpink">Heitbleikur</string>
     <string name="color_dimgray">Daufur grár</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Rauður</string>
     <string name="hue_orange">Appelsínugulur</string>
     <string name="hue_yellow">Gulur</string>
@@ -1103,7 +1102,8 @@
     <string name="hue_neutral">Hlutlaus</string>
     <string name="label_more_colors">Fleiri litir</string>
     <string name="label_back_to_grid">Til baka</string>
-    <string name="settings_suggest_titles">Stinga upp á heiti atburða</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Þátttakendur</string>
     <string name="attendee_you_marker">Þú</string>
     <string name="attendee_card_going">Mætir</string>
@@ -1113,6 +1113,8 @@
     <string name="attendee_card_hosting">Gestgjafi</string>
     <string name="attendee_action_copy">Afrita tölvupóst</string>
     <string name="attendee_action_email">Senda tölvupóst</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Tölvupóstur afritaður</string>
     <string name="attendee_no_email_app">Ekkert tölvupóstforrit uppsett</string>
     <string name="attendee_show_all">Sýna alla þátttakendur</string>
@@ -1121,32 +1123,9 @@
     <string name="attendee_status_tentative">Til bráðabirgða</string>
     <string name="attendee_status_delegated">Framsalið</string>
     <string name="attendee_status_pending">Bíður</string>
-    <string name="attendee_sheet_title">Þátttakendur</string>
-    <string name="attendee_search_hint">Leita</string>
-    <string name="attendee_search_no_matches">Engar niðurstöður</string>
-    <string name="attendee_section_going">Mæta</string>
-    <string name="attendee_section_maybe">Kannski</string>
-    <string name="attendee_section_pending">Bíður</string>
-    <string name="attendee_section_declined">Hafnað</string>
-    <string name="attendee_section_delegated">Áframsent</string>
-    <string name="attendee_picker_title">Bæta við þátttakendum</string>
-    <string name="attendee_pick_add_people">Bæta við þátttakendum</string>
-    <string name="attendee_pick_from_contacts">Nafn eða tölvupóstur</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d til viðbótar</item>
-        <item quantity="other">+%1$d til viðbótar</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Stinga upp á fólki úr tengiliðunum þínum</string>
-    <string name="attendee_invalid_email">Sláðu inn fullt tölvupóstfang</string>
-    <string name="attendee_add_typed">Bæta við \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Ekki er hægt að bjóða fólki á þessum reikningi</string>
-    <string name="device_attendee_local_no_delivery">Þetta dagatal getur ekki sent boð. Gestir eru vistaðir en fá enga tilkynningu.</string>
-    <string name="action_save_and_notify">Vista &amp; tilkynna</string>
-    <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Allt frágengið</string>
     <string name="inbox_organizer_suffix">(skipuleggjandi)</string>
     <string name="menu_invites">Boð</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Fara á dagsetningu</string>
     <string name="menu_about">Um</string>
     <string name="menu_more">Meira-valmynd</string>
@@ -1154,15 +1133,26 @@
         <item quantity="one">Meira-valmynd, %d boð bíður</item>
         <item quantity="other">Meira-valmynd, %d boð bíða</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Deila stöðu</string>
     <string name="share_availability_sheet_title">Deila stöðu</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Næsti %1$d dagur</item>
+        <item quantity="other">Næstu %1$d dagar</item>
+    </plurals>
     <string name="share_availability_hours_label">Vinnutími: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">Heilsdagsviðburðir sem uppteknir</string>
     <string name="share_availability_share_button">Deila</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Laus næsta %1$d dag (%2$s – %3$s):</item>
+        <item quantity="other">Laus næstu %1$d daga (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Engar lausar lotur sem eru að minnsta kosti klukkustund á völdu tímabili.</string>
+    <string name="share_from_kashcal_footer">Deilt frá KashCal</string>
     <string name="share_availability_chooser_title">Deila stöðu</string>
     <string name="share_availability_share_failed">Ekkert forrit til staðar fyrir deilingu</string>
     <string name="share_availability_window_section">Tímabil</string>
@@ -1181,53 +1171,5 @@
     <string name="share_as_card_all_day">Allan daginn</string>
     <string name="share_as_card_chooser_title">Deila viðburði</string>
     <string name="share_as_card_share_failed">Ekki tókst að deila kortinu</string>
-    <string name="share_from_kashcal_footer">Deilt frá KashCal</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="one">Næsti %1$d dagur</item>
-        <item quantity="other">Næstu %1$d dagar</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="one">Laus næsta %1$d dag (%2$s – %3$s):</item>
-        <item quantity="other">Laus næstu %1$d daga (%2$s – %3$s):</item>
-    </plurals>
-    <string name="invitees_summary_you_alone">Þú</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Þú · %d boðið</item>
-        <item quantity="other">Þú · %d boðnir</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d boðið</item>
-        <item quantity="other">%d boðnir</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s skipuleggur</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Þú</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Þú + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Þú + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Þú + %d</item>
-        <item quantity="other">Þú + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d til viðbótar</item>
-        <item quantity="other">%1$s · %2$d til viðbótar</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Breyta svari</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Eftir %1$d dag</item>
-        <item quantity="other">Eftir %1$d daga</item>
-    </plurals>
-    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
-    <string name="holiday_catalog_add">Bæta við frídagadagatali</string>
-    <string name="holiday_catalog_search_label">Leita</string>
-    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
-    <string name="holiday_catalog_already_added">Bætt við</string>
-    <string name="holiday_catalog_empty">Engin lönd fundust</string>
-    <string name="holiday_catalog_empty_hint">Prófaðu annað heiti</string>
-    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
-    <string name="holiday_catalog_validate_error">Ekki tókst að ná í þetta dagatal. Athugaðu nettenginguna og reyndu aftur.</string>
-    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
-    <string name="holiday_catalog_attribution">Frídagadagatöl frá Mozilla Thunderbird, með leyfi samkvæmt %1$s.</string>
-    <string name="qs_tile_label">Bæta við</string>
+
 </resources>

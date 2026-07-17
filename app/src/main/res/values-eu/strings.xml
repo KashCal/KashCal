@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">KashCal</string>
 
-    <!-- Widget -->
+    <!-- ==================== Widget ==================== -->
     <string name="widget_name">Gaurko agenda</string>
     <string name="widget_description">Gaurko egutegiko gertaerak erakusten ditu</string>
     <string name="week_widget_name">Aste ikuspegia</string>
@@ -13,14 +13,29 @@
     <string name="date_widget_description">Gaurko data erakusten du aplikazio-ikono gisa</string>
     <string name="upcoming_widget_name">Datozenak</string>
     <string name="upcoming_widget_description">Hurrengo 10 egunetako gertaerak erakusten ditu, egun hutsak saltatuz</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Datozen gertaerak kargatzen…</string>
     <string name="widget_error_load_events">Ezin izan dira gertaerak kargatu, ukitu irekitzeko</string>
     <string name="widget_no_events_today">Gertaerarik ez gaur</string>
     <string name="widget_add_event">+ Gertaera gehitu</string>
     <string name="widget_no_events">Gertaerarik ez</string>
     <string name="widget_no_upcoming_events">Datozen gertaerarik ez</string>
+    <string name="cd_widget_calendar">Egutegia</string>
+    <string name="cd_widget_add_event">Gehitu gertaera</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">gertaerarik gabe</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, bertan behera utzita</string>
+    <string name="channel_event_reminders">Gertaeren oroigarriak</string>
+    <string name="channel_event_reminders_desc">Hurrengo egutegiko gertaeretarako jakinarazpenak</string>
+    <string name="channel_sync_progress">Sinkronizazio aurrerapena</string>
+    <string name="channel_sync_progress_desc">Egutegiak sinkronizatzen diren bitartean aurrerapena erakusten du</string>
+    <string name="channel_sync_status">Sinkronizazio egoera</string>
+    <string name="channel_sync_status_desc">Sinkronizazioaren osotasunari eta akatsari buruzko jakinarazpenak</string>
+    <string name="channel_event_invitations">Gertaeren gonbidapenak</string>
+    <string name="channel_event_invitations_desc">Egutegiko gonbidapen berri bat jasotzean jakinarazpenak</string>
+    <string name="invite_notification_body">%1$s erabiltzailearena · Sakatu erantzuteko</string>
 
-    <!-- App Shortcuts -->
+    <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Gertaera berria</string>
     <string name="shortcut_new_event_long">Gertaera berria sortu</string>
     <string name="shortcut_today">Gaur</string>
@@ -28,13 +43,15 @@
     <string name="shortcut_search">Bilatu</string>
     <string name="shortcut_search_long">Gertaerak bilatu</string>
 
-    <!-- Common Actions -->
+    <!-- ==================== Common Actions ==================== -->
     <string name="action_retry">Berriro saiatu</string>
     <string name="action_try_again">Saiatu berriro</string>
     <string name="action_cancel">Utzi</string>
     <string name="action_close">Itxi</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Orain ez</string>
+    <string name="action_allow">Eman</string>
+    <string name="action_no_thanks">Ez, eskerrik asko</string>
     <string name="action_sign_in">Hasi saioa</string>
     <string name="action_select">Hautatu</string>
     <string name="action_show_password">Pasahitza erakutsi</string>
@@ -43,7 +60,6 @@
     <string name="action_learn_more">Informazio gehiago</string>
     <string name="action_open_apple_id">Apple ID ireki</string>
     <string name="action_open_settings">Ezarpenak ireki</string>
-    <string name="action_open">Ireki</string>
     <string name="action_force_sync">Sinkronizazioa behartu</string>
     <string name="action_sync_now">Orain sinkronizatu</string>
     <string name="action_details">Xehetasunak</string>
@@ -55,12 +71,11 @@
     <string name="action_save">Gorde</string>
     <string name="action_add">Gehitu</string>
     <string name="action_edit">Editatu</string>
+    <string name="action_open">Ireki</string>
     <string name="action_delete">Ezabatu</string>
     <string name="action_confirm">Berretsi</string>
     <string name="action_discard">Baztertu</string>
     <string name="action_dismiss">Baztertu</string>
-    <string name="action_allow">Eman</string>
-    <string name="action_no_thanks">Ez, eskerrik asko</string>
     <string name="action_show_all">Dena erakutsi</string>
     <string name="action_connect">Konektatu</string>
     <string name="action_duplicate">Bikoiztu</string>
@@ -70,56 +85,13 @@
     <string name="action_confirm_delete">Ezabatzea berretsi</string>
     <string name="action_delete_event">Gertaera ezabatu</string>
 
-    <!-- RSVP Actions -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Erantzuna serie osoari aplikatzen zaio.</string>
-    <string name="invitees_host_tag">Antolatzailea</string>
-    <string name="invitees_summary_you_alone">Zu</string>
-    <string name="holiday_catalog_add">Gehitu jaiegunen egutegia</string>
-    <string name="holiday_catalog_search_label">Bilatu</string>
-    <string name="holiday_catalog_already_added">Gehituta</string>
-    <string name="holiday_catalog_empty">Ez da herrialderik aurkitu</string>
-    <string name="holiday_catalog_empty_hint">Saiatu beste izen batekin</string>
-    <string name="holiday_catalog_validate_error">Ezin izan da egutegi honetara sartu. Egiaztatu konexioa eta saiatu berriro.</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird-en jaiegunen egutegiak, %1$s lizentziapean.</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Zu · %d gonbidatu</item>
-        <item quantity="other">Zu · %d gonbidatu</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d gonbidatu</item>
-        <item quantity="other">%d gonbidatu</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s antolatzen</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Zu</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Zu + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Zu + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Zu + %d</item>
-        <item quantity="other">Zu + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d gehiago</item>
-        <item quantity="other">%1$s · %2$d gehiago</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Aldatu erantzuna</string>
-    <string name="rsvp_question_going">Joango zara?</string>
-    <string name="rsvp_action_yes">Bai</string>
-    <string name="rsvp_action_maybe">Beharbada</string>
-    <string name="rsvp_action_no">Ez</string>
-    <string name="rsvp_state_going">Joango zara</string>
-    <string name="rsvp_state_maybe">Beharbada</string>
-    <string name="rsvp_state_not_going">Ez zara joango</string>
-    <string name="rsvp_action_change">Aldatu</string>
 
-
-    <!-- Recurring Event Actions -->
+    <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Hau eta etorkizuneko guztiak</string>
 
-    <!-- Form Labels -->
+    <!-- ==================== Form Labels ==================== -->
     <string name="label_event_title">Gertaeraren izenburua</string>
     <string name="label_location">Kokapena</string>
     <string name="label_location_hint">Helbidea edo esteka</string>
@@ -145,18 +117,17 @@
     <string name="label_hex_color">Hex kolorea</string>
     <string name="label_enter_hex">Sartu 6 karaktere hamaseitarrak (0–9, A–F)</string>
 
-    <!-- View Labels -->
+    <!-- ==================== View Labels ==================== -->
     <string name="view_all">Dena</string>
     <string name="view_week">Astea</string>
     <string name="view_month">Hilabetea</string>
     <string name="label_all_day">Egun osoa</string>
     <string name="label_today">Gaur</string>
     <string name="label_go_to_date">Datara joan</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">A</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
-    <!-- Settings -->
+    <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ezarpenak</string>
     <string name="settings_theme">Gaia</string>
     <string name="settings_theme_system_desc">Jarraitu telefonoaren argi edo ilun ezarpenari</string>
@@ -205,17 +176,45 @@
     <string name="app_lock_enabled_message">Aplikazioaren blokeoa aktibatuta. KashCal-ek autentifikatzeko eskatuko dizu hurrengoan irekitzean.</string>
     <string name="app_lock_disable_prompt_title">Desblokeatu aplikazioaren blokeoa desaktibatzeko</string>
 
-    <!-- Onboarding -->
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Egin ezarpenen babeskopia</string>
+    <string name="backup_settings_subtitle">Gorde KashCal-en konfigurazioa JSON fitxategi batean</string>
+    <string name="restore_settings_label">Leheneratu ezarpenak</string>
+    <string name="restore_settings_subtitle">Leheneratu KashCal-en konfigurazioa babeskopia-fitxategi batetik</string>
+    <string name="restore_confirm_title">Babeskopia leheneratu?</string>
+    <string name="restore_confirm_from">KashCal %1$s-ren babeskopia, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Zure hobespenak inportatuko dira.</string>
+    <string name="action_restore">Leheneratu</string>
+    <string name="restore_success_title">Leheneratzea amaitu da</string>
+    <string name="restore_success_message_prefs_only">Hobespenak inportatuta.</string>
+    <string name="restore_success_device_calendars_note">Hautatu berriz gailuko egutegiak eginbide hori erabiltzen baduzu.</string>
+    <string name="restore_error_title">Leheneratzeak huts egin du</string>
+    <string name="restore_error_version_too_new">Babeskopia hau KashCal-en bertsio berriago batekin sortu zen. Eguneratu KashCal eta saiatu berriz.</string>
+    <string name="restore_error_malformed_json">Fitxategi hau ez da KashCal-en baliozko babeskopia bat.</string>
+    <string name="restore_error_invalid_value">Babeskopia-fitxategi honek baliogabeko datuak ditu eta ezin da leheneratu.</string>
+    <string name="restore_error_apply_failure">Zerbait gaizki joan da babeskopia aplikatzean. Ez da aldaketarik gorde.</string>
+    <string name="backup_error_build_failed">Babeskopiak huts egin du</string>
+    <string name="backup_error_write_failed">Babeskopiak huts egin du — ezin izan da fitxategian idatzi</string>
+    <string name="backup_error_read_failed">Ezin izan da fitxategia irakurri</string>
+
+    <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Gu hemen gaude.</string>
     <string name="onboarding_connect_prompt">Konektatu iCloud zure gertaerak hemen ikusteko</string>
 
-    <!-- Sign-In -->
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Berriak</string>
+    <string name="whats_new_dismiss">Ulertuta</string>
+    <string name="whats_new_v598_title">Lagundu Android irekirik mantentzen</string>
+    <string name="whats_new_v598_body">Google zure gailuan aplikazioak instalatzeko modua aldatzen ari da. Zure laguntza behar dugu.</string>
+    <string name="whats_new_v598_action_label">Bisitatu keepandroidopen.org</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud konektatu</string>
     <string name="signin_caldav_title">CalDAV kontua gehitu</string>
     <string name="signin_connected_to">%1$s(e)ra konektatuta</string>
 
-    <!-- Dialogs -->
+    <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Gertaera berria</string>
     <string name="dialog_edit_event_title">Gertaera editatu</string>
     <string name="dialog_force_sync_title">Sinkronizazio osoa behartu?</string>
@@ -228,7 +227,7 @@
     <string name="dialog_add_subscription">Harpidetza gehitu</string>
     <string name="dialog_edit_subscription">Harpidetza editatu</string>
 
-    <!-- Status Messages -->
+    <!-- ==================== Status Messages ==================== -->
     <string name="status_no_events_week">Gertaerarik ez aste honetan</string>
     <string name="status_more_events">+%1$d gehiago</string>
     <string name="status_no_sync_sessions">Oraindik sinkronizazio-saiorik ez.\n\nArrastatu behera egutegiaren ikuspegian eguneratzeko.</string>
@@ -243,23 +242,21 @@
     <string name="status_in_austin">Austin-en</string>
     <string name="status_version">KashCal v%1$s</string>
 
-    <!-- Success Messages -->
+    <!-- ==================== Success Messages ==================== -->
     <string name="success_sync_complete">Sinkronizazioa osatuta</string>
 
-    <!-- Error Messages -->
+    <!-- ==================== Error Messages ==================== -->
     <string name="error_auth_title">Saio-hasieraren errorea</string>
     <string name="error_auth_invalid_credentials">Apple ID edo aplikaziorako pasahitza baliogabea. Egiaztatu zure kredentzialak eta saiatu berriro.</string>
     <string name="error_auth_app_specific_password_required">iCloud-ek aplikaziorako pasahitza bat behar du. Zure Apple ID pasahitz arrunta ez du funtzionatuko hemen.</string>
     <string name="error_auth_session_expired_title">Saioa iraungi da</string>
     <string name="error_auth_session_expired">Zure iCloud saioa iraungi da. Hasi saioa berriro sinkronizatzen jarraitzeko.</string>
     <string name="error_auth_account_locked">Zure Apple ID blokeatuta dago. Bisitatu appleid.apple.com desblokeatzeko.</string>
-
     <string name="error_network_offline">Lineaz kanpo zaude. Aldaketak linean zaudenean sinkronizatuko dira.</string>
     <string name="error_network_timeout">Konexioaren denbora agortu da. Egiaztatu Internet konexioa eta saiatu berriro.</string>
     <string name="error_network_ssl">Konexio seguruak huts egin du. Egiaztatu sare-ezarpenak.</string>
     <string name="error_network_unknown_host">Ezin izan da iCloud-era konektatu. Egiaztatu Internet konexioa.</string>
     <string name="error_network_connection_failed">Konexioak huts egin du. Saiatu berriro.</string>
-
     <string name="error_server_unavailable">iCloud aldi baterako ez dago erabilgarri. Saiatu berriro geroago.</string>
     <string name="error_server_rate_limited">Eskaera gehiegi. Itxaron momentu bat eta saiatu berriro.</string>
     <string name="error_server_forbidden">Sarbidea ukatua. Agian ez duzu egutegi honetarako baimenik.</string>
@@ -268,13 +265,11 @@
     <string name="error_conflict_generic">Gertaera hau beste gailu batean aldatu da. Behartu sinkronizazioa azken bertsioa lortzeko.</string>
     <string name="error_conflict_with_event">\"%1$s\" beste gailu batean aldatu da. Behartu sinkronizazioa azken bertsioa lortzeko.</string>
     <string name="error_sync_token_expired">Sinkronizazio-datuak iraungi dira. Sinkronizazio osoa egiten…</string>
-
     <string name="error_event_not_found">Gertaera ez da aurkitu.</string>
     <string name="error_calendar_not_found">Egutegia ez da aurkitu.</string>
     <string name="error_calendar_read_only">Ezin dira \"%1$s\"(e)ko gertaerak aldatu (irakurtzeko soilik den egutegia).</string>
     <string name="error_event_invalid_data">Gertaeraren datu baliogabeak. Egiaztatu hasiera eta amaiera orduak.</string>
     <string name="error_event_invalid_recurrence">Errepikapen-eredu baliogabea.</string>
-
     <string name="error_display_name_exists">\"%1$s\" izeneko kontu bat badago jada.</string>
     <string name="icloud_error_credentials_required">Apple ID eta pasahitza behar dira</string>
     <string name="icloud_error_connection_timeout">Konexioaren denbora agortu da. Saiatu berriro.</string>
@@ -283,53 +278,48 @@
     <string name="caldav_error_connection_timeout">Konexioaren denbora agortu da. Saiatu berriro.</string>
     <string name="caldav_error_no_calendars">Ez da egutegirik aurkitu zerbitzari honetan.</string>
     <string name="caldav_error_unexpected">Ustekabeko errorea. Saiatu berriro.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nHau zure sare lokaleko zerbitzari bat bada, baimendu sare lokalerako sarbidea konektatzeko.</string>
+    <string name="local_network_banner_title">Sare lokalerako sarbidea behar da</string>
+    <string name="local_network_banner_body">Badirudi zerbitzari hau zure sare lokalean dagoela. Baimendu sare lokalerako sarbidea KashCal bertara konektatu ahal izan dadin.</string>
+    <string name="local_network_banner_allow">Baimendu sarbidea</string>
+    <string name="local_network_banner_dismiss">Orain ez</string>
     <string name="password_change_error_account_not_found">Ez da kontua aurkitu</string>
     <string name="password_change_error_no_credentials">Ez dago kredentzialik</string>
     <string name="password_change_error_unsupported_provider">Hornitzaile honek ez du pasahitza aldatzea onartzen</string>
     <string name="password_change_error_invalid">Pasahitz baliogabea</string>
     <string name="password_change_error_network">Sare-errorea, saiatu berriro</string>
-
     <string name="error_import_file_not_found">Fitxategia ez da aurkitu edo ezin da irakurri.</string>
     <string name="error_import_invalid_format">Egutegi-fitxategiaren formatu baliogabea.</string>
     <string name="error_import_partial">%1$d gertaera inportatu dira, %2$d huts egin du.</string>
     <string name="error_export_failed">Gertaerak esportatzeak huts egin du.</string>
     <string name="error_export_no_events">Ez dago esportatzeko gertaerarik.</string>
     <string name="error_end_before_start">Amaiera ordua hasiera ordua baino geroagokoa izan behar da</string>
-
     <string name="error_storage_full_title">Biltegia beteta</string>
     <string name="error_storage_full">Ez dago nahikoa biltegi-lekurik. Askatu lekua eta saiatu berriro.</string>
     <string name="error_database_corruption_title">Datu-errorea</string>
     <string name="error_database_corruption">Zure egutegiko datuak hondatuta egon daitezke. Jarri harremanetan laguntzarekin.</string>
     <string name="error_migration_title">Eguneratze-errorea</string>
     <string name="error_migration_failed">Aplikazioaren datuak eguneratzeak huts egin du. Mesedez berrinstalatu aplikazioa.</string>
-
     <string name="error_permission_notification_title">Jakinarazpenak gaitu?</string>
     <string name="error_permission_notification">KashCal-ek jakinarazpen-baimena behar du hurrengo gertaerak gogoratzeko.</string>
     <string name="error_permission_alarm_title">Alarma zehatzak gaitu?</string>
     <string name="error_permission_alarm">KashCal-ek alarma zehatzen baimena behar du gogorarazle zehatzak lortzeko.</string>
     <string name="error_permission_storage">Biltegi-baimena behar da inportatzeko/esportatzeko.</string>
-
     <string name="error_device_calendar_title">Egutegi-errorea</string>
     <string name="error_device_calendar_write_failed">Gailuko egutegian gordetzeak huts egin du. Saiatu berriro.</string>
     <string name="error_device_calendar_permission">Egutegiaren idazte-baimena behar da. Eman baimena Ezarpenetan.</string>
     <string name="error_device_calendar_not_found">Egutegia ez da aurkitu. Agian ezabatu egin da.</string>
     <string name="error_device_event_not_found">Gertaera ez da aurkitu. Agian ezabatu egin da.</string>
     <string name="error_device_calendar_read_only">Egutegi hau irakurtzeko soilik da.</string>
-
     <string name="error_sync_no_accounts">Ez dago iCloud konturik konfiguratuta. Konfiguratu iCloud zure egutegiak sinkronizatzeko.</string>
     <string name="error_sync_partial">%1$d egutegi sinkronizatu dira, %2$d huts egin du.</string>
-
     <string name="error_unknown">Zerbaitek huts egin du. Saiatu berriro.</string>
 
-    <!-- Content Descriptions -->
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Hautatuta</string>
     <string name="cd_back">Atzera</string>
     <string name="cd_search">Bilatu</string>
     <string name="cd_create_event">Gertaera sortu</string>
-    <string name="cd_event_state_cancelled">ezeztatuta</string>
-    <string name="cd_event_state_declined">ezetsita</string>
-    <string name="cd_event_state_past">iraganeko gertaera</string>
-    <string name="cd_event_untitled">Izenbururik gabeko gertaera</string>
     <string name="cd_delete">Ezabatu</string>
     <string name="cd_refresh">Eguneratu</string>
     <string name="cd_more_options">Aukera gehiago</string>
@@ -353,7 +343,7 @@
     <string name="cd_color_slider">Kolore-graduatzailea, unean %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradu</string>
 
-    <!-- Form Labels (Additional) -->
+    <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">Egutegia</string>
     <string name="label_color">Kolorea:</string>
     <string name="label_repeat">Errepikatu</string>
@@ -365,19 +355,20 @@
     <string name="label_password">Pasahitza</string>
     <string name="label_display_name_optional">Erakutsitako izena</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Gertaerak bilatu…</string>
 
-    <!-- Hints -->
+    <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">https:// lehenetsita zehaztu ezean</string>
     <string name="hint_name_shown_in_settings">Ezarpenetan erakusten den izena</string>
     <string name="caldav_trust_insecure_subtitle">Auto-sinatutako ziurtagirietarako edo tokiko HTTP zerbitzarietarako</string>
 
-    <!-- Recurrence -->
+    <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">Ondoren</string>
     <string name="label_recurrence_occurrences">agerpen</string>
     <string name="label_recurrence_on_date">Datan</string>
 
-    <!-- Settings (Additional) -->
+    <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">Egutegi ikusgarriak</string>
     <string name="settings_default_calendar">Egutegi lehenetsia</string>
     <string name="settings_default_event_length">Gertaeraren iraupena lehenetsia</string>
@@ -385,7 +376,7 @@
     <string name="settings_notifications">Jakinarazpenak</string>
     <string name="settings_new_events">Gertaera berriak</string>
 
-    <!-- Settings Options -->
+    <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistemaren lehenetsia</string>
     <string name="option_light">Argia</string>
     <string name="option_dark">Iluna</string>
@@ -395,24 +386,24 @@
     <string name="option_monday">Astelehena</string>
     <string name="option_saturday">Larunbata</string>
 
-    <!-- Empty States -->
+    <!-- ==================== Empty States ==================== -->
     <string name="empty_no_events_found">Ez da gertaerarik aurkitu</string>
     <string name="empty_no_upcoming_events">Ez dago hurrengo gertaerarik</string>
     <string name="empty_no_calendars">Ez dago egutegirik erabilgarri</string>
 
-    <!-- Status (Additional) -->
+    <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">Konektatzen…</string>
     <string name="status_fetching">Eskuratzen…</string>
 
-    <!-- Actions (Additional) -->
+    <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Egutegia eskuratu</string>
     <string name="action_import_from_file">Inportatu ekitaldiak fitxategitik</string>
     <string name="action_export_local_calendar">Esportatu tokiko egutegia</string>
 
-    <!-- Providers -->
+    <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
 
-    <!-- Help Text -->
+    <!-- ==================== Help Text ==================== -->
     <string name="help_app_password_description">Aplikaziorako pasahitzek hirugarren aplikazioetan saioa hasteko aukera ematen dute zure Apple ID pasahitz nagusia partekatu gabe.</string>
     <string name="help_app_password_steps_header">Bat sortzeko:</string>
     <string name="help_app_password_step_1">1. Joan appleid.apple.com gunera</string>
@@ -421,11 +412,11 @@
     <string name="help_app_password_step_4">4. Sakatu Aplikaziorako pasahitzak</string>
     <string name="help_app_password_step_5">5. Sakatu Sortu eta kopiatu hona</string>
 
-    <!-- Notification Permission Dialog -->
+    <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal-ek jakinarazpen-baimena behar du hurrengo gertaerak gogoratzeko.</string>
     <string name="dialog_notification_permission_settings_hint">Hau geroago alda dezakezu Ezarpenetan.</string>
 
-    <!-- Accounts Screen -->
+    <!-- ==================== Accounts Screen ==================== -->
     <string name="accounts_title">Kontuak</string>
     <string name="accounts_section_connected">Konektatuak</string>
     <string name="accounts_section_add">Kontua gehitu</string>
@@ -446,16 +437,24 @@
     <string name="accounts_sync_issue">Sinkronizazio-arazoa</string>
     <string name="accounts_cd_sync_warning">Sinkronizazio-abisua</string>
 
-    <!-- Subscriptions Screen -->
+    <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Egutegi-jarioak</string>
     <string name="subscriptions_section_add">Gehitu</string>
     <string name="subscriptions_empty_ics">ICS harpidetzarik ez</string>
     <string name="subscriptions_empty_ics_hint">Gehitu egutegi-jario bat gertaerak ikusteko</string>
     <string name="subscriptions_add_ics">ICS egutegia gehitu</string>
+    <string name="qs_tile_label">Gehitu</string>
+    <string name="holiday_catalog_add">Gehitu jaiegunen egutegia</string>
+    <string name="holiday_catalog_search_label">Bilatu</string>
+    <string name="holiday_catalog_already_added">Gehituta</string>
+    <string name="holiday_catalog_empty">Ez da herrialderik aurkitu</string>
+    <string name="holiday_catalog_empty_hint">Saiatu beste izen batekin</string>
+    <string name="holiday_catalog_validate_error">Ezin izan da egutegi honetara sartu. Egiaztatu konexioa eta saiatu berriro.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird-en jaiegunen egutegiak, %1$s lizentziapean.</string>
     <string name="subscriptions_row_label">Egutegi-jarioak (ICS)</string>
     <string name="subscriptions_row_hint">adib. jaiegunak, kirolak, eskola</string>
 
-    <!-- Birthdays & Anniversaries -->
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Urtebetetzeak eta urteurrenak</string>
     <string name="birthdays_anniversaries_row_hint">Telefonoko kontaktuetatik</string>
     <string name="birthdays_section_title">Urtebetetzeak</string>
@@ -473,10 +472,10 @@
     <string name="subscriptions_cd_back">Atzera joan</string>
     <string name="subscriptions_cd_add">Harpidetza gehitu</string>
     <string name="snackbar_subscription_removed">Harpidetza kenduta</string>
-    <string name="snackbar_subscription_already_exists">Dagoeneko URL honetara harpidetuta</string>
     <string name="snackbar_action_undo">Desegin</string>
+    <string name="snackbar_subscription_already_exists">Dagoeneko URL honetara harpidetuta</string>
 
-    <!-- Account Detail Sheet -->
+    <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINKRONIZAZIOA</string>
     <string name="account_detail_section_calendars">EGUTEGIAK</string>
     <string name="account_detail_section_account">KONTUA</string>
@@ -494,23 +493,23 @@
     <string name="account_detail_cd_show_password">Pasahitza erakutsi</string>
     <string name="account_detail_cd_hide_password">Pasahitza ezkutatu</string>
 
-
-    <!-- Rename Account Sheet -->
+    <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Kontuaren izena aldatu</string>
     <string name="rename_account_label">Kontuaren izena</string>
 
-    <!-- Change Password Sheet -->
+    <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">Pasahitza aldatu</string>
     <string name="change_password_label_icloud">Aplikaziorako pasahitza</string>
     <string name="change_password_label_default">Pasahitza</string>
 
-    <!-- System Account -->
+    <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
 
-    <!-- Settings Screen -->
+    <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Gailuko egutegiak</string>
     <string name="settings_device_calendars_hint">Beste aplikazioetako egutegiak</string>
     <string name="settings_quick_event_add">Gertaera azkar gehitu</string>
+    <string name="settings_suggest_titles">Iradoki gertaeren izenburuak</string>
     <string name="settings_week_numbers">Aste-zenbakiak</string>
     <string name="settings_show_declined">Erakutsi ezetsitako gertaerak</string>
     <string name="settings_widget_event_limit">Widget-eko gertaera-muga</string>
@@ -523,6 +522,8 @@
     <string name="settings_tap_to_enable">Sakatu gaitzeko</string>
     <string name="settings_device_calendars_enabled">%1$d gaituta</string>
     <string name="settings_per_day">%1$d eguneko</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Zer da aplikaziorako pasahitza?</string>
     <string name="caldav_trust_insecure_label">Konexio ez-seguruan fidatu</string>
     <string name="action_add_another">Beste bat gehitu</string>
@@ -545,7 +546,7 @@
     <string name="cd_warning">Abisua</string>
     <string name="cd_refresh_calendars">Egutegiak eguneratu</string>
 
-    <!-- Pickers / Forms -->
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">Egunetan</string>
     <string name="label_pattern">Eredua</string>
     <string name="label_ends">Amaiera</string>
@@ -572,7 +573,7 @@
     <string name="status_minutes_ago">Duela %1$dm</string>
     <string name="status_hours_ago">Duela %1$dh</string>
 
-    <!-- Device Calendars Sheet -->
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_description">Erakutsi gailuko beste egutegi-aplikazioetako gertaerak (sinkronizazio-moldagailuak, tokiko egutegiak).</string>
     <string name="device_calendars_permission_required">Egutegi-baimena behar da. Sakatu Gaitu sarbidea emateko.</string>
     <string name="device_calendars_read_only_access">Irakurtzeko soilik sarbidea</string>
@@ -584,14 +585,13 @@
     <string name="device_calendars_reminders_desc">Jaso jakinarazpenak gailuko egutegiko gertaerentzat</string>
     <string name="device_calendars_read_only_no_write">Irakurtzeko soilik (idazte-baimenik gabe)</string>
     <string name="device_calendars_read_only_calendar">Irakurtzeko soilik (egutegia irakurtzeko soilik da)</string>
-
     <string name="settings_developer_options">Garatzaile-aukerak</string>
     <string name="settings_sync_frequency">Sinkronizazio-maiztasuna</string>
     <string name="settings_preview">AURREBISTA</string>
     <string name="settings_n_events">%1$d gertaera</string>
     <string name="settings_n_events_default">%1$d gertaera (lehenetsia)</string>
 
-    <!-- Drawer -->
+    <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Egutegiak</string>
     <string name="drawer_contacts">Kontaktuak</string>
     <string name="drawer_device_calendars">Gailuko egutegiak</string>
@@ -599,11 +599,11 @@
     <string name="drawer_share_feedback">Laguntza eta dokumentazioa</string>
     <string name="event_title_fallback">Gertaera</string>
 
-    <!-- App Info / About -->
+    <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">Zuretzat, ez zure datuentzat.</string>
     <string name="action_keep_it_that_way">Manten ezazu horrela</string>
 
-    <!-- Sync History -->
+    <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">Dagoeneko sinkronizatuta</string>
     <string name="status_warnings">Abisuak</string>
     <string name="sync_history_events_failed">Huts egin duten gertaerak</string>
@@ -612,17 +612,17 @@
     <string name="sync_history_duration">Iraupena</string>
     <string name="sync_history_already_synced_count">%1$d dagoeneko sinkronizatuta</string>
 
-    <!-- Day Events Sheet -->
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
     <string name="day_events_no_events">Gertaerarik ez</string>
 
-    <!-- Offline -->
+    <!-- ==================== i18n: Error / Offline ==================== -->
     <string name="status_youre_offline">Lineaz kanpo zaude</string>
 
-    <!-- Sign Out -->
+    <!-- ==================== i18n: Sign Out ==================== -->
     <string name="dialog_sign_out_title">%1$s(e)tik saioa amaitu?</string>
     <string name="dialog_sign_out_message">%1$s gisa hasi duzu saioa. Saioa amaitzeak sinkronizatutako egutegiak gailu honetatik kenduko ditu.</string>
 
-    <!-- Plural Resources (one, other) -->
+    <!-- ==================== Plural Resources ==================== -->
     <plurals name="accounts_count">
         <item quantity="one">kontu %1$d</item>
         <item quantity="other">%1$d kontu</item>
@@ -659,12 +659,11 @@
         <item quantity="one">gertaera %1$d</item>
         <item quantity="other">%1$d gertaera</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Ireki egutegia</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">egun %1$d gehiago</item>
         <item quantity="other">%1$d egun gehiago</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Ireki egutegia</string>
     <plurals name="birthday_count">
         <item quantity="one">urtebetetze %1$d</item>
         <item quantity="other">%1$d urtebetetze</item>
@@ -754,45 +753,104 @@
         <item quantity="other">%1$d aste lehenago</item>
     </plurals>
 
-    <!-- HomeScreen -->
-    <string name="recurring_this_event">Gertaera hau</string>
-    <string name="recurring_all_events">Gertaera guztiak</string>
+    <!-- ==================== i18n: HomeScreen ==================== -->
     <string name="dialog_edit_recurring_title">Gorde aldaketak</string>
     <string name="dialog_delete_recurring_title">Ezabatu</string>
     <string name="dialog_move_recurring_title">Eraman</string>
+    <string name="recurring_this_event">Gertaera hau</string>
+    <string name="recurring_all_events">Gertaera guztiak</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Bertaratuak</string>
+    <string name="attendee_search_hint">Bilatu</string>
+    <string name="attendee_search_no_matches">Emaitzarik ez</string>
+    <string name="attendee_picker_title">Gehitu parte-hartzaileak</string>
+    <string name="attendee_pick_add_people">Gehitu parte-hartzaileak</string>
+    <string name="attendee_pick_from_contacts">Izena edo e-posta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d gehiago</item>
+        <item quantity="other">+%1$d gehiago</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Iradoki jendea zure kontaktuetatik</string>
+    <string name="attendee_invalid_email">Idatzi helbide elektroniko oso bat</string>
+    <string name="attendee_add_typed">Gehitu \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Ezin da jenderik gonbidatu kontu honetan</string>
+    <string name="device_attendee_local_no_delivery">Egutegi honek ezin du gonbidapenik bidali. Gonbidatuak gordetzen dira, baina ez zaie jakinaraziko.</string>
+    <string name="action_save_and_notify">Gorde eta jakinarazi</string>
+    <string name="attendee_section_going">Joaten</string>
+    <string name="attendee_section_maybe">Beharbada</string>
+    <string name="attendee_section_pending">Zain</string>
+    <string name="attendee_section_declined">Ukatua</string>
+    <string name="attendee_section_delegated">Eskuordetua</string>
+    <string name="invitees_host_tag">Antolatzailea</string>
+    <string name="invitees_summary_you_alone">Zu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Zu · %d gonbidatu</item>
+        <item quantity="other">Zu · %d gonbidatu</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d gonbidatu</item>
+        <item quantity="other">%d gonbidatu</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s antolatzen</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Zu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Zu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Zu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Zu + %d</item>
+        <item quantity="other">Zu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d gehiago</item>
+        <item quantity="other">%1$s · %2$d gehiago</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Aldatu erantzuna</string>
+    <string name="rsvp_question_going">Joango zara?</string>
+    <string name="rsvp_action_yes">Bai</string>
+    <string name="rsvp_action_maybe">Beharbada</string>
+    <string name="rsvp_action_no">Ez</string>
+    <string name="rsvp_state_going">Joango zara</string>
+    <string name="rsvp_state_maybe">Beharbada</string>
+    <string name="rsvp_state_not_going">Ez zara joango</string>
+    <string name="rsvp_action_change">Aldatu</string>
     <string name="empty_pick_a_day">Aukeratu egun bat. Aprobetxatu.</string>
-    <string name="empty_no_events_day">Hemen ez dago ezer; atera paseatzera?</string>
+    <string name="cd_empty_pick_a_day">Aukeratu egun bat</string>
+    <string name="empty_no_events_day_1">Egun libre bat. Unibertsoak atseden hartzeko eskatzen dizu.</string>
+    <string name="empty_no_events_day_2">Planik ez. Hori da plana.</string>
+    <string name="empty_no_events_day_3">Opari bat: egun huts bat.</string>
+    <string name="empty_no_events_day_4">Egutegiaren egoera: zoragarriro hutsik.</string>
+    <string name="empty_no_events_day_5">Ezer planeatu gabe. Gozatu lasaitasunaz.</string>
+    <string name="cd_empty_no_events_day">Egun lasaia, ezer antolatu gabe</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Hautatu data bat</string>
     <string name="hint_tap_date_range">Sakatu data berdina egun baterako, edo beste data bat tarte baterako</string>
-
     <string name="cd_clear">Garbitu</string>
     <string name="cd_offline">Lineaz kanpo</string>
+    <string name="cd_event_state_cancelled">ezeztatuta</string>
+    <string name="cd_event_state_declined">ezetsita</string>
+    <string name="cd_event_state_past">iraganeko gertaera</string>
     <string name="cd_loading_events">Gertaerak kargatzen</string>
+    <string name="cd_event_untitled">Izenbururik gabeko gertaera</string>
     <string name="cd_open_drawer">Tiradera ireki</string>
     <string name="cd_close_drawer">Tiradera itxi</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Egutegi ikuspegia</string>
     <string name="cd_active_view">Ikuspegi aktiboa</string>
-
     <string name="view_agenda">Agenda</string>
-    <string name="view_day">Eguna</string>
     <string name="view_month_full">Hilabetea (osoa)</string>
+    <string name="view_day">Eguna</string>
     <string name="view_three_days">3 egun</string>
     <string name="view_year">Urtea</string>
     <string name="view_insights">Ikuspegiak</string>
-
     <string name="label_go_to_month">Hilabetera joan</string>
-
     <string name="action_more_options">Aukera gehiago</string>
     <string name="quick_add_save_failed">Ezin izan da gertaera gorde</string>
-
     <string name="label_duration_days">egun</string>
     <string name="label_duration_hrs">ord</string>
     <string name="label_duration_min">min</string>
 
-    <!-- RecurrencePicker -->
+    <!-- ==================== RecurrencePicker ==================== -->
     <string name="recurrence_on_day">%1$d egunean</string>
     <string name="recurrence_on_last_day">Hilabeteko azken egunean</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
@@ -802,7 +860,7 @@
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
 
-    <!-- RRULE Display -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Ez da errepikatzen</string>
     <string name="rrule_freq_daily">Egunero</string>
     <string name="rrule_freq_weekly">Astero</string>
@@ -834,29 +892,24 @@
     <string name="cd_increase_interval">Handitu tartea</string>
     <string name="rrule_starting">%1$s %2$s-(e)tik%3$s</string>
     <string name="rrule_since">%1$s · %2$s-(e)tik</string>
-    <!-- Sync Summary -->
+
+    <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d berri</string>
     <string name="sync_summary_updated">%1$d eguneratuta</string>
     <string name="sync_summary_removed">%1$d kenduta</string>
 
-    <!-- Additional Content Descriptions -->
+    <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Korrimen zirkularra gaituta</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
     <string name="reminder_none">Gogorarazlerik ez</string>
     <string name="reminder_at_time_of_event">Gertaeraren orduan</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
     <string name="reminder_time_before">%1$s lehenago</string>
     <string name="reminder_time_after">%1$s geroago</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
     <string name="reminder_day_of_event_12h">9 AM gertaeraren egunean</string>
     <string name="reminder_day_of_event_24h">09:00 gertaeraren egunean</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
     <string name="reminder_before_at_12h">%1$s lehenago 9 AM-etan</string>
     <string name="reminder_before_at_24h">%1$s lehenago 09:00etan</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
     <string name="reminder_short_off">Desaktibatuta</string>
     <string name="reminder_short_at_event">Gertaeran</string>
     <string name="reminder_short_9am_12h">9AM</string>
@@ -866,44 +919,34 @@
     <string name="reminder_short_days">%1$de</string>
     <string name="reminder_short_weeks">%1$da</string>
     <string name="reminder_summary_none">Bat ere ez</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
     <string name="duration_compact">%1$do %2$dm</string>
     <string name="duration_compact_short">%1$do%2$dm</string>
-
-    <!-- Sync interval options -->
     <string name="sync_manual_only">Eskuzkoa soilik</string>
-    <!-- Sync lookback options -->
     <string name="sync_lookback_all">Gertaera guztiak</string>
 
     <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
     <string name="action_snooze">Atzeratu</string>
-    <!-- Reminder notification content -->
     <string name="notification_starting_now">Orain hasten da</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d egun barru</item>
+        <item quantity="other">%1$d egun barru</item>
+    </plurals>
     <string name="notification_tomorrow_time">Bihar, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
     <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
     <string name="sync_notification_complete">Sinkronizazioa osatuta</string>
     <string name="sync_notification_partial">Sinkronizazioa partzialki osatuta</string>
     <string name="sync_notification_auth_failed">Sinkronizazioaren autentifikazio-errorea</string>
     <string name="sync_notification_auth_reauth">Berriz autentifikatu zure kontua</string>
     <string name="sync_notification_failed">Sinkronizazio-errorea</string>
     <string name="sync_notification_parse_title">Gertaera batzuk ezin izan dira sinkronizatu</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
     <string name="sync_notification_parse_content">%1$s %2$s-(e)n ezin izan dira sinkronizatu. Saiatu Behartu sinkronizazioa Ezarpenetan.</string>
     <string name="sync_notification_conflict_title">Sinkronizazio-gatazka konponduta</string>
-    <!-- %1$s = event title -->
     <string name="sync_notification_conflict_single">\"%1$s\"-(r)en tokiko aldaketak galdu dira sinkronizazio-gatazka batengatik. Zerbitzariaren bertsioa erabiliko da.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_conflict_multi">%1$s-ren tokiko aldaketak galdu dira sinkronizazio-gatazkak direla eta. Zerbitzariaren bertsioak erabiliko dira.</string>
     <string name="sync_notification_expired_title">Sinkronizazio-aldaketak iraungi dira</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
     <string name="sync_notification_expired_content_calendar">%2$s egutegiko %1$s ezin izan dira 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
     <string name="sync_notification_expired_content_calendars">%1$s ezin izan dira %2$s-etan 30 egunen ondoren sinkronizatu. Zerbitzariaren bertsioa erabiliko da. Behartu sinkronizazioa berriro saiatzeko.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d egutegi sinkronizatu da</item>
         <item quantity="other">%1$d egutegi sinkronizatu dira</item>
@@ -918,31 +961,21 @@
     </plurals>
 
     <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
     <string name="contact_birthday_with_age">%1$s(r)en %2$s urtebetetzea</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
     <string name="contact_birthday">%1$s(r)en urtebetetzea</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
     <string name="contact_anniversary_with_age">%1$s(r)en %2$s urteurrena</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
     <string name="contact_anniversary">%1$s(r)en urteurrena</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
     <string name="ordinal_suffix_st">%1$d.</string>
     <string name="ordinal_suffix_nd">%1$d.</string>
     <string name="ordinal_suffix_rd">%1$d.</string>
     <string name="ordinal_suffix_th">%1$d.</string>
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
     <string name="sync_banner_syncing">Egutegiak sinkronizatzen…</string>
     <string name="sync_banner_preparing">Sinkronizazioa prestatzen…</string>
     <string name="sync_banner_complete_errors">Sinkronizazioa osatuta errorekin</string>
-    <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sinkronizazio-errorea: %1$s</string>
     <string name="error_unknown_error">Errore ezezaguna</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
     <string name="sync_snackbar_new_event">Gertaera berria: %1$s</string>
     <plurals name="sync_snackbar_new_events">
         <item quantity="one">Gertaera berri %1$d</item>
@@ -956,33 +989,24 @@
         <item quantity="one">%1$d gertaera kenduta</item>
         <item quantity="other">%1$d gertaera kenduta</item>
     </plurals>
-    <!-- %1$d = total change count -->
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d egutegi-eguneratze</item>
         <item quantity="other">%1$d egutegi-eguneratze</item>
     </plurals>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">%2$d/%1$d eguna</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
     <string name="day_starts">%1$d/1 eguna · hasten da %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
     <string name="day_ends">%2$d/%1$d eguna · amaitzen da %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
     <string name="event_date_range_all_day">%1$s → %2$s · Egun osoa</string>
     <string name="event_date_all_day">%1$s · Egun osoa</string>
-    <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Egun osoa)</string>
     <string name="event_date_all_day_parens">%1$s (Egun osoa)</string>
 
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
     <string name="action_save_event">Gorde gertaera</string>
-    <!-- Badges -->
     <string name="badge_beta">Beta</string>
     <string name="badge_new">Berria</string>
-    <!-- Color names for accessibility -->
     <string name="color_red">Gorria</string>
     <string name="color_orange">Laranja</string>
     <string name="color_yellow">Horia</string>
@@ -990,49 +1014,25 @@
     <string name="color_cyan">Ziana</string>
     <string name="color_blue">Urdina</string>
     <string name="color_purple">Morea</string>
-    <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Bilera-esteka: %1$s</string>
     <string name="cd_phone_number">Telefono-zenbakia</string>
     <string name="cd_email_link">Posta elektronikoa: %1$s</string>
     <string name="cd_web_link">Esteka: %1$s</string>
     <string name="cd_text_with_links">Testua %1$d estekekin: %2$s</string>
     <string name="cd_text_with_link">Testua esteka batekin: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">%2$d/%1$d eguna (Egun osoa)</string>
-    <!-- Sync history stats header -->
     <string name="sync_history_stats">%1$d sinkr.   ↑%2$d igota   ↓%3$d jaitsita</string>
     <string name="sync_history_stats_issues">%1$d sinkr.   ↑%2$d igota   ↓%3$d jaitsita   ⚠ %4$d arazo</string>
     <string name="sync_history_failed">Huts egin du</string>
-    <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Orduro</string>
     <string name="ics_sync_every_n_hours">%1$d orduro</string>
     <string name="ics_sync_daily">Egunero</string>
     <string name="ics_sync_weekly">Astero</string>
-    <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL behar da</string>
     <string name="ics_url_invalid_scheme">URLa http://, https://, edo webcal:// bidez hasi behar da</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Zerbitzariak errore bat itzuli du (%1$d). Egiaztatu URLa.</string>
     <string name="ics_fetch_error_empty">Egutegiaren jarioa hutsik dago.</string>
     <string name="ics_fetch_error_not_calendar">URL horrek ez dirudi egutegi-jario bat.</string>
-    <!-- Event confirmation snackbar -->
-    <string name="cd_widget_calendar">Egutegia</string>
-    <string name="cd_widget_add_event">Gehitu gertaera</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">gertaerarik gabe</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, bertan behera utzita</string>
-    <string name="channel_event_reminders">Gertaeren oroigarriak</string>
-    <string name="channel_event_reminders_desc">Hurrengo egutegiko gertaeretarako jakinarazpenak</string>
-    <string name="channel_sync_progress">Sinkronizazio aurrerapena</string>
-    <string name="channel_sync_progress_desc">Egutegiak sinkronizatzen diren bitartean aurrerapena erakusten du</string>
-    <string name="channel_sync_status">Sinkronizazio egoera</string>
-    <string name="channel_sync_status_desc">Sinkronizazioaren osotasunari eta akatsari buruzko jakinarazpenak</string>
-    <string name="channel_event_invitations">Gertaeren gonbidapenak</string>
-    <string name="channel_event_invitations_desc">Egutegiko gonbidapen berri bat jasotzean jakinarazpenak</string>
-    <string name="invite_notification_body">%1$s erabiltzailearena · Sakatu erantzuteko</string>
-
-    <!-- Insights -->
     <string name="insights_title">Ikuspegiak</string>
     <string name="insights_period_this_week">Astea</string>
     <string name="insights_period_last_week">Aurreko astea</string>
@@ -1070,17 +1070,16 @@
     <string name="insight_next_free_block">Hurrengo bloke librea: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Eguneroko banaketa: egun okupatuena %1$s da</string>
 
-    <!-- Event Form Redesign -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Erabilgarritasuna</string>
     <string name="label_busy">Okupatuta</string>
     <string name="label_free">Libre</string>
     <string name="label_event_color">Gertaeraren kolorea</string>
     <string name="label_calendar_default">Egutegiaren lehenetsia</string>
     <string name="label_custom">Pertsonalizatua</string>
-
     <string name="cd_checkmark">Hautatuta</string>
 
-    <!-- Event Color Palette (CSS3) -->
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Larru-marroia</string>
     <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranja iluna</string>
     <string name="color_gold">Urre-kolorea</string>
@@ -1091,6 +1090,7 @@
     <string name="color_hotpink">Arrosa bizia</string>
     <string name="color_dimgray">Gris ilun</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Gorria</string>
     <string name="hue_orange">Laranja</string>
     <string name="hue_yellow">Horia</string>
@@ -1103,26 +1103,8 @@
     <string name="hue_neutral">Neutroa</string>
     <string name="label_more_colors">Kolore gehiago</string>
     <string name="label_back_to_grid">Atzera</string>
-    <string name="settings_suggest_titles">Iradoki ekitaldien izenburuak</string>
-    <string name="backup_settings_label">Egin ezarpenen babeskopia</string>
-    <string name="backup_settings_subtitle">Gorde KashCal-en konfigurazioa JSON fitxategi batean</string>
-    <string name="restore_settings_label">Leheneratu ezarpenak</string>
-    <string name="restore_settings_subtitle">Leheneratu KashCal-en konfigurazioa babeskopia-fitxategi batetik</string>
-    <string name="restore_confirm_title">Babeskopia leheneratu?</string>
-    <string name="restore_confirm_from">KashCal %1$s-ren babeskopia, %2$s</string>
-    <string name="action_restore">Leheneratu</string>
-    <string name="restore_success_title">Leheneratzea amaitu da</string>
-    <string name="restore_confirm_message_prefs_only">Zure hobespenak inportatuko dira.</string>
-    <string name="restore_success_message_prefs_only">Hobespenak inportatuta.</string>
-    <string name="restore_success_device_calendars_note">Hautatu berriz gailuko egutegiak eginbide hori erabiltzen baduzu.</string>
-    <string name="restore_error_title">Leheneratzeak huts egin du</string>
-    <string name="restore_error_version_too_new">Babeskopia hau KashCal-en bertsio berriago batekin sortu zen. Eguneratu KashCal eta saiatu berriz.</string>
-    <string name="restore_error_malformed_json">Fitxategi hau ez da KashCal-en baliozko babeskopia bat.</string>
-    <string name="restore_error_invalid_value">Babeskopia-fitxategi honek baliogabeko datuak ditu eta ezin da leheneratu.</string>
-    <string name="restore_error_apply_failure">Zerbait gaizki joan da babeskopia aplikatzean. Ez da aldaketarik gorde.</string>
-    <string name="backup_error_build_failed">Babeskopiak huts egin du</string>
-    <string name="backup_error_write_failed">Babeskopiak huts egin du — ezin izan da fitxategian idatzi</string>
-    <string name="backup_error_read_failed">Ezin izan da fitxategia irakurri</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Partaideak</string>
     <string name="attendee_you_marker">Zu</string>
     <string name="attendee_card_going">Joango da</string>
@@ -1132,6 +1114,8 @@
     <string name="attendee_card_hosting">Anfitrioia</string>
     <string name="attendee_action_copy">Kopiatu helbide elektronikoa</string>
     <string name="attendee_action_email">Bidali mezua</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Helbide elektronikoa kopiatuta</string>
     <string name="attendee_no_email_app">Ez dago posta-aplikaziorik instalatuta</string>
     <string name="attendee_show_all">Erakutsi parte-hartzaile guztiak</string>
@@ -1140,23 +1124,9 @@
     <string name="attendee_status_tentative">Behin-behinekoa</string>
     <string name="attendee_status_delegated">Eskuordetua</string>
     <string name="attendee_status_pending">Zain</string>
-    <string name="attendee_picker_title">Gehitu parte-hartzaileak</string>
-    <string name="attendee_pick_add_people">Gehitu parte-hartzaileak</string>
-    <string name="attendee_pick_from_contacts">Izena edo e-posta</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d gehiago</item>
-        <item quantity="other">+%1$d gehiago</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Iradoki jendea zure kontaktuetatik</string>
-    <string name="attendee_invalid_email">Idatzi helbide elektroniko oso bat</string>
-    <string name="attendee_add_typed">Gehitu \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Ezin da jenderik gonbidatu kontu honetan</string>
-    <string name="device_attendee_local_no_delivery">Egutegi honek ezin du gonbidapenik bidali. Gonbidatuak gordetzen dira, baina ez zaie jakinaraziko.</string>
-    <string name="action_save_and_notify">Gorde eta jakinarazi</string>
     <string name="inbox_empty_caught_up">Dena egunean</string>
     <string name="inbox_organizer_suffix">(antolatzailea)</string>
     <string name="menu_invites">Gonbidapenak</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Joan datara</string>
     <string name="menu_about">Honi buruz</string>
     <string name="menu_more">Gehiago menua</string>
@@ -1183,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Hautatutako tartean ez dago gutxienez ordubeteko bloke libreak.</string>
+    <string name="share_from_kashcal_footer">KashCal-etik partekatua</string>
     <string name="share_availability_chooser_title">Erabilgarritasuna partekatu</string>
     <string name="share_availability_share_failed">Ez dago partekatzeko aplikaziorik</string>
     <string name="share_availability_window_section">Tartea</string>
@@ -1201,23 +1172,5 @@
     <string name="share_as_card_all_day">Egun osoa</string>
     <string name="share_as_card_chooser_title">Partekatu gertaera</string>
     <string name="share_as_card_share_failed">Ezin izan da txartela partekatu</string>
-    <string name="share_from_kashcal_footer">KashCal-etik partekatua</string>
-    <string name="attendee_sheet_title">Bertaratuak</string>
-    <string name="attendee_search_hint">Bilatu</string>
-    <string name="attendee_search_no_matches">Emaitzarik ez</string>
-    <string name="attendee_section_going">Joaten</string>
-    <string name="attendee_section_maybe">Beharbada</string>
-    <string name="attendee_section_pending">Zain</string>
-    <string name="attendee_section_declined">Ukatua</string>
-    <string name="attendee_section_delegated">Eskuordetua</string>
-    <string name="whats_new_title">Berriak</string>
-    <string name="whats_new_dismiss">Ulertuta</string>
-    <string name="whats_new_v598_title">Lagundu Android irekirik mantentzen</string>
-    <string name="whats_new_v598_body">Google zure gailuan aplikazioak instalatzeko modua aldatzen ari da. Zure laguntza behar dugu.</string>
-    <string name="whats_new_v598_action_label">Bisitatu keepandroidopen.org</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d egun barru</item>
-        <item quantity="other">%1$d egun barru</item>
-    </plurals>
-    <string name="qs_tile_label">Gehitu</string>
+
 </resources>

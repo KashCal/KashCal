@@ -42,11 +42,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -1549,17 +1551,26 @@ private fun ColumnScope.DayEventsPager(
 
     if (!isSelectedInViewingMonth) {
         // Show message when user swipes month pager without selecting a day
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .padding(32.dp),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            Icon(
+                imageVector = Icons.Filled.Bolt,
+                contentDescription = stringResource(R.string.cd_empty_pick_a_day),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 stringResource(R.string.empty_pick_a_day),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
             )
         }
     } else {
@@ -1620,14 +1631,40 @@ private fun DayEventsPage(
             }
         }
         events.isEmpty() -> {
-            Box(
+            // Rotate the playful empty-day line per calendar day so it varies
+            // between empty days but is stable across recomposition (no random).
+            // Keyed on epoch-day for clean day-to-day cycling with no month/year
+            // boundary repeats.
+            val emptyDayPhrases = remember {
+                intArrayOf(
+                    R.string.empty_no_events_day_1,
+                    R.string.empty_no_events_day_2,
+                    R.string.empty_no_events_day_3,
+                    R.string.empty_no_events_day_4,
+                    R.string.empty_no_events_day_5,
+                )
+            }
+            val epochDay = Instant.ofEpochMilli(dateMs)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .toEpochDay()
+            val phraseRes = emptyDayPhrases[Math.floorMod(epochDay, emptyDayPhrases.size.toLong()).toInt()]
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(32.dp),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
+                Icon(
+                    imageVector = Icons.Filled.SelfImprovement,
+                    contentDescription = stringResource(R.string.cd_empty_no_events_day),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    stringResource(R.string.empty_no_events_day),
+                    stringResource(phraseRes),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )

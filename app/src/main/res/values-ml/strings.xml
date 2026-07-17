@@ -13,12 +13,27 @@
     <string name="date_widget_description">ഇന്നത്തെ തീയതി ആപ്പ് ഐക്കൺ പോലെ കാണിക്കുന്നു</string>
     <string name="upcoming_widget_name">വരാനിരിക്കുന്നവ</string>
     <string name="upcoming_widget_description">ശൂന്യമായ ദിവസങ്ങൾ ഒഴിവാക്കി, അടുത്ത 10 ദിവസത്തെ ഇവന്റുകൾ കാണിക്കുന്നു</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">വരാനിരിക്കുന്ന ഇവന്റുകൾ ലോഡ് ചെയ്യുന്നു…</string>
     <string name="widget_error_load_events">ഇവന്റുകൾ ലോഡ് ചെയ്യാനായില്ല, തുറക്കാൻ ടാപ്പ് ചെയ്യുക</string>
     <string name="widget_no_events_today">ഇന്ന് ഇവന്റുകൾ ഇല്ല</string>
     <string name="widget_add_event">+ ഇവന്റ് ചേർക്കുക</string>
     <string name="widget_no_events">ഇവന്റുകൾ ഇല്ല</string>
     <string name="widget_no_upcoming_events">വരാനിരിക്കുന്ന ഇവന്റുകൾ ഇല്ല</string>
+    <string name="cd_widget_calendar">കലണ്ടർ</string>
+    <string name="cd_widget_add_event">ഇവന്റ് ചേർക്കുക</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ഇവന്റുകളൊന്നുമില്ല</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, റദ്ദാക്കി</string>
+    <string name="channel_event_reminders">ഇവന്റ് റിമൈൻഡറുകൾ</string>
+    <string name="channel_event_reminders_desc">വരാനിരിക്കുന്ന കലണ്ടർ ഇവന്റുകൾക്കുള്ള അറിയിപ്പുകൾ</string>
+    <string name="channel_sync_progress">സിങ്ക് പുരോഗതി</string>
+    <string name="channel_sync_progress_desc">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുമ്പോൾ പുരോഗതി കാണിക്കുന്നു</string>
+    <string name="channel_sync_status">സിങ്ക് നില</string>
+    <string name="channel_sync_status_desc">സിങ്ക് പൂർത്തീകരണത്തെയും പിശകുകളെയും കുറിച്ചുള്ള അറിയിപ്പുകൾ</string>
+    <string name="channel_event_invitations">ഇവന്റ് ക്ഷണങ്ങൾ</string>
+    <string name="channel_event_invitations_desc">നിങ്ങൾക്ക് ഒരു പുതിയ കലണ്ടർ ക്ഷണം ലഭിക്കുമ്പോഴുള്ള അറിയിപ്പുകൾ</string>
+    <string name="invite_notification_body">%1$s നിന്ന് · പ്രതികരിക്കാൻ ടാപ്പ് ചെയ്യുക</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">പുതിയ ഇവന്റ്</string>
@@ -43,7 +58,6 @@
     <string name="action_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
     <string name="action_sign_out">സൈൻ ഔട്ട്</string>
     <string name="action_learn_more">കൂടുതൽ അറിയുക</string>
-    <string name="action_open">തുറക്കുക</string>
     <string name="action_open_apple_id">Apple ID തുറക്കുക</string>
     <string name="action_open_settings">ക്രമീകരണങ്ങൾ തുറക്കുക</string>
     <string name="action_force_sync">ഫോഴ്സ് സിങ്ക്</string>
@@ -57,6 +71,7 @@
     <string name="action_save">സേവ് ചെയ്യുക</string>
     <string name="action_add">ചേർക്കുക</string>
     <string name="action_edit">തിരുത്തുക</string>
+    <string name="action_open">തുറക്കുക</string>
     <string name="action_delete">ഇല്ലാതാക്കുക</string>
     <string name="action_confirm">സ്ഥിരീകരിക്കുക</string>
     <string name="action_discard">നിരസിക്കുക</string>
@@ -70,43 +85,8 @@
     <string name="action_confirm_delete">ഇല്ലാതാക്കൽ സ്ഥിരീകരിക്കുക</string>
     <string name="action_delete_event">ഇവന്റ് ഇല്ലാതാക്കുക</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">നിങ്ങളുടെ പ്രതികരണം മുഴുവൻ പരമ്പരയ്ക്കും ബാധകമാണ്.</string>
-    <string name="invitees_host_tag">ഹോസ്റ്റ്</string>
-    <string name="rsvp_question_going">വരുമോ?</string>
-    <string name="rsvp_action_yes">അതെ</string>
-    <string name="rsvp_action_maybe">ഒരുപക്ഷേ</string>
-    <string name="rsvp_action_no">ഇല്ല</string>
-    <string name="rsvp_state_going">നിങ്ങൾ വരുന്നു</string>
-    <string name="rsvp_state_maybe">ഒരുപക്ഷേ</string>
-    <string name="rsvp_state_not_going">നിങ്ങൾ വരുന്നില്ല</string>
-    <string name="rsvp_action_change">മാറ്റുക</string>
-
-
-    <string name="invitees_summary_you_alone">നിങ്ങൾ</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
-        <item quantity="other">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d പേർ ക്ഷണിച്ചു</item>
-        <item quantity="other">%d പേർ ക്ഷണിച്ചു</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s നടത്തുന്നു</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · നിങ്ങൾ</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">നിങ്ങൾ + %d</item>
-        <item quantity="other">നിങ്ങൾ + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d പേർ കൂടി</item>
-        <item quantity="other">%1$s · %2$d പേർ കൂടി</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">പ്രതികരണം മാറ്റുക</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">ഇതും ഭാവിയിലേതും എല്ലാം</string>
@@ -144,7 +124,6 @@
     <string name="label_all_day">മുഴുവൻ ദിവസം</string>
     <string name="label_today">ഇന്ന്</string>
     <string name="label_go_to_date">തീയതിയിലേക്ക് പോകുക</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">ആ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -204,9 +183,9 @@
     <string name="restore_settings_subtitle">ബാക്കപ്പ് ഫയലിൽ നിന്ന് KashCal കോൺഫിഗറേഷൻ പുനഃസ്ഥാപിക്കുക</string>
     <string name="restore_confirm_title">ബാക്കപ്പ് പുനഃസ്ഥാപിക്കണോ?</string>
     <string name="restore_confirm_from">KashCal %1$s-ൽ നിന്നുള്ള ബാക്കപ്പ്, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">നിങ്ങളുടെ മുൻഗണനകൾ ഇറക്കുമതി ചെയ്യും.</string>
     <string name="action_restore">പുനഃസ്ഥാപിക്കുക</string>
     <string name="restore_success_title">പുനഃസ്ഥാപനം പൂർത്തിയായി</string>
-    <string name="restore_confirm_message_prefs_only">നിങ്ങളുടെ മുൻഗണനകൾ ഇറക്കുമതി ചെയ്യും.</string>
     <string name="restore_success_message_prefs_only">മുൻഗണനകൾ ഇറക്കുമതി ചെയ്തു.</string>
     <string name="restore_success_device_calendars_note">നിങ്ങൾ ഉപകരണ കലണ്ടർ സവിശേഷത ഉപയോഗിക്കുന്നെങ്കിൽ, അവ വീണ്ടും തിരഞ്ഞെടുക്കുക.</string>
     <string name="restore_error_title">പുനഃസ്ഥാപനം പരാജയപ്പെട്ടു</string>
@@ -229,6 +208,7 @@
     <string name="whats_new_v598_title">Android തുറന്നുകിടക്കാൻ സഹായിക്കുക</string>
     <string name="whats_new_v598_body">Google നിങ്ങളുടെ ഉപകരണത്തിൽ ആപ്പുകൾ ഇൻസ്റ്റാൾ ചെയ്യുന്ന രീതി മാറ്റുകയാണ്. ഞങ്ങൾക്ക് നിങ്ങളുടെ സഹായം ആവശ്യമാണ്.</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org സന്ദർശിക്കുക</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud കണക്ട് ചെയ്യുക</string>
     <string name="signin_caldav_title">CalDAV അക്കൗണ്ട് ചേർക്കുക</string>
@@ -272,13 +252,11 @@
     <string name="error_auth_session_expired_title">സെഷൻ കാലഹരണപ്പെട്ടു</string>
     <string name="error_auth_session_expired">നിങ്ങളുടെ iCloud സെഷൻ കാലഹരണപ്പെട്ടു. സിങ്ക് തുടരാൻ ദയവായി വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.</string>
     <string name="error_auth_account_locked">നിങ്ങളുടെ Apple ID ലോക്ക് ചെയ്തിരിക്കുന്നു. ദയവായി appleid.apple.com സന്ദർശിച്ച് അൺലോക്ക് ചെയ്യുക.</string>
-
     <string name="error_network_offline">നിങ്ങൾ ഓഫ്‌ലൈനാണ്. നിങ്ങൾ ഓൺലൈനായിരിക്കുമ്പോൾ മാറ്റങ്ങൾ സിങ്ക് ചെയ്യും.</string>
     <string name="error_network_timeout">കണക്ഷൻ സമയം കഴിഞ്ഞു. ദയവായി ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="error_network_ssl">സുരക്ഷിത കണക്ഷൻ പരാജയപ്പെട്ടു. ദയവായി നെറ്റ്‌വർക്ക് ക്രമീകരണങ്ങൾ പരിശോധിക്കുക.</string>
     <string name="error_network_unknown_host">iCloud ലേക്ക് എത്തിച്ചേരാൻ കഴിഞ്ഞില്ല. ദയവായി ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിക്കുക.</string>
     <string name="error_network_connection_failed">കണക്ഷൻ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.</string>
-
     <string name="error_server_unavailable">iCloud താൽക്കാലികമായി ലഭ്യമല്ല. ദയവായി പിന്നീട് ശ്രമിക്കുക.</string>
     <string name="error_server_rate_limited">വളരെയധികം അഭ്യർത്ഥനകൾ. ദയവായി കുറച്ച് കാത്തിരുന്ന് വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="error_server_forbidden">ആക്സസ് നിഷേധിച്ചു. ഈ കലണ്ടറിന് നിങ്ങൾക്ക് അനുമതി ഉണ്ടാകണമെന്നില്ല.</string>
@@ -287,13 +265,11 @@
     <string name="error_conflict_generic">ഈ ഇവന്റ് മറ്റൊരു ഉപകരണത്തിൽ മാറ്റം വരുത്തി. ഏറ്റവും പുതിയ പതിപ്പ് ലഭിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
     <string name="error_conflict_with_event">\"%1$s\" മറ്റൊരു ഉപകരണത്തിൽ മാറ്റം വരുത്തി. ഏറ്റവും പുതിയ പതിപ്പ് ലഭിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
     <string name="error_sync_token_expired">സിങ്ക് ഡാറ്റ കാലഹരണപ്പെട്ടു. ഫുൾ സിങ്ക് നടക്കുന്നു…</string>
-
     <string name="error_event_not_found">ഇവന്റ് കണ്ടെത്തിയില്ല.</string>
     <string name="error_calendar_not_found">കലണ്ടർ കണ്ടെത്തിയില്ല.</string>
     <string name="error_calendar_read_only">\"%1$s\" ലെ ഇവന്റുകൾ മാറ്റാൻ കഴിയില്ല (വായന-മാത്രം കലണ്ടർ).</string>
     <string name="error_event_invalid_data">അസാധുവായ ഇവന്റ് ഡാറ്റ. ദയവായി ആരംഭ-അവസാന സമയങ്ങൾ പരിശോധിക്കുക.</string>
     <string name="error_event_invalid_recurrence">അസാധുവായ ആവർത്തന പാറ്റേൺ.</string>
-
     <string name="error_display_name_exists">\"%1$s\" എന്ന പേരിൽ ഒരു അക്കൗണ്ട് ഇതിനകം ഉണ്ട്.</string>
     <string name="icloud_error_credentials_required">Apple ID യും പാസ്‌വേഡും ആവശ്യമാണ്</string>
     <string name="icloud_error_connection_timeout">കണക്ഷൻ സമയം കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.</string>
@@ -302,47 +278,45 @@
     <string name="caldav_error_connection_timeout">കണക്ഷൻ സമയം കഴിഞ്ഞു. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="caldav_error_no_calendars">ഈ സെർവറിൽ കലണ്ടറുകൾ കണ്ടെത്തിയില്ല.</string>
     <string name="caldav_error_unexpected">അപ്രതീക്ഷിത പിശക്. വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nഇത് നിങ്ങളുടെ ലോക്കൽ നെറ്റ്‌വർക്കിലുള്ള ഒരു സെർവർ ആണെങ്കിൽ, കണക്റ്റ് ചെയ്യാൻ ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് അനുവദിക്കുക.</string>
+    <string name="local_network_banner_title">ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് ആവശ്യമാണ്</string>
+    <string name="local_network_banner_body">ഈ സെർവർ നിങ്ങളുടെ ലോക്കൽ നെറ്റ്‌വർക്കിൽ ഉള്ളതായി തോന്നുന്നു. KashCal-ന് ഇതിലേക്ക് കണക്റ്റ് ചെയ്യാൻ ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് അനുവദിക്കുക.</string>
+    <string name="local_network_banner_allow">ആക്‌സസ് അനുവദിക്കുക</string>
+    <string name="local_network_banner_dismiss">ഇപ്പോൾ വേണ്ട</string>
     <string name="password_change_error_account_not_found">അക്കൗണ്ട് കണ്ടെത്തിയില്ല</string>
     <string name="password_change_error_no_credentials">നിലവിലുള്ള ക്രെഡൻഷ്യലുകൾ ഇല്ല</string>
     <string name="password_change_error_unsupported_provider">ഈ ദാതാവ് പാസ്‌വേഡ് മാറ്റം പിന്തുണയ്ക്കുന്നില്ല</string>
     <string name="password_change_error_invalid">അസാധുവായ പാസ്‌വേഡ്</string>
     <string name="password_change_error_network">നെറ്റ്‌വർക്ക് പിശക്, വീണ്ടും ശ്രമിക്കുക</string>
-
     <string name="error_import_file_not_found">ഫയൽ കണ്ടെത്തിയില്ല അല്ലെങ്കിൽ വായിക്കാൻ കഴിയില്ല.</string>
     <string name="error_import_invalid_format">അസാധുവായ കലണ്ടർ ഫയൽ ഫോർമാറ്റ്.</string>
     <string name="error_import_partial">%1$d ഇവന്റുകൾ ഇമ്പോർട്ട് ചെയ്തു, %2$d പരാജയപ്പെട്ടു.</string>
     <string name="error_export_failed">ഇവന്റുകൾ എക്സ്‌പോർട്ട് ചെയ്യൽ പരാജയപ്പെട്ടു.</string>
     <string name="error_export_no_events">എക്സ്‌പോർട്ട് ചെയ്യാൻ ഇവന്റുകൾ ഇല്ല.</string>
     <string name="error_end_before_start">അവസാന സമയം ആരംഭ സമയത്തിന് ശേഷമായിരിക്കണം</string>
-
     <string name="error_storage_full_title">സ്റ്റോറേജ് നിറഞ്ഞു</string>
     <string name="error_storage_full">മതിയായ സ്റ്റോറേജ് ഇല്ല. ദയവായി സ്ഥലം ശൂന്യമാക്കി വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="error_database_corruption_title">ഡാറ്റ പിശക്</string>
     <string name="error_database_corruption">നിങ്ങളുടെ കലണ്ടർ ഡാറ്റ കേടായിരിക്കാം. ദയവായി പിന്തുണ ബന്ധപ്പെടുക.</string>
     <string name="error_migration_title">അപ്ഡേറ്റ് പിശക്</string>
     <string name="error_migration_failed">ആപ്പ് ഡാറ്റ അപ്ഡേറ്റ് ചെയ്യൽ പരാജയപ്പെട്ടു. ദയവായി ആപ്പ് വീണ്ടും ഇൻസ്റ്റാൾ ചെയ്യുക.</string>
-
     <string name="error_permission_notification_title">അറിയിപ്പുകൾ ഓൺ ആക്കണോ?</string>
     <string name="error_permission_notification">വരാനിരിക്കുന്ന ഇവന്റുകൾ ഓർമ്മിപ്പിക്കാൻ KashCal ന് നോട്ടിഫിക്കേഷൻ അനുമതി ആവശ്യമാണ്.</string>
     <string name="error_permission_alarm_title">കൃത്യമായ അലാറങ്ങൾ ഓൺ ആക്കണോ?</string>
     <string name="error_permission_alarm">കൃത്യമായ റിമൈൻഡറുകൾക്ക് KashCal ന് എക്സാക്ട് അലാറം അനുമതി ആവശ്യമാണ്.</string>
     <string name="error_permission_storage">ഇമ്പോർട്ട്/എക്സ്‌പോർട്ടിന് സ്റ്റോറേജ് അനുമതി ആവശ്യമാണ്.</string>
-
     <string name="error_device_calendar_title">കലണ്ടർ പിശക്</string>
     <string name="error_device_calendar_write_failed">ഉപകരണ കലണ്ടറിൽ സേവ് ചെയ്യൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="error_device_calendar_permission">കലണ്ടർ എഴുത്ത് അനുമതി ആവശ്യമാണ്. ദയവായി ക്രമീകരണങ്ങളിൽ അനുമതി നൽകുക.</string>
     <string name="error_device_calendar_not_found">കലണ്ടർ കണ്ടെത്തിയില്ല. ഇത് നീക്കം ചെയ്തിരിക്കാം.</string>
     <string name="error_device_event_not_found">ഇവന്റ് കണ്ടെത്തിയില്ല. ഇത് ഇല്ലാതാക്കിയിരിക്കാം.</string>
     <string name="error_device_calendar_read_only">ഈ കലണ്ടർ വായന-മാത്രമാണ്.</string>
-
     <string name="error_sync_no_accounts">iCloud അക്കൗണ്ട് കോൺഫിഗർ ചെയ്തിട്ടില്ല. കലണ്ടറുകൾ സിങ്ക് ചെയ്യാൻ iCloud സെറ്റപ്പ് ചെയ്യുക.</string>
     <string name="error_sync_partial">%1$d കലണ്ടറുകൾ സിങ്ക് ചെയ്തു, %2$d പരാജയപ്പെട്ടു.</string>
-
     <string name="error_unknown">എന്തോ കുഴപ്പം സംഭവിച്ചു. ദയവായി വീണ്ടും ശ്രമിക്കുക.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">തിരഞ്ഞെടുത്തു</string>
-    <string name="cd_checkmark">തിരഞ്ഞെടുത്തു</string>
     <string name="cd_back">പിന്നിലേക്ക്</string>
     <string name="cd_search">തിരയുക</string>
     <string name="cd_create_event">ഇവന്റ് സൃഷ്ടിക്കുക</string>
@@ -368,10 +342,6 @@
     <string name="cd_version_info">KashCal പതിപ്പ് %1$s. ഡീബഗ് ഓപ്ഷനുകൾക്ക് ദീർഘനേരം അമർത്തുക.</string>
     <string name="cd_color_slider">നിറ സ്ലൈഡർ, ഇപ്പോൾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ഡിഗ്രി</string>
-    <string name="cd_event_state_cancelled">റദ്ദാക്കി</string>
-    <string name="cd_event_state_declined">നിരസിച്ചു</string>
-    <string name="cd_event_state_past">കഴിഞ്ഞ ഇവന്റ്</string>
-    <string name="cd_event_untitled">തലക്കെട്ടില്ലാത്ത ഇവന്റ്</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">കലണ്ടർ</string>
@@ -385,6 +355,7 @@
     <string name="label_password">പാസ്‌വേഡ്</string>
     <string name="label_display_name_optional">ഡിസ്പ്ലേ പേര്</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">ഇവന്റുകൾ തിരയുക…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -469,11 +440,19 @@
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">കലണ്ടർ ഫീഡുകൾ</string>
     <string name="subscriptions_section_add">ചേർക്കുക</string>
-    <string name="subscriptions_row_hint">ഉദാ. അവധികൾ, കായികം, സ്കൂൾ</string>
     <string name="subscriptions_empty_ics">ICS സബ്സ്ക്രിപ്ഷനുകൾ ഇല്ല</string>
     <string name="subscriptions_empty_ics_hint">ഇവന്റുകൾ കാണാൻ ഒരു കലണ്ടർ ഫീഡ് ചേർക്കുക</string>
     <string name="subscriptions_add_ics">ICS കലണ്ടർ ചേർക്കുക</string>
+    <string name="qs_tile_label">ഇവന്റ് ചേർക്കുക</string>
+    <string name="holiday_catalog_add">അവധി കലണ്ടർ ചേർക്കുക</string>
+    <string name="holiday_catalog_search_label">തിരയുക</string>
+    <string name="holiday_catalog_already_added">ചേർത്തു</string>
+    <string name="holiday_catalog_empty">രാജ്യങ്ങളൊന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="holiday_catalog_empty_hint">മറ്റൊരു പേര് ശ്രമിക്കുക</string>
+    <string name="holiday_catalog_validate_error">ഈ കലണ്ടറിലേക്ക് എത്താനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird-ൽ നിന്നുള്ള അവധി കലണ്ടറുകൾ, %1$s പ്രകാരം ലൈസൻസ് ചെയ്തവ.</string>
     <string name="subscriptions_row_label">കലണ്ടർ ഫീഡുകൾ (ICS)</string>
+    <string name="subscriptions_row_hint">ഉദാ. അവധികൾ, കായികം, സ്കൂൾ</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">ജന്മദിനങ്ങൾ &amp; വാർഷികങ്ങൾ</string>
@@ -493,8 +472,8 @@
     <string name="subscriptions_cd_back">പിന്നിലേക്ക് നാവിഗേറ്റ് ചെയ്യുക</string>
     <string name="subscriptions_cd_add">സബ്സ്ക്രിപ്ഷൻ ചേർക്കുക</string>
     <string name="snackbar_subscription_removed">സബ്സ്ക്രിപ്ഷൻ നീക്കം ചെയ്തു</string>
-    <string name="snackbar_subscription_already_exists">ഈ URL-ന് ഇതിനകം സബ്സ്ക്രൈബ് ചെയ്തിട്ടുണ്ട്</string>
     <string name="snackbar_action_undo">പഴയപടിയാക്കുക</string>
+    <string name="snackbar_subscription_already_exists">ഈ URL-ന് ഇതിനകം സബ്സ്ക്രൈബ് ചെയ്തിട്ടുണ്ട്</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">സിങ്ക്</string>
@@ -514,7 +493,6 @@
     <string name="account_detail_cd_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
     <string name="account_detail_cd_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">അക്കൗണ്ട് പേരുമാറ്റുക</string>
     <string name="rename_account_label">അക്കൗണ്ട് പേര്</string>
@@ -531,6 +509,7 @@
     <string name="settings_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="settings_device_calendars_hint">മറ്റ് ആപ്പുകളിൽ നിന്നുള്ള കലണ്ടറുകൾ</string>
     <string name="settings_quick_event_add">ദ്രുത ഇവന്റ് ചേർക്കൽ</string>
+    <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
     <string name="settings_week_numbers">ആഴ്ച നമ്പറുകൾ</string>
     <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="settings_widget_event_limit">വിജറ്റ് ഇവന്റ് പരിധി</string>
@@ -543,6 +522,8 @@
     <string name="settings_tap_to_enable">ഓൺ ആക്കാൻ ടാപ്പ് ചെയ്യുക</string>
     <string name="settings_device_calendars_enabled">%1$d ഓൺ</string>
     <string name="settings_per_day">ദിവസം %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">ആപ്പ്-നിർദ്ദിഷ്ട പാസ്‌വേഡ് എന്താണ്?</string>
     <string name="caldav_trust_insecure_label">അസുരക്ഷിത കണക്ഷൻ വിശ്വസിക്കുക</string>
     <string name="action_add_another">ഒന്ന് കൂടി ചേർക്കുക</string>
@@ -604,7 +585,6 @@
     <string name="device_calendars_reminders_desc">ഉപകരണ കലണ്ടർ ഇവന്റുകൾക്ക് നോട്ടിഫിക്കേഷൻ ലഭിക്കുക</string>
     <string name="device_calendars_read_only_no_write">വായന മാത്രം (എഴുത്ത് അനുമതി ഇല്ല)</string>
     <string name="device_calendars_read_only_calendar">വായന മാത്രം (കലണ്ടർ വായന-മാത്രം)</string>
-
     <string name="settings_developer_options">ഡെവലപ്പർ ഓപ്ഷനുകൾ</string>
     <string name="settings_sync_frequency">സിങ്ക് ആവൃത്തി</string>
     <string name="settings_preview">പ്രിവ്യൂ</string>
@@ -617,7 +597,6 @@
     <string name="drawer_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="drawer_account_offline">ഓഫ്‌ലൈൻ</string>
     <string name="drawer_share_feedback">സഹായവും രേഖകളും</string>
-
     <string name="event_title_fallback">ഇവന്റ്</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -680,12 +659,11 @@
         <item quantity="one">%1$d ഇവന്റ്</item>
         <item quantity="other">%1$d ഇവന്റുകൾ</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">കലണ്ടർ തുറക്കുക</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d ദിവസം കൂടി</item>
         <item quantity="other">%1$d ദിവസങ്ങൾ കൂടി</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">കലണ്ടർ തുറക്കുക</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ജന്മദിനം</item>
         <item quantity="other">%1$d ജന്മദിനങ്ങൾ</item>
@@ -776,39 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">ഈ ഇവന്റ്</string>
-    <string name="recurring_all_events">എല്ലാ ഇവന്റുകളും</string>
     <string name="dialog_edit_recurring_title">മാറ്റങ്ങൾ സംരക്ഷിക്കുക</string>
     <string name="dialog_delete_recurring_title">ഇല്ലാതാക്കുക</string>
     <string name="dialog_move_recurring_title">മാറ്റുക</string>
+    <string name="recurring_this_event">ഈ ഇവന്റ്</string>
+    <string name="recurring_all_events">എല്ലാ ഇവന്റുകളും</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">പങ്കെടുക്കുന്നവർ</string>
+    <string name="attendee_search_hint">തിരയുക</string>
+    <string name="attendee_search_no_matches">ഫലങ്ങളില്ല</string>
+    <string name="attendee_picker_title">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
+    <string name="attendee_pick_add_people">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
+    <string name="attendee_pick_from_contacts">പേര് അല്ലെങ്കിൽ ഇമെയിൽ</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d കൂടി</item>
+        <item quantity="other">+%1$d കൂടി</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">നിങ്ങളുടെ കോൺടാക്റ്റുകളിൽ നിന്ന് ആളുകളെ നിർദ്ദേശിക്കുക</string>
+    <string name="attendee_invalid_email">പൂർണ്ണമായ ഇമെയിൽ വിലാസം നൽകുക</string>
+    <string name="attendee_add_typed">\"%1$s\" ചേർക്കുക</string>
+    <string name="attendee_scheduling_unavailable">ഈ അക്കൗണ്ടിൽ ആളുകളെ ക്ഷണിക്കാൻ കഴിയില്ല</string>
+    <string name="device_attendee_local_no_delivery">ഈ കലണ്ടറിന് ക്ഷണങ്ങൾ അയയ്ക്കാൻ കഴിയില്ല. അതിഥികളെ സംരക്ഷിക്കും, പക്ഷേ അവരെ അറിയിക്കില്ല.</string>
+    <string name="action_save_and_notify">സംരക്ഷിച്ച് അറിയിക്കുക</string>
+    <string name="attendee_section_going">വരുന്നു</string>
+    <string name="attendee_section_maybe">ഒരുപക്ഷേ</string>
+    <string name="attendee_section_pending">കാത്തിരിക്കുന്നു</string>
+    <string name="attendee_section_declined">നിരസിച്ചു</string>
+    <string name="attendee_section_delegated">ഏല്പിച്ചു</string>
+    <string name="invitees_host_tag">ഹോസ്റ്റ്</string>
+    <string name="invitees_summary_you_alone">നിങ്ങൾ</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
+        <item quantity="other">നിങ്ങൾ · %d പേർ ക്ഷണിച്ചു</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d പേർ ക്ഷണിച്ചു</item>
+        <item quantity="other">%d പേർ ക്ഷണിച്ചു</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s നടത്തുന്നു</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · നിങ്ങൾ</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · നിങ്ങൾ + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">നിങ്ങൾ + %d</item>
+        <item quantity="other">നിങ്ങൾ + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d പേർ കൂടി</item>
+        <item quantity="other">%1$s · %2$d പേർ കൂടി</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">പ്രതികരണം മാറ്റുക</string>
+    <string name="rsvp_question_going">വരുമോ?</string>
+    <string name="rsvp_action_yes">അതെ</string>
+    <string name="rsvp_action_maybe">ഒരുപക്ഷേ</string>
+    <string name="rsvp_action_no">ഇല്ല</string>
+    <string name="rsvp_state_going">നിങ്ങൾ വരുന്നു</string>
+    <string name="rsvp_state_maybe">ഒരുപക്ഷേ</string>
+    <string name="rsvp_state_not_going">നിങ്ങൾ വരുന്നില്ല</string>
+    <string name="rsvp_action_change">മാറ്റുക</string>
     <string name="empty_pick_a_day">ഒരു ദിവസം തിരഞ്ഞെടുക്കുക. അത് പ്രയോജനപ്പെടുത്തുക.</string>
-    <string name="empty_no_events_day">ഇവിടെ ഒന്നുമില്ല; പുറത്ത് പോയി ഒന്ന് നടക്കാം?</string>
+    <string name="cd_empty_pick_a_day">ഒരു ദിവസം തിരഞ്ഞെടുക്കുക</string>
+    <string name="empty_no_events_day_1">ഒരു ഒഴിവുദിനം. വിശ്രമിക്കാൻ പ്രപഞ്ചം പറയുന്നു.</string>
+    <string name="empty_no_events_day_2">പദ്ധതികളൊന്നുമില്ല. അതുതന്നെയാണ് പദ്ധതി.</string>
+    <string name="empty_no_events_day_3">ഒരു സമ്മാനം: ഒഴിഞ്ഞൊരു ദിവസം.</string>
+    <string name="empty_no_events_day_4">കലണ്ടർ നില: മനോഹരമായി ഒഴിഞ്ഞുകിടക്കുന്നു.</string>
+    <string name="empty_no_events_day_5">ഒന്നും ക്രമീകരിച്ചിട്ടില്ല. ശാന്തത ആസ്വദിക്കൂ.</string>
+    <string name="cd_empty_no_events_day">ശാന്തമായ ദിവസം, ഒന്നും ക്രമീകരിച്ചിട്ടില്ല</string>
     <string name="filter_date">തീയതി</string>
     <string name="label_select_date">ഒരു തീയതി തിരഞ്ഞെടുക്കുക</string>
     <string name="hint_tap_date_range">ഒറ്റ ദിവസത്തിന് അതേ തീയതി ടാപ്പ് ചെയ്യുക, അല്ലെങ്കിൽ പരിധിക്ക് മറ്റൊരു തീയതി</string>
-
     <string name="cd_clear">ക്ലിയർ</string>
     <string name="cd_offline">ഓഫ്‌ലൈൻ</string>
+    <string name="cd_event_state_cancelled">റദ്ദാക്കി</string>
+    <string name="cd_event_state_declined">നിരസിച്ചു</string>
+    <string name="cd_event_state_past">കഴിഞ്ഞ ഇവന്റ്</string>
     <string name="cd_loading_events">ഇവന്റുകൾ ലോഡ് ചെയ്യുന്നു</string>
+    <string name="cd_event_untitled">തലക്കെട്ടില്ലാത്ത ഇവന്റ്</string>
     <string name="cd_open_drawer">ഡ്രോയർ തുറക്കുക</string>
     <string name="cd_close_drawer">ഡ്രോയർ അടയ്ക്കുക</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">കലണ്ടർ കാഴ്ച</string>
     <string name="cd_active_view">സജീവ കാഴ്ച</string>
-
     <string name="view_agenda">അജണ്ട</string>
     <string name="view_month_full">മാസം (പൂർണ്ണം)</string>
     <string name="view_day">ദിവസം</string>
     <string name="view_three_days">3 ദിവസം</string>
     <string name="view_year">വർഷം</string>
     <string name="view_insights">ഇൻസൈറ്റുകൾ</string>
-
     <string name="label_go_to_month">മാസത്തിലേക്ക് പോകുക</string>
-
     <string name="action_more_options">കൂടുതൽ ഓപ്ഷനുകൾ</string>
     <string name="quick_add_save_failed">ഇവന്റ് സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല</string>
-
     <string name="label_duration_days">ദിവസം</string>
     <string name="label_duration_hrs">മ.</string>
     <string name="label_duration_min">മി.</string>
@@ -823,222 +860,7 @@
     <string name="ordinal_4th">4-ാം</string>
     <string name="ordinal_nth">%1$d-ാം</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d പുതിയത്</string>
-    <string name="sync_summary_updated">%1$d അപ്ഡേറ്റ് ചെയ്തത്</string>
-    <string name="sync_summary_removed">%1$d നീക്കം ചെയ്തത്</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">സർക്കുലർ സ്ക്രോളിങ് ഓൺ ആക്കി</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">റിമൈൻഡർ ഇല്ല</string>
-    <string name="reminder_at_time_of_event">ഇവന്റ് സമയത്ത്</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s മുമ്പ്</string>
-    <string name="reminder_time_after">%1$s ശേഷം</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">ഇവന്റ് ദിവസം 9 AM</string>
-    <string name="reminder_day_of_event_24h">ഇവന്റ് ദിവസം 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s മുമ്പ് 9 AM-ന്</string>
-    <string name="reminder_before_at_24h">%1$s മുമ്പ് 09:00-ന്</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">ഓഫ്</string>
-    <string name="reminder_short_at_event">ഇവന്റിൽ</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dമി.</string>
-    <string name="reminder_short_hours">%1$dമ.</string>
-    <string name="reminder_short_days">%1$dദി.</string>
-    <string name="reminder_short_weeks">%1$dആ.</string>
-    <string name="reminder_summary_none">ഒന്നുമില്ല</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dമ. %2$dമി.</string>
-    <string name="duration_compact_short">%1$dമ.%2$dമി.</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">മാനുവൽ മാത്രം</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">എല്ലാ ഇവന്റുകളും</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">സ്നൂസ്</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">ഇപ്പോൾ ആരംഭിക്കുന്നു</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d ദിവസത്തിൽ</item>
-        <item quantity="other">%1$d ദിവസങ്ങളിൽ</item>
-    </plurals>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">നാളെ, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">സിങ്ക് പൂർത്തിയായി</string>
-    <string name="sync_notification_partial">സിങ്ക് ഭാഗികമായി പൂർത്തിയായി</string>
-    <string name="sync_notification_auth_failed">സിങ്ക് ഓതന്റിക്കേഷൻ പരാജയപ്പെട്ടു</string>
-    <string name="sync_notification_auth_reauth">നിങ്ങളുടെ അക്കൗണ്ട് വീണ്ടും ഓതന്റിക്കേറ്റ് ചെയ്യുക</string>
-    <string name="sync_notification_failed">സിങ്ക് പരാജയപ്പെട്ടു</string>
-    <string name="sync_notification_parse_title">ചില ഇവന്റുകൾ സിങ്ക് ചെയ്യാനായില്ല</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s-ൽ %1$s സിങ്ക് ചെയ്യാനായില്ല. സെറ്റിംഗ്സിൽ ഫോഴ്സ് സിങ്ക് പരീക്ഷിക്കുക.</string>
-    <string name="sync_notification_conflict_title">സിങ്ക് വൈരുദ്ധ്യം പരിഹരിച്ചു</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">സിങ്ക് വൈരുദ്ധ്യം കാരണം \"%1$s\"-ന്റെ ലോക്കൽ മാറ്റങ്ങൾ നഷ്ടപ്പെട്ടു. സെർവർ പതിപ്പ് ഉപയോഗിക്കും.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">സിങ്ക് വൈരുദ്ധ്യങ്ങൾ കാരണം %1$s-ന്റെ ലോക്കൽ മാറ്റങ്ങൾ നഷ്ടപ്പെട്ടു. സെർവർ പതിപ്പുകൾ ഉപയോഗിക്കും.</string>
-    <string name="sync_notification_expired_title">സിങ്ക് മാറ്റങ്ങൾ കാലഹരണപ്പെട്ടു</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">30 ദിവസത്തിന് ശേഷവും %1$s സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
-    <string name="sync_notification_expired_content_calendar">%2$s-ലെ %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
-    <string name="sync_notification_expired_content_calendars">%2$s-ൽ ഉടനീളമുള്ള %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d കലണ്ടർ സിങ്ക് ചെയ്തു</item>
-        <item quantity="other">%1$d കലണ്ടറുകൾ സിങ്ക് ചെയ്തു</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d മാറ്റം</item>
-        <item quantity="other">, %1$d മാറ്റങ്ങൾ</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d പിശക്</item>
-        <item quantity="other">, %1$d പിശകുകൾ</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s-ന്റെ %2$s ജന്മദിനം</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s-ന്റെ ജന്മദിനം</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s-ന്റെ %2$s വാർഷികം</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s-ന്റെ വാർഷികം</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$dാം</string>
-    <string name="ordinal_suffix_nd">%1$dാം</string>
-    <string name="ordinal_suffix_rd">%1$dാം</string>
-    <string name="ordinal_suffix_th">%1$dാം</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുന്നു…</string>
-    <string name="sync_banner_preparing">സിങ്കിനായി തയ്യാറെടുക്കുന്നു…</string>
-    <string name="sync_banner_complete_errors">പിശകുകളോടെ സിങ്ക് പൂർത്തിയായി</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">സിങ്ക് പരാജയം: %1$s</string>
-    <string name="error_unknown_error">അജ്ഞാത പിശക്</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">പുതിയ ഇവന്റ്: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d പുതിയ ഇവന്റ്</item>
-        <item quantity="other">%1$d പുതിയ ഇവന്റുകൾ</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d ഇവന്റ് അപ്ഡേറ്റ് ചെയ്തു</item>
-        <item quantity="other">%1$d ഇവന്റുകൾ അപ്ഡേറ്റ് ചെയ്തു</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d ഇവന്റ് നീക്കം ചെയ്തു</item>
-        <item quantity="other">%1$d ഇവന്റുകൾ നീക്കം ചെയ്തു</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d കലണ്ടർ അപ്ഡേറ്റ്</item>
-        <item quantity="other">%1$d കലണ്ടർ അപ്ഡേറ്റുകൾ</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">ദിവസം %1$d / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ദിവസം 1 / %1$d · ആരംഭം %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ദിവസം %1$d / %2$d · അവസാനം %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · മുഴുവൻ ദിവസം</string>
-    <string name="event_date_all_day">%1$s · മുഴുവൻ ദിവസം</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (മുഴുവൻ ദിവസം)</string>
-    <string name="event_date_all_day_parens">%1$s (മുഴുവൻ ദിവസം)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">ഇവന്റ് സേവ് ചെയ്യുക</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">പുതിയത്</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">ചുവപ്പ്</string>
-    <string name="color_orange">ഓറഞ്ച്</string>
-    <string name="color_yellow">മഞ്ഞ</string>
-    <string name="color_green">പച്ച</string>
-    <string name="color_cyan">സയാൻ</string>
-    <string name="color_blue">നീല</string>
-    <string name="color_purple">പർപ്പിൾ</string>
-    <string name="color_saddlebrown">സാഡിൽ ബ്രൗൺ</string>
-    <string name="color_tomato">തക്കാളി</string>    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
-    <string name="color_gold">സ്വർണം</string>
-    <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>
-    <string name="color_limegreen">നാരങ്ങാ പച്ച</string>    <string name="color_lightseagreen">ഇളം കടൽ പച്ച</string>
-    <string name="color_dodgerblue">ഡോഡ്ജർ നീല</string>
-    <string name="color_royalblue">രാജകീയ നീല</string>    <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
-    <string name="color_hotpink">ഹോട്ട് പിങ്ക്</string>
-    <string name="color_dimgray">മങ്ങിയ ചാര</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">മീറ്റിംഗ് ലിങ്ക്: %1$s</string>
-    <string name="cd_phone_number">ഫോൺ നമ്പർ</string>
-    <string name="cd_email_link">ഇമെയിൽ: %1$s</string>
-    <string name="cd_web_link">ലിങ്ക്: %1$s</string>
-    <string name="cd_text_with_links">%1$d ലിങ്കുകളുള്ള ടെക്സ്റ്റ്: %2$s</string>
-    <string name="cd_text_with_link">1 ലിങ്കുള്ള ടെക്സ്റ്റ്: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">ദിവസം %1$d / %2$d (മുഴുവൻ ദിവസം)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ</string>
-    <string name="sync_history_stats_issues">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ   ⚠ %4$d പ്രശ്നങ്ങൾ</string>
-    <string name="sync_history_failed">പരാജയം</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">ഓരോ മണിക്കൂറിലും</string>
-    <string name="ics_sync_every_n_hours">ഓരോ %1$d മണിക്കൂറിലും</string>
-    <string name="ics_sync_daily">ദിവസവും</string>
-    <string name="ics_sync_weekly">ആഴ്ചതോറും</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL ആവശ്യമാണ്</string>
-    <string name="ics_url_invalid_scheme">URL http://, https://, അല്ലെങ്കിൽ webcal:// ൽ ആരംഭിക്കണം</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">സെർവർ ഒരു പിശക് നൽകി (%1$d). ദയവായി URL പരിശോധിക്കുക.</string>
-    <string name="ics_fetch_error_empty">കലണ്ടർ ഫീഡ് ശൂന്യമാണ്.</string>
-    <string name="ics_fetch_error_not_calendar">ആ URL ഒരു കലണ്ടർ ഫീഡ് ആയി തോന്നുന്നില്ല.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget content descriptions -->
-    <string name="cd_widget_calendar">കലണ്ടർ</string>
-    <string name="cd_widget_add_event">ഇവന്റ് ചേർക്കുക</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">ഇവന്റുകളൊന്നുമില്ല</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, റദ്ദാക്കി</string>
-
-    <!-- Notification channels -->
-    <string name="channel_event_reminders">ഇവന്റ് റിമൈൻഡറുകൾ</string>
-    <string name="channel_event_reminders_desc">വരാനിരിക്കുന്ന കലണ്ടർ ഇവന്റുകൾക്കുള്ള അറിയിപ്പുകൾ</string>
-    <string name="channel_sync_progress">സിങ്ക് പുരോഗതി</string>
-    <string name="channel_sync_progress_desc">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുമ്പോൾ പുരോഗതി കാണിക്കുന്നു</string>
-    <string name="channel_sync_status">സിങ്ക് നില</string>
-    <string name="channel_sync_status_desc">സിങ്ക് പൂർത്തീകരണത്തെയും പിശകുകളെയും കുറിച്ചുള്ള അറിയിപ്പുകൾ</string>
-    <string name="channel_event_invitations">ഇവന്റ് ക്ഷണങ്ങൾ</string>
-    <string name="channel_event_invitations_desc">നിങ്ങൾക്ക് ഒരു പുതിയ കലണ്ടർ ക്ഷണം ലഭിക്കുമ്പോഴുള്ള അറിയിപ്പുകൾ</string>
-    <string name="invite_notification_body">%1$s നിന്ന് · പ്രതികരിക്കാൻ ടാപ്പ് ചെയ്യുക</string>
-
-    <!-- Recurrence rules -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">ആവർത്തിക്കുന്നില്ല</string>
     <string name="rrule_freq_daily">ദിവസേന</string>
     <string name="rrule_freq_weekly">ആഴ്ചതോറും</string>
@@ -1054,17 +876,163 @@
     <string name="rrule_freq_on_last_day">അവസാന ദിവസം %1$s</string>
     <string name="rrule_freq_on_day_n">ദിവസം %2$d-ൽ %1$s</string>
     <string name="rrule_ordinal_last">അവസാനം</string>
-    <string name="rrule_until_suffix">, %1$s വരെ</string>
-    <string name="rrule_freq_never">ഒരിക്കലുമില്ല</string>
-    <string name="rrule_starting">%1$s %2$s മുതൽ ആരംഭിക്കുന്നു%3$s</string>
-    <string name="rrule_since">%1$s · %2$s മുതൽ</string>
-
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d തവണ</item>
         <item quantity="other">, %1$d തവണ</item>
     </plurals>
+    <string name="rrule_until_suffix">, %1$s വരെ</string>
+    <string name="rrule_freq_never">ഒരിക്കലുമില്ല</string>
+    <string name="rrule_freq_custom">ഇഷ്ടാനുസൃതം</string>
+    <string name="label_repeat_every">ഓരോ</string>
+    <string name="rrule_unit_day">ദിവസം</string>
+    <string name="rrule_unit_week">ആഴ്‌ച</string>
+    <string name="rrule_unit_month">മാസം</string>
+    <string name="rrule_unit_year">വർഷം</string>
+    <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
+    <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
+    <string name="rrule_starting">%1$s %2$s മുതൽ ആരംഭിക്കുന്നു%3$s</string>
+    <string name="rrule_since">%1$s · %2$s മുതൽ</string>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d പുതിയത്</string>
+    <string name="sync_summary_updated">%1$d അപ്ഡേറ്റ് ചെയ്തത്</string>
+    <string name="sync_summary_removed">%1$d നീക്കം ചെയ്തത്</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">സർക്കുലർ സ്ക്രോളിങ് ഓൺ ആക്കി</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">റിമൈൻഡർ ഇല്ല</string>
+    <string name="reminder_at_time_of_event">ഇവന്റ് സമയത്ത്</string>
+    <string name="reminder_time_before">%1$s മുമ്പ്</string>
+    <string name="reminder_time_after">%1$s ശേഷം</string>
+    <string name="reminder_day_of_event_12h">ഇവന്റ് ദിവസം 9 AM</string>
+    <string name="reminder_day_of_event_24h">ഇവന്റ് ദിവസം 09:00</string>
+    <string name="reminder_before_at_12h">%1$s മുമ്പ് 9 AM-ന്</string>
+    <string name="reminder_before_at_24h">%1$s മുമ്പ് 09:00-ന്</string>
+    <string name="reminder_short_off">ഓഫ്</string>
+    <string name="reminder_short_at_event">ഇവന്റിൽ</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dമി.</string>
+    <string name="reminder_short_hours">%1$dമ.</string>
+    <string name="reminder_short_days">%1$dദി.</string>
+    <string name="reminder_short_weeks">%1$dആ.</string>
+    <string name="reminder_summary_none">ഒന്നുമില്ല</string>
+    <string name="duration_compact">%1$dമ. %2$dമി.</string>
+    <string name="duration_compact_short">%1$dമ.%2$dമി.</string>
+    <string name="sync_manual_only">മാനുവൽ മാത്രം</string>
+    <string name="sync_lookback_all">എല്ലാ ഇവന്റുകളും</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">സ്നൂസ്</string>
+    <string name="notification_starting_now">ഇപ്പോൾ ആരംഭിക്കുന്നു</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d ദിവസത്തിൽ</item>
+        <item quantity="other">%1$d ദിവസങ്ങളിൽ</item>
+    </plurals>
+    <string name="notification_tomorrow_time">നാളെ, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">സിങ്ക് പൂർത്തിയായി</string>
+    <string name="sync_notification_partial">സിങ്ക് ഭാഗികമായി പൂർത്തിയായി</string>
+    <string name="sync_notification_auth_failed">സിങ്ക് ഓതന്റിക്കേഷൻ പരാജയപ്പെട്ടു</string>
+    <string name="sync_notification_auth_reauth">നിങ്ങളുടെ അക്കൗണ്ട് വീണ്ടും ഓതന്റിക്കേറ്റ് ചെയ്യുക</string>
+    <string name="sync_notification_failed">സിങ്ക് പരാജയപ്പെട്ടു</string>
+    <string name="sync_notification_parse_title">ചില ഇവന്റുകൾ സിങ്ക് ചെയ്യാനായില്ല</string>
+    <string name="sync_notification_parse_content">%2$s-ൽ %1$s സിങ്ക് ചെയ്യാനായില്ല. സെറ്റിംഗ്സിൽ ഫോഴ്സ് സിങ്ക് പരീക്ഷിക്കുക.</string>
+    <string name="sync_notification_conflict_title">സിങ്ക് വൈരുദ്ധ്യം പരിഹരിച്ചു</string>
+    <string name="sync_notification_conflict_single">സിങ്ക് വൈരുദ്ധ്യം കാരണം \"%1$s\"-ന്റെ ലോക്കൽ മാറ്റങ്ങൾ നഷ്ടപ്പെട്ടു. സെർവർ പതിപ്പ് ഉപയോഗിക്കും.</string>
+    <string name="sync_notification_conflict_multi">സിങ്ക് വൈരുദ്ധ്യങ്ങൾ കാരണം %1$s-ന്റെ ലോക്കൽ മാറ്റങ്ങൾ നഷ്ടപ്പെട്ടു. സെർവർ പതിപ്പുകൾ ഉപയോഗിക്കും.</string>
+    <string name="sync_notification_expired_title">സിങ്ക് മാറ്റങ്ങൾ കാലഹരണപ്പെട്ടു</string>
+    <string name="sync_notification_expired_content">30 ദിവസത്തിന് ശേഷവും %1$s സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s-ലെ %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s-ൽ ഉടനീളമുള്ള %1$s 30 ദിവസത്തിന് ശേഷവും സിങ്ക് ചെയ്യാനായില്ല. സെർവർ പതിപ്പ് ഉപയോഗിക്കും. വീണ്ടും ശ്രമിക്കാൻ ഫോഴ്സ് സിങ്ക് ചെയ്യുക.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d കലണ്ടർ സിങ്ക് ചെയ്തു</item>
+        <item quantity="other">%1$d കലണ്ടറുകൾ സിങ്ക് ചെയ്തു</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d മാറ്റം</item>
+        <item quantity="other">, %1$d മാറ്റങ്ങൾ</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d പിശക്</item>
+        <item quantity="other">, %1$d പിശകുകൾ</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s-ന്റെ %2$s ജന്മദിനം</string>
+    <string name="contact_birthday">%1$s-ന്റെ ജന്മദിനം</string>
+    <string name="contact_anniversary_with_age">%1$s-ന്റെ %2$s വാർഷികം</string>
+    <string name="contact_anniversary">%1$s-ന്റെ വാർഷികം</string>
+    <string name="ordinal_suffix_st">%1$dാം</string>
+    <string name="ordinal_suffix_nd">%1$dാം</string>
+    <string name="ordinal_suffix_rd">%1$dാം</string>
+    <string name="ordinal_suffix_th">%1$dാം</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുന്നു…</string>
+    <string name="sync_banner_preparing">സിങ്കിനായി തയ്യാറെടുക്കുന്നു…</string>
+    <string name="sync_banner_complete_errors">പിശകുകളോടെ സിങ്ക് പൂർത്തിയായി</string>
+    <string name="sync_banner_failed">സിങ്ക് പരാജയം: %1$s</string>
+    <string name="error_unknown_error">അജ്ഞാത പിശക്</string>
+    <string name="sync_snackbar_new_event">പുതിയ ഇവന്റ്: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d പുതിയ ഇവന്റ്</item>
+        <item quantity="other">%1$d പുതിയ ഇവന്റുകൾ</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d ഇവന്റ് അപ്ഡേറ്റ് ചെയ്തു</item>
+        <item quantity="other">%1$d ഇവന്റുകൾ അപ്ഡേറ്റ് ചെയ്തു</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d ഇവന്റ് നീക്കം ചെയ്തു</item>
+        <item quantity="other">%1$d ഇവന്റുകൾ നീക്കം ചെയ്തു</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d കലണ്ടർ അപ്ഡേറ്റ്</item>
+        <item quantity="other">%1$d കലണ്ടർ അപ്ഡേറ്റുകൾ</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">ദിവസം %1$d / %2$d</string>
+    <string name="day_starts">ദിവസം 1 / %1$d · ആരംഭം %2$s</string>
+    <string name="day_ends">ദിവസം %1$d / %2$d · അവസാനം %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · മുഴുവൻ ദിവസം</string>
+    <string name="event_date_all_day">%1$s · മുഴുവൻ ദിവസം</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (മുഴുവൻ ദിവസം)</string>
+    <string name="event_date_all_day_parens">%1$s (മുഴുവൻ ദിവസം)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">ഇവന്റ് സേവ് ചെയ്യുക</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">പുതിയത്</string>
+    <string name="color_red">ചുവപ്പ്</string>
+    <string name="color_orange">ഓറഞ്ച്</string>
+    <string name="color_yellow">മഞ്ഞ</string>
+    <string name="color_green">പച്ച</string>
+    <string name="color_cyan">സയാൻ</string>
+    <string name="color_blue">നീല</string>
+    <string name="color_purple">പർപ്പിൾ</string>
+    <string name="cd_meeting_link">മീറ്റിംഗ് ലിങ്ക്: %1$s</string>
+    <string name="cd_phone_number">ഫോൺ നമ്പർ</string>
+    <string name="cd_email_link">ഇമെയിൽ: %1$s</string>
+    <string name="cd_web_link">ലിങ്ക്: %1$s</string>
+    <string name="cd_text_with_links">%1$d ലിങ്കുകളുള്ള ടെക്സ്റ്റ്: %2$s</string>
+    <string name="cd_text_with_link">1 ലിങ്കുള്ള ടെക്സ്റ്റ്: %1$s</string>
+    <string name="day_x_of_y_all_day">ദിവസം %1$d / %2$d (മുഴുവൻ ദിവസം)</string>
+    <string name="sync_history_stats">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ</string>
+    <string name="sync_history_stats_issues">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ   ⚠ %4$d പ്രശ്നങ്ങൾ</string>
+    <string name="sync_history_failed">പരാജയം</string>
+    <string name="ics_sync_every_hour">ഓരോ മണിക്കൂറിലും</string>
+    <string name="ics_sync_every_n_hours">ഓരോ %1$d മണിക്കൂറിലും</string>
+    <string name="ics_sync_daily">ദിവസവും</string>
+    <string name="ics_sync_weekly">ആഴ്ചതോറും</string>
+    <string name="ics_url_required">URL ആവശ്യമാണ്</string>
+    <string name="ics_url_invalid_scheme">URL http://, https://, അല്ലെങ്കിൽ webcal:// ൽ ആരംഭിക്കണം</string>
+    <string name="ics_fetch_error_http">സെർവർ ഒരു പിശക് നൽകി (%1$d). ദയവായി URL പരിശോധിക്കുക.</string>
+    <string name="ics_fetch_error_empty">കലണ്ടർ ഫീഡ് ശൂന്യമാണ്.</string>
+    <string name="ics_fetch_error_not_calendar">ആ URL ഒരു കലണ്ടർ ഫീഡ് ആയി തോന്നുന്നില്ല.</string>
     <string name="insights_title">ഇൻസൈറ്റുകൾ</string>
     <string name="insights_period_this_week">ആഴ്ച</string>
     <string name="insights_period_last_week">കഴിഞ്ഞ ആഴ്ച</string>
@@ -1102,14 +1070,27 @@
     <string name="insight_next_free_block">അടുത്ത ഒഴിവ് സമയം: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">ദൈനംദിന വിതരണം: ഏറ്റവും തിരക്കുള്ള ദിവസം %1$s</string>
 
-    <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">ലഭ്യത</string>
     <string name="label_busy">തിരക്ക്</string>
     <string name="label_free">ഒഴിവ്</string>
     <string name="label_event_color">ഇവന്റ് നിറം</string>
     <string name="label_calendar_default">കലണ്ടർ ഡിഫോൾട്ട്</string>
     <string name="label_custom">ഇഷ്ടാനുസൃതം</string>
+    <string name="cd_checkmark">തിരഞ്ഞെടുത്തു</string>
 
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">സാഡിൽ ബ്രൗൺ</string>
+    <string name="color_tomato">തക്കാളി</string>    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
+    <string name="color_gold">സ്വർണം</string>
+    <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>
+    <string name="color_limegreen">നാരങ്ങാ പച്ച</string>    <string name="color_lightseagreen">ഇളം കടൽ പച്ച</string>
+    <string name="color_dodgerblue">ഡോഡ്ജർ നീല</string>
+    <string name="color_royalblue">രാജകീയ നീല</string>    <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
+    <string name="color_hotpink">ഹോട്ട് പിങ്ക്</string>
+    <string name="color_dimgray">മങ്ങിയ ചാര</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">ചുവപ്പ്</string>
     <string name="hue_orange">ഓറഞ്ച്</string>
     <string name="hue_yellow">മഞ്ഞ</string>
@@ -1122,8 +1103,8 @@
     <string name="hue_neutral">നിഷ്പക്ഷം</string>
     <string name="label_more_colors">കൂടുതൽ നിറങ്ങൾ</string>
     <string name="label_back_to_grid">തിരികെ</string>
-    <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
 
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">പങ്കെടുക്കുന്നവർ</string>
     <string name="attendee_you_marker">നിങ്ങൾ</string>
     <string name="attendee_card_going">പോകുന്നു</string>
@@ -1131,21 +1112,10 @@
     <string name="attendee_card_declined">നിരസിച്ചു</string>
     <string name="attendee_card_tentative">താൽക്കാലികം</string>
     <string name="attendee_card_hosting">ആതിഥേയത്വം വഹിക്കുന്നു</string>
-    <string name="attendee_picker_title">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
-    <string name="attendee_pick_add_people">പങ്കെടുക്കുന്നവരെ ചേർക്കുക</string>
-    <string name="attendee_pick_from_contacts">പേര് അല്ലെങ്കിൽ ഇമെയിൽ</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d കൂടി</item>
-        <item quantity="other">+%1$d കൂടി</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">നിങ്ങളുടെ കോൺടാക്റ്റുകളിൽ നിന്ന് ആളുകളെ നിർദ്ദേശിക്കുക</string>
-    <string name="attendee_invalid_email">പൂർണ്ണമായ ഇമെയിൽ വിലാസം നൽകുക</string>
-    <string name="attendee_add_typed">\"%1$s\" ചേർക്കുക</string>
-    <string name="attendee_scheduling_unavailable">ഈ അക്കൗണ്ടിൽ ആളുകളെ ക്ഷണിക്കാൻ കഴിയില്ല</string>
-    <string name="device_attendee_local_no_delivery">ഈ കലണ്ടറിന് ക്ഷണങ്ങൾ അയയ്ക്കാൻ കഴിയില്ല. അതിഥികളെ സംരക്ഷിക്കും, പക്ഷേ അവരെ അറിയിക്കില്ല.</string>
-    <string name="action_save_and_notify">സംരക്ഷിച്ച് അറിയിക്കുക</string>
     <string name="attendee_action_copy">ഇമെയിൽ പകർത്തുക</string>
     <string name="attendee_action_email">ഇമെയിൽ അയയ്ക്കുക</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">ഇമെയിൽ പകർത്തി</string>
     <string name="attendee_no_email_app">ഇമെയിൽ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല</string>
     <string name="attendee_show_all">എല്ലാ പങ്കാളികളെയും കാണിക്കുക</string>
@@ -1157,7 +1127,6 @@
     <string name="inbox_empty_caught_up">എല്ലാം പൂർത്തിയായി</string>
     <string name="inbox_organizer_suffix">(സംഘാടകൻ)</string>
     <string name="menu_invites">ക്ഷണങ്ങൾ</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">തീയതിയിലേക്ക് പോവുക</string>
     <string name="menu_about">കുറിച്ച്</string>
     <string name="menu_more">കൂടുതൽ മെനു</string>
@@ -1165,19 +1134,34 @@
         <item quantity="one">കൂടുതൽ മെനു, %d ക്ഷണം തീർപ്പാക്കാത്തത്</item>
         <item quantity="other">കൂടുതൽ മെനു, %d ക്ഷണങ്ങൾ തീർപ്പാക്കാത്തവ</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ലഭ്യത പങ്കിടുക</string>
     <string name="share_availability_sheet_title">ലഭ്യത പങ്കിടുക</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">അടുത്ത %1$d ദിവസം</item>
+        <item quantity="other">അടുത്ത %1$d ദിവസങ്ങൾ</item>
+    </plurals>
     <string name="share_availability_hours_label">ജോലി സമയം: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">മുഴുവൻ ദിവസത്തെ ഇവന്റുകൾ തിരക്കിലായി</string>
     <string name="share_availability_share_button">പങ്കിടുക</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">അടുത്ത %1$d ദിവസം സ്വതന്ത്രം (%2$s – %3$s):</item>
+        <item quantity="other">അടുത്ത %1$d ദിവസങ്ങളിൽ സ്വതന്ത്രം (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">തിരഞ്ഞെടുത്ത ശ്രേണിയിൽ ഒരു മണിക്കൂറെങ്കിലുമുള്ള ഒഴിവുകൾ ഇല്ല.</string>
+    <string name="share_from_kashcal_footer">KashCal-ൽ നിന്ന് പങ്കിട്ടു</string>
     <string name="share_availability_chooser_title">ലഭ്യത പങ്കിടുക</string>
     <string name="share_availability_share_failed">പങ്കിടാൻ ആപ്പ് ലഭ്യമല്ല</string>
     <string name="share_availability_window_section">വിൻഡോ</string>
     <string name="share_availability_hours_section">ജോലി സമയം</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d ദിവസം</item>
+        <item quantity="other">%1$d ദിവസങ്ങൾ</item>
+    </plurals>
     <string name="share_availability_days_through">%1$s വരെ</string>
     <string name="share_availability_window_duration">%1$s മണിക്കൂർ വിൻഡോ</string>
     <string name="share_as_card_action">കാർഡായി പങ്കിടുക</string>
@@ -1188,41 +1172,5 @@
     <string name="share_as_card_all_day">മുഴുവൻ ദിവസം</string>
     <string name="share_as_card_chooser_title">ഇവന്റ് പങ്കിടുക</string>
     <string name="share_as_card_share_failed">കാർഡ് പങ്കിടാൻ കഴിഞ്ഞില്ല</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="one">%1$d ദിവസം</item>
-        <item quantity="other">%1$d ദിവസങ്ങൾ</item>
-    </plurals>
-    <string name="share_from_kashcal_footer">KashCal-ൽ നിന്ന് പങ്കിട്ടു</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="one">അടുത്ത %1$d ദിവസം</item>
-        <item quantity="other">അടുത്ത %1$d ദിവസങ്ങൾ</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="one">അടുത്ത %1$d ദിവസം സ്വതന്ത്രം (%2$s – %3$s):</item>
-        <item quantity="other">അടുത്ത %1$d ദിവസങ്ങളിൽ സ്വതന്ത്രം (%2$s – %3$s):</item>
-    </plurals>
-    <string name="rrule_freq_custom">ഇഷ്ടാനുസൃതം</string>
-    <string name="label_repeat_every">ഓരോ</string>
-    <string name="rrule_unit_day">ദിവസം</string>
-    <string name="rrule_unit_week">ആഴ്‌ച</string>
-    <string name="rrule_unit_month">മാസം</string>
-    <string name="rrule_unit_year">വർഷം</string>
-    <string name="cd_decrease_interval">ഇടവേള കുറയ്ക്കുക</string>
-    <string name="cd_increase_interval">ഇടവേള വർദ്ധിപ്പിക്കുക</string>
-    <string name="attendee_sheet_title">പങ്കെടുക്കുന്നവർ</string>
-    <string name="attendee_search_hint">തിരയുക</string>
-    <string name="attendee_search_no_matches">ഫലങ്ങളില്ല</string>
-    <string name="attendee_section_going">വരുന്നു</string>
-    <string name="attendee_section_maybe">ഒരുപക്ഷേ</string>
-    <string name="attendee_section_pending">കാത്തിരിക്കുന്നു</string>
-    <string name="attendee_section_declined">നിരസിച്ചു</string>
-    <string name="attendee_section_delegated">ഏല്പിച്ചു</string>
-    <string name="holiday_catalog_add">അവധി കലണ്ടർ ചേർക്കുക</string>
-    <string name="holiday_catalog_search_label">തിരയുക</string>
-    <string name="holiday_catalog_already_added">ചേർത്തു</string>
-    <string name="holiday_catalog_empty">രാജ്യങ്ങളൊന്നും കണ്ടെത്തിയില്ല</string>
-    <string name="holiday_catalog_empty_hint">മറ്റൊരു പേര് ശ്രമിക്കുക</string>
-    <string name="holiday_catalog_validate_error">ഈ കലണ്ടറിലേക്ക് എത്താനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird-ൽ നിന്നുള്ള അവധി കലണ്ടറുകൾ, %1$s പ്രകാരം ലൈസൻസ് ചെയ്തവ.</string>
-    <string name="qs_tile_label">ഇവന്റ് ചേർക്കുക</string>
+
 </resources>

@@ -13,12 +13,27 @@
     <string name="date_widget_description">අද දිනය යෙදුම් නිරූපකයක් ලෙස පෙන්වයි</string>
     <string name="upcoming_widget_name">ඉදිරි</string>
     <string name="upcoming_widget_description">ඉදිරි දින 10ක සිදුවීම් පෙන්වයි, හිස් දින මඟ හරියි</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">ඉදිරි සිදුවීම් පූරණය වෙමින්…</string>
     <string name="widget_error_load_events">සිදුවීම් පූරණය කළ නොහැකි විය, විවෘත කිරීමට තට්ටු කරන්න</string>
     <string name="widget_no_events_today">අද සිදුවීම් නැත</string>
     <string name="widget_add_event">+ සිදුවීමක් එකතු කරන්න</string>
     <string name="widget_no_events">සිදුවීම් නැත</string>
     <string name="widget_no_upcoming_events">ඉදිරි සිදුවීම් නැත</string>
+    <string name="cd_widget_calendar">දින දර්ශනය</string>
+    <string name="cd_widget_add_event">සිදුවීම එකතු කරන්න</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">සිදුවීම් නැත</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, අවලංගු කරන ලදී</string>
+    <string name="channel_event_reminders">සිදුවීම් මතක් කිරීම්</string>
+    <string name="channel_event_reminders_desc">ඉදිරියට එන දිනදර්ශන සිදුවීම් සඳහා දැනුම්දීම්</string>
+    <string name="channel_sync_progress">සමමුහුර්ත ප්‍රගතිය</string>
+    <string name="channel_sync_progress_desc">දිනදර්ශන සමමුහුර්ත කරන විට ප්‍රගතිය පෙන්වයි</string>
+    <string name="channel_sync_status">සමමුහුර්ත තත්ත්වය</string>
+    <string name="channel_sync_status_desc">සමමුහුර්ත සම්පූර්ණ කිරීම සහ දෝෂ පිළිබඳ දැනුම්දීම්</string>
+    <string name="channel_event_invitations">සිදුවීම් ආරාධනා</string>
+    <string name="channel_event_invitations_desc">ඔබට නව දිනදර්ශන ආරාධනාවක් ලැබුණු විට දැනුම්දීම්</string>
+    <string name="invite_notification_body">%1$s වෙතින් · ප්‍රතිචාර දැක්වීමට තට්ටු කරන්න</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">නව සිදුවීම</string>
@@ -45,7 +60,6 @@
     <string name="action_learn_more">තව දැනගන්න</string>
     <string name="action_open_apple_id">Apple ID විවෘත කරන්න</string>
     <string name="action_open_settings">සැකසීම් විවෘත කරන්න</string>
-    <string name="action_open">විවෘත කරන්න</string>
     <string name="action_force_sync">බලෙන් සමමුහුර්ත</string>
     <string name="action_sync_now">දැන් සමමුහුර්ත කරන්න</string>
     <string name="action_details">විස්තර</string>
@@ -57,6 +71,7 @@
     <string name="action_save">සුරකින්න</string>
     <string name="action_add">එකතු කරන්න</string>
     <string name="action_edit">සංස්කරණය</string>
+    <string name="action_open">විවෘත කරන්න</string>
     <string name="action_delete">මකන්න</string>
     <string name="action_confirm">තහවුරු කරන්න</string>
     <string name="action_discard">ඉවතලන්න</string>
@@ -70,21 +85,7 @@
     <string name="action_confirm_delete">මකීම තහවුරු කරන්න</string>
     <string name="action_delete_event">සිදුවීම මකන්න</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="invitees_host_tag">සත්කාරක</string>
-    <string name="rsvp_question_going">යනවාද?</string>
-    <string name="rsvp_action_yes">ඔව්</string>
-    <string name="rsvp_action_maybe">සමහර විට</string>
-    <string name="rsvp_action_no">නැහැ</string>
-    <string name="rsvp_state_going">ඔබ යනවා</string>
-    <string name="rsvp_state_maybe">සමහර විට</string>
-    <string name="rsvp_state_not_going">ඔබ යන්නේ නැහැ</string>
-    <string name="rsvp_action_change">වෙනස් කරන්න</string>
-
-
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">මෙම ප්‍රතිචාරය මුළු මාලාවටම අදාළ වේ.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
@@ -123,7 +124,6 @@
     <string name="label_all_day">මුළු දිනය</string>
     <string name="label_today">අද</string>
     <string name="label_go_to_date">දිනය වෙත යන්න</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">ස</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -144,9 +144,6 @@
     <string name="app_icon_label_calendar">දින දර්ශනය</string>
     <string name="app_icon_support_cta">KashCal ට සහාය වන්න</string>
     <string name="app_icon_switch_note">නිරූපකය වෙනස් කිරීමෙන් යෙදුම යළි ආරම්භ විය හැක. දැනුම්දීම් සැමවිටම පෙරනිමි නිරූපකය සහ නම භාවිත කරයි.</string>
-    <string name="settings_search_placeholder">සැකසීම් සොයන්න…</string>
-    <string name="settings_search_no_results">\"%1$s\" සඳහා සැකසීම් හමු නොවීය</string>
-    <string name="cd_search_settings">සැකසීම් සොයන්න</string>
     <string name="settings_time_format">කාල ආකෘතිය</string>
     <string name="settings_start_week_on">සතිය ආරම්භ කරන්න</string>
     <string name="settings_event_emojis">සිදුවීම් ඉමෝජි</string>
@@ -165,6 +162,8 @@
     <string name="settings_section_sync">සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
     <string name="settings_section_privacy">පෞද්ගලිකත්වය</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">යෙදුම් අගුල</string>
     <string name="app_lock_subtitle_off">KashCal විවෘත කිරීමට අගුළු හැරීම අවශ්‍ය කරන්න</string>
     <string name="app_lock_subtitle_on">ඇඟිලි සලකුණ, මුහුණ හෝ තිර අගුලෙන් අගුළු හරින්න</string>
@@ -184,9 +183,9 @@
     <string name="restore_settings_subtitle">උපස්ථ ගොනුවෙන් KashCal වින්‍යාසය ප්‍රතිසාධනය කරන්න</string>
     <string name="restore_confirm_title">උපස්ථය ප්‍රතිසාධනය කරන්නද?</string>
     <string name="restore_confirm_from">KashCal %1$s, %2$s වෙතින් උපස්ථය</string>
+    <string name="restore_confirm_message_prefs_only">ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</string>
     <string name="action_restore">ප්‍රතිසාධන</string>
     <string name="restore_success_title">ප්‍රතිසාධනය සම්පූර්ණයි</string>
-    <string name="restore_confirm_message_prefs_only">ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</string>
     <string name="restore_success_message_prefs_only">මනාපයන් ආයාත කර ඇත.</string>
     <string name="restore_success_device_calendars_note">ඔබ එම විශේෂාංගය භාවිත කරන්නේ නම් ඔබේ උපාංග දින දර්ශන නැවත තෝරන්න.</string>
     <string name="restore_error_title">ප්‍රතිසාධනය අසාර්ථකයි</string>
@@ -202,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">අපි ඔබ වෙනුවෙන් ඉන්නවා.</string>
     <string name="onboarding_connect_prompt">ඔබේ සිදුවීම් මෙහි බැලීමට iCloud සම්බන්ධ කරන්න</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">අලුත් මොනවද</string>
+    <string name="whats_new_dismiss">තේරුණා</string>
+    <string name="whats_new_v598_title">Android විවෘතව තබා ගැනීමට උදව් වන්න</string>
+    <string name="whats_new_v598_body">Google ඔබේ උපාංගයේ යෙදුම් ස්ථාපනය කරන ආකාරය වෙනස් කරමින් සිටී. අපට ඔබේ උදව් අවශ්‍යයි.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org වෙත යන්න</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud සම්බන්ධ කරන්න</string>
@@ -246,13 +252,11 @@
     <string name="error_auth_session_expired_title">සැසිය කල් ඉකුත්වී ඇත</string>
     <string name="error_auth_session_expired">ඔබේ iCloud සැසිය කල් ඉකුත්වී ඇත. සමමුහුර්තය දිගටම කරගෙන යාමට කරුණාකර නැවත පිවිසෙන්න.</string>
     <string name="error_auth_account_locked">ඔබේ Apple ID අගුළු දමා ඇත. අගුළු ඇරීමට appleid.apple.com වෙත පිවිසෙන්න.</string>
-
     <string name="error_network_offline">ඔබ මාර්ගගත නැත. ඔබ නැවත මාර්ගගතව ඇති විට වෙනස්කම් සමමුහුර්ත වේ.</string>
     <string name="error_network_timeout">සම්බන්ධතාවය කල් ඉකුත්වී ඇත. කරුණාකර ඔබේ අන්තර්ජාලය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <string name="error_network_ssl">ආරක්ෂිත සම්බන්ධතාවය අසාර්ථකයි. කරුණාකර ඔබේ ජාල සැකසීම් පරීක්ෂා කරන්න.</string>
     <string name="error_network_unknown_host">iCloud වෙත ළඟා විය නොහැක. කරුණාකර ඔබේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කරන්න.</string>
     <string name="error_network_connection_failed">සම්බන්ධතාවය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.</string>
-
     <string name="error_server_unavailable">iCloud තාවකාලිකව නොපවතී. කරුණාකර පසුව නැවත උත්සාහ කරන්න.</string>
     <string name="error_server_rate_limited">ඉල්ලීම් ඕනෑවට වඩා. කරුණාකර මොහොතක් රැඳී නැවත උත්සාහ කරන්න.</string>
     <string name="error_server_forbidden">ප්‍රවේශය ප්‍රතික්ෂේප විය. ඔබට මෙම දින දර්ශනයට අවසරය නැති විය හැක.</string>
@@ -261,13 +265,11 @@
     <string name="error_conflict_generic">මෙම සිදුවීම වෙනත් උපාංගයකින් වෙනස් කර ඇත. නවතම අනුවාදය ලබා ගැනීමට බලෙන් සමමුහුර්ත කරන්න.</string>
     <string name="error_conflict_with_event">\"%1$s\" වෙනත් උපාංගයකින් වෙනස් කර ඇත. නවතම අනුවාදය ලබා ගැනීමට බලෙන් සමමුහුර්ත කරන්න.</string>
     <string name="error_sync_token_expired">සමමුහුර්ත දත්ත කල් ඉකුත්වී ඇත. සම්පූර්ණ සමමුහුර්තය සිදු කරමින්…</string>
-
     <string name="error_event_not_found">සිදුවීම හමු නොවීය.</string>
     <string name="error_calendar_not_found">දින දර්ශනය හමු නොවීය.</string>
     <string name="error_calendar_read_only">\"%1$s\" හි සිදුවීම් වෙනස් කළ නොහැක (කියවීමට පමණක් දින දර්ශනය).</string>
     <string name="error_event_invalid_data">වලංගු නොවන සිදුවීම් දත්ත. කරුණාකර ආරම්භ හා අවසාන වේලාවන් පරීක්ෂා කරන්න.</string>
     <string name="error_event_invalid_recurrence">වලංගු නොවන පුනරාවර්තන රටාව.</string>
-
     <string name="error_display_name_exists">\"%1$s\" නමින් ගිණුමක් දැනටමත් පවතී.</string>
     <string name="icloud_error_credentials_required">Apple ID සහ මුරපදය අවශ්‍යයි</string>
     <string name="icloud_error_connection_timeout">සම්බන්ධතාවයේ කාලය ඉකුත් විය. නැවත උත්සාහ කරන්න.</string>
@@ -276,42 +278,41 @@
     <string name="caldav_error_connection_timeout">සම්බන්ධතාවයේ කාලය ඉකුත් විය. නැවත උත්සාහ කරන්න.</string>
     <string name="caldav_error_no_calendars">මෙම සේවාදායකයේ දින දසුන් හමු නොවීය.</string>
     <string name="caldav_error_unexpected">බලාපොරොත්තු නොවූ දෝෂයක්. නැවත උත්සාහ කරන්න.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nමෙය ඔබේ ස්ථානීය ජාලයේ සේවාදායකයක් නම්, සම්බන්ධ වීමට ස්ථානීය ජාල ප්‍රවේශයට ඉඩ දෙන්න.</string>
+    <string name="local_network_banner_title">ස්ථානීය ජාල ප්‍රවේශය අවශ්‍යයි</string>
+    <string name="local_network_banner_body">මෙම සේවාදායකය ඔබේ ස්ථානීය ජාලයේ ඇති බව පෙනේ. KashCal හට එයට සම්බන්ධ විය හැකි වන පරිදි ස්ථානීය ජාල ප්‍රවේශයට ඉඩ දෙන්න.</string>
+    <string name="local_network_banner_allow">ප්‍රවේශයට ඉඩ දෙන්න</string>
+    <string name="local_network_banner_dismiss">දැන් නොවේ</string>
     <string name="password_change_error_account_not_found">ගිණුම හමු නොවීය</string>
     <string name="password_change_error_no_credentials">පවතින අක්තපත්‍ර නොමැත</string>
     <string name="password_change_error_unsupported_provider">මෙම සැපයුම්කරු මුරපදය වෙනස් කිරීමට සහාය නොදක්වයි</string>
     <string name="password_change_error_invalid">වලංගු නොවන මුරපදය</string>
     <string name="password_change_error_network">ජාල දෝෂයකි, නැවත උත්සාහ කරන්න</string>
-
     <string name="error_import_file_not_found">ගොනුව හමු නොවීය හෝ කියවිය නොහැක.</string>
     <string name="error_import_invalid_format">වලංගු නොවන දින දර්ශන ගොනු ආකෘතිය.</string>
     <string name="error_import_partial">සිදුවීම් %1$d ක් ආයාත විය, %2$d අසාර්ථකයි.</string>
     <string name="error_export_failed">සිදුවීම් නිර්යාත කිරීමට අසමත්.</string>
     <string name="error_export_no_events">නිර්යාත කිරීමට සිදුවීම් නැත.</string>
     <string name="error_end_before_start">අවසාන වේලාව ආරම්භ වේලාවට පසුව විය යුතුය</string>
-
     <string name="error_storage_full_title">ගබඩාව පිරී ඇත</string>
     <string name="error_storage_full">ප්‍රමාණවත් ගබඩා ඉඩක් නැත. කරුණාකර ඉඩ හිස් කර නැවත උත්සාහ කරන්න.</string>
     <string name="error_database_corruption_title">දත්ත දෝෂය</string>
     <string name="error_database_corruption">ඔබේ දින දර්ශන දත්ත හානි වී ඇති විය හැක. කරුණාකර සහාය අමතන්න.</string>
     <string name="error_migration_title">යාවත්කාලීන දෝෂය</string>
     <string name="error_migration_failed">යෙදුම් දත්ත යාවත්කාලීන කිරීමට අසමත්. කරුණාකර යෙදුම නැවත ස්ථාපනය කරන්න.</string>
-
     <string name="error_permission_notification_title">දැනුම්දීම් සක්‍රිය කරන්නද?</string>
     <string name="error_permission_notification">KashCal සඳහා ඉදිරි සිදුවීම් ගැන මතක් කිරීමට දැනුම්දීම් අවසරය අවශ්‍යයි.</string>
     <string name="error_permission_alarm_title">නිරවද්‍ය එලාම සක්‍රිය කරන්නද?</string>
     <string name="error_permission_alarm">KashCal සඳහා නිරවද්‍ය මතක්කිරීම් සඳහා නිරවද්‍ය එලාම අවසරය අවශ්‍යයි.</string>
     <string name="error_permission_storage">ආයාත/නිර්යාත සඳහා ගබඩා අවසරය අවශ්‍යයි.</string>
-
     <string name="error_device_calendar_title">දින දර්ශන දෝෂය</string>
     <string name="error_device_calendar_write_failed">උපාංග දින දර්ශනයට සුරැකීමට අසමත්. කරුණාකර නැවත උත්සාහ කරන්න.</string>
     <string name="error_device_calendar_permission">දින දර්ශන ලිවීමේ අවසරය අවශ්‍යයි. කරුණාකර සැකසීම් තුළ අවසරය ලබා දෙන්න.</string>
     <string name="error_device_calendar_not_found">දින දර්ශනය හමු නොවීය. ඉවත් කර ඇති විය හැක.</string>
     <string name="error_device_event_not_found">සිදුවීම හමු නොවීය. මකා දමා ඇති විය හැක.</string>
     <string name="error_device_calendar_read_only">මෙම දින දර්ශනය කියවීමට පමණයි.</string>
-
     <string name="error_sync_no_accounts">iCloud ගිණුමක් වින්‍යාස කර නැත. ඔබේ දින දර්ශන සමමුහුර්ත කිරීමට iCloud පිහිටුවන්න.</string>
     <string name="error_sync_partial">දින දර්ශන %1$d ක් සමමුහුර්ත විය, %2$d අසාර්ථකයි.</string>
-
     <string name="error_unknown">යම් දෝෂයක් සිදු විය. කරුණාකර නැවත උත්සාහ කරන්න.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -354,16 +355,20 @@
     <string name="label_password">මුරපදය</string>
     <string name="label_display_name_optional">ප්‍රදර්ශන නාමය</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">සිදුවීම් සොයන්න…</string>
 
+    <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">නිශ්චිත නොකළහොත් https:// වෙත පෙරනිමිය</string>
     <string name="hint_name_shown_in_settings">සැකසීම්වල පෙන්වන නම</string>
     <string name="caldav_trust_insecure_subtitle">Self-signed සහතික හෝ දේශීය HTTP සේවාදායක සඳහා</string>
 
+    <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">පසුව</string>
     <string name="label_recurrence_occurrences">අවස්ථා</string>
     <string name="label_recurrence_on_date">දිනයේදී</string>
 
+    <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">දෘශ්‍ය දින දර්ශන</string>
     <string name="settings_default_calendar">පෙරනිමි දින දර්ශනය</string>
     <string name="settings_default_event_length">පෙරනිමි සිදුවීම් කාලය</string>
@@ -371,6 +376,7 @@
     <string name="settings_notifications">දැනුම්දීම්</string>
     <string name="settings_new_events">නව සිදුවීම්</string>
 
+    <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">පද්ධති පෙරනිමිය</string>
     <string name="option_light">ආලෝක</string>
     <string name="option_dark">අඳුරු</string>
@@ -380,19 +386,24 @@
     <string name="option_monday">සඳුදා</string>
     <string name="option_saturday">සෙනසුරාදා</string>
 
+    <!-- ==================== Empty States ==================== -->
     <string name="empty_no_events_found">සිදුවීම් හමු නොවීය</string>
     <string name="empty_no_upcoming_events">ඉදිරි සිදුවීම් නැත</string>
     <string name="empty_no_calendars">දින දර්ශන නොමැත</string>
 
+    <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">සම්බන්ධ වෙමින්…</string>
     <string name="status_fetching">ලබා ගනිමින්…</string>
 
+    <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">දින දර්ශනය ලබාගන්න</string>
     <string name="action_import_from_file">ගොනුවෙන් සිදුවීම් ආයාත</string>
     <string name="action_export_local_calendar">දේශීය දින දර්ශනය නිර්යාත</string>
 
+    <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
 
+    <!-- ==================== Help Text ==================== -->
     <string name="help_app_password_description">යෙදුම්-විශේෂිත මුරපද ඔබේ ප්‍රධාන Apple ID මුරපදය බෙදා නොගෙන තෙවන-පාර්ශ්ව යෙදුම්වලට පිවිසීමට ඔබට ඉඩ සලසයි.</string>
     <string name="help_app_password_steps_header">එකක් සාදන්නේ:</string>
     <string name="help_app_password_step_1">1. appleid.apple.com වෙත යන්න</string>
@@ -401,9 +412,11 @@
     <string name="help_app_password_step_4">4. App-Specific Passwords ක්ලික් කරන්න</string>
     <string name="help_app_password_step_5">5. Generate ක්ලික් කර මෙහි පිටපත් කරන්න</string>
 
+    <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal සඳහා ඉදිරි සිදුවීම් ගැන මතක් කිරීමට දැනුම්දීම් අවසරය අවශ්‍යයි.</string>
     <string name="dialog_notification_permission_settings_hint">ඔබට පසුව සැකසීම්වල මෙය වෙනස් කළ හැක.</string>
 
+    <!-- ==================== Accounts Screen ==================== -->
     <string name="accounts_title">ගිණුම්</string>
     <string name="accounts_section_connected">සම්බන්ධයි</string>
     <string name="accounts_section_add">ගිණුමක් එකතු කරන්න</string>
@@ -424,14 +437,24 @@
     <string name="accounts_sync_issue">සමමුහුර්ත ගැටලුව</string>
     <string name="accounts_cd_sync_warning">සමමුහුර්ත අනතුරු ඇඟවීම</string>
 
+    <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">දින දර්ශන පෝෂණ</string>
     <string name="subscriptions_section_add">එකතු කරන්න</string>
     <string name="subscriptions_empty_ics">ICS දායකත්ව නැත</string>
     <string name="subscriptions_empty_ics_hint">සිදුවීම් බැලීමට දින දර්ශන පෝෂණයක් එකතු කරන්න</string>
     <string name="subscriptions_add_ics">ICS දින දර්ශනය එකතු කරන්න</string>
+    <string name="qs_tile_label">සිදුවීමක් එක් කරන්න</string>
+    <string name="holiday_catalog_add">නිවාඩු දින දර්ශනය එකතු කරන්න</string>
+    <string name="holiday_catalog_search_label">සොයන්න</string>
+    <string name="holiday_catalog_already_added">එකතු කළා</string>
+    <string name="holiday_catalog_empty">රටවල් හමු නොවීය</string>
+    <string name="holiday_catalog_empty_hint">වෙනත් නමක් උත්සාහ කරන්න</string>
+    <string name="holiday_catalog_validate_error">මෙම දින දර්ශනයට ළඟා විය නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird වෙතින් නිවාඩු දින දර්ශන, %1$s යටතේ බලපත්‍ර ලබා ඇත.</string>
     <string name="subscriptions_row_label">දින දර්ශන පෝෂණ (ICS)</string>
     <string name="subscriptions_row_hint">උදා. නිවාඩු, ක්‍රීඩා, පාසල</string>
 
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">උපන්දින &amp; සංවත්සර</string>
     <string name="birthdays_anniversaries_row_hint">ඔබේ දුරකථන සම්බන්ධතාවලින්</string>
     <string name="birthdays_section_title">උපන්දින</string>
@@ -449,9 +472,10 @@
     <string name="subscriptions_cd_back">ආපසු යන්න</string>
     <string name="subscriptions_cd_add">දායකත්වය එකතු කරන්න</string>
     <string name="snackbar_subscription_removed">දායකත්වය ඉවත් කරන ලදී</string>
-    <string name="snackbar_subscription_already_exists">මෙම URL වෙත දැනටමත් දායක වී ඇත</string>
     <string name="snackbar_action_undo">පෙරසේ කරන්න</string>
+    <string name="snackbar_subscription_already_exists">මෙම URL වෙත දැනටමත් දායක වී ඇත</string>
 
+    <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">සමමුහුර්තය</string>
     <string name="account_detail_section_calendars">දින දර්ශන</string>
     <string name="account_detail_section_account">ගිණුම</string>
@@ -469,19 +493,23 @@
     <string name="account_detail_cd_show_password">මුරපදය පෙන්වන්න</string>
     <string name="account_detail_cd_hide_password">මුරපදය සඟවන්න</string>
 
-
+    <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">ගිණුම නැවත නම් කරන්න</string>
     <string name="rename_account_label">ගිණුම් නම</string>
 
+    <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">මුරපදය වෙනස් කරන්න</string>
     <string name="change_password_label_icloud">යෙදුම්-විශේෂිත මුරපදය</string>
     <string name="change_password_label_default">මුරපදය</string>
 
+    <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
 
+    <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>
     <string name="settings_device_calendars_hint">වෙනත් යෙදුම්වල දින දර්ශන</string>
     <string name="settings_quick_event_add">ඉක්මන් සිදුවීම් එකතුව</string>
+    <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
     <string name="settings_week_numbers">සතිය අංක</string>
     <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
     <string name="settings_widget_event_limit">විජට් සිදුවීම් සීමාව</string>
@@ -494,6 +522,8 @@
     <string name="settings_tap_to_enable">සක්‍රිය කිරීමට තට්ටු කරන්න</string>
     <string name="settings_device_calendars_enabled">%1$d සක්‍රියයි</string>
     <string name="settings_per_day">දිනකට %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">යෙදුම්-විශේෂිත මුරපදයක් යනු කුමක්ද?</string>
     <string name="caldav_trust_insecure_label">අනාරක්ෂිත සම්බන්ධතාවය විශ්වාස කරන්න</string>
     <string name="action_add_another">තවත් එකතු කරන්න</string>
@@ -513,13 +543,10 @@
     <string name="cd_next_month">මීළඟ මාසය</string>
     <string name="cd_month_year_picker">මාසය සහ වසර තෝරනය</string>
     <string name="cd_remove_alert">ඇඟවීම ඉවත් කරන්න</string>
-    <string name="cd_event_state_cancelled">අවලංගු කරන ලදී</string>
-    <string name="cd_event_state_declined">ප්‍රතික්ෂේප කළා</string>
-    <string name="cd_event_state_past">පසුගිය සිදුවීම</string>
-    <string name="cd_event_untitled">නමක් නැති සිදුවීම</string>
     <string name="cd_warning">අනතුරු ඇඟවීම</string>
     <string name="cd_refresh_calendars">දින දර්ශන නැවුම් කරන්න</string>
 
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
     <string name="label_on_days">දිනවල</string>
     <string name="label_pattern">රටාව</string>
     <string name="label_ends">අවසානය</string>
@@ -537,12 +564,16 @@
     <string name="label_found_events">හමු විය: සිදුවීම් %1$d</string>
     <string name="label_open_debug_menu">නිදොස්කරණ මෙනුව විවෘත කරන්න</string>
     <string name="placeholder_search">සොයන්න…</string>
+    <string name="settings_search_placeholder">සැකසීම් සොයන්න…</string>
+    <string name="settings_search_no_results">\"%1$s\" සඳහා සැකසීම් හමු නොවීය</string>
+    <string name="cd_search_settings">සැකසීම් සොයන්න</string>
     <string name="status_sync_paused">සමමුහුර්තය විරාමයි</string>
     <string name="status_not_synced">සමමුහුර්ත නැත</string>
     <string name="status_sync_error">සමමුහුර්ත දෝෂය</string>
     <string name="status_minutes_ago">මිනිත්තු %1$d කට පෙර</string>
     <string name="status_hours_ago">පැය %1$d කට පෙර</string>
 
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_description">ඔබේ උපාංගයේ වෙනත් දින දර්ශන යෙදුම්වලින් සිදුවීම් පෙන්වන්න (සමමුහුර්ත ඇඩැප්ටර, දේශීය දින දර්ශන).</string>
     <string name="device_calendars_permission_required">දින දර්ශන අවසරය අවශ්‍යයි. ප්‍රවේශය ලබා දීමට සක්‍රිය තට්ටු කරන්න.</string>
     <string name="device_calendars_read_only_access">කියවීමට පමණක් ප්‍රවේශය</string>
@@ -554,24 +585,25 @@
     <string name="device_calendars_reminders_desc">උපාංග දින දර්ශන සිදුවීම් සඳහා දැනුම්දීම් ලබාගන්න</string>
     <string name="device_calendars_read_only_no_write">කියවීමට පමණයි (ලිවීමේ අවසරය නැත)</string>
     <string name="device_calendars_read_only_calendar">කියවීමට පමණයි (කියවීමට පමණක් දින දර්ශනය)</string>
-
     <string name="settings_developer_options">සංවර්ධක විකල්ප</string>
     <string name="settings_sync_frequency">සමමුහුර්ත වාරිකතාව</string>
     <string name="settings_preview">පෙරදසුන</string>
     <string name="settings_n_events">සිදුවීම් %1$d</string>
     <string name="settings_n_events_default">සිදුවීම් %1$d (පෙරනිමි)</string>
 
+    <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">දින දර්ශන</string>
     <string name="drawer_contacts">සම්බන්ධතා</string>
     <string name="drawer_device_calendars">උපාංග දින දර්ශන</string>
     <string name="drawer_account_offline">මාර්ගගත නැත</string>
     <string name="drawer_share_feedback">උදව් සහ ලේඛන</string>
-
     <string name="event_title_fallback">සිදුවීම</string>
 
+    <!-- ==================== i18n: App Info / About ==================== -->
     <string name="status_privacy_tagline">ඔබ වෙනුවෙන්, ඔබේ දත්ත වෙනුවෙන් නොවේ.</string>
     <string name="action_keep_it_that_way">එසේම තබාගන්න</string>
 
+    <!-- ==================== i18n: Sync History ==================== -->
     <string name="status_already_synced">දැනටමත් සමමුහුර්තයි</string>
     <string name="status_warnings">අනතුරු ඇඟවීම්</string>
     <string name="sync_history_events_failed">සිදුවීම් අසාර්ථකයි</string>
@@ -580,15 +612,17 @@
     <string name="sync_history_duration">කාලය</string>
     <string name="sync_history_already_synced_count">%1$d දැනටමත් සමමුහුර්තයි</string>
 
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
     <string name="day_events_no_events">සිදුවීම් නැත</string>
 
+    <!-- ==================== i18n: Error / Offline ==================== -->
     <string name="status_youre_offline">ඔබ මාර්ගගත නැත</string>
 
+    <!-- ==================== i18n: Sign Out ==================== -->
     <string name="dialog_sign_out_title">%1$s වෙතින් පිටවන්නද?</string>
     <string name="dialog_sign_out_message">ඔබ %1$s ලෙස පිවිසී ඇත. පිටවීමෙන් සමමුහුර්ත දින දර්ශන මෙම උපාංගයෙන් ඉවත් වේ.</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Sinhala: one, other -->
     <plurals name="accounts_count">
         <item quantity="one">ගිණුම %1$d</item>
         <item quantity="other">ගිණුම් %1$d</item>
@@ -625,12 +659,11 @@
         <item quantity="one">සිදුවීම %1$d</item>
         <item quantity="other">සිදුවීම් %1$d</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">දින දර්ශනය විවෘත කරන්න</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">තවත් දින %1$d</item>
         <item quantity="other">තවත් දින %1$d</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">දින දර්ශනය විවෘත කරන්න</string>
     <plurals name="birthday_count">
         <item quantity="one">උපන්දින %1$d</item>
         <item quantity="other">උපන්දින %1$d</item>
@@ -721,387 +754,16 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">මෙම සිදුවීම</string>
-    <string name="recurring_all_events">සියලු සිදුවීම්</string>
     <string name="dialog_edit_recurring_title">වෙනස්කම් සුරකින්න</string>
     <string name="dialog_delete_recurring_title">මකන්න</string>
     <string name="dialog_move_recurring_title">ගෙනයන්න</string>
-    <string name="empty_pick_a_day">දිනයක් තෝරන්න. එය හැමරගන්න.</string>
-    <string name="empty_no_events_day">මෙහි බලන්නට කිසිවක් නැත; පිටතට ගිහින් එන්නද?</string>
-    <string name="filter_date">දිනය</string>
-    <string name="label_select_date">දිනයක් තෝරන්න</string>
-    <string name="hint_tap_date_range">එක් දිනක් සඳහා එකම දිනය තට්ටු කරන්න, හෝ පරාසයක් සඳහා වෙනත් දිනයක්</string>
+    <string name="recurring_this_event">මෙම සිදුවීම</string>
+    <string name="recurring_all_events">සියලු සිදුවීම්</string>
 
-    <string name="cd_clear">හිස් කරන්න</string>
-    <string name="cd_offline">මාර්ගගත නැත</string>
-    <string name="cd_loading_events">සිදුවීම් පූරණය වෙමින්</string>
-    <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
-    <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
-    <string name="cd_calendar_view">දින දර්ශන දසුන</string>
-    <string name="cd_active_view">සක්‍රිය දසුන</string>
-
-    <string name="view_agenda">කාර්ය සටහන</string>
-    <string name="view_month_full">මාසය (සම්පූර්ණ)</string>
-    <string name="view_three_days">දින 3</string>
-    <string name="view_day">දිනය</string>
-    <string name="view_year">වසර</string>
-    <string name="view_insights">තීක්ෂ්ණ බුද්ධිය</string>
-
-    <string name="label_go_to_month">මාසය වෙත යන්න</string>
-
-    <string name="action_more_options">තවත් විකල්ප</string>
-    <string name="quick_add_save_failed">සිදුවීම සුරැකීමට අසමත් විය</string>
-
-    <string name="label_duration_days">දින</string>
-    <string name="label_duration_hrs">පැ</string>
-    <string name="label_duration_min">මි</string>
-
-    <string name="recurrence_on_day">දිනය %1$d දී</string>
-    <string name="recurrence_on_last_day">මාසයේ අවසාන දිනයේ</string>
-    <string name="recurrence_on_nth_weekday">%1$s %2$s දී</string>
-    <string name="ordinal_1st">1 වැනි</string>
-    <string name="ordinal_2nd">2 වැනි</string>
-    <string name="ordinal_3rd">3 වැනි</string>
-    <string name="ordinal_4th">4 වැනි</string>
-    <string name="ordinal_nth">%1$d වැනි</string>
-
-    <string name="sync_summary_new">%1$d නව</string>
-    <string name="sync_summary_updated">%1$d යාවත්කාලීන</string>
-    <string name="sync_summary_removed">%1$d ඉවත් කළ</string>
-
-    <string name="cd_circular_scrolling">රවුම් අනුචලනය සක්‍රියයි</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">මතක් කිරීමක් නැත</string>
-    <string name="reminder_at_time_of_event">සිදුවීමේ වේලාවට</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s කලින්</string>
-    <string name="reminder_time_after">%1$s පසුව</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">සිදුවීමේ දින පෙ.ව. 9</string>
-    <string name="reminder_day_of_event_24h">සිදුවීමේ දින 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s කලින් පෙ.ව. 9 ට</string>
-    <string name="reminder_before_at_24h">%1$s කලින් 09:00 ට</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">අක්‍රිය</string>
-    <string name="reminder_short_at_event">සිදුවීමේදී</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dමි</string>
-    <string name="reminder_short_hours">%1$dප</string>
-    <string name="reminder_short_days">%1$dදි</string>
-    <string name="reminder_short_weeks">%1$dස</string>
-    <string name="reminder_summary_none">නැත</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dප %2$dමි</string>
-    <string name="duration_compact_short">%1$dප%2$dමි</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">අතින් පමණි</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">සියලුම සිදුවීම්</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">මදකට නවතන්න</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">දැන් ආරම්භ වෙයි</string>
-    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
-    <plurals name="reminder_in_days">
-        <item quantity="one">දින %1$dකින්</item>
-        <item quantity="other">දින %1$dකින්</item>
-    </plurals>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">හෙට, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">සමමුහුර්තය සම්පූර්ණයි</string>
-    <string name="sync_notification_partial">සමමුහුර්තය අර්ධ වශයෙන් සම්පූර්ණයි</string>
-    <string name="sync_notification_auth_failed">සමමුහුර්ත සත්‍යාපනය අසාර්ථකයි</string>
-    <string name="sync_notification_auth_reauth">කරුණාකර ඔබගේ ගිණුම නැවත සත්‍යාපනය කරන්න</string>
-    <string name="sync_notification_failed">සමමුහුර්තය අසාර්ථකයි</string>
-    <string name="sync_notification_parse_title">සමහර සිදුවීම් සමමුහුර්ත කළ නොහැක</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s හි %1$s සමමුහුර්ත කළ නොහැක. සැකසීම් වල Force Sync උත්සාහ කරන්න.</string>
-    <string name="sync_notification_conflict_title">සමමුහුර්ත ගැටුම නිරාකරණය විය</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">සමමුහුර්ත ගැටුම නිසා \"%1$s\" හි දේශීය වෙනස්කම් නැති විය. සේවාදායක අනුවාදය භාවිතා වේ.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">සමමුහුර්ත ගැටුම් නිසා %1$s හි දේශීය වෙනස්කම් නැති විය. සේවාදායක අනුවාද භාවිතා වේ.</string>
-    <string name="sync_notification_expired_title">සමමුහුර්ත වෙනස්කම් කල් ඉකුත් විය</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">දින 30 කට පසු %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
-    <string name="sync_notification_expired_content_calendar">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
-    <string name="sync_notification_expired_content_calendars">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>
-        <item quantity="other">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, වෙනස්කම් %1$d ක්</item>
-        <item quantity="other">, වෙනස්කම් %1$d ක්</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, දෝෂ %1$d ක්</item>
-        <item quantity="other">, දෝෂ %1$d ක්</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s ගේ %2$s වන උපන්දිනය</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s ගේ උපන්දිනය</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s ගේ %2$s වන සංවත්සරය</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s ගේ සංවත්සරය</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d වන</string>
-    <string name="ordinal_suffix_nd">%1$d වන</string>
-    <string name="ordinal_suffix_rd">%1$d වන</string>
-    <string name="ordinal_suffix_th">%1$d වන</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">දින දර්ශන සමමුහුර්ත වෙමින්…</string>
-    <string name="sync_banner_preparing">සමමුහුර්තයට සූදානම් වෙමින්…</string>
-    <string name="sync_banner_complete_errors">සමමුහුර්තය දෝෂ සහිතව සම්පූර්ණයි</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">සමමුහුර්තය අසාර්ථකයි: %1$s</string>
-    <string name="error_unknown_error">නොදන්නා දෝෂයක්</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">නව සිදුවීම: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">නව සිදුවීම් %1$d ක්</item>
-        <item quantity="other">නව සිදුවීම් %1$d ක්</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">සිදුවීම් %1$d ක් යාවත්කාලීන විය</item>
-        <item quantity="other">සිදුවීම් %1$d ක් යාවත්කාලීන විය</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">සිදුවීම් %1$d ක් ඉවත් විය</item>
-        <item quantity="other">සිදුවීම් %1$d ක් ඉවත් විය</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
-        <item quantity="other">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">දින %1$d / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">දින 1 / %1$d · ආරම්භය %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">දින %1$d / %2$d · අවසානය %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · මුළු දිනය</string>
-    <string name="event_date_all_day">%1$s · මුළු දිනය</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (මුළු දිනය)</string>
-    <string name="event_date_all_day_parens">%1$s (මුළු දිනය)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">සිදුවීම සුරකින්න</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">නව</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">රතු</string>
-    <string name="color_orange">තැඹිලි</string>
-    <string name="color_yellow">කහ</string>
-    <string name="color_green">කොළ</string>
-    <string name="color_cyan">සයන්</string>
-    <string name="color_blue">නිල්</string>
-    <string name="color_purple">දම්</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">රැස්වීම් සබැඳිය: %1$s</string>
-    <string name="cd_phone_number">දුරකථන අංකය</string>
-    <string name="cd_email_link">ඊමේල්: %1$s</string>
-    <string name="cd_web_link">සබැඳිය: %1$s</string>
-    <string name="cd_text_with_links">සබැඳි %1$d ක් සහිත පෙළ: %2$s</string>
-    <string name="cd_text_with_link">සබැඳිය 1 ක් සහිත පෙළ: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">දින %1$d / %2$d (මුළු දිනය)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද</string>
-    <string name="sync_history_stats_issues">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද   ⚠ %4$d ගැටලු</string>
-    <string name="sync_history_failed">අසාර්ථකයි</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">සෑම පැයකටම</string>
-    <string name="ics_sync_every_n_hours">සෑම පැය %1$d කටම</string>
-    <string name="ics_sync_daily">දිනපතා</string>
-    <string name="ics_sync_weekly">සතිපතා</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL අවශ්‍යයි</string>
-    <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">සේවාදායකය දෝෂයක් ලබා දුන්නේය (%1$d). කරුණාකර URL පරීක්ෂා කරන්න.</string>
-    <string name="ics_fetch_error_empty">දින දර්ශන පෝෂකය හිස්ය.</string>
-    <string name="ics_fetch_error_not_calendar">එම URL දින දර්ශන පෝෂකයක් ලෙස නොපෙනේ.</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, වාර %1$d ක්</item>
-        <item quantity="other">, වාර %1$d ක්</item>
-    </plurals>
-
-    <!-- Widget content descriptions -->
-    <string name="cd_widget_calendar">දින දර්ශනය</string>
-    <string name="cd_widget_add_event">සිදුවීම එකතු කරන්න</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">සිදුවීම් නැත</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, අවලංගු කරන ලදී</string>
-
-    <!-- Notification channels -->
-    <string name="channel_event_reminders">සිදුවීම් මතක් කිරීම්</string>
-    <string name="channel_event_reminders_desc">ඉදිරියට එන දිනදර්ශන සිදුවීම් සඳහා දැනුම්දීම්</string>
-    <string name="channel_sync_progress">සමමුහුර්ත ප්‍රගතිය</string>
-    <string name="channel_sync_progress_desc">දිනදර්ශන සමමුහුර්ත කරන විට ප්‍රගතිය පෙන්වයි</string>
-    <string name="channel_sync_status">සමමුහුර්ත තත්ත්වය</string>
-    <string name="channel_sync_status_desc">සමමුහුර්ත සම්පූර්ණ කිරීම සහ දෝෂ පිළිබඳ දැනුම්දීම්</string>
-    <string name="channel_event_invitations">සිදුවීම් ආරාධනා</string>
-    <string name="channel_event_invitations_desc">ඔබට නව දිනදර්ශන ආරාධනාවක් ලැබුණු විට දැනුම්දීම්</string>
-    <string name="invite_notification_body">%1$s වෙතින් · ප්‍රතිචාර දැක්වීමට තට්ටු කරන්න</string>
-
-    <!-- Recurrence rules -->
-    <string name="rrule_does_not_repeat">නැවත නොකරයි</string>
-    <string name="rrule_freq_daily">දිනපතා</string>
-    <string name="rrule_freq_weekly">සතිපතා</string>
-    <string name="rrule_freq_monthly">මාසිකව</string>
-    <string name="rrule_freq_yearly">වාර්ෂිකව</string>
-    <string name="rrule_repeats">නැවත කරයි</string>
-    <string name="rrule_every_n_days">සෑම දින %1$d කටම</string>
-    <string name="rrule_every_n_weeks">සෑම සති %1$d කටම</string>
-    <string name="rrule_every_n_months">සෑම මාස %1$d කටම</string>
-    <string name="rrule_every_n_years">සෑම වසර %1$d කටම</string>
-    <string name="rrule_freq_on_days">%2$s දින %1$s</string>
-    <string name="rrule_freq_on_ordinal_day">%2$s %3$s දින %1$s</string>
-    <string name="rrule_freq_on_last_day">අවසාන දිනයේ %1$s</string>
-    <string name="rrule_freq_on_day_n">දිනය %2$d හි %1$s</string>
-    <string name="rrule_ordinal_last">අවසාන</string>
-    <string name="rrule_until_suffix">, %1$s දක්වා</string>
-    <string name="rrule_freq_never">කිසි විටෙකත් නැත</string>
-    <string name="rrule_freq_custom">අභිරුචි</string>
-    <string name="label_repeat_every">සෑම වරක්ම නැවත කරන්න</string>
-    <string name="rrule_unit_day">දිනය</string>
-    <string name="rrule_unit_week">සතිය</string>
-    <string name="rrule_unit_month">මාසය</string>
-    <string name="rrule_unit_year">වසර</string>
-    <string name="cd_decrease_interval">පරතරය අඩු කරන්න</string>
-    <string name="cd_increase_interval">පරතරය වැඩි කරන්න</string>
-    <string name="rrule_starting">%1$s %2$s සිට ආරම්භ වෙමින්%3$s</string>
-    <string name="rrule_since">%1$s · %2$s සිට</string>
-
-    <!-- Insights -->
-    <string name="insights_title">තීක්ෂ්ණ බුද්ධිය</string>
-    <string name="insights_period_this_week">සතිය</string>
-    <string name="insights_period_last_week">පසුගිය සතිය</string>
-    <string name="insights_period_this_month">මාසය</string>
-    <string name="insights_empty_state">මෙම සතියේ කිසිදු සිදුවීමක් උපලේඛනගත කර නැත</string>
-    <plurals name="insights_all_day_count">
-        <item quantity="one">දිනපුරා සිදුවීම් %d ක්</item>
-        <item quantity="other">දිනපුරා සිදුවීම් %d ක්</item>
-    </plurals>
-
-    <!-- Insight text: Busiest Day -->
-    <string name="insight_busiest_day_future">%1$s ඔබේ වඩාත්ම කාර්යබහුල දිනයයි (%2$s)</string>
-    <string name="insight_busiest_day_past">%1$s ඔබේ වඩාත්ම කාර්යබහුල දිනය විය (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
-    <string name="insight_lightest_day_future">%1$s ඔබේ වඩාත්ම සැහැල්ලු දිනයයි (%2$s)</string>
-    <string name="insight_lightest_day_past">%1$s ඔබේ වඩාත්ම සැහැල්ලු දිනය විය (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">දීර්ඝතම නිදහස් කාලය: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">දීර්ඝතම නිදහස් කාලය %1$s %2$s–%3$s (%4$s) විය</string>
-    <!-- Insight text: Weekend Load -->
-    <string name="insight_weekend_load_clear_future">ඔබේ සති අන්තය පැහැදිලිය</string>
-    <string name="insight_weekend_load_clear_past">ඔබේ සති අන්තය පැහැදිලි විය</string>
-    <string name="insight_weekend_load_light_future">සති අන්තයේ %1$s උපලේඛනගත කර ඇත</string>
-    <string name="insight_weekend_load_light_past">සති අන්තයේ %1$s උපලේඛනගත කර තිබුණි</string>
-    <string name="insight_weekend_load_busy_future">සති අන්තයේ %1$s උපලේඛනගත කර ඇත</string>
-    <string name="insight_weekend_load_busy_past">සති අන්තයේ %1$s උපලේඛනගත කර තිබුණි</string>
-    <!-- Insight text: Back to Back -->
-    <string name="insight_back_to_back_future">එකින් එක රැස්වීම් %1$d ක්</string>
-    <string name="insight_back_to_back_past">ඔබට එකින් එක රැස්වීම් %1$d ක් තිබුණි</string>
-    <!-- Insight text: Calendar Dominant -->
-    <string name="insight_calendar_dominant_future">%1$s ඔබේ උපලේඛනගත කාලයෙන් %2$d%% කි</string>
-    <string name="insight_calendar_dominant_past">%1$s ඔබේ උපලේඛනගත කාලයෙන් %2$d%% ක් විය</string>
-    <!-- Insight text: Early/Late Bounds -->
-    <string name="insight_early_bounds_future">ඔබේ කාලසටහන දින %1$d ක පෙ.ව. 8 ට පෙර ආරම්භ වේ</string>
-    <string name="insight_early_bounds_past">ඔබේ කාලසටහන දින %1$d ක පෙ.ව. 8 ට පෙර ආරම්භ විය</string>
-    <string name="insight_late_bounds_future">දින %1$d ක ප.ව. 7 පසු සිදුවීම්</string>
-    <string name="insight_late_bounds_past">දින %1$d ක ප.ව. 7 පසු සිදුවීම් පැවතුණි</string>
-    <!-- Insight text: Meeting-Free Days -->
-    <string name="insight_meeting_free_days_future">ඔබට රැස්වීම් රහිත දින %1$d ක් ඇත</string>
-    <string name="insight_meeting_free_days_past">ඔබට රැස්වීම් රහිත දින %1$d ක් තිබුණි</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
-    <string name="insight_tomorrow_preview">හෙට: %1$s උපලේඛනගතයි, %2$s ට ආරම්භ වේ</string>
-    <string name="insight_tomorrow_preview_no_start">හෙට: %1$s උපලේඛනගතයි</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
-    <string name="insight_heaviest_upcoming">%1$s ඔබේ ඉදිරි වඩාත්ම බර දිනයයි (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">ඊළඟ නිදහස් කාලය: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
-    <string name="insights_cd_daily_chart">දෛනික බෙදාහැරීම: වඩාත්ම කාර්යබහුල දිනය %1$s</string>
-
-    <!-- ==================== Event Form: Availability & Color ==================== -->
-    <string name="label_availability">ලබා ගත හැකි බව</string>
-    <string name="label_busy">කාර්යබහුල</string>
-    <string name="label_free">නිදහස්</string>
-    <string name="label_event_color">සිදුවීමේ වර්ණය</string>
-    <string name="label_calendar_default">දින දර්ශන පෙරනිමිය</string>
-    <string name="label_custom">අභිරුචි</string>
-    <string name="cd_checkmark">තෝරාගත්</string>
-    <string name="color_saddlebrown">සෑදල දුඹුරු</string>
-    <string name="color_tomato">තක්කාලි</string>    <string name="color_darkorange">තද තැඹිලි</string>
-    <string name="color_gold">රන්වන්</string>
-    <string name="color_yellowgreen">කහ කොළ</string>
-    <string name="color_limegreen">දෙහි කොළ</string>    <string name="color_lightseagreen">ලා මුහුදු කොළ</string>
-    <string name="color_dodgerblue">ඩොජර් නිල්</string>
-    <string name="color_royalblue">රාජකීය නිල්</string>    <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
-    <string name="color_hotpink">දීප්තිමත් රෝස</string>
-    <string name="color_dimgray">අඳුරු අළු</string>
-
-    <string name="hue_red">රතු</string>
-    <string name="hue_orange">තැඹිලි</string>
-    <string name="hue_yellow">කහ</string>
-    <string name="hue_green">කොළ</string>
-    <string name="hue_teal">නිල්-කොළ</string>
-    <string name="hue_blue">නිල්</string>
-    <string name="hue_purple">දම්</string>
-    <string name="hue_pink">රෝස</string>
-    <string name="hue_brown">දුඹුරු</string>
-    <string name="hue_neutral">උදාසීන</string>
-    <string name="label_more_colors">තවත් වර්ණ</string>
-    <string name="label_back_to_grid">ආපසු</string>
-    <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
-    <string name="label_attendees">සහභාගිවන්නන්</string>
-    <string name="attendee_you_marker">ඔබ</string>
-    <string name="attendee_card_going">පැමිණේ</string>
-    <string name="attendee_card_pending">පොරොත්තුවේ</string>
-    <string name="attendee_card_declined">ප්‍රතික්ෂේප කළා</string>
-    <string name="attendee_card_tentative">අවිනිශ්චිතයි</string>
-    <string name="attendee_card_hosting">සත්කාරකත්වය</string>
-    <string name="attendee_action_copy">ඊමේල් පිටපත් කරන්න</string>
-    <string name="attendee_action_email">ඊමේල් යවන්න</string>
-    <string name="attendee_email_copied">ඊමේල් පිටපත් කළා</string>
-    <string name="attendee_no_email_app">ඊමේල් යෙදුමක් ස්ථාපනය කර නැත</string>
-    <string name="attendee_show_all">සියලු සහභාගිවන්නන් පෙන්වන්න</string>
-    <string name="attendee_status_accepted">පිළිගන්නා ලදී</string>
-    <string name="attendee_status_declined">ප්‍රතික්ෂේප කළා</string>
-    <string name="attendee_status_tentative">අවිනිශ්චිතයි</string>
-    <string name="attendee_status_delegated">පවරන ලදී</string>
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">සහභාගිවන්නන්</string>
+    <string name="attendee_search_hint">සොයන්න</string>
+    <string name="attendee_search_no_matches">ප්‍රතිඵල නැත</string>
     <string name="attendee_picker_title">සහභාගිවන්නන් එක් කරන්න</string>
     <string name="attendee_pick_add_people">සහභාගිවන්නන් එක් කරන්න</string>
     <string name="attendee_pick_from_contacts">නම හෝ ඊමේල්</string>
@@ -1115,62 +777,12 @@
     <string name="attendee_scheduling_unavailable">මෙම ගිණුමේ පුද්ගලයින් ආරාධනා කිරීම ලබා ගත නොහැක</string>
     <string name="device_attendee_local_no_delivery">මෙම දින දර්ශනයට ආරාධනා යැවිය නොහැක. අමුත්තන් සුරැකේ නමුත් දැනුම් දෙනු නොලැබේ.</string>
     <string name="action_save_and_notify">සුරකින්න සහ දැනුම් දෙන්න</string>
-    <string name="attendee_status_pending">පොරොත්තුවේ</string>
-    <string name="inbox_empty_caught_up">සියල්ල අවසන්</string>
-    <string name="inbox_organizer_suffix">(සංවිධායක)</string>
-    <string name="menu_invites">ආරාධනා</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">දිනයට යන්න</string>
-    <string name="menu_about">පිළිබඳ</string>
-    <string name="menu_more">තවත් මෙනුව</string>
-    <plurals name="menu_more_with_invites">
-        <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
-        <item quantity="other">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
-    </plurals>
-    <string name="share_availability_rail_label">ලබා ගත හැකි කාලය බෙදාගන්න</string>
-    <string name="share_availability_sheet_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
-    <string name="share_availability_hours_label">වැඩ කරන වේලාවන්: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">මුළු දින සිදුවීම් කාර්යබහුල ලෙස</string>
-    <string name="share_availability_share_button">බෙදාගන්න</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">තේරූ පරාසයේ අවම වශයෙන් පැයක නිදහස් කොටස් නැත.</string>
-    <string name="share_availability_chooser_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
-    <string name="share_availability_share_failed">බෙදා ගැනීමට යෙදුමක් නැත</string>
-    <string name="share_from_kashcal_footer">KashCal වෙතින් බෙදාගත්</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="one">ඊළඟ %1$d දිනය</item>
-        <item quantity="other">ඊළඟ %1$d දින</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="one">ඊළඟ %1$d දිනයේ නිදහස් (%2$s – %3$s):</item>
-        <item quantity="other">ඊළඟ %1$d දින තුළ නිදහස් (%2$s – %3$s):</item>
-    </plurals>
-    <string name="share_availability_window_section">කාල පරාසය</string>
-    <string name="share_availability_hours_section">වැඩ කරන වේලාවන්</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="one">දින %1$d</item>
-        <item quantity="other">දින %1$d</item>
-    </plurals>
-    <string name="share_availability_days_through">%1$s දක්වා</string>
-    <string name="share_availability_window_duration">පැය %1$sක කාල පරාසය</string>
-    <string name="share_as_card_action">කාඩ්පතක් ලෙස බෙදාගන්න</string>
-    <string name="share_as_card_chip_standard">සම්මත</string>
-    <string name="share_as_card_chip_celebration">සැමරුම</string>
-    <string name="share_as_card_send">යවන්න</string>
-    <string name="share_as_card_attribution">KashCal සමඟ සාදන ලදී</string>
-    <string name="share_as_card_all_day">මුළු දිනම</string>
-    <string name="share_as_card_chooser_title">සිදුවීම බෙදාගන්න</string>
-    <string name="share_as_card_share_failed">කාඩ්පත බෙදා ගත නොහැකි විය</string>
-    <string name="attendee_sheet_title">සහභාගිවන්නන්</string>
-    <string name="attendee_search_hint">සොයන්න</string>
-    <string name="attendee_search_no_matches">ප්‍රතිඵල නැත</string>
     <string name="attendee_section_going">යනවා</string>
     <string name="attendee_section_maybe">සමහර විට</string>
     <string name="attendee_section_pending">පොරොත්තු</string>
     <string name="attendee_section_declined">ප්‍රතික්ෂේප</string>
     <string name="attendee_section_delegated">පවරා දී</string>
+    <string name="invitees_host_tag">සත්කාරක</string>
     <string name="invitees_summary_you_alone">ඔබ</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="one">ඔබ · %d ක් ආරාධිතයි</item>
@@ -1195,17 +807,370 @@
         <item quantity="other">%1$s · තවත් %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">ප්‍රතිචාරය වෙනස් කරන්න</string>
-    <string name="whats_new_title">අලුත් මොනවද</string>
-    <string name="whats_new_dismiss">තේරුණා</string>
-    <string name="whats_new_v598_title">Android විවෘතව තබා ගැනීමට උදව් වන්න</string>
-    <string name="whats_new_v598_body">Google ඔබේ උපාංගයේ යෙදුම් ස්ථාපනය කරන ආකාරය වෙනස් කරමින් සිටී. අපට ඔබේ උදව් අවශ්‍යයි.</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org වෙත යන්න</string>
-    <string name="holiday_catalog_add">නිවාඩු දින දර්ශනය එකතු කරන්න</string>
-    <string name="holiday_catalog_search_label">සොයන්න</string>
-    <string name="holiday_catalog_already_added">එකතු කළා</string>
-    <string name="holiday_catalog_empty">රටවල් හමු නොවීය</string>
-    <string name="holiday_catalog_empty_hint">වෙනත් නමක් උත්සාහ කරන්න</string>
-    <string name="holiday_catalog_validate_error">මෙම දින දර්ශනයට ළඟා විය නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird වෙතින් නිවාඩු දින දර්ශන, %1$s යටතේ බලපත්‍ර ලබා ඇත.</string>
-    <string name="qs_tile_label">සිදුවීමක් එක් කරන්න</string>
+    <string name="rsvp_question_going">යනවාද?</string>
+    <string name="rsvp_action_yes">ඔව්</string>
+    <string name="rsvp_action_maybe">සමහර විට</string>
+    <string name="rsvp_action_no">නැහැ</string>
+    <string name="rsvp_state_going">ඔබ යනවා</string>
+    <string name="rsvp_state_maybe">සමහර විට</string>
+    <string name="rsvp_state_not_going">ඔබ යන්නේ නැහැ</string>
+    <string name="rsvp_action_change">වෙනස් කරන්න</string>
+    <string name="empty_pick_a_day">දිනයක් තෝරන්න. එය හැමරගන්න.</string>
+    <string name="cd_empty_pick_a_day">දිනයක් තෝරන්න</string>
+    <string name="empty_no_events_day_1">හිස් දිනයක්. විශ්වය ඔබට විවේක ගන්නැයි කියයි.</string>
+    <string name="empty_no_events_day_2">සැලසුම් නැහැ. ඒක තමයි සැලසුම.</string>
+    <string name="empty_no_events_day_3">තෑග්ගක්: හිස් දිනයක්.</string>
+    <string name="empty_no_events_day_4">දින දර්ශන තත්ත්වය: අපූරුවට හිස්.</string>
+    <string name="empty_no_events_day_5">කිසිවක් සැලසුම් කර නැත. නිස්කලංකභාවය භුක්ති විඳින්න.</string>
+    <string name="cd_empty_no_events_day">සන්සුන් දිනයක්, කිසිවක් උපලේඛනගත කර නැත</string>
+    <string name="filter_date">දිනය</string>
+    <string name="label_select_date">දිනයක් තෝරන්න</string>
+    <string name="hint_tap_date_range">එක් දිනක් සඳහා එකම දිනය තට්ටු කරන්න, හෝ පරාසයක් සඳහා වෙනත් දිනයක්</string>
+    <string name="cd_clear">හිස් කරන්න</string>
+    <string name="cd_offline">මාර්ගගත නැත</string>
+    <string name="cd_event_state_cancelled">අවලංගු කරන ලදී</string>
+    <string name="cd_event_state_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="cd_event_state_past">පසුගිය සිදුවීම</string>
+    <string name="cd_loading_events">සිදුවීම් පූරණය වෙමින්</string>
+    <string name="cd_event_untitled">නමක් නැති සිදුවීම</string>
+    <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
+    <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
+    <string name="cd_calendar_view">දින දර්ශන දසුන</string>
+    <string name="cd_active_view">සක්‍රිය දසුන</string>
+    <string name="view_agenda">කාර්ය සටහන</string>
+    <string name="view_month_full">මාසය (සම්පූර්ණ)</string>
+    <string name="view_day">දිනය</string>
+    <string name="view_three_days">දින 3</string>
+    <string name="view_year">වසර</string>
+    <string name="view_insights">තීක්ෂ්ණ බුද්ධිය</string>
+    <string name="label_go_to_month">මාසය වෙත යන්න</string>
+    <string name="action_more_options">තවත් විකල්ප</string>
+    <string name="quick_add_save_failed">සිදුවීම සුරැකීමට අසමත් විය</string>
+    <string name="label_duration_days">දින</string>
+    <string name="label_duration_hrs">පැ</string>
+    <string name="label_duration_min">මි</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">දිනය %1$d දී</string>
+    <string name="recurrence_on_last_day">මාසයේ අවසාන දිනයේ</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s දී</string>
+    <string name="ordinal_1st">1 වැනි</string>
+    <string name="ordinal_2nd">2 වැනි</string>
+    <string name="ordinal_3rd">3 වැනි</string>
+    <string name="ordinal_4th">4 වැනි</string>
+    <string name="ordinal_nth">%1$d වැනි</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">නැවත නොකරයි</string>
+    <string name="rrule_freq_daily">දිනපතා</string>
+    <string name="rrule_freq_weekly">සතිපතා</string>
+    <string name="rrule_freq_monthly">මාසිකව</string>
+    <string name="rrule_freq_yearly">වාර්ෂිකව</string>
+    <string name="rrule_repeats">නැවත කරයි</string>
+    <string name="rrule_every_n_days">සෑම දින %1$d කටම</string>
+    <string name="rrule_every_n_weeks">සෑම සති %1$d කටම</string>
+    <string name="rrule_every_n_months">සෑම මාස %1$d කටම</string>
+    <string name="rrule_every_n_years">සෑම වසර %1$d කටම</string>
+    <string name="rrule_freq_on_days">%2$s දින %1$s</string>
+    <string name="rrule_freq_on_ordinal_day">%2$s %3$s දින %1$s</string>
+    <string name="rrule_freq_on_last_day">අවසාන දිනයේ %1$s</string>
+    <string name="rrule_freq_on_day_n">දිනය %2$d හි %1$s</string>
+    <string name="rrule_ordinal_last">අවසාන</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, වාර %1$d ක්</item>
+        <item quantity="other">, වාර %1$d ක්</item>
+    </plurals>
+    <string name="rrule_until_suffix">, %1$s දක්වා</string>
+    <string name="rrule_freq_never">කිසි විටෙකත් නැත</string>
+    <string name="rrule_freq_custom">අභිරුචි</string>
+    <string name="label_repeat_every">සෑම වරක්ම නැවත කරන්න</string>
+    <string name="rrule_unit_day">දිනය</string>
+    <string name="rrule_unit_week">සතිය</string>
+    <string name="rrule_unit_month">මාසය</string>
+    <string name="rrule_unit_year">වසර</string>
+    <string name="cd_decrease_interval">පරතරය අඩු කරන්න</string>
+    <string name="cd_increase_interval">පරතරය වැඩි කරන්න</string>
+    <string name="rrule_starting">%1$s %2$s සිට ආරම්භ වෙමින්%3$s</string>
+    <string name="rrule_since">%1$s · %2$s සිට</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d නව</string>
+    <string name="sync_summary_updated">%1$d යාවත්කාලීන</string>
+    <string name="sync_summary_removed">%1$d ඉවත් කළ</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">රවුම් අනුචලනය සක්‍රියයි</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">මතක් කිරීමක් නැත</string>
+    <string name="reminder_at_time_of_event">සිදුවීමේ වේලාවට</string>
+    <string name="reminder_time_before">%1$s කලින්</string>
+    <string name="reminder_time_after">%1$s පසුව</string>
+    <string name="reminder_day_of_event_12h">සිදුවීමේ දින පෙ.ව. 9</string>
+    <string name="reminder_day_of_event_24h">සිදුවීමේ දින 09:00</string>
+    <string name="reminder_before_at_12h">%1$s කලින් පෙ.ව. 9 ට</string>
+    <string name="reminder_before_at_24h">%1$s කලින් 09:00 ට</string>
+    <string name="reminder_short_off">අක්‍රිය</string>
+    <string name="reminder_short_at_event">සිදුවීමේදී</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dමි</string>
+    <string name="reminder_short_hours">%1$dප</string>
+    <string name="reminder_short_days">%1$dදි</string>
+    <string name="reminder_short_weeks">%1$dස</string>
+    <string name="reminder_summary_none">නැත</string>
+    <string name="duration_compact">%1$dප %2$dමි</string>
+    <string name="duration_compact_short">%1$dප%2$dමි</string>
+    <string name="sync_manual_only">අතින් පමණි</string>
+    <string name="sync_lookback_all">සියලුම සිදුවීම්</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">මදකට නවතන්න</string>
+    <string name="notification_starting_now">දැන් ආරම්භ වෙයි</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">දින %1$dකින්</item>
+        <item quantity="other">දින %1$dකින්</item>
+    </plurals>
+    <string name="notification_tomorrow_time">හෙට, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">සමමුහුර්තය සම්පූර්ණයි</string>
+    <string name="sync_notification_partial">සමමුහුර්තය අර්ධ වශයෙන් සම්පූර්ණයි</string>
+    <string name="sync_notification_auth_failed">සමමුහුර්ත සත්‍යාපනය අසාර්ථකයි</string>
+    <string name="sync_notification_auth_reauth">කරුණාකර ඔබගේ ගිණුම නැවත සත්‍යාපනය කරන්න</string>
+    <string name="sync_notification_failed">සමමුහුර්තය අසාර්ථකයි</string>
+    <string name="sync_notification_parse_title">සමහර සිදුවීම් සමමුහුර්ත කළ නොහැක</string>
+    <string name="sync_notification_parse_content">%2$s හි %1$s සමමුහුර්ත කළ නොහැක. සැකසීම් වල Force Sync උත්සාහ කරන්න.</string>
+    <string name="sync_notification_conflict_title">සමමුහුර්ත ගැටුම නිරාකරණය විය</string>
+    <string name="sync_notification_conflict_single">සමමුහුර්ත ගැටුම නිසා \"%1$s\" හි දේශීය වෙනස්කම් නැති විය. සේවාදායක අනුවාදය භාවිතා වේ.</string>
+    <string name="sync_notification_conflict_multi">සමමුහුර්ත ගැටුම් නිසා %1$s හි දේශීය වෙනස්කම් නැති විය. සේවාදායක අනුවාද භාවිතා වේ.</string>
+    <string name="sync_notification_expired_title">සමමුහුර්ත වෙනස්කම් කල් ඉකුත් විය</string>
+    <string name="sync_notification_expired_content">දින 30 කට පසු %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
+    <string name="sync_notification_expired_content_calendar">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
+    <string name="sync_notification_expired_content_calendars">දින 30 කට පසු %2$s හි %1$s සමමුහුර්ත කළ නොහැක. සේවාදායක අනුවාදය භාවිතා වේ. නැවත උත්සාහ කිරීමට Force Sync කරන්න.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>
+        <item quantity="other">දින දර්ශන %1$d ක් සමමුහුර්ත විය</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, වෙනස්කම් %1$d ක්</item>
+        <item quantity="other">, වෙනස්කම් %1$d ක්</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, දෝෂ %1$d ක්</item>
+        <item quantity="other">, දෝෂ %1$d ක්</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s ගේ %2$s වන උපන්දිනය</string>
+    <string name="contact_birthday">%1$s ගේ උපන්දිනය</string>
+    <string name="contact_anniversary_with_age">%1$s ගේ %2$s වන සංවත්සරය</string>
+    <string name="contact_anniversary">%1$s ගේ සංවත්සරය</string>
+    <string name="ordinal_suffix_st">%1$d වන</string>
+    <string name="ordinal_suffix_nd">%1$d වන</string>
+    <string name="ordinal_suffix_rd">%1$d වන</string>
+    <string name="ordinal_suffix_th">%1$d වන</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">දින දර්ශන සමමුහුර්ත වෙමින්…</string>
+    <string name="sync_banner_preparing">සමමුහුර්තයට සූදානම් වෙමින්…</string>
+    <string name="sync_banner_complete_errors">සමමුහුර්තය දෝෂ සහිතව සම්පූර්ණයි</string>
+    <string name="sync_banner_failed">සමමුහුර්තය අසාර්ථකයි: %1$s</string>
+    <string name="error_unknown_error">නොදන්නා දෝෂයක්</string>
+    <string name="sync_snackbar_new_event">නව සිදුවීම: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">නව සිදුවීම් %1$d ක්</item>
+        <item quantity="other">නව සිදුවීම් %1$d ක්</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">සිදුවීම් %1$d ක් යාවත්කාලීන විය</item>
+        <item quantity="other">සිදුවීම් %1$d ක් යාවත්කාලීන විය</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">සිදුවීම් %1$d ක් ඉවත් විය</item>
+        <item quantity="other">සිදුවීම් %1$d ක් ඉවත් විය</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
+        <item quantity="other">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">දින %1$d / %2$d</string>
+    <string name="day_starts">දින 1 / %1$d · ආරම්භය %2$s</string>
+    <string name="day_ends">දින %1$d / %2$d · අවසානය %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · මුළු දිනය</string>
+    <string name="event_date_all_day">%1$s · මුළු දිනය</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (මුළු දිනය)</string>
+    <string name="event_date_all_day_parens">%1$s (මුළු දිනය)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">සිදුවීම සුරකින්න</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">නව</string>
+    <string name="color_red">රතු</string>
+    <string name="color_orange">තැඹිලි</string>
+    <string name="color_yellow">කහ</string>
+    <string name="color_green">කොළ</string>
+    <string name="color_cyan">සයන්</string>
+    <string name="color_blue">නිල්</string>
+    <string name="color_purple">දම්</string>
+    <string name="cd_meeting_link">රැස්වීම් සබැඳිය: %1$s</string>
+    <string name="cd_phone_number">දුරකථන අංකය</string>
+    <string name="cd_email_link">ඊමේල්: %1$s</string>
+    <string name="cd_web_link">සබැඳිය: %1$s</string>
+    <string name="cd_text_with_links">සබැඳි %1$d ක් සහිත පෙළ: %2$s</string>
+    <string name="cd_text_with_link">සබැඳිය 1 ක් සහිත පෙළ: %1$s</string>
+    <string name="day_x_of_y_all_day">දින %1$d / %2$d (මුළු දිනය)</string>
+    <string name="sync_history_stats">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද</string>
+    <string name="sync_history_stats_issues">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද   ⚠ %4$d ගැටලු</string>
+    <string name="sync_history_failed">අසාර්ථකයි</string>
+    <string name="ics_sync_every_hour">සෑම පැයකටම</string>
+    <string name="ics_sync_every_n_hours">සෑම පැය %1$d කටම</string>
+    <string name="ics_sync_daily">දිනපතා</string>
+    <string name="ics_sync_weekly">සතිපතා</string>
+    <string name="ics_url_required">URL අවශ්‍යයි</string>
+    <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
+    <string name="ics_fetch_error_http">සේවාදායකය දෝෂයක් ලබා දුන්නේය (%1$d). කරුණාකර URL පරීක්ෂා කරන්න.</string>
+    <string name="ics_fetch_error_empty">දින දර්ශන පෝෂකය හිස්ය.</string>
+    <string name="ics_fetch_error_not_calendar">එම URL දින දර්ශන පෝෂකයක් ලෙස නොපෙනේ.</string>
+    <string name="insights_title">තීක්ෂ්ණ බුද්ධිය</string>
+    <string name="insights_period_this_week">සතිය</string>
+    <string name="insights_period_last_week">පසුගිය සතිය</string>
+    <string name="insights_period_this_month">මාසය</string>
+    <string name="insights_empty_state">මෙම සතියේ කිසිදු සිදුවීමක් උපලේඛනගත කර නැත</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">දිනපුරා සිදුවීම් %d ක්</item>
+        <item quantity="other">දිනපුරා සිදුවීම් %d ක්</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ඔබේ වඩාත්ම කාර්යබහුල දිනයයි (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ඔබේ වඩාත්ම කාර්යබහුල දිනය විය (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ඔබේ වඩාත්ම සැහැල්ලු දිනයයි (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ඔබේ වඩාත්ම සැහැල්ලු දිනය විය (%2$s)</string>
+    <string name="insight_longest_free_future">දීර්ඝතම නිදහස් කාලය: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">දීර්ඝතම නිදහස් කාලය %1$s %2$s–%3$s (%4$s) විය</string>
+    <string name="insight_weekend_load_clear_future">ඔබේ සති අන්තය පැහැදිලිය</string>
+    <string name="insight_weekend_load_clear_past">ඔබේ සති අන්තය පැහැදිලි විය</string>
+    <string name="insight_weekend_load_light_future">සති අන්තයේ %1$s උපලේඛනගත කර ඇත</string>
+    <string name="insight_weekend_load_light_past">සති අන්තයේ %1$s උපලේඛනගත කර තිබුණි</string>
+    <string name="insight_weekend_load_busy_future">සති අන්තයේ %1$s උපලේඛනගත කර ඇත</string>
+    <string name="insight_weekend_load_busy_past">සති අන්තයේ %1$s උපලේඛනගත කර තිබුණි</string>
+    <string name="insight_back_to_back_future">එකින් එක රැස්වීම් %1$d ක්</string>
+    <string name="insight_back_to_back_past">ඔබට එකින් එක රැස්වීම් %1$d ක් තිබුණි</string>
+    <string name="insight_calendar_dominant_future">%1$s ඔබේ උපලේඛනගත කාලයෙන් %2$d%% කි</string>
+    <string name="insight_calendar_dominant_past">%1$s ඔබේ උපලේඛනගත කාලයෙන් %2$d%% ක් විය</string>
+    <string name="insight_early_bounds_future">ඔබේ කාලසටහන දින %1$d ක පෙ.ව. 8 ට පෙර ආරම්භ වේ</string>
+    <string name="insight_early_bounds_past">ඔබේ කාලසටහන දින %1$d ක පෙ.ව. 8 ට පෙර ආරම්භ විය</string>
+    <string name="insight_late_bounds_future">දින %1$d ක ප.ව. 7 පසු සිදුවීම්</string>
+    <string name="insight_late_bounds_past">දින %1$d ක ප.ව. 7 පසු සිදුවීම් පැවතුණි</string>
+    <string name="insight_meeting_free_days_future">ඔබට රැස්වීම් රහිත දින %1$d ක් ඇත</string>
+    <string name="insight_meeting_free_days_past">ඔබට රැස්වීම් රහිත දින %1$d ක් තිබුණි</string>
+    <string name="insight_tomorrow_preview">හෙට: %1$s උපලේඛනගතයි, %2$s ට ආරම්භ වේ</string>
+    <string name="insight_tomorrow_preview_no_start">හෙට: %1$s උපලේඛනගතයි</string>
+    <string name="insight_heaviest_upcoming">%1$s ඔබේ ඉදිරි වඩාත්ම බර දිනයයි (%2$s)</string>
+    <string name="insight_next_free_block">ඊළඟ නිදහස් කාලය: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_daily_chart">දෛනික බෙදාහැරීම: වඩාත්ම කාර්යබහුල දිනය %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">ලබා ගත හැකි බව</string>
+    <string name="label_busy">කාර්යබහුල</string>
+    <string name="label_free">නිදහස්</string>
+    <string name="label_event_color">සිදුවීමේ වර්ණය</string>
+    <string name="label_calendar_default">දින දර්ශන පෙරනිමිය</string>
+    <string name="label_custom">අභිරුචි</string>
+    <string name="cd_checkmark">තෝරාගත්</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">සෑදල දුඹුරු</string>
+    <string name="color_tomato">තක්කාලි</string>    <string name="color_darkorange">තද තැඹිලි</string>
+    <string name="color_gold">රන්වන්</string>
+    <string name="color_yellowgreen">කහ කොළ</string>
+    <string name="color_limegreen">දෙහි කොළ</string>    <string name="color_lightseagreen">ලා මුහුදු කොළ</string>
+    <string name="color_dodgerblue">ඩොජර් නිල්</string>
+    <string name="color_royalblue">රාජකීය නිල්</string>    <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
+    <string name="color_hotpink">දීප්තිමත් රෝස</string>
+    <string name="color_dimgray">අඳුරු අළු</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <string name="hue_red">රතු</string>
+    <string name="hue_orange">තැඹිලි</string>
+    <string name="hue_yellow">කහ</string>
+    <string name="hue_green">කොළ</string>
+    <string name="hue_teal">නිල්-කොළ</string>
+    <string name="hue_blue">නිල්</string>
+    <string name="hue_purple">දම්</string>
+    <string name="hue_pink">රෝස</string>
+    <string name="hue_brown">දුඹුරු</string>
+    <string name="hue_neutral">උදාසීන</string>
+    <string name="label_more_colors">තවත් වර්ණ</string>
+    <string name="label_back_to_grid">ආපසු</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <string name="label_attendees">සහභාගිවන්නන්</string>
+    <string name="attendee_you_marker">ඔබ</string>
+    <string name="attendee_card_going">පැමිණේ</string>
+    <string name="attendee_card_pending">පොරොත්තුවේ</string>
+    <string name="attendee_card_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="attendee_card_tentative">අවිනිශ්චිතයි</string>
+    <string name="attendee_card_hosting">සත්කාරකත්වය</string>
+    <string name="attendee_action_copy">ඊමේල් පිටපත් කරන්න</string>
+    <string name="attendee_action_email">ඊමේල් යවන්න</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <string name="attendee_email_copied">ඊමේල් පිටපත් කළා</string>
+    <string name="attendee_no_email_app">ඊමේල් යෙදුමක් ස්ථාපනය කර නැත</string>
+    <string name="attendee_show_all">සියලු සහභාගිවන්නන් පෙන්වන්න</string>
+    <string name="attendee_status_accepted">පිළිගන්නා ලදී</string>
+    <string name="attendee_status_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="attendee_status_tentative">අවිනිශ්චිතයි</string>
+    <string name="attendee_status_delegated">පවරන ලදී</string>
+    <string name="attendee_status_pending">පොරොත්තුවේ</string>
+    <string name="inbox_empty_caught_up">සියල්ල අවසන්</string>
+    <string name="inbox_organizer_suffix">(සංවිධායක)</string>
+    <string name="menu_invites">ආරාධනා</string>
+    <string name="jump_to_date">දිනයට යන්න</string>
+    <string name="menu_about">පිළිබඳ</string>
+    <string name="menu_more">තවත් මෙනුව</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
+        <item quantity="other">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
+    </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <string name="share_availability_sheet_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">ඊළඟ %1$d දිනය</item>
+        <item quantity="other">ඊළඟ %1$d දින</item>
+    </plurals>
+    <string name="share_availability_hours_label">වැඩ කරන වේලාවන්: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">මුළු දින සිදුවීම් කාර්යබහුල ලෙස</string>
+    <string name="share_availability_share_button">බෙදාගන්න</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">ඊළඟ %1$d දිනයේ නිදහස් (%2$s – %3$s):</item>
+        <item quantity="other">ඊළඟ %1$d දින තුළ නිදහස් (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">තේරූ පරාසයේ අවම වශයෙන් පැයක නිදහස් කොටස් නැත.</string>
+    <string name="share_from_kashcal_footer">KashCal වෙතින් බෙදාගත්</string>
+    <string name="share_availability_chooser_title">ලබා ගත හැකි කාලය බෙදාගන්න</string>
+    <string name="share_availability_share_failed">බෙදා ගැනීමට යෙදුමක් නැත</string>
+    <string name="share_availability_window_section">කාල පරාසය</string>
+    <string name="share_availability_hours_section">වැඩ කරන වේලාවන්</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">දින %1$d</item>
+        <item quantity="other">දින %1$d</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s දක්වා</string>
+    <string name="share_availability_window_duration">පැය %1$sක කාල පරාසය</string>
+    <string name="share_as_card_action">කාඩ්පතක් ලෙස බෙදාගන්න</string>
+    <string name="share_as_card_chip_standard">සම්මත</string>
+    <string name="share_as_card_chip_celebration">සැමරුම</string>
+    <string name="share_as_card_send">යවන්න</string>
+    <string name="share_as_card_attribution">KashCal සමඟ සාදන ලදී</string>
+    <string name="share_as_card_all_day">මුළු දිනම</string>
+    <string name="share_as_card_chooser_title">සිදුවීම බෙදාගන්න</string>
+    <string name="share_as_card_share_failed">කාඩ්පත බෙදා ගත නොහැකි විය</string>
+
 </resources>

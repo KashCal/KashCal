@@ -1,0 +1,4 @@
+• New deck-of-cards app icon, top-bar logo, and supporter icon
+• Empty days show gentler, rotating copy
+• Targets Android 17, with an inline permission ask for CalDAV servers on your home network
+• Tidied translations across all 67 languages

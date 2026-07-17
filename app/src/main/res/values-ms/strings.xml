@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Menunjukkan tarikh hari ini seperti ikon aplikasi</string>
     <string name="upcoming_widget_name">Akan Datang</string>
     <string name="upcoming_widget_description">Menunjukkan acara untuk 10 hari akan datang, melangkau hari kosong</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Memuatkan acara akan datang…</string>
     <string name="widget_error_load_events">Tidak dapat memuatkan acara, ketik untuk buka</string>
     <string name="widget_no_events_today">Tiada acara hari ini</string>
     <string name="widget_add_event">+ Tambah acara</string>
     <string name="widget_no_events">Tiada acara</string>
     <string name="widget_no_upcoming_events">Tiada acara akan datang</string>
+    <string name="cd_widget_calendar">Kalendar</string>
+    <string name="cd_widget_add_event">Tambah acara</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">tiada acara</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, dibatalkan</string>
+    <string name="channel_event_reminders">Peringatan Acara</string>
+    <string name="channel_event_reminders_desc">Pemberitahuan untuk acara kalendar yang akan datang</string>
+    <string name="channel_sync_progress">Kemajuan Segerak</string>
+    <string name="channel_sync_progress_desc">Menunjukkan kemajuan semasa menyegerakkan kalendar</string>
+    <string name="channel_sync_status">Status Segerak</string>
+    <string name="channel_sync_status_desc">Pemberitahuan tentang penyempurnaan segerak dan ralat</string>
+    <string name="channel_event_invitations">Jemputan Acara</string>
+    <string name="channel_event_invitations_desc">Pemberitahuan apabila anda menerima jemputan kalendar baharu</string>
+    <string name="invite_notification_body">Daripada %1$s · Ketik untuk membalas</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Acara Baharu</string>
@@ -71,6 +85,9 @@
     <string name="action_confirm_delete">Sahkan Padam</string>
     <string name="action_delete_event">Padam Acara</string>
 
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">Balasan anda terpakai untuk seluruh siri.</string>
+
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Yang ini dan semua akan datang</string>
 
@@ -107,7 +124,6 @@
     <string name="label_all_day">Sepanjang hari</string>
     <string name="label_today">Hari ini</string>
     <string name="label_go_to_date">Pergi ke tarikh</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">Mg</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -160,6 +176,27 @@
     <string name="app_lock_enabled_message">Kunci apl dihidupkan. KashCal akan meminta anda mengesahkan pada kali seterusnya anda membukanya.</string>
     <string name="app_lock_disable_prompt_title">Buka kunci untuk mematikan Kunci apl</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Sandarkan tetapan</string>
+    <string name="backup_settings_subtitle">Simpan konfigurasi KashCal ke fail JSON</string>
+    <string name="restore_settings_label">Pulihkan tetapan</string>
+    <string name="restore_settings_subtitle">Pulihkan konfigurasi KashCal daripada fail sandaran</string>
+    <string name="restore_confirm_title">Pulihkan sandaran?</string>
+    <string name="restore_confirm_from">Sandaran dari KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Pilihan anda akan diimport.</string>
+    <string name="action_restore">Pulihkan</string>
+    <string name="restore_success_title">Pemulihan selesai</string>
+    <string name="restore_success_message_prefs_only">Pilihan diimport.</string>
+    <string name="restore_success_device_calendars_note">Pilih semula kalendar peranti anda jika anda menggunakan ciri itu.</string>
+    <string name="restore_error_title">Pemulihan gagal</string>
+    <string name="restore_error_version_too_new">Sandaran ini dicipta dengan versi KashCal yang lebih baharu. Sila kemas kini KashCal dan cuba lagi.</string>
+    <string name="restore_error_malformed_json">Fail ini bukan sandaran KashCal yang sah.</string>
+    <string name="restore_error_invalid_value">Fail sandaran ini mengandungi data yang tidak sah dan tidak boleh dipulihkan.</string>
+    <string name="restore_error_apply_failure">Berlaku masalah semasa menggunakan sandaran. Tiada perubahan disimpan.</string>
+    <string name="backup_error_build_failed">Sandaran gagal</string>
+    <string name="backup_error_write_failed">Sandaran gagal — tidak dapat menulis ke fail</string>
+    <string name="backup_error_read_failed">Tidak dapat membaca fail</string>
+
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Guna Apple Calendar?</string>
     <string name="onboarding_got_you">Kami boleh bantu.</string>
@@ -171,6 +208,7 @@
     <string name="whats_new_v598_title">Bantu pastikan Android kekal terbuka</string>
     <string name="whats_new_v598_body">Google sedang mengubah cara anda memasang aplikasi pada peranti anda. Kami memerlukan bantuan anda.</string>
     <string name="whats_new_v598_action_label">Lawati keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Sambung iCloud</string>
     <string name="signin_caldav_title">Tambah Akaun CalDAV</string>
@@ -214,13 +252,11 @@
     <string name="error_auth_session_expired_title">Sesi Tamat Tempoh</string>
     <string name="error_auth_session_expired">Sesi iCloud anda telah tamat tempoh. Sila log masuk semula untuk meneruskan segerak.</string>
     <string name="error_auth_account_locked">Apple ID anda telah dikunci. Sila lawati appleid.apple.com untuk membuka kunci.</string>
-
     <string name="error_network_offline">Anda sedang luar talian. Perubahan akan disegerakkan apabila kembali dalam talian.</string>
     <string name="error_network_timeout">Sambungan tamat masa. Sila semak internet anda dan cuba lagi.</string>
     <string name="error_network_ssl">Sambungan selamat gagal. Sila semak tetapan rangkaian anda.</string>
     <string name="error_network_unknown_host">Tidak dapat menghubungi iCloud. Sila semak sambungan internet anda.</string>
     <string name="error_network_connection_failed">Sambungan gagal. Sila cuba lagi.</string>
-
     <string name="error_server_unavailable">iCloud tidak tersedia buat sementara. Sila cuba lagi kemudian.</string>
     <string name="error_server_rate_limited">Terlalu banyak permintaan. Sila tunggu sebentar dan cuba lagi.</string>
     <string name="error_server_forbidden">Akses ditolak. Anda mungkin tiada kebenaran untuk kalendar ini.</string>
@@ -229,13 +265,11 @@
     <string name="error_conflict_generic">Acara ini telah diubah suai pada peranti lain. Segerak penuh untuk mendapatkan versi terkini.</string>
     <string name="error_conflict_with_event">\"%1$s\" telah diubah suai pada peranti lain. Segerak penuh untuk mendapatkan versi terkini.</string>
     <string name="error_sync_token_expired">Data segerak telah tamat tempoh. Menjalankan segerak penuh…</string>
-
     <string name="error_event_not_found">Acara tidak dijumpai.</string>
     <string name="error_calendar_not_found">Kalendar tidak dijumpai.</string>
     <string name="error_calendar_read_only">Tidak boleh mengubah suai acara dalam \"%1$s\" (kalendar baca sahaja).</string>
     <string name="error_event_invalid_data">Data acara tidak sah. Sila semak masa mula dan tamat.</string>
     <string name="error_event_invalid_recurrence">Corak ulangan tidak sah.</string>
-
     <string name="error_display_name_exists">Akaun bernama \"%1$s\" sudah wujud.</string>
     <string name="icloud_error_credentials_required">Apple ID dan kata laluan diperlukan</string>
     <string name="icloud_error_connection_timeout">Sambungan tamat masa. Sila cuba lagi.</string>
@@ -244,42 +278,41 @@
     <string name="caldav_error_connection_timeout">Sambungan tamat masa. Sila cuba lagi.</string>
     <string name="caldav_error_no_calendars">Tiada kalendar dijumpai pada pelayan ini.</string>
     <string name="caldav_error_unexpected">Ralat tidak dijangka. Sila cuba lagi.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nJika ini pelayan pada rangkaian setempat anda, benarkan akses rangkaian setempat untuk menyambung.</string>
+    <string name="local_network_banner_title">Akses rangkaian setempat diperlukan</string>
+    <string name="local_network_banner_body">Pelayan ini nampaknya berada pada rangkaian setempat anda. Benarkan akses rangkaian setempat supaya KashCal boleh menyambung kepadanya.</string>
+    <string name="local_network_banner_allow">Benarkan akses</string>
+    <string name="local_network_banner_dismiss">Bukan sekarang</string>
     <string name="password_change_error_account_not_found">Akaun tidak dijumpai</string>
     <string name="password_change_error_no_credentials">Tiada kelayakan sedia ada</string>
     <string name="password_change_error_unsupported_provider">Penyedia ini tidak menyokong penukaran kata laluan</string>
     <string name="password_change_error_invalid">Kata laluan tidak sah</string>
     <string name="password_change_error_network">Ralat rangkaian, sila cuba lagi</string>
-
     <string name="error_import_file_not_found">Fail tidak dijumpai atau tidak boleh dibaca.</string>
     <string name="error_import_invalid_format">Format fail kalendar tidak sah.</string>
     <string name="error_import_partial">%1$d acara diimport, %2$d gagal.</string>
     <string name="error_export_failed">Gagal mengeksport acara.</string>
     <string name="error_export_no_events">Tiada acara untuk dieksport.</string>
     <string name="error_end_before_start">Masa tamat mesti selepas masa mula</string>
-
     <string name="error_storage_full_title">Storan Penuh</string>
     <string name="error_storage_full">Ruang storan tidak mencukupi. Sila kosongkan ruang dan cuba lagi.</string>
     <string name="error_database_corruption_title">Ralat Data</string>
     <string name="error_database_corruption">Data kalendar anda mungkin rosak. Sila hubungi sokongan.</string>
     <string name="error_migration_title">Ralat Kemaskini</string>
     <string name="error_migration_failed">Gagal mengemaskini data aplikasi. Sila pasang semula aplikasi.</string>
-
     <string name="error_permission_notification_title">Dayakan Pemberitahuan?</string>
     <string name="error_permission_notification">KashCal memerlukan kebenaran pemberitahuan untuk mengingatkan anda tentang acara akan datang.</string>
     <string name="error_permission_alarm_title">Dayakan Penggera Tepat?</string>
     <string name="error_permission_alarm">KashCal memerlukan kebenaran penggera tepat untuk peringatan yang tepat.</string>
     <string name="error_permission_storage">Kebenaran storan diperlukan untuk import/eksport.</string>
-
     <string name="error_device_calendar_title">Ralat Kalendar</string>
     <string name="error_device_calendar_write_failed">Gagal menyimpan ke kalendar peranti. Sila cuba lagi.</string>
     <string name="error_device_calendar_permission">Kebenaran tulis kalendar diperlukan. Sila beri kebenaran dalam Tetapan.</string>
     <string name="error_device_calendar_not_found">Kalendar tidak dijumpai. Mungkin telah dibuang.</string>
     <string name="error_device_event_not_found">Acara tidak dijumpai. Mungkin telah dipadam.</string>
     <string name="error_device_calendar_read_only">Kalendar ini baca sahaja.</string>
-
     <string name="error_sync_no_accounts">Tiada akaun iCloud dikonfigurasi. Sediakan iCloud untuk menyegerakkan kalendar anda.</string>
     <string name="error_sync_partial">%1$d kalendar disegerakkan, %2$d gagal.</string>
-
     <string name="error_unknown">Sesuatu tidak kena. Sila cuba lagi.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -322,6 +355,7 @@
     <string name="label_password">Kata laluan</string>
     <string name="label_display_name_optional">Nama Paparan</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Cari acara…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -405,12 +439,20 @@
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Suapan Kalendar</string>
-    <string name="subscriptions_row_label">Suapan Kalendar (ICS)</string>
-    <string name="subscriptions_row_hint">cth. cuti, sukan, sekolah</string>
     <string name="subscriptions_section_add">Tambah</string>
     <string name="subscriptions_empty_ics">Tiada langganan ICS</string>
     <string name="subscriptions_empty_ics_hint">Tambah suapan kalendar untuk melihat acara</string>
     <string name="subscriptions_add_ics">Tambah Kalendar ICS</string>
+    <string name="qs_tile_label">Tambah acara</string>
+    <string name="holiday_catalog_add">Tambah kalendar cuti</string>
+    <string name="holiday_catalog_search_label">Cari</string>
+    <string name="holiday_catalog_already_added">Ditambah</string>
+    <string name="holiday_catalog_empty">Tiada negara dijumpai</string>
+    <string name="holiday_catalog_empty_hint">Cuba nama lain</string>
+    <string name="holiday_catalog_validate_error">Tidak dapat menghubungi kalendar ini. Sila semak sambungan anda dan cuba lagi.</string>
+    <string name="holiday_catalog_attribution">Kalendar cuti daripada Mozilla Thunderbird, dilesenkan di bawah %1$s.</string>
+    <string name="subscriptions_row_label">Suapan Kalendar (ICS)</string>
+    <string name="subscriptions_row_hint">cth. cuti, sukan, sekolah</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Hari Lahir &amp; Ulang Tahun</string>
@@ -430,8 +472,8 @@
     <string name="subscriptions_cd_back">Kembali</string>
     <string name="subscriptions_cd_add">Tambah langganan</string>
     <string name="snackbar_subscription_removed">Langganan dialih keluar</string>
-    <string name="snackbar_subscription_already_exists">Sudah melanggan URL ini</string>
     <string name="snackbar_action_undo">Buat asal</string>
+    <string name="snackbar_subscription_already_exists">Sudah melanggan URL ini</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SEGERAK</string>
@@ -451,7 +493,6 @@
     <string name="account_detail_cd_show_password">Tunjuk kata laluan</string>
     <string name="account_detail_cd_hide_password">Sembunyikan kata laluan</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Nama Semula Akaun</string>
     <string name="rename_account_label">Nama Akaun</string>
@@ -468,6 +509,7 @@
     <string name="settings_device_calendars">Kalendar Peranti</string>
     <string name="settings_device_calendars_hint">Kalendar dari aplikasi lain</string>
     <string name="settings_quick_event_add">Tambah Acara Pantas</string>
+    <string name="settings_suggest_titles">Cadangkan tajuk acara</string>
     <string name="settings_week_numbers">Nombor Minggu</string>
     <string name="settings_show_declined">Tunjukkan acara ditolak</string>
     <string name="settings_widget_event_limit">Had Acara Widget</string>
@@ -481,6 +523,7 @@
     <string name="settings_device_calendars_enabled">%1$d didayakan</string>
     <string name="settings_per_day">%1$d setiap hari</string>
 
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Apa itu kata laluan khusus aplikasi?</string>
     <string name="caldav_trust_insecure_label">Percaya sambungan tidak selamat</string>
     <string name="action_add_another">Tambah Lagi</string>
@@ -521,6 +564,9 @@
     <string name="label_found_events">Dijumpai: %1$d acara</string>
     <string name="label_open_debug_menu">Buka menu nyahpepijat</string>
     <string name="placeholder_search">Cari…</string>
+    <string name="settings_search_placeholder">Cari tetapan…</string>
+    <string name="settings_search_no_results">Tiada tetapan ditemui untuk \"%1$s\"</string>
+    <string name="cd_search_settings">Cari tetapan</string>
     <string name="status_sync_paused">Segerak dijeda</string>
     <string name="status_not_synced">Belum disegerakkan</string>
     <string name="status_sync_error">Ralat segerak</string>
@@ -539,15 +585,11 @@
     <string name="device_calendars_reminders_desc">Terima pemberitahuan untuk acara kalendar peranti</string>
     <string name="device_calendars_read_only_no_write">Baca sahaja (tiada kebenaran tulis)</string>
     <string name="device_calendars_read_only_calendar">Baca sahaja (kalendar baca sahaja)</string>
-
     <string name="settings_developer_options">Pilihan Pembangun</string>
     <string name="settings_sync_frequency">Kekerapan Segerak</string>
     <string name="settings_preview">PRATONTON</string>
     <string name="settings_n_events">%1$d acara</string>
     <string name="settings_n_events_default">%1$d acara (lalai)</string>
-    <string name="settings_search_placeholder">Cari tetapan…</string>
-    <string name="settings_search_no_results">Tiada tetapan ditemui untuk \"%1$s\"</string>
-    <string name="cd_search_settings">Cari tetapan</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendar</string>
@@ -555,7 +597,6 @@
     <string name="drawer_device_calendars">Kalendar peranti</string>
     <string name="drawer_account_offline">Luar talian</string>
     <string name="drawer_share_feedback">Bantuan &amp; dokumen</string>
-
     <string name="event_title_fallback">Acara</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -609,11 +650,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d acara</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Buka kalendar</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">%1$d hari lagi</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Buka kalendar</string>
     <plurals name="birthday_count">
         <item quantity="other">%1$d hari lahir</item>
     </plurals>
@@ -682,39 +722,92 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Acara ini sahaja</string>
-    <string name="recurring_all_events">Semua acara</string>
     <string name="dialog_edit_recurring_title">Simpan perubahan ke</string>
     <string name="dialog_delete_recurring_title">Padam</string>
     <string name="dialog_move_recurring_title">Alih</string>
+    <string name="recurring_this_event">Acara ini sahaja</string>
+    <string name="recurring_all_events">Semua acara</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Hadirin</string>
+    <string name="attendee_search_hint">Cari</string>
+    <string name="attendee_search_no_matches">Tiada padanan</string>
+    <string name="attendee_picker_title">Tambah peserta</string>
+    <string name="attendee_pick_add_people">Tambah peserta</string>
+    <string name="attendee_pick_from_contacts">Nama atau e-mel</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="other">+%1$d lagi</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Cadangkan orang daripada kenalan anda</string>
+    <string name="attendee_invalid_email">Masukkan alamat e-mel yang lengkap</string>
+    <string name="attendee_add_typed">Tambah \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Menjemput orang tidak tersedia pada akaun ini</string>
+    <string name="device_attendee_local_no_delivery">Kalendar ini tidak boleh menghantar jemputan. Tetamu disimpan tetapi tidak dimaklumkan.</string>
+    <string name="action_save_and_notify">Simpan &amp; maklum</string>
+    <string name="attendee_section_going">Hadir</string>
+    <string name="attendee_section_maybe">Mungkin</string>
+    <string name="attendee_section_pending">Menunggu</string>
+    <string name="attendee_section_declined">Menolak</string>
+    <string name="attendee_section_delegated">Delegasi</string>
+    <string name="invitees_host_tag">Tuan rumah</string>
+    <string name="invitees_summary_you_alone">Anda</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="other">Anda · %d dijemput</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="other">%d dijemput</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s mengacara</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Anda</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="other">%1$s (%2$s) · Anda + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="other">Anda + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="other">%1$s · %2$d lagi</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Tukar respons</string>
+    <string name="rsvp_question_going">Pergi?</string>
+    <string name="rsvp_action_yes">Ya</string>
+    <string name="rsvp_action_maybe">Mungkin</string>
+    <string name="rsvp_action_no">Tidak</string>
+    <string name="rsvp_state_going">Anda pergi</string>
+    <string name="rsvp_state_maybe">Mungkin</string>
+    <string name="rsvp_state_not_going">Anda tidak pergi</string>
+    <string name="rsvp_action_change">Tukar</string>
     <string name="empty_pick_a_day">Pilih satu hari. Rebut peluang.</string>
-    <string name="empty_no_events_day">Tiada apa di sini; keluar jalan-jalan?</string>
+    <string name="cd_empty_pick_a_day">Pilih satu hari</string>
+    <string name="empty_no_events_day_1">Hari yang lapang. Alam semesta berkeras suruh anda berehat.</string>
+    <string name="empty_no_events_day_2">Tiada rancangan. Itulah rancangannya.</string>
+    <string name="empty_no_events_day_3">Satu hadiah: hari yang kosong.</string>
+    <string name="empty_no_events_day_4">Status kalendar: kosong yang indah.</string>
+    <string name="empty_no_events_day_5">Tiada apa dirancang. Nikmati ketenangan.</string>
+    <string name="cd_empty_no_events_day">Hari santai, tiada jadual</string>
     <string name="filter_date">Tarikh</string>
     <string name="label_select_date">Pilih tarikh</string>
     <string name="hint_tap_date_range">Ketik tarikh sama untuk satu hari, atau tarikh lain untuk julat</string>
-
     <string name="cd_clear">Kosongkan</string>
     <string name="cd_offline">Luar talian</string>
+    <string name="cd_event_state_cancelled">Dibatalkan</string>
+    <string name="cd_event_state_declined">Ditolak</string>
+    <string name="cd_event_state_past">Acara lepas</string>
     <string name="cd_loading_events">Memuatkan acara</string>
+    <string name="cd_event_untitled">Acara tanpa tajuk</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Paparan kalendar</string>
     <string name="cd_active_view">Paparan aktif</string>
-
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Bulan (Penuh)</string>
     <string name="view_day">Hari</string>
     <string name="view_three_days">3 Hari</string>
     <string name="view_year">Tahun</string>
     <string name="view_insights">Cerapan</string>
-
     <string name="label_go_to_month">Pergi ke bulan</string>
-
     <string name="action_more_options">Lagi pilihan</string>
     <string name="quick_add_save_failed">Gagal menyimpan acara</string>
-
     <string name="label_duration_days">hari</string>
     <string name="label_duration_hrs">jam</string>
     <string name="label_duration_min">min</string>
@@ -729,202 +822,7 @@
     <string name="ordinal_4th">4</string>
     <string name="ordinal_nth">ke-%1$d</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d baharu</string>
-    <string name="sync_summary_updated">%1$d dikemaskini</string>
-    <string name="sync_summary_removed">%1$d dibuang</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Tatal bulat didayakan</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Tiada peringatan</string>
-    <string name="reminder_at_time_of_event">Semasa acara bermula</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s sebelum</string>
-    <string name="reminder_time_after">%1$s selepas</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM hari acara</string>
-    <string name="reminder_day_of_event_24h">09:00 hari acara</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s sebelum pada 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s sebelum pada 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Mati</string>
-    <string name="reminder_short_at_event">Semasa</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$d min</string>
-    <string name="reminder_short_hours">%1$d jam</string>
-    <string name="reminder_short_days">%1$d hari</string>
-    <string name="reminder_short_weeks">%1$d mgu</string>
-    <string name="reminder_summary_none">Tiada</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$d jam %2$d min</string>
-    <string name="duration_compact_short">%1$dj%2$dm</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Manual sahaja</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Semua acara</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Tunda</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Bermula sekarang</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Esok, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Segerak selesai</string>
-    <string name="sync_notification_partial">Segerak separa selesai</string>
-    <string name="sync_notification_auth_failed">Pengesahan segerak gagal</string>
-    <string name="sync_notification_auth_reauth">Sila sahkan semula akaun anda</string>
-    <string name="sync_notification_failed">Segerak gagal</string>
-    <string name="sync_notification_parse_title">Beberapa acara tidak dapat disegerakkan</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s dalam %2$s tidak dapat disegerakkan. Cuba Paksa Segerak dalam Tetapan.</string>
-    <string name="sync_notification_conflict_title">Konflik segerak telah diselesaikan</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Perubahan setempat pada \"%1$s\" hilang kerana konflik segerak. Versi pelayan akan digunakan.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Perubahan setempat pada %1$s hilang kerana konflik segerak. Versi pelayan akan digunakan.</string>
-    <string name="sync_notification_expired_title">Perubahan segerak telah tamat tempoh</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s dalam %2$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s merentasi %2$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="other">Disegerakkan %1$d kalendar</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="other">, %1$d perubahan</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="other">, %1$d ralat</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">Hari Lahir ke-%2$s %1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Hari Lahir %1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">Ulang Tahun ke-%2$s %1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">Ulang Tahun %1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">ke-%1$d</string>
-    <string name="ordinal_suffix_nd">ke-%1$d</string>
-    <string name="ordinal_suffix_rd">ke-%1$d</string>
-    <string name="ordinal_suffix_th">ke-%1$d</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Menyegerakkan kalendar…</string>
-    <string name="sync_banner_preparing">Bersedia untuk segerak…</string>
-    <string name="sync_banner_complete_errors">Segerak selesai dengan ralat</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Segerak gagal: %1$s</string>
-    <string name="error_unknown_error">Ralat tidak diketahui</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Acara baharu: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="other">%1$d acara baharu</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="other">%1$d acara dikemas kini</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="other">%1$d acara dipadamkan</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="other">%1$d kemas kini kalendar</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Hari %1$d daripada %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Hari 1 daripada %1$d · bermula %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Hari %1$d daripada %2$d · berakhir %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Sepanjang hari</string>
-    <string name="event_date_all_day">%1$s · Sepanjang hari</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Sepanjang hari)</string>
-    <string name="event_date_all_day_parens">%1$s (Sepanjang hari)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Simpan Acara</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Baharu</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Merah</string>
-    <string name="color_orange">Jingga</string>
-    <string name="color_yellow">Kuning</string>
-    <string name="color_green">Hijau</string>
-    <string name="color_cyan">Sian</string>
-    <string name="color_blue">Biru</string>
-    <string name="color_purple">Ungu</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Pautan mesyuarat: %1$s</string>
-    <string name="cd_phone_number">Nombor telefon</string>
-    <string name="cd_email_link">E-mel: %1$s</string>
-    <string name="cd_web_link">Pautan: %1$s</string>
-    <string name="cd_text_with_links">Teks dengan %1$d pautan: %2$s</string>
-    <string name="cd_text_with_link">Teks dengan 1 pautan: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Hari %1$d daripada %2$d (Sepanjang hari)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d segerak   ↑%2$d tolak   ↓%3$d tarik</string>
-    <string name="sync_history_stats_issues">%1$d segerak   ↑%2$d tolak   ↓%3$d tarik   ⚠ %4$d isu</string>
-    <string name="sync_history_failed">Gagal</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Setiap jam</string>
-    <string name="ics_sync_every_n_hours">Setiap %1$d jam</string>
-    <string name="ics_sync_daily">Setiap hari</string>
-    <string name="ics_sync_weekly">Setiap minggu</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL diperlukan</string>
-    <string name="ics_url_invalid_scheme">URL mesti bermula dengan http://, https://, atau webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Pelayan mengembalikan ralat (%1$d). Sila semak URL.</string>
-    <string name="ics_fetch_error_empty">Suapan kalendar kosong.</string>
-    <string name="ics_fetch_error_not_calendar">URL itu nampaknya bukan suapan kalendar.</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="other">, %1$d kali</item>
-    </plurals>
-
-    <!-- Missing translations -->
-    <string name="cd_widget_calendar">Kalendar</string>
-    <string name="cd_widget_add_event">Tambah acara</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">tiada acara</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, dibatalkan</string>
-    <string name="channel_event_reminders">Peringatan Acara</string>
-    <string name="channel_event_reminders_desc">Pemberitahuan untuk acara kalendar yang akan datang</string>
-    <string name="channel_sync_progress">Kemajuan Segerak</string>
-    <string name="channel_sync_progress_desc">Menunjukkan kemajuan semasa menyegerakkan kalendar</string>
-    <string name="channel_sync_status">Status Segerak</string>
-    <string name="channel_sync_status_desc">Pemberitahuan tentang penyempurnaan segerak dan ralat</string>
-    <string name="channel_event_invitations">Jemputan Acara</string>
-    <string name="channel_event_invitations_desc">Pemberitahuan apabila anda menerima jemputan kalendar baharu</string>
-    <string name="invite_notification_body">Daripada %1$s · Ketik untuk membalas</string>
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Tidak berulang</string>
     <string name="rrule_freq_daily">Harian</string>
     <string name="rrule_freq_weekly">Mingguan</string>
@@ -940,6 +838,9 @@
     <string name="rrule_freq_on_last_day">%1$s pada hari terakhir</string>
     <string name="rrule_freq_on_day_n">%1$s pada hari %2$d</string>
     <string name="rrule_ordinal_last">terakhir</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d kali</item>
+    </plurals>
     <string name="rrule_until_suffix">, sehingga %1$s</string>
     <string name="rrule_freq_never">Tidak pernah</string>
     <string name="rrule_freq_custom">Tersuai</string>
@@ -953,7 +854,138 @@
     <string name="rrule_starting">%1$s bermula %2$s%3$s</string>
     <string name="rrule_since">%1$s · sejak %2$s</string>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d baharu</string>
+    <string name="sync_summary_updated">%1$d dikemaskini</string>
+    <string name="sync_summary_removed">%1$d dibuang</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Tatal bulat didayakan</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Tiada peringatan</string>
+    <string name="reminder_at_time_of_event">Semasa acara bermula</string>
+    <string name="reminder_time_before">%1$s sebelum</string>
+    <string name="reminder_time_after">%1$s selepas</string>
+    <string name="reminder_day_of_event_12h">9 AM hari acara</string>
+    <string name="reminder_day_of_event_24h">09:00 hari acara</string>
+    <string name="reminder_before_at_12h">%1$s sebelum pada 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s sebelum pada 09:00</string>
+    <string name="reminder_short_off">Mati</string>
+    <string name="reminder_short_at_event">Semasa</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d min</string>
+    <string name="reminder_short_hours">%1$d jam</string>
+    <string name="reminder_short_days">%1$d hari</string>
+    <string name="reminder_short_weeks">%1$d mgu</string>
+    <string name="reminder_summary_none">Tiada</string>
+    <string name="duration_compact">%1$d jam %2$d min</string>
+    <string name="duration_compact_short">%1$dj%2$dm</string>
+    <string name="sync_manual_only">Manual sahaja</string>
+    <string name="sync_lookback_all">Semua acara</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Tunda</string>
+    <string name="notification_starting_now">Bermula sekarang</string>
+    <plurals name="reminder_in_days">
+        <item quantity="other">Dalam %1$d hari</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Esok, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Segerak selesai</string>
+    <string name="sync_notification_partial">Segerak separa selesai</string>
+    <string name="sync_notification_auth_failed">Pengesahan segerak gagal</string>
+    <string name="sync_notification_auth_reauth">Sila sahkan semula akaun anda</string>
+    <string name="sync_notification_failed">Segerak gagal</string>
+    <string name="sync_notification_parse_title">Beberapa acara tidak dapat disegerakkan</string>
+    <string name="sync_notification_parse_content">%1$s dalam %2$s tidak dapat disegerakkan. Cuba Paksa Segerak dalam Tetapan.</string>
+    <string name="sync_notification_conflict_title">Konflik segerak telah diselesaikan</string>
+    <string name="sync_notification_conflict_single">Perubahan setempat pada \"%1$s\" hilang kerana konflik segerak. Versi pelayan akan digunakan.</string>
+    <string name="sync_notification_conflict_multi">Perubahan setempat pada %1$s hilang kerana konflik segerak. Versi pelayan akan digunakan.</string>
+    <string name="sync_notification_expired_title">Perubahan segerak telah tamat tempoh</string>
+    <string name="sync_notification_expired_content">%1$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s dalam %2$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s merentasi %2$s tidak dapat disegerakkan selepas 30 hari. Versi pelayan akan digunakan. Paksa Segerak untuk mencuba semula.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">Disegerakkan %1$d kalendar</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d perubahan</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d ralat</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">Hari Lahir ke-%2$s %1$s</string>
+    <string name="contact_birthday">Hari Lahir %1$s</string>
+    <string name="contact_anniversary_with_age">Ulang Tahun ke-%2$s %1$s</string>
+    <string name="contact_anniversary">Ulang Tahun %1$s</string>
+    <string name="ordinal_suffix_st">ke-%1$d</string>
+    <string name="ordinal_suffix_nd">ke-%1$d</string>
+    <string name="ordinal_suffix_rd">ke-%1$d</string>
+    <string name="ordinal_suffix_th">ke-%1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Menyegerakkan kalendar…</string>
+    <string name="sync_banner_preparing">Bersedia untuk segerak…</string>
+    <string name="sync_banner_complete_errors">Segerak selesai dengan ralat</string>
+    <string name="sync_banner_failed">Segerak gagal: %1$s</string>
+    <string name="error_unknown_error">Ralat tidak diketahui</string>
+    <string name="sync_snackbar_new_event">Acara baharu: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d acara baharu</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d acara dikemas kini</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d acara dipadamkan</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d kemas kini kalendar</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Hari %1$d daripada %2$d</string>
+    <string name="day_starts">Hari 1 daripada %1$d · bermula %2$s</string>
+    <string name="day_ends">Hari %1$d daripada %2$d · berakhir %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Sepanjang hari</string>
+    <string name="event_date_all_day">%1$s · Sepanjang hari</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Sepanjang hari)</string>
+    <string name="event_date_all_day_parens">%1$s (Sepanjang hari)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Simpan Acara</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Baharu</string>
+    <string name="color_red">Merah</string>
+    <string name="color_orange">Jingga</string>
+    <string name="color_yellow">Kuning</string>
+    <string name="color_green">Hijau</string>
+    <string name="color_cyan">Sian</string>
+    <string name="color_blue">Biru</string>
+    <string name="color_purple">Ungu</string>
+    <string name="cd_meeting_link">Pautan mesyuarat: %1$s</string>
+    <string name="cd_phone_number">Nombor telefon</string>
+    <string name="cd_email_link">E-mel: %1$s</string>
+    <string name="cd_web_link">Pautan: %1$s</string>
+    <string name="cd_text_with_links">Teks dengan %1$d pautan: %2$s</string>
+    <string name="cd_text_with_link">Teks dengan 1 pautan: %1$s</string>
+    <string name="day_x_of_y_all_day">Hari %1$d daripada %2$d (Sepanjang hari)</string>
+    <string name="sync_history_stats">%1$d segerak   ↑%2$d tolak   ↓%3$d tarik</string>
+    <string name="sync_history_stats_issues">%1$d segerak   ↑%2$d tolak   ↓%3$d tarik   ⚠ %4$d isu</string>
+    <string name="sync_history_failed">Gagal</string>
+    <string name="ics_sync_every_hour">Setiap jam</string>
+    <string name="ics_sync_every_n_hours">Setiap %1$d jam</string>
+    <string name="ics_sync_daily">Setiap hari</string>
+    <string name="ics_sync_weekly">Setiap minggu</string>
+    <string name="ics_url_required">URL diperlukan</string>
+    <string name="ics_url_invalid_scheme">URL mesti bermula dengan http://, https://, atau webcal://</string>
+    <string name="ics_fetch_error_http">Pelayan mengembalikan ralat (%1$d). Sila semak URL.</string>
+    <string name="ics_fetch_error_empty">Suapan kalendar kosong.</string>
+    <string name="ics_fetch_error_not_calendar">URL itu nampaknya bukan suapan kalendar.</string>
     <string name="insights_title">Cerapan</string>
     <string name="insights_period_this_week">Minggu</string>
     <string name="insights_period_last_week">Minggu lepas</string>
@@ -989,6 +1021,8 @@
     <string name="insight_heaviest_upcoming">%1$s adalah hari paling sibuk akan datang (%2$s)</string>
     <string name="insight_next_free_block">Blok lapang seterusnya: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Taburan harian: hari paling sibuk ialah %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Ketersediaan</string>
     <string name="label_busy">Sibuk</string>
     <string name="label_free">Lapang</string>
@@ -996,10 +1030,8 @@
     <string name="label_calendar_default">Lalai kalendar</string>
     <string name="label_custom">Tersuai</string>
     <string name="cd_checkmark">Dipilih</string>
-    <string name="cd_event_state_cancelled">Dibatalkan</string>
-    <string name="cd_event_state_declined">Ditolak</string>
-    <string name="cd_event_state_past">Acara lepas</string>
-    <string name="cd_event_untitled">Acara tanpa tajuk</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Coklat Pelana</string>    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
     <string name="color_gold">Emas</string>
     <string name="color_yellowgreen">Hijau Kuning</string>
@@ -1008,6 +1040,8 @@
     <string name="color_royalblue">Biru diraja</string>    <string name="color_mediumorchid">Ungu Orkid Sederhana</string>
     <string name="color_hotpink">Merah Jambu Terang</string>
     <string name="color_dimgray">Kelabu malap</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Merah</string>
     <string name="hue_orange">Jingga</string>
     <string name="hue_yellow">Kuning</string>
@@ -1020,42 +1054,10 @@
     <string name="hue_neutral">Neutral</string>
     <string name="label_more_colors">Lebih banyak warna</string>
     <string name="label_back_to_grid">Kembali</string>
-    <string name="settings_suggest_titles">Cadangkan tajuk acara</string>
 
-    <!-- ==================== Backup & Restore ==================== -->
-    <string name="backup_settings_label">Sandarkan tetapan</string>
-    <string name="backup_settings_subtitle">Simpan konfigurasi KashCal ke fail JSON</string>
-    <string name="restore_settings_label">Pulihkan tetapan</string>
-    <string name="restore_settings_subtitle">Pulihkan konfigurasi KashCal daripada fail sandaran</string>
-    <string name="restore_confirm_title">Pulihkan sandaran?</string>
-    <string name="restore_confirm_from">Sandaran dari KashCal %1$s, %2$s</string>
-    <string name="restore_confirm_message_prefs_only">Pilihan anda akan diimport.</string>
-    <string name="action_restore">Pulihkan</string>
-    <string name="restore_success_title">Pemulihan selesai</string>
-    <string name="restore_success_message_prefs_only">Pilihan diimport.</string>
-    <string name="restore_success_device_calendars_note">Pilih semula kalendar peranti anda jika anda menggunakan ciri itu.</string>
-    <string name="restore_error_title">Pemulihan gagal</string>
-    <string name="restore_error_version_too_new">Sandaran ini dicipta dengan versi KashCal yang lebih baharu. Sila kemas kini KashCal dan cuba lagi.</string>
-    <string name="restore_error_malformed_json">Fail ini bukan sandaran KashCal yang sah.</string>
-    <string name="restore_error_invalid_value">Fail sandaran ini mengandungi data yang tidak sah dan tidak boleh dipulihkan.</string>
-    <string name="restore_error_apply_failure">Berlaku masalah semasa menggunakan sandaran. Tiada perubahan disimpan.</string>
-    <string name="backup_error_build_failed">Sandaran gagal</string>
-    <string name="backup_error_write_failed">Sandaran gagal — tidak dapat menulis ke fail</string>
-    <string name="backup_error_read_failed">Tidak dapat membaca fail</string>
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Peserta</string>
     <string name="attendee_you_marker">Anda</string>
-    <string name="attendee_picker_title">Tambah peserta</string>
-    <string name="attendee_pick_add_people">Tambah peserta</string>
-    <string name="attendee_pick_from_contacts">Nama atau e-mel</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="other">+%1$d lagi</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Cadangkan orang daripada kenalan anda</string>
-    <string name="attendee_invalid_email">Masukkan alamat e-mel yang lengkap</string>
-    <string name="attendee_add_typed">Tambah \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Menjemput orang tidak tersedia pada akaun ini</string>
-    <string name="device_attendee_local_no_delivery">Kalendar ini tidak boleh menghantar jemputan. Tetamu disimpan tetapi tidak dimaklumkan.</string>
-    <string name="action_save_and_notify">Simpan &amp; maklum</string>
     <string name="attendee_card_going">Hadir</string>
     <string name="attendee_card_pending">Menunggu</string>
     <string name="attendee_card_declined">Ditolak</string>
@@ -1063,6 +1065,8 @@
     <string name="attendee_card_hosting">Mengelola</string>
     <string name="attendee_action_copy">Salin e-mel</string>
     <string name="attendee_action_email">Hantar e-mel</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-mel disalin</string>
     <string name="attendee_no_email_app">Tiada aplikasi e-mel dipasang</string>
     <string name="attendee_show_all">Tunjuk semua hadirin</string>
@@ -1071,49 +1075,9 @@
     <string name="attendee_status_tentative">Tentatif</string>
     <string name="attendee_status_delegated">Diwakilkan</string>
     <string name="attendee_status_pending">Menunggu</string>
-    <string name="rsvp_series_disclosure">Balasan anda terpakai untuk seluruh siri.</string>
-    <string name="attendee_sheet_title">Hadirin</string>
-    <string name="attendee_search_hint">Cari</string>
-    <string name="attendee_search_no_matches">Tiada padanan</string>
-    <string name="attendee_section_going">Hadir</string>
-    <string name="attendee_section_maybe">Mungkin</string>
-    <string name="attendee_section_pending">Menunggu</string>
-    <string name="attendee_section_declined">Menolak</string>
-    <string name="attendee_section_delegated">Delegasi</string>
-    <string name="invitees_host_tag">Tuan rumah</string>
-    <string name="invitees_summary_you_alone">Anda</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="other">Anda · %d dijemput</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="other">%d dijemput</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s mengacara</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Anda</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="other">%1$s (%2$s) · Anda + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="other">Anda + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="other">%1$s · %2$d lagi</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Tukar respons</string>
-    <string name="rsvp_question_going">Pergi?</string>
-    <string name="rsvp_action_yes">Ya</string>
-    <string name="rsvp_action_maybe">Mungkin</string>
-    <string name="rsvp_action_no">Tidak</string>
-    <string name="rsvp_state_going">Anda pergi</string>
-    <string name="rsvp_state_maybe">Mungkin</string>
-    <string name="rsvp_state_not_going">Anda tidak pergi</string>
-    <string name="rsvp_action_change">Tukar</string>
-
-
     <string name="inbox_empty_caught_up">Semua telah diuruskan</string>
     <string name="inbox_organizer_suffix">(penganjur)</string>
     <string name="menu_invites">Jemputan</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Pergi ke tarikh</string>
     <string name="menu_about">Perihal</string>
     <string name="menu_more">Menu lain</string>
@@ -1121,19 +1085,31 @@
         <item quantity="one">Menu lain, %d jemputan menunggu</item>
         <item quantity="other">Menu lain, %d jemputan menunggu</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Kongsi ketersediaan</string>
     <string name="share_availability_sheet_title">Kongsi ketersediaan</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">%1$d hari akan datang</item>
+    </plurals>
     <string name="share_availability_hours_label">Waktu kerja: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">Acara sepanjang hari sebagai sibuk</string>
     <string name="share_availability_share_button">Kongsi</string>
+    <plurals name="share_availability_header">
+        <item quantity="other">Lapang dalam %1$d hari akan datang (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Tiada blok lapang sekurang-kurangnya satu jam dalam julat yang dipilih.</string>
+    <string name="share_from_kashcal_footer">Dikongsi dari KashCal</string>
     <string name="share_availability_chooser_title">Kongsi ketersediaan</string>
     <string name="share_availability_share_failed">Tiada apl untuk dikongsi</string>
     <string name="share_availability_window_section">Tempoh</string>
     <string name="share_availability_hours_section">Waktu kerja</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d hari</item>
+    </plurals>
     <string name="share_availability_days_through">Hingga %1$s</string>
     <string name="share_availability_window_duration">Tempoh %1$s jam</string>
     <string name="share_as_card_action">Kongsi sebagai kad</string>
@@ -1144,25 +1120,5 @@
     <string name="share_as_card_all_day">Sepanjang hari</string>
     <string name="share_as_card_chooser_title">Kongsi acara</string>
     <string name="share_as_card_share_failed">Tidak dapat berkongsi kad</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="other">%1$d hari</item>
-    </plurals>
-    <string name="share_from_kashcal_footer">Dikongsi dari KashCal</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="other">%1$d hari akan datang</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="other">Lapang dalam %1$d hari akan datang (%2$s – %3$s):</item>
-    </plurals>
-    <plurals name="reminder_in_days">
-        <item quantity="other">Dalam %1$d hari</item>
-    </plurals>
-    <string name="holiday_catalog_add">Tambah kalendar cuti</string>
-    <string name="holiday_catalog_search_label">Cari</string>
-    <string name="holiday_catalog_already_added">Ditambah</string>
-    <string name="holiday_catalog_empty">Tiada negara dijumpai</string>
-    <string name="holiday_catalog_empty_hint">Cuba nama lain</string>
-    <string name="holiday_catalog_validate_error">Tidak dapat menghubungi kalendar ini. Sila semak sambungan anda dan cuba lagi.</string>
-    <string name="holiday_catalog_attribution">Kalendar cuti daripada Mozilla Thunderbird, dilesenkan di bawah %1$s.</string>
-    <string name="qs_tile_label">Tambah acara</string>
+
 </resources>

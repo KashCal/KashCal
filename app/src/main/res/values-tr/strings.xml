@@ -13,12 +13,27 @@
     <string name="date_widget_description">Bugünün tarihini uygulama simgesi gibi gösterir</string>
     <string name="upcoming_widget_name">Yaklaşan</string>
     <string name="upcoming_widget_description">Sonraki 10 günün etkinliklerini gösterir, boş günleri atlayarak</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Yaklaşan etkinlikler yükleniyor…</string>
     <string name="widget_error_load_events">Etkinlikler yüklenemedi, açmak için dokunun</string>
     <string name="widget_no_events_today">Bugün etkinlik yok</string>
     <string name="widget_add_event">+ Etkinlik ekle</string>
     <string name="widget_no_events">Etkinlik yok</string>
     <string name="widget_no_upcoming_events">Yaklaşan etkinlik yok</string>
+    <string name="cd_widget_calendar">Takvim</string>
+    <string name="cd_widget_add_event">Etkinlik ekle</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">etkinlik yok</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, iptal edildi</string>
+    <string name="channel_event_reminders">Etkinlik Hatırlatıcıları</string>
+    <string name="channel_event_reminders_desc">Yaklaşan takvim etkinlikleri için bildirimler</string>
+    <string name="channel_sync_progress">Eşitleme İlerlemesi</string>
+    <string name="channel_sync_progress_desc">Takvimler eşitlenirken ilerlemeyi gösterir</string>
+    <string name="channel_sync_status">Eşitleme Durumu</string>
+    <string name="channel_sync_status_desc">Eşitleme tamamlanması ve hatalar hakkında bildirimler</string>
+    <string name="channel_event_invitations">Etkinlik Davetleri</string>
+    <string name="channel_event_invitations_desc">Yeni bir takvim daveti aldığınızda bildirimler</string>
+    <string name="invite_notification_body">Gönderen: %1$s · Yanıtlamak için dokunun</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Yeni Etkinlik</string>
@@ -70,46 +85,8 @@
     <string name="action_confirm_delete">Silmeyi Onayla</string>
     <string name="action_delete_event">Etkinliği Sil</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Yanıt, tüm seriye uygulanır.</string>
-    <string name="invitees_host_tag">Ev sahibi</string>
-    <string name="invitees_summary_you_alone">Sen</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d gün sonra</item>
-        <item quantity="other">%1$d gün sonra</item>
-    </plurals>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Sen · %d davetli</item>
-        <item quantity="other">Sen · %d davetli</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d davetli</item>
-        <item quantity="other">%d davetli</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s düzenliyor</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sen</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Sen + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Sen + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Sen + %d</item>
-        <item quantity="other">Sen + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d kişi daha</item>
-        <item quantity="other">%1$s · %2$d kişi daha</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Yanıtı değiştir</string>
-    <string name="rsvp_question_going">Geliyor musun?</string>
-    <string name="rsvp_action_yes">Evet</string>
-    <string name="rsvp_action_maybe">Belki</string>
-    <string name="rsvp_action_no">Hayır</string>
-    <string name="rsvp_state_going">Geliyorsun</string>
-    <string name="rsvp_state_maybe">Belki</string>
-    <string name="rsvp_state_not_going">Gelmiyorsun</string>
-    <string name="rsvp_action_change">Değiştir</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Bu ve gelecekteki tümü</string>
@@ -147,7 +124,6 @@
     <string name="label_all_day">Tüm gün</string>
     <string name="label_today">Bugün</string>
     <string name="label_go_to_date">Tarihe git</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">H</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -200,16 +176,16 @@
     <string name="app_lock_enabled_message">Uygulama kilidi açık. KashCal, bir sonraki açılışınızda kimlik doğrulaması isteyecek.</string>
     <string name="app_lock_disable_prompt_title">Uygulama kilidini kapatmak için kilidi açın</string>
 
-    <!-- ==================== Backup &amp; Restore ==================== -->
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Ayarları yedekle</string>
     <string name="backup_settings_subtitle">KashCal yapılandırmasını JSON dosyasına kaydet</string>
     <string name="restore_settings_label">Ayarları geri yükle</string>
     <string name="restore_settings_subtitle">KashCal yapılandırmasını yedek dosyasından geri yükle</string>
     <string name="restore_confirm_title">Yedek geri yüklensin mi?</string>
     <string name="restore_confirm_from">KashCal %1$s sürümünden yedek, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Tercihlerin içe aktarılacak.</string>
     <string name="action_restore">Geri Yükle</string>
     <string name="restore_success_title">Geri yükleme tamamlandı</string>
-    <string name="restore_confirm_message_prefs_only">Tercihlerin içe aktarılacak.</string>
     <string name="restore_success_message_prefs_only">Tercihler içe aktarıldı.</string>
     <string name="restore_success_device_calendars_note">Cihaz takvimlerini kullanıyorsan tekrar seç.</string>
     <string name="restore_error_title">Geri yükleme başarısız</string>
@@ -225,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Takvim mi?</string>
     <string name="onboarding_got_you">Yanındayız.</string>
     <string name="onboarding_connect_prompt">Etkinliklerini burada görmek için iCloud\'a bağlan</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Yenilikler</string>
+    <string name="whats_new_dismiss">Anladım</string>
+    <string name="whats_new_v598_title">Android\'ın açık kalmasına yardım et</string>
+    <string name="whats_new_v598_body">Google, cihazınıza uygulama yükleme şeklinizi değiştiriyor. Yardımınıza ihtiyacımız var.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org adresini ziyaret et</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud\'a Bağlan</string>
@@ -269,13 +252,11 @@
     <string name="error_auth_session_expired_title">Oturum Süresi Doldu</string>
     <string name="error_auth_session_expired">iCloud oturumunun süresi doldu. Eşitlemeye devam etmek için tekrar giriş yap.</string>
     <string name="error_auth_account_locked">Apple ID\'n kilitli. Kilidi açmak için appleid.apple.com\'u ziyaret et.</string>
-
     <string name="error_network_offline">Çevrimdışısın. Değişiklikler çevrimiçi olunca eşitlenecek.</string>
     <string name="error_network_timeout">Bağlantı zaman aşımına uğradı. İnternetini kontrol edip tekrar dene.</string>
     <string name="error_network_ssl">Güvenli bağlantı başarısız. Ağ ayarlarını kontrol et.</string>
     <string name="error_network_unknown_host">iCloud\'a ulaşılamadı. İnternet bağlantını kontrol et.</string>
     <string name="error_network_connection_failed">Bağlantı başarısız. Tekrar dene.</string>
-
     <string name="error_server_unavailable">iCloud geçici olarak kullanılamıyor. Daha sonra tekrar dene.</string>
     <string name="error_server_rate_limited">Çok fazla istek. Biraz bekleyip tekrar dene.</string>
     <string name="error_server_forbidden">Erişim reddedildi. Bu takvime erişim iznin olmayabilir.</string>
@@ -284,13 +265,11 @@
     <string name="error_conflict_generic">Bu etkinlik başka bir cihazda değiştirilmiş. En son sürümü almak için zorla eşitle.</string>
     <string name="error_conflict_with_event">\"%1$s\" başka bir cihazda değiştirilmiş. En son sürümü almak için zorla eşitle.</string>
     <string name="error_sync_token_expired">Eşitleme verileri süresi doldu. Tam eşitleme yapılıyor…</string>
-
     <string name="error_event_not_found">Etkinlik bulunamadı.</string>
     <string name="error_calendar_not_found">Takvim bulunamadı.</string>
     <string name="error_calendar_read_only">\"%1$s\" takvimindeki etkinlikler değiştirilemez (salt okunur takvim).</string>
     <string name="error_event_invalid_data">Geçersiz etkinlik verisi. Başlangıç ve bitiş saatlerini kontrol et.</string>
     <string name="error_event_invalid_recurrence">Geçersiz tekrar kalıbı.</string>
-
     <string name="error_display_name_exists">\"%1$s\" adında bir hesap zaten var.</string>
     <string name="icloud_error_credentials_required">Apple ID ve parola gerekli</string>
     <string name="icloud_error_connection_timeout">Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.</string>
@@ -299,43 +278,41 @@
     <string name="caldav_error_connection_timeout">Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.</string>
     <string name="caldav_error_no_calendars">Bu sunucuda takvim bulunamadı.</string>
     <string name="caldav_error_unexpected">Beklenmeyen hata. Lütfen tekrar deneyin.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nBu, yerel ağındaki bir sunucuysa, bağlanmak için yerel ağ erişimine izin ver.</string>
+    <string name="local_network_banner_title">Yerel ağ erişimi gerekli</string>
+    <string name="local_network_banner_body">Bu sunucu, yerel ağında gibi görünüyor. KashCal\'ın ona bağlanabilmesi için yerel ağ erişimine izin ver.</string>
+    <string name="local_network_banner_allow">Erişime izin ver</string>
+    <string name="local_network_banner_dismiss">Şimdi değil</string>
     <string name="password_change_error_account_not_found">Hesap bulunamadı</string>
     <string name="password_change_error_no_credentials">Mevcut kimlik bilgisi yok</string>
     <string name="password_change_error_unsupported_provider">Bu sağlayıcı parola değiştirmeyi desteklemiyor</string>
     <string name="password_change_error_invalid">Geçersiz parola</string>
     <string name="password_change_error_network">Ağ hatası, lütfen tekrar deneyin</string>
-
     <string name="error_import_file_not_found">Dosya bulunamadı veya okunamıyor.</string>
     <string name="error_import_invalid_format">Geçersiz takvim dosyası biçimi.</string>
     <string name="error_import_partial">%1$d etkinlik içe aktarıldı, %2$d başarısız.</string>
     <string name="error_export_failed">Etkinlikler dışa aktarılamadı.</string>
     <string name="error_export_no_events">Dışa aktarılacak etkinlik yok.</string>
     <string name="error_end_before_start">Bitiş saati başlangıç saatinden sonra olmalı</string>
-
     <string name="error_storage_full_title">Depolama Dolu</string>
     <string name="error_storage_full">Yeterli depolama alanı yok. Biraz alan boşaltıp tekrar dene.</string>
     <string name="error_database_corruption_title">Veri Hatası</string>
     <string name="error_database_corruption">Takvim verilerin bozulmuş olabilir. Destek ile iletişime geç.</string>
     <string name="error_migration_title">Güncelleme Hatası</string>
     <string name="error_migration_failed">Uygulama verileri güncellenemedi. Uygulamayı yeniden yükle.</string>
-
     <string name="error_permission_notification_title">Bildirimler Etkinleştirilsin mi?</string>
     <string name="error_permission_notification">KashCal, yaklaşan etkinlikleri hatırlatmak için bildirim izni gerektirir.</string>
     <string name="error_permission_alarm_title">Kesin Alarmlar Etkinleştirilsin mi?</string>
     <string name="error_permission_alarm">KashCal, hassas hatırlatıcılar için kesin alarm izni gerektirir.</string>
     <string name="error_permission_storage">İçe/dışa aktarma için depolama izni gerekli.</string>
-
     <string name="error_device_calendar_title">Takvim Hatası</string>
     <string name="error_device_calendar_write_failed">Cihaz takvimine kaydedilemedi. Tekrar dene.</string>
     <string name="error_device_calendar_permission">Takvim yazma izni gerekli. Ayarlardan izin ver.</string>
     <string name="error_device_calendar_not_found">Takvim bulunamadı. Kaldırılmış olabilir.</string>
     <string name="error_device_event_not_found">Etkinlik bulunamadı. Silinmiş olabilir.</string>
     <string name="error_device_calendar_read_only">Bu takvim salt okunur.</string>
-
     <string name="error_sync_no_accounts">iCloud hesabı yapılandırılmamış. Takvimlerini eşitlemek için iCloud\'u kur.</string>
     <string name="error_sync_partial">%1$d takvim eşitlendi, %2$d başarısız.</string>
-
     <string name="error_unknown">Bir şeyler ters gitti. Tekrar dene.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -378,6 +355,7 @@
     <string name="label_password">Parola</string>
     <string name="label_display_name_optional">Görünen Ad</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Etkinlik ara…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -462,12 +440,19 @@
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Takvim Akışları</string>
     <string name="subscriptions_section_add">Ekle</string>
-    <string name="subscriptions_row_hint">örn. tatiller, spor, okul</string>
-    <string name="subscriptions_row_label">Takvim Akışları (ICS)</string>
     <string name="subscriptions_empty_ics">ICS aboneliği yok</string>
     <string name="subscriptions_empty_ics_hint">Etkinlikleri görmek için takvim akışı ekle</string>
     <string name="subscriptions_add_ics">ICS Takvimi Ekle</string>
     <string name="qs_tile_label">Etkinlik ekle</string>
+    <string name="holiday_catalog_add">Tatil takvimi ekle</string>
+    <string name="holiday_catalog_search_label">Ara</string>
+    <string name="holiday_catalog_already_added">Eklendi</string>
+    <string name="holiday_catalog_empty">Ülke bulunamadı</string>
+    <string name="holiday_catalog_empty_hint">Farklı bir ad deneyin</string>
+    <string name="holiday_catalog_validate_error">Bu takvime ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird tatil takvimleri, %1$s lisansı altında sunulmaktadır.</string>
+    <string name="subscriptions_row_label">Takvim Akışları (ICS)</string>
+    <string name="subscriptions_row_hint">örn. tatiller, spor, okul</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Doğum Günleri ve Yıl Dönümleri</string>
@@ -486,11 +471,8 @@
     <string name="settings_contacts_permission_required">Kişiler izni gerekli</string>
     <string name="subscriptions_cd_back">Geri dön</string>
     <string name="subscriptions_cd_add">Abonelik ekle</string>
-    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
     <string name="snackbar_subscription_removed">Abonelik kaldırıldı</string>
-    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
     <string name="snackbar_action_undo">Geri al</string>
-    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
     <string name="snackbar_subscription_already_exists">Bu URL\'ye zaten abone olundu</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
@@ -511,7 +493,6 @@
     <string name="account_detail_cd_show_password">Parolayı göster</string>
     <string name="account_detail_cd_hide_password">Parolayı gizle</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Hesabı Yeniden Adlandır</string>
     <string name="rename_account_label">Hesap Adı</string>
@@ -528,6 +509,7 @@
     <string name="settings_device_calendars">Cihaz Takvimleri</string>
     <string name="settings_device_calendars_hint">Diğer uygulamalardaki takvimler</string>
     <string name="settings_quick_event_add">Hızlı Etkinlik Ekleme</string>
+    <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
     <string name="settings_week_numbers">Hafta Numaraları</string>
     <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="settings_widget_event_limit">Widget Etkinlik Sınırı</string>
@@ -540,6 +522,8 @@
     <string name="settings_tap_to_enable">Etkinleştirmek için dokun</string>
     <string name="settings_device_calendars_enabled">%1$d etkin</string>
     <string name="settings_per_day">Günde %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Uygulamaya özel parola nedir?</string>
     <string name="caldav_trust_insecure_label">Güvensiz bağlantıya güven</string>
     <string name="action_add_another">Bir Tane Daha Ekle</string>
@@ -601,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Cihaz takvimi etkinlikleri için bildirim al</string>
     <string name="device_calendars_read_only_no_write">Salt okunur (yazma izni yok)</string>
     <string name="device_calendars_read_only_calendar">Salt okunur (takvim salt okunur)</string>
-
     <string name="settings_developer_options">Geliştirici Seçenekleri</string>
     <string name="settings_sync_frequency">Eşitleme Sıklığı</string>
     <string name="settings_preview">ÖNİZLEME</string>
@@ -614,7 +597,6 @@
     <string name="drawer_device_calendars">Cihaz takvimleri</string>
     <string name="drawer_account_offline">Çevrimdışı</string>
     <string name="drawer_share_feedback">Yardım ve belgeler</string>
-
     <string name="event_title_fallback">Etkinlik</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -677,12 +659,11 @@
         <item quantity="one">%1$d etkinlik</item>
         <item quantity="other">%1$d etkinlik</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Takvimi aç</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d gün daha</item>
         <item quantity="other">%1$d gün daha</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Takvimi aç</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d doğum günü</item>
         <item quantity="other">%1$d doğum günü</item>
@@ -773,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Bu etkinlik</string>
-    <string name="recurring_all_events">Tüm etkinlikler</string>
     <string name="dialog_edit_recurring_title">Değişiklikleri kaydet</string>
     <string name="dialog_delete_recurring_title">Sil</string>
     <string name="dialog_move_recurring_title">Taşı</string>
+    <string name="recurring_this_event">Bu etkinlik</string>
+    <string name="recurring_all_events">Tüm etkinlikler</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Katılımcılar</string>
+    <string name="attendee_search_hint">Ara</string>
+    <string name="attendee_search_no_matches">Sonuç yok</string>
+    <string name="attendee_picker_title">Katılımcı ekle</string>
+    <string name="attendee_pick_add_people">Katılımcı ekle</string>
+    <string name="attendee_pick_from_contacts">Ad veya e-posta</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d daha</item>
+        <item quantity="other">+%1$d daha</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Kişilerinizden kişi önerin</string>
+    <string name="attendee_invalid_email">Tam bir e-posta adresi girin</string>
+    <string name="attendee_add_typed">\"%1$s\" ekle</string>
+    <string name="attendee_scheduling_unavailable">Bu hesapta kişi davet etme kullanılamıyor</string>
+    <string name="device_attendee_local_no_delivery">Bu takvim davetiye gönderemez. Konuklar kaydedilir ancak bilgilendirilmez.</string>
+    <string name="action_save_and_notify">Kaydet ve bildir</string>
+    <string name="attendee_section_going">Geliyor</string>
+    <string name="attendee_section_maybe">Belki</string>
+    <string name="attendee_section_pending">Bekliyor</string>
+    <string name="attendee_section_declined">Reddetti</string>
+    <string name="attendee_section_delegated">Devretti</string>
+    <string name="invitees_host_tag">Ev sahibi</string>
+    <string name="invitees_summary_you_alone">Sen</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Sen · %d davetli</item>
+        <item quantity="other">Sen · %d davetli</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d davetli</item>
+        <item quantity="other">%d davetli</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s düzenliyor</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Sen</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Sen + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Sen + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Sen + %d</item>
+        <item quantity="other">Sen + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d kişi daha</item>
+        <item quantity="other">%1$s · %2$d kişi daha</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Yanıtı değiştir</string>
+    <string name="rsvp_question_going">Geliyor musun?</string>
+    <string name="rsvp_action_yes">Evet</string>
+    <string name="rsvp_action_maybe">Belki</string>
+    <string name="rsvp_action_no">Hayır</string>
+    <string name="rsvp_state_going">Geliyorsun</string>
+    <string name="rsvp_state_maybe">Belki</string>
+    <string name="rsvp_state_not_going">Gelmiyorsun</string>
+    <string name="rsvp_action_change">Değiştir</string>
     <string name="empty_pick_a_day">Bir gün seç. Yakala.</string>
-    <string name="empty_no_events_day">Burada bir şey yok; biraz dışarı çık?</string>
+    <string name="cd_empty_pick_a_day">Bir gün seç</string>
+    <string name="empty_no_events_day_1">Boş bir gün. Evren dinlenmen konusunda ısrarcı.</string>
+    <string name="empty_no_events_day_2">Plan yok. Zaten plan bu.</string>
+    <string name="empty_no_events_day_3">Bir hediye: boş bir gün.</string>
+    <string name="empty_no_events_day_4">Takvim durumu: harika şekilde boş.</string>
+    <string name="empty_no_events_day_5">Hiç planın yok. Sakinliğin tadını çıkar.</string>
+    <string name="cd_empty_no_events_day">Sakin gün, hiçbir şey planlanmadı</string>
     <string name="filter_date">Tarih</string>
     <string name="label_select_date">Tarih seç</string>
     <string name="hint_tap_date_range">Tek gün için aynı tarihe, aralık için başka tarihe dokun</string>
-
     <string name="cd_clear">Temizle</string>
     <string name="cd_offline">Çevrimdışı</string>
+    <string name="cd_event_state_cancelled">iptal edildi</string>
+    <string name="cd_event_state_declined">reddedildi</string>
+    <string name="cd_event_state_past">geçmiş etkinlik</string>
     <string name="cd_loading_events">Etkinlikler yükleniyor</string>
+    <string name="cd_event_untitled">Başlıksız etkinlik</string>
     <string name="cd_open_drawer">Çekmeceyi aç</string>
     <string name="cd_close_drawer">Çekmeceyi kapat</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Takvim görünümü</string>
     <string name="cd_active_view">Aktif görünüm</string>
-
     <string name="view_agenda">Gündem</string>
     <string name="view_month_full">Ay (Tam)</string>
     <string name="view_day">Gün</string>
     <string name="view_three_days">3 Gün</string>
     <string name="view_year">Yıl</string>
     <string name="view_insights">İstatistikler</string>
-
     <string name="label_go_to_month">Aya git</string>
-
     <string name="action_more_options">Diğer seçenekler</string>
     <string name="quick_add_save_failed">Etkinlik kaydedilemedi</string>
-
     <string name="label_duration_days">gün</string>
     <string name="label_duration_hrs">sa</string>
     <string name="label_duration_min">dk</string>
@@ -821,211 +860,7 @@
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d yeni</string>
-    <string name="sync_summary_updated">%1$d güncellendi</string>
-    <string name="sync_summary_removed">%1$d kaldırıldı</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Döngüsel kaydırma etkin</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Hatırlatıcı yok</string>
-    <string name="reminder_at_time_of_event">Etkinlik saatinde</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s önce</string>
-    <string name="reminder_time_after">%1$s sonra</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">Etkinlik günü 9 AM</string>
-    <string name="reminder_day_of_event_24h">Etkinlik günü 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s önce 9 AM\'de</string>
-    <string name="reminder_before_at_24h">%1$s önce 09:00\'da</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Kapalı</string>
-    <string name="reminder_short_at_event">Etkinlikte</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dd</string>
-    <string name="reminder_short_hours">%1$ds</string>
-    <string name="reminder_short_days">%1$dg</string>
-    <string name="reminder_short_weeks">%1$dh</string>
-    <string name="reminder_summary_none">Yok</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$ds %2$dd</string>
-    <string name="duration_compact_short">%1$ds%2$dd</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Yalnızca manuel</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Tüm etkinlikler</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Ertele</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Şimdi başlıyor</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Yarın, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Eşitleme Tamamlandı</string>
-    <string name="sync_notification_partial">Eşitleme Kısmen Tamamlandı</string>
-    <string name="sync_notification_auth_failed">Eşitleme Kimlik Doğrulaması Başarısız</string>
-    <string name="sync_notification_auth_reauth">Lütfen hesabını yeniden doğrula</string>
-    <string name="sync_notification_failed">Eşitleme Başarısız</string>
-    <string name="sync_notification_parse_title">Bazı etkinlikler eşitlenemedi</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s içindeki %1$s eşitlenemedi. Ayarlar\'dan Zorla Eşitle\'yi dene.</string>
-    <string name="sync_notification_conflict_title">Eşitleme çakışması çözüldü</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">\"%1$s\" için yerel değişiklikler eşitleme çakışması nedeniyle kaybedildi. Sunucu sürümü kullanılacak.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">%1$s için yerel değişiklikler eşitleme çakışmaları nedeniyle kaybedildi. Sunucu sürümleri kullanılacak.</string>
-    <string name="sync_notification_expired_title">Eşitleme değişiklikleri süresi doldu</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
-    <string name="sync_notification_expired_content_calendar">%2$s takviminde %1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
-    <string name="sync_notification_expired_content_calendars">%2$s genelinde %1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d takvim eşitlendi</item>
-        <item quantity="other">%1$d takvim eşitlendi</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d değişiklik</item>
-        <item quantity="other">, %1$d değişiklik</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d hata</item>
-        <item quantity="other">, %1$d hata</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s - %2$s. Doğum Günü</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s - Doğum Günü</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s - %2$s. Yıl Dönümü</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s - Yıl Dönümü</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d.</string>
-    <string name="ordinal_suffix_nd">%1$d.</string>
-    <string name="ordinal_suffix_rd">%1$d.</string>
-    <string name="ordinal_suffix_th">%1$d.</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Takvimler eşitleniyor…</string>
-    <string name="sync_banner_preparing">Eşitlemeye hazırlanılıyor…</string>
-    <string name="sync_banner_complete_errors">Eşitleme hatalarla tamamlandı</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Eşitleme başarısız: %1$s</string>
-    <string name="error_unknown_error">Bilinmeyen hata</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Yeni etkinlik: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d yeni etkinlik</item>
-        <item quantity="other">%1$d yeni etkinlik</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d etkinlik güncellendi</item>
-        <item quantity="other">%1$d etkinlik güncellendi</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d etkinlik kaldırıldı</item>
-        <item quantity="other">%1$d etkinlik kaldırıldı</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d takvim güncellemesi</item>
-        <item quantity="other">%1$d takvim güncellemesi</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Gün %1$d / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Gün 1 / %1$d · başlangıç %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Gün %1$d / %2$d · bitiş %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Tüm gün</string>
-    <string name="event_date_all_day">%1$s · Tüm gün</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Tüm gün)</string>
-    <string name="event_date_all_day_parens">%1$s (Tüm gün)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Etkinliği Kaydet</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Yeni</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Kırmızı</string>
-    <string name="color_orange">Turuncu</string>
-    <string name="color_yellow">Sarı</string>
-    <string name="color_green">Yeşil</string>
-    <string name="color_cyan">Camgöbeği</string>
-    <string name="color_blue">Mavi</string>
-    <string name="color_purple">Mor</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Toplantı bağlantısı: %1$s</string>
-    <string name="cd_phone_number">Telefon numarası</string>
-    <string name="cd_email_link">E-posta: %1$s</string>
-    <string name="cd_web_link">Bağlantı: %1$s</string>
-    <string name="cd_text_with_links">%1$d bağlantılı metin: %2$s</string>
-    <string name="cd_text_with_link">1 bağlantılı metin: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Gün %1$d / %2$d (Tüm gün)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı</string>
-    <string name="sync_history_stats_issues">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı   ⚠ %4$d sorun</string>
-    <string name="sync_history_failed">Başarısız</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Her saat</string>
-    <string name="ics_sync_every_n_hours">Her %1$d saatte bir</string>
-    <string name="ics_sync_daily">Günlük</string>
-    <string name="ics_sync_weekly">Haftalık</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL gerekli</string>
-    <string name="ics_url_invalid_scheme">URL http://, https:// veya webcal:// ile başlamalı</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Sunucu bir hata döndürdü (%1$d). Lütfen URL\'yi kontrol et.</string>
-    <string name="ics_fetch_error_empty">Takvim akışı boş.</string>
-    <string name="ics_fetch_error_not_calendar">Bu URL bir takvim akışı gibi görünmüyor.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget strings -->
-    <string name="cd_widget_calendar">Takvim</string>
-    <string name="cd_widget_add_event">Etkinlik ekle</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">etkinlik yok</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, iptal edildi</string>
-    <string name="cd_event_state_cancelled">iptal edildi</string>
-    <string name="cd_event_state_declined">reddedildi</string>
-    <string name="cd_event_state_past">geçmiş etkinlik</string>
-    <string name="cd_event_untitled">Başlıksız etkinlik</string>
-    <string name="channel_event_reminders">Etkinlik Hatırlatıcıları</string>
-    <string name="channel_event_reminders_desc">Yaklaşan takvim etkinlikleri için bildirimler</string>
-    <string name="channel_sync_progress">Eşitleme İlerlemesi</string>
-    <string name="channel_sync_progress_desc">Takvimler eşitlenirken ilerlemeyi gösterir</string>
-    <string name="channel_sync_status">Eşitleme Durumu</string>
-    <string name="channel_sync_status_desc">Eşitleme tamamlanması ve hatalar hakkında bildirimler</string>
-    <string name="channel_event_invitations">Etkinlik Davetleri</string>
-    <string name="channel_event_invitations_desc">Yeni bir takvim daveti aldığınızda bildirimler</string>
-    <string name="invite_notification_body">Gönderen: %1$s · Yanıtlamak için dokunun</string>
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Tekrarlanmaz</string>
     <string name="rrule_freq_daily">Günlük</string>
     <string name="rrule_freq_weekly">Haftalık</string>
@@ -1041,6 +876,10 @@
     <string name="rrule_freq_on_last_day">Son gün %1$s</string>
     <string name="rrule_freq_on_day_n">%2$d. gün %1$s</string>
     <string name="rrule_ordinal_last">son</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d kez</item>
+        <item quantity="other">, %1$d kez</item>
+    </plurals>
     <string name="rrule_until_suffix">, %1$s tarihine kadar</string>
     <string name="rrule_freq_never">Asla</string>
     <string name="rrule_freq_custom">Özel</string>
@@ -1054,13 +893,146 @@
     <string name="rrule_starting">%2$s%3$s tarihinden başlayarak %1$s</string>
     <string name="rrule_since">%1$s · %2$s tarihinden itibaren</string>
 
-    <!-- Recurrence plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d kez</item>
-        <item quantity="other">, %1$d kez</item>
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d yeni</string>
+    <string name="sync_summary_updated">%1$d güncellendi</string>
+    <string name="sync_summary_removed">%1$d kaldırıldı</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Döngüsel kaydırma etkin</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Hatırlatıcı yok</string>
+    <string name="reminder_at_time_of_event">Etkinlik saatinde</string>
+    <string name="reminder_time_before">%1$s önce</string>
+    <string name="reminder_time_after">%1$s sonra</string>
+    <string name="reminder_day_of_event_12h">Etkinlik günü 9 AM</string>
+    <string name="reminder_day_of_event_24h">Etkinlik günü 09:00</string>
+    <string name="reminder_before_at_12h">%1$s önce 9 AM\'de</string>
+    <string name="reminder_before_at_24h">%1$s önce 09:00\'da</string>
+    <string name="reminder_short_off">Kapalı</string>
+    <string name="reminder_short_at_event">Etkinlikte</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dd</string>
+    <string name="reminder_short_hours">%1$ds</string>
+    <string name="reminder_short_days">%1$dg</string>
+    <string name="reminder_short_weeks">%1$dh</string>
+    <string name="reminder_summary_none">Yok</string>
+    <string name="duration_compact">%1$ds %2$dd</string>
+    <string name="duration_compact_short">%1$ds%2$dd</string>
+    <string name="sync_manual_only">Yalnızca manuel</string>
+    <string name="sync_lookback_all">Tüm etkinlikler</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Ertele</string>
+    <string name="notification_starting_now">Şimdi başlıyor</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d gün sonra</item>
+        <item quantity="other">%1$d gün sonra</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Yarın, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Eşitleme Tamamlandı</string>
+    <string name="sync_notification_partial">Eşitleme Kısmen Tamamlandı</string>
+    <string name="sync_notification_auth_failed">Eşitleme Kimlik Doğrulaması Başarısız</string>
+    <string name="sync_notification_auth_reauth">Lütfen hesabını yeniden doğrula</string>
+    <string name="sync_notification_failed">Eşitleme Başarısız</string>
+    <string name="sync_notification_parse_title">Bazı etkinlikler eşitlenemedi</string>
+    <string name="sync_notification_parse_content">%2$s içindeki %1$s eşitlenemedi. Ayarlar\'dan Zorla Eşitle\'yi dene.</string>
+    <string name="sync_notification_conflict_title">Eşitleme çakışması çözüldü</string>
+    <string name="sync_notification_conflict_single">\"%1$s\" için yerel değişiklikler eşitleme çakışması nedeniyle kaybedildi. Sunucu sürümü kullanılacak.</string>
+    <string name="sync_notification_conflict_multi">%1$s için yerel değişiklikler eşitleme çakışmaları nedeniyle kaybedildi. Sunucu sürümleri kullanılacak.</string>
+    <string name="sync_notification_expired_title">Eşitleme değişiklikleri süresi doldu</string>
+    <string name="sync_notification_expired_content">%1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s takviminde %1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s genelinde %1$s 30 gün sonra eşitlenemedi. Sunucu sürümü kullanılacak. Tekrar denemek için Zorla Eşitle\'yi kullan.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d takvim eşitlendi</item>
+        <item quantity="other">%1$d takvim eşitlendi</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d değişiklik</item>
+        <item quantity="other">, %1$d değişiklik</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d hata</item>
+        <item quantity="other">, %1$d hata</item>
     </plurals>
 
-    <!-- Insights -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s - %2$s. Doğum Günü</string>
+    <string name="contact_birthday">%1$s - Doğum Günü</string>
+    <string name="contact_anniversary_with_age">%1$s - %2$s. Yıl Dönümü</string>
+    <string name="contact_anniversary">%1$s - Yıl Dönümü</string>
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Takvimler eşitleniyor…</string>
+    <string name="sync_banner_preparing">Eşitlemeye hazırlanılıyor…</string>
+    <string name="sync_banner_complete_errors">Eşitleme hatalarla tamamlandı</string>
+    <string name="sync_banner_failed">Eşitleme başarısız: %1$s</string>
+    <string name="error_unknown_error">Bilinmeyen hata</string>
+    <string name="sync_snackbar_new_event">Yeni etkinlik: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d yeni etkinlik</item>
+        <item quantity="other">%1$d yeni etkinlik</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d etkinlik güncellendi</item>
+        <item quantity="other">%1$d etkinlik güncellendi</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d etkinlik kaldırıldı</item>
+        <item quantity="other">%1$d etkinlik kaldırıldı</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d takvim güncellemesi</item>
+        <item quantity="other">%1$d takvim güncellemesi</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Gün %1$d / %2$d</string>
+    <string name="day_starts">Gün 1 / %1$d · başlangıç %2$s</string>
+    <string name="day_ends">Gün %1$d / %2$d · bitiş %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Tüm gün</string>
+    <string name="event_date_all_day">%1$s · Tüm gün</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Tüm gün)</string>
+    <string name="event_date_all_day_parens">%1$s (Tüm gün)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Etkinliği Kaydet</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Yeni</string>
+    <string name="color_red">Kırmızı</string>
+    <string name="color_orange">Turuncu</string>
+    <string name="color_yellow">Sarı</string>
+    <string name="color_green">Yeşil</string>
+    <string name="color_cyan">Camgöbeği</string>
+    <string name="color_blue">Mavi</string>
+    <string name="color_purple">Mor</string>
+    <string name="cd_meeting_link">Toplantı bağlantısı: %1$s</string>
+    <string name="cd_phone_number">Telefon numarası</string>
+    <string name="cd_email_link">E-posta: %1$s</string>
+    <string name="cd_web_link">Bağlantı: %1$s</string>
+    <string name="cd_text_with_links">%1$d bağlantılı metin: %2$s</string>
+    <string name="cd_text_with_link">1 bağlantılı metin: %1$s</string>
+    <string name="day_x_of_y_all_day">Gün %1$d / %2$d (Tüm gün)</string>
+    <string name="sync_history_stats">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı</string>
+    <string name="sync_history_stats_issues">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı   ⚠ %4$d sorun</string>
+    <string name="sync_history_failed">Başarısız</string>
+    <string name="ics_sync_every_hour">Her saat</string>
+    <string name="ics_sync_every_n_hours">Her %1$d saatte bir</string>
+    <string name="ics_sync_daily">Günlük</string>
+    <string name="ics_sync_weekly">Haftalık</string>
+    <string name="ics_url_required">URL gerekli</string>
+    <string name="ics_url_invalid_scheme">URL http://, https:// veya webcal:// ile başlamalı</string>
+    <string name="ics_fetch_error_http">Sunucu bir hata döndürdü (%1$d). Lütfen URL\'yi kontrol et.</string>
+    <string name="ics_fetch_error_empty">Takvim akışı boş.</string>
+    <string name="ics_fetch_error_not_calendar">Bu URL bir takvim akışı gibi görünmüyor.</string>
     <string name="insights_title">İstatistikler</string>
     <string name="insights_period_this_week">Hafta</string>
     <string name="insights_period_last_week">Geçen hafta</string>
@@ -1070,48 +1042,35 @@
         <item quantity="one">%d tüm gün etkinliği</item>
         <item quantity="other">%d tüm gün etkinliği</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s en yoğun günün (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s en yoğun günündü (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s en hafif günün (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s en hafif günündü (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">En uzun boş zaman: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">En uzun boş zaman %1$s %2$s–%3$s (%4$s) idi</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Hafta sonun boş</string>
     <string name="insight_weekend_load_clear_past">Hafta sonun boştu</string>
     <string name="insight_weekend_load_light_future">Hafta sonunda %1$s planlandı</string>
     <string name="insight_weekend_load_light_past">Hafta sonunda %1$s planlanmıştı</string>
     <string name="insight_weekend_load_busy_future">Hafta sonunda %1$s planlandı</string>
     <string name="insight_weekend_load_busy_past">Hafta sonunda %1$s planlanmıştı</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d arka arkaya toplantı</string>
     <string name="insight_back_to_back_past">%1$d arka arkaya toplantın vardı</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s planlanan zamanının %2$d%%\'si</string>
     <string name="insight_calendar_dominant_past">%1$s planlanan zamanının %2$d%%\'siydi</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">Programın %1$d gün 08:00\'den önce başlıyor</string>
     <string name="insight_early_bounds_past">Programın %1$d gün 08:00\'den önce başladı</string>
     <string name="insight_late_bounds_future">%1$d gün 19:00\'dan sonra etkinlik var</string>
     <string name="insight_late_bounds_past">%1$d gün 19:00\'dan sonra etkinlik vardı</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">%1$d toplantısız günün var</string>
     <string name="insight_meeting_free_days_past">%1$d toplantısız günün vardı</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Yarın: %1$s planlandı, %2$s\'de başlıyor</string>
     <string name="insight_tomorrow_preview_no_start">Yarın: %1$s planlandı</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s en yoğun yaklaşan günün (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Sonraki boş zaman: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Günlük dağılım: en yoğun gün %1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Uygunluk</string>
     <string name="label_busy">Meşgul</string>
     <string name="label_free">Müsait</string>
@@ -1120,7 +1079,7 @@
     <string name="label_custom">Özel</string>
     <string name="cd_checkmark">Seçili</string>
 
-    <!-- Color names -->
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Eyer kahverengisi</string>    <string name="color_tomato">Domates</string>    <string name="color_darkorange">Koyu turuncu</string>
     <string name="color_gold">Altın</string>
     <string name="color_yellowgreen">Sarı yeşil</string>
@@ -1130,6 +1089,7 @@
     <string name="color_hotpink">Sıcak pembe</string>
     <string name="color_dimgray">Soluk gri</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Kırmızı</string>
     <string name="hue_orange">Turuncu</string>
     <string name="hue_yellow">Sarı</string>
@@ -1142,7 +1102,8 @@
     <string name="hue_neutral">Nötr</string>
     <string name="label_more_colors">Daha fazla renk</string>
     <string name="label_back_to_grid">Geri</string>
-    <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Katılımcılar</string>
     <string name="attendee_you_marker">Sen</string>
     <string name="attendee_card_going">Geliyor</string>
@@ -1152,31 +1113,19 @@
     <string name="attendee_card_hosting">Düzenleyen</string>
     <string name="attendee_action_copy">E-postayı kopyala</string>
     <string name="attendee_action_email">E-posta gönder</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-posta kopyalandı</string>
     <string name="attendee_no_email_app">Yüklü e-posta uygulaması yok</string>
     <string name="attendee_show_all">Tüm katılımcıları göster</string>
     <string name="attendee_status_accepted">Kabul edildi</string>
     <string name="attendee_status_declined">Reddedildi</string>
     <string name="attendee_status_tentative">Belirsiz</string>
-    <string name="attendee_picker_title">Katılımcı ekle</string>
-    <string name="attendee_pick_add_people">Katılımcı ekle</string>
-    <string name="attendee_pick_from_contacts">Ad veya e-posta</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d daha</item>
-        <item quantity="other">+%1$d daha</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Kişilerinizden kişi önerin</string>
-    <string name="attendee_invalid_email">Tam bir e-posta adresi girin</string>
-    <string name="attendee_add_typed">\"%1$s\" ekle</string>
-    <string name="attendee_scheduling_unavailable">Bu hesapta kişi davet etme kullanılamıyor</string>
-    <string name="device_attendee_local_no_delivery">Bu takvim davetiye gönderemez. Konuklar kaydedilir ancak bilgilendirilmez.</string>
-    <string name="action_save_and_notify">Kaydet ve bildir</string>
     <string name="attendee_status_delegated">Devredildi</string>
     <string name="attendee_status_pending">Beklemede</string>
     <string name="inbox_empty_caught_up">Hepsi tamam</string>
     <string name="inbox_organizer_suffix">(düzenleyen)</string>
     <string name="menu_invites">Davetler</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Tarihe git</string>
     <string name="menu_about">Hakkında</string>
     <string name="menu_more">Diğer menüsü</string>
@@ -1184,26 +1133,28 @@
         <item quantity="one">Diğer menüsü, %d davet bekliyor</item>
         <item quantity="other">Diğer menüsü, %d davet bekliyor</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Müsaitliği paylaş</string>
     <string name="share_availability_sheet_title">Müsaitliği paylaş</string>
-    <string name="share_availability_hours_label">Çalışma saatleri: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Tüm gün etkinlikleri meşgul olarak</string>
-    <string name="share_availability_share_button">Paylaş</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">Seçilen aralıkta en az bir saatlik boş blok yok.</string>
-    <string name="share_availability_chooser_title">Müsaitliği paylaş</string>
-    <string name="share_availability_share_failed">Paylaşım için uygulama bulunamadı</string>
-    <string name="share_from_kashcal_footer">KashCal\'dan paylaşıldı</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Sonraki %1$d gün</item>
         <item quantity="other">Sonraki %1$d gün</item>
     </plurals>
+    <string name="share_availability_hours_label">Çalışma saatleri: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Tüm gün etkinlikleri meşgul olarak</string>
+    <string name="share_availability_share_button">Paylaş</string>
     <plurals name="share_availability_header">
         <item quantity="one">Sonraki %1$d günde boş (%2$s – %3$s):</item>
         <item quantity="other">Sonraki %1$d günde boş (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Seçilen aralıkta en az bir saatlik boş blok yok.</string>
+    <string name="share_from_kashcal_footer">KashCal\'dan paylaşıldı</string>
+    <string name="share_availability_chooser_title">Müsaitliği paylaş</string>
+    <string name="share_availability_share_failed">Paylaşım için uygulama bulunamadı</string>
     <string name="share_availability_window_section">Aralık</string>
     <string name="share_availability_hours_section">Çalışma saatleri</string>
     <plurals name="share_availability_days_hero">
@@ -1220,25 +1171,5 @@
     <string name="share_as_card_all_day">Tüm gün</string>
     <string name="share_as_card_chooser_title">Etkinliği paylaş</string>
     <string name="share_as_card_share_failed">Kart paylaşılamadı</string>
-    <string name="attendee_sheet_title">Katılımcılar</string>
-    <string name="attendee_search_hint">Ara</string>
-    <string name="attendee_search_no_matches">Sonuç yok</string>
-    <string name="attendee_section_going">Geliyor</string>
-    <string name="attendee_section_maybe">Belki</string>
-    <string name="attendee_section_pending">Bekliyor</string>
-    <string name="attendee_section_declined">Reddetti</string>
-    <string name="attendee_section_delegated">Devretti</string>
-    <string name="whats_new_title">Yenilikler</string>
-    <string name="whats_new_dismiss">Anladım</string>
-    <string name="whats_new_v598_title">Android\'ın açık kalmasına yardım et</string>
-    <string name="whats_new_v598_body">Google, cihazınıza uygulama yükleme şeklinizi değiştiriyor. Yardımınıza ihtiyacımız var.</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org adresini ziyaret et</string>
-    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
-    <string name="holiday_catalog_add">Tatil takvimi ekle</string>
-    <string name="holiday_catalog_search_label">Ara</string>
-    <string name="holiday_catalog_already_added">Eklendi</string>
-    <string name="holiday_catalog_empty">Ülke bulunamadı</string>
-    <string name="holiday_catalog_empty_hint">Farklı bir ad deneyin</string>
-    <string name="holiday_catalog_validate_error">Bu takvime ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird tatil takvimleri, %1$s lisansı altında sunulmaktadır.</string>
+
 </resources>

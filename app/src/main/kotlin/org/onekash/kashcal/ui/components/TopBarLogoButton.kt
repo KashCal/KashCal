@@ -30,8 +30,9 @@ import java.time.LocalDate
  * caller wires this to "navigate to today" so the logo doubles as the today
  * affordance.
  *
- * Geometry mirrors images/icon-transparent.svg (viewBox 88x88) so any future
- * tweak to the static SVG should be mirrored here.
+ * Geometry mirrors images/icon-transparent.svg (viewBox 88x88): three
+ * equal-size cards fanned around a shared center so the mark reads as a
+ * deck. Any future tweak to the static SVG should be mirrored here.
  */
 @Composable
 fun TopBarLogoButton(
@@ -53,24 +54,30 @@ fun TopBarLogoButton(
         val day = today.dayOfMonth
         val scale = this.size.width / 88f
 
-        translate(left = 56f * scale, top = 36f * scale) {
-            rotate(degrees = 14f, pivot = Offset.Zero) {
+        // Three equal-size cards (36×42) fanned around a shared center at
+        // (44,46) so the icon reads as a deck of dated pages rather than a
+        // loose pile of mismatched cards. The back cards peek as uniform
+        // edges; the tight ±7–8° fan keeps overall width in check. Gold and
+        // blue behind, teal front with the header bar, today-dot, and the
+        // day-of-month numeral.
+        translate(left = 44f * scale, top = 46f * scale) {
+            rotate(degrees = 8f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFFF2C14E),
-                    topLeft = Offset(-12f * scale, -13f * scale),
-                    size = Size(24f * scale, 26f * scale),
-                    cornerRadius = CornerRadius(4f * scale, 4f * scale),
+                    topLeft = Offset(-18f * scale, -21f * scale),
+                    size = Size(36f * scale, 42f * scale),
+                    cornerRadius = CornerRadius(6f * scale, 6f * scale),
                 )
             }
         }
 
-        translate(left = 32f * scale, top = 38f * scale) {
-            rotate(degrees = -12f, pivot = Offset.Zero) {
+        translate(left = 44f * scale, top = 46f * scale) {
+            rotate(degrees = -7f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFF4A9BDC),
-                    topLeft = Offset(-13f * scale, -15f * scale),
-                    size = Size(26f * scale, 30f * scale),
-                    cornerRadius = CornerRadius(4.5f * scale, 4.5f * scale),
+                    topLeft = Offset(-18f * scale, -21f * scale),
+                    size = Size(36f * scale, 42f * scale),
+                    cornerRadius = CornerRadius(6f * scale, 6f * scale),
                 )
             }
         }
@@ -79,20 +86,27 @@ fun TopBarLogoButton(
             rotate(degrees = -2f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFF2A8A7A),
-                    topLeft = Offset(-18f * scale, -20f * scale),
-                    size = Size(36f * scale, 40f * scale),
+                    topLeft = Offset(-18f * scale, -21f * scale),
+                    size = Size(36f * scale, 42f * scale),
                     cornerRadius = CornerRadius(6f * scale, 6f * scale),
                 )
+                // Header bar: rounded top corners, squared bottom edge
+                // (the filler rect flattens the rounded lower corners).
                 drawRoundRect(
                     color = Color(0xFF0D9488),
-                    topLeft = Offset(-18f * scale, -20f * scale),
-                    size = Size(36f * scale, 8f * scale),
+                    topLeft = Offset(-18f * scale, -21f * scale),
+                    size = Size(36f * scale, 9f * scale),
                     cornerRadius = CornerRadius(6f * scale, 6f * scale),
+                )
+                drawRect(
+                    color = Color(0xFF2A8A7A),
+                    topLeft = Offset(-18f * scale, -16f * scale),
+                    size = Size(36f * scale, 5f * scale),
                 )
                 drawCircle(
                     color = Color(0xFFE85D75),
                     radius = 4f * scale,
-                    center = Offset(14f * scale, -16f * scale),
+                    center = Offset(13f * scale, -17f * scale),
                 )
                 drawIntoCanvas { canvas ->
                     val paint = android.graphics.Paint().apply {
@@ -105,7 +119,7 @@ fun TopBarLogoButton(
                             android.graphics.Typeface.BOLD,
                         )
                     }
-                    canvas.nativeCanvas.drawText(day.toString(), 0f, 10f * scale, paint)
+                    canvas.nativeCanvas.drawText(day.toString(), 0f, 9f * scale, paint)
                 }
             }
         }

@@ -423,6 +423,14 @@
     <string name="caldav_error_connection_timeout">Connection timed out. Please try again.</string>
     <string name="caldav_error_no_calendars">No calendars found on this server.</string>
     <string name="caldav_error_unexpected">Unexpected error. Please try again.</string>
+    <!-- Appended to a connection failure (arg %1$s is the underlying error) when local-network access may be blocked on Android 17+. -->
+    <string name="caldav_error_with_lan_hint">%1$s\n\nIf this is a server on your local network, allow local network access to connect.</string>
+
+    <!-- Local-network permission banner in CalDAV sign-in (Android 17+) -->
+    <string name="local_network_banner_title">Local network access needed</string>
+    <string name="local_network_banner_body">This server looks like it\'s on your local network. Allow local network access so KashCal can connect to it.</string>
+    <string name="local_network_banner_allow">Allow access</string>
+    <string name="local_network_banner_dismiss">Not now</string>
 
     <!-- Errors shown when changing the password on an existing account -->
     <string name="password_change_error_account_not_found">Account not found</string>
@@ -1133,8 +1141,17 @@
 
     <!-- Empty state: playful/casual — shown when no day is selected. Keep the playful tone. -->
     <string name="empty_pick_a_day">Pick a day. Seize it.</string>
-    <!-- Empty state: playful/casual — shown when selected day has no events. Keep informal. -->
-    <string name="empty_no_events_day">Nothing to see here; go touch grass?</string>
+    <!-- Content description for the energetic icon on the pick-a-day empty state. -->
+    <string name="cd_empty_pick_a_day">Pick a day</string>
+    <!-- Empty state: playful/casual — shown when the selected day has no events. One is chosen
+         per day so it varies. Keep the informal, gently playful tone; translate by meaning. -->
+    <string name="empty_no_events_day_1">An open day. The universe insists you rest.</string>
+    <string name="empty_no_events_day_2">No plans. That\'s the plan.</string>
+    <string name="empty_no_events_day_3">A gift: an empty day.</string>
+    <string name="empty_no_events_day_4">Calendar status: gloriously empty.</string>
+    <string name="empty_no_events_day_5">Nothing planned. Enjoy the calm.</string>
+    <!-- Content description for the meditation icon on the empty-day state. -->
+    <string name="cd_empty_no_events_day">Calm day, nothing scheduled</string>
     <!-- Search filter chip: filter by date (noun, not verb) -->
     <string name="filter_date">Date</string>
     <string name="label_select_date">Select a date</string>

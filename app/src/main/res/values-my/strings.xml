@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">ယနေ့ရက်စွဲကို အက်ပ်အိုင်ကွန်ကဲ့သို့ ပြသသည်</string>
     <string name="upcoming_widget_name">လာမည့်</string>
     <string name="upcoming_widget_description">လာမည့် ၁၀ ရက်အတွင်း ပွဲများကို ပြသပြီး လွတ်နေသည့်ရက်များကို ကျော်သည်</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">လာမည့်ပွဲများကို ဖွင့်နေသည်…</string>
     <string name="widget_error_load_events">ပွဲများကို ဖွင့်၍မရပါ၊ ဖွင့်ရန် တို့ပါ</string>
     <string name="widget_no_events_today">ယနေ့ ပွဲများ မရှိပါ</string>
     <string name="widget_add_event">+ ပွဲထည့်ရန်</string>
     <string name="widget_no_events">ပွဲများ မရှိပါ</string>
     <string name="widget_no_upcoming_events">လာမည့်ပွဲများ မရှိပါ</string>
+    <string name="cd_widget_calendar">ပြက္ခဒိန်</string>
+    <string name="cd_widget_add_event">ပွဲထည့်ရန်</string>
+    <string name="cd_widget_day_cell">%1$s၊ %2$s</string>
+    <string name="cd_widget_no_events">ပွဲမရှိပါ</string>
+    <string name="cd_widget_event_cancelled">%1$s၊ %2$s၊ ပယ်ဖျက်လိုက်သည်</string>
+    <string name="channel_event_reminders">ပွဲသတိပေးချက်များ</string>
+    <string name="channel_event_reminders_desc">လာမည့်ပြက္ခဒိန်ပွဲများအတွက် အကြောင်းကြားချက်များ</string>
+    <string name="channel_sync_progress">ချိန်ကိုက်ခြင်းတိုးတက်မှု</string>
+    <string name="channel_sync_progress_desc">ပြက္ခဒိန်များကို ချိန်ကိုက်နေစဉ် တိုးတက်မှုကို ပြသသည်</string>
+    <string name="channel_sync_status">ချိန်ကိုက်ခြင်းအခြေအနေ</string>
+    <string name="channel_sync_status_desc">ချိန်ကိုက်ခြင်းပြီးစီးမှုနှင့် အမှားများအကြောင်း အကြောင်းကြားချက်များ</string>
+    <string name="channel_event_invitations">ပွဲဖိတ်စာများ</string>
+    <string name="channel_event_invitations_desc">ပြက္ခဒိန် ဖိတ်စာအသစ် လက်ခံရရှိသည့်အခါ အကြောင်းကြားချက်များ</string>
+    <string name="invite_notification_body">%1$s ထံမှ · တုံ့ပြန်ရန် တို့ပါ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ပွဲအသစ်</string>
@@ -46,7 +60,6 @@
     <string name="action_learn_more">ပိုမိုလေ့လာ</string>
     <string name="action_open_apple_id">Apple ID ဖွင့်</string>
     <string name="action_open_settings">ဆက်တင်များ ဖွင့်</string>
-    <string name="action_open">ဖွင့်</string>
     <string name="action_force_sync">အတင်း ချိန်ကိုက်</string>
     <string name="action_sync_now">ယခု ချိန်ကိုက်</string>
     <string name="action_details">အသေးစိတ်</string>
@@ -58,6 +71,7 @@
     <string name="action_save">သိမ်း</string>
     <string name="action_add">ထည့်</string>
     <string name="action_edit">ပြင်ဆင်</string>
+    <string name="action_open">ဖွင့်</string>
     <string name="action_delete">ဖျက်</string>
     <string name="action_confirm">အတည်ပြု</string>
     <string name="action_discard">စွန့်ပစ်</string>
@@ -71,21 +85,7 @@
     <string name="action_confirm_delete">ဖျက်ရန် အတည်ပြု</string>
     <string name="action_delete_event">ပွဲ ဖျက်</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <string name="invitees_host_tag">ဧည့်ခံသူ</string>
-    <string name="rsvp_question_going">သွားမှာလား?</string>
-    <string name="rsvp_action_yes">ဟုတ်</string>
-    <string name="rsvp_action_maybe">ဖြစ်နိုင်</string>
-    <string name="rsvp_action_no">မဟုတ်</string>
-    <string name="rsvp_state_going">သွားမှာ</string>
-    <string name="rsvp_state_maybe">ဖြစ်နိုင်</string>
-    <string name="rsvp_state_not_going">မသွားဘူး</string>
-    <string name="rsvp_action_change">ပြောင်းရန်</string>
-
-
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">ဤတုံ့ပြန်ချက်သည် အစီအစဉ်တစ်ခုလုံးအတွက် သက်ဆိုင်သည်။</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
@@ -124,7 +124,6 @@
     <string name="label_all_day">တစ်နေ့တာ</string>
     <string name="label_today">ယနေ့</string>
     <string name="label_go_to_date">ရက်စွဲသို့ သွားရန်</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">ပ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -145,9 +144,6 @@
     <string name="app_icon_label_calendar">ပြက္ခဒိန်</string>
     <string name="app_icon_support_cta">KashCal ကို ပံ့ပိုးပါ</string>
     <string name="app_icon_switch_note">အိုင်ကွန်ပြောင်းလဲခြင်းသည် အက်ပ်ကို ပြန်စတင်စေနိုင်သည်။ အကြောင်းကြားချက်များသည် မူရင်း အိုင်ကွန်နှင့် အမည်ကို အမြဲ အသုံးပြုသည်။</string>
-    <string name="settings_search_placeholder">ဆက်တင်များ ရှာရန်…</string>
-    <string name="settings_search_no_results">\"%1$s\" အတွက် ဆက်တင် မတွေ့ပါ</string>
-    <string name="cd_search_settings">ဆက်တင်များ ရှာရန်</string>
     <string name="settings_time_format">အချိန်ပုံစံ</string>
     <string name="settings_start_week_on">အပတ်စ ရက်</string>
     <string name="settings_event_emojis">ပွဲ အီမိုဂျီ</string>
@@ -166,6 +162,8 @@
     <string name="settings_section_sync">ချိန်ကိုက်</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
     <string name="settings_section_privacy">ကိုယ်ရေးကိုယ်တာ</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">အက်ပ်လော့ခ်</string>
     <string name="app_lock_subtitle_off">KashCal ဖွင့်ရန် လော့ခ်ဖွင့်ခြင်း လိုအပ်စေပါ</string>
     <string name="app_lock_subtitle_on">လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ်ဖြင့် ဖွင့်ပါ</string>
@@ -185,9 +183,9 @@
     <string name="restore_settings_subtitle">အရန်ကူးဖိုင်မှ KashCal ဆက်တင်များ ပြန်ယူပါ</string>
     <string name="restore_confirm_title">အရန်ဖိုင် ပြန်ယူမလား?</string>
     <string name="restore_confirm_from">KashCal %1$s, %2$s မှ အရန်ဖိုင်</string>
+    <string name="restore_confirm_message_prefs_only">သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</string>
     <string name="action_restore">ပြန်ယူ</string>
     <string name="restore_success_title">ပြန်ယူခြင်း ပြီးဆုံးပါပြီ</string>
-    <string name="restore_confirm_message_prefs_only">သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</string>
     <string name="restore_success_message_prefs_only">ရှေးချယ်မှုများ တင်သွင်းပြီးပါပြီ။</string>
     <string name="restore_success_device_calendars_note">ယင်းအင်္ဂါရပ်ကို အသုံးပြုပါက သင့်စက်၏ ပြက္ခဒိန်များကို ပြန်ရွေးပါ။</string>
     <string name="restore_error_title">ပြန်ယူခြင်း မအောင်မြင်ပါ</string>
@@ -203,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">ကျွန်ုပ်တို့ ကူညီပါမည်။</string>
     <string name="onboarding_connect_prompt">သင့်ပွဲများကို ဤနေရာတွင် ကြည့်ရန် iCloud ချိတ်ဆက်ပါ</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">အသစ်တင်ထားသောအရာများ</string>
+    <string name="whats_new_dismiss">ရပါပြီ</string>
+    <string name="whats_new_v598_title">Android ဖွင့်ထားရန် ကူညီပါ</string>
+    <string name="whats_new_v598_body">Google သည် သင့်စက်ပစ္စည်းတွင် အက်ပ်များ တပ်ဆင်ပုံကို ပြောင်းလဲနေသည်။ သင့်အကူအညီ လိုအပ်သည်။</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org သို့ သွားပါ</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud ချိတ်ဆက်</string>
@@ -247,13 +252,11 @@
     <string name="error_auth_session_expired_title">စက်ရှင် သက်တမ်းကုန်</string>
     <string name="error_auth_session_expired">သင့် iCloud စက်ရှင် သက်တမ်းကုန်သွားပါပြီ။ ချိန်ကိုက်မှု ဆက်လုပ်ရန် ပြန်ဝင်ပါ။</string>
     <string name="error_auth_account_locked">သင့် Apple ID လော့ခ်ကျသွားပါပြီ။ appleid.apple.com သို့ သွား၍ လော့ခ်ဖွင့်ပါ။</string>
-
     <string name="error_network_offline">သင် အော့ဖ်လိုင်းဖြစ်နေပါသည်။ အွန်လိုင်းပြန်ရောက်ချိန် ပြောင်းလဲမှုများ ချိန်ကိုက်ပါမည်။</string>
     <string name="error_network_timeout">ချိတ်ဆက်မှု အချိန်ကုန်သွားပါပြီ။ သင့်အင်တာနက်ကို စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။</string>
     <string name="error_network_ssl">လုံခြုံသော ချိတ်ဆက်မှု မအောင်မြင်ပါ။ သင့်ကွန်ရက်ဆက်တင်များကို စစ်ဆေးပါ။</string>
     <string name="error_network_unknown_host">iCloud ကို ဆက်သွယ်၍ မရပါ။ သင့်အင်တာနက်ချိတ်ဆက်မှုကို စစ်ဆေးပါ။</string>
     <string name="error_network_connection_failed">ချိတ်ဆက်မှု မအောင်မြင်ပါ။ ထပ်ကြိုးစားပါ။</string>
-
     <string name="error_server_unavailable">iCloud ယာယီ မရရှိနိုင်ပါ။ နောက်မှ ထပ်ကြိုးစားပါ။</string>
     <string name="error_server_rate_limited">တောင်းဆိုမှု များလွန်းပါသည်။ ခဏစောင့်ပြီး ထပ်ကြိုးစားပါ။</string>
     <string name="error_server_forbidden">ဝင်ရောက်ခွင့် ငြင်းပယ်ခံရ။ ဤပြက္ခဒိန်အတွက် ခွင့်ပြုချက် မရှိနိုင်ပါ။</string>
@@ -262,13 +265,11 @@
     <string name="error_conflict_generic">ဤပွဲကို အခြားစက်တွင် ပြောင်းလဲထားပါသည်။ နောက်ဆုံးဗားရှင်းရယူရန် အတင်းချိန်ကိုက်ပါ။</string>
     <string name="error_conflict_with_event">\"%1$s\" ကို အခြားစက်တွင် ပြောင်းလဲထားပါသည်။ နောက်ဆုံးဗားရှင်းရယူရန် အတင်းချိန်ကိုက်ပါ။</string>
     <string name="error_sync_token_expired">ချိန်ကိုက်ဒေတာ သက်တမ်းကုန်။ အပြည့်အဝ ချိန်ကိုက်နေသည်…</string>
-
     <string name="error_event_not_found">ပွဲ မတွေ့ရှိပါ။</string>
     <string name="error_calendar_not_found">ပြက္ခဒိန် မတွေ့ရှိပါ။</string>
     <string name="error_calendar_read_only">\"%1$s\" တွင် ပွဲများကို ပြောင်းလဲ၍ မရပါ (ဖတ်ရုံ ပြက္ခဒိန်)။</string>
     <string name="error_event_invalid_data">ပွဲဒေတာ မမှန်ကန်ပါ။ စတင်ချိန်နှင့် ပြီးဆုံးချိန်ကို စစ်ဆေးပါ။</string>
     <string name="error_event_invalid_recurrence">ထပ်ခါထပ်ခါ ပုံစံ မမှန်ကန်ပါ။</string>
-
     <string name="error_display_name_exists">\"%1$s\" ဟု အမည်ပေးထားသော အကောင့် ရှိပြီးသားဖြစ်သည်။</string>
     <string name="icloud_error_credentials_required">Apple ID နှင့် စကားဝှက် လိုအပ်သည်</string>
     <string name="icloud_error_connection_timeout">ချိတ်ဆက်ချိန် ကုန်ဆုံးသွားပါပြီ။ ထပ်စမ်းကြည့်ပါ။</string>
@@ -277,42 +278,41 @@
     <string name="caldav_error_connection_timeout">ချိတ်ဆက်ချိန် ကုန်ဆုံးသွားပါပြီ။ ထပ်စမ်းကြည့်ပါ။</string>
     <string name="caldav_error_no_calendars">ဤဆာဗာတွင် ပြက္ခဒိန်များ မတွေ့ရှိပါ။</string>
     <string name="caldav_error_unexpected">မမျှော်လင့်သော အမှားတစ်ခု။ ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nဤသည်မှာ သင့်ဒေသတွင်း ကွန်ရက်ရှိ ဆာဗာဖြစ်ပါက ချိတ်ဆက်ရန် ဒေသတွင်း ကွန်ရက်သုံးခွင့်ကို ခွင့်ပြုပါ။</string>
+    <string name="local_network_banner_title">ဒေသတွင်း ကွန်ရက်သုံးခွင့် လိုအပ်သည်</string>
+    <string name="local_network_banner_body">ဤဆာဗာသည် သင့်ဒေသတွင်း ကွန်ရက်ပေါ်တွင် ရှိပုံရသည်။ KashCal က ၎င်းသို့ ချိတ်ဆက်နိုင်ရန် ဒေသတွင်း ကွန်ရက်သုံးခွင့်ကို ခွင့်ပြုပါ။</string>
+    <string name="local_network_banner_allow">သုံးခွင့်ပြု</string>
+    <string name="local_network_banner_dismiss">ယခုမလို</string>
     <string name="password_change_error_account_not_found">အကောင့် မတွေ့ရှိပါ</string>
     <string name="password_change_error_no_credentials">ရှိရင်းစွဲ အထောက်အထား မရှိပါ</string>
     <string name="password_change_error_unsupported_provider">ဤဝန်ဆောင်မှုပေးသူသည် စကားဝှက် ပြောင်းခြင်းကို မပံ့ပိုးပါ</string>
     <string name="password_change_error_invalid">စကားဝှက် မမှန်ကန်ပါ</string>
     <string name="password_change_error_network">ကွန်ရက် အမှား၊ ထပ်စမ်းကြည့်ပါ</string>
-
     <string name="error_import_file_not_found">ဖိုင် မတွေ့ရှိ သို့မဟုတ် ဖတ်၍ မရပါ။</string>
     <string name="error_import_invalid_format">ပြက္ခဒိန် ဖိုင်ပုံစံ မမှန်ကန်ပါ။</string>
     <string name="error_import_partial">ပွဲ %1$d ခု တင်သွင်းပြီး၊ %2$d ခု မအောင်မြင်။</string>
     <string name="error_export_failed">ပွဲများ ထုတ်ယူ၍ မရပါ။</string>
     <string name="error_export_no_events">ထုတ်ယူရန် ပွဲများ မရှိပါ။</string>
     <string name="error_end_before_start">ပြီးဆုံးချိန်သည် စတင်ချိန်ပြီးနောက် ဖြစ်ရမည်</string>
-
     <string name="error_storage_full_title">သိုလှောင်ခန်း ပြည့်</string>
     <string name="error_storage_full">သိုလှောင်ခန်း မလုံလောက်ပါ။ နေရာလွတ်ဖန်တီးပြီး ထပ်ကြိုးစားပါ။</string>
     <string name="error_database_corruption_title">ဒေတာ အမှား</string>
     <string name="error_database_corruption">သင့်ပြက္ခဒိန်ဒေတာ ပျက်စီးနေနိုင်ပါသည်။ အကူအညီကို ဆက်သွယ်ပါ။</string>
     <string name="error_migration_title">အပ်ဒိတ် အမှား</string>
     <string name="error_migration_failed">အက်ပ်ဒေတာ အပ်ဒိတ်လုပ်ရန် မအောင်မြင်ပါ။ အက်ပ်ကို ပြန်လည်ထည့်သွင်းပါ။</string>
-
     <string name="error_permission_notification_title">အကြောင်းကြားချက်များ ဖွင့်မလား?</string>
     <string name="error_permission_notification">KashCal သည် လာမည့်ပွဲများအကြောင်း သတိပေးရန် အကြောင်းကြားခွင့် လိုအပ်ပါသည်။</string>
     <string name="error_permission_alarm_title">တိကျသော နှိုးစက် ဖွင့်မလား?</string>
     <string name="error_permission_alarm">KashCal သည် တိကျသော သတိပေးချက်များအတွက် တိကျသော နှိုးစက်ခွင့်ပြုချက် လိုအပ်ပါသည်။</string>
     <string name="error_permission_storage">တင်သွင်း/ထုတ်ယူအတွက် သိုလှောင်ခွင့် လိုအပ်ပါသည်။</string>
-
     <string name="error_device_calendar_title">ပြက္ခဒိန် အမှား</string>
     <string name="error_device_calendar_write_failed">စက်ပြက္ခဒိန်သို့ သိမ်း၍ မရပါ။ ထပ်ကြိုးစားပါ။</string>
     <string name="error_device_calendar_permission">ပြက္ခဒိန် ရေးသားခွင့် လိုအပ်ပါသည်။ ဆက်တင်များတွင် ခွင့်ပြုပါ။</string>
     <string name="error_device_calendar_not_found">ပြက္ခဒိန် မတွေ့ရှိပါ။ ဖယ်ရှားလိုက်ပြီ ဖြစ်နိုင်ပါသည်။</string>
     <string name="error_device_event_not_found">ပွဲ မတွေ့ရှိပါ။ ဖျက်လိုက်ပြီ ဖြစ်နိုင်ပါသည်။</string>
     <string name="error_device_calendar_read_only">ဤပြက္ခဒိန်သည် ဖတ်ရုံသာ ဖြစ်ပါသည်။</string>
-
     <string name="error_sync_no_accounts">iCloud အကောင့် သတ်မှတ်မထားပါ။ သင့်ပြက္ခဒိန်များကို ချိန်ကိုက်ရန် iCloud စတင်သတ်မှတ်ပါ။</string>
     <string name="error_sync_partial">ပြက္ခဒိန် %1$d ခု ချိန်ကိုက်ပြီး၊ %2$d ခု မအောင်မြင်။</string>
-
     <string name="error_unknown">တစ်ခုခု မှားသွားပါပြီ။ ထပ်ကြိုးစားပါ။</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -355,6 +355,7 @@
     <string name="label_password">စကားဝှက်</string>
     <string name="label_display_name_optional">ပြသမည့်အမည်</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">ပွဲများ ရှာဖွေ…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -442,6 +443,14 @@
     <string name="subscriptions_empty_ics">ICS စာရင်းသွင်းမှု မရှိပါ</string>
     <string name="subscriptions_empty_ics_hint">ပွဲများကို ကြည့်ရန် ပြက္ခဒိန် ဖိဒ် ထည့်ပါ</string>
     <string name="subscriptions_add_ics">ICS ပြက္ခဒိန် ထည့်</string>
+    <string name="qs_tile_label">ပွဲထည့်ရန်</string>
+    <string name="holiday_catalog_add">အားလပ်ရက် ပြက္ခဒိန် ထည့်ပါ</string>
+    <string name="holiday_catalog_search_label">ရှာဖွေ</string>
+    <string name="holiday_catalog_already_added">ထည့်ပြီးပါပြီ</string>
+    <string name="holiday_catalog_empty">နိုင်ငံ မတွေ့ပါ</string>
+    <string name="holiday_catalog_empty_hint">အခြားအမည်ဖြင့် စမ်းကြည့်ပါ</string>
+    <string name="holiday_catalog_validate_error">ဤပြက္ခဒိန်ကို မရောက်ရှိနိုင်ပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird မှ အားလပ်ရက် ပြက္ခဒိန်များ၊ %1$s အောက်တွင် လိုင်စင်ရထားသည်။</string>
     <string name="subscriptions_row_label">ပြက္ခဒိန် ဖိဒ်များ (ICS)</string>
     <string name="subscriptions_row_hint">ဥပမာ ရုံးပိတ်ရက်၊ အားကစား၊ ကျောင်း</string>
 
@@ -463,8 +472,8 @@
     <string name="subscriptions_cd_back">နောက်သို့</string>
     <string name="subscriptions_cd_add">စာရင်းသွင်းမှု ထည့်</string>
     <string name="snackbar_subscription_removed">စာရင်းသွင်းမှု ဖယ်ရှားပြီးပါပြီ</string>
-    <string name="snackbar_subscription_already_exists">ဤ URL ကို စာရင်းသွင်းပြီးပြီ</string>
     <string name="snackbar_action_undo">ပြန်ပြင်ရန်</string>
+    <string name="snackbar_subscription_already_exists">ဤ URL ကို စာရင်းသွင်းပြီးပြီ</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ချိန်ကိုက်</string>
@@ -484,7 +493,6 @@
     <string name="account_detail_cd_show_password">စကားဝှက်ပြ</string>
     <string name="account_detail_cd_hide_password">စကားဝှက်ဖျောက်</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">အကောင့် အမည်ပြောင်း</string>
     <string name="rename_account_label">အကောင့် အမည်</string>
@@ -501,6 +509,7 @@
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="settings_device_calendars_hint">အခြားအက်ပ်များမှ ပြက္ခဒိန်များ</string>
     <string name="settings_quick_event_add">ပွဲ အမြန်ထည့်</string>
+    <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
     <string name="settings_week_numbers">အပတ် နံပါတ်များ</string>
     <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
     <string name="settings_widget_event_limit">ဝစ်ဂျက် ပွဲ ကန့်သတ်ချက်</string>
@@ -513,6 +522,8 @@
     <string name="settings_tap_to_enable">ဖွင့်ရန် နှိပ်ပါ</string>
     <string name="settings_device_calendars_enabled">%1$d ခု ဖွင့်ထား</string>
     <string name="settings_per_day">တစ်နေ့ %1$d ခု</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">အက်ပ်သီးသန့် စကားဝှက်ဆိုတာ ဘာလဲ?</string>
     <string name="caldav_trust_insecure_label">မလုံခြုံသော ချိတ်ဆက်မှုကို ယုံကြည်</string>
     <string name="action_add_another">နောက်ထပ် ထည့်</string>
@@ -532,10 +543,6 @@
     <string name="cd_next_month">နောက်လ</string>
     <string name="cd_month_year_picker">လနှင့်နှစ် ရွေးချယ်ကိရိယာ</string>
     <string name="cd_remove_alert">သတိပေးချက် ဖယ်ရှား</string>
-    <string name="cd_event_state_cancelled">ပယ်ဖျက်လိုက်သည်</string>
-    <string name="cd_event_state_declined">ငြင်းပယ်ခဲ့သည်</string>
-    <string name="cd_event_state_past">ကုန်လွန်ခဲ့သော ပွဲ</string>
-    <string name="cd_event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
     <string name="cd_warning">သတိပေးချက်</string>
     <string name="cd_refresh_calendars">ပြက္ခဒိန်များ ပြန်လည်စတင်</string>
 
@@ -557,6 +564,9 @@
     <string name="label_found_events">တွေ့ရှိ: ပွဲ %1$d ခု</string>
     <string name="label_open_debug_menu">ဒီဘတ်မီနူး ဖွင့်</string>
     <string name="placeholder_search">ရှာဖွေ…</string>
+    <string name="settings_search_placeholder">ဆက်တင်များ ရှာရန်…</string>
+    <string name="settings_search_no_results">\"%1$s\" အတွက် ဆက်တင် မတွေ့ပါ</string>
+    <string name="cd_search_settings">ဆက်တင်များ ရှာရန်</string>
     <string name="status_sync_paused">ချိန်ကိုက်မှု ရပ်တန့်ထား</string>
     <string name="status_not_synced">ချိန်ကိုက်မထား</string>
     <string name="status_sync_error">ချိန်ကိုက် အမှား</string>
@@ -575,7 +585,6 @@
     <string name="device_calendars_reminders_desc">စက်ပြက္ခဒိန်ပွဲများအတွက် အကြောင်းကြားချက် ရယူ</string>
     <string name="device_calendars_read_only_no_write">ဖတ်ရုံ (ရေးသားခွင့် မရှိ)</string>
     <string name="device_calendars_read_only_calendar">ဖတ်ရုံ (ပြက္ခဒိန်သည် ဖတ်ရုံသာ)</string>
-
     <string name="settings_developer_options">ဆော့ဖ်ဝဲရေးသားသူ ရွေးစရာများ</string>
     <string name="settings_sync_frequency">ချိန်ကိုက် အကြိမ်နှုန်း</string>
     <string name="settings_preview">အကြိုကြည့်ရှု</string>
@@ -588,7 +597,6 @@
     <string name="drawer_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="drawer_account_offline">အော့ဖ်လိုင်း</string>
     <string name="drawer_share_feedback">အကူအညီနှင့် စာရွက်စာတမ်း</string>
-
     <string name="event_title_fallback">ပွဲ</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -615,7 +623,6 @@
     <string name="dialog_sign_out_message">သင် %1$s အဖြစ် ဝင်ရောက်ထားပါသည်။ ထွက်ခြင်းသည် ချိန်ကိုက်ထားသော ပြက္ခဒိန်များကို ဤစက်မှ ဖယ်ရှားပါမည်။</string>
 
     <!-- ==================== Plural Resources ==================== -->
-    <!-- Burmese: "other" only -->
     <plurals name="accounts_count">
         <item quantity="other">အကောင့် %1$d ခု</item>
     </plurals>
@@ -643,11 +650,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">ပွဲ %1$d ခု</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">ပြက္ခဒိန်ဖွင့်ပါ</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="other">နောက်ထပ် %1$d ရက်</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ပြက္ခဒိန်ဖွင့်ပါ</string>
     <plurals name="birthday_count">
         <item quantity="other">မွေးနေ့ %1$d ခု</item>
     </plurals>
@@ -716,375 +722,16 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">ဤပွဲ</string>
-    <string name="recurring_all_events">ပွဲအားလုံး</string>
     <string name="dialog_edit_recurring_title">ပြောင်းလဲမှုများကို သိမ်းရန်</string>
     <string name="dialog_delete_recurring_title">ဖျက်ရန်</string>
     <string name="dialog_move_recurring_title">ရွှေ့ရန်</string>
-    <string name="empty_pick_a_day">ရက်တစ်ရက် ရွေးပါ။ အခွင့်ယူပါ။</string>
-    <string name="empty_no_events_day">ဤနေရာတွင် ဘာမှ မရှိပါ; အပြင်ထွက်လှောက်မလား?</string>
-    <string name="filter_date">ရက်စွဲ</string>
-    <string name="label_select_date">ရက်စွဲ ရွေးချယ်ပါ</string>
-    <string name="hint_tap_date_range">ရက်တစ်ရက်အတွက် တူညီသောရက်ကို နှိပ်ပါ သို့မဟုတ် အကွာအဝေးအတွက် အခြားရက်ကို နှိပ်ပါ</string>
+    <string name="recurring_this_event">ဤပွဲ</string>
+    <string name="recurring_all_events">ပွဲအားလုံး</string>
 
-    <string name="cd_clear">ရှင်း</string>
-    <string name="cd_offline">အော့ဖ်လိုင်း</string>
-    <string name="cd_loading_events">ပွဲများ ဖွင့်နေသည်</string>
-    <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
-    <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
-    <string name="cd_calendar_view">ပြက္ခဒိန် အမြင်</string>
-    <string name="cd_active_view">လက်ရှိ အမြင်</string>
-
-    <string name="view_agenda">အစီအစဉ်</string>
-    <string name="view_month_full">လ (အပြည့်)</string>
-    <string name="view_three_days">၃ ရက်</string>
-    <string name="view_day">နေ့</string>
-    <string name="view_year">နှစ်</string>
-    <string name="view_insights">ထိုးထွင်းသိမြင်မှုများ</string>
-
-    <string name="label_go_to_month">လသို့ သွားရန်</string>
-
-    <string name="action_more_options">ရွေးစရာ အပိုများ</string>
-    <string name="quick_add_save_failed">အဖြစ်အပျက်ကို သိမ်းဆည်း၍ မရပါ</string>
-
-    <string name="label_duration_days">ရက်</string>
-    <string name="label_duration_hrs">နာရီ</string>
-    <string name="label_duration_min">မိ</string>
-
-    <!-- ==================== RecurrencePicker ==================== -->
-    <string name="recurrence_on_day">ရက် %1$d တွင်</string>
-    <string name="recurrence_on_last_day">လ၏ နောက်ဆုံးရက်တွင်</string>
-    <string name="recurrence_on_nth_weekday">%1$s %2$s တွင်</string>
-    <string name="ordinal_1st">ပထမ</string>
-    <string name="ordinal_2nd">ဒုတိယ</string>
-    <string name="ordinal_3rd">တတိယ</string>
-    <string name="ordinal_4th">စတုတ္ထ</string>
-    <string name="ordinal_nth">အမှတ်စဉ် %1$d</string>
-
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d အသစ်</string>
-    <string name="sync_summary_updated">%1$d အပ်ဒိတ်ပြီး</string>
-    <string name="sync_summary_removed">%1$d ဖယ်ရှားပြီး</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">စက်ဝိုင်း လှိမ့်ခြင်း ဖွင့်ထား</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">သတိပေးချက်မရှိ</string>
-    <string name="reminder_at_time_of_event">ပွဲအချိန်တွင်</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s အလို</string>
-    <string name="reminder_time_after">%1$s အလွန်</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">ပွဲနေ့ မနက် 9 နာရီ</string>
-    <string name="reminder_day_of_event_24h">ပွဲနေ့ 09:00</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s အလို မနက် 9 နာရီ</string>
-    <string name="reminder_before_at_24h">%1$s အလို 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">ပိတ်</string>
-    <string name="reminder_short_at_event">ပွဲတွင်</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dမ</string>
-    <string name="reminder_short_hours">%1$dန</string>
-    <string name="reminder_short_days">%1$dရ</string>
-    <string name="reminder_short_weeks">%1$dပ</string>
-    <string name="reminder_summary_none">မရှိ</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dန %2$dမ</string>
-    <string name="duration_compact_short">%1$dန%2$dမ</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">ကိုယ်တိုင်သာ</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">ပွဲအားလုံး</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">ခဏဆိုင်းငံ့</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">ယခုစတင်နေသည်</string>
-    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
-    <plurals name="reminder_in_days">
-        <item quantity="other">%1$d ရက်အတွင်း</item>
-    </plurals>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">မနက်ဖြန်, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">စင့်ခ်ပြီးပါပြီ</string>
-    <string name="sync_notification_partial">စင့်ခ်တစ်စိတ်တစ်ပိုင်းပြီးပါပြီ</string>
-    <string name="sync_notification_auth_failed">စင့်ခ်အတည်ပြုခြင်းမအောင်မြင်ပါ</string>
-    <string name="sync_notification_auth_reauth">သင့်အကောင့်ကိုပြန်လည်အတည်ပြုပါ</string>
-    <string name="sync_notification_failed">စင့်ခ်မအောင်မြင်ပါ</string>
-    <string name="sync_notification_parse_title">အချို့ပွဲများစင့်ခ်မလုပ်နိုင်ပါ</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s ရှိ %1$s စင့်ခ်မလုပ်နိုင်ပါ။ ဆက်တင်တွင် Force Sync ကိုစမ်းကြည့်ပါ။</string>
-    <string name="sync_notification_conflict_title">စင့်ခ်ပဋိပက္ခဖြေရှင်းပြီး</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">\"%1$s\" ၏ ပြည်တွင်းပြောင်းလဲမှုများ စင့်ခ်ပဋိပက္ခကြောင့်ဆုံးရှုံးသွားပါသည်။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">%1$s ၏ ပြည်တွင်းပြောင်းလဲမှုများ စင့်ခ်ပဋိပက္ခများကြောင့်ဆုံးရှုံးသွားပါသည်။ ဆာဗာဗားရှင်းများကိုအသုံးပြုပါမည်။</string>
-    <string name="sync_notification_expired_title">စင့်ခ်ပြောင်းလဲမှုများသက်တမ်းကုန်သွားပါပြီ</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
-    <string name="sync_notification_expired_content_calendar">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
-    <string name="sync_notification_expired_content_calendars">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="other">ပြက္ခဒိန် %1$d ခုစင့်ခ်ပြီး</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="other">, ပြောင်းလဲမှု %1$d ခု</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="other">, အမှား %1$d ခု</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s ၏ %2$s နှစ်မြောက်မွေးနေ့</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s ၏ မွေးနေ့</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s ၏ %2$s နှစ်မြောက်နှစ်ပတ်လည်</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s ၏ နှစ်ပတ်လည်</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d ကြိမ်မြောက်</string>
-    <string name="ordinal_suffix_nd">%1$d ကြိမ်မြောက်</string>
-    <string name="ordinal_suffix_rd">%1$d ကြိမ်မြောက်</string>
-    <string name="ordinal_suffix_th">%1$d ကြိမ်မြောက်</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">ပြက္ခဒိန်များစင့်ခ်လုပ်နေသည်…</string>
-    <string name="sync_banner_preparing">စင့်ခ်ပြင်ဆင်နေသည်…</string>
-    <string name="sync_banner_complete_errors">စင့်ခ်ပြီး အမှားများရှိသည်</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">စင့်ခ်မအောင်မြင်ပါ: %1$s</string>
-    <string name="error_unknown_error">မသိအမှား</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">ပွဲအသစ်: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="other">ပွဲအသစ် %1$d ခု</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="other">ပွဲ %1$d ခုအပ်ဒိတ်ပြီး</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="other">ပွဲ %1$d ခုဖယ်ရှားပြီး</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="other">ပြက္ခဒိန်အပ်ဒိတ် %1$d ခု</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">ရက် %1$d / %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ရက် 1 / %1$d · စတင် %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ရက် %1$d / %2$d · ပြီးဆုံး %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · တစ်နေ့တာ</string>
-    <string name="event_date_all_day">%1$s · တစ်နေ့တာ</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (တစ်နေ့တာ)</string>
-    <string name="event_date_all_day_parens">%1$s (တစ်နေ့တာ)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">ပွဲသိမ်းမည်</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">အသစ်</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">အနီ</string>
-    <string name="color_orange">လိမ္မော်</string>
-    <string name="color_yellow">အဝါ</string>
-    <string name="color_green">အစိမ်း</string>
-    <string name="color_cyan">စိမ်းပြာ</string>
-    <string name="color_blue">အပြာ</string>
-    <string name="color_purple">ခရမ်း</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">အစည်းအဝေးလင့်ခ်: %1$s</string>
-    <string name="cd_phone_number">ဖုန်းနံပါတ်</string>
-    <string name="cd_email_link">အီးမေးလ်: %1$s</string>
-    <string name="cd_web_link">လင့်ခ်: %1$s</string>
-    <string name="cd_text_with_links">လင့်ခ် %1$d ခုပါသောစာသား: %2$s</string>
-    <string name="cd_text_with_link">လင့်ခ် 1 ခုပါသောစာသား: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">ရက် %1$d / %2$d (တစ်နေ့တာ)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး</string>
-    <string name="sync_history_stats_issues">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး   ⚠ %4$d ပြဿနာ</string>
-    <string name="sync_history_failed">မအောင်မြင်</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">တစ်နာရီတိုင်း</string>
-    <string name="ics_sync_every_n_hours">%1$d နာရီတိုင်း</string>
-    <string name="ics_sync_daily">နေ့စဉ်</string>
-    <string name="ics_sync_weekly">အပတ်စဉ်</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
-    <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">ဆာဗာက အမှားတစ်ခု ပြန်ပို့ခဲ့သည် (%1$d)။ URL ကို စစ်ဆေးပါ။</string>
-    <string name="ics_fetch_error_empty">ပြက္ခဒိန်ဖိဒ်သည် ဗလာဖြစ်နေသည်။</string>
-    <string name="ics_fetch_error_not_calendar">ထို URL သည် ပြက္ခဒိန်ဖိဒ်တစ်ခုနှင့် မတူပါ။</string>
-    <!-- Event confirmation snackbar -->
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="other">, %1$d ကြိမ်</item>
-    </plurals>
-
-    <!-- Missing translations -->
-    <string name="cd_widget_calendar">ပြက္ခဒိန်</string>
-    <string name="cd_widget_add_event">ပွဲထည့်ရန်</string>
-    <string name="cd_widget_day_cell">%1$s၊ %2$s</string>
-    <string name="cd_widget_no_events">ပွဲမရှိပါ</string>
-    <string name="cd_widget_event_cancelled">%1$s၊ %2$s၊ ပယ်ဖျက်လိုက်သည်</string>
-    <string name="channel_event_reminders">ပွဲသတိပေးချက်များ</string>
-    <string name="channel_event_reminders_desc">လာမည့်ပြက္ခဒိန်ပွဲများအတွက် အကြောင်းကြားချက်များ</string>
-    <string name="channel_sync_progress">ချိန်ကိုက်ခြင်းတိုးတက်မှု</string>
-    <string name="channel_sync_progress_desc">ပြက္ခဒိန်များကို ချိန်ကိုက်နေစဉ် တိုးတက်မှုကို ပြသသည်</string>
-    <string name="channel_sync_status">ချိန်ကိုက်ခြင်းအခြေအနေ</string>
-    <string name="channel_sync_status_desc">ချိန်ကိုက်ခြင်းပြီးစီးမှုနှင့် အမှားများအကြောင်း အကြောင်းကြားချက်များ</string>
-    <string name="channel_event_invitations">ပွဲဖိတ်စာများ</string>
-    <string name="channel_event_invitations_desc">ပြက္ခဒိန် ဖိတ်စာအသစ် လက်ခံရရှိသည့်အခါ အကြောင်းကြားချက်များ</string>
-    <string name="invite_notification_body">%1$s ထံမှ · တုံ့ပြန်ရန် တို့ပါ</string>
-    <string name="rrule_does_not_repeat">ထပ်မလုပ်ပါ</string>
-    <string name="rrule_freq_daily">နေ့စဉ်</string>
-    <string name="rrule_freq_weekly">အပတ်စဉ်</string>
-    <string name="rrule_freq_monthly">လစဉ်</string>
-    <string name="rrule_freq_yearly">နှစ်စဉ်</string>
-    <string name="rrule_repeats">ထပ်လုပ်သည်</string>
-    <string name="rrule_every_n_days">%1$d ရက်တစ်ကြိမ်</string>
-    <string name="rrule_every_n_weeks">%1$d ပတ်တစ်ကြိမ်</string>
-    <string name="rrule_every_n_months">%1$d လတစ်ကြိမ်</string>
-    <string name="rrule_every_n_years">%1$d နှစ်တစ်ကြိမ်</string>
-    <string name="rrule_freq_on_days">%1$s %2$s တွင်</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s တွင်</string>
-    <string name="rrule_freq_on_last_day">%1$s နောက်ဆုံးရက်တွင်</string>
-    <string name="rrule_freq_on_day_n">%1$s %2$d ရက်နေ့တွင်</string>
-    <string name="rrule_ordinal_last">နောက်ဆုံး</string>
-    <string name="rrule_until_suffix">၊ %1$s အထိ</string>
-    <string name="rrule_freq_never">ဘယ်တော့မှ</string>
-    <string name="rrule_freq_custom">စိတ်ကြိုက်</string>
-    <string name="label_repeat_every">ထပ်ခါတလဲလဲ လုပ်မည်</string>
-    <string name="rrule_unit_day">ရက်</string>
-    <string name="rrule_unit_week">အပတ်</string>
-    <string name="rrule_unit_month">လ</string>
-    <string name="rrule_unit_year">နှစ်</string>
-    <string name="cd_decrease_interval">အကြားအချိန် လျှော့ရန်</string>
-    <string name="cd_increase_interval">အကြားအချိန် တိုးရန်</string>
-    <string name="rrule_starting">%1$s %2$s စတင်သည်%3$s</string>
-    <string name="rrule_since">%1$s · %2$s ကတည်းက</string>
-
-    <!-- Insights -->
-    <string name="insights_title">ထိုးထွင်းသိမြင်မှုများ</string>
-    <string name="insights_period_this_week">အပတ်</string>
-    <string name="insights_period_last_week">ယခင်အပတ်</string>
-    <string name="insights_period_this_month">လ</string>
-    <string name="insights_empty_state">ဤအပတ်အတွက် ပွဲစဉ်များ စီစဉ်ထားခြင်း မရှိပါ</string>
-    <plurals name="insights_all_day_count">
-        <item quantity="other">တစ်နေ့တာ ပွဲစဉ် %d ခု</item>
-    </plurals>
-
-    <!-- Insight text: Busiest Day -->
-    <string name="insight_busiest_day_future">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
-    <string name="insight_busiest_day_past">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
-    <string name="insight_lightest_day_future">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
-    <string name="insight_lightest_day_past">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">အရှည်ဆုံး အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">အရှည်ဆုံး အလွတ်အပိုင်းမှာ %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
-    <string name="insight_weekend_load_clear_future">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ပါသည်</string>
-    <string name="insight_weekend_load_clear_past">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ခဲ့ပါသည်</string>
-    <string name="insight_weekend_load_light_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
-    <string name="insight_weekend_load_light_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
-    <string name="insight_weekend_load_busy_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
-    <string name="insight_weekend_load_busy_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
-    <!-- Insight text: Back to Back -->
-    <string name="insight_back_to_back_future">ဆက်တိုက် အစည်းအဝေး %1$d ခု</string>
-    <string name="insight_back_to_back_past">သင့်တွင် ဆက်တိုက် အစည်းအဝေး %1$d ခု ရှိခဲ့သည်</string>
-    <!-- Insight text: Calendar Dominant -->
-    <string name="insight_calendar_dominant_future">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်သည်</string>
-    <string name="insight_calendar_dominant_past">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်ခဲ့သည်</string>
-    <!-- Insight text: Early/Late Bounds -->
-    <string name="insight_early_bounds_future">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်သည်</string>
-    <string name="insight_early_bounds_past">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်ခဲ့သည်</string>
-    <string name="insight_late_bounds_future">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
-    <string name="insight_late_bounds_past">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
-    <!-- Insight text: Meeting-Free Days -->
-    <string name="insight_meeting_free_days_future">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိသည်</string>
-    <string name="insight_meeting_free_days_past">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိခဲ့သည်</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
-    <string name="insight_tomorrow_preview">မနက်ဖြန်: %1$s စီစဉ်ထားပြီး %2$s တွင် စတင်သည်</string>
-    <string name="insight_tomorrow_preview_no_start">မနက်ဖြန်: %1$s စီစဉ်ထားသည်</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
-    <string name="insight_heaviest_upcoming">%1$s သည် သင့်လာမည့် အလုပ်အများဆုံးနေ့ (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">နောက် အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
-    <string name="insights_cd_daily_chart">နေ့စဉ် ဖြန့်ဝေမှု: အအလုပ်များဆုံးနေ့မှာ %1$s</string>
-
-    <!-- ==================== Event Form: Availability & Color ==================== -->
-    <string name="label_availability">ရရှိနိုင်မှု</string>
-    <string name="label_busy">အလုပ်များ</string>
-    <string name="label_free">အားလပ်</string>
-    <string name="label_event_color">ပွဲအရောင်</string>
-    <string name="label_calendar_default">ပြက္ခဒိန် မူရင်း</string>
-    <string name="label_custom">စိတ်ကြိုက်</string>
-    <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
-    <string name="color_saddlebrown">ကုန်းနှီးအညိုရောင်</string>
-    <string name="color_tomato">ခရမ်းချဉ်သီး</string>    <string name="color_darkorange">လိမ္မော်ရင့်</string>
-    <string name="color_gold">ရွှေရောင်</string>
-    <string name="color_yellowgreen">အဝါစိမ်း</string>
-    <string name="color_limegreen">သံပုရာစိမ်း</string>    <string name="color_lightseagreen">ပင်လယ်စိမ်းဖျော့</string>
-    <string name="color_dodgerblue">ဒေါ့ဂျာပြာ</string>
-    <string name="color_royalblue">ဘုရင့်ပြာ</string>    <string name="color_mediumorchid">အလယ်အလတ် သစ်ခွရောင်</string>
-    <string name="color_hotpink">ပန်းရောင်ရဲ</string>
-    <string name="color_dimgray">မီးခိုးမှိန်</string>
-    <string name="hue_red">အနီ</string>
-    <string name="hue_orange">လိမ္မော်</string>
-    <string name="hue_yellow">အဝါ</string>
-    <string name="hue_green">အစိမ်း</string>
-    <string name="hue_teal">အစိမ်းပြာ</string>
-    <string name="hue_blue">အပြာ</string>
-    <string name="hue_purple">ခရမ်း</string>
-    <string name="hue_pink">ပန်းရောင်</string>
-    <string name="hue_brown">အညို</string>
-    <string name="hue_neutral">ကြားနေ</string>
-    <string name="label_more_colors">နောက်ထပ်အရောင်များ</string>
-    <string name="label_back_to_grid">နောက်သို့</string>
-    <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
-    <string name="label_attendees">ပါဝင်သူများ</string>
-    <string name="attendee_you_marker">သင်</string>
-    <string name="attendee_card_going">တက်ရောက်မည်</string>
-    <string name="attendee_card_pending">စောင့်ဆိုင်းနေသည်</string>
-    <string name="attendee_card_declined">ငြင်းပယ်ခဲ့သည်</string>
-    <string name="attendee_card_tentative">မသေချာ</string>
-    <string name="attendee_card_hosting">အိမ်ရှင်</string>
-    <string name="attendee_action_copy">အီးမေးလ်ကူးယူရန်</string>
-    <string name="attendee_action_email">အီးမေးလ်ပို့ရန်</string>
-    <string name="attendee_email_copied">အီးမေးလ်ကို ကူးယူပြီးပါပြီ</string>
-    <string name="attendee_no_email_app">အီးမေးလ်အက်ပ် မထည့်သွင်းထားပါ</string>
-    <string name="attendee_show_all">တက်ရောက်သူအားလုံးကို ပြရန်</string>
-    <string name="attendee_status_accepted">လက်ခံခဲ့သည်</string>
-    <string name="attendee_status_declined">ငြင်းပယ်ခဲ့သည်</string>
-    <string name="attendee_status_tentative">မသေချာ</string>
-    <string name="attendee_status_delegated">ကိုယ်စားလှယ်အပ်နှင်း</string>
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
+    <string name="attendee_search_hint">ရှာဖွေ</string>
+    <string name="attendee_search_no_matches">ရလဒ်မရှိ</string>
     <string name="attendee_picker_title">တက်ရောက်သူများ ထည့်ရန်</string>
     <string name="attendee_pick_add_people">တက်ရောက်သူများ ထည့်ရန်</string>
     <string name="attendee_pick_from_contacts">အမည် သို့မဟုတ် အီးမေးလ်</string>
@@ -1097,58 +744,12 @@
     <string name="attendee_scheduling_unavailable">ဤအကောင့်တွင် လူများ ဖိတ်ကြားခြင်း မရရှိနိုင်ပါ</string>
     <string name="device_attendee_local_no_delivery">ဤပြက္ခဒိန်သည် ဖိတ်စာများ ပေးပို့၍မရပါ။ ဧည့်သည်များကို သိမ်းဆည်းထားသော်လည်း အကြောင်းကြားမည် မဟုတ်ပါ။</string>
     <string name="action_save_and_notify">သိမ်းပြီး အသိပေးရန်</string>
-    <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
-    <string name="inbox_empty_caught_up">အားလုံး ပြီးပြီ</string>
-    <string name="inbox_organizer_suffix">(စီစဉ်သူ)</string>
-    <string name="menu_invites">ဖိတ်ကြားချက်များ</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
-    <string name="jump_to_date">ရက်စွဲသို့သွားရန်</string>
-    <string name="menu_about">အကြောင်း</string>
-    <string name="menu_more">အခြားမီနူး</string>
-    <plurals name="menu_more_with_invites">
-        <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>
-    </plurals>
-    <string name="share_availability_rail_label">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
-    <string name="share_availability_sheet_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
-    <string name="share_availability_hours_label">အလုပ်ချိန်: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">တစ်နေကုန်ပွဲများကို အလုပ်ရှုပ်နေသည်ဟု သတ်မှတ်</string>
-    <string name="share_availability_share_button">မျှဝေရန်</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">ရွေးချယ်ထားသော အပိုင်းအခြားတွင် အနည်းဆုံး တစ်နာရီ အားလပ်သော အပိုင်းများ မရှိပါ။</string>
-    <string name="share_availability_chooser_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
-    <string name="share_availability_share_failed">မျှဝေရန် အက်ပ် မရှိပါ</string>
-    <string name="share_from_kashcal_footer">KashCal မှ မျှဝေထားသည်</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="other">နောက် %1$d ရက်</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="other">နောက် %1$d ရက်အတွင်း အားလပ် (%2$s – %3$s):</item>
-    </plurals>
-    <string name="share_availability_window_section">ကာလ</string>
-    <string name="share_availability_hours_section">အလုပ်ချိန်</string>
-    <plurals name="share_availability_days_hero">
-        <item quantity="other">%1$d ရက်</item>
-    </plurals>
-    <string name="share_availability_days_through">%1$s အထိ</string>
-    <string name="share_availability_window_duration">%1$s နာရီ ကာလ</string>
-    <string name="share_as_card_action">ကတ်အဖြစ် မျှဝေရန်</string>
-    <string name="share_as_card_chip_standard">စံ</string>
-    <string name="share_as_card_chip_celebration">ပွဲတော်</string>
-    <string name="share_as_card_send">ပို့ရန်</string>
-    <string name="share_as_card_attribution">KashCal ဖြင့် ပြုလုပ်ထားသည်</string>
-    <string name="share_as_card_all_day">တစ်နေကုန်</string>
-    <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
-    <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
-    <string name="attendee_sheet_title">တက်ရောက်သူများ</string>
-    <string name="attendee_search_hint">ရှာဖွေ</string>
-    <string name="attendee_search_no_matches">ရလဒ်မရှိ</string>
     <string name="attendee_section_going">လာမည်</string>
     <string name="attendee_section_maybe">ဖြစ်နိုင်</string>
     <string name="attendee_section_pending">စောင့်ဆိုင်း</string>
     <string name="attendee_section_declined">ငြင်းပယ်</string>
     <string name="attendee_section_delegated">လွှဲအပ်</string>
+    <string name="invitees_host_tag">ဧည့်ခံသူ</string>
     <string name="invitees_summary_you_alone">သင်</string>
     <plurals name="invitees_summary_you_organizing">
         <item quantity="other">သင် · ဖိတ်ထား %d ယောက်</item>
@@ -1168,17 +769,356 @@
         <item quantity="other">%1$s · နောက်ထပ် %2$d</item>
     </plurals>
     <string name="rsvp_action_change_a11y">တုံ့ပြန်မှု ပြောင်းရန်</string>
-    <string name="whats_new_title">အသစ်တင်ထားသောအရာများ</string>
-    <string name="whats_new_dismiss">ရပါပြီ</string>
-    <string name="whats_new_v598_title">Android ဖွင့်ထားရန် ကူညီပါ</string>
-    <string name="whats_new_v598_body">Google သည် သင့်စက်ပစ္စည်းတွင် အက်ပ်များ တပ်ဆင်ပုံကို ပြောင်းလဲနေသည်။ သင့်အကူအညီ လိုအပ်သည်။</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org သို့ သွားပါ</string>
-    <string name="holiday_catalog_add">အားလပ်ရက် ပြက္ခဒိန် ထည့်ပါ</string>
-    <string name="holiday_catalog_search_label">ရှာဖွေ</string>
-    <string name="holiday_catalog_already_added">ထည့်ပြီးပါပြီ</string>
-    <string name="holiday_catalog_empty">နိုင်ငံ မတွေ့ပါ</string>
-    <string name="holiday_catalog_empty_hint">အခြားအမည်ဖြင့် စမ်းကြည့်ပါ</string>
-    <string name="holiday_catalog_validate_error">ဤပြက္ခဒိန်ကို မရောက်ရှိနိုင်ပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်စမ်းကြည့်ပါ။</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird မှ အားလပ်ရက် ပြက္ခဒိန်များ၊ %1$s အောက်တွင် လိုင်စင်ရထားသည်။</string>
-    <string name="qs_tile_label">ပွဲထည့်ရန်</string>
+    <string name="rsvp_question_going">သွားမှာလား?</string>
+    <string name="rsvp_action_yes">ဟုတ်</string>
+    <string name="rsvp_action_maybe">ဖြစ်နိုင်</string>
+    <string name="rsvp_action_no">မဟုတ်</string>
+    <string name="rsvp_state_going">သွားမှာ</string>
+    <string name="rsvp_state_maybe">ဖြစ်နိုင်</string>
+    <string name="rsvp_state_not_going">မသွားဘူး</string>
+    <string name="rsvp_action_change">ပြောင်းရန်</string>
+    <string name="empty_pick_a_day">ရက်တစ်ရက် ရွေးပါ။ အခွင့်ယူပါ။</string>
+    <string name="cd_empty_pick_a_day">ရက်တစ်ရက် ရွေးပါ</string>
+    <string name="empty_no_events_day_1">ဘာမှမရှိတဲ့နေ့။ စကြဝဠာက အနားယူဖို့ တွန်းအားပေးနေတယ်။</string>
+    <string name="empty_no_events_day_2">အစီအစဉ်မရှိဘူး။ ဒါပဲ အစီအစဉ်။</string>
+    <string name="empty_no_events_day_3">လက်ဆောင်တစ်ခု— ဘာမှမရှိတဲ့နေ့။</string>
+    <string name="empty_no_events_day_4">ပြက္ခဒိန်အခြေအနေ— သာယာလှပစွာ ဗလာ။</string>
+    <string name="empty_no_events_day_5">အစီအစဉ်ဘာမှမရှိ။ ငြိမ်းချမ်းမှုကို ခံစားပါ။</string>
+    <string name="cd_empty_no_events_day">ငြိမ်းချမ်းတဲ့နေ့၊ ဘာမှ မစီစဉ်ထားပါ</string>
+    <string name="filter_date">ရက်စွဲ</string>
+    <string name="label_select_date">ရက်စွဲ ရွေးချယ်ပါ</string>
+    <string name="hint_tap_date_range">ရက်တစ်ရက်အတွက် တူညီသောရက်ကို နှိပ်ပါ သို့မဟုတ် အကွာအဝေးအတွက် အခြားရက်ကို နှိပ်ပါ</string>
+    <string name="cd_clear">ရှင်း</string>
+    <string name="cd_offline">အော့ဖ်လိုင်း</string>
+    <string name="cd_event_state_cancelled">ပယ်ဖျက်လိုက်သည်</string>
+    <string name="cd_event_state_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="cd_event_state_past">ကုန်လွန်ခဲ့သော ပွဲ</string>
+    <string name="cd_loading_events">ပွဲများ ဖွင့်နေသည်</string>
+    <string name="cd_event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
+    <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
+    <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
+    <string name="cd_calendar_view">ပြက္ခဒိန် အမြင်</string>
+    <string name="cd_active_view">လက်ရှိ အမြင်</string>
+    <string name="view_agenda">အစီအစဉ်</string>
+    <string name="view_month_full">လ (အပြည့်)</string>
+    <string name="view_day">နေ့</string>
+    <string name="view_three_days">၃ ရက်</string>
+    <string name="view_year">နှစ်</string>
+    <string name="view_insights">ထိုးထွင်းသိမြင်မှုများ</string>
+    <string name="label_go_to_month">လသို့ သွားရန်</string>
+    <string name="action_more_options">ရွေးစရာ အပိုများ</string>
+    <string name="quick_add_save_failed">ပွဲကို သိမ်းဆည်း၍ မရပါ</string>
+    <string name="label_duration_days">ရက်</string>
+    <string name="label_duration_hrs">နာရီ</string>
+    <string name="label_duration_min">မိ</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">ရက် %1$d တွင်</string>
+    <string name="recurrence_on_last_day">လ၏ နောက်ဆုံးရက်တွင်</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s တွင်</string>
+    <string name="ordinal_1st">ပထမ</string>
+    <string name="ordinal_2nd">ဒုတိယ</string>
+    <string name="ordinal_3rd">တတိယ</string>
+    <string name="ordinal_4th">စတုတ္ထ</string>
+    <string name="ordinal_nth">အမှတ်စဉ် %1$d</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">ထပ်မလုပ်ပါ</string>
+    <string name="rrule_freq_daily">နေ့စဉ်</string>
+    <string name="rrule_freq_weekly">အပတ်စဉ်</string>
+    <string name="rrule_freq_monthly">လစဉ်</string>
+    <string name="rrule_freq_yearly">နှစ်စဉ်</string>
+    <string name="rrule_repeats">ထပ်လုပ်သည်</string>
+    <string name="rrule_every_n_days">%1$d ရက်တစ်ကြိမ်</string>
+    <string name="rrule_every_n_weeks">%1$d ပတ်တစ်ကြိမ်</string>
+    <string name="rrule_every_n_months">%1$d လတစ်ကြိမ်</string>
+    <string name="rrule_every_n_years">%1$d နှစ်တစ်ကြိမ်</string>
+    <string name="rrule_freq_on_days">%1$s %2$s တွင်</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s တွင်</string>
+    <string name="rrule_freq_on_last_day">%1$s နောက်ဆုံးရက်တွင်</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d ရက်နေ့တွင်</string>
+    <string name="rrule_ordinal_last">နောက်ဆုံး</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d ကြိမ်</item>
+    </plurals>
+    <string name="rrule_until_suffix">၊ %1$s အထိ</string>
+    <string name="rrule_freq_never">ဘယ်တော့မှ</string>
+    <string name="rrule_freq_custom">စိတ်ကြိုက်</string>
+    <string name="label_repeat_every">ထပ်ခါတလဲလဲ လုပ်မည်</string>
+    <string name="rrule_unit_day">ရက်</string>
+    <string name="rrule_unit_week">အပတ်</string>
+    <string name="rrule_unit_month">လ</string>
+    <string name="rrule_unit_year">နှစ်</string>
+    <string name="cd_decrease_interval">အကြားအချိန် လျှော့ရန်</string>
+    <string name="cd_increase_interval">အကြားအချိန် တိုးရန်</string>
+    <string name="rrule_starting">%1$s %2$s စတင်သည်%3$s</string>
+    <string name="rrule_since">%1$s · %2$s ကတည်းက</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d အသစ်</string>
+    <string name="sync_summary_updated">%1$d အပ်ဒိတ်ပြီး</string>
+    <string name="sync_summary_removed">%1$d ဖယ်ရှားပြီး</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">စက်ဝိုင်း လှိမ့်ခြင်း ဖွင့်ထား</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">သတိပေးချက်မရှိ</string>
+    <string name="reminder_at_time_of_event">ပွဲအချိန်တွင်</string>
+    <string name="reminder_time_before">%1$s အလို</string>
+    <string name="reminder_time_after">%1$s အလွန်</string>
+    <string name="reminder_day_of_event_12h">ပွဲနေ့ မနက် 9 နာရီ</string>
+    <string name="reminder_day_of_event_24h">ပွဲနေ့ 09:00</string>
+    <string name="reminder_before_at_12h">%1$s အလို မနက် 9 နာရီ</string>
+    <string name="reminder_before_at_24h">%1$s အလို 09:00</string>
+    <string name="reminder_short_off">ပိတ်</string>
+    <string name="reminder_short_at_event">ပွဲတွင်</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dမ</string>
+    <string name="reminder_short_hours">%1$dန</string>
+    <string name="reminder_short_days">%1$dရ</string>
+    <string name="reminder_short_weeks">%1$dပ</string>
+    <string name="reminder_summary_none">မရှိ</string>
+    <string name="duration_compact">%1$dန %2$dမ</string>
+    <string name="duration_compact_short">%1$dန%2$dမ</string>
+    <string name="sync_manual_only">ကိုယ်တိုင်သာ</string>
+    <string name="sync_lookback_all">ပွဲအားလုံး</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">ခဏဆိုင်းငံ့</string>
+    <string name="notification_starting_now">ယခုစတင်နေသည်</string>
+    <plurals name="reminder_in_days">
+        <item quantity="other">%1$d ရက်အတွင်း</item>
+    </plurals>
+    <string name="notification_tomorrow_time">မနက်ဖြန်, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">စင့်ခ်ပြီးပါပြီ</string>
+    <string name="sync_notification_partial">စင့်ခ်တစ်စိတ်တစ်ပိုင်းပြီးပါပြီ</string>
+    <string name="sync_notification_auth_failed">စင့်ခ်အတည်ပြုခြင်းမအောင်မြင်ပါ</string>
+    <string name="sync_notification_auth_reauth">သင့်အကောင့်ကိုပြန်လည်အတည်ပြုပါ</string>
+    <string name="sync_notification_failed">စင့်ခ်မအောင်မြင်ပါ</string>
+    <string name="sync_notification_parse_title">အချို့ပွဲများစင့်ခ်မလုပ်နိုင်ပါ</string>
+    <string name="sync_notification_parse_content">%2$s ရှိ %1$s စင့်ခ်မလုပ်နိုင်ပါ။ ဆက်တင်တွင် Force Sync ကိုစမ်းကြည့်ပါ။</string>
+    <string name="sync_notification_conflict_title">စင့်ခ်ပဋိပက္ခဖြေရှင်းပြီး</string>
+    <string name="sync_notification_conflict_single">\"%1$s\" ၏ ပြည်တွင်းပြောင်းလဲမှုများ စင့်ခ်ပဋိပက္ခကြောင့်ဆုံးရှုံးသွားပါသည်။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။</string>
+    <string name="sync_notification_conflict_multi">%1$s ၏ ပြည်တွင်းပြောင်းလဲမှုများ စင့်ခ်ပဋိပက္ခများကြောင့်ဆုံးရှုံးသွားပါသည်။ ဆာဗာဗားရှင်းများကိုအသုံးပြုပါမည်။</string>
+    <string name="sync_notification_expired_title">စင့်ခ်ပြောင်းလဲမှုများသက်တမ်းကုန်သွားပါပြီ</string>
+    <string name="sync_notification_expired_content">%1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
+    <string name="sync_notification_expired_content_calendar">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
+    <string name="sync_notification_expired_content_calendars">%2$s ရှိ %1$s ရက် 30 အကြာတွင်စင့်ခ်မလုပ်နိုင်ပါ။ ဆာဗာဗားရှင်းကိုအသုံးပြုပါမည်။ ပြန်စမ်းရန် Force Sync ကိုနှိပ်ပါ။</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">ပြက္ခဒိန် %1$d ခုစင့်ခ်ပြီး</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, ပြောင်းလဲမှု %1$d ခု</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, အမှား %1$d ခု</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s ၏ %2$s နှစ်မြောက်မွေးနေ့</string>
+    <string name="contact_birthday">%1$s ၏ မွေးနေ့</string>
+    <string name="contact_anniversary_with_age">%1$s ၏ %2$s နှစ်မြောက်နှစ်ပတ်လည်</string>
+    <string name="contact_anniversary">%1$s ၏ နှစ်ပတ်လည်</string>
+    <string name="ordinal_suffix_st">%1$d ကြိမ်မြောက်</string>
+    <string name="ordinal_suffix_nd">%1$d ကြိမ်မြောက်</string>
+    <string name="ordinal_suffix_rd">%1$d ကြိမ်မြောက်</string>
+    <string name="ordinal_suffix_th">%1$d ကြိမ်မြောက်</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">ပြက္ခဒိန်များစင့်ခ်လုပ်နေသည်…</string>
+    <string name="sync_banner_preparing">စင့်ခ်ပြင်ဆင်နေသည်…</string>
+    <string name="sync_banner_complete_errors">စင့်ခ်ပြီး အမှားများရှိသည်</string>
+    <string name="sync_banner_failed">စင့်ခ်မအောင်မြင်ပါ: %1$s</string>
+    <string name="error_unknown_error">မသိအမှား</string>
+    <string name="sync_snackbar_new_event">ပွဲအသစ်: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">ပွဲအသစ် %1$d ခု</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">ပွဲ %1$d ခုအပ်ဒိတ်ပြီး</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">ပွဲ %1$d ခုဖယ်ရှားပြီး</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">ပြက္ခဒိန်အပ်ဒိတ် %1$d ခု</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">ရက် %1$d / %2$d</string>
+    <string name="day_starts">ရက် 1 / %1$d · စတင် %2$s</string>
+    <string name="day_ends">ရက် %1$d / %2$d · ပြီးဆုံး %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · တစ်နေ့တာ</string>
+    <string name="event_date_all_day">%1$s · တစ်နေ့တာ</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (တစ်နေ့တာ)</string>
+    <string name="event_date_all_day_parens">%1$s (တစ်နေ့တာ)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">ပွဲသိမ်းမည်</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">အသစ်</string>
+    <string name="color_red">အနီ</string>
+    <string name="color_orange">လိမ္မော်</string>
+    <string name="color_yellow">အဝါ</string>
+    <string name="color_green">အစိမ်း</string>
+    <string name="color_cyan">စိမ်းပြာ</string>
+    <string name="color_blue">အပြာ</string>
+    <string name="color_purple">ခရမ်း</string>
+    <string name="cd_meeting_link">အစည်းအဝေးလင့်ခ်: %1$s</string>
+    <string name="cd_phone_number">ဖုန်းနံပါတ်</string>
+    <string name="cd_email_link">အီးမေးလ်: %1$s</string>
+    <string name="cd_web_link">လင့်ခ်: %1$s</string>
+    <string name="cd_text_with_links">လင့်ခ် %1$d ခုပါသောစာသား: %2$s</string>
+    <string name="cd_text_with_link">လင့်ခ် 1 ခုပါသောစာသား: %1$s</string>
+    <string name="day_x_of_y_all_day">ရက် %1$d / %2$d (တစ်နေ့တာ)</string>
+    <string name="sync_history_stats">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး</string>
+    <string name="sync_history_stats_issues">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး   ⚠ %4$d ပြဿနာ</string>
+    <string name="sync_history_failed">မအောင်မြင်</string>
+    <string name="ics_sync_every_hour">တစ်နာရီတိုင်း</string>
+    <string name="ics_sync_every_n_hours">%1$d နာရီတိုင်း</string>
+    <string name="ics_sync_daily">နေ့စဉ်</string>
+    <string name="ics_sync_weekly">အပတ်စဉ်</string>
+    <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
+    <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
+    <string name="ics_fetch_error_http">ဆာဗာက အမှားတစ်ခု ပြန်ပို့ခဲ့သည် (%1$d)။ URL ကို စစ်ဆေးပါ။</string>
+    <string name="ics_fetch_error_empty">ပြက္ခဒိန်ဖိဒ်သည် ဗလာဖြစ်နေသည်။</string>
+    <string name="ics_fetch_error_not_calendar">ထို URL သည် ပြက္ခဒိန်ဖိဒ်တစ်ခုနှင့် မတူပါ။</string>
+    <string name="insights_title">ထိုးထွင်းသိမြင်မှုများ</string>
+    <string name="insights_period_this_week">အပတ်</string>
+    <string name="insights_period_last_week">ယခင်အပတ်</string>
+    <string name="insights_period_this_month">လ</string>
+    <string name="insights_empty_state">ဤအပတ်အတွက် ပွဲစဉ်များ စီစဉ်ထားခြင်း မရှိပါ</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">တစ်နေ့တာ ပွဲစဉ် %d ခု</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
+    <string name="insight_longest_free_future">အရှည်ဆုံး အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">အရှည်ဆုံး အလွတ်အပိုင်းမှာ %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ပါသည်</string>
+    <string name="insight_weekend_load_clear_past">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ခဲ့ပါသည်</string>
+    <string name="insight_weekend_load_light_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
+    <string name="insight_weekend_load_light_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
+    <string name="insight_weekend_load_busy_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
+    <string name="insight_weekend_load_busy_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
+    <string name="insight_back_to_back_future">ဆက်တိုက် အစည်းအဝေး %1$d ခု</string>
+    <string name="insight_back_to_back_past">သင့်တွင် ဆက်တိုက် အစည်းအဝေး %1$d ခု ရှိခဲ့သည်</string>
+    <string name="insight_calendar_dominant_future">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်သည်</string>
+    <string name="insight_calendar_dominant_past">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်ခဲ့သည်</string>
+    <string name="insight_early_bounds_future">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်သည်</string>
+    <string name="insight_early_bounds_past">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်ခဲ့သည်</string>
+    <string name="insight_late_bounds_future">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
+    <string name="insight_late_bounds_past">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
+    <string name="insight_meeting_free_days_future">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိသည်</string>
+    <string name="insight_meeting_free_days_past">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိခဲ့သည်</string>
+    <string name="insight_tomorrow_preview">မနက်ဖြန်: %1$s စီစဉ်ထားပြီး %2$s တွင် စတင်သည်</string>
+    <string name="insight_tomorrow_preview_no_start">မနက်ဖြန်: %1$s စီစဉ်ထားသည်</string>
+    <string name="insight_heaviest_upcoming">%1$s သည် သင့်လာမည့် အလုပ်အများဆုံးနေ့ (%2$s)</string>
+    <string name="insight_next_free_block">နောက် အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_daily_chart">နေ့စဉ် ဖြန့်ဝေမှု: အအလုပ်များဆုံးနေ့မှာ %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">ရရှိနိုင်မှု</string>
+    <string name="label_busy">အလုပ်များ</string>
+    <string name="label_free">အားလပ်</string>
+    <string name="label_event_color">ပွဲအရောင်</string>
+    <string name="label_calendar_default">ပြက္ခဒိန် မူရင်း</string>
+    <string name="label_custom">စိတ်ကြိုက်</string>
+    <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">ကုန်းနှီးအညိုရောင်</string>
+    <string name="color_tomato">ခရမ်းချဉ်သီး</string>    <string name="color_darkorange">လိမ္မော်ရင့်</string>
+    <string name="color_gold">ရွှေရောင်</string>
+    <string name="color_yellowgreen">အဝါစိမ်း</string>
+    <string name="color_limegreen">သံပုရာစိမ်း</string>    <string name="color_lightseagreen">ပင်လယ်စိမ်းဖျော့</string>
+    <string name="color_dodgerblue">ဒေါ့ဂျာပြာ</string>
+    <string name="color_royalblue">ဘုရင့်ပြာ</string>    <string name="color_mediumorchid">အလယ်အလတ် သစ်ခွရောင်</string>
+    <string name="color_hotpink">ပန်းရောင်ရဲ</string>
+    <string name="color_dimgray">မီးခိုးမှိန်</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <string name="hue_red">အနီ</string>
+    <string name="hue_orange">လိမ္မော်</string>
+    <string name="hue_yellow">အဝါ</string>
+    <string name="hue_green">အစိမ်း</string>
+    <string name="hue_teal">အစိမ်းပြာ</string>
+    <string name="hue_blue">အပြာ</string>
+    <string name="hue_purple">ခရမ်း</string>
+    <string name="hue_pink">ပန်းရောင်</string>
+    <string name="hue_brown">အညို</string>
+    <string name="hue_neutral">ကြားနေ</string>
+    <string name="label_more_colors">နောက်ထပ်အရောင်များ</string>
+    <string name="label_back_to_grid">နောက်သို့</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <string name="label_attendees">ပါဝင်သူများ</string>
+    <string name="attendee_you_marker">သင်</string>
+    <string name="attendee_card_going">တက်ရောက်မည်</string>
+    <string name="attendee_card_pending">စောင့်ဆိုင်းနေသည်</string>
+    <string name="attendee_card_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="attendee_card_tentative">မသေချာ</string>
+    <string name="attendee_card_hosting">အိမ်ရှင်</string>
+    <string name="attendee_action_copy">အီးမေးလ်ကူးယူရန်</string>
+    <string name="attendee_action_email">အီးမေးလ်ပို့ရန်</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <string name="attendee_email_copied">အီးမေးလ်ကို ကူးယူပြီးပါပြီ</string>
+    <string name="attendee_no_email_app">အီးမေးလ်အက်ပ် မထည့်သွင်းထားပါ</string>
+    <string name="attendee_show_all">တက်ရောက်သူအားလုံးကို ပြရန်</string>
+    <string name="attendee_status_accepted">လက်ခံခဲ့သည်</string>
+    <string name="attendee_status_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="attendee_status_tentative">မသေချာ</string>
+    <string name="attendee_status_delegated">ကိုယ်စားလှယ်အပ်နှင်း</string>
+    <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
+    <string name="inbox_empty_caught_up">အားလုံး ပြီးပြီ</string>
+    <string name="inbox_organizer_suffix">(စီစဉ်သူ)</string>
+    <string name="menu_invites">ဖိတ်ကြားချက်များ</string>
+    <string name="jump_to_date">ရက်စွဲသို့သွားရန်</string>
+    <string name="menu_about">အကြောင်း</string>
+    <string name="menu_more">အခြားမီနူး</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>
+    </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
+    <string name="share_availability_rail_label">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <string name="share_availability_sheet_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="other">နောက် %1$d ရက်</item>
+    </plurals>
+    <string name="share_availability_hours_label">အလုပ်ချိန်: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">တစ်နေကုန်ပွဲများကို အလုပ်ရှုပ်နေသည်ဟု သတ်မှတ်</string>
+    <string name="share_availability_share_button">မျှဝေရန်</string>
+    <plurals name="share_availability_header">
+        <item quantity="other">နောက် %1$d ရက်အတွင်း အားလပ် (%2$s – %3$s):</item>
+    </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">ရွေးချယ်ထားသော အပိုင်းအခြားတွင် အနည်းဆုံး တစ်နာရီ အားလပ်သော အပိုင်းများ မရှိပါ။</string>
+    <string name="share_from_kashcal_footer">KashCal မှ မျှဝေထားသည်</string>
+    <string name="share_availability_chooser_title">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>
+    <string name="share_availability_share_failed">မျှဝေရန် အက်ပ် မရှိပါ</string>
+    <string name="share_availability_window_section">ကာလ</string>
+    <string name="share_availability_hours_section">အလုပ်ချိန်</string>
+    <plurals name="share_availability_days_hero">
+        <item quantity="other">%1$d ရက်</item>
+    </plurals>
+    <string name="share_availability_days_through">%1$s အထိ</string>
+    <string name="share_availability_window_duration">%1$s နာရီ ကာလ</string>
+    <string name="share_as_card_action">ကတ်အဖြစ် မျှဝေရန်</string>
+    <string name="share_as_card_chip_standard">စံ</string>
+    <string name="share_as_card_chip_celebration">ပွဲတော်</string>
+    <string name="share_as_card_send">ပို့ရန်</string>
+    <string name="share_as_card_attribution">KashCal ဖြင့် ပြုလုပ်ထားသည်</string>
+    <string name="share_as_card_all_day">တစ်နေကုန်</string>
+    <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
+    <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
+
 </resources>

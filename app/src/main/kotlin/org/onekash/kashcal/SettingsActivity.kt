@@ -53,6 +53,11 @@ import org.onekash.kashcal.domain.backup.BackupFilename
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
+import org.onekash.kashcal.ui.permission.LocalNetworkPermissionManager
+import org.onekash.kashcal.ui.permission.classifyLocalNetworkAfterRequest
+import org.onekash.kashcal.ui.permission.shouldShowLanBanner
+import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
+import org.onekash.kashcal.util.isLanHost
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.SyncHistorySheet
@@ -215,6 +220,29 @@ class SettingsActivity : FragmentActivity() {
                         }
                     }
                     pendingContactPermissionAction = null
+                }
+
+                // Local-network permission (Android 17+) for LAN CalDAV servers.
+                // The manager owns the rationale read; the resolved state is
+                // pushed to the VM so the sign-in sheet can proactively ask.
+                val localNetworkPermissionManager = remember {
+                    LocalNetworkPermissionManager(applicationContext)
+                }
+                // User dismissal of the banner for the current sheet session.
+                var localNetworkBannerDismissed by remember { mutableStateOf(false) }
+                // Rationale sampled just before launching, so the callback can
+                // detect the rationale-flip that signals "don't ask again".
+                var localNetworkRationaleBefore by remember { mutableStateOf(false) }
+                val localNetworkPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    viewModel.updateLocalNetworkPermissionState(
+                        classifyLocalNetworkAfterRequest(
+                            granted = isGranted,
+                            rationaleBefore = localNetworkRationaleBefore,
+                            rationaleAfter = localNetworkPermissionManager.shouldShowRationale(this@SettingsActivity),
+                        )
+                    )
                 }
 
                 // Calendar permission launcher (for Device Calendars - READ + WRITE)
@@ -779,6 +807,23 @@ class SettingsActivity : FragmentActivity() {
 
                     // CalDAV Sign-In Sheet (at top level so it shows from any screen)
                     if (uiState.showCalDavSignInSheet) {
+                        // Resolve live permission state when the sheet opens and
+                        // reset the per-session dismissal.
+                        LaunchedEffect(Unit) {
+                            localNetworkBannerDismissed = false
+                            viewModel.updateLocalNetworkPermissionState(
+                                localNetworkPermissionManager.resolveState(this@SettingsActivity)
+                            )
+                        }
+                        val lanPermissionState by viewModel.localNetworkPermissionState.collectAsStateWithLifecycle()
+                        val lanHintActive by viewModel.localNetworkHintActive.collectAsStateWithLifecycle()
+                        val serverUrl = (uiState.calDavState as? CalDavConnectionState.NotConnected)?.serverUrl.orEmpty()
+                        // Show the banner proactively for a recognizably-local URL, OR
+                        // reactively after a discovery failure that looks like a blocked
+                        // LAN socket (covers bare hostnames isLanHost can't classify).
+                        val showLanBanner = !localNetworkBannerDismissed &&
+                            shouldShowLanBanner(isLanHost(serverUrl) || lanHintActive, lanPermissionState)
+
                         CalDavSignInSheet(
                             state = uiState.calDavState,
                             onServerUrlChange = viewModel::onCalDavServerUrlChange,
@@ -787,7 +832,14 @@ class SettingsActivity : FragmentActivity() {
                             onPasswordChange = viewModel::onCalDavPasswordChange,
                             onTrustInsecureChange = viewModel::onCalDavTrustInsecureChange,
                             onDiscover = viewModel::onCalDavDiscover,
-                            onDismiss = viewModel::hideCalDavSignInSheet
+                            onDismiss = viewModel::hideCalDavSignInSheet,
+                            showLocalNetworkBanner = showLanBanner,
+                            onRequestLocalNetwork = {
+                                localNetworkRationaleBefore =
+                                    localNetworkPermissionManager.shouldShowRationale(this@SettingsActivity)
+                                localNetworkPermissionLauncher.launch(Manifest.permission.ACCESS_LOCAL_NETWORK)
+                            },
+                            onDismissLocalNetworkBanner = { localNetworkBannerDismissed = true },
                         )
                     }
 
@@ -843,6 +895,13 @@ class SettingsActivity : FragmentActivity() {
         viewModel.refreshNotificationPermission()
         viewModel.refreshContactsPermission()
         viewModel.refreshCalendarPermission()
+        // Reflect a local-network grant made in system Settings while the sheet
+        // was open. Upgrade-only: must not clobber a PermanentlyDenied set by the
+        // request classifier (a live read can't represent it), or the banner
+        // would nag again on every resume.
+        viewModel.reconcileLocalNetworkPermissionOnResume(
+            LocalNetworkPermissionManager(applicationContext).resolveState(this)
+        )
     }
 
     /** Can the device satisfy the app lock with a strong biometric OR the screen-lock credential? */

@@ -13,12 +13,27 @@
     <string name="date_widget_description">Бүгінгі күнді қолданба белгішесі ретінде көрсетеді</string>
     <string name="upcoming_widget_name">Алдағы</string>
     <string name="upcoming_widget_description">Алдағы 10 күнге арналған оқиғаларды көрсетеді, бос күндерді өткізіп жібереді</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Алдағы оқиғалар жүктелуде…</string>
     <string name="widget_error_load_events">Оқиғаларды жүктеу мүмкін болмады, ашу үшін түртіңіз</string>
     <string name="widget_no_events_today">Бүгін оқиғалар жоқ</string>
     <string name="widget_add_event">+ Оқиға қосу</string>
     <string name="widget_no_events">Оқиғалар жоқ</string>
     <string name="widget_no_upcoming_events">Алдағы оқиғалар жоқ</string>
+    <string name="cd_widget_calendar">Күнтізбе</string>
+    <string name="cd_widget_add_event">Оқиға қосу</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">оқиғалар жоқ</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, бас тартылды</string>
+    <string name="channel_event_reminders">Оқиға еске салулары</string>
+    <string name="channel_event_reminders_desc">Алдағы күнтізбе оқиғалары туралы хабарламалар</string>
+    <string name="channel_sync_progress">Синхрондау барысы</string>
+    <string name="channel_sync_progress_desc">Күнтізбелерді синхрондау кезінде прогрессті көрсетеді</string>
+    <string name="channel_sync_status">Синхрондау күйі</string>
+    <string name="channel_sync_status_desc">Синхрондаудың аяқталуы және қателері туралы хабарламалар</string>
+    <string name="channel_event_invitations">Оқиға шақырулары</string>
+    <string name="channel_event_invitations_desc">Жаңа күнтізбе шақыруын алған кездегі хабарламалар</string>
+    <string name="invite_notification_body">%1$s жіберген · Жауап беру үшін түртіңіз</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Жаңа оқиға</string>
@@ -35,6 +50,8 @@
     <string name="action_close">Жабу</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Қазір емес</string>
+    <string name="action_allow">Рұқсат ету</string>
+    <string name="action_no_thanks">Жоқ, рақмет</string>
     <string name="action_sign_in">Кіру</string>
     <string name="action_select">Таңдау</string>
     <string name="action_show_password">Құпия сөзді көрсету</string>
@@ -59,8 +76,6 @@
     <string name="action_confirm">Растау</string>
     <string name="action_discard">Қабылдамау</string>
     <string name="action_dismiss">Жабу</string>
-    <string name="action_allow">Рұқсат ету</string>
-    <string name="action_no_thanks">Жоқ, рақмет</string>
     <string name="action_show_all">Барлығын көрсету</string>
     <string name="action_connect">Қосылу</string>
     <string name="action_duplicate">Көшірмелеу</string>
@@ -70,42 +85,8 @@
     <string name="action_confirm_delete">Жоюды растау</string>
     <string name="action_delete_event">Оқиғаны жою</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Жауабыңыз бүкіл серияға қолданылады.</string>
-    <string name="invitees_host_tag">Хост</string>
-    <string name="invitees_summary_you_alone">Сен</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Сен · %d шақырылған</item>
-        <item quantity="other">Сен · %d шақырылған</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d шақырылған</item>
-        <item quantity="other">%d шақырылған</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ұйымдастырушы</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Сен</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Сен + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Сен + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Сен + %d</item>
-        <item quantity="other">Сен + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · тағы %2$d</item>
-        <item quantity="other">%1$s · тағы %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Жауапты өзгерту</string>
-    <string name="rsvp_question_going">Барасың ба?</string>
-    <string name="rsvp_action_yes">Иә</string>
-    <string name="rsvp_action_maybe">Мүмкін</string>
-    <string name="rsvp_action_no">Жоқ</string>
-    <string name="rsvp_state_going">Барасың</string>
-    <string name="rsvp_state_maybe">Мүмкін</string>
-    <string name="rsvp_state_not_going">Бармайсың</string>
-    <string name="rsvp_action_change">Өзгерту</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Мынау және болашақтағылардың барлығы</string>
@@ -143,7 +124,6 @@
     <string name="label_all_day">Күні бойы</string>
     <string name="label_today">Бүгін</string>
     <string name="label_go_to_date">Күнге өту</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">А</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -164,9 +144,6 @@
     <string name="app_icon_label_calendar">Күнтізбе</string>
     <string name="app_icon_support_cta">KashCal қолдау</string>
     <string name="app_icon_switch_note">Белгішені өзгерту қолданбаны қайта іске қосуы мүмкін. Хабарландырулар әрқашан әдепкі белгіше мен атауды пайдаланады.</string>
-    <string name="settings_search_placeholder">Параметрлерді іздеу…</string>
-    <string name="settings_search_no_results">\"%1$s\" үшін параметрлер табылмады</string>
-    <string name="cd_search_settings">Параметрлерді іздеу</string>
     <string name="settings_time_format">Уақыт пішімі</string>
     <string name="settings_start_week_on">Апта басталады</string>
     <string name="settings_event_emojis">Оқиға эмодзилері</string>
@@ -199,6 +176,7 @@
     <string name="app_lock_enabled_message">Қолданба құлпы қосулы. KashCal оны келесі жолы ашқанда сізден аутентификациядан өтуді сұрайды.</string>
     <string name="app_lock_disable_prompt_title">Қолданба құлпын өшіру үшін құлыпты ашыңыз</string>
 
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Параметрлердің сақтық көшірмесі</string>
     <string name="backup_settings_subtitle">KashCal конфигурациясын JSON файлына сақтау</string>
     <string name="restore_settings_label">Параметрлерді қалпына келтіру</string>
@@ -223,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Біз көмектесеміз.</string>
     <string name="onboarding_connect_prompt">Оқиғаларыңызды мұнда көру үшін iCloud-қа қосылыңыз</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Не жаңалық</string>
+    <string name="whats_new_dismiss">Түсіндім</string>
+    <string name="whats_new_v598_title">Android ашық қалуына көмектесіңіз</string>
+    <string name="whats_new_v598_body">Google құрылғыңызға қолданбаларды орнату тәсілін өзгертуде. Сіздің көмегіңіз қажет.</string>
+    <string name="whats_new_v598_action_label">keepandroidopen.org сайтына кіру</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud қосу</string>
@@ -267,13 +252,11 @@
     <string name="error_auth_session_expired_title">Сеанс мерзімі аяқталды</string>
     <string name="error_auth_session_expired">iCloud сеансыңыздың мерзімі аяқталды. Синхрондауды жалғастыру үшін қайта кіріңіз.</string>
     <string name="error_auth_account_locked">Apple ID құлыпталған. Құлпын ашу үшін appleid.apple.com сайтына кіріңіз.</string>
-
     <string name="error_network_offline">Сіз желіден тыссыз. Желіге қосылғанда өзгерістер синхрондалады.</string>
     <string name="error_network_timeout">Қосылу уақыты аяқталды. Интернетіңізді тексеріп, қайта байқап көріңіз.</string>
     <string name="error_network_ssl">Қауіпсіз қосылу сәтсіз болды. Желі параметрлерін тексеріңіз.</string>
     <string name="error_network_unknown_host">iCloud-қа қосылу мүмкін болмады. Интернет қосылымыңызды тексеріңіз.</string>
     <string name="error_network_connection_failed">Қосылу сәтсіз болды. Қайта байқап көріңіз.</string>
-
     <string name="error_server_unavailable">iCloud уақытша қолжетімсіз. Кейінірек қайта байқап көріңіз.</string>
     <string name="error_server_rate_limited">Тым көп сұраулар. Біраз күтіп, қайта байқап көріңіз.</string>
     <string name="error_server_forbidden">Кіру рұқсаты жоқ. Бұл күнтізбеге рұқсатыңыз болмауы мүмкін.</string>
@@ -282,13 +265,11 @@
     <string name="error_conflict_generic">Бұл оқиға басқа құрылғыда өзгертілді. Соңғы нұсқаны алу үшін мәжбүрлі синхрондау жасаңыз.</string>
     <string name="error_conflict_with_event">\"%1$s\" басқа құрылғыда өзгертілді. Соңғы нұсқаны алу үшін мәжбүрлі синхрондау жасаңыз.</string>
     <string name="error_sync_token_expired">Синхрондау деректерінің мерзімі аяқталды. Толық синхрондау орындалуда…</string>
-
     <string name="error_event_not_found">Оқиға табылмады.</string>
     <string name="error_calendar_not_found">Күнтізбе табылмады.</string>
     <string name="error_calendar_read_only">\"%1$s\" ішіндегі оқиғаларды өзгерту мүмкін емес (тек оқуға арналған күнтізбе).</string>
     <string name="error_event_invalid_data">Жарамсыз оқиға деректері. Басталу және аяқталу уақытын тексеріңіз.</string>
     <string name="error_event_invalid_recurrence">Жарамсыз қайталану үлгісі.</string>
-
     <string name="error_display_name_exists">\"%1$s\" атауымен есептік жазба бұрыннан бар.</string>
     <string name="icloud_error_credentials_required">Apple ID және құпия сөз қажет</string>
     <string name="icloud_error_connection_timeout">Байланыс уақыты аяқталды. Қайталап көріңіз.</string>
@@ -297,43 +278,41 @@
     <string name="caldav_error_connection_timeout">Байланыс уақыты аяқталды. Қайталап көріңіз.</string>
     <string name="caldav_error_no_calendars">Бұл серверде күнтізбелер табылмады.</string>
     <string name="caldav_error_unexpected">Күтпеген қате. Қайталап көріңіз.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nЕгер бұл жергілікті желідегі сервер болса, қосылу үшін жергілікті желіге кіруге рұқсат етіңіз.</string>
+    <string name="local_network_banner_title">Жергілікті желіге кіру қажет</string>
+    <string name="local_network_banner_body">Бұл сервер жергілікті желіде тұрған сияқты. KashCal оған қосыла алуы үшін жергілікті желіге кіруге рұқсат етіңіз.</string>
+    <string name="local_network_banner_allow">Кіруге рұқсат ету</string>
+    <string name="local_network_banner_dismiss">Қазір емес</string>
     <string name="password_change_error_account_not_found">Аккаунт табылмады</string>
     <string name="password_change_error_no_credentials">Бар тіркелгі деректері жоқ</string>
     <string name="password_change_error_unsupported_provider">Бұл провайдер құпия сөзді өзгертуді қолдамайды</string>
     <string name="password_change_error_invalid">Жарамсыз құпия сөз</string>
     <string name="password_change_error_network">Желі қатесі, қайталап көріңіз</string>
-
     <string name="error_import_file_not_found">Файл табылмады немесе оқу мүмкін емес.</string>
     <string name="error_import_invalid_format">Жарамсыз күнтізбе файл пішімі.</string>
     <string name="error_import_partial">%1$d оқиға импортталды, %2$d сәтсіз.</string>
     <string name="error_export_failed">Оқиғаларды экспорттау сәтсіз болды.</string>
     <string name="error_export_no_events">Экспорттауға оқиғалар жоқ.</string>
     <string name="error_end_before_start">Аяқталу уақыты басталу уақытынан кейін болуы керек</string>
-
     <string name="error_storage_full_title">Жад толы</string>
     <string name="error_storage_full">Жеткілікті орын жоқ. Орын босатып, қайта байқап көріңіз.</string>
     <string name="error_database_corruption_title">Деректер қатесі</string>
     <string name="error_database_corruption">Күнтізбе деректері зақымдалған болуы мүмкін. Қолдау қызметіне хабарласыңыз.</string>
     <string name="error_migration_title">Жаңарту қатесі</string>
     <string name="error_migration_failed">Деректерді жаңарту сәтсіз болды. Қолданбаны қайта орнатыңыз.</string>
-
     <string name="error_permission_notification_title">Хабарландыруларды қосу керек пе?</string>
     <string name="error_permission_notification">KashCal алдағы оқиғалар туралы еске салу үшін хабарландыру рұқсатын қажет етеді.</string>
     <string name="error_permission_alarm_title">Дәл дабылдарды қосу керек пе?</string>
     <string name="error_permission_alarm">KashCal дәл еске салғыштар үшін дабыл рұқсатын қажет етеді.</string>
     <string name="error_permission_storage">Импорттау/экспорттау үшін жад рұқсаты қажет.</string>
-
     <string name="error_device_calendar_title">Күнтізбе қатесі</string>
     <string name="error_device_calendar_write_failed">Құрылғы күнтізбесіне сақтау сәтсіз болды. Қайта байқап көріңіз.</string>
     <string name="error_device_calendar_permission">Күнтізбеге жазу рұқсаты қажет. Параметрлерден рұқсат беріңіз.</string>
     <string name="error_device_calendar_not_found">Күнтізбе табылмады. Жойылған болуы мүмкін.</string>
     <string name="error_device_event_not_found">Оқиға табылмады. Жойылған болуы мүмкін.</string>
     <string name="error_device_calendar_read_only">Бұл күнтізбе тек оқуға арналған.</string>
-
     <string name="error_sync_no_accounts">iCloud есептік жазбасы конфигурацияланбаған. Күнтізбелеріңізді синхрондау үшін iCloud орнатыңыз.</string>
     <string name="error_sync_partial">%1$d күнтізбе синхрондалды, %2$d сәтсіз.</string>
-
     <string name="error_unknown">Бірдеңе дұрыс болмады. Қайта байқап көріңіз.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -376,6 +355,7 @@
     <string name="label_password">Құпия сөз</string>
     <string name="label_display_name_optional">Көрсетілетін атау</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Оқиғаларды іздеу…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -463,6 +443,14 @@
     <string name="subscriptions_empty_ics">ICS жазылымдар жоқ</string>
     <string name="subscriptions_empty_ics_hint">Оқиғаларды көру үшін күнтізбе арнасын қосыңыз</string>
     <string name="subscriptions_add_ics">ICS күнтізбе қосу</string>
+    <string name="qs_tile_label">Қосу</string>
+    <string name="holiday_catalog_add">Мереке күнтізбесін қосу</string>
+    <string name="holiday_catalog_search_label">Іздеу</string>
+    <string name="holiday_catalog_already_added">Қосылды</string>
+    <string name="holiday_catalog_empty">Ел табылмады</string>
+    <string name="holiday_catalog_empty_hint">Басқа атауды қолданып көріңіз</string>
+    <string name="holiday_catalog_validate_error">Бұл күнтізбеге қосылу мүмкін болмады. Байланысыңызды тексеріп, қайталап көріңіз.</string>
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird мереке күнтізбелері, %1$s аясында лицензияланған.</string>
     <string name="subscriptions_row_label">Күнтізбе арналары (ICS)</string>
     <string name="subscriptions_row_hint">мысалы, мерекелер, спорт, мектеп</string>
 
@@ -505,7 +493,6 @@
     <string name="account_detail_cd_show_password">Құпия сөзді көрсету</string>
     <string name="account_detail_cd_hide_password">Құпия сөзді жасыру</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Есептік жазба атын өзгерту</string>
     <string name="rename_account_label">Есептік жазба атауы</string>
@@ -522,6 +509,7 @@
     <string name="settings_device_calendars">Құрылғы күнтізбелері</string>
     <string name="settings_device_calendars_hint">Басқа қолданбалардан күнтізбелер</string>
     <string name="settings_quick_event_add">Жылдам оқиға қосу</string>
+    <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
     <string name="settings_week_numbers">Апта нөмірлері</string>
     <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="settings_widget_event_limit">Виджет оқиға шектеуі</string>
@@ -534,6 +522,8 @@
     <string name="settings_tap_to_enable">Қосу үшін түртіңіз</string>
     <string name="settings_device_calendars_enabled">%1$d қосулы</string>
     <string name="settings_per_day">Күніне %1$d</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Қолданба құпия сөзі дегеніміз не?</string>
     <string name="caldav_trust_insecure_label">Қауіпсіз емес қосылымға сену</string>
     <string name="action_add_another">Тағы бір қосу</string>
@@ -574,6 +564,9 @@
     <string name="label_found_events">Табылды: %1$d оқиға</string>
     <string name="label_open_debug_menu">Жөндеу мәзірін ашу</string>
     <string name="placeholder_search">Іздеу…</string>
+    <string name="settings_search_placeholder">Параметрлерді іздеу…</string>
+    <string name="settings_search_no_results">\"%1$s\" үшін параметрлер табылмады</string>
+    <string name="cd_search_settings">Параметрлерді іздеу</string>
     <string name="status_sync_paused">Синхрондау кідіртілді</string>
     <string name="status_not_synced">Синхрондалмаған</string>
     <string name="status_sync_error">Синхрондау қатесі</string>
@@ -592,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Құрылғы күнтізбесі оқиғалары үшін хабарландыру алу</string>
     <string name="device_calendars_read_only_no_write">Тек оқу (жазу рұқсаты жоқ)</string>
     <string name="device_calendars_read_only_calendar">Тек оқу (күнтізбе тек оқуға арналған)</string>
-
     <string name="settings_developer_options">Әзірлеуші параметрлері</string>
     <string name="settings_sync_frequency">Синхрондау жиілігі</string>
     <string name="settings_preview">АЛДЫН АЛА ҚАРАУ</string>
@@ -605,7 +597,6 @@
     <string name="drawer_device_calendars">Құрылғы күнтізбелері</string>
     <string name="drawer_account_offline">Желіден тыс</string>
     <string name="drawer_share_feedback">Анықтама &amp; құжаттар</string>
-
     <string name="event_title_fallback">Оқиға</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -668,12 +659,11 @@
         <item quantity="one">%1$d оқиға</item>
         <item quantity="other">%1$d оқиға</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Күнтізбені ашу</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">тағы %1$d күн</item>
         <item quantity="other">тағы %1$d күн</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Күнтізбені ашу</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d туған күн</item>
         <item quantity="other">%1$d туған күн</item>
@@ -764,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Бұл оқиға</string>
-    <string name="recurring_all_events">Барлық оқиғалар</string>
     <string name="dialog_edit_recurring_title">Өзгерістерді сақтау</string>
     <string name="dialog_delete_recurring_title">Жою</string>
     <string name="dialog_move_recurring_title">Жылжыту</string>
+    <string name="recurring_this_event">Бұл оқиға</string>
+    <string name="recurring_all_events">Барлық оқиғалар</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Қатысушылар</string>
+    <string name="attendee_search_hint">Іздеу</string>
+    <string name="attendee_search_no_matches">Нәтиже жоқ</string>
+    <string name="attendee_picker_title">Қатысушыларды қосу</string>
+    <string name="attendee_pick_add_people">Қатысушыларды қосу</string>
+    <string name="attendee_pick_from_contacts">Аты немесе электрондық пошта</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d тағы</item>
+        <item quantity="other">+%1$d тағы</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Контактілеріңізден адамдарды ұсыну</string>
+    <string name="attendee_invalid_email">Толық электрондық пошта мекенжайын енгізіңіз</string>
+    <string name="attendee_add_typed">\"%1$s\" қосу</string>
+    <string name="attendee_scheduling_unavailable">Бұл тіркелгіде адамдарды шақыру қолжетімсіз</string>
+    <string name="device_attendee_local_no_delivery">Бұл күнтізбе шақыру жібере алмайды. Қонақтар сақталады, бірақ оларға хабарланбайды.</string>
+    <string name="action_save_and_notify">Сақтау &amp; хабарлау</string>
+    <string name="attendee_section_going">Барады</string>
+    <string name="attendee_section_maybe">Мүмкін</string>
+    <string name="attendee_section_pending">Күтуде</string>
+    <string name="attendee_section_declined">Бас тартты</string>
+    <string name="attendee_section_delegated">Тапсырды</string>
+    <string name="invitees_host_tag">Хост</string>
+    <string name="invitees_summary_you_alone">Сен</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Сен · %d шақырылған</item>
+        <item quantity="other">Сен · %d шақырылған</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d шақырылған</item>
+        <item quantity="other">%d шақырылған</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s ұйымдастырушы</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Сен</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Сен + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Сен + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Сен + %d</item>
+        <item quantity="other">Сен + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · тағы %2$d</item>
+        <item quantity="other">%1$s · тағы %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Жауапты өзгерту</string>
+    <string name="rsvp_question_going">Барасың ба?</string>
+    <string name="rsvp_action_yes">Иә</string>
+    <string name="rsvp_action_maybe">Мүмкін</string>
+    <string name="rsvp_action_no">Жоқ</string>
+    <string name="rsvp_state_going">Барасың</string>
+    <string name="rsvp_state_maybe">Мүмкін</string>
+    <string name="rsvp_state_not_going">Бармайсың</string>
+    <string name="rsvp_action_change">Өзгерту</string>
     <string name="empty_pick_a_day">Күн таңда. Пайдалан.</string>
-    <string name="empty_no_events_day">Мұнда ештеңе жоқ; далаға шыққыңыз келе ме?</string>
+    <string name="cd_empty_pick_a_day">Күн таңдаңыз</string>
+    <string name="empty_no_events_day_1">Бос күн. Әлем демалуыңды талап етеді.</string>
+    <string name="empty_no_events_day_2">Жоспар жоқ. Жоспар — осы.</string>
+    <string name="empty_no_events_day_3">Сыйлық: бос күн.</string>
+    <string name="empty_no_events_day_4">Күнтізбе күйі: керемет бос.</string>
+    <string name="empty_no_events_day_5">Ештеңе жоспарланбаған. Тыныштықтан ләззат алыңыз.</string>
+    <string name="cd_empty_no_events_day">Тыныш күн, ештеңе жоспарланбаған</string>
     <string name="filter_date">Күн</string>
     <string name="label_select_date">Күн таңдаңыз</string>
     <string name="hint_tap_date_range">Бір күн үшін сол күнді, ауқым үшін басқа күнді түртіңіз</string>
-
     <string name="cd_clear">Тазалау</string>
     <string name="cd_offline">Желіден тыс</string>
+    <string name="cd_event_state_cancelled">болдырылмады</string>
+    <string name="cd_event_state_declined">қабылданбады</string>
+    <string name="cd_event_state_past">өткен оқиға</string>
     <string name="cd_loading_events">Оқиғалар жүктелуде</string>
+    <string name="cd_event_untitled">Атаусыз оқиға</string>
     <string name="cd_open_drawer">Тартпаны ашу</string>
     <string name="cd_close_drawer">Тартпаны жабу</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Күнтізбе көрінісі</string>
     <string name="cd_active_view">Белсенді көрініс</string>
-
     <string name="view_agenda">Күн тәртібі</string>
     <string name="view_month_full">Ай (толық)</string>
-    <string name="view_three_days">3 күн</string>
     <string name="view_day">Күн</string>
+    <string name="view_three_days">3 күн</string>
     <string name="view_year">Жыл</string>
     <string name="view_insights">Статистика</string>
-
     <string name="label_go_to_month">Айға өту</string>
-
     <string name="action_more_options">Қосымша параметрлер</string>
     <string name="quick_add_save_failed">Оқиғаны сақтау мүмкін болмады</string>
-
     <string name="label_duration_days">күн</string>
     <string name="label_duration_hrs">сағ</string>
     <string name="label_duration_min">мин</string>
@@ -812,207 +860,7 @@
     <string name="ordinal_4th">4-ші</string>
     <string name="ordinal_nth">%1$d-ші</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d жаңа</string>
-    <string name="sync_summary_updated">%1$d жаңартылды</string>
-    <string name="sync_summary_removed">%1$d жойылды</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Дөңгелек айналдыру қосулы</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Еске салғыш жоқ</string>
-    <string name="reminder_at_time_of_event">Оқиға уақытында</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s бұрын</string>
-    <string name="reminder_time_after">%1$s кейін</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM оқиға күні</string>
-    <string name="reminder_day_of_event_24h">09:00 оқиға күні</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s бұрын 9 AM-де</string>
-    <string name="reminder_before_at_24h">%1$s бұрын 09:00-де</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Өшірулі</string>
-    <string name="reminder_short_at_event">Оқиғада</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dм</string>
-    <string name="reminder_short_hours">%1$dс</string>
-    <string name="reminder_short_days">%1$dк</string>
-    <string name="reminder_short_weeks">%1$dап</string>
-    <string name="reminder_summary_none">Жоқ</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dс %2$dм</string>
-    <string name="duration_compact_short">%1$dс%2$dм</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Тек қолмен</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Барлық оқиғалар</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Кейінге қалдыру</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Қазір басталуда</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Ертең, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Синхрондау аяқталды</string>
-    <string name="sync_notification_partial">Синхрондау жартылай аяқталды</string>
-    <string name="sync_notification_auth_failed">Синхрондау аутентификациясы сәтсіз аяқталды</string>
-    <string name="sync_notification_auth_reauth">Тіркелгіңізді қайта растаңыз</string>
-    <string name="sync_notification_failed">Синхрондау сәтсіз аяқталды</string>
-    <string name="sync_notification_parse_title">Кейбір оқиғалар синхрондала алмады</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%2$s ішіндегі %1$s синхрондала алмады. Параметрлерде Мәжбүрлі Синхрондауды қолданып көріңіз.</string>
-    <string name="sync_notification_conflict_title">Синхрондау қайшылығы шешілді</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Синхрондау қайшылығы салдарынан \"%1$s\" бойынша жергілікті өзгерістер жоғалды. Сервер нұсқасы пайдаланылады.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Синхрондау қайшылықтары салдарынан %1$s бойынша жергілікті өзгерістер жоғалды. Сервер нұсқалары пайдаланылады.</string>
-    <string name="sync_notification_expired_title">Синхрондау өзгерістерінің мерзімі аяқталды</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
-    <string name="sync_notification_expired_content_calendar">%2$s күнтізбесіндегі %1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
-    <string name="sync_notification_expired_content_calendars">%2$s бойынша %1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d күнтізбе синхрондалды</item>
-        <item quantity="other">%1$d күнтізбе синхрондалды</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d өзгеріс</item>
-        <item quantity="other">, %1$d өзгеріс</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d қате</item>
-        <item quantity="other">, %1$d қате</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s — %2$s туған күні</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s туған күні</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s — %2$s мерейтойы</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s мерейтойы</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d-ші</string>
-    <string name="ordinal_suffix_nd">%1$d-ші</string>
-    <string name="ordinal_suffix_rd">%1$d-ші</string>
-    <string name="ordinal_suffix_th">%1$d-ші</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Күнтізбелер синхрондалуда…</string>
-    <string name="sync_banner_preparing">Синхрондауға дайындалуда…</string>
-    <string name="sync_banner_complete_errors">Синхрондау қателермен аяқталды</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Синхрондау сәтсіз: %1$s</string>
-    <string name="error_unknown_error">Белгісіз қате</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Жаңа оқиға: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d жаңа оқиға</item>
-        <item quantity="other">%1$d жаңа оқиға</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d оқиға жаңартылды</item>
-        <item quantity="other">%1$d оқиға жаңартылды</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d оқиға жойылды</item>
-        <item quantity="other">%1$d оқиға жойылды</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d күнтізбе жаңартуы</item>
-        <item quantity="other">%1$d күнтізбе жаңартуы</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">%2$d ішінен %1$d-күн</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">%1$d ішінен 1-күн · басталады %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%2$d ішінен %1$d-күн · аяқталады %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Күні бойы</string>
-    <string name="event_date_all_day">%1$s · Күні бойы</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Күні бойы)</string>
-    <string name="event_date_all_day_parens">%1$s (Күні бойы)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Оқиғаны сақтау</string>
-    <!-- Badges -->
-    <string name="badge_beta">Бета</string>
-    <string name="badge_new">Жаңа</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Қызыл</string>
-    <string name="color_orange">Қызғылт сары</string>
-    <string name="color_yellow">Сары</string>
-    <string name="color_green">Жасыл</string>
-    <string name="color_cyan">Көгілдір</string>
-    <string name="color_blue">Көк</string>
-    <string name="color_purple">Күлгін</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Кездесу сілтемесі: %1$s</string>
-    <string name="cd_phone_number">Телефон нөмірі</string>
-    <string name="cd_email_link">Электрондық пошта: %1$s</string>
-    <string name="cd_web_link">Сілтеме: %1$s</string>
-    <string name="cd_text_with_links">%1$d сілтемесі бар мәтін: %2$s</string>
-    <string name="cd_text_with_link">1 сілтемесі бар мәтін: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">%2$d ішінен %1$d-күн (Күні бойы)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d синхрондау   ↑%2$d жіберілді   ↓%3$d алынды</string>
-    <string name="sync_history_stats_issues">%1$d синхрондау   ↑%2$d жіберілді   ↓%3$d алынды   ⚠ %4$d мәселе</string>
-    <string name="sync_history_failed">Сәтсіз</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Сағат сайын</string>
-    <string name="ics_sync_every_n_hours">%1$d сағат сайын</string>
-    <string name="ics_sync_daily">Күн сайын</string>
-    <string name="ics_sync_weekly">Апта сайын</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL қажет</string>
-    <string name="ics_url_invalid_scheme">URL http://, https://, немесе webcal:// арқылы басталуы тиіс</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Сервер қате қайтарды (%1$d). URL мекенжайын тексеріңіз.</string>
-    <string name="ics_fetch_error_empty">Күнтізбе арнасы бос.</string>
-    <string name="ics_fetch_error_not_calendar">Бұл URL күнтізбе арнасына ұқсамайды.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget strings -->
-    <string name="cd_widget_calendar">Күнтізбе</string>
-    <string name="cd_widget_add_event">Оқиға қосу</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">оқиғалар жоқ</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, бас тартылды</string>
-    <string name="channel_event_reminders">Оқиға еске салулары</string>
-    <string name="channel_event_reminders_desc">Алдағы күнтізбе оқиғалары туралы хабарламалар</string>
-    <string name="channel_sync_progress">Синхрондау барысы</string>
-    <string name="channel_sync_progress_desc">Күнтізбелерді синхрондау кезінде прогрессті көрсетеді</string>
-    <string name="channel_sync_status">Синхрондау күйі</string>
-    <string name="channel_sync_status_desc">Синхрондаудың аяқталуы және қателері туралы хабарламалар</string>
-    <string name="channel_event_invitations">Оқиға шақырулары</string>
-    <string name="channel_event_invitations_desc">Жаңа күнтізбе шақыруын алған кездегі хабарламалар</string>
-    <string name="invite_notification_body">%1$s жіберген · Жауап беру үшін түртіңіз</string>
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Қайталанбайды</string>
     <string name="rrule_freq_daily">Күн сайын</string>
     <string name="rrule_freq_weekly">Апта сайын</string>
@@ -1028,6 +876,10 @@
     <string name="rrule_freq_on_last_day">%1$s соңғы күні</string>
     <string name="rrule_freq_on_day_n">%1$s %2$d-күні</string>
     <string name="rrule_ordinal_last">соңғы</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d рет</item>
+        <item quantity="other">, %1$d рет</item>
+    </plurals>
     <string name="rrule_until_suffix">, %1$s дейін</string>
     <string name="rrule_freq_never">Ешқашан</string>
     <string name="rrule_freq_custom">Таңдамалы</string>
@@ -1041,13 +893,146 @@
     <string name="rrule_starting">%1$s %2$s%3$s бастап</string>
     <string name="rrule_since">%1$s · %2$s бастап</string>
 
-    <!-- Recurrence plural -->
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d рет</item>
-        <item quantity="other">, %1$d рет</item>
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d жаңа</string>
+    <string name="sync_summary_updated">%1$d жаңартылды</string>
+    <string name="sync_summary_removed">%1$d жойылды</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Дөңгелек айналдыру қосулы</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Еске салғыш жоқ</string>
+    <string name="reminder_at_time_of_event">Оқиға уақытында</string>
+    <string name="reminder_time_before">%1$s бұрын</string>
+    <string name="reminder_time_after">%1$s кейін</string>
+    <string name="reminder_day_of_event_12h">9 AM оқиға күні</string>
+    <string name="reminder_day_of_event_24h">09:00 оқиға күні</string>
+    <string name="reminder_before_at_12h">%1$s бұрын 9 AM-де</string>
+    <string name="reminder_before_at_24h">%1$s бұрын 09:00-де</string>
+    <string name="reminder_short_off">Өшірулі</string>
+    <string name="reminder_short_at_event">Оқиғада</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dм</string>
+    <string name="reminder_short_hours">%1$dс</string>
+    <string name="reminder_short_days">%1$dк</string>
+    <string name="reminder_short_weeks">%1$dап</string>
+    <string name="reminder_summary_none">Жоқ</string>
+    <string name="duration_compact">%1$dс %2$dм</string>
+    <string name="duration_compact_short">%1$dс%2$dм</string>
+    <string name="sync_manual_only">Тек қолмен</string>
+    <string name="sync_lookback_all">Барлық оқиғалар</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Кейінге қалдыру</string>
+    <string name="notification_starting_now">Қазір басталуда</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d күннен кейін</item>
+        <item quantity="other">%1$d күннен кейін</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Ертең, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Синхрондау аяқталды</string>
+    <string name="sync_notification_partial">Синхрондау жартылай аяқталды</string>
+    <string name="sync_notification_auth_failed">Синхрондау аутентификациясы сәтсіз аяқталды</string>
+    <string name="sync_notification_auth_reauth">Тіркелгіңізді қайта растаңыз</string>
+    <string name="sync_notification_failed">Синхрондау сәтсіз аяқталды</string>
+    <string name="sync_notification_parse_title">Кейбір оқиғалар синхрондала алмады</string>
+    <string name="sync_notification_parse_content">%2$s ішіндегі %1$s синхрондала алмады. Параметрлерде Мәжбүрлі Синхрондауды қолданып көріңіз.</string>
+    <string name="sync_notification_conflict_title">Синхрондау қайшылығы шешілді</string>
+    <string name="sync_notification_conflict_single">Синхрондау қайшылығы салдарынан \"%1$s\" бойынша жергілікті өзгерістер жоғалды. Сервер нұсқасы пайдаланылады.</string>
+    <string name="sync_notification_conflict_multi">Синхрондау қайшылықтары салдарынан %1$s бойынша жергілікті өзгерістер жоғалды. Сервер нұсқалары пайдаланылады.</string>
+    <string name="sync_notification_expired_title">Синхрондау өзгерістерінің мерзімі аяқталды</string>
+    <string name="sync_notification_expired_content">%1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
+    <string name="sync_notification_expired_content_calendar">%2$s күнтізбесіндегі %1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
+    <string name="sync_notification_expired_content_calendars">%2$s бойынша %1$s 30 күн ішінде синхрондала алмады. Сервер нұсқасы пайдаланылады. Қайта көру үшін Мәжбүрлі Синхрондаңыз.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d күнтізбе синхрондалды</item>
+        <item quantity="other">%1$d күнтізбе синхрондалды</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d өзгеріс</item>
+        <item quantity="other">, %1$d өзгеріс</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d қате</item>
+        <item quantity="other">, %1$d қате</item>
     </plurals>
 
-    <!-- Insights -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s — %2$s туған күні</string>
+    <string name="contact_birthday">%1$s туған күні</string>
+    <string name="contact_anniversary_with_age">%1$s — %2$s мерейтойы</string>
+    <string name="contact_anniversary">%1$s мерейтойы</string>
+    <string name="ordinal_suffix_st">%1$d-ші</string>
+    <string name="ordinal_suffix_nd">%1$d-ші</string>
+    <string name="ordinal_suffix_rd">%1$d-ші</string>
+    <string name="ordinal_suffix_th">%1$d-ші</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Күнтізбелер синхрондалуда…</string>
+    <string name="sync_banner_preparing">Синхрондауға дайындалуда…</string>
+    <string name="sync_banner_complete_errors">Синхрондау қателермен аяқталды</string>
+    <string name="sync_banner_failed">Синхрондау сәтсіз: %1$s</string>
+    <string name="error_unknown_error">Белгісіз қате</string>
+    <string name="sync_snackbar_new_event">Жаңа оқиға: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d жаңа оқиға</item>
+        <item quantity="other">%1$d жаңа оқиға</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d оқиға жаңартылды</item>
+        <item quantity="other">%1$d оқиға жаңартылды</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d оқиға жойылды</item>
+        <item quantity="other">%1$d оқиға жойылды</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d күнтізбе жаңартуы</item>
+        <item quantity="other">%1$d күнтізбе жаңартуы</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">%2$d ішінен %1$d-күн</string>
+    <string name="day_starts">%1$d ішінен 1-күн · басталады %2$s</string>
+    <string name="day_ends">%2$d ішінен %1$d-күн · аяқталады %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Күні бойы</string>
+    <string name="event_date_all_day">%1$s · Күні бойы</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Күні бойы)</string>
+    <string name="event_date_all_day_parens">%1$s (Күні бойы)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Оқиғаны сақтау</string>
+    <string name="badge_beta">Бета</string>
+    <string name="badge_new">Жаңа</string>
+    <string name="color_red">Қызыл</string>
+    <string name="color_orange">Қызғылт сары</string>
+    <string name="color_yellow">Сары</string>
+    <string name="color_green">Жасыл</string>
+    <string name="color_cyan">Көгілдір</string>
+    <string name="color_blue">Көк</string>
+    <string name="color_purple">Күлгін</string>
+    <string name="cd_meeting_link">Кездесу сілтемесі: %1$s</string>
+    <string name="cd_phone_number">Телефон нөмірі</string>
+    <string name="cd_email_link">Электрондық пошта: %1$s</string>
+    <string name="cd_web_link">Сілтеме: %1$s</string>
+    <string name="cd_text_with_links">%1$d сілтемесі бар мәтін: %2$s</string>
+    <string name="cd_text_with_link">1 сілтемесі бар мәтін: %1$s</string>
+    <string name="day_x_of_y_all_day">%2$d ішінен %1$d-күн (Күні бойы)</string>
+    <string name="sync_history_stats">%1$d синхрондау   ↑%2$d жіберілді   ↓%3$d алынды</string>
+    <string name="sync_history_stats_issues">%1$d синхрондау   ↑%2$d жіберілді   ↓%3$d алынды   ⚠ %4$d мәселе</string>
+    <string name="sync_history_failed">Сәтсіз</string>
+    <string name="ics_sync_every_hour">Сағат сайын</string>
+    <string name="ics_sync_every_n_hours">%1$d сағат сайын</string>
+    <string name="ics_sync_daily">Күн сайын</string>
+    <string name="ics_sync_weekly">Апта сайын</string>
+    <string name="ics_url_required">URL қажет</string>
+    <string name="ics_url_invalid_scheme">URL http://, https://, немесе webcal:// арқылы басталуы тиіс</string>
+    <string name="ics_fetch_error_http">Сервер қате қайтарды (%1$d). URL мекенжайын тексеріңіз.</string>
+    <string name="ics_fetch_error_empty">Күнтізбе арнасы бос.</string>
+    <string name="ics_fetch_error_not_calendar">Бұл URL күнтізбе арнасына ұқсамайды.</string>
     <string name="insights_title">Статистика</string>
     <string name="insights_period_this_week">Апта</string>
     <string name="insights_period_last_week">Өткен апта</string>
@@ -1057,61 +1042,42 @@
         <item quantity="one">%d күндік оқиға</item>
         <item quantity="other">%d күндік оқиға</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s — ең жүктелген күнің (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s — ең жүктелген күнің болды (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s — ең жеңіл күнің (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s — ең жеңіл күнің болды (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Ең ұзақ бос уақыт: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">Ең ұзақ бос уақыт %1$s %2$s–%3$s болды (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Демалыс күндерің бос</string>
     <string name="insight_weekend_load_clear_past">Демалыс күндерің бос болды</string>
     <string name="insight_weekend_load_light_future">Демалыс күндері %1$s жоспарланған</string>
     <string name="insight_weekend_load_light_past">Демалыс күндері %1$s жоспарланған болатын</string>
     <string name="insight_weekend_load_busy_future">Демалыс күндері %1$s жоспарланған</string>
     <string name="insight_weekend_load_busy_past">Демалыс күндері %1$s жоспарланған болатын</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d қатарынан кездесу</string>
     <string name="insight_back_to_back_past">%1$d қатарынан кездесу болды</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s — жоспарланған уақытыңның %2$d%%</string>
     <string name="insight_calendar_dominant_past">%1$s — жоспарланған уақытыңның %2$d%% болды</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">Кестең %1$d күн 8:00-ге дейін басталады</string>
     <string name="insight_early_bounds_past">Кестең %1$d күн 8:00-ге дейін басталды</string>
     <string name="insight_late_bounds_future">%1$d күн 19:00-ден кейін оқиғалар бар</string>
     <string name="insight_late_bounds_past">%1$d күн 19:00-ден кейін оқиғалар болды</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">%1$d кездесусіз күнің бар</string>
     <string name="insight_meeting_free_days_past">%1$d кездесусіз күнің болды</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Ертең: %1$s жоспарланған, %2$s-де басталады</string>
     <string name="insight_tomorrow_preview_no_start">Ертең: %1$s жоспарланған</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s — ең жүктелген алдағы күнің (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Келесі бос уақыт: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Күнделікті бөлу: ең жүктелген күн %1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Қолжетімділік</string>
     <string name="label_busy">Бос емес</string>
     <string name="label_free">Бос</string>
     <string name="label_event_color">Оқиға түсі</string>
     <string name="label_calendar_default">Күнтізбе әдепкісі</string>
     <string name="label_custom">Таңдамалы</string>
-
     <string name="cd_checkmark">Таңдалды</string>
-
-    <string name="cd_event_state_cancelled">болдырылмады</string>
-    <string name="cd_event_state_declined">қабылданбады</string>
-    <string name="cd_event_state_past">өткен оқиға</string>
-    <string name="cd_event_untitled">Атаусыз оқиға</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Ер қоңыр</string>
@@ -1124,6 +1090,7 @@
     <string name="color_hotpink">Қызғылт</string>
     <string name="color_dimgray">Күңгірт сұр</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Қызыл</string>
     <string name="hue_orange">Қызғылт сары</string>
     <string name="hue_yellow">Сары</string>
@@ -1136,7 +1103,8 @@
     <string name="hue_neutral">Бейтарап</string>
     <string name="label_more_colors">Басқа түстер</string>
     <string name="label_back_to_grid">Артқа</string>
-    <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Қатысушылар</string>
     <string name="attendee_you_marker">Сіз</string>
     <string name="attendee_card_going">Барады</string>
@@ -1146,6 +1114,8 @@
     <string name="attendee_card_hosting">Өткізуші</string>
     <string name="attendee_action_copy">Электрондық поштаны көшіру</string>
     <string name="attendee_action_email">Электрондық пошта жіберу</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Электрондық пошта көшірілді</string>
     <string name="attendee_no_email_app">Электрондық пошта қолданбасы орнатылмаған</string>
     <string name="attendee_show_all">Барлық қатысушыларды көрсету</string>
@@ -1154,23 +1124,9 @@
     <string name="attendee_status_tentative">Шамамен</string>
     <string name="attendee_status_delegated">Тапсырылды</string>
     <string name="attendee_status_pending">Күтілуде</string>
-    <string name="attendee_picker_title">Қатысушыларды қосу</string>
-    <string name="attendee_pick_add_people">Қатысушыларды қосу</string>
-    <string name="attendee_pick_from_contacts">Аты немесе электрондық пошта</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d тағы</item>
-        <item quantity="other">+%1$d тағы</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Контактілеріңізден адамдарды ұсыну</string>
-    <string name="attendee_invalid_email">Толық электрондық пошта мекенжайын енгізіңіз</string>
-    <string name="attendee_add_typed">\"%1$s\" қосу</string>
-    <string name="attendee_scheduling_unavailable">Бұл тіркелгіде адамдарды шақыру қолжетімсіз</string>
-    <string name="device_attendee_local_no_delivery">Бұл күнтізбе шақыру жібере алмайды. Қонақтар сақталады, бірақ оларға хабарланбайды.</string>
-    <string name="action_save_and_notify">Сақтау &amp; хабарлау</string>
     <string name="inbox_empty_caught_up">Барлығы өңделді</string>
     <string name="inbox_organizer_suffix">(ұйымдастырушы)</string>
     <string name="menu_invites">Шақырулар</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Күнге өту</string>
     <string name="menu_about">Туралы</string>
     <string name="menu_more">Қосымша мәзір</string>
@@ -1178,6 +1134,8 @@
         <item quantity="one">Қосымша мәзір, %d шақыру күтілуде</item>
         <item quantity="other">Қосымша мәзір, %d шақыру күтілуде</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Қолжетімділікті бөлісу</string>
     <string name="share_availability_sheet_title">Қолжетімділікті бөлісу</string>
     <plurals name="share_availability_days_label">
@@ -1195,6 +1153,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Таңдалған аралықта кемінде бір сағаттық бос блоктар жоқ.</string>
+    <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
     <string name="share_availability_chooser_title">Қолжетімділікті бөлісу</string>
     <string name="share_availability_share_failed">Бөлісу үшін қолданба жоқ</string>
     <string name="share_availability_window_section">Терезе</string>
@@ -1213,30 +1172,5 @@
     <string name="share_as_card_all_day">Күні бойы</string>
     <string name="share_as_card_chooser_title">Оқиғаны бөлісу</string>
     <string name="share_as_card_share_failed">Картамен бөлісу мүмкін болмады</string>
-    <string name="share_from_kashcal_footer">KashCal-дан бөлісілді</string>
-    <string name="attendee_sheet_title">Қатысушылар</string>
-    <string name="attendee_search_hint">Іздеу</string>
-    <string name="attendee_search_no_matches">Нәтиже жоқ</string>
-    <string name="attendee_section_going">Барады</string>
-    <string name="attendee_section_maybe">Мүмкін</string>
-    <string name="attendee_section_pending">Күтуде</string>
-    <string name="attendee_section_declined">Бас тартты</string>
-    <string name="attendee_section_delegated">Тапсырды</string>
-    <string name="whats_new_title">Не жаңалық</string>
-    <string name="whats_new_dismiss">Түсіндім</string>
-    <string name="whats_new_v598_title">Android ашық қалуына көмектесіңіз</string>
-    <string name="whats_new_v598_body">Google құрылғыңызға қолданбаларды орнату тәсілін өзгертуде. Сіздің көмегіңіз қажет.</string>
-    <string name="whats_new_v598_action_label">keepandroidopen.org сайтына кіру</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">%1$d күннен кейін</item>
-        <item quantity="other">%1$d күннен кейін</item>
-    </plurals>
-    <string name="holiday_catalog_add">Мереке күнтізбесін қосу</string>
-    <string name="holiday_catalog_search_label">Іздеу</string>
-    <string name="holiday_catalog_already_added">Қосылды</string>
-    <string name="holiday_catalog_empty">Ел табылмады</string>
-    <string name="holiday_catalog_empty_hint">Басқа атауды қолданып көріңіз</string>
-    <string name="holiday_catalog_validate_error">Бұл күнтізбеге қосылу мүмкін болмады. Байланысыңызды тексеріп, қайталап көріңіз.</string>
-    <string name="holiday_catalog_attribution">Mozilla Thunderbird мереке күнтізбелері, %1$s аясында лицензияланған.</string>
-    <string name="qs_tile_label">Қосу</string>
+
 </resources>

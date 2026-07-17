@@ -13,12 +13,27 @@
     <string name="date_widget_description">Показва днешната дата като икона на приложение</string>
     <string name="upcoming_widget_name">Предстоящи</string>
     <string name="upcoming_widget_description">Показва събитията за следващите 10 дни, пропускайки празните дни</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Зареждане на предстоящи събития…</string>
     <string name="widget_error_load_events">Събитията не можаха да се заредят, докоснете за отваряне</string>
     <string name="widget_no_events_today">Няма събития днес</string>
     <string name="widget_add_event">+ Добави събитие</string>
     <string name="widget_no_events">Няма събития</string>
     <string name="widget_no_upcoming_events">Няма предстоящи събития</string>
+    <string name="cd_widget_calendar">Календар</string>
+    <string name="cd_widget_add_event">Добави събитие</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">няма събития</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>
+    <string name="channel_event_reminders">Напомняния за събития</string>
+    <string name="channel_event_reminders_desc">Известия за предстоящи събития в календара</string>
+    <string name="channel_sync_progress">Напредък на синхронизацията</string>
+    <string name="channel_sync_progress_desc">Показва напредъка по време на синхронизация на календари</string>
+    <string name="channel_sync_status">Статус на синхронизацията</string>
+    <string name="channel_sync_status_desc">Известия за завършване на синхронизацията и грешки</string>
+    <string name="channel_event_invitations">Покани за събития</string>
+    <string name="channel_event_invitations_desc">Известия при получаване на нова покана за календар</string>
+    <string name="invite_notification_body">От %1$s · Докоснете, за да отговорите</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Ново събитие</string>
@@ -70,46 +85,8 @@
     <string name="action_confirm_delete">Потвърди изтриването</string>
     <string name="action_delete_event">Изтрий събитие</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">Отговорът важи за цялата серия.</string>
-    <string name="invitees_host_tag">Домакин</string>
-    <string name="invitees_summary_you_alone">Ти</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">След %1$d ден</item>
-        <item quantity="other">След %1$d дни</item>
-    </plurals>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Ти · %d поканен</item>
-        <item quantity="other">Ти · %d поканен</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d поканен</item>
-        <item quantity="other">%d поканен</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s е домакин</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ти</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Ти + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Ти + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Ти + %d</item>
-        <item quantity="other">Ти + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · още %2$d</item>
-        <item quantity="other">%1$s · още %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Промени отговора</string>
-    <string name="rsvp_question_going">Ще отидеш ли?</string>
-    <string name="rsvp_action_yes">Да</string>
-    <string name="rsvp_action_maybe">Може би</string>
-    <string name="rsvp_action_no">Не</string>
-    <string name="rsvp_state_going">Отиваш</string>
-    <string name="rsvp_state_maybe">Може би</string>
-    <string name="rsvp_state_not_going">Не отиваш</string>
-    <string name="rsvp_action_change">Промени</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Това и всички бъдещи</string>
@@ -147,7 +124,6 @@
     <string name="label_all_day">Цял ден</string>
     <string name="label_today">Днес</string>
     <string name="label_go_to_date">Отиди на дата</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">С</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -200,16 +176,16 @@
     <string name="app_lock_enabled_message">Заключването на приложението е включено. KashCal ще поиска удостоверяване следващия път, когато го отворите.</string>
     <string name="app_lock_disable_prompt_title">Отключете, за да изключите Заключването на приложението</string>
 
-    <!-- ==================== Backup &amp; Restore ==================== -->
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">Архивирай настройките</string>
     <string name="backup_settings_subtitle">Запази конфигурацията на KashCal в JSON файл</string>
     <string name="restore_settings_label">Възстанови настройките</string>
     <string name="restore_settings_subtitle">Възстанови конфигурацията на KashCal от архивен файл</string>
     <string name="restore_confirm_title">Да се възстанови ли архивът?</string>
     <string name="restore_confirm_from">Архив от KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Вашите настройки ще бъдат импортирани.</string>
     <string name="action_restore">Възстанови</string>
     <string name="restore_success_title">Възстановяването приключи</string>
-    <string name="restore_confirm_message_prefs_only">Вашите настройки ще бъдат импортирани.</string>
     <string name="restore_success_message_prefs_only">Настройките са импортирани.</string>
     <string name="restore_success_device_calendars_note">Избери отново календарите на устройството, ако използваш тази функция.</string>
     <string name="restore_error_title">Възстановяването е неуспешно</string>
@@ -225,6 +201,13 @@
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">Ние ще помогнем.</string>
     <string name="onboarding_connect_prompt">Свържи iCloud, за да виждаш събитията си тук</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <string name="whats_new_title">Какво ново</string>
+    <string name="whats_new_dismiss">Разбрах</string>
+    <string name="whats_new_v598_title">Помогни Android да остане отворен</string>
+    <string name="whats_new_v598_body">Google променя начина, по който инсталираш приложения на устройството си. Нуждаем се от твоята помощ.</string>
+    <string name="whats_new_v598_action_label">Посети keepandroidopen.org</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Свържи iCloud</string>
@@ -269,13 +252,11 @@
     <string name="error_auth_session_expired_title">Сесията изтече</string>
     <string name="error_auth_session_expired">Сесията ви в iCloud изтече. Влезте отново, за да продължите синхронизирането.</string>
     <string name="error_auth_account_locked">Apple ID е заключен. Посетете appleid.apple.com, за да го отключите.</string>
-
     <string name="error_network_offline">Офлайн сте. Промените ще се синхронизират, когато сте онлайн.</string>
     <string name="error_network_timeout">Времето за връзка изтече. Проверете интернет връзката и опитайте отново.</string>
     <string name="error_network_ssl">Защитената връзка е неуспешна. Проверете мрежовите настройки.</string>
     <string name="error_network_unknown_host">Не може да се достъпи iCloud. Проверете интернет връзката.</string>
     <string name="error_network_connection_failed">Неуспешна връзка. Опитайте отново.</string>
-
     <string name="error_server_unavailable">iCloud е временно недостъпен. Опитайте по-късно.</string>
     <string name="error_server_rate_limited">Твърде много заявки. Изчакайте малко и опитайте отново.</string>
     <string name="error_server_forbidden">Достъпът е отказан. Може да нямате разрешение за този календар.</string>
@@ -284,13 +265,11 @@
     <string name="error_conflict_generic">Това събитие е променено на друго устройство. Принудително синхронизирайте за последната версия.</string>
     <string name="error_conflict_with_event">\"%1$s\" е променено на друго устройство. Принудително синхронизирайте за последната версия.</string>
     <string name="error_sync_token_expired">Данните за синхронизиране изтекоха. Извършва се пълно синхронизиране…</string>
-
     <string name="error_event_not_found">Събитието не е намерено.</string>
     <string name="error_calendar_not_found">Календарът не е намерен.</string>
     <string name="error_calendar_read_only">Не могат да се променят събития в \"%1$s\" (календар само за четене).</string>
     <string name="error_event_invalid_data">Невалидни данни за събитие. Проверете началния и крайния час.</string>
     <string name="error_event_invalid_recurrence">Невалиден модел на повторение.</string>
-
     <string name="error_display_name_exists">Акаунт с име \"%1$s\" вече съществува.</string>
     <string name="icloud_error_credentials_required">Изискват се Apple ID и парола</string>
     <string name="icloud_error_connection_timeout">Времето за изчакване на връзката изтече. Опитайте отново.</string>
@@ -299,43 +278,41 @@
     <string name="caldav_error_connection_timeout">Времето за изчакване на връзката изтече. Опитайте отново.</string>
     <string name="caldav_error_no_calendars">Не са намерени календари на този сървър.</string>
     <string name="caldav_error_unexpected">Неочаквана грешка. Опитайте отново.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nАко това е сървър във вашата локална мрежа, разрешете достъпа до локалната мрежа, за да се свържете.</string>
+    <string name="local_network_banner_title">Необходим е достъп до локалната мрежа</string>
+    <string name="local_network_banner_body">Изглежда, че този сървър е във вашата локална мрежа. Разрешете достъпа до локалната мрежа, за да може KashCal да се свърже с него.</string>
+    <string name="local_network_banner_allow">Разрешаване на достъп</string>
+    <string name="local_network_banner_dismiss">Не сега</string>
     <string name="password_change_error_account_not_found">Акаунтът не е намерен</string>
     <string name="password_change_error_no_credentials">Няма съществуващи идентификационни данни</string>
     <string name="password_change_error_unsupported_provider">Този доставчик не поддържа смяна на паролата</string>
     <string name="password_change_error_invalid">Невалидна парола</string>
     <string name="password_change_error_network">Мрежова грешка, опитайте отново</string>
-
     <string name="error_import_file_not_found">Файлът не е намерен или не може да бъде прочетен.</string>
     <string name="error_import_invalid_format">Невалиден формат на файл с календар.</string>
     <string name="error_import_partial">Импортирани %1$d събития, %2$d неуспешни.</string>
     <string name="error_export_failed">Неуспешно експортиране на събития.</string>
     <string name="error_export_no_events">Няма събития за експортиране.</string>
     <string name="error_end_before_start">Крайният час трябва да е след началния</string>
-
     <string name="error_storage_full_title">Паметта е пълна</string>
     <string name="error_storage_full">Няма достатъчно място. Освободете място и опитайте отново.</string>
     <string name="error_database_corruption_title">Грешка в данните</string>
     <string name="error_database_corruption">Данните от календара може да са повредени. Свържете се с поддръжката.</string>
     <string name="error_migration_title">Грешка при актуализиране</string>
     <string name="error_migration_failed">Неуспешно актуализиране на данните. Моля, преинсталирайте приложението.</string>
-
     <string name="error_permission_notification_title">Включи известията?</string>
     <string name="error_permission_notification">KashCal се нуждае от разрешение за известия, за да ви напомня за предстоящи събития.</string>
     <string name="error_permission_alarm_title">Включи точните аларми?</string>
     <string name="error_permission_alarm">KashCal се нуждае от разрешение за точни аларми за прецизни напомняния.</string>
     <string name="error_permission_storage">Необходимо е разрешение за съхранение за импортиране/експортиране.</string>
-
     <string name="error_device_calendar_title">Грешка в календара</string>
     <string name="error_device_calendar_write_failed">Неуспешно запазване в календара на устройството. Опитайте отново.</string>
     <string name="error_device_calendar_permission">Необходимо е разрешение за запис в календара. Дайте разрешение от Настройки.</string>
     <string name="error_device_calendar_not_found">Календарът не е намерен. Може да е бил премахнат.</string>
     <string name="error_device_event_not_found">Събитието не е намерено. Може да е било изтрито.</string>
     <string name="error_device_calendar_read_only">Този календар е само за четене.</string>
-
     <string name="error_sync_no_accounts">Няма конфигуриран iCloud акаунт. Настройте iCloud, за да синхронизирате календарите си.</string>
     <string name="error_sync_partial">Синхронизирани %1$d календара, %2$d неуспешни.</string>
-
     <string name="error_unknown">Нещо се обърка. Опитайте отново.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -378,6 +355,7 @@
     <string name="label_password">Парола</string>
     <string name="label_display_name_optional">Показвано име</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Търсене на събития…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -462,12 +440,19 @@
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Календарни канали</string>
     <string name="subscriptions_section_add">Добави</string>
-    <string name="subscriptions_row_hint">напр. празници, спорт, училище</string>
-    <string name="subscriptions_row_label">Календарни канали (ICS)</string>
     <string name="subscriptions_empty_ics">Няма ICS абонаменти</string>
     <string name="subscriptions_empty_ics_hint">Добавете канал с календар, за да виждате събития</string>
     <string name="subscriptions_add_ics">Добави ICS календар</string>
     <string name="qs_tile_label">Добави събитие</string>
+    <string name="holiday_catalog_add">Добавяне на календар с празници</string>
+    <string name="holiday_catalog_search_label">Търсене</string>
+    <string name="holiday_catalog_already_added">Добавено</string>
+    <string name="holiday_catalog_empty">Няма намерени държави</string>
+    <string name="holiday_catalog_empty_hint">Опитай с друго име</string>
+    <string name="holiday_catalog_validate_error">Този календар не можа да бъде достигнат. Провери връзката и опитай отново.</string>
+    <string name="holiday_catalog_attribution">Календари с празници от Mozilla Thunderbird, лицензирани под %1$s.</string>
+    <string name="subscriptions_row_label">Календарни канали (ICS)</string>
+    <string name="subscriptions_row_hint">напр. празници, спорт, училище</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Рождени дни и годишнини</string>
@@ -486,11 +471,8 @@
     <string name="settings_contacts_permission_required">Необходимо е разрешение за контакти</string>
     <string name="subscriptions_cd_back">Назад</string>
     <string name="subscriptions_cd_add">Добави абонамент</string>
-    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
     <string name="snackbar_subscription_removed">Абонаментът е премахнат</string>
-    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
     <string name="snackbar_action_undo">Отмяна</string>
-    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
     <string name="snackbar_subscription_already_exists">Вече има абонамент за този URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
@@ -511,7 +493,6 @@
     <string name="account_detail_cd_show_password">Покажи паролата</string>
     <string name="account_detail_cd_hide_password">Скрий паролата</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Преименувай акаунт</string>
     <string name="rename_account_label">Име на акаунта</string>
@@ -528,6 +509,7 @@
     <string name="settings_device_calendars">Календари на устройството</string>
     <string name="settings_device_calendars_hint">Календари от други приложения</string>
     <string name="settings_quick_event_add">Бързо добавяне на събитие</string>
+    <string name="settings_suggest_titles">Предлагай заглавия на събития</string>
     <string name="settings_week_numbers">Номера на седмици</string>
     <string name="settings_show_declined">Показване на отказани събития</string>
     <string name="settings_widget_event_limit">Лимит на събития за уиджет</string>
@@ -540,6 +522,8 @@
     <string name="settings_tap_to_enable">Натиснете, за да включите</string>
     <string name="settings_device_calendars_enabled">%1$d включени</string>
     <string name="settings_per_day">%1$d на ден</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Какво е парола за приложение?</string>
     <string name="caldav_trust_insecure_label">Доверявай се на незащитена връзка</string>
     <string name="action_add_another">Добави още</string>
@@ -601,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Получавай известия за събития от календара на устройството</string>
     <string name="device_calendars_read_only_no_write">Само за четене (няма разрешение за запис)</string>
     <string name="device_calendars_read_only_calendar">Само за четене (календарът е само за четене)</string>
-
     <string name="settings_developer_options">Опции за разработчици</string>
     <string name="settings_sync_frequency">Честота на синхронизиране</string>
     <string name="settings_preview">ПРЕГЛЕД</string>
@@ -614,7 +597,6 @@
     <string name="drawer_device_calendars">Календари на устройството</string>
     <string name="drawer_account_offline">Офлайн</string>
     <string name="drawer_share_feedback">Помощ и документация</string>
-
     <string name="event_title_fallback">Събитие</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -677,12 +659,11 @@
         <item quantity="one">%1$d събитие</item>
         <item quantity="other">%1$d събития</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Отваряне на календара</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">още %1$d ден</item>
         <item quantity="other">още %1$d дни</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Отваряне на календара</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d рожден ден</item>
         <item quantity="other">%1$d рождени дни</item>
@@ -773,40 +754,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Това събитие</string>
-    <string name="recurring_all_events">Всички събития</string>
     <string name="dialog_edit_recurring_title">Запази промените в</string>
     <string name="dialog_delete_recurring_title">Изтрий</string>
     <string name="dialog_move_recurring_title">Премести</string>
+    <string name="recurring_this_event">Това събитие</string>
+    <string name="recurring_all_events">Всички събития</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Участници</string>
+    <string name="attendee_search_hint">Търсене</string>
+    <string name="attendee_search_no_matches">Няма резултати</string>
+    <string name="attendee_picker_title">Добавяне на участници</string>
+    <string name="attendee_pick_add_people">Добавяне на участници</string>
+    <string name="attendee_pick_from_contacts">Име или имейл</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+още %1$d</item>
+        <item quantity="other">+още %1$d</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Предлагай хора от вашите контакти</string>
+    <string name="attendee_invalid_email">Въведете пълен имейл адрес</string>
+    <string name="attendee_add_typed">Добавяне на \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Поканването на хора не е налично за този акаунт</string>
+    <string name="device_attendee_local_no_delivery">Този календар не може да изпраща покани. Гостите се запазват, но няма да бъдат уведомени.</string>
+    <string name="action_save_and_notify">Запазване и известяване</string>
+    <string name="attendee_section_going">Отиват</string>
+    <string name="attendee_section_maybe">Може би</string>
+    <string name="attendee_section_pending">Чакащи</string>
+    <string name="attendee_section_declined">Отказали</string>
+    <string name="attendee_section_delegated">Делегирани</string>
+    <string name="invitees_host_tag">Домакин</string>
+    <string name="invitees_summary_you_alone">Ти</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Ти · %d поканен</item>
+        <item quantity="other">Ти · %d поканен</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d поканен</item>
+        <item quantity="other">%d поканен</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s е домакин</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Ти</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Ти + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Ти + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Ти + %d</item>
+        <item quantity="other">Ти + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · още %2$d</item>
+        <item quantity="other">%1$s · още %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Промени отговора</string>
+    <string name="rsvp_question_going">Ще отидеш ли?</string>
+    <string name="rsvp_action_yes">Да</string>
+    <string name="rsvp_action_maybe">Може би</string>
+    <string name="rsvp_action_no">Не</string>
+    <string name="rsvp_state_going">Отиваш</string>
+    <string name="rsvp_state_maybe">Може би</string>
+    <string name="rsvp_state_not_going">Не отиваш</string>
+    <string name="rsvp_action_change">Промени</string>
     <string name="empty_pick_a_day">Избери ден. Възползвай се.</string>
-    <string name="empty_no_events_day">Нищо за показване; излез навън?</string>
+    <string name="cd_empty_pick_a_day">Изберете ден</string>
+    <string name="empty_no_events_day_1">Свободен ден. Вселената настоява да си починете.</string>
+    <string name="empty_no_events_day_2">Няма планове. Това е планът.</string>
+    <string name="empty_no_events_day_3">Подарък: празен ден.</string>
+    <string name="empty_no_events_day_4">Състояние на календара: прекрасно празен.</string>
+    <string name="empty_no_events_day_5">Нищо планирано. Насладете се на спокойствието.</string>
+    <string name="cd_empty_no_events_day">Спокоен ден, нищо не е насрочено</string>
     <string name="filter_date">Дата</string>
     <string name="label_select_date">Избери дата</string>
     <string name="hint_tap_date_range">Натиснете същата дата за един ден или друга за период</string>
-
     <string name="cd_clear">Изчисти</string>
     <string name="cd_offline">Офлайн</string>
+    <string name="cd_event_state_cancelled">отменено</string>
+    <string name="cd_event_state_declined">отказано</string>
+    <string name="cd_event_state_past">минало събитие</string>
     <string name="cd_loading_events">Зареждане на събития</string>
+    <string name="cd_event_untitled">Събитие без заглавие</string>
     <string name="cd_open_drawer">Отвори чекмеджето</string>
     <string name="cd_close_drawer">Затвори чекмеджето</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Изглед на календара</string>
     <string name="cd_active_view">Активен изглед</string>
-
     <string name="view_agenda">Дневен ред</string>
     <string name="view_month_full">Месец (пълен)</string>
     <string name="view_day">Ден</string>
     <string name="view_three_days">3 дни</string>
     <string name="view_year">Година</string>
     <string name="view_insights">Статистика</string>
-
     <string name="label_go_to_month">Отиди на месец</string>
-
     <string name="action_more_options">Повече опции</string>
     <string name="quick_add_save_failed">Неуспешно запазване на събитието</string>
-
     <string name="label_duration_days">дни</string>
     <string name="label_duration_hrs">ч</string>
     <string name="label_duration_min">мин</string>
@@ -821,211 +860,7 @@
     <string name="ordinal_4th">4-ти</string>
     <string name="ordinal_nth">%1$d-ти</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d нови</string>
-    <string name="sync_summary_updated">%1$d обновени</string>
-    <string name="sync_summary_removed">%1$d премахнати</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Кръгово превъртане включено</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Без напомняне</string>
-    <string name="reminder_at_time_of_event">В часа на събитието</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s преди</string>
-    <string name="reminder_time_after">%1$s след</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM в деня на събитието</string>
-    <string name="reminder_day_of_event_24h">09:00 в деня на събитието</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s преди в 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s преди в 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Изкл.</string>
-    <string name="reminder_short_at_event">При събитие</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dм</string>
-    <string name="reminder_short_hours">%1$dч</string>
-    <string name="reminder_short_days">%1$dд</string>
-    <string name="reminder_short_weeks">%1$dс</string>
-    <string name="reminder_summary_none">Няма</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dч %2$dм</string>
-    <string name="duration_compact_short">%1$dч%2$dм</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Само ръчно</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Всички събития</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Отлагане</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Започва сега</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">Утре, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Синхронизирането завърши</string>
-    <string name="sync_notification_partial">Синхронизирането завърши частично</string>
-    <string name="sync_notification_auth_failed">Удостоверяването за синхронизиране е неуспешно</string>
-    <string name="sync_notification_auth_reauth">Моля, удостоверете отново акаунта си</string>
-    <string name="sync_notification_failed">Синхронизирането е неуспешно</string>
-    <string name="sync_notification_parse_title">Някои събития не можаха да бъдат синхронизирани</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s в %2$s не можаха да бъдат синхронизирани. Опитайте Принудително синхронизиране от Настройки.</string>
-    <string name="sync_notification_conflict_title">Конфликтът при синхронизиране е разрешен</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Локалните промени на \"%1$s\" бяха загубени поради конфликт при синхронизиране. Ще се използва версията от сървъра.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Локалните промени на %1$s бяха загубени поради конфликти при синхронизиране. Ще се използват версиите от сървъра.</string>
-    <string name="sync_notification_expired_title">Промените за синхронизиране изтекоха</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d календар синхронизиран</item>
-        <item quantity="other">%1$d календара синхронизирани</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d промяна</item>
-        <item quantity="other">, %1$d промени</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d грешка</item>
-        <item quantity="other">, %1$d грешки</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%2$s-и рожден ден на %1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Рожден ден на %1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%2$s-а годишнина на %1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">Годишнина на %1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d-ви</string>
-    <string name="ordinal_suffix_nd">%1$d-ри</string>
-    <string name="ordinal_suffix_rd">%1$d-ти</string>
-    <string name="ordinal_suffix_th">%1$d-ти</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Синхронизиране на календарите…</string>
-    <string name="sync_banner_preparing">Подготовка за синхронизиране…</string>
-    <string name="sync_banner_complete_errors">Синхронизирането завърши с грешки</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Синхронизирането е неуспешно: %1$s</string>
-    <string name="error_unknown_error">Неизвестна грешка</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Ново събитие: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d ново събитие</item>
-        <item quantity="other">%1$d нови събития</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d събитие обновено</item>
-        <item quantity="other">%1$d събития обновени</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d събитие премахнато</item>
-        <item quantity="other">%1$d събития премахнати</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d актуализация на календар</item>
-        <item quantity="other">%1$d актуализации на календар</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Ден %1$d от %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ден 1 от %1$d · начало %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ден %1$d от %2$d · край %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Цял ден</string>
-    <string name="event_date_all_day">%1$s · Цял ден</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Цял ден)</string>
-    <string name="event_date_all_day_parens">%1$s (Цял ден)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Запазване на събитие</string>
-    <!-- Badges -->
-    <string name="badge_beta">Бета</string>
-    <string name="badge_new">Ново</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Червено</string>
-    <string name="color_orange">Оранжево</string>
-    <string name="color_yellow">Жълто</string>
-    <string name="color_green">Зелено</string>
-    <string name="color_cyan">Циан</string>
-    <string name="color_blue">Синьо</string>
-    <string name="color_purple">Лилаво</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Линк за среща: %1$s</string>
-    <string name="cd_phone_number">Телефонен номер</string>
-    <string name="cd_email_link">Имейл: %1$s</string>
-    <string name="cd_web_link">Линк: %1$s</string>
-    <string name="cd_text_with_links">Текст с %1$d линка: %2$s</string>
-    <string name="cd_text_with_link">Текст с 1 линк: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Ден %1$d от %2$d (Цял ден)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени</string>
-    <string name="sync_history_stats_issues">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени   ⚠ %4$d проблема</string>
-    <string name="sync_history_failed">Неуспешно</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Всеки час</string>
-    <string name="ics_sync_every_n_hours">На всеки %1$d часа</string>
-    <string name="ics_sync_daily">Ежедневно</string>
-    <string name="ics_sync_weekly">Ежеседмично</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL е задължителен</string>
-    <string name="ics_url_invalid_scheme">URL трябва да започва с http://, https:// или webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Сървърът върна грешка (%1$d). Моля, проверете URL адреса.</string>
-    <string name="ics_fetch_error_empty">Каналът с календара е празен.</string>
-    <string name="ics_fetch_error_not_calendar">Този URL не изглежда като календарен канал.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget/channel strings -->
-    <string name="cd_widget_calendar">Календар</string>
-    <string name="cd_widget_add_event">Добави събитие</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">няма събития</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>
-    <string name="cd_event_state_cancelled">отменено</string>
-    <string name="cd_event_state_declined">отказано</string>
-    <string name="cd_event_state_past">минало събитие</string>
-    <string name="cd_event_untitled">Събитие без заглавие</string>
-    <string name="channel_event_reminders">Напомняния за събития</string>
-    <string name="channel_event_reminders_desc">Известия за предстоящи събития в календара</string>
-    <string name="channel_sync_progress">Напредък на синхронизацията</string>
-    <string name="channel_sync_progress_desc">Показва напредъка по време на синхронизация на календари</string>
-    <string name="channel_sync_status">Статус на синхронизацията</string>
-    <string name="channel_sync_status_desc">Известия за завършване на синхронизацията и грешки</string>
-    <string name="channel_event_invitations">Покани за събития</string>
-    <string name="channel_event_invitations_desc">Известия при получаване на нова покана за календар</string>
-    <string name="invite_notification_body">От %1$s · Докоснете, за да отговорите</string>
-
-    <!-- Recurrence strings -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Не се повтаря</string>
     <string name="rrule_freq_daily">Дневно</string>
     <string name="rrule_freq_weekly">Седмично</string>
@@ -1041,6 +876,10 @@
     <string name="rrule_freq_on_last_day">%1$s в последния ден</string>
     <string name="rrule_freq_on_day_n">%1$s на %2$d. ден</string>
     <string name="rrule_ordinal_last">последен</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d път</item>
+        <item quantity="other">, %1$d пъти</item>
+    </plurals>
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Никога</string>
     <string name="rrule_freq_custom">По избор</string>
@@ -1053,12 +892,147 @@
     <string name="cd_increase_interval">Увеличи интервала</string>
     <string name="rrule_starting">%1$s започвайки от %2$s%3$s</string>
     <string name="rrule_since">%1$s · от %2$s</string>
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d път</item>
-        <item quantity="other">, %1$d пъти</item>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d нови</string>
+    <string name="sync_summary_updated">%1$d обновени</string>
+    <string name="sync_summary_removed">%1$d премахнати</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Кръгово превъртане включено</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Без напомняне</string>
+    <string name="reminder_at_time_of_event">В часа на събитието</string>
+    <string name="reminder_time_before">%1$s преди</string>
+    <string name="reminder_time_after">%1$s след</string>
+    <string name="reminder_day_of_event_12h">9 AM в деня на събитието</string>
+    <string name="reminder_day_of_event_24h">09:00 в деня на събитието</string>
+    <string name="reminder_before_at_12h">%1$s преди в 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s преди в 09:00</string>
+    <string name="reminder_short_off">Изкл.</string>
+    <string name="reminder_short_at_event">При събитие</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dм</string>
+    <string name="reminder_short_hours">%1$dч</string>
+    <string name="reminder_short_days">%1$dд</string>
+    <string name="reminder_short_weeks">%1$dс</string>
+    <string name="reminder_summary_none">Няма</string>
+    <string name="duration_compact">%1$dч %2$dм</string>
+    <string name="duration_compact_short">%1$dч%2$dм</string>
+    <string name="sync_manual_only">Само ръчно</string>
+    <string name="sync_lookback_all">Всички събития</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Отлагане</string>
+    <string name="notification_starting_now">Започва сега</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">След %1$d ден</item>
+        <item quantity="other">След %1$d дни</item>
+    </plurals>
+    <string name="notification_tomorrow_time">Утре, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Синхронизирането завърши</string>
+    <string name="sync_notification_partial">Синхронизирането завърши частично</string>
+    <string name="sync_notification_auth_failed">Удостоверяването за синхронизиране е неуспешно</string>
+    <string name="sync_notification_auth_reauth">Моля, удостоверете отново акаунта си</string>
+    <string name="sync_notification_failed">Синхронизирането е неуспешно</string>
+    <string name="sync_notification_parse_title">Някои събития не можаха да бъдат синхронизирани</string>
+    <string name="sync_notification_parse_content">%1$s в %2$s не можаха да бъдат синхронизирани. Опитайте Принудително синхронизиране от Настройки.</string>
+    <string name="sync_notification_conflict_title">Конфликтът при синхронизиране е разрешен</string>
+    <string name="sync_notification_conflict_single">Локалните промени на \"%1$s\" бяха загубени поради конфликт при синхронизиране. Ще се използва версията от сървъра.</string>
+    <string name="sync_notification_conflict_multi">Локалните промени на %1$s бяха загубени поради конфликти при синхронизиране. Ще се използват версиите от сървъра.</string>
+    <string name="sync_notification_expired_title">Промените за синхронизиране изтекоха</string>
+    <string name="sync_notification_expired_content">%1$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s в %2$s не можаха да бъдат синхронизирани след 30 дни. Ще се използва версията от сървъра. Опитайте Принудително синхронизиране.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d календар синхронизиран</item>
+        <item quantity="other">%1$d календара синхронизирани</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d промяна</item>
+        <item quantity="other">, %1$d промени</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d грешка</item>
+        <item quantity="other">, %1$d грешки</item>
     </plurals>
 
-    <!-- Insights -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%2$s-и рожден ден на %1$s</string>
+    <string name="contact_birthday">Рожден ден на %1$s</string>
+    <string name="contact_anniversary_with_age">%2$s-а годишнина на %1$s</string>
+    <string name="contact_anniversary">Годишнина на %1$s</string>
+    <string name="ordinal_suffix_st">%1$d-ви</string>
+    <string name="ordinal_suffix_nd">%1$d-ри</string>
+    <string name="ordinal_suffix_rd">%1$d-ти</string>
+    <string name="ordinal_suffix_th">%1$d-ти</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Синхронизиране на календарите…</string>
+    <string name="sync_banner_preparing">Подготовка за синхронизиране…</string>
+    <string name="sync_banner_complete_errors">Синхронизирането завърши с грешки</string>
+    <string name="sync_banner_failed">Синхронизирането е неуспешно: %1$s</string>
+    <string name="error_unknown_error">Неизвестна грешка</string>
+    <string name="sync_snackbar_new_event">Ново събитие: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d ново събитие</item>
+        <item quantity="other">%1$d нови събития</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d събитие обновено</item>
+        <item quantity="other">%1$d събития обновени</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d събитие премахнато</item>
+        <item quantity="other">%1$d събития премахнати</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d актуализация на календар</item>
+        <item quantity="other">%1$d актуализации на календар</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Ден %1$d от %2$d</string>
+    <string name="day_starts">Ден 1 от %1$d · начало %2$s</string>
+    <string name="day_ends">Ден %1$d от %2$d · край %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Цял ден</string>
+    <string name="event_date_all_day">%1$s · Цял ден</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Цял ден)</string>
+    <string name="event_date_all_day_parens">%1$s (Цял ден)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Запазване на събитие</string>
+    <string name="badge_beta">Бета</string>
+    <string name="badge_new">Ново</string>
+    <string name="color_red">Червено</string>
+    <string name="color_orange">Оранжево</string>
+    <string name="color_yellow">Жълто</string>
+    <string name="color_green">Зелено</string>
+    <string name="color_cyan">Циан</string>
+    <string name="color_blue">Синьо</string>
+    <string name="color_purple">Лилаво</string>
+    <string name="cd_meeting_link">Линк за среща: %1$s</string>
+    <string name="cd_phone_number">Телефонен номер</string>
+    <string name="cd_email_link">Имейл: %1$s</string>
+    <string name="cd_web_link">Линк: %1$s</string>
+    <string name="cd_text_with_links">Текст с %1$d линка: %2$s</string>
+    <string name="cd_text_with_link">Текст с 1 линк: %1$s</string>
+    <string name="day_x_of_y_all_day">Ден %1$d от %2$d (Цял ден)</string>
+    <string name="sync_history_stats">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени</string>
+    <string name="sync_history_stats_issues">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени   ⚠ %4$d проблема</string>
+    <string name="sync_history_failed">Неуспешно</string>
+    <string name="ics_sync_every_hour">Всеки час</string>
+    <string name="ics_sync_every_n_hours">На всеки %1$d часа</string>
+    <string name="ics_sync_daily">Ежедневно</string>
+    <string name="ics_sync_weekly">Ежеседмично</string>
+    <string name="ics_url_required">URL е задължителен</string>
+    <string name="ics_url_invalid_scheme">URL трябва да започва с http://, https:// или webcal://</string>
+    <string name="ics_fetch_error_http">Сървърът върна грешка (%1$d). Моля, проверете URL адреса.</string>
+    <string name="ics_fetch_error_empty">Каналът с календара е празен.</string>
+    <string name="ics_fetch_error_not_calendar">Този URL не изглежда като календарен канал.</string>
     <string name="insights_title">Статистика</string>
     <string name="insights_period_this_week">Седмица</string>
     <string name="insights_period_last_week">Мин. седмица</string>
@@ -1068,48 +1042,35 @@
         <item quantity="one">%d целодневно събитие</item>
         <item quantity="other">%d целодневни събития</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s е най-натовареният ти ден (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s беше най-натовареният ти ден (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s е най-лекият ти ден (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s беше най-лекият ти ден (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Най-дълъг свободен период: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">Най-дългият свободен период беше %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Уикендът ти е свободен</string>
     <string name="insight_weekend_load_clear_past">Уикендът ти беше свободен</string>
     <string name="insight_weekend_load_light_future">%1$s планирани за уикенда</string>
     <string name="insight_weekend_load_light_past">%1$s бяха планирани за уикенда</string>
     <string name="insight_weekend_load_busy_future">%1$s планирани за уикенда</string>
     <string name="insight_weekend_load_busy_past">%1$s бяха планирани за уикенда</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d последователни срещи</string>
     <string name="insight_back_to_back_past">Имаше %1$d последователни срещи</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s е %2$d%% от планираното ти време</string>
     <string name="insight_calendar_dominant_past">%1$s беше %2$d%% от планираното ти време</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">Графикът ти започва преди 8:00 в %1$d дни</string>
     <string name="insight_early_bounds_past">Графикът ти започваше преди 8:00 в %1$d дни</string>
     <string name="insight_late_bounds_future">Събития след 19:00 в %1$d дни</string>
     <string name="insight_late_bounds_past">Събития след 19:00 в %1$d дни</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">Имаш %1$d дни без срещи</string>
     <string name="insight_meeting_free_days_past">Имаше %1$d дни без срещи</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Утре: %1$s планирани, започва в %2$s</string>
     <string name="insight_tomorrow_preview_no_start">Утре: %1$s планирани</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s е най-натовареният ти предстоящ ден (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Следващ свободен период: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Дневно разпределение: най-натовареният ден е %1$s</string>
 
-    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Наличност</string>
     <string name="label_busy">Зает</string>
     <string name="label_free">Свободен</string>
@@ -1118,7 +1079,7 @@
     <string name="label_custom">Персонализиран</string>
     <string name="cd_checkmark">Избрано</string>
 
-    <!-- Color names -->
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Седлесто кафяво</string>    <string name="color_tomato">Доматено червено</string>    <string name="color_darkorange">Тъмнооранжево</string>
     <string name="color_gold">Златисто</string>
     <string name="color_yellowgreen">Жълто-зелено</string>
@@ -1128,6 +1089,7 @@
     <string name="color_hotpink">Ярко розово</string>
     <string name="color_dimgray">Тъмносиво</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Червено</string>
     <string name="hue_orange">Оранжево</string>
     <string name="hue_yellow">Жълто</string>
@@ -1140,7 +1102,8 @@
     <string name="hue_neutral">Неутрално</string>
     <string name="label_more_colors">Още цветове</string>
     <string name="label_back_to_grid">Назад</string>
-    <string name="settings_suggest_titles">Предлагай заглавия на събития</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Участници</string>
     <string name="attendee_you_marker">Ти</string>
     <string name="attendee_card_going">Отива</string>
@@ -1150,31 +1113,19 @@
     <string name="attendee_card_hosting">Домакин</string>
     <string name="attendee_action_copy">Копирай имейл</string>
     <string name="attendee_action_email">Изпрати имейл</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">Имейлът е копиран</string>
     <string name="attendee_no_email_app">Няма инсталирано имейл приложение</string>
     <string name="attendee_show_all">Покажи всички участници</string>
     <string name="attendee_status_accepted">Прието</string>
     <string name="attendee_status_declined">Отказан</string>
     <string name="attendee_status_tentative">Условно</string>
-    <string name="attendee_picker_title">Добавяне на участници</string>
-    <string name="attendee_pick_add_people">Добавяне на участници</string>
-    <string name="attendee_pick_from_contacts">Име или имейл</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+още %1$d</item>
-        <item quantity="other">+още %1$d</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Предлагай хора от вашите контакти</string>
-    <string name="attendee_invalid_email">Въведете пълен имейл адрес</string>
-    <string name="attendee_add_typed">Добавяне на \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Поканването на хора не е налично за този акаунт</string>
-    <string name="device_attendee_local_no_delivery">Този календар не може да изпраща покани. Гостите се запазват, но няма да бъдат уведомени.</string>
-    <string name="action_save_and_notify">Запазване и известяване</string>
     <string name="attendee_status_delegated">Делегирано</string>
     <string name="attendee_status_pending">Изчакване</string>
     <string name="inbox_empty_caught_up">Всичко е готово</string>
     <string name="inbox_organizer_suffix">(организатор)</string>
     <string name="menu_invites">Покани</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Към датата</string>
     <string name="menu_about">Относно</string>
     <string name="menu_more">Меню „Още“</string>
@@ -1182,26 +1133,28 @@
         <item quantity="one">Меню „Още“, %d чакаща покана</item>
         <item quantity="other">Меню „Още“, %d чакащи покани</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Споделяне на наличност</string>
     <string name="share_availability_sheet_title">Споделяне на наличност</string>
-    <string name="share_availability_hours_label">Работно време: %1$s – %2$s</string>
-    <string name="share_availability_all_day_toggle_title">Целодневни събития като заети</string>
-    <string name="share_availability_share_button">Споделяне</string>
-    <string name="share_availability_day_line">%1$s: %2$s</string>
-    <string name="share_availability_block_separator">, </string>
-    <string name="share_availability_time_range">%1$s – %2$s</string>
-    <string name="share_availability_empty">Няма свободни блокове от поне един час в избрания диапазон.</string>
-    <string name="share_availability_chooser_title">Споделяне на наличност</string>
-    <string name="share_availability_share_failed">Няма приложение за споделяне</string>
-    <string name="share_from_kashcal_footer">Споделено от KashCal</string>
     <plurals name="share_availability_days_label">
         <item quantity="one">Следващ %1$d ден</item>
         <item quantity="other">Следващи %1$d дни</item>
     </plurals>
+    <string name="share_availability_hours_label">Работно време: %1$s – %2$s</string>
+    <string name="share_availability_all_day_toggle_title">Целодневни събития като заети</string>
+    <string name="share_availability_share_button">Споделяне</string>
     <plurals name="share_availability_header">
         <item quantity="one">Свободно през следващия %1$d ден (%2$s – %3$s):</item>
         <item quantity="other">Свободно през следващите %1$d дни (%2$s – %3$s):</item>
     </plurals>
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <string name="share_availability_block_separator">, </string>
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <string name="share_availability_empty">Няма свободни блокове от поне един час в избрания диапазон.</string>
+    <string name="share_from_kashcal_footer">Споделено от KashCal</string>
+    <string name="share_availability_chooser_title">Споделяне на наличност</string>
+    <string name="share_availability_share_failed">Няма приложение за споделяне</string>
     <string name="share_availability_window_section">Интервал</string>
     <string name="share_availability_hours_section">Работно време</string>
     <plurals name="share_availability_days_hero">
@@ -1218,25 +1171,5 @@
     <string name="share_as_card_all_day">Цял ден</string>
     <string name="share_as_card_chooser_title">Споделяне на събитието</string>
     <string name="share_as_card_share_failed">Картата не може да бъде споделена</string>
-    <string name="attendee_sheet_title">Участници</string>
-    <string name="attendee_search_hint">Търсене</string>
-    <string name="attendee_search_no_matches">Няма резултати</string>
-    <string name="attendee_section_going">Отиват</string>
-    <string name="attendee_section_maybe">Може би</string>
-    <string name="attendee_section_pending">Чакащи</string>
-    <string name="attendee_section_declined">Отказали</string>
-    <string name="attendee_section_delegated">Делегирани</string>
-    <string name="whats_new_title">Какво ново</string>
-    <string name="whats_new_dismiss">Разбрах</string>
-    <string name="whats_new_v598_title">Помогни Android да остане отворен</string>
-    <string name="whats_new_v598_body">Google променя начина, по който инсталираш приложения на устройството си. Нуждаем се от твоята помощ.</string>
-    <string name="whats_new_v598_action_label">Посети keepandroidopen.org</string>
-    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
-    <string name="holiday_catalog_add">Добавяне на календар с празници</string>
-    <string name="holiday_catalog_search_label">Търсене</string>
-    <string name="holiday_catalog_already_added">Добавено</string>
-    <string name="holiday_catalog_empty">Няма намерени държави</string>
-    <string name="holiday_catalog_empty_hint">Опитай с друго име</string>
-    <string name="holiday_catalog_validate_error">Този календар не можа да бъде достигнат. Провери връзката и опитай отново.</string>
-    <string name="holiday_catalog_attribution">Календари с празници от Mozilla Thunderbird, лицензирани под %1$s.</string>
+
 </resources>

@@ -1,3 +1,16 @@
+## [2026.07.18]
+
+New app icon. The old one was three calendar cards in a loose pile, like they had just been dealt. Now they are a proper deck, squared up and stacked, matching the cards KashCal has always drawn on your share images. The top-bar logo got the same tidy-up and still counts off today's date; the supporter icon kept its gold card and its heart.
+
+While we were in there: empty days now say something kinder than "touch grass" and vary the line so it never nags, and CalDAV servers on your own home network are reachable on Android 17 with a quick permission ask instead of a mystery error.
+
+### Everything in this release
+
+- New deck-of-cards app icon, top-bar logo, and supporter icon
+- Empty days show gentler, rotating copy instead of one fixed line
+- Target Android 17 (API 37), with an inline local-network permission ask for CalDAV servers on your home network
+- Tidied translations across all 67 languages for consistent ordering and calendar wording
+
 ## [2026.07.17]
 
 A calendar is for scheduling things. So naturally, we asked our marketing team to sit with that idea for an afternoon and write up this release. Several donut holes past the point of good judgment, they came back not with scheduled thoughts but with a whole feed of ["unscheduled thoughts"](https://kashcal.onekash.org/unscheduled-thoughts): a steady drip of tiny, mostly kind notes like "You are not behind, time is just ambitious," which is, for the marketing arm of a scheduling company, either a resignation letter or a mission statement. We could not decide which, so we shipped it as a calendar you can subscribe to. It never blocks your day, it means well mostly, and yes, the "webcal://" fix in this very release is what lets you add it in one tap. Subscribe, and let a donut-addled marketing team quietly improve your week.

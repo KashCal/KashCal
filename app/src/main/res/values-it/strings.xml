@@ -20,6 +20,20 @@
     <string name="widget_add_event">+ Aggiungi evento</string>
     <string name="widget_no_events">Nessun evento</string>
     <string name="widget_no_upcoming_events">Nessun evento in arrivo</string>
+    <string name="cd_widget_calendar">Calendario</string>
+    <string name="cd_widget_add_event">Aggiungi evento</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">nessun evento</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, annullato</string>
+    <string name="channel_event_reminders">Promemoria eventi</string>
+    <string name="channel_event_reminders_desc">Notifiche per gli eventi del calendario in arrivo</string>
+    <string name="channel_sync_progress">Progresso sincronizzazione</string>
+    <string name="channel_sync_progress_desc">Mostra il progresso durante la sincronizzazione dei calendari</string>
+    <string name="channel_sync_status">Stato sincronizzazione</string>
+    <string name="channel_sync_status_desc">Notifiche sul completamento e gli errori di sincronizzazione</string>
+    <string name="channel_event_invitations">Inviti a eventi</string>
+    <string name="channel_event_invitations_desc">Notifiche quando ricevi un nuovo invito di calendario</string>
+    <string name="invite_notification_body">Da %1$s · Tocca per rispondere</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nuovo evento</string>
@@ -71,48 +85,8 @@
     <string name="action_confirm_delete">Conferma eliminazione</string>
     <string name="action_delete_event">Elimina evento</string>
 
-    <!-- ==================== RSVP Actions (T2) ==================== -->
-    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
-         Explains why most fields are dimmed and which fields the attendee can still change. -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
-    <!-- Caption shown under the RSVP buttons on a recurring event. Series-level RSVP is the only
-         supported mode, so this disclosure prevents the surprise of "I declined Friday and now every
-         Friday is gone from my calendar." -->
+    <!-- ==================== RSVP Actions ==================== -->
     <string name="rsvp_series_disclosure">La tua risposta si applica a tutta la serie.</string>
-    <string name="invitees_host_tag">Organizzatore</string>
-    <string name="invitees_summary_you_alone">Tu</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Tu · %d invitato</item>
-        <item quantity="other">Tu · %d invitati</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d invitato</item>
-        <item quantity="other">%d invitati</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizza</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Tu + %d</item>
-        <item quantity="other">Tu + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · altri %2$d</item>
-        <item quantity="other">%1$s · altri %2$d</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Modifica risposta</string>
-    <string name="rsvp_question_going">Partecipi?</string>
-    <string name="rsvp_action_yes">Sì</string>
-    <string name="rsvp_action_maybe">Forse</string>
-    <string name="rsvp_action_no">No</string>
-    <string name="rsvp_state_going">Partecipi</string>
-    <string name="rsvp_state_maybe">Forse</string>
-    <string name="rsvp_state_not_going">Non partecipi</string>
-    <string name="rsvp_action_change">Modifica</string>
-
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Questo e tutti i futuri</string>
@@ -150,9 +124,7 @@
     <string name="label_all_day">Tutto il giorno</string>
     <string name="label_today">Oggi</string>
     <string name="label_go_to_date">Vai alla data</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">S</string>
-    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -192,26 +164,38 @@
     <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
-    <!-- Settings toggle. Keep "KashCal" untranslated. -->
     <string name="app_lock_label">Blocco dell\'app</string>
-    <!-- Subtitle when the lock is off: states what the toggle does. -->
     <string name="app_lock_subtitle_off">Richiedi lo sblocco per aprire KashCal</string>
-    <!-- Subtitle when the lock is on: names the unlock methods. -->
     <string name="app_lock_subtitle_on">Sblocca con impronta, volto o blocco schermo</string>
-    <!-- Branded lock screen (veil) shown over the app while locked. -->
     <string name="app_lock_veil_locked">Bloccata</string>
     <string name="app_lock_veil_unlock">Sblocca</string>
     <string name="app_lock_veil_footnote">Impronta, volto o blocco schermo</string>
-    <!-- System biometric prompt title (required by the OS). Short; no app name. -->
     <string name="app_lock_prompt_title">Sblocca per vedere i tuoi eventi</string>
-    <!-- Shown when the user enables the lock but has no biometric or screen lock set up. -->
     <string name="app_lock_enroll_message">Configura un\'impronta, il volto o un blocco schermo nelle impostazioni di sistema per usare il blocco dell\'app.</string>
-    <!-- Shown when the device has no hardware/software capable of authenticating. -->
     <string name="app_lock_unsupported_message">Questo dispositivo non può usare il blocco dell\'app.</string>
-
     <string name="app_lock_enabled_message">Blocco dell\'app attivato. KashCal ti chiederà di autenticarti alla prossima apertura.</string>
-
     <string name="app_lock_disable_prompt_title">Sblocca per disattivare il blocco dell\'app</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Esegui il backup delle impostazioni</string>
+    <string name="backup_settings_subtitle">Salva la configurazione di KashCal in un file JSON</string>
+    <string name="restore_settings_label">Ripristina impostazioni</string>
+    <string name="restore_settings_subtitle">Ripristina la configurazione di KashCal da un file di backup</string>
+    <string name="restore_confirm_title">Ripristinare il backup?</string>
+    <string name="restore_confirm_from">Backup di KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Le tue preferenze verranno importate.</string>
+    <string name="action_restore">Ripristina</string>
+    <string name="restore_success_title">Ripristino completato</string>
+    <string name="restore_success_message_prefs_only">Preferenze importate.</string>
+    <string name="restore_success_device_calendars_note">Seleziona di nuovo i calendari del dispositivo se usi questa funzione.</string>
+    <string name="restore_error_title">Ripristino non riuscito</string>
+    <string name="restore_error_version_too_new">Questo backup è stato creato con una versione più recente di KashCal. Aggiorna KashCal e riprova.</string>
+    <string name="restore_error_malformed_json">Questo file non è un backup di KashCal valido.</string>
+    <string name="restore_error_invalid_value">Questo file di backup contiene dati non validi e non può essere ripristinato.</string>
+    <string name="restore_error_apply_failure">Si è verificato un errore durante l\'applicazione del backup. Nessuna modifica è stata salvata.</string>
+    <string name="backup_error_build_failed">Backup non riuscito</string>
+    <string name="backup_error_write_failed">Backup non riuscito — impossibile scrivere sul file</string>
+    <string name="backup_error_read_failed">Impossibile leggere il file</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Calendario Apple?</string>
@@ -224,6 +208,7 @@
     <string name="whats_new_v598_title">Aiuta a mantenere Android aperto</string>
     <string name="whats_new_v598_body">Google sta cambiando il modo in cui installi le app sul tuo dispositivo. Abbiamo bisogno del tuo aiuto.</string>
     <string name="whats_new_v598_action_label">Visita keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Connetti iCloud</string>
     <string name="signin_caldav_title">Aggiungi account CalDAV</string>
@@ -267,13 +252,11 @@
     <string name="error_auth_session_expired_title">Sessione scaduta</string>
     <string name="error_auth_session_expired">La tua sessione iCloud è scaduta. Accedi di nuovo per continuare la sincronizzazione.</string>
     <string name="error_auth_account_locked">Il tuo Apple ID è bloccato. Visita appleid.apple.com per sbloccarlo.</string>
-
     <string name="error_network_offline">Sei offline. Le modifiche verranno sincronizzate quando tornerai online.</string>
     <string name="error_network_timeout">Connessione scaduta. Controlla la tua connessione internet e riprova.</string>
     <string name="error_network_ssl">Connessione sicura non riuscita. Controlla le impostazioni di rete.</string>
     <string name="error_network_unknown_host">Impossibile raggiungere iCloud. Controlla la tua connessione internet.</string>
     <string name="error_network_connection_failed">Connessione non riuscita. Riprova.</string>
-
     <string name="error_server_unavailable">iCloud è temporaneamente non disponibile. Riprova più tardi.</string>
     <string name="error_server_rate_limited">Troppe richieste. Attendi un momento e riprova.</string>
     <string name="error_server_forbidden">Accesso negato. Potresti non avere i permessi per questo calendario.</string>
@@ -282,13 +265,11 @@
     <string name="error_conflict_generic">Questo evento è stato modificato su un altro dispositivo. Forza una sincronizzazione per ottenere la versione più recente.</string>
     <string name="error_conflict_with_event">\"%1$s\" è stato modificato su un altro dispositivo. Forza una sincronizzazione per ottenere la versione più recente.</string>
     <string name="error_sync_token_expired">Dati di sincronizzazione scaduti. Sincronizzazione completa in corso…</string>
-
     <string name="error_event_not_found">Evento non trovato.</string>
     <string name="error_calendar_not_found">Calendario non trovato.</string>
     <string name="error_calendar_read_only">Impossibile modificare gli eventi in \"%1$s\" (calendario in sola lettura).</string>
     <string name="error_event_invalid_data">Dati evento non validi. Controlla gli orari di inizio e fine.</string>
     <string name="error_event_invalid_recurrence">Schema di ripetizione non valido.</string>
-
     <string name="error_display_name_exists">Esiste già un account con il nome \"%1$s\".</string>
     <string name="icloud_error_credentials_required">Sono richiesti Apple ID e password</string>
     <string name="icloud_error_connection_timeout">Timeout della connessione. Riprova.</string>
@@ -297,43 +278,41 @@
     <string name="caldav_error_connection_timeout">Timeout della connessione. Riprova.</string>
     <string name="caldav_error_no_calendars">Nessun calendario trovato su questo server.</string>
     <string name="caldav_error_unexpected">Errore imprevisto. Riprova.</string>
-
+    <string name="caldav_error_with_lan_hint">%1$s\n\nSe si tratta di un server sulla tua rete locale, consenti l\'accesso alla rete locale per poterti connettere.</string>
+    <string name="local_network_banner_title">Accesso alla rete locale necessario</string>
+    <string name="local_network_banner_body">Questo server sembra trovarsi sulla tua rete locale. Consenti l\'accesso alla rete locale in modo che KashCal possa connettersi.</string>
+    <string name="local_network_banner_allow">Consenti accesso</string>
+    <string name="local_network_banner_dismiss">Non ora</string>
     <string name="password_change_error_account_not_found">Account non trovato</string>
     <string name="password_change_error_no_credentials">Nessuna credenziale esistente</string>
     <string name="password_change_error_unsupported_provider">Questo provider non supporta la modifica della password</string>
     <string name="password_change_error_invalid">Password non valida</string>
     <string name="password_change_error_network">Errore di rete, riprova</string>
-
     <string name="error_import_file_not_found">File non trovato o non leggibile.</string>
     <string name="error_import_invalid_format">Formato file calendario non valido.</string>
     <string name="error_import_partial">%1$d eventi importati, %2$d non riusciti.</string>
     <string name="error_export_failed">Esportazione eventi non riuscita.</string>
     <string name="error_export_no_events">Nessun evento da esportare.</string>
     <string name="error_end_before_start">L\'ora di fine deve essere successiva all\'ora di inizio</string>
-
     <string name="error_storage_full_title">Memoria piena</string>
     <string name="error_storage_full">Spazio insufficiente. Libera spazio e riprova.</string>
     <string name="error_database_corruption_title">Errore dati</string>
     <string name="error_database_corruption">I dati del tuo calendario potrebbero essere danneggiati. Contatta il supporto.</string>
     <string name="error_migration_title">Errore di aggiornamento</string>
     <string name="error_migration_failed">Aggiornamento dati dell\'app non riuscito. Reinstalla l\'app.</string>
-
     <string name="error_permission_notification_title">Attivare le notifiche?</string>
     <string name="error_permission_notification">KashCal ha bisogno del permesso per le notifiche per ricordarti i prossimi eventi.</string>
     <string name="error_permission_alarm_title">Attivare le sveglie esatte?</string>
     <string name="error_permission_alarm">KashCal ha bisogno del permesso per sveglie esatte per promemoria precisi.</string>
     <string name="error_permission_storage">Permesso di archiviazione necessario per importazione/esportazione.</string>
-
     <string name="error_device_calendar_title">Errore calendario</string>
     <string name="error_device_calendar_write_failed">Salvataggio nel calendario del dispositivo non riuscito. Riprova.</string>
     <string name="error_device_calendar_permission">Permesso di scrittura del calendario necessario. Concedilo nelle Impostazioni.</string>
     <string name="error_device_calendar_not_found">Calendario non trovato. Potrebbe essere stato rimosso.</string>
     <string name="error_device_event_not_found">Evento non trovato. Potrebbe essere stato eliminato.</string>
     <string name="error_device_calendar_read_only">Questo calendario è in sola lettura.</string>
-
     <string name="error_sync_no_accounts">Nessun account iCloud configurato. Configura iCloud per sincronizzare i tuoi calendari.</string>
     <string name="error_sync_partial">%1$d calendari sincronizzati, %2$d non riusciti.</string>
-
     <string name="error_unknown">Qualcosa è andato storto. Riprova.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
@@ -376,6 +355,7 @@
     <string name="label_password">Password</string>
     <string name="label_display_name_optional">Nome visualizzato</string>
 
+    <!-- ==================== Placeholders (Additional) ==================== -->
     <string name="placeholder_search_events">Cerca eventi…</string>
 
     <!-- ==================== Hints ==================== -->
@@ -513,7 +493,6 @@
     <string name="account_detail_cd_show_password">Mostra password</string>
     <string name="account_detail_cd_hide_password">Nascondi password</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Rinomina account</string>
     <string name="rename_account_label">Nome dell\'account</string>
@@ -530,6 +509,7 @@
     <string name="settings_device_calendars">Calendari del dispositivo</string>
     <string name="settings_device_calendars_hint">Calendari da altre app</string>
     <string name="settings_quick_event_add">Aggiunta rapida evento</string>
+    <string name="settings_suggest_titles">Suggerisci titoli eventi</string>
     <string name="settings_week_numbers">Numeri settimana</string>
     <string name="settings_show_declined">Mostra eventi rifiutati</string>
     <string name="settings_widget_event_limit">Limite eventi del widget</string>
@@ -542,6 +522,8 @@
     <string name="settings_tap_to_enable">Tocca per attivare</string>
     <string name="settings_device_calendars_enabled">%1$d attivati</string>
     <string name="settings_per_day">%1$d al giorno</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Cos\'è una password specifica per l\'app?</string>
     <string name="caldav_trust_insecure_label">Accetta connessione non sicura</string>
     <string name="action_add_another">Aggiungi un altro</string>
@@ -603,7 +585,6 @@
     <string name="device_calendars_reminders_desc">Ricevi notifiche per gli eventi del calendario del dispositivo</string>
     <string name="device_calendars_read_only_no_write">Sola lettura (nessun permesso di scrittura)</string>
     <string name="device_calendars_read_only_calendar">Sola lettura (calendario in sola lettura)</string>
-
     <string name="settings_developer_options">Opzioni sviluppatore</string>
     <string name="settings_sync_frequency">Frequenza di sincronizzazione</string>
     <string name="settings_preview">ANTEPRIMA</string>
@@ -616,7 +597,6 @@
     <string name="drawer_device_calendars">Calendari del dispositivo</string>
     <string name="drawer_account_offline">Offline</string>
     <string name="drawer_share_feedback">Aiuto &amp; documenti</string>
-
     <string name="event_title_fallback">Evento</string>
 
     <!-- ==================== i18n: App Info / About ==================== -->
@@ -688,11 +668,11 @@
         <item quantity="many">%1$d eventi</item>
         <item quantity="other">%1$d eventi</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Apri calendario</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d altro giorno</item>
         <item quantity="other">%1$d altri giorni</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Apri calendario</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d compleanno</item>
         <item quantity="many">%1$d compleanni</item>
@@ -802,50 +782,100 @@
         <item quantity="many">%1$d settimane prima</item>
         <item quantity="other">%1$d settimane prima</item>
     </plurals>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Tra %1$d giorno</item>
-        <item quantity="other">Tra %1$d giorni</item>
-    </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Questo evento</string>
-    <string name="recurring_all_events">Tutti gli eventi</string>
     <string name="dialog_edit_recurring_title">Salva modifiche in</string>
     <string name="dialog_delete_recurring_title">Elimina</string>
     <string name="dialog_move_recurring_title">Sposta</string>
+    <string name="recurring_this_event">Questo evento</string>
+    <string name="recurring_all_events">Tutti gli eventi</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Partecipanti</string>
+    <string name="attendee_search_hint">Cerca</string>
+    <string name="attendee_search_no_matches">Nessun risultato</string>
+    <string name="attendee_picker_title">Aggiungi partecipanti</string>
+    <string name="attendee_pick_add_people">Aggiungi partecipanti</string>
+    <string name="attendee_pick_from_contacts">Nome o email</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d altro</item>
+        <item quantity="other">+%1$d altri</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Suggerisci persone dai tuoi contatti</string>
+    <string name="attendee_invalid_email">Inserisci un indirizzo e-mail completo</string>
+    <string name="attendee_add_typed">Aggiungi \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Invitare persone non è disponibile su questo account</string>
+    <string name="device_attendee_local_no_delivery">Questo calendario non può inviare inviti. Gli invitati vengono salvati, ma non riceveranno una notifica.</string>
+    <string name="action_save_and_notify">Salva e notifica</string>
+    <string name="attendee_section_going">Partecipano</string>
+    <string name="attendee_section_maybe">Forse</string>
+    <string name="attendee_section_pending">In attesa</string>
+    <string name="attendee_section_declined">Rifiutati</string>
+    <string name="attendee_section_delegated">Delegati</string>
+    <string name="invitees_host_tag">Organizzatore</string>
+    <string name="invitees_summary_you_alone">Tu</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Tu · %d invitato</item>
+        <item quantity="other">Tu · %d invitati</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invitato</item>
+        <item quantity="other">%d invitati</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s organizza</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Tu</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Tu + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Tu + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Tu + %d</item>
+        <item quantity="other">Tu + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · altri %2$d</item>
+        <item quantity="other">%1$s · altri %2$d</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Modifica risposta</string>
+    <string name="rsvp_question_going">Partecipi?</string>
+    <string name="rsvp_action_yes">Sì</string>
+    <string name="rsvp_action_maybe">Forse</string>
+    <string name="rsvp_action_no">No</string>
+    <string name="rsvp_state_going">Partecipi</string>
+    <string name="rsvp_state_maybe">Forse</string>
+    <string name="rsvp_state_not_going">Non partecipi</string>
+    <string name="rsvp_action_change">Modifica</string>
     <string name="empty_pick_a_day">Scegli un giorno. Approfittane.</string>
-    <string name="empty_no_events_day">Niente da vedere qui, esci a prendere aria?</string>
+    <string name="cd_empty_pick_a_day">Scegli un giorno</string>
+    <string name="empty_no_events_day_1">Una giornata libera. L\'universo insiste perché tu ti riposi.</string>
+    <string name="empty_no_events_day_2">Nessun piano. È proprio questo il piano.</string>
+    <string name="empty_no_events_day_3">Un regalo: una giornata vuota.</string>
+    <string name="empty_no_events_day_4">Stato del calendario: splendidamente vuoto.</string>
+    <string name="empty_no_events_day_5">Niente in programma. Goditi la calma.</string>
+    <string name="cd_empty_no_events_day">Giornata tranquilla, niente in programma</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Seleziona una data</string>
     <string name="hint_tap_date_range">Tocca la stessa data per un giorno, o un\'altra per un intervallo</string>
-
     <string name="cd_clear">Cancella</string>
     <string name="cd_offline">Offline</string>
     <string name="cd_event_state_cancelled">annullato</string>
     <string name="cd_event_state_declined">rifiutato</string>
     <string name="cd_event_state_past">evento passato</string>
-    <string name="cd_event_untitled">Evento senza titolo</string>
     <string name="cd_loading_events">Caricamento eventi</string>
+    <string name="cd_event_untitled">Evento senza titolo</string>
     <string name="cd_open_drawer">Apri menu</string>
     <string name="cd_close_drawer">Chiudi menu</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
-    <!-- Content description for the dim background behind the overflow tray; tap closes the tray -->
     <string name="cd_calendar_view">Vista calendario</string>
     <string name="cd_active_view">Vista attiva</string>
-
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Mese (completo)</string>
-    <string name="view_three_days">3 giorni</string>
     <string name="view_day">Giorno</string>
+    <string name="view_three_days">3 giorni</string>
     <string name="view_year">Anno</string>
     <string name="view_insights">Statistiche</string>
-
     <string name="label_go_to_month">Vai al mese</string>
-
     <string name="action_more_options">Altre opzioni</string>
     <string name="quick_add_save_failed">Salvataggio evento non riuscito</string>
-
     <string name="label_duration_days">giorni</string>
     <string name="label_duration_hrs">ore</string>
     <string name="label_duration_min">min</string>
@@ -860,6 +890,40 @@
     <string name="ordinal_4th">4°</string>
     <string name="ordinal_nth">%1$d°</string>
 
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <string name="rrule_does_not_repeat">Non si ripete</string>
+    <string name="rrule_freq_daily">Giornaliero</string>
+    <string name="rrule_freq_weekly">Settimanale</string>
+    <string name="rrule_freq_monthly">Mensile</string>
+    <string name="rrule_freq_yearly">Annuale</string>
+    <string name="rrule_repeats">Si ripete</string>
+    <string name="rrule_every_n_days">Ogni %1$d giorni</string>
+    <string name="rrule_every_n_weeks">Ogni %1$d settimane</string>
+    <string name="rrule_every_n_months">Ogni %1$d mesi</string>
+    <string name="rrule_every_n_years">Ogni %1$d anni</string>
+    <string name="rrule_freq_on_days">%1$s il %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s il %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s l\'ultimo giorno</string>
+    <string name="rrule_freq_on_day_n">%1$s il giorno %2$d</string>
+    <string name="rrule_ordinal_last">ultimo</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d volta</item>
+        <item quantity="many">, %1$d volte</item>
+        <item quantity="other">, %1$d volte</item>
+    </plurals>
+    <string name="rrule_until_suffix">, fino al %1$s</string>
+    <string name="rrule_freq_never">Mai</string>
+    <string name="rrule_freq_custom">Personalizzato</string>
+    <string name="label_repeat_every">Ripeti ogni</string>
+    <string name="rrule_unit_day">Giorno</string>
+    <string name="rrule_unit_week">Settimana</string>
+    <string name="rrule_unit_month">Mese</string>
+    <string name="rrule_unit_year">Anno</string>
+    <string name="cd_decrease_interval">Riduci intervallo</string>
+    <string name="cd_increase_interval">Aumenta intervallo</string>
+    <string name="rrule_starting">%1$s a partire dal %2$s%3$s</string>
+    <string name="rrule_since">%1$s · dal %2$s</string>
+
     <!-- ==================== Sync Summary ==================== -->
     <string name="sync_summary_new">%1$d nuovi</string>
     <string name="sync_summary_updated">%1$d aggiornati</string>
@@ -869,20 +933,14 @@
     <string name="cd_circular_scrolling">Scorrimento circolare attivato</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
     <string name="reminder_none">Nessun promemoria</string>
     <string name="reminder_at_time_of_event">All\'ora dell\'evento</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
     <string name="reminder_time_before">%1$s prima</string>
     <string name="reminder_time_after">%1$s dopo</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
     <string name="reminder_day_of_event_12h">9:00 il giorno dell\'evento</string>
     <string name="reminder_day_of_event_24h">09:00 il giorno dell\'evento</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
     <string name="reminder_before_at_12h">%1$s prima alle 9:00</string>
     <string name="reminder_before_at_24h">%1$s prima alle 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
     <string name="reminder_short_off">No</string>
     <string name="reminder_short_at_event">All\'inizio</string>
     <string name="reminder_short_9am_12h">9:00</string>
@@ -892,44 +950,34 @@
     <string name="reminder_short_days">%1$dg</string>
     <string name="reminder_short_weeks">%1$ds</string>
     <string name="reminder_summary_none">Nessuno</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>
-
-    <!-- Sync interval options -->
     <string name="sync_manual_only">Solo manuale</string>
-    <!-- Sync lookback options -->
     <string name="sync_lookback_all">Tutti gli eventi</string>
 
     <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
     <string name="action_snooze">Posticipa</string>
-    <!-- Reminder notification content -->
     <string name="notification_starting_now">Inizia ora</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">Tra %1$d giorno</item>
+        <item quantity="other">Tra %1$d giorni</item>
+    </plurals>
     <string name="notification_tomorrow_time">Domani, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
     <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
     <string name="sync_notification_complete">Sincronizzazione completata</string>
     <string name="sync_notification_partial">Sincronizzazione parzialmente completata</string>
     <string name="sync_notification_auth_failed">Autenticazione sincronizzazione non riuscita</string>
     <string name="sync_notification_auth_reauth">Effettua nuovamente l\'autenticazione</string>
     <string name="sync_notification_failed">Sincronizzazione non riuscita</string>
     <string name="sync_notification_parse_title">Alcuni eventi non sono stati sincronizzati</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
     <string name="sync_notification_parse_content">%1$s in %2$s non sono stati sincronizzati. Prova Forza sincronizzazione nelle Impostazioni.</string>
     <string name="sync_notification_conflict_title">Conflitto di sincronizzazione risolto</string>
-    <!-- %1$s = event title -->
     <string name="sync_notification_conflict_single">Le modifiche locali a \"%1$s\" sono state perse a causa di un conflitto di sincronizzazione. Verrà usata la versione del server.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_conflict_multi">Le modifiche locali a %1$s sono state perse a causa di conflitti di sincronizzazione. Verranno usate le versioni del server.</string>
     <string name="sync_notification_expired_title">Modifiche di sincronizzazione scadute</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
     <string name="sync_notification_expired_content">%1$s non sono stati sincronizzati dopo 30 giorni. Verrà usata la versione del server. Forza sincronizzazione per riprovare.</string>
     <string name="sync_notification_expired_content_calendar">%1$s in %2$s non sono stati sincronizzati dopo 30 giorni. Verrà usata la versione del server. Forza sincronizzazione per riprovare.</string>
     <string name="sync_notification_expired_content_calendars">%1$s distribuiti su %2$s non sono stati sincronizzati dopo 30 giorni. Verrà usata la versione del server. Forza sincronizzazione per riprovare.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d calendario sincronizzato</item>
         <item quantity="many">%1$d calendari sincronizzati</item>
@@ -947,31 +995,21 @@
     </plurals>
 
     <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
     <string name="contact_birthday_with_age">%2$s compleanno di %1$s</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
     <string name="contact_birthday">Compleanno di %1$s</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
     <string name="contact_anniversary_with_age">%2$s anniversario di %1$s</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
     <string name="contact_anniversary">Anniversario di %1$s</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
     <string name="ordinal_suffix_st">%1$d°</string>
     <string name="ordinal_suffix_nd">%1$d°</string>
     <string name="ordinal_suffix_rd">%1$d°</string>
     <string name="ordinal_suffix_th">%1$d°</string>
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
     <string name="sync_banner_syncing">Sincronizzazione calendari…</string>
     <string name="sync_banner_preparing">Preparazione sincronizzazione…</string>
     <string name="sync_banner_complete_errors">Sincronizzazione completata con errori</string>
-    <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sincronizzazione non riuscita: %1$s</string>
     <string name="error_unknown_error">Errore sconosciuto</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
     <string name="sync_snackbar_new_event">Nuovo evento: %1$s</string>
     <plurals name="sync_snackbar_new_events">
         <item quantity="one">%1$d nuovo evento</item>
@@ -988,7 +1026,6 @@
         <item quantity="many">%1$d eventi rimossi</item>
         <item quantity="other">%1$d eventi rimossi</item>
     </plurals>
-    <!-- %1$d = total change count -->
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d aggiornamento calendario</item>
         <item quantity="many">%1$d aggiornamenti calendario</item>
@@ -996,26 +1033,18 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Giorno %1$d di %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
     <string name="day_starts">Giorno 1 di %1$d · inizia %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
     <string name="day_ends">Giorno %1$d di %2$d · finisce %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
     <string name="event_date_range_all_day">%1$s → %2$s · Tutto il giorno</string>
     <string name="event_date_all_day">%1$s · Tutto il giorno</string>
-    <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Tutto il giorno)</string>
     <string name="event_date_all_day_parens">%1$s (Tutto il giorno)</string>
 
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
     <string name="action_save_event">Salva evento</string>
-    <!-- Badges -->
     <string name="badge_beta">Beta</string>
     <string name="badge_new">Nuovo</string>
-    <!-- Color names for accessibility -->
     <string name="color_red">Rosso</string>
     <string name="color_orange">Arancione</string>
     <string name="color_yellow">Giallo</string>
@@ -1023,85 +1052,25 @@
     <string name="color_cyan">Ciano</string>
     <string name="color_blue">Blu</string>
     <string name="color_purple">Viola</string>
-    <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Link riunione: %1$s</string>
     <string name="cd_phone_number">Numero di telefono</string>
     <string name="cd_email_link">E-mail: %1$s</string>
     <string name="cd_web_link">Link: %1$s</string>
     <string name="cd_text_with_links">Testo con %1$d link: %2$s</string>
     <string name="cd_text_with_link">Testo con 1 link: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Giorno %1$d di %2$d (Tutto il giorno)</string>
-    <!-- Sync history stats header -->
     <string name="sync_history_stats">%1$d sincronizzazioni   ↑%2$d inviati   ↓%3$d ricevuti</string>
     <string name="sync_history_stats_issues">%1$d sincronizzazioni   ↑%2$d inviati   ↓%3$d ricevuti   ⚠ %4$d problemi</string>
     <string name="sync_history_failed">Non riuscita</string>
-    <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Ogni ora</string>
     <string name="ics_sync_every_n_hours">Ogni %1$d ore</string>
     <string name="ics_sync_daily">Ogni giorno</string>
     <string name="ics_sync_weekly">Settimanalmente</string>
-    <!-- ICS subscription URL validation -->
     <string name="ics_url_required">L\'URL è obbligatorio</string>
     <string name="ics_url_invalid_scheme">L\'URL deve iniziare con http://, https:// o webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
     <string name="ics_fetch_error_http">Il server ha restituito un errore (%1$d). Controlla l\'URL.</string>
     <string name="ics_fetch_error_empty">Il feed del calendario è vuoto.</string>
     <string name="ics_fetch_error_not_calendar">Questo URL non sembra un feed di calendario.</string>
-    <!-- Event confirmation snackbar -->
-    <!-- Widget/Channel strings -->
-    <string name="cd_widget_calendar">Calendario</string>
-    <string name="cd_widget_add_event">Aggiungi evento</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_no_events">nessun evento</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, annullato</string>
-    <string name="channel_event_reminders">Promemoria eventi</string>
-    <string name="channel_event_reminders_desc">Notifiche per gli eventi del calendario in arrivo</string>
-    <string name="channel_sync_progress">Progresso sincronizzazione</string>
-    <string name="channel_sync_progress_desc">Mostra il progresso durante la sincronizzazione dei calendari</string>
-    <string name="channel_sync_status">Stato sincronizzazione</string>
-    <string name="channel_sync_status_desc">Notifiche sul completamento e gli errori di sincronizzazione</string>
-    <string name="channel_event_invitations">Inviti a eventi</string>
-    <string name="channel_event_invitations_desc">Notifiche quando ricevi un nuovo invito di calendario</string>
-    <string name="invite_notification_body">Da %1$s · Tocca per rispondere</string>
-
-    <!-- Recurrence rule strings -->
-    <string name="rrule_does_not_repeat">Non si ripete</string>
-    <string name="rrule_freq_daily">Giornaliero</string>
-    <string name="rrule_freq_weekly">Settimanale</string>
-    <string name="rrule_freq_monthly">Mensile</string>
-    <string name="rrule_freq_yearly">Annuale</string>
-    <string name="rrule_repeats">Si ripete</string>
-    <string name="rrule_every_n_days">Ogni %1$d giorni</string>
-    <string name="rrule_every_n_weeks">Ogni %1$d settimane</string>
-    <string name="rrule_every_n_months">Ogni %1$d mesi</string>
-    <string name="rrule_every_n_years">Ogni %1$d anni</string>
-    <string name="rrule_freq_on_days">%1$s il %2$s</string>
-    <string name="rrule_freq_on_ordinal_day">%1$s il %2$s %3$s</string>
-    <string name="rrule_freq_on_last_day">%1$s l\'ultimo giorno</string>
-    <string name="rrule_freq_on_day_n">%1$s il giorno %2$d</string>
-    <string name="rrule_ordinal_last">ultimo</string>
-    <string name="rrule_until_suffix">, fino al %1$s</string>
-    <string name="rrule_freq_never">Mai</string>
-    <string name="rrule_freq_custom">Personalizzato</string>
-    <string name="label_repeat_every">Ripeti ogni</string>
-    <string name="rrule_unit_day">Giorno</string>
-    <string name="rrule_unit_week">Settimana</string>
-    <string name="rrule_unit_month">Mese</string>
-    <string name="rrule_unit_year">Anno</string>
-    <string name="cd_decrease_interval">Riduci intervallo</string>
-    <string name="cd_increase_interval">Aumenta intervallo</string>
-    <string name="rrule_starting">%1$s a partire dal %2$s%3$s</string>
-    <string name="rrule_since">%1$s · dal %2$s</string>
-
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d volta</item>
-        <item quantity="many">, %1$d volte</item>
-        <item quantity="other">, %1$d volte</item>
-    </plurals>
-
-    <!-- Insights -->
     <string name="insights_title">Statistiche</string>
     <string name="insights_period_this_week">Settimana</string>
     <string name="insights_period_last_week">Sett. scorsa</string>
@@ -1111,48 +1080,35 @@
         <item quantity="one">%d evento per l\'intera giornata</item>
         <item quantity="other">%d eventi per l\'intera giornata</item>
     </plurals>
-
-    <!-- Insight text: Busiest Day -->
     <string name="insight_busiest_day_future">%1$s è il tuo giorno più pieno (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s è stato il tuo giorno più pieno (%2$s)</string>
-    <!-- Insight text: Lightest Day -->
     <string name="insight_lightest_day_future">%1$s è il tuo giorno più leggero (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s è stato il tuo giorno più leggero (%2$s)</string>
-    <!-- Insight text: Longest Free Block -->
     <string name="insight_longest_free_future">Blocco libero più lungo: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_longest_free_past">Blocco libero più lungo: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Il tuo fine settimana è libero</string>
     <string name="insight_weekend_load_clear_past">Il tuo fine settimana era libero</string>
     <string name="insight_weekend_load_light_future">%1$s in programma nel fine settimana</string>
     <string name="insight_weekend_load_light_past">%1$s erano in programma nel fine settimana</string>
     <string name="insight_weekend_load_busy_future">%1$s in programma nel fine settimana</string>
     <string name="insight_weekend_load_busy_past">%1$s erano in programma nel fine settimana</string>
-    <!-- Insight text: Back to Back -->
     <string name="insight_back_to_back_future">%1$d riunioni consecutive</string>
     <string name="insight_back_to_back_past">Hai avuto %1$d riunioni consecutive</string>
-    <!-- Insight text: Calendar Dominant -->
     <string name="insight_calendar_dominant_future">%1$s è il %2$d%% del tuo tempo pianificato</string>
     <string name="insight_calendar_dominant_past">%1$s era il %2$d%% del tuo tempo pianificato</string>
-    <!-- Insight text: Early/Late Bounds -->
     <string name="insight_early_bounds_future">La tua agenda inizia prima delle 8:00 in %1$d giorni</string>
     <string name="insight_early_bounds_past">La tua agenda iniziava prima delle 8:00 in %1$d giorni</string>
     <string name="insight_late_bounds_future">Eventi dopo le 19:00 in %1$d giorni</string>
     <string name="insight_late_bounds_past">Eventi dopo le 19:00 in %1$d giorni</string>
-    <!-- Insight text: Meeting-Free Days -->
     <string name="insight_meeting_free_days_future">Hai %1$d giorni senza riunioni</string>
     <string name="insight_meeting_free_days_past">Hai avuto %1$d giorni senza riunioni</string>
-    <!-- Insight text: Tomorrow Preview (forward-only) -->
     <string name="insight_tomorrow_preview">Domani: %1$s in programma, inizio alle %2$s</string>
     <string name="insight_tomorrow_preview_no_start">Domani: %1$s in programma</string>
-    <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s è il tuo giorno più pieno in arrivo (%2$s)</string>
-    <!-- Insight text: Next Free Block (forward-only) -->
     <string name="insight_next_free_block">Prossimo blocco libero: %1$s %2$s–%3$s (%4$s)</string>
-    <!-- Insight accessibility -->
     <string name="insights_cd_daily_chart">Distribuzione giornaliera: il giorno più pieno è %1$s</string>
 
-    <!-- Event editor: availability & color -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Disponibilità</string>
     <string name="label_busy">Occupato</string>
     <string name="label_free">Libero</string>
@@ -1161,7 +1117,7 @@
     <string name="label_custom">Personalizzato</string>
     <string name="cd_checkmark">Selezionato</string>
 
-    <!-- Event color palette (CSS3 color names) -->
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Marrone sella</string>
     <string name="color_tomato">Pomodoro</string>    <string name="color_darkorange">Arancione scuro</string>
     <string name="color_gold">Oro</string>
@@ -1172,6 +1128,7 @@
     <string name="color_hotpink">Rosa acceso</string>
     <string name="color_dimgray">Grigio scuro</string>
 
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Rosso</string>
     <string name="hue_orange">Arancione</string>
     <string name="hue_yellow">Giallo</string>
@@ -1184,28 +1141,8 @@
     <string name="hue_neutral">Neutro</string>
     <string name="label_more_colors">Altri colori</string>
     <string name="label_back_to_grid">Indietro</string>
-    <string name="settings_suggest_titles">Suggerisci titoli eventi</string>
 
-    <!-- ==================== Backup &amp; Restore ==================== -->
-    <string name="backup_settings_label">Esegui il backup delle impostazioni</string>
-    <string name="backup_settings_subtitle">Salva la configurazione di KashCal in un file JSON</string>
-    <string name="restore_settings_label">Ripristina impostazioni</string>
-    <string name="restore_settings_subtitle">Ripristina la configurazione di KashCal da un file di backup</string>
-    <string name="restore_confirm_title">Ripristinare il backup?</string>
-    <string name="restore_confirm_from">Backup di KashCal %1$s, %2$s</string>
-    <string name="restore_confirm_message_prefs_only">Le tue preferenze verranno importate.</string>
-    <string name="action_restore">Ripristina</string>
-    <string name="restore_success_title">Ripristino completato</string>
-    <string name="restore_success_message_prefs_only">Preferenze importate.</string>
-    <string name="restore_success_device_calendars_note">Seleziona di nuovo i calendari del dispositivo se usi questa funzione.</string>
-    <string name="restore_error_title">Ripristino non riuscito</string>
-    <string name="restore_error_version_too_new">Questo backup è stato creato con una versione più recente di KashCal. Aggiorna KashCal e riprova.</string>
-    <string name="restore_error_malformed_json">Questo file non è un backup di KashCal valido.</string>
-    <string name="restore_error_invalid_value">Questo file di backup contiene dati non validi e non può essere ripristinato.</string>
-    <string name="restore_error_apply_failure">Si è verificato un errore durante l\'applicazione del backup. Nessuna modifica è stata salvata.</string>
-    <string name="backup_error_build_failed">Backup non riuscito</string>
-    <string name="backup_error_write_failed">Backup non riuscito — impossibile scrivere sul file</string>
-    <string name="backup_error_read_failed">Impossibile leggere il file</string>
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Partecipanti</string>
     <string name="attendee_you_marker">Tu</string>
     <string name="attendee_card_going">Presente</string>
@@ -1215,6 +1152,8 @@
     <string name="attendee_card_hosting">Organizzatore</string>
     <string name="attendee_action_copy">Copia e-mail</string>
     <string name="attendee_action_email">Invia e-mail</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-mail copiata</string>
     <string name="attendee_no_email_app">Nessuna app e-mail installata</string>
     <string name="attendee_show_all">Mostra tutti i partecipanti</string>
@@ -1223,32 +1162,9 @@
     <string name="attendee_status_tentative">Provvisorio</string>
     <string name="attendee_status_delegated">Delegato</string>
     <string name="attendee_status_pending">In attesa</string>
-    <string name="attendee_picker_title">Aggiungi partecipanti</string>
-    <string name="attendee_pick_add_people">Aggiungi partecipanti</string>
-    <string name="attendee_pick_from_contacts">Nome o email</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d altro</item>
-        <item quantity="other">+%1$d altri</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Suggerisci persone dai tuoi contatti</string>
-    <string name="attendee_invalid_email">Inserisci un indirizzo e-mail completo</string>
-    <string name="attendee_add_typed">Aggiungi \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Invitare persone non è disponibile su questo account</string>
-    <string name="device_attendee_local_no_delivery">Questo calendario non può inviare inviti. Gli invitati vengono salvati, ma non riceveranno una notifica.</string>
-    <string name="action_save_and_notify">Salva e notifica</string>
-    <string name="attendee_sheet_title">Partecipanti</string>
-    <string name="attendee_search_hint">Cerca</string>
-    <string name="attendee_search_no_matches">Nessun risultato</string>
-    <string name="attendee_section_going">Partecipano</string>
-    <string name="attendee_section_maybe">Forse</string>
-    <string name="attendee_section_pending">In attesa</string>
-    <string name="attendee_section_declined">Rifiutati</string>
-    <string name="attendee_section_delegated">Delegati</string>
-    <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Tutto in ordine</string>
     <string name="inbox_organizer_suffix">(organizzatore)</string>
     <string name="menu_invites">Inviti</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Vai alla data</string>
     <string name="menu_about">Informazioni</string>
     <string name="menu_more">Menu Altro</string>
@@ -1275,6 +1191,7 @@
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Nessun blocco libero di almeno un\'ora nell\'intervallo selezionato.</string>
+    <string name="share_from_kashcal_footer">Condiviso da KashCal</string>
     <string name="share_availability_chooser_title">Condividi disponibilità</string>
     <string name="share_availability_share_failed">Nessuna app per condividere</string>
     <string name="share_availability_window_section">Intervallo</string>
@@ -1293,5 +1210,5 @@
     <string name="share_as_card_all_day">Tutto il giorno</string>
     <string name="share_as_card_chooser_title">Condividi evento</string>
     <string name="share_as_card_share_failed">Impossibile condividere la scheda</string>
-    <string name="share_from_kashcal_footer">Condiviso da KashCal</string>
+
 </resources>

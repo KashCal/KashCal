@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
@@ -14,12 +13,27 @@
     <string name="date_widget_description">Viser dagens dato som et appikon</string>
     <string name="upcoming_widget_name">Kommende</string>
     <string name="upcoming_widget_description">Viser hendelser de neste 10 dagene og hopper over tomme dager</string>
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <string name="widget_loading_upcoming">Laster inn kommende hendelser…</string>
     <string name="widget_error_load_events">Kunne ikke laste hendelser, trykk for å åpne</string>
     <string name="widget_no_events_today">Ingen hendelser i dag</string>
     <string name="widget_add_event">+ Legg til hendelse</string>
     <string name="widget_no_events">Ingen hendelser</string>
     <string name="widget_no_upcoming_events">Ingen kommende hendelser</string>
+    <string name="cd_widget_calendar">Kalender</string>
+    <string name="cd_widget_add_event">Legg til hendelse</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ingen hendelser</string>
+    <string name="cd_widget_event_cancelled">%1$s, %2$s, avlyst</string>
+    <string name="channel_event_reminders">Hendelsespåminnelser</string>
+    <string name="channel_event_reminders_desc">Varsler for kommende kalenderhendelser</string>
+    <string name="channel_sync_progress">Synkroniseringsfremdrift</string>
+    <string name="channel_sync_progress_desc">Viser fremdrift under synkronisering av kalendere</string>
+    <string name="channel_sync_status">Synkroniseringsstatus</string>
+    <string name="channel_sync_status_desc">Varsler om synkronisering fullført og feil</string>
+    <string name="channel_event_invitations">Hendelsesinvitasjoner</string>
+    <string name="channel_event_invitations_desc">Varsler når du mottar en ny kalenderinvitasjon</string>
+    <string name="invite_notification_body">Fra %1$s · Trykk for å svare</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Ny hendelse</string>
@@ -35,9 +49,9 @@
     <string name="action_cancel">Avbryt</string>
     <string name="action_close">Lukk</string>
     <string name="action_ok">OK</string>
+    <string name="action_not_now">Ikke nå</string>
     <string name="action_allow">Tillat</string>
     <string name="action_no_thanks">Nei takk</string>
-    <string name="action_not_now">Ikke nå</string>
     <string name="action_sign_in">Logg inn</string>
     <string name="action_select">Velg</string>
     <string name="action_show_password">Vis passord</string>
@@ -70,6 +84,9 @@
     <string name="action_export_ics">Eksporter som .ics</string>
     <string name="action_confirm_delete">Bekreft sletting</string>
     <string name="action_delete_event">Slett hendelse</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <string name="rsvp_series_disclosure">Svaret gjelder hele serien.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_this_and_future">Denne og alle fremtidige</string>
@@ -107,9 +124,7 @@
     <string name="label_all_day">Hele dagen</string>
     <string name="label_today">I dag</string>
     <string name="label_go_to_date">Gå til dato</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
     <string name="label_week">U</string>
-    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -168,9 +183,9 @@
     <string name="restore_settings_subtitle">Gjenopprett KashCal-konfigurasjon fra en sikkerhetskopi</string>
     <string name="restore_confirm_title">Gjenopprette sikkerhetskopi?</string>
     <string name="restore_confirm_from">Sikkerhetskopi fra KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Innstillingene dine importeres.</string>
     <string name="action_restore">Gjenopprett</string>
     <string name="restore_success_title">Gjenoppretting fullført</string>
-    <string name="restore_confirm_message_prefs_only">Innstillingene dine importeres.</string>
     <string name="restore_success_message_prefs_only">Innstillinger importert.</string>
     <string name="restore_success_device_calendars_note">Velg enhetskalenderne dine på nytt hvis du bruker den funksjonen.</string>
     <string name="restore_error_title">Gjenoppretting mislyktes</string>
@@ -187,12 +202,13 @@
     <string name="onboarding_got_you">Vi hjelper deg.</string>
     <string name="onboarding_connect_prompt">Koble til iCloud for å se hendelsene dine her</string>
 
-    <!-- ==================== Nyheter ==================== -->
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_title">Nyheter</string>
     <string name="whats_new_dismiss">Forstått</string>
     <string name="whats_new_v598_title">Hjelp med å holde Android åpent</string>
     <string name="whats_new_v598_body">Google endrer måten du installerer apper på enheten. Vi trenger din hjelp.</string>
     <string name="whats_new_v598_action_label">Besøk keepandroidopen.org</string>
+
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Koble til iCloud</string>
     <string name="signin_caldav_title">Legg til CalDAV-konto</string>
@@ -236,13 +252,11 @@
     <string name="error_auth_session_expired_title">Økten har utløpt</string>
     <string name="error_auth_session_expired">iCloud-økten din har utløpt. Logg inn igjen for å fortsette synkronisering.</string>
     <string name="error_auth_account_locked">Apple ID-en din er låst. Besøk appleid.apple.com for å låse den opp.</string>
-
     <string name="error_network_offline">Du er frakoblet. Endringer synkroniseres når du er tilkoblet igjen.</string>
     <string name="error_network_timeout">Tilkoblingen tok for lang tid. Sjekk internettforbindelsen din og prøv igjen.</string>
     <string name="error_network_ssl">Sikker tilkobling mislyktes. Sjekk nettverksinnstillingene dine.</string>
     <string name="error_network_unknown_host">Kan ikke nå iCloud. Sjekk internettforbindelsen din.</string>
     <string name="error_network_connection_failed">Tilkobling mislyktes. Prøv igjen.</string>
-
     <string name="error_server_unavailable">iCloud er midlertidig utilgjengelig. Prøv igjen senere.</string>
     <string name="error_server_rate_limited">For mange forespørsler. Vent litt og prøv igjen.</string>
     <string name="error_server_forbidden">Tilgang nektet. Du har kanskje ikke tilgang til denne kalenderen.</string>
@@ -251,13 +265,11 @@
     <string name="error_conflict_generic">Denne hendelsen ble endret på en annen enhet. Tving synkronisering for å hente siste versjon.</string>
     <string name="error_conflict_with_event">\"%1$s\" ble endret på en annen enhet. Tving synkronisering for å hente siste versjon.</string>
     <string name="error_sync_token_expired">Synkroniseringsdata har utløpt. Utfører fullstendig synkronisering…</string>
-
     <string name="error_event_not_found">Hendelse ikke funnet.</string>
     <string name="error_calendar_not_found">Kalender ikke funnet.</string>
     <string name="error_calendar_read_only">Kan ikke endre hendelser i \"%1$s\" (skrivebeskyttet kalender).</string>
     <string name="error_event_invalid_data">Ugyldige hendelsesdata. Sjekk start- og sluttid.</string>
     <string name="error_event_invalid_recurrence">Ugyldig gjentakelsesmønster.</string>
-
     <string name="error_display_name_exists">En konto med navnet \"%1$s\" finnes allerede.</string>
     <string name="icloud_error_credentials_required">Apple ID og passord kreves</string>
     <string name="icloud_error_connection_timeout">Tilkoblingen fikk tidsavbrudd. Prøv igjen.</string>
@@ -266,47 +278,45 @@
     <string name="caldav_error_connection_timeout">Tilkoblingen fikk tidsavbrudd. Prøv igjen.</string>
     <string name="caldav_error_no_calendars">Ingen kalendere funnet på denne serveren.</string>
     <string name="caldav_error_unexpected">Uventet feil. Prøv igjen.</string>
+    <string name="caldav_error_with_lan_hint">%1$s\n\nHvis dette er en server på det lokale nettverket ditt, må du tillate tilgang til lokalt nettverk for å koble til.</string>
+    <string name="local_network_banner_title">Tilgang til lokalt nettverk kreves</string>
+    <string name="local_network_banner_body">Denne serveren ser ut til å være på det lokale nettverket ditt. Tillat tilgang til lokalt nettverk så KashCal kan koble til den.</string>
+    <string name="local_network_banner_allow">Tillat tilgang</string>
+    <string name="local_network_banner_dismiss">Ikke nå</string>
     <string name="password_change_error_account_not_found">Kontoen ble ikke funnet</string>
     <string name="password_change_error_no_credentials">Ingen eksisterende påloggingsdetaljer</string>
     <string name="password_change_error_unsupported_provider">Denne leverandøren støtter ikke endring av passordet</string>
     <string name="password_change_error_invalid">Ugyldig passord</string>
     <string name="password_change_error_network">Nettverksfeil, prøv igjen</string>
-
     <string name="error_import_file_not_found">Filen ble ikke funnet eller kan ikke leses.</string>
     <string name="error_import_invalid_format">Ugyldig kalenderfilformat.</string>
     <string name="error_import_partial">%1$d hendelser importert, %2$d mislyktes.</string>
     <string name="error_export_failed">Eksport av hendelser mislyktes.</string>
     <string name="error_export_no_events">Ingen hendelser å eksportere.</string>
     <string name="error_end_before_start">Sluttid må være etter starttid</string>
-
     <string name="error_storage_full_title">Lagringsplass full</string>
     <string name="error_storage_full">Ikke nok lagringsplass. Frigjør plass og prøv igjen.</string>
     <string name="error_database_corruption_title">Datafeil</string>
     <string name="error_database_corruption">Kalenderdataene dine kan være skadet. Kontakt support.</string>
     <string name="error_migration_title">Oppdateringsfeil</string>
     <string name="error_migration_failed">Oppdatering av appdata mislyktes. Installer appen på nytt.</string>
-
     <string name="error_permission_notification_title">Aktiver varsler?</string>
     <string name="error_permission_notification">KashCal trenger varslingstillatelse for å minne deg på kommende hendelser.</string>
     <string name="error_permission_alarm_title">Aktiver eksakte alarmer?</string>
     <string name="error_permission_alarm">KashCal trenger tillatelse for eksakte alarmer for presise påminnelser.</string>
     <string name="error_permission_storage">Lagringstillatelse kreves for import/eksport.</string>
-
     <string name="error_device_calendar_title">Kalenderfeil</string>
     <string name="error_device_calendar_write_failed">Kunne ikke lagre til enhetskalender. Prøv igjen.</string>
     <string name="error_device_calendar_permission">Kalendertillatelse kreves. Gi tillatelse i Innstillinger.</string>
     <string name="error_device_calendar_not_found">Kalender ikke funnet. Den kan ha blitt fjernet.</string>
     <string name="error_device_event_not_found">Hendelse ikke funnet. Den kan ha blitt slettet.</string>
     <string name="error_device_calendar_read_only">Denne kalenderen er skrivebeskyttet.</string>
-
     <string name="error_sync_no_accounts">Ingen iCloud-konto konfigurert. Konfigurer iCloud for å synkronisere kalenderne dine.</string>
     <string name="error_sync_partial">%1$d kalendere synkronisert, %2$d mislyktes.</string>
-
     <string name="error_unknown">Noe gikk galt. Prøv igjen.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valgt</string>
-    <string name="cd_checkmark">Valgt</string>
     <string name="cd_back">Tilbake</string>
     <string name="cd_search">Søk</string>
     <string name="cd_create_event">Opprett hendelse</string>
@@ -427,13 +437,21 @@
     <string name="accounts_cd_sync_warning">Synkroniseringsadvarsel</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
-    <string name="subscriptions_row_label">Kalenderstrømmer (ICS)</string>
-    <string name="subscriptions_row_hint">f.eks. helligdager, sport, skole</string>
     <string name="subscriptions_title">Kalenderstrømmer</string>
     <string name="subscriptions_section_add">Legg til</string>
     <string name="subscriptions_empty_ics">Ingen ICS-abonnementer</string>
     <string name="subscriptions_empty_ics_hint">Legg til en kalenderstrøm for å se hendelser</string>
     <string name="subscriptions_add_ics">Legg til ICS-kalender</string>
+    <string name="qs_tile_label">Legg til</string>
+    <string name="holiday_catalog_add">Legg til helligdagskalender</string>
+    <string name="holiday_catalog_search_label">Søk</string>
+    <string name="holiday_catalog_already_added">Lagt til</string>
+    <string name="holiday_catalog_empty">Ingen land funnet</string>
+    <string name="holiday_catalog_empty_hint">Prøv et annet navn</string>
+    <string name="holiday_catalog_validate_error">Kunne ikke nå denne kalenderen. Sjekk tilkoblingen og prøv igjen.</string>
+    <string name="holiday_catalog_attribution">Helligdagskalendere fra Mozilla Thunderbird, lisensiert under %1$s.</string>
+    <string name="subscriptions_row_label">Kalenderstrømmer (ICS)</string>
+    <string name="subscriptions_row_hint">f.eks. helligdager, sport, skole</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Bursdager &amp; jubileer</string>
@@ -453,8 +471,8 @@
     <string name="subscriptions_cd_back">Tilbake</string>
     <string name="subscriptions_cd_add">Legg til abonnement</string>
     <string name="snackbar_subscription_removed">Abonnement fjernet</string>
-    <string name="snackbar_subscription_already_exists">Allerede abonnert på denne URL-en</string>
     <string name="snackbar_action_undo">Angre</string>
+    <string name="snackbar_subscription_already_exists">Allerede abonnert på denne URL-en</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNK</string>
@@ -474,7 +492,6 @@
     <string name="account_detail_cd_show_password">Vis passord</string>
     <string name="account_detail_cd_hide_password">Skjul passord</string>
 
-
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Gi nytt navn til konto</string>
     <string name="rename_account_label">Kontonavn</string>
@@ -491,6 +508,7 @@
     <string name="settings_device_calendars">Enhetskalendere</string>
     <string name="settings_device_calendars_hint">Kalendere fra andre apper</string>
     <string name="settings_quick_event_add">Raskt hendelsestillegg</string>
+    <string name="settings_suggest_titles">Foreslå hendelsestitler</string>
     <string name="settings_week_numbers">Ukenummer</string>
     <string name="settings_show_declined">Vis avslåtte hendelser</string>
     <string name="settings_widget_event_limit">Widget-hendelsesgrense</string>
@@ -503,6 +521,8 @@
     <string name="settings_tap_to_enable">Trykk for å aktivere</string>
     <string name="settings_device_calendars_enabled">%1$d aktivert</string>
     <string name="settings_per_day">%1$d per dag</string>
+
+    <!-- ==================== Sign-In / Account ==================== -->
     <string name="signin_icloud_help_question">Hva er et appspesifikt passord?</string>
     <string name="caldav_trust_insecure_label">Stol på usikker tilkobling</string>
     <string name="action_add_another">Legg til en til</string>
@@ -564,7 +584,6 @@
     <string name="device_calendars_reminders_desc">Få varsler for enhetens kalenderhendelser</string>
     <string name="device_calendars_read_only_no_write">Skrivebeskyttet (ingen skrivetillatelse)</string>
     <string name="device_calendars_read_only_calendar">Skrivebeskyttet (kalenderen er skrivebeskyttet)</string>
-
     <string name="settings_developer_options">Utvikleralternativer</string>
     <string name="settings_sync_frequency">Synkroniseringsfrekvens</string>
     <string name="settings_preview">FORHÅNDSVISNING</string>
@@ -639,12 +658,11 @@
         <item quantity="one">%1$d hendelse</item>
         <item quantity="other">%1$d hendelser</item>
     </plurals>
-    <string name="upcoming_widget_open_calendar">Åpne kalender</string>
-    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
     <plurals name="upcoming_widget_more_days">
         <item quantity="one">%1$d dag til</item>
         <item quantity="other">%1$d dager til</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Åpne kalender</string>
     <plurals name="birthday_count">
         <item quantity="one">%1$d bursdag</item>
         <item quantity="other">%1$d bursdager</item>
@@ -685,7 +703,6 @@
         <item quantity="one">%1$d kalender</item>
         <item quantity="other">%1$d kalendere</item>
     </plurals>
-
     <plurals name="time_minutes">
         <item quantity="one">%1$d minutt</item>
         <item quantity="other">%1$d minutter</item>
@@ -718,7 +735,6 @@
         <item quantity="one">%1$d sek</item>
         <item quantity="other">%1$d sek</item>
     </plurals>
-
     <plurals name="reminder_minutes_before">
         <item quantity="one">%1$d minutt før</item>
         <item quantity="other">%1$d minutter før</item>
@@ -737,39 +753,98 @@
     </plurals>
 
     <!-- ==================== i18n: HomeScreen ==================== -->
-    <string name="recurring_this_event">Denne hendelsen</string>
-    <string name="recurring_all_events">Alle hendelser</string>
     <string name="dialog_edit_recurring_title">Lagre endringer i</string>
     <string name="dialog_delete_recurring_title">Slett</string>
     <string name="dialog_move_recurring_title">Flytt</string>
+    <string name="recurring_this_event">Denne hendelsen</string>
+    <string name="recurring_all_events">Alle hendelser</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <string name="attendee_sheet_title">Deltakere</string>
+    <string name="attendee_search_hint">Søk</string>
+    <string name="attendee_search_no_matches">Ingen treff</string>
+    <string name="attendee_picker_title">Legg til deltakere</string>
+    <string name="attendee_pick_add_people">Legg til deltakere</string>
+    <string name="attendee_pick_from_contacts">Navn eller e-post</string>
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d til</item>
+        <item quantity="other">+%1$d til</item>
+    </plurals>
+    <string name="attendee_contacts_permission_rationale">Foreslå personer fra kontaktene dine</string>
+    <string name="attendee_invalid_email">Skriv inn en fullstendig e-postadresse</string>
+    <string name="attendee_add_typed">Legg til \"%1$s\"</string>
+    <string name="attendee_scheduling_unavailable">Det er ikke mulig å invitere personer på denne kontoen</string>
+    <string name="device_attendee_local_no_delivery">Denne kalenderen kan ikke sende invitasjoner. Gjester lagres, men varsles ikke.</string>
+    <string name="action_save_and_notify">Lagre &amp; varsle</string>
+    <string name="attendee_section_going">Kommer</string>
+    <string name="attendee_section_maybe">Kanskje</string>
+    <string name="attendee_section_pending">Avventer</string>
+    <string name="attendee_section_declined">Avslått</string>
+    <string name="attendee_section_delegated">Delegert</string>
+    <string name="invitees_host_tag">Vert</string>
+    <string name="invitees_summary_you_alone">Deg</string>
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">Deg · %d invitert</item>
+        <item quantity="other">Deg · %d inviterte</item>
+    </plurals>
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d invitert</item>
+        <item quantity="other">%d inviterte</item>
+    </plurals>
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s arrangerer</string>
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Deg</string>
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · Deg + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · Deg + %3$d</item>
+    </plurals>
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">Deg + %d</item>
+        <item quantity="other">Deg + %d</item>
+    </plurals>
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d til</item>
+        <item quantity="other">%1$s · %2$d til</item>
+    </plurals>
+    <string name="rsvp_action_change_a11y">Endre svar</string>
+    <string name="rsvp_question_going">Kommer du?</string>
+    <string name="rsvp_action_yes">Ja</string>
+    <string name="rsvp_action_maybe">Kanskje</string>
+    <string name="rsvp_action_no">Nei</string>
+    <string name="rsvp_state_going">Du kommer</string>
+    <string name="rsvp_state_maybe">Kanskje</string>
+    <string name="rsvp_state_not_going">Du kommer ikke</string>
+    <string name="rsvp_action_change">Endre</string>
     <string name="empty_pick_a_day">Velg en dag. Grip den.</string>
-    <string name="empty_no_events_day">Ingenting her; ut og nyt været?</string>
+    <string name="cd_empty_pick_a_day">Velg en dag</string>
+    <string name="empty_no_events_day_1">En fri dag. Universet insisterer på at du hviler.</string>
+    <string name="empty_no_events_day_2">Ingen planer. Det er planen.</string>
+    <string name="empty_no_events_day_3">En gave: en tom dag.</string>
+    <string name="empty_no_events_day_4">Kalenderstatus: herlig tom.</string>
+    <string name="empty_no_events_day_5">Ingenting planlagt. Nyt roen.</string>
+    <string name="cd_empty_no_events_day">Rolig dag, ingenting planlagt</string>
     <string name="filter_date">Dato</string>
     <string name="label_select_date">Velg en dato</string>
     <string name="hint_tap_date_range">Trykk samme dato for en dag, eller en annen dato for et intervall</string>
-
     <string name="cd_clear">Tøm</string>
     <string name="cd_offline">Frakoblet</string>
+    <string name="cd_event_state_cancelled">avlyst</string>
+    <string name="cd_event_state_declined">avslått</string>
+    <string name="cd_event_state_past">tidligere hendelse</string>
     <string name="cd_loading_events">Laster inn hendelser</string>
+    <string name="cd_event_untitled">Hendelse uten tittel</string>
     <string name="cd_open_drawer">Åpne meny</string>
     <string name="cd_close_drawer">Lukk meny</string>
-    <!-- Content description for the AppBar rail toggle when the rail is closed -->
-    <!-- Content description for the AppBar rail toggle when the rail is open -->
     <string name="cd_calendar_view">Kalendervisning</string>
     <string name="cd_active_view">Aktiv visning</string>
-
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Måned (Full)</string>
     <string name="view_day">Dag</string>
     <string name="view_three_days">3 dager</string>
     <string name="view_year">År</string>
     <string name="view_insights">Innsikt</string>
-
     <string name="label_go_to_month">Gå til måned</string>
-
     <string name="action_more_options">Flere alternativer</string>
     <string name="quick_add_save_failed">Kunne ikke lagre hendelse</string>
-
     <string name="label_duration_days">dager</string>
     <string name="label_duration_hrs">timer</string>
     <string name="label_duration_min">min</string>
@@ -784,221 +859,7 @@
     <string name="ordinal_4th">4.</string>
     <string name="ordinal_nth">%1$d.</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nye</string>
-    <string name="sync_summary_updated">%1$d oppdatert</string>
-    <string name="sync_summary_removed">%1$d fjernet</string>
-
-    <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_circular_scrolling">Sirkulær rulling aktivert</string>
-
-    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
-    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Ingen påminnelse</string>
-    <string name="reminder_at_time_of_event">På tidspunktet for hendelsen</string>
-    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s før</string>
-    <string name="reminder_time_after">%1$s etter</string>
-    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM på dagen for hendelsen</string>
-    <string name="reminder_day_of_event_24h">09:00 på dagen for hendelsen</string>
-    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
-    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s før kl. 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s før kl. 09:00</string>
-    <!-- Short/compact reminder labels (used in chips and summaries) -->
-    <string name="reminder_short_off">Av</string>
-    <string name="reminder_short_at_event">Ved hendelse</string>
-    <string name="reminder_short_9am_12h">9AM</string>
-    <string name="reminder_short_9am_24h">09:00</string>
-    <string name="reminder_short_minutes">%1$dm</string>
-    <string name="reminder_short_hours">%1$dt</string>
-    <string name="reminder_short_days">%1$dd</string>
-    <string name="reminder_short_weeks">%1$du</string>
-    <string name="reminder_summary_none">Ingen</string>
-    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dt %2$dm</string>
-    <string name="duration_compact_short">%1$dt%2$dm</string>
-
-    <!-- Sync interval options -->
-    <string name="sync_manual_only">Kun manuelt</string>
-    <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Alle hendelser</string>
-
-    <!-- ==================== i18n: Notification Strings ==================== -->
-    <!-- Notification action buttons -->
-    <string name="action_snooze">Utsett</string>
-    <!-- Reminder notification content -->
-    <string name="notification_starting_now">Starter nå</string>
-    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">I morgen, %1$s</string>
-    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
-    <string name="notification_date_time">%1$s, %2$s</string>
-    <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Synkronisering fullført</string>
-    <string name="sync_notification_partial">Synkronisering delvis fullført</string>
-    <string name="sync_notification_auth_failed">Synkronisering: Autentisering mislyktes</string>
-    <string name="sync_notification_auth_reauth">Logg inn på kontoen din på nytt</string>
-    <string name="sync_notification_failed">Synkronisering mislyktes</string>
-    <string name="sync_notification_parse_title">Noen hendelser kunne ikke synkroniseres</string>
-    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s i %2$s kunne ikke synkroniseres. Prøv en full synkronisering i Innstillinger.</string>
-    <string name="sync_notification_conflict_title">Synkroniseringskonflikt løst</string>
-    <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Lokale endringer i \"%1$s\" gikk tapt på grunn av synkroniseringskonflikt. Serverversjonen brukes.</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Lokale endringer i %1$s gikk tapt på grunn av synkroniseringskonflikter. Serverversjoner brukes.</string>
-    <string name="sync_notification_expired_title">Synkroniseringsendringer utløpt</string>
-    <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
-    <string name="sync_notification_expired_content_calendar">%1$s i %2$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
-    <string name="sync_notification_expired_content_calendars">%1$s på tvers av %2$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
-    <!-- Sync notification content — %1$d = calendar count -->
-    <plurals name="sync_notification_calendars">
-        <item quantity="one">%1$d kalender synkronisert</item>
-        <item quantity="other">%1$d kalendere synkronisert</item>
-    </plurals>
-    <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d endring</item>
-        <item quantity="other">, %1$d endringer</item>
-    </plurals>
-    <plurals name="sync_notification_errors">
-        <item quantity="one">, %1$d feil</item>
-        <item quantity="other">, %1$d feil</item>
-    </plurals>
-
-    <!-- ==================== i18n: Contact Event Titles ==================== -->
-    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s sin %2$s bursdag</string>
-    <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s sin bursdag</string>
-    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%1$s sitt %2$s jubileum</string>
-    <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">%1$s sitt jubileum</string>
-    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
-    <string name="ordinal_suffix_st">%1$d.</string>
-    <string name="ordinal_suffix_nd">%1$d.</string>
-    <string name="ordinal_suffix_rd">%1$d.</string>
-    <string name="ordinal_suffix_th">%1$d.</string>
-
-    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
-    <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synkroniserer kalendere…</string>
-    <string name="sync_banner_preparing">Forbereder synkronisering…</string>
-    <string name="sync_banner_complete_errors">Synkronisering fullført med feil</string>
-    <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Synkronisering mislyktes: %1$s</string>
-    <string name="error_unknown_error">Ukjent feil</string>
-
-    <!-- Sync change snackbar messages -->
-    <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Ny hendelse: %1$s</string>
-    <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d ny hendelse</item>
-        <item quantity="other">%1$d nye hendelser</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d hendelse oppdatert</item>
-        <item quantity="other">%1$d hendelser oppdatert</item>
-    </plurals>
-    <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d hendelse fjernet</item>
-        <item quantity="other">%1$d hendelser fjernet</item>
-    </plurals>
-    <!-- %1$d = total change count -->
-    <plurals name="sync_snackbar_calendar_updates">
-        <item quantity="one">%1$d kalenderoppdatering</item>
-        <item quantity="other">%1$d kalenderoppdateringer</item>
-    </plurals>
-
-    <!-- ==================== i18n: HomeScreen Day View ==================== -->
-    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
-    <string name="day_x_of_y">Dag %1$d av %2$d</string>
-    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 av %1$d · starter %2$s</string>
-    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d av %2$d · slutter %3$s</string>
-    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s → %2$s · Hele dagen</string>
-    <string name="event_date_all_day">%1$s · Hele dagen</string>
-    <!-- ICS import date+all day patterns -->
-    <string name="event_date_range_all_day_parens">%1$s - %2$s (Hele dagen)</string>
-    <string name="event_date_all_day_parens">%1$s (Hele dagen)</string>
-
-    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
-    <!-- Save button for event form -->
-    <string name="action_save_event">Lagre hendelse</string>
-    <!-- Badges -->
-    <string name="badge_beta">Beta</string>
-    <string name="badge_new">Ny</string>
-    <!-- Color names for accessibility -->
-    <string name="color_red">Rød</string>
-    <string name="color_orange">Oransje</string>
-    <string name="color_yellow">Gul</string>
-    <string name="color_green">Grønn</string>
-    <string name="color_cyan">Cyan</string>
-    <string name="color_blue">Blå</string>
-    <string name="color_purple">Lilla</string>
-    <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">Møtelenke: %1$s</string>
-    <string name="cd_phone_number">Telefonnummer</string>
-    <string name="cd_email_link">E-post: %1$s</string>
-    <string name="cd_web_link">Lenke: %1$s</string>
-    <string name="cd_text_with_links">Tekst med %1$d lenker: %2$s</string>
-    <string name="cd_text_with_link">Tekst med 1 lenke: %1$s</string>
-    <!-- Multi-day event: all-day indicator with day number -->
-    <string name="day_x_of_y_all_day">Dag %1$d av %2$d (Hele dagen)</string>
-    <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d synk.   ↑%2$d sendt   ↓%3$d mottatt</string>
-    <string name="sync_history_stats_issues">%1$d synk.   ↑%2$d sendt   ↓%3$d mottatt   ⚠ %4$d problemer</string>
-    <string name="sync_history_failed">Mislyktes</string>
-    <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">Hver time</string>
-    <string name="ics_sync_every_n_hours">Hver %1$d. time</string>
-    <string name="ics_sync_daily">Daglig</string>
-    <string name="ics_sync_weekly">Ukentlig</string>
-    <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL er påkrevd</string>
-    <string name="ics_url_invalid_scheme">URL må starte med http://, https:// eller webcal://</string>
-    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
-    <!-- %1$d = HTTP status code, e.g. 404 -->
-    <string name="ics_fetch_error_http">Serveren returnerte en feil (%1$d). Sjekk URL-en.</string>
-    <string name="ics_fetch_error_empty">Kalenderfeeden er tom.</string>
-    <string name="ics_fetch_error_not_calendar">Denne URL-en ser ikke ut som en kalenderfeed.</string>
-    <!-- Event confirmation snackbar -->
-
-    <!-- Widget/Channel accessibility -->
-    <string name="cd_widget_calendar">Kalender</string>
-    <string name="cd_widget_add_event">Legg til hendelse</string>
-    <string name="cd_widget_day_cell">%1$s, %2$s</string>
-    <string name="cd_widget_event_cancelled">%1$s, %2$s, avlyst</string>
-    <string name="cd_widget_no_events">ingen hendelser</string>
-    <string name="channel_event_reminders">Hendelsespåminnelser</string>
-    <string name="channel_event_reminders_desc">Varsler for kommende kalenderhendelser</string>
-    <string name="channel_sync_progress">Synkroniseringsfremdrift</string>
-    <string name="channel_sync_progress_desc">Viser fremdrift under synkronisering av kalendere</string>
-    <string name="channel_sync_status">Synkroniseringsstatus</string>
-    <string name="channel_sync_status_desc">Varsler om synkronisering fullført og feil</string>
-    <string name="channel_event_invitations">Hendelsesinvitasjoner</string>
-    <string name="channel_event_invitations_desc">Varsler når du mottar en ny kalenderinvitasjon</string>
-    <string name="invite_notification_body">Fra %1$s · Trykk for å svare</string>
-
-    <!-- RSVP Actions -->
-    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
-    <string name="rsvp_series_disclosure">Svaret gjelder hele serien.</string>
-    <string name="invitees_host_tag">Vert</string>
-    <string name="rsvp_question_going">Kommer du?</string>
-    <string name="rsvp_action_yes">Ja</string>
-    <string name="rsvp_action_maybe">Kanskje</string>
-    <string name="rsvp_action_no">Nei</string>
-    <string name="rsvp_state_going">Du kommer</string>
-    <string name="rsvp_state_maybe">Kanskje</string>
-    <string name="rsvp_state_not_going">Du kommer ikke</string>
-    <string name="rsvp_action_change">Endre</string>
-
-
-    <!-- Recurrence rules -->
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
     <string name="rrule_does_not_repeat">Gjentas ikke</string>
     <string name="rrule_freq_daily">Daglig</string>
     <string name="rrule_freq_weekly">Ukentlig</string>
@@ -1014,6 +875,10 @@
     <string name="rrule_freq_on_last_day">%1$s på siste dag</string>
     <string name="rrule_freq_on_day_n">%1$s på dag %2$d</string>
     <string name="rrule_ordinal_last">siste</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d gang</item>
+        <item quantity="other">, %1$d ganger</item>
+    </plurals>
     <string name="rrule_until_suffix">, til %1$s</string>
     <string name="rrule_freq_never">Aldri</string>
     <string name="rrule_freq_custom">Tilpasset</string>
@@ -1026,12 +891,147 @@
     <string name="cd_increase_interval">Øk intervall</string>
     <string name="rrule_starting">%1$s fra %2$s%3$s</string>
     <string name="rrule_since">%1$s · siden %2$s</string>
-    <plurals name="rrule_count_suffix">
-        <item quantity="one">, %1$d gang</item>
-        <item quantity="other">, %1$d ganger</item>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d nye</string>
+    <string name="sync_summary_updated">%1$d oppdatert</string>
+    <string name="sync_summary_removed">%1$d fjernet</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">Sirkulær rulling aktivert</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Ingen påminnelse</string>
+    <string name="reminder_at_time_of_event">På tidspunktet for hendelsen</string>
+    <string name="reminder_time_before">%1$s før</string>
+    <string name="reminder_time_after">%1$s etter</string>
+    <string name="reminder_day_of_event_12h">9 AM på dagen for hendelsen</string>
+    <string name="reminder_day_of_event_24h">09:00 på dagen for hendelsen</string>
+    <string name="reminder_before_at_12h">%1$s før kl. 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s før kl. 09:00</string>
+    <string name="reminder_short_off">Av</string>
+    <string name="reminder_short_at_event">Ved hendelse</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$dt</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$du</string>
+    <string name="reminder_summary_none">Ingen</string>
+    <string name="duration_compact">%1$dt %2$dm</string>
+    <string name="duration_compact_short">%1$dt%2$dm</string>
+    <string name="sync_manual_only">Kun manuelt</string>
+    <string name="sync_lookback_all">Alle hendelser</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Utsett</string>
+    <string name="notification_starting_now">Starter nå</string>
+    <plurals name="reminder_in_days">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dager</item>
+    </plurals>
+    <string name="notification_tomorrow_time">I morgen, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Synkronisering fullført</string>
+    <string name="sync_notification_partial">Synkronisering delvis fullført</string>
+    <string name="sync_notification_auth_failed">Synkronisering: Autentisering mislyktes</string>
+    <string name="sync_notification_auth_reauth">Logg inn på kontoen din på nytt</string>
+    <string name="sync_notification_failed">Synkronisering mislyktes</string>
+    <string name="sync_notification_parse_title">Noen hendelser kunne ikke synkroniseres</string>
+    <string name="sync_notification_parse_content">%1$s i %2$s kunne ikke synkroniseres. Prøv en full synkronisering i Innstillinger.</string>
+    <string name="sync_notification_conflict_title">Synkroniseringskonflikt løst</string>
+    <string name="sync_notification_conflict_single">Lokale endringer i \"%1$s\" gikk tapt på grunn av synkroniseringskonflikt. Serverversjonen brukes.</string>
+    <string name="sync_notification_conflict_multi">Lokale endringer i %1$s gikk tapt på grunn av synkroniseringskonflikter. Serverversjoner brukes.</string>
+    <string name="sync_notification_expired_title">Synkroniseringsendringer utløpt</string>
+    <string name="sync_notification_expired_content">%1$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
+    <string name="sync_notification_expired_content_calendar">%1$s i %2$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
+    <string name="sync_notification_expired_content_calendars">%1$s på tvers av %2$s kunne ikke synkroniseres etter 30 dager. Serverversjonen brukes. Tving synkronisering for å prøve igjen.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d kalender synkronisert</item>
+        <item quantity="other">%1$d kalendere synkronisert</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d endring</item>
+        <item quantity="other">, %1$d endringer</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d feil</item>
+        <item quantity="other">, %1$d feil</item>
     </plurals>
 
-    <!-- ==================== Insights ==================== -->
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s sin %2$s bursdag</string>
+    <string name="contact_birthday">%1$s sin bursdag</string>
+    <string name="contact_anniversary_with_age">%1$s sitt %2$s jubileum</string>
+    <string name="contact_anniversary">%1$s sitt jubileum</string>
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Synkroniserer kalendere…</string>
+    <string name="sync_banner_preparing">Forbereder synkronisering…</string>
+    <string name="sync_banner_complete_errors">Synkronisering fullført med feil</string>
+    <string name="sync_banner_failed">Synkronisering mislyktes: %1$s</string>
+    <string name="error_unknown_error">Ukjent feil</string>
+    <string name="sync_snackbar_new_event">Ny hendelse: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d ny hendelse</item>
+        <item quantity="other">%1$d nye hendelser</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d hendelse oppdatert</item>
+        <item quantity="other">%1$d hendelser oppdatert</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d hendelse fjernet</item>
+        <item quantity="other">%1$d hendelser fjernet</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d kalenderoppdatering</item>
+        <item quantity="other">%1$d kalenderoppdateringer</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Dag %1$d av %2$d</string>
+    <string name="day_starts">Dag 1 av %1$d · starter %2$s</string>
+    <string name="day_ends">Dag %1$d av %2$d · slutter %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Hele dagen</string>
+    <string name="event_date_all_day">%1$s · Hele dagen</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Hele dagen)</string>
+    <string name="event_date_all_day_parens">%1$s (Hele dagen)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Lagre hendelse</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Ny</string>
+    <string name="color_red">Rød</string>
+    <string name="color_orange">Oransje</string>
+    <string name="color_yellow">Gul</string>
+    <string name="color_green">Grønn</string>
+    <string name="color_cyan">Cyan</string>
+    <string name="color_blue">Blå</string>
+    <string name="color_purple">Lilla</string>
+    <string name="cd_meeting_link">Møtelenke: %1$s</string>
+    <string name="cd_phone_number">Telefonnummer</string>
+    <string name="cd_email_link">E-post: %1$s</string>
+    <string name="cd_web_link">Lenke: %1$s</string>
+    <string name="cd_text_with_links">Tekst med %1$d lenker: %2$s</string>
+    <string name="cd_text_with_link">Tekst med 1 lenke: %1$s</string>
+    <string name="day_x_of_y_all_day">Dag %1$d av %2$d (Hele dagen)</string>
+    <string name="sync_history_stats">%1$d synk.   ↑%2$d sendt   ↓%3$d mottatt</string>
+    <string name="sync_history_stats_issues">%1$d synk.   ↑%2$d sendt   ↓%3$d mottatt   ⚠ %4$d problemer</string>
+    <string name="sync_history_failed">Mislyktes</string>
+    <string name="ics_sync_every_hour">Hver time</string>
+    <string name="ics_sync_every_n_hours">Hver %1$d. time</string>
+    <string name="ics_sync_daily">Daglig</string>
+    <string name="ics_sync_weekly">Ukentlig</string>
+    <string name="ics_url_required">URL er påkrevd</string>
+    <string name="ics_url_invalid_scheme">URL må starte med http://, https:// eller webcal://</string>
+    <string name="ics_fetch_error_http">Serveren returnerte en feil (%1$d). Sjekk URL-en.</string>
+    <string name="ics_fetch_error_empty">Kalenderfeeden er tom.</string>
+    <string name="ics_fetch_error_not_calendar">Denne URL-en ser ikke ut som en kalenderfeed.</string>
     <string name="insights_title">Innsikt</string>
     <string name="insights_period_this_week">Uke</string>
     <string name="insights_period_last_week">Forrige uke</string>
@@ -1069,17 +1069,16 @@
     <string name="insight_next_free_block">Neste ledige blokk: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_daily_chart">Daglig fordeling: travleste dag er %1$s</string>
 
-    <!-- ==================== Event Color / Availability ==================== -->
+    <!-- ==================== Event Form Redesign ==================== -->
     <string name="label_availability">Tilgjengelighet</string>
     <string name="label_busy">Opptatt</string>
     <string name="label_free">Ledig</string>
     <string name="label_event_color">Hendelsesfarge</string>
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Egendefinert</string>
-    <string name="cd_event_state_cancelled">avlyst</string>
-    <string name="cd_event_state_declined">avslått</string>
-    <string name="cd_event_state_past">tidligere hendelse</string>
-    <string name="cd_event_untitled">Hendelse uten tittel</string>
+    <string name="cd_checkmark">Valgt</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_saddlebrown">Salbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørk oransje</string>
     <string name="color_gold">Gull</string>
@@ -1089,6 +1088,8 @@
     <string name="color_royalblue">Kongeblå</string>    <string name="color_mediumorchid">Orkidé</string>
     <string name="color_hotpink">Knallrosa</string>
     <string name="color_dimgray">Matt grå</string>
+
+    <!-- ==================== Color Wheel Picker ==================== -->
     <string name="hue_red">Rød</string>
     <string name="hue_orange">Oransje</string>
     <string name="hue_yellow">Gul</string>
@@ -1101,7 +1102,8 @@
     <string name="hue_neutral">Nøytral</string>
     <string name="label_more_colors">Flere farger</string>
     <string name="label_back_to_grid">Tilbake</string>
-    <string name="settings_suggest_titles">Foreslå hendelsestitler</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
     <string name="label_attendees">Deltakere</string>
     <string name="attendee_you_marker">Du</string>
     <string name="attendee_card_going">Kommer</string>
@@ -1111,6 +1113,8 @@
     <string name="attendee_card_hosting">Vert</string>
     <string name="attendee_action_copy">Kopier e-post</string>
     <string name="attendee_action_email">Send e-post</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
     <string name="attendee_email_copied">E-post kopiert</string>
     <string name="attendee_no_email_app">Ingen e-postapp installert</string>
     <string name="attendee_show_all">Vis alle deltakere</string>
@@ -1119,32 +1123,9 @@
     <string name="attendee_status_tentative">Foreløpig</string>
     <string name="attendee_status_delegated">Delegert</string>
     <string name="attendee_status_pending">Venter</string>
-    <string name="attendee_sheet_title">Deltakere</string>
-    <string name="attendee_search_hint">Søk</string>
-    <string name="attendee_search_no_matches">Ingen treff</string>
-    <string name="attendee_section_going">Kommer</string>
-    <string name="attendee_section_maybe">Kanskje</string>
-    <string name="attendee_section_pending">Avventer</string>
-    <string name="attendee_section_declined">Avslått</string>
-    <string name="attendee_section_delegated">Delegert</string>
-    <string name="attendee_picker_title">Legg til deltakere</string>
-    <string name="attendee_pick_add_people">Legg til deltakere</string>
-    <string name="attendee_pick_from_contacts">Navn eller e-post</string>
-    <plurals name="attendee_overflow_count">
-        <item quantity="one">+%1$d til</item>
-        <item quantity="other">+%1$d til</item>
-    </plurals>
-    <string name="attendee_contacts_permission_rationale">Foreslå personer fra kontaktene dine</string>
-    <string name="attendee_invalid_email">Skriv inn en fullstendig e-postadresse</string>
-    <string name="attendee_add_typed">Legg til \"%1$s\"</string>
-    <string name="attendee_scheduling_unavailable">Det er ikke mulig å invitere personer på denne kontoen</string>
-    <string name="device_attendee_local_no_delivery">Denne kalenderen kan ikke sende invitasjoner. Gjester lagres, men varsles ikke.</string>
-    <string name="action_save_and_notify">Lagre &amp; varsle</string>
-    <!-- Invitation Inbox -->
     <string name="inbox_empty_caught_up">Alt er ajour</string>
     <string name="inbox_organizer_suffix">(arrangør)</string>
     <string name="menu_invites">Invitasjoner</string>
-    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Gå til dato</string>
     <string name="menu_about">Om</string>
     <string name="menu_more">Mer-meny</string>
@@ -1152,15 +1133,26 @@
         <item quantity="one">Mer-meny, %d invitasjon venter</item>
         <item quantity="other">Mer-meny, %d invitasjoner venter</item>
     </plurals>
+
+    <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Del tilgjengelighet</string>
     <string name="share_availability_sheet_title">Del tilgjengelighet</string>
+    <plurals name="share_availability_days_label">
+        <item quantity="one">Neste %1$d dag</item>
+        <item quantity="other">Neste %1$d dager</item>
+    </plurals>
     <string name="share_availability_hours_label">Arbeidstid: %1$s – %2$s</string>
     <string name="share_availability_all_day_toggle_title">Heldagshendelser som opptatt</string>
     <string name="share_availability_share_button">Del</string>
+    <plurals name="share_availability_header">
+        <item quantity="one">Ledig den neste %1$d dagen (%2$s – %3$s):</item>
+        <item quantity="other">Ledig de neste %1$d dagene (%2$s – %3$s):</item>
+    </plurals>
     <string name="share_availability_day_line">%1$s: %2$s</string>
     <string name="share_availability_block_separator">, </string>
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <string name="share_availability_empty">Ingen ledige blokker på minst én time i det valgte intervallet.</string>
+    <string name="share_from_kashcal_footer">Delt fra KashCal</string>
     <string name="share_availability_chooser_title">Del tilgjengelighet</string>
     <string name="share_availability_share_failed">Ingen app tilgjengelig for deling</string>
     <string name="share_availability_window_section">Periode</string>
@@ -1179,53 +1171,5 @@
     <string name="share_as_card_all_day">Hele dagen</string>
     <string name="share_as_card_chooser_title">Del hendelse</string>
     <string name="share_as_card_share_failed">Kunne ikke dele kortet</string>
-    <string name="share_from_kashcal_footer">Delt fra KashCal</string>
-    <plurals name="share_availability_days_label">
-        <item quantity="one">Neste %1$d dag</item>
-        <item quantity="other">Neste %1$d dager</item>
-    </plurals>
-    <plurals name="share_availability_header">
-        <item quantity="one">Ledig den neste %1$d dagen (%2$s – %3$s):</item>
-        <item quantity="other">Ledig de neste %1$d dagene (%2$s – %3$s):</item>
-    </plurals>
-    <string name="invitees_summary_you_alone">Deg</string>
-    <plurals name="invitees_summary_you_organizing">
-        <item quantity="one">Deg · %d invitert</item>
-        <item quantity="other">Deg · %d inviterte</item>
-    </plurals>
-    <plurals name="invitees_summary_off_list_total">
-        <item quantity="one">%d invitert</item>
-        <item quantity="other">%d inviterte</item>
-    </plurals>
-    <string name="invitees_summary_off_list_with_host">%1$s · %2$s arrangerer</string>
-    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · Deg</string>
-    <plurals name="invitees_summary_organizer_plus_you_plus_n">
-        <item quantity="one">%1$s (%2$s) · Deg + %3$d</item>
-        <item quantity="other">%1$s (%2$s) · Deg + %3$d</item>
-    </plurals>
-    <plurals name="invitees_summary_you_plus_n">
-        <item quantity="one">Deg + %d</item>
-        <item quantity="other">Deg + %d</item>
-    </plurals>
-    <plurals name="invitees_summary_organizer_other_more">
-        <item quantity="one">%1$s · %2$d til</item>
-        <item quantity="other">%1$s · %2$d til</item>
-    </plurals>
-    <string name="rsvp_action_change_a11y">Endre svar</string>
-    <plurals name="reminder_in_days">
-        <item quantity="one">Om %1$d dag</item>
-        <item quantity="other">Om %1$d dager</item>
-    </plurals>
-    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
-    <string name="holiday_catalog_add">Legg til helligdagskalender</string>
-    <string name="holiday_catalog_search_label">Søk</string>
-    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
-    <string name="holiday_catalog_already_added">Lagt til</string>
-    <string name="holiday_catalog_empty">Ingen land funnet</string>
-    <string name="holiday_catalog_empty_hint">Prøv et annet navn</string>
-    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
-    <string name="holiday_catalog_validate_error">Kunne ikke nå denne kalenderen. Sjekk tilkoblingen og prøv igjen.</string>
-    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
-    <string name="holiday_catalog_attribution">Helligdagskalendere fra Mozilla Thunderbird, lisensiert under %1$s.</string>
-    <string name="qs_tile_label">Legg til</string>
+
 </resources>

@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -81,7 +82,13 @@ fun CalDavSignInSheet(
     onPasswordChange: (String) -> Unit,
     onTrustInsecureChange: (Boolean) -> Unit,
     onDiscover: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    // Android 17+ local-network permission ask for LAN servers. Defaulted so the
+    // pre-existing secondary call site compiles unchanged; the authoritative
+    // top-level sheet passes real values.
+    showLocalNetworkBanner: Boolean = false,
+    onRequestLocalNetwork: () -> Unit = {},
+    onDismissLocalNetworkBanner: () -> Unit = {},
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -132,7 +139,10 @@ fun CalDavSignInSheet(
                         onTrustInsecureChange = onTrustInsecureChange,
                         onConnect = onDiscover,
                         onDismiss = onDismiss,
-                        focusManager = focusManager
+                        focusManager = focusManager,
+                        showLocalNetworkBanner = showLocalNetworkBanner,
+                        onRequestLocalNetwork = onRequestLocalNetwork,
+                        onDismissLocalNetworkBanner = onDismissLocalNetworkBanner,
                     )
                 }
 
@@ -156,11 +166,24 @@ private fun NotConnectedContent(
     onTrustInsecureChange: (Boolean) -> Unit,
     onConnect: () -> Unit,
     onDismiss: () -> Unit,
-    focusManager: androidx.compose.ui.focus.FocusManager
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    showLocalNetworkBanner: Boolean,
+    onRequestLocalNetwork: () -> Unit,
+    onDismissLocalNetworkBanner: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
+        // Local-network permission banner (Android 17+): inline, dismissible,
+        // never blocks the fields below.
+        if (showLocalNetworkBanner) {
+            LocalNetworkPermissionBanner(
+                onAllow = onRequestLocalNetwork,
+                onDismiss = onDismissLocalNetworkBanner,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         // Server URL field
         OutlinedTextField(
             value = state.serverUrl,
@@ -363,6 +386,54 @@ private fun NotConnectedContent(
         // Cancel button
         TextButton(onClick = onDismiss) {
             Text(stringResource(R.string.action_cancel))
+        }
+    }
+}
+
+/**
+ * Inline, dismissible banner asking for local-network access when the entered
+ * Server URL looks like a LAN address (Android 17+). Follows the app's
+ * inline-over-popup philosophy: it never blocks the fields, and manual entry
+ * works whether or not the user allows.
+ */
+@Composable
+private fun LocalNetworkPermissionBanner(
+    onAllow: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.local_network_banner_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.local_network_banner_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.local_network_banner_dismiss))
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Button(onClick = onAllow) {
+                    Text(stringResource(R.string.local_network_banner_allow))
+                }
+            }
         }
     }
 }
