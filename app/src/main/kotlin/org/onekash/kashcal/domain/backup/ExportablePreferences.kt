@@ -20,6 +20,7 @@ object ExportablePreferences {
     private val KIND_BY_KEY: Map<String, PrefKind> = mapOf(
         PreferencesKeys.FIRST_DAY_OF_WEEK.name to PrefKind.INT,
         PreferencesKeys.SHOW_WEEK_NUMBERS.name to PrefKind.BOOL,
+        PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.TAGS_ABOVE_NOTES.name to PrefKind.BOOL,
         PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
         PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
@@ -51,12 +52,16 @@ object ExportablePreferences {
         PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN.name to PrefKind.INT,
         PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN.name to PrefKind.INT,
         PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY.name to PrefKind.BOOL,
+        PreferencesKeys.USER_INITIALS.name to PrefKind.STRING,
     )
 
     val KEYS: List<Preferences.Key<*>> = listOf(
         // Calendar view
         PreferencesKeys.FIRST_DAY_OF_WEEK,
         PreferencesKeys.SHOW_WEEK_NUMBERS,
+        // Agenda week bar expanded/collapsed — a deliberate, persistent display
+        // choice (like SHOW_WEEK_NUMBERS), so it travels in a settings backup.
+        PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
         PreferencesKeys.DEFAULT_EVENT_DURATION,
@@ -95,9 +100,11 @@ object ExportablePreferences {
         PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN,
         PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN,
         PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY,
+        // Profile — user's avatar initials travel with a settings backup
+        PreferencesKeys.USER_INITIALS,
     ).also {
-        require(it.size == 33) {
-            "KEYS size drifted; expected 33 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 35) {
+            "KEYS size drifted; expected 35 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

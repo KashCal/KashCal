@@ -123,6 +123,7 @@
     <string name="view_month">Maand</string>
     <string name="label_all_day">Hele dag</string>
     <string name="label_today">Vandaag</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Ga naar datum</string>
     <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -831,6 +832,8 @@
     <string name="cd_event_state_declined">afgewezen</string>
     <string name="cd_event_state_past">afgelopen afspraak</string>
     <string name="cd_loading_events">Afspraken laden</string>
+    <string name="cd_collapse_week_bar">Weekbalk verbergen</string>
+    <string name="cd_expand_week_bar">Weekbalk tonen</string>
     <string name="cd_event_untitled">Afspraak zonder titel</string>
     <string name="cd_open_drawer">Menu openen</string>
     <string name="cd_close_drawer">Menu sluiten</string>
@@ -845,6 +848,7 @@
     <string name="label_go_to_month">Ga naar maand</string>
     <string name="action_more_options">Meer opties</string>
     <string name="quick_add_save_failed">Kon afspraak niet opslaan</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dagen</string>
     <string name="label_duration_hrs">uur</string>
     <string name="label_duration_min">min</string>
@@ -853,6 +857,8 @@
     <string name="recurrence_on_day">Op dag %1$d</string>
     <string name="recurrence_on_last_day">Op de laatste dag van de maand</string>
     <string name="recurrence_on_nth_weekday">Op de %1$s %2$s</string>
+    <string name="recurrence_which">Welke</string>
+    <string name="recurrence_weekday">Weekdag</string>
     <string name="ordinal_1st">1e</string>
     <string name="ordinal_2nd">2e</string>
     <string name="ordinal_3rd">3e</string>
@@ -1133,6 +1139,14 @@
         <item quantity="one">Meer-menu, %d uitnodiging in afwachting</item>
         <item quantity="other">Meer-menu, %d uitnodigingen in afwachting</item>
     </plurals>
+    <string name="menu_privacy_security">Privacy &amp; beveiliging</string>
+    <string name="cd_edit_initials">Je initialen bewerken</string>
+    <string name="hub_initials_hint">Tik om je initialen in te stellen</string>
+    <string name="hub_initials_field_label">Initialen</string>
+    <string name="hub_initials_save">Opslaan</string>
+    <string name="hub_initials_cancel">Annuleren</string>
+    <string name="hub_section_make_it_yours">Maak het je eigen</string>
+    <string name="hub_accounts_and_settings">Accounts en instellingen</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Beschikbaarheid delen</string>

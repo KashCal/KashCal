@@ -123,6 +123,7 @@
     <string name="view_month">เดือน</string>
     <string name="label_all_day">ทั้งวัน</string>
     <string name="label_today">วันนี้</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ไปที่วันที่</string>
     <string name="label_week">ส</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">ปฏิเสธแล้ว</string>
     <string name="cd_event_state_past">กิจกรรมที่ผ่านมา</string>
     <string name="cd_loading_events">กำลังโหลดกิจกรรม</string>
+    <string name="cd_collapse_week_bar">ซ่อนแถบสัปดาห์</string>
+    <string name="cd_expand_week_bar">แสดงแถบสัปดาห์</string>
     <string name="cd_event_untitled">กิจกรรมที่ไม่มีชื่อ</string>
     <string name="cd_open_drawer">เปิดลิ้นชัก</string>
     <string name="cd_close_drawer">ปิดลิ้นชัก</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">ไปที่เดือน</string>
     <string name="action_more_options">ตัวเลือกเพิ่มเติม</string>
     <string name="quick_add_save_failed">บันทึกกิจกรรมไม่สำเร็จ</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">วัน</string>
     <string name="label_duration_hrs">ชม.</string>
     <string name="label_duration_min">นาที</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">วันที่ %1$d ของเดือน</string>
     <string name="recurrence_on_last_day">วันสุดท้ายของเดือน</string>
     <string name="recurrence_on_nth_weekday">%2$sที่ %1$s ของเดือน</string>
+    <string name="recurrence_which">ลำดับ</string>
+    <string name="recurrence_weekday">วันในสัปดาห์</string>
     <string name="ordinal_1st">1</string>
     <string name="ordinal_2nd">2</string>
     <string name="ordinal_3rd">3</string>
@@ -1084,6 +1090,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">เมนูเพิ่มเติม มีคำเชิญรอดำเนินการ %d รายการ</item>
     </plurals>
+    <string name="menu_privacy_security">ความเป็นส่วนตัวและความปลอดภัย</string>
+    <string name="cd_edit_initials">แก้ไขอักษรย่อ</string>
+    <string name="hub_initials_hint">แตะเพื่อตั้งอักษรย่อ</string>
+    <string name="hub_initials_field_label">อักษรย่อ</string>
+    <string name="hub_initials_save">บันทึก</string>
+    <string name="hub_initials_cancel">ยกเลิก</string>
+    <string name="hub_section_make_it_yours">ปรับแต่งให้เป็นของคุณ</string>
+    <string name="hub_accounts_and_settings">บัญชีและการตั้งค่า</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">แชร์เวลาว่าง</string>

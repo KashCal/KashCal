@@ -345,29 +345,6 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `setAccentSeed persists seed, selects SEED source, and refreshes widgets`() = runTest {
-        val viewModel = createViewModel()
-
-        viewModel.setAccentSeed(0xFF1E90FF.toInt())
-        advanceUntilIdle()
-
-        coVerify { dataStore.setAccentSeed(0xFF1E90FF.toInt()) }
-        coVerify { dataStore.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.SEED.prefValue) }
-        coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
-    }
-
-    @Test
-    fun `setColorSource to dynamic persists and refreshes widgets`() = runTest {
-        val viewModel = createViewModel()
-
-        viewModel.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.DYNAMIC)
-        advanceUntilIdle()
-
-        coVerify { dataStore.setColorSource(org.onekash.kashcal.ui.theme.ColorSource.DYNAMIC.prefValue) }
-        coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
-    }
-
-    @Test
     fun `contactBirthdaysColor seeds to a palette entry`() = runTest {
         val paletteArgbs = EventColorPalette.entries.map { it.argb }.toSet()
         val viewModel = createViewModel()

@@ -123,6 +123,7 @@
     <string name="view_month">මාසය</string>
     <string name="label_all_day">මුළු දිනය</string>
     <string name="label_today">අද</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">දිනය වෙත යන්න</string>
     <string name="label_week">ස</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">ප්‍රතික්ෂේප කළා</string>
     <string name="cd_event_state_past">පසුගිය සිදුවීම</string>
     <string name="cd_loading_events">සිදුවීම් පූරණය වෙමින්</string>
+    <string name="cd_collapse_week_bar">සතියේ තීරුව සඟවන්න</string>
+    <string name="cd_expand_week_bar">සතියේ තීරුව පෙන්වන්න</string>
     <string name="cd_event_untitled">නමක් නැති සිදුවීම</string>
     <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
     <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">මාසය වෙත යන්න</string>
     <string name="action_more_options">තවත් විකල්ප</string>
     <string name="quick_add_save_failed">සිදුවීම සුරැකීමට අසමත් විය</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">දින</string>
     <string name="label_duration_hrs">පැ</string>
     <string name="label_duration_min">මි</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">දිනය %1$d දී</string>
     <string name="recurrence_on_last_day">මාසයේ අවසාන දිනයේ</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s දී</string>
+    <string name="recurrence_which">කුමන</string>
+    <string name="recurrence_weekday">සතියේ දිනය</string>
     <string name="ordinal_1st">1 වැනි</string>
     <string name="ordinal_2nd">2 වැනි</string>
     <string name="ordinal_3rd">3 වැනි</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
         <item quantity="other">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
     </plurals>
+    <string name="menu_privacy_security">පෞද්ගලිකත්වය සහ ආරක්ෂාව</string>
+    <string name="cd_edit_initials">ඔබේ මුලකුරු සංස්කරණය කරන්න</string>
+    <string name="hub_initials_hint">ඔබේ මුලකුරු සැකසීමට තට්ටු කරන්න</string>
+    <string name="hub_initials_field_label">මුලකුරු</string>
+    <string name="hub_initials_save">සුරකින්න</string>
+    <string name="hub_initials_cancel">අවලංගු කරන්න</string>
+    <string name="hub_section_make_it_yours">ඔබට ගැළපෙන ලෙස සකසන්න</string>
+    <string name="hub_accounts_and_settings">ගිණුම් සහ සැකසීම්</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ලබා ගත හැකි කාලය බෙදාගන්න</string>

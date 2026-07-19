@@ -123,6 +123,7 @@
     <string name="view_month">Mois</string>
     <string name="label_all_day">Toute la journée</string>
     <string name="label_today">Aujourd\'hui</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Aller à une date</string>
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -862,6 +863,8 @@
     <string name="cd_event_state_declined">refusé</string>
     <string name="cd_event_state_past">événement passé</string>
     <string name="cd_loading_events">Chargement des événements</string>
+    <string name="cd_collapse_week_bar">Masquer la barre de semaine</string>
+    <string name="cd_expand_week_bar">Afficher la barre de semaine</string>
     <string name="cd_event_untitled">Événement sans titre</string>
     <string name="cd_open_drawer">Ouvrir le menu</string>
     <string name="cd_close_drawer">Fermer le menu</string>
@@ -876,6 +879,7 @@
     <string name="label_go_to_month">Aller au mois</string>
     <string name="action_more_options">Plus d\'options</string>
     <string name="quick_add_save_failed">Échec de l\'enregistrement</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">jours</string>
     <string name="label_duration_hrs">hrs</string>
     <string name="label_duration_min">min</string>
@@ -884,6 +888,8 @@
     <string name="recurrence_on_day">Le %1$d</string>
     <string name="recurrence_on_last_day">Le dernier jour du mois</string>
     <string name="recurrence_on_nth_weekday">Le %1$s %2$s</string>
+    <string name="recurrence_which">Lequel</string>
+    <string name="recurrence_weekday">Jour de la semaine</string>
     <string name="ordinal_1st">1er</string>
     <string name="ordinal_2nd">2e</string>
     <string name="ordinal_3rd">3e</string>
@@ -1172,6 +1178,14 @@
         <item quantity="one">Menu Plus, %d invitation en attente</item>
         <item quantity="other">Menu Plus, %d invitations en attente</item>
     </plurals>
+    <string name="menu_privacy_security">Confidentialité et sécurité</string>
+    <string name="cd_edit_initials">Modifier tes initiales</string>
+    <string name="hub_initials_hint">Appuie pour définir tes initiales</string>
+    <string name="hub_initials_field_label">Initiales</string>
+    <string name="hub_initials_save">Enregistrer</string>
+    <string name="hub_initials_cancel">Annuler</string>
+    <string name="hub_section_make_it_yours">À votre image</string>
+    <string name="hub_accounts_and_settings">Comptes et réglages</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Partager les disponibilités</string>

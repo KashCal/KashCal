@@ -193,6 +193,7 @@ class QuickAddViewModel @Inject constructor(
                     timezone = timezone,
                     isAllDay = isAllDay,
                     location = result.location,
+                    description = result.note,
                     rrule = result.rrule,
                     categories = result.categories.ifEmpty { null },
                     reminders = reminders,
@@ -218,7 +219,7 @@ class QuickAddViewModel @Inject constructor(
         // all-day fallback whenever the user taps Expand without typing.
         val nothingParsed = result.title.isBlank() && result.startTime == null &&
             result.location == null && result.endDate == null && result.rrule == null &&
-            result.categories.isEmpty()
+            result.categories.isEmpty() && result.note == null
         if (nothingParsed) {
             val nextHour = (LocalTime.now().hour + 1) % 24
             val startMs = result.startDate.atTime(LocalTime.of(nextHour, 0))
@@ -247,6 +248,7 @@ class QuickAddViewModel @Inject constructor(
 
         return CalendarIntentData(
             title = result.title.ifBlank { null },
+            description = result.note,
             location = result.location,
             startTimeMillis = startTimeMillis,
             endTimeMillis = endTimeMillis,

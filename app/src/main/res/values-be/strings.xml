@@ -123,6 +123,7 @@
     <string name="view_month">Месяц</string>
     <string name="label_all_day">Увесь дзень</string>
     <string name="label_today">Сёння</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Перайсці да даты</string>
     <string name="label_week">Т</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -908,6 +909,8 @@
     <string name="cd_event_state_declined">адхілена</string>
     <string name="cd_event_state_past">мінулая падзея</string>
     <string name="cd_loading_events">Загрузка падзей</string>
+    <string name="cd_collapse_week_bar">Схаваць панэль тыдня</string>
+    <string name="cd_expand_week_bar">Паказаць панэль тыдня</string>
     <string name="cd_event_untitled">Падзея без назвы</string>
     <string name="cd_open_drawer">Адкрыць меню</string>
     <string name="cd_close_drawer">Закрыць меню</string>
@@ -922,6 +925,7 @@
     <string name="label_go_to_month">Перайсці да месяца</string>
     <string name="action_more_options">Яшчэ</string>
     <string name="quick_add_save_failed">Не ўдалося захаваць падзею</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">дзён</string>
     <string name="label_duration_hrs">гадз</string>
     <string name="label_duration_min">хв</string>
@@ -930,6 +934,8 @@
     <string name="recurrence_on_day">%1$d лік</string>
     <string name="recurrence_on_last_day">У апошні дзень месяца</string>
     <string name="recurrence_on_nth_weekday">У %1$s %2$s</string>
+    <string name="recurrence_which">Які</string>
+    <string name="recurrence_weekday">Дзень тыдня</string>
     <string name="ordinal_1st">1-ы</string>
     <string name="ordinal_2nd">2-і</string>
     <string name="ordinal_3rd">3-і</string>
@@ -1232,6 +1238,14 @@
         <item quantity="many">Меню «Яшчэ», %d запрашэнняў чакаюць</item>
         <item quantity="other">Меню «Яшчэ», %d запрашэння чакае</item>
     </plurals>
+    <string name="menu_privacy_security">Прыватнасць і бяспека</string>
+    <string name="cd_edit_initials">Змяніць ініцыялы</string>
+    <string name="hub_initials_hint">Націсні, каб указаць ініцыялы</string>
+    <string name="hub_initials_field_label">Ініцыялы</string>
+    <string name="hub_initials_save">Захаваць</string>
+    <string name="hub_initials_cancel">Скасаваць</string>
+    <string name="hub_section_make_it_yours">Наладзь пад сябе</string>
+    <string name="hub_accounts_and_settings">Уліковыя запісы і налады</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Падзяліцца даступнасцю</string>

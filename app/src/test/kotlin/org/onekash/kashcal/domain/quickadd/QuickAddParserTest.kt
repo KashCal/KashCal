@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.quickadd
 
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -545,6 +546,225 @@ class QuickAddParserTest {
     fun `no recurrence keywords gives null rrule`() {
         val result = parse("Meeting tomorrow at 3pm")
         assertNull(result.rrule)
+    }
+
+    @Test
+    fun `gym every Monday and Wednesday - multi-weekday recurrence with clean title`() {
+        val result = parse("gym every Monday and Wednesday")
+        assertEquals("gym", result.title)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,WE", result.rrule)
+    }
+
+    @Test
+    fun `standup every Monday Wednesday and Friday - three weekdays`() {
+        val result = parse("standup every Monday, Wednesday, and Friday")
+        assertEquals("standup", result.title)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,WE,FR", result.rrule)
+    }
+
+    @Test
+    fun `standup MWF at 9am - shorthand recurrence`() {
+        val result = parse("standup MWF at 9am")
+        assertEquals("standup", result.title)
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,WE,FR", result.rrule)
+    }
+
+    @Test
+    fun `class TTh - shorthand two weekdays`() {
+        val result = parse("class TTh")
+        assertEquals("class", result.title)
+        assertEquals("FREQ=WEEKLY;BYDAY=TU,TH", result.rrule)
+    }
+
+    @Test
+    fun `team sync every other week - interval 2 with clean title`() {
+        val result = parse("team sync every other week")
+        assertEquals("team sync", result.title)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2", result.rrule)
+    }
+
+    @Test
+    fun `standup every other day - daily interval 2`() {
+        val result = parse("standup every other day")
+        assertEquals("standup", result.title)
+        assertEquals("FREQ=DAILY;INTERVAL=2", result.rrule)
+    }
+
+    @Test
+    fun `book club first Monday of the month - monthly nth weekday`() {
+        val result = parse("book club first Monday of the month")
+        assertEquals("book club", result.title)
+        assertEquals("FREQ=MONTHLY;BYDAY=1MO", result.rrule)
+        // April's 1st Monday (Apr 6) is past the reference Mon Apr 13, so the start
+        // date anchors on May's 1st Monday, May 4 — not today.
+        assertEquals(LocalDate.of(2026, 5, 4), result.startDate)
+    }
+
+    @Test
+    fun `rent last Friday of every month - monthly last weekday`() {
+        val result = parse("rent last Friday of every month")
+        assertEquals("rent", result.title)
+        assertEquals("FREQ=MONTHLY;BYDAY=-1FR", result.rrule)
+        // Last Friday of April 2026 (Apr 24) is on/after the reference.
+        assertEquals(LocalDate.of(2026, 4, 24), result.startDate)
+    }
+
+    @Test
+    fun `pay rent on the 15th of every month - monthly by date`() {
+        val result = parse("pay rent on the 15th of every month")
+        assertEquals("pay rent", result.title)
+        assertEquals("FREQ=MONTHLY;BYMONTHDAY=15", result.rrule)
+        // April 15 is on/after the reference Mon Apr 13.
+        assertEquals(LocalDate.of(2026, 4, 15), result.startDate)
+    }
+
+    @Test
+    fun `rent last day of every month - monthly last day`() {
+        val result = parse("rent last day of every month")
+        assertEquals("rent", result.title)
+        assertEquals("FREQ=MONTHLY;BYMONTHDAY=-1", result.rrule)
+        // Reference month (April 2026) ends on the 30th.
+        assertEquals(LocalDate.of(2026, 4, 30), result.startDate)
+    }
+
+    @Test
+    fun `rent last Friday of this month - one-off in current month with clean title`() {
+        // "of this month" (not "the"/"every") means a single occurrence in the
+        // current month, NOT a recurrence — and the phrase must be fully consumed
+        // so "month" doesn't leak into the title.
+        val result = parse("rent last Friday of this month")
+        assertEquals("rent", result.title)
+        assertNull(result.rrule)
+        // Last Friday of April 2026 is Apr 24.
+        assertEquals(LocalDate.of(2026, 4, 24), result.startDate)
+    }
+
+    @Test
+    fun `15th of this month - one-off on the current month's 15th`() {
+        val result = parse("15th of this month")
+        assertNull(result.rrule)
+        assertEquals(LocalDate.of(2026, 4, 15), result.startDate)
+    }
+
+    @Test
+    fun `pay rent 31st of this month clamps to month end with a clean title`() {
+        // February 2026 has 28 days: "31st of this month" must stay in the month
+        // (clamp to Feb 28), not roll forward, and must not leak "of this month"
+        // into the title.
+        val febRef = LocalDateTime.of(2026, 2, 10, 10, 0)
+        val result = QuickAddParser.parse("pay rent 31st of this month", febRef)
+        assertEquals("pay rent", result.title)
+        assertNull(result.rrule)
+        assertEquals(LocalDate.of(2026, 2, 28), result.startDate)
+    }
+
+    @Test
+    fun `fifth Friday of this month falls back to the last Friday in a month without one`() {
+        // February 2026 has only four Fridays; stay in the month on the last one.
+        val febRef = LocalDateTime.of(2026, 2, 10, 10, 0)
+        val result = QuickAddParser.parse("fifth Friday of this month", febRef)
+        assertNull(result.rrule)
+        assertEquals(LocalDate.of(2026, 2, 27), result.startDate)
+    }
+
+    @Test
+    fun `15th of March stays a one-off absolute date not monthly recurrence`() {
+        val result = parse("15th of March")
+        assertNull(result.rrule)
+        assertEquals(3, result.startDate.monthValue)
+        assertEquals(15, result.startDate.dayOfMonth)
+    }
+
+    @Test
+    fun `drinks this weekend - date set with clean title`() {
+        val result = parse("drinks this weekend")
+        assertEquals("drinks", result.title)
+        assertEquals(LocalDate.of(2026, 4, 18), result.startDate)
+    }
+
+    @Test
+    fun `trip next weekend - Saturday after`() {
+        val result = parse("trip next weekend")
+        assertEquals("trip", result.title)
+        assertEquals(LocalDate.of(2026, 4, 25), result.startDate)
+    }
+
+    @Test
+    fun `every weekend becomes weekly recurrence not a one-off`() {
+        val result = parse("brunch every weekend")
+        assertEquals("brunch", result.title)
+        assertEquals("FREQ=WEEKLY;BYDAY=SA,SU", result.rrule)
+    }
+
+    @Test
+    fun `standup at 1500 - compact 24h time`() {
+        val result = parse("standup at 1500")
+        assertEquals("standup", result.title)
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+    }
+
+    @Test
+    fun `call at 0930 - compact time with leading zero`() {
+        val result = parse("call at 0930")
+        assertEquals("call", result.title)
+        assertEquals(LocalTime.of(9, 30), result.startTime)
+    }
+
+    @Test
+    fun `meeting 15h30 - h-notation time`() {
+        val result = parse("meeting 15h30")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(15, 30), result.startTime)
+    }
+
+    @Test
+    fun `lunch 9h - h-notation on the hour`() {
+        val result = parse("lunch 9h")
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+    }
+
+    @Test
+    fun `Jan 5 2027 still parses year not compact time`() {
+        val result = parse("trip Jan 5 2027")
+        assertEquals(2027, result.startDate.year)
+        assertEquals(1, result.startDate.monthValue)
+        assertEquals(5, result.startDate.dayOfMonth)
+    }
+
+    @Test
+    fun `every Monday until 2027 leaves 2027 as year not a time`() {
+        val result = parse("standup every Monday until 2027")
+        assertNull(result.startTime)
+        assertNotNull(result.rrule)
+        assertTrue(result.rrule!!.contains("FREQ=WEEKLY"))
+    }
+
+    @Test
+    fun `meeting for half an hour - 30 minute duration`() {
+        val result = parse("meeting at 2pm for half an hour")
+        assertEquals(LocalTime.of(14, 0), result.startTime)
+        assertEquals(LocalTime.of(14, 30), result.endTime)
+    }
+
+    @Test
+    fun `lunch in a couple hours - fuzzy forward offset`() {
+        // Reference Monday April 13, 10:00 → +2h = 12:00.
+        val result = parse("lunch in a couple hours")
+        assertEquals(LocalTime.of(12, 0), result.startTime)
+    }
+
+    @Test
+    fun `review 3 days from now - forward offset`() {
+        val result = parse("review 3 days from now")
+        assertEquals(LocalDate.of(2026, 4, 16), result.startDate)
+    }
+
+    @Test
+    fun `gym after work - part of day time cue`() {
+        val result = parse("gym after work")
+        assertEquals("gym", result.title)
+        assertEquals(LocalTime.of(18, 0), result.startTime)
     }
 
     @Test
@@ -1251,5 +1471,104 @@ class QuickAddParserTest {
         assertEquals(listOf("work"), result.categories)
         assertEquals(LocalTime.of(9, 0), result.startTime)
         assertTrue(result.title.contains("Standup"))
+    }
+
+    // ==================== Inline note via " //" delimiter ====================
+
+    @Test
+    fun `note after slashes is extracted and event parsed from the part before`() {
+        val result = parse("Lunch with Sam tomorrow 1pm // bring the signed contract")
+        assertEquals("Lunch with Sam", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(13, 0), result.startTime)
+        assertEquals("bring the signed contract", result.note)
+    }
+
+    @Test
+    fun `no delimiter gives null note`() {
+        val result = parse("Coffee tomorrow at 3pm")
+        assertNull(result.note)
+    }
+
+    @Test
+    fun `date words inside the note do not move the event schedule`() {
+        val result = parse("Standup tomorrow at 9am // remind him about Friday at 5pm")
+        // Schedule comes only from the part before " //".
+        assertEquals("Standup", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+        // The note's "Friday"/"5pm" must NOT have hijacked the date/time.
+        assertEquals("remind him about Friday at 5pm", result.note)
+    }
+
+    @Test
+    fun `note is split on the first delimiter only`() {
+        val result = parse("Meeting tomorrow // discuss A // then B")
+        assertEquals("Meeting", result.title)
+        assertEquals("discuss A // then B", result.note)
+    }
+
+    @Test
+    fun `note preserves original casing and punctuation verbatim`() {
+        val result = parse("Call Bob tomorrow // Bring the PROPOSAL, v2 & notes!")
+        assertEquals("Bring the PROPOSAL, v2 & notes!", result.note)
+    }
+
+    @Test
+    fun `note surrounding whitespace is trimmed`() {
+        val result = parse("Call Bob tomorrow //    padded note   ")
+        assertEquals("padded note", result.note)
+    }
+
+    @Test
+    fun `https url is not split because there is no whitespace before the slashes`() {
+        val result = parse("Join call https://zoom.us/j/123 tomorrow at 3pm")
+        assertNull(result.note)
+        assertTrue("URL should stay in the title: '${result.title}'", result.title.contains("https://zoom.us/j/123"))
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+    }
+
+    @Test
+    fun `bare double slash without preceding whitespace stays in the title`() {
+        val result = parse("zoom.us//x tomorrow")
+        assertNull(result.note)
+        assertTrue(result.title.contains("zoom.us//x"))
+    }
+
+    @Test
+    fun `delimiter with nothing after it produces no note and is dropped from title`() {
+        val result = parse("Coffee tomorrow //")
+        assertNull(result.note)
+        assertEquals("Coffee", result.title)
+        assertFalse("delimiter must not leak into title: '${result.title}'", result.title.contains("//"))
+    }
+
+    @Test
+    fun `delimiter with only whitespace after it produces no note`() {
+        val result = parse("Coffee tomorrow //    ")
+        assertNull(result.note)
+        assertEquals("Coffee", result.title)
+    }
+
+    @Test
+    fun `note-only input has empty title and captured note`() {
+        val result = parse(" // just a note")
+        assertEquals("", result.title)
+        assertEquals("just a note", result.note)
+    }
+
+    @Test
+    fun `hashtag inside the note is not extracted as a category and stays verbatim`() {
+        val result = parse("Lunch tomorrow // ping #work about it")
+        assertEquals(emptyList<String>(), result.categories)
+        assertEquals("ping #work about it", result.note)
+        assertEquals("Lunch", result.title)
+    }
+
+    @Test
+    fun `tab before slashes also delimits the note`() {
+        val result = parse("Coffee tomorrow\t// tabbed note")
+        assertEquals("tabbed note", result.note)
+        assertEquals("Coffee", result.title)
     }
 }

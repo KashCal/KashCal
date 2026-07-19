@@ -1,23 +1,18 @@
 package org.onekash.kashcal.ui.screens
 
 import android.text.format.DateFormat
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Colorize
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
@@ -31,7 +26,6 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,8 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -85,15 +77,8 @@ import org.onekash.kashcal.ui.screens.settings.SearchableSection
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SettingsToggleRow
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
-import org.onekash.kashcal.ui.appicon.AppIconUtility
 import org.onekash.kashcal.util.ExternalLinks
-import org.onekash.kashcal.ui.screens.settings.AppIconSheet
-import org.onekash.kashcal.ui.screens.settings.ThemeSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
-import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
-import org.onekash.kashcal.ui.shared.EventColorPalette
-import org.onekash.kashcal.ui.theme.ColorSource
-import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
 import org.onekash.kashcal.ui.shared.formatDuration
@@ -257,12 +242,6 @@ fun AccountSettingsScreen(
     onQuickAddEnabledChange: (Boolean) -> Unit = {},
     titleSuggestionsEnabled: Boolean = true,
     onTitleSuggestionsEnabledChange: (Boolean) -> Unit = {},
-    themeMode: ThemeMode = ThemeMode.SYSTEM,
-    onThemeModeChange: (ThemeMode) -> Unit = {},
-    colorSource: ColorSource = ColorSource.DYNAMIC,
-    accentSeed: Int = KashCalDataStore.ACCENT_SEED_DEFAULT,
-    onAccentSeedChange: (Int) -> Unit = {},
-    onColorSourceChange: (ColorSource) -> Unit = {},
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     onTimeFormatChange: (String) -> Unit = {},
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
@@ -388,12 +367,6 @@ fun AccountSettingsScreen(
                     onQuickAddEnabledChange = onQuickAddEnabledChange,
                     titleSuggestionsEnabled = titleSuggestionsEnabled,
                     onTitleSuggestionsEnabledChange = onTitleSuggestionsEnabledChange,
-                    themeMode = themeMode,
-                    onThemeModeChange = onThemeModeChange,
-                    colorSource = colorSource,
-                    accentSeed = accentSeed,
-                    onAccentSeedChange = onAccentSeedChange,
-                    onColorSourceChange = onColorSourceChange,
                     timeFormat = timeFormat,
                     onTimeFormatChange = onTimeFormatChange,
                     firstDayOfWeek = firstDayOfWeek,
@@ -534,12 +507,6 @@ private fun FlatSettingsContent(
     onQuickAddEnabledChange: (Boolean) -> Unit,
     titleSuggestionsEnabled: Boolean,
     onTitleSuggestionsEnabledChange: (Boolean) -> Unit,
-    themeMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    colorSource: ColorSource,
-    accentSeed: Int,
-    onAccentSeedChange: (Int) -> Unit,
-    onColorSourceChange: (ColorSource) -> Unit,
     timeFormat: String,
     onTimeFormatChange: (String) -> Unit,
     firstDayOfWeek: Int,
@@ -560,9 +527,6 @@ private fun FlatSettingsContent(
     var showDefaultCalendarSheet by remember { mutableStateOf(false) }
     var showAlertsSheet by remember { mutableStateOf(false) }
     var showEventEmojisSheet by remember { mutableStateOf(false) }
-    var showThemeSheet by remember { mutableStateOf(false) }
-    var showAccentSheet by remember { mutableStateOf(false) }
-    var showAppIconSheet by remember { mutableStateOf(false) }
     var showTimeFormatSheet by remember { mutableStateOf(false) }
     var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
     var showEventDurationSheet by remember { mutableStateOf(false) }
@@ -575,10 +539,6 @@ private fun FlatSettingsContent(
     val defaultCalendarSheetState = rememberModalBottomSheetState()
     val alertsSheetState = rememberModalBottomSheetState()
     val eventEmojisSheetState = rememberModalBottomSheetState()
-    val themeSheetState = rememberModalBottomSheetState()
-    // Open fully expanded: the icon options + support link + note should all be visible at once,
-    // not half-height requiring a drag-up.
-    val appIconSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val timeFormatSheetState = rememberModalBottomSheetState()
     val firstDayOfWeekSheetState = rememberModalBottomSheetState()
     val eventDurationSheetState = rememberModalBottomSheetState()
@@ -591,10 +551,6 @@ private fun FlatSettingsContent(
     val context = LocalContext.current
     val resources = LocalResources.current
 
-    // App-icon state is backed by PackageManager component state (no DataStore); seed it here and
-    // update it optimistically after a swap so the row subtitle + picker selection stay in sync.
-    val appIconUtility = remember(context) { AppIconUtility(context) }
-    var currentAppIcon by remember { mutableStateOf(appIconUtility.currentPreset()) }
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
 
     // Memoized: resolve default calendar name (supports both Room and Device)
@@ -716,57 +672,6 @@ private fun FlatSettingsContent(
                     label = stringResource(R.string.settings_event_emojis),
                     subtitle = emojisSubtitle,
                     onClick = { showEventEmojisSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val themeSubtitle = stringResource(themeMode.labelRes)
-            row(label = stringResource(R.string.settings_theme), subtitle = themeSubtitle, id = "theme") {
-                SettingsRow(
-                    icon = Icons.Default.Palette,
-                    label = stringResource(R.string.settings_theme),
-                    subtitle = themeSubtitle,
-                    onClick = { showThemeSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val accentSubtitle = when {
-                colorSource != ColorSource.SEED -> stringResource(R.string.settings_accent_color_dynamic)
-                // Brand teal isn't a CSS3 palette entry, so it would otherwise read as "Custom".
-                accentSeed == KashCalDataStore.ACCENT_SEED_DEFAULT -> stringResource(R.string.settings_accent_color_brand)
-                else -> stringResource(EventColorPalette.stringResIdForColor(accentSeed))
-            }
-            row(label = stringResource(R.string.settings_accent_color), subtitle = accentSubtitle, id = "accent_color") {
-                SettingsRow(
-                    icon = Icons.Default.Colorize,
-                    label = stringResource(R.string.settings_accent_color),
-                    subtitle = accentSubtitle,
-                    onClick = { showAccentSheet = true },
-                    trailing = if (colorSource == ColorSource.SEED) {
-                        {
-                            Box(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(accentSeed))
-                            )
-                        }
-                    } else null,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val appIconSubtitle = stringResource(currentAppIcon.labelRes)
-            row(label = stringResource(R.string.settings_app_icon), subtitle = appIconSubtitle, id = "app_icon") {
-                SettingsRow(
-                    icon = Icons.Default.Favorite,
-                    label = stringResource(R.string.settings_app_icon),
-                    subtitle = appIconSubtitle,
-                    onClick = { showAppIconSheet = true },
                     showDivider = false,
                     searchQuery = searchQuery
                 )
@@ -1093,51 +998,6 @@ private fun FlatSettingsContent(
             showEventEmojis = showEventEmojis,
             onShowEventEmojisChange = onShowEventEmojisChange,
             onDismiss = { showEventEmojisSheet = false }
-        )
-    }
-
-    // Theme Sheet
-    if (showThemeSheet) {
-        ThemeSheet(
-            sheetState = themeSheetState,
-            currentMode = themeMode,
-            onModeSelect = onThemeModeChange,
-            onDismiss = { showThemeSheet = false }
-        )
-    }
-
-    // Accent Color Sheet
-    if (showAccentSheet) {
-        AccentColorSheet(
-            selectedArgb = accentSeed,
-            useDynamic = colorSource == ColorSource.DYNAMIC,
-            onColorSelected = {
-                onAccentSeedChange(it)
-                showAccentSheet = false
-            },
-            onUseDynamic = {
-                onColorSourceChange(ColorSource.DYNAMIC)
-                showAccentSheet = false
-            },
-            onDismiss = { showAccentSheet = false }
-        )
-    }
-
-    // App Icon Sheet
-    if (showAppIconSheet) {
-        AppIconSheet(
-            sheetState = appIconSheetState,
-            currentPreset = currentAppIcon,
-            onPresetSelect = { preset ->
-                // Skip the no-op: re-toggling the active alias would needlessly refresh the
-                // launcher (and can briefly restart the app) for a tap that changes nothing.
-                if (preset != currentAppIcon) {
-                    appIconUtility.setAppIcon(preset)
-                    currentAppIcon = preset
-                }
-            },
-            onSupportClick = { ExternalLinks.openUrl(context, ExternalLinks.DONATE) },
-            onDismiss = { showAppIconSheet = false }
         )
     }
 

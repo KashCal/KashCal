@@ -123,6 +123,7 @@
     <string name="view_month">월</string>
     <string name="label_all_day">종일</string>
     <string name="label_today">오늘</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">날짜로 이동</string>
     <string name="label_week">주</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">거절됨</string>
     <string name="cd_event_state_past">지난 일정</string>
     <string name="cd_loading_events">일정 불러오는 중</string>
+    <string name="cd_collapse_week_bar">주 표시줄 숨기기</string>
+    <string name="cd_expand_week_bar">주 표시줄 표시</string>
     <string name="cd_event_untitled">제목 없는 일정</string>
     <string name="cd_open_drawer">서랍 열기</string>
     <string name="cd_close_drawer">서랍 닫기</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">월로 이동</string>
     <string name="action_more_options">더 많은 옵션</string>
     <string name="quick_add_save_failed">일정을 저장하지 못했습니다</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">일</string>
     <string name="label_duration_hrs">시간</string>
     <string name="label_duration_min">분</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">매월 %1$d일</string>
     <string name="recurrence_on_last_day">매월 마지막 날</string>
     <string name="recurrence_on_nth_weekday">%1$s번째 %2$s</string>
+    <string name="recurrence_which">몇 번째</string>
+    <string name="recurrence_weekday">요일</string>
     <string name="ordinal_1st">첫째</string>
     <string name="ordinal_2nd">둘째</string>
     <string name="ordinal_3rd">셋째</string>
@@ -1084,6 +1090,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">더보기 메뉴, 대기 중인 초대 %d건</item>
     </plurals>
+    <string name="menu_privacy_security">개인정보 및 보안</string>
+    <string name="cd_edit_initials">이니셜 편집</string>
+    <string name="hub_initials_hint">탭하여 이니셜을 설정하세요</string>
+    <string name="hub_initials_field_label">이니셜</string>
+    <string name="hub_initials_save">저장</string>
+    <string name="hub_initials_cancel">취소</string>
+    <string name="hub_section_make_it_yours">나만의 스타일로</string>
+    <string name="hub_accounts_and_settings">계정 및 설정</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">가용성 공유</string>

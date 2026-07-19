@@ -123,6 +123,7 @@
     <string name="view_month">Lună</string>
     <string name="label_all_day">Toată ziua</string>
     <string name="label_today">Azi</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Mergi la data</string>
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -870,6 +871,8 @@
     <string name="cd_event_state_declined">refuzat</string>
     <string name="cd_event_state_past">eveniment trecut</string>
     <string name="cd_loading_events">Se încarcă evenimentele</string>
+    <string name="cd_collapse_week_bar">Ascunde bara săptămânii</string>
+    <string name="cd_expand_week_bar">Afișează bara săptămânii</string>
     <string name="cd_event_untitled">Eveniment fără titlu</string>
     <string name="cd_open_drawer">Deschide meniul</string>
     <string name="cd_close_drawer">Închide meniul</string>
@@ -884,6 +887,7 @@
     <string name="label_go_to_month">Mergi la lună</string>
     <string name="action_more_options">Mai multe opțiuni</string>
     <string name="quick_add_save_failed">Evenimentul nu a putut fi salvat</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">zile</string>
     <string name="label_duration_hrs">ore</string>
     <string name="label_duration_min">min</string>
@@ -892,6 +896,8 @@
     <string name="recurrence_on_day">În ziua %1$d</string>
     <string name="recurrence_on_last_day">În ultima zi a lunii</string>
     <string name="recurrence_on_nth_weekday">A %1$s %2$s</string>
+    <string name="recurrence_which">Care</string>
+    <string name="recurrence_weekday">Zi a săptămânii</string>
     <string name="ordinal_1st">1-a</string>
     <string name="ordinal_2nd">a 2-a</string>
     <string name="ordinal_3rd">a 3-a</string>
@@ -1182,6 +1188,14 @@
         <item quantity="few">Meniu suplimentar, %d invitații în așteptare</item>
         <item quantity="other">Meniu suplimentar, %d de invitații în așteptare</item>
     </plurals>
+    <string name="menu_privacy_security">Confidențialitate &amp; Securitate</string>
+    <string name="cd_edit_initials">Editează-ți inițialele</string>
+    <string name="hub_initials_hint">Atinge pentru a-ți seta inițialele</string>
+    <string name="hub_initials_field_label">Inițiale</string>
+    <string name="hub_initials_save">Salvează</string>
+    <string name="hub_initials_cancel">Anulează</string>
+    <string name="hub_section_make_it_yours">Personalizează</string>
+    <string name="hub_accounts_and_settings">Conturi și setări</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Partajează disponibilitatea</string>

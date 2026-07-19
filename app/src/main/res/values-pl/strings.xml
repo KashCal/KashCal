@@ -123,6 +123,7 @@
     <string name="view_month">Miesiąc</string>
     <string name="label_all_day">Cały dzień</string>
     <string name="label_today">Dziś</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Przejdź do daty</string>
     <string name="label_week">T</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -908,6 +909,8 @@
     <string name="cd_event_state_declined">odrzucone</string>
     <string name="cd_event_state_past">minione wydarzenie</string>
     <string name="cd_loading_events">Ładowanie wydarzeń</string>
+    <string name="cd_collapse_week_bar">Ukryj pasek tygodnia</string>
+    <string name="cd_expand_week_bar">Pokaż pasek tygodnia</string>
     <string name="cd_event_untitled">Wydarzenie bez tytułu</string>
     <string name="cd_open_drawer">Otwórz szufladę</string>
     <string name="cd_close_drawer">Zamknij szufladę</string>
@@ -922,6 +925,7 @@
     <string name="label_go_to_month">Przejdź do miesiąca</string>
     <string name="action_more_options">Więcej opcji</string>
     <string name="quick_add_save_failed">Nie udało się zapisać wydarzenia</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dni</string>
     <string name="label_duration_hrs">godz.</string>
     <string name="label_duration_min">min</string>
@@ -930,6 +934,8 @@
     <string name="recurrence_on_day">W dniu %1$d</string>
     <string name="recurrence_on_last_day">W ostatnim dniu miesiąca</string>
     <string name="recurrence_on_nth_weekday">W %1$s %2$s</string>
+    <string name="recurrence_which">Który</string>
+    <string name="recurrence_weekday">Dzień tygodnia</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1232,6 +1238,14 @@
         <item quantity="many">Menu więcej, %d oczekujących zaproszeń</item>
         <item quantity="other">Menu więcej, %d oczekujących zaproszeń</item>
     </plurals>
+    <string name="menu_privacy_security">Prywatność i bezpieczeństwo</string>
+    <string name="cd_edit_initials">Edytuj swoje inicjały</string>
+    <string name="hub_initials_hint">Dotknij, aby ustawić inicjały</string>
+    <string name="hub_initials_field_label">Inicjały</string>
+    <string name="hub_initials_save">Zapisz</string>
+    <string name="hub_initials_cancel">Anuluj</string>
+    <string name="hub_section_make_it_yours">Dostosuj do siebie</string>
+    <string name="hub_accounts_and_settings">Konta i ustawienia</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Udostępnij dostępność</string>

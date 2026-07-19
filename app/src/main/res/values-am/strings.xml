@@ -123,6 +123,7 @@
     <string name="view_month">ወር</string>
     <string name="label_all_day">ሙሉ ቀን</string>
     <string name="label_today">ዛሬ</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ወደ ቀን ሂድ</string>
     <string name="label_week">ሳ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">ውድቅ ተደርጓል</string>
     <string name="cd_event_state_past">ያለፈ ክስተት</string>
     <string name="cd_loading_events">ክስተቶችን በመጫን ላይ</string>
+    <string name="cd_collapse_week_bar">የሳምንት አሞሌን ደብቅ</string>
+    <string name="cd_expand_week_bar">የሳምንት አሞሌን አሳይ</string>
     <string name="cd_event_untitled">ርዕስ የሌለው ክስተት</string>
     <string name="cd_open_drawer">መሳቢያ ክፈት</string>
     <string name="cd_close_drawer">መሳቢያ ዝጋ</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">ወደ ወር ሂድ</string>
     <string name="action_more_options">ተጨማሪ አማራጮች</string>
     <string name="quick_add_save_failed">ክስተቱን ማስቀመጥ አልተቻለም</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ቀናት</string>
     <string name="label_duration_hrs">ሰዓ</string>
     <string name="label_duration_min">ደቂ</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">በቀን %1$d</string>
     <string name="recurrence_on_last_day">በወሩ የመጨረሻ ቀን</string>
     <string name="recurrence_on_nth_weekday">በ%1$s %2$s</string>
+    <string name="recurrence_which">የትኛው</string>
+    <string name="recurrence_weekday">የሳምንቱ ቀን</string>
     <string name="ordinal_1st">1ኛ</string>
     <string name="ordinal_2nd">2ኛ</string>
     <string name="ordinal_3rd">3ኛ</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">ተጨማሪ ምናሌ፣ %d ግብዣ በመጠባበቅ ላይ</item>
         <item quantity="other">ተጨማሪ ምናሌ፣ %d ግብዣዎች በመጠባበቅ ላይ</item>
     </plurals>
+    <string name="menu_privacy_security">ግላዊነት እና ደህንነት</string>
+    <string name="cd_edit_initials">የመጀመሪያ ፊደላትዎን ያርትዑ</string>
+    <string name="hub_initials_hint">የመጀመሪያ ፊደላትዎን ለማዘጋጀት ይንኩ</string>
+    <string name="hub_initials_field_label">የመጀመሪያ ፊደላት</string>
+    <string name="hub_initials_save">አስቀምጥ</string>
+    <string name="hub_initials_cancel">ሰርዝ</string>
+    <string name="hub_section_make_it_yours">የእርስዎ ያድርጉት</string>
+    <string name="hub_accounts_and_settings">መለያዎች እና ቅንብሮች</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ተገኝነትን አጋራ</string>

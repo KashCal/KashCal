@@ -602,10 +602,15 @@ class MainActivity : FragmentActivity() {
                     onShareAvailabilityClick = { homeViewModel.openShareAvailabilitySheet() },
                     // Info callbacks
                     onInfoClick = { homeViewModel.toggleAppInfoSheet() },
+                    // Avatar hub: persist edited initials
+                    onInitialsChange = { homeViewModel.setUserInitials(it) },
                     // View picker callback
                     onViewSelect = { mode -> homeViewModel.setViewMode(mode) },
                     // Year overlay callbacks
                     onMonthHeaderClick = { homeViewModel.toggleYearOverlay() },
+                    onAgendaWeekBarToggle = {
+                        homeViewModel.setAgendaWeekBarExpanded(!homeViewModel.uiState.value.agendaWeekBarExpanded)
+                    },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
                     // Week view callbacks (infinite day pager)
@@ -1301,8 +1306,16 @@ class MainActivity : FragmentActivity() {
                                 .atZone(java.time.ZoneId.systemDefault())
                                 .toLocalDateTime()
                             quickAddViewModel.setReferenceTime(anchor)
-                            quickAddTextFieldState.edit { replace(0, length, seed.text) }
-                            quickAddViewModel.seedInput(seed.text, seed.location)
+                            // Programmatic edits bypass the field's InputTransformation,
+                            // so apply the same newline-strip + hard cap here to keep the
+                            // 500-char limit global (a shared payload can be arbitrarily long).
+                            val seededText = org.onekash.kashcal.ui.components.QuickAddInputLimits
+                                .takeGraphemes(
+                                    seed.text.replace("\n", ""),
+                                    org.onekash.kashcal.ui.components.QuickAddInputLimits.MAX_LENGTH
+                                )
+                            quickAddTextFieldState.edit { replace(0, length, seededText) }
+                            quickAddViewModel.seedInput(seededText, seed.location)
                             quickAddShareSeed = null
                         } else {
                             // Undated input should default to the day the user is viewing,

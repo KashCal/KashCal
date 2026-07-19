@@ -674,8 +674,12 @@ class RecurrencePickerStateTest {
         // Documents the lossy-reload behavior: 200 is gone after the round-trip.
         // The fix is in the picker (self-echo guard skips the reload), not in
         // the holder. This test is a guard against accidentally fixing it
-        // by changing toRrule() preset semantics — see the matching Compose
-        // test that exercises the actual user surface and asserts 200 SURVIVES.
+        // by changing toRrule() preset semantics — the compose tests that drive
+        // the actual user surface and assert 200 SURVIVES are
+        // chipDetour_preservesInterval200_throughWeeklyThenCustom in
+        // RecurrencePickerChipDetourComposeTest (Robolectric, PR-gated) and
+        // chipDetour_preservesInterval200_throughChipClicks in
+        // RecurrencePickerComposeTest (on-device instrumentation).
         assertTrue(
             "lifecycle simulation: parent round-trip loses interval (fix lives in RecurrencePickerRow), got $finalRrule",
             !finalRrule.contains("INTERVAL=200"),
@@ -947,5 +951,130 @@ class RecurrencePickerStateTest {
         )
         val rrule = selections.toRrule(deviceWkst = null)!!
         assertTrue("expected no WKST for single-day rule, got $rrule", !rrule.contains("WKST="))
+    }
+
+    // ==================== Monthly nth-weekday: last-weekday (ordinal -1) through the holder ====================
+
+    @Test
+    fun `toRrule MONTHLY preset with NthWeekday last Friday emits BYDAY -1FR`() {
+        val selections = RecurrencePickerSelections.from(
+            parsed = ParsedRecurrence(
+                frequency = RecurrenceFrequency.MONTHLY,
+                interval = 1,
+                monthlyPattern = MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY),
+            ),
+            startDayOfWeek = DayOfWeek.SATURDAY,
+            startDayOfMonth = 18,
+        )
+        assertEquals("FREQ=MONTHLY;BYDAY=-1FR", selections.toRrule(DayOfWeek.SUNDAY))
+    }
+
+    @Test
+    fun `toRrule CUSTOM Month interval 2 with NthWeekday last Friday emits canonical order`() {
+        // "Last Friday of every 2 months" through the CUSTOM(month) path. Assert the
+        // exact canonical token order the builder produces.
+        val selections = RecurrencePickerSelections.from(
+            parsed = ParsedRecurrence(
+                frequency = RecurrenceFrequency.MONTHLY,
+                interval = 2,
+                monthlyPattern = MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY),
+            ),
+            startDayOfWeek = DayOfWeek.FRIDAY,
+            startDayOfMonth = 24,
+        )
+        assertEquals("FREQ=MONTHLY;INTERVAL=2;BYDAY=-1FR", selections.toRrule(DayOfWeek.SUNDAY))
+    }
+
+    @Test
+    fun `ordinal switch 1st to Last to 2nd stays consistent through holder copies`() {
+        // Simulates the user flipping the ordinal chip repeatedly. Each copy is
+        // read back through toRrule; the last write wins with no residue.
+        val base = RecurrencePickerSelections.from(
+            parsed = ParsedRecurrence(
+                frequency = RecurrenceFrequency.MONTHLY,
+                interval = 1,
+                monthlyPattern = MonthlyPattern.NthWeekday(1, DayOfWeek.MONDAY),
+            ),
+            startDayOfWeek = DayOfWeek.MONDAY,
+            startDayOfMonth = 5,
+        )
+        assertEquals(
+            "FREQ=MONTHLY;BYDAY=1MO",
+            base.toRrule(DayOfWeek.SUNDAY),
+        )
+        val toLast = base.copy(monthlyPattern = MonthlyPattern.NthWeekday(-1, DayOfWeek.MONDAY))
+        assertEquals(
+            "FREQ=MONTHLY;BYDAY=-1MO",
+            toLast.toRrule(DayOfWeek.SUNDAY),
+        )
+        val toSecond = toLast.copy(monthlyPattern = MonthlyPattern.NthWeekday(2, DayOfWeek.MONDAY))
+        assertEquals(
+            "FREQ=MONTHLY;BYDAY=2MO",
+            toSecond.toRrule(DayOfWeek.SUNDAY),
+        )
+    }
+
+    @Test
+    fun `from seeds monthlyPattern NthWeekday last Friday from parsed regardless of start weekday`() {
+        // Holder-level guard: a parsed last-Friday rule reaches the holder
+        // as NthWeekday(-1, FRIDAY) even though the start date is a Saturday.
+        val selections = RecurrencePickerSelections.from(
+            parsed = RruleBuilder.parseRrule(
+                "FREQ=MONTHLY;BYDAY=-1FR",
+                defaultWeekday = DayOfWeek.SATURDAY,
+                defaultDayOfMonth = 18,
+                defaultOrdinal = 3,
+            ),
+            startDayOfWeek = DayOfWeek.SATURDAY,
+            startDayOfMonth = 18,
+        )
+        assertEquals(
+            MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY),
+            selections.monthlyPattern,
+        )
+    }
+
+    @Test
+    fun `BYSETPOS last-weekday rule routes to CUSTOM and round-trips without being hijacked`() {
+        // FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1 ("last weekday"). The
+        // picker must NOT interpret this as an nth-weekday selection; it routes to
+        // CUSTOM via extraTokens and round-trips verbatim.
+        val selections = RecurrencePickerSelections.from(
+            parsed = RruleBuilder.parseRrule(
+                "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1",
+                DayOfWeek.MONDAY,
+                15,
+                3,
+            ),
+            startDayOfWeek = DayOfWeek.MONDAY,
+            startDayOfMonth = 15,
+        )
+        assertEquals(FrequencyOption.CUSTOM, selections.frequencyOption)
+        val rrule = selections.toRrule(DayOfWeek.MONDAY)!!
+        assertTrue("expected BYSETPOS=-1 preserved, got $rrule", rrule.contains("BYSETPOS=-1"))
+    }
+
+    @Test
+    fun `imported BYDAY -2FR second-to-last weekday round-trips through the holder verbatim`() {
+        // The picker offers only 1st-4th + Last, so it can't author a
+        // second-to-last (-2) ordinal, but a synced rule may carry one. It must
+        // reach the holder as NthWeekday(-2, FRIDAY) and re-emit BYDAY=-2FR
+        // unchanged — the value is preserved even though the selector has no chip
+        // for it (the ordinal label degrades gracefully but the rule round-trips).
+        val selections = RecurrencePickerSelections.from(
+            parsed = RruleBuilder.parseRrule(
+                "FREQ=MONTHLY;BYDAY=-2FR",
+                DayOfWeek.SATURDAY,
+                18,
+                3,
+            ),
+            startDayOfWeek = DayOfWeek.SATURDAY,
+            startDayOfMonth = 18,
+        )
+        assertEquals(
+            MonthlyPattern.NthWeekday(-2, DayOfWeek.FRIDAY),
+            selections.monthlyPattern,
+        )
+        assertEquals("FREQ=MONTHLY;BYDAY=-2FR", selections.toRrule(DayOfWeek.SUNDAY))
     }
 }

@@ -14,6 +14,9 @@ class NormalizerChain(private val lowercase: Boolean = true) : Normalizer {
         add(Normalizer { input -> CHAR_CLEANUP.replace(input, " ") })
         // Whitespace normalization
         add(Normalizer { WHITESPACE.replace(it, " ").trim() })
+        // Fuzzy quantities ("a couple", "half an hour") → concrete number+unit.
+        // MUST precede NumberWordNormalizer, which maps "a"/"an" → 1.
+        add(FuzzyQuantifierNormalizer)
         // Number words → digits (case-insensitive internally)
         add(NumberWordNormalizer)
         // Multi-word expressions → underscored (case-insensitive internally)

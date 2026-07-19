@@ -123,6 +123,7 @@
     <string name="view_month">Buwan</string>
     <string name="label_all_day">Buong araw</string>
     <string name="label_today">Ngayon</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Pumunta sa petsa</string>
     <string name="label_week">L</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">tinanggihan</string>
     <string name="cd_event_state_past">nakaraang kaganapan</string>
     <string name="cd_loading_events">Naglo-load ng mga event</string>
+    <string name="cd_collapse_week_bar">Itago ang bar ng linggo</string>
+    <string name="cd_expand_week_bar">Ipakita ang bar ng linggo</string>
     <string name="cd_event_untitled">Kaganapang walang pamagat</string>
     <string name="cd_open_drawer">Buksan ang drawer</string>
     <string name="cd_close_drawer">Isara ang drawer</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Pumunta sa buwan</string>
     <string name="action_more_options">Higit pang mga opsyon</string>
     <string name="quick_add_save_failed">Hindi na-save ang event</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">araw</string>
     <string name="label_duration_hrs">oras</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Sa araw %1$d</string>
     <string name="recurrence_on_last_day">Sa huling araw ng buwan</string>
     <string name="recurrence_on_nth_weekday">Sa ika-%1$s %2$s</string>
+    <string name="recurrence_which">Alin</string>
+    <string name="recurrence_weekday">Araw ng linggo</string>
     <string name="ordinal_1st">ika-1</string>
     <string name="ordinal_2nd">ika-2</string>
     <string name="ordinal_3rd">ika-3</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Higit pang menu, %d imbitasyon ang nakabinbin</item>
         <item quantity="other">Higit pang menu, %d na imbitasyon ang nakabinbin</item>
     </plurals>
+    <string name="menu_privacy_security">Pagkapribado at Seguridad</string>
+    <string name="cd_edit_initials">I-edit ang iyong mga inisyal</string>
+    <string name="hub_initials_hint">I-tap para itakda ang iyong mga inisyal</string>
+    <string name="hub_initials_field_label">Mga inisyal</string>
+    <string name="hub_initials_save">I-save</string>
+    <string name="hub_initials_cancel">Kanselahin</string>
+    <string name="hub_section_make_it_yours">Gawing iyo</string>
+    <string name="hub_accounts_and_settings">Mga account at setting</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Ibahagi ang availability</string>

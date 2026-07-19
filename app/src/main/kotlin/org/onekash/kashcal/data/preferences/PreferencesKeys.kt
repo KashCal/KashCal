@@ -110,6 +110,9 @@ object PreferencesKeys {
     /** Show auto-detected emojis in event titles */
     val SHOW_EVENT_EMOJIS = booleanPreferencesKey("show_event_emojis")
 
+    /** Show the week bar at the top of the Agenda view. Default: true (expanded) */
+    val AGENDA_WEEK_BAR_EXPANDED = booleanPreferencesKey("agenda_week_bar_expanded")
+
     /** Time format preference: "system", "12h", or "24h" */
     val TIME_FORMAT = stringPreferencesKey("time_format")
 
@@ -274,4 +277,9 @@ object PreferencesKeys {
 
     /** Treat all-day events as busy when computing free blocks (default false). */
     val SHARE_AVAILABILITY_INCLUDE_ALL_DAY = booleanPreferencesKey("share_availability_include_all_day")
+
+    // ========== Profile ==========
+
+    /** User's up-to-2-letter initials shown in the top-bar avatar and account hub; empty = generic glyph. */
+    val USER_INITIALS = stringPreferencesKey("user_initials")
 }

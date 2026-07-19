@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
@@ -28,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -38,6 +42,24 @@ import androidx.compose.ui.window.DialogProperties
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.quickadd.QuickAddResult
+import org.onekash.kashcal.ui.theme.WarningAmberDark
+import org.onekash.kashcal.ui.theme.WarningAmberLight
+
+/**
+ * Enforces the field's two input invariants on every edit (typing and paste):
+ * strip newlines so Enter can't insert a line break (it triggers Save instead,
+ * and the input stays one logical line), then hard-cap the buffer at
+ * [QuickAddInputLimits.MAX_LENGTH] graphemes so a large paste fills to the limit
+ * and drops the remainder. Only rewrites the buffer when it actually changed.
+ */
+private val quickAddInputTransformation = InputTransformation {
+    val current = asCharSequence().toString()
+    val stripped = current.replace("\n", "")
+    val capped = QuickAddInputLimits.takeGraphemes(stripped, QuickAddInputLimits.MAX_LENGTH)
+    if (capped != current) {
+        replace(0, length, capped)
+    }
+}
 
 private val placeholderExamples = listOf(
     // Practical / realistic
@@ -60,6 +82,7 @@ private val placeholderExamples = listOf(
     "Flight to Spain Monday 14:00",
     "Meeting at quarter past 10",
     "Walk the dog daily",
+    "Lunch with Sam tomorrow // bring the contract",
     // Witty
     "Touch grass tomorrow afternoon",
     "Panic about deadline Friday night",
@@ -164,7 +187,13 @@ internal fun QuickAddDialogContent(
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
                 placeholder = { Text(placeholder) },
-                lineLimits = TextFieldLineLimits.SingleLine,
+                // Grows from one line as text wraps, up to three, then scrolls
+                // internally so nothing is ever lost on this fast-capture surface.
+                lineLimits = TextFieldLineLimits.MultiLine(
+                    minHeightInLines = 1,
+                    maxHeightInLines = 3
+                ),
+                inputTransformation = quickAddInputTransformation,
                 keyboardOptions = remember {
                     KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
@@ -172,6 +201,10 @@ internal fun QuickAddDialogContent(
                     )
                 },
                 onKeyboardAction = { if (isSaveEnabled && !isSaving) onSave() }
+            )
+
+            QuickAddCharCounter(
+                count = QuickAddInputLimits.graphemeCount(textFieldState.text.toString())
             )
 
             QuickAddPreview(result = parseResult, timeFormat = timeFormat)
@@ -201,6 +234,45 @@ internal fun QuickAddDialogContent(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Left-aligned "N/500" caption under the Quick Add field. Occupies a fixed
+ * min-height row at all times so revealing it never shifts the layout: hidden
+ * below the reveal threshold, amber as the cap approaches, and a muted, bold
+ * "at limit" treatment (never red — input is hard-capped, so over-limit can't
+ * occur) once the cap is reached.
+ */
+@Composable
+private fun QuickAddCharCounter(count: Int) {
+    val state = QuickAddInputLimits.counterState(count)
+    val onLightSurface = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    val amber = if (onLightSurface) WarningAmberLight else WarningAmberDark
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 18.dp)
+            .padding(top = 2.dp, start = 4.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (state != QuickAddCounterState.HIDDEN) {
+            Text(
+                text = stringResource(
+                    R.string.quick_add_char_counter,
+                    count,
+                    QuickAddInputLimits.MAX_LENGTH
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = when (state) {
+                    QuickAddCounterState.WARN -> amber
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = if (state == QuickAddCounterState.AT_LIMIT) FontWeight.Bold else null
+            )
         }
     }
 }

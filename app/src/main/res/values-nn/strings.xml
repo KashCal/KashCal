@@ -123,6 +123,7 @@
     <string name="view_month">Månad</string>
     <string name="label_all_day">Heile dagen</string>
     <string name="label_today">I dag</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Gå til dato</string>
     <string name="label_week">U</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -831,6 +832,8 @@
     <string name="cd_event_state_declined">avslått</string>
     <string name="cd_event_state_past">tidlegare hending</string>
     <string name="cd_loading_events">Lastar inn hendingar</string>
+    <string name="cd_collapse_week_bar">Skjul vekelinje</string>
+    <string name="cd_expand_week_bar">Vis vekelinje</string>
     <string name="cd_event_untitled">Hending utan tittel</string>
     <string name="cd_open_drawer">Opne meny</string>
     <string name="cd_close_drawer">Lukk meny</string>
@@ -845,6 +848,7 @@
     <string name="label_go_to_month">Gå til månad</string>
     <string name="action_more_options">Fleire alternativ</string>
     <string name="quick_add_save_failed">Kunne ikkje lagre hending</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dagar</string>
     <string name="label_duration_hrs">timar</string>
     <string name="label_duration_min">min</string>
@@ -853,6 +857,8 @@
     <string name="recurrence_on_day">Dag %1$d</string>
     <string name="recurrence_on_last_day">Siste dag i månaden</string>
     <string name="recurrence_on_nth_weekday">Den %1$s %2$s</string>
+    <string name="recurrence_which">Kva</string>
+    <string name="recurrence_weekday">Vekedag</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1133,6 +1139,14 @@
         <item quantity="one">Meir-meny, %d invitasjon ventar</item>
         <item quantity="other">Meir-meny, %d invitasjonar ventar</item>
     </plurals>
+    <string name="menu_privacy_security">Personvern &amp; tryggleik</string>
+    <string name="cd_edit_initials">Rediger initialane dine</string>
+    <string name="hub_initials_hint">Trykk for å velje initialane dine</string>
+    <string name="hub_initials_field_label">Initialar</string>
+    <string name="hub_initials_save">Lagre</string>
+    <string name="hub_initials_cancel">Avbryt</string>
+    <string name="hub_section_make_it_yours">Gjer den til di</string>
+    <string name="hub_accounts_and_settings">Kontoar og innstillingar</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Del tilgjengelegheit</string>

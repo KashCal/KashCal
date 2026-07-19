@@ -123,6 +123,7 @@
     <string name="view_month">လ</string>
     <string name="label_all_day">တစ်နေ့တာ</string>
     <string name="label_today">ယနေ့</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ရက်စွဲသို့ သွားရန်</string>
     <string name="label_week">ပ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">ငြင်းပယ်ခဲ့သည်</string>
     <string name="cd_event_state_past">ကုန်လွန်ခဲ့သော ပွဲ</string>
     <string name="cd_loading_events">ပွဲများ ဖွင့်နေသည်</string>
+    <string name="cd_collapse_week_bar">အပတ်စဉ်ဘား ဖျောက်ရန်</string>
+    <string name="cd_expand_week_bar">အပတ်စဉ်ဘား ပြရန်</string>
     <string name="cd_event_untitled">ခေါင်းစဉ်မဲ့ ပွဲ</string>
     <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
     <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">လသို့ သွားရန်</string>
     <string name="action_more_options">ရွေးစရာ အပိုများ</string>
     <string name="quick_add_save_failed">ပွဲကို သိမ်းဆည်း၍ မရပါ</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ရက်</string>
     <string name="label_duration_hrs">နာရီ</string>
     <string name="label_duration_min">မိ</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">ရက် %1$d တွင်</string>
     <string name="recurrence_on_last_day">လ၏ နောက်ဆုံးရက်တွင်</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s တွင်</string>
+    <string name="recurrence_which">မည်သည့်</string>
+    <string name="recurrence_weekday">နေ့</string>
     <string name="ordinal_1st">ပထမ</string>
     <string name="ordinal_2nd">ဒုတိယ</string>
     <string name="ordinal_3rd">တတိယ</string>
@@ -1085,6 +1091,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>
     </plurals>
+    <string name="menu_privacy_security">ကိုယ်ရေးကိုယ်တာနှင့် လုံခြုံရေး</string>
+    <string name="cd_edit_initials">သင့်အမည်အက္ခရာ တည်းဖြတ်ရန်</string>
+    <string name="hub_initials_hint">သင့်အမည်အက္ခရာ သတ်မှတ်ရန် တို့ပါ</string>
+    <string name="hub_initials_field_label">အမည်အက္ခရာ</string>
+    <string name="hub_initials_save">သိမ်း</string>
+    <string name="hub_initials_cancel">ပယ်ဖျက်</string>
+    <string name="hub_section_make_it_yours">သင့်စိတ်ကြိုက်ပြင်ဆင်ပါ</string>
+    <string name="hub_accounts_and_settings">အကောင့်များ &amp; ဆက်တင်များ</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">လုပ်ဆောင်နိုင်မှု မျှဝေရန်</string>

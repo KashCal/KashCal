@@ -123,6 +123,7 @@
     <string name="view_month">Bulan</string>
     <string name="label_all_day">Sepanjang hari</string>
     <string name="label_today">Hari ini</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Pergi ke tarikh</string>
     <string name="label_week">Mg</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">Ditolak</string>
     <string name="cd_event_state_past">Acara lepas</string>
     <string name="cd_loading_events">Memuatkan acara</string>
+    <string name="cd_collapse_week_bar">Sembunyikan bar minggu</string>
+    <string name="cd_expand_week_bar">Tunjukkan bar minggu</string>
     <string name="cd_event_untitled">Acara tanpa tajuk</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">Pergi ke bulan</string>
     <string name="action_more_options">Lagi pilihan</string>
     <string name="quick_add_save_failed">Gagal menyimpan acara</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">hari</string>
     <string name="label_duration_hrs">jam</string>
     <string name="label_duration_min">min</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">Pada hari %1$d</string>
     <string name="recurrence_on_last_day">Pada hari terakhir bulan</string>
     <string name="recurrence_on_nth_weekday">Pada %2$s ke-%1$s setiap bulan</string>
+    <string name="recurrence_which">Yang mana</string>
+    <string name="recurrence_weekday">Hari</string>
     <string name="ordinal_1st">1</string>
     <string name="ordinal_2nd">2</string>
     <string name="ordinal_3rd">3</string>
@@ -1085,6 +1091,14 @@
         <item quantity="one">Menu lain, %d jemputan menunggu</item>
         <item quantity="other">Menu lain, %d jemputan menunggu</item>
     </plurals>
+    <string name="menu_privacy_security">Privasi &amp; Keselamatan</string>
+    <string name="cd_edit_initials">Edit huruf awal anda</string>
+    <string name="hub_initials_hint">Ketik untuk menetapkan huruf awal anda</string>
+    <string name="hub_initials_field_label">Huruf awal</string>
+    <string name="hub_initials_save">Simpan</string>
+    <string name="hub_initials_cancel">Batal</string>
+    <string name="hub_section_make_it_yours">Jadikan milik anda</string>
+    <string name="hub_accounts_and_settings">Akaun &amp; Tetapan</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Kongsi ketersediaan</string>

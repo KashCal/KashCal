@@ -72,6 +72,7 @@ import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
+import org.onekash.kashcal.ui.components.hub.normalizeInitials
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
@@ -331,6 +332,19 @@ class HomeViewModel(
     /** Persist whether the event form's tag row sits above the notes/attendees block. */
     fun setTagsAboveNotes(above: Boolean) {
         viewModelScope.launch { dataStore.setTagsAboveNotes(above) }
+    }
+
+    /** Persist whether the Agenda view's top week bar is expanded. */
+    fun setAgendaWeekBarExpanded(expanded: Boolean) {
+        viewModelScope.launch { dataStore.setAgendaWeekBarExpanded(expanded) }
+    }
+
+    /**
+     * Persist the user's avatar initials, normalizing first so the stored value
+     * is always at most two uppercase letters (or empty to clear).
+     */
+    fun setUserInitials(raw: String) {
+        viewModelScope.launch { dataStore.setUserInitials(normalizeInitials(raw)) }
     }
 
     /**
@@ -987,8 +1001,18 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
+            dataStore.agendaWeekBarExpanded.collect { expanded ->
+                _uiState.update { it.copy(agendaWeekBarExpanded = expanded) }
+            }
+        }
+        viewModelScope.launch {
             dataStore.tagsAboveNotes.collect { above ->
                 _uiState.update { it.copy(tagsAboveNotes = above) }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.userInitials.collect { initials ->
+                _uiState.update { it.copy(userInitials = initials) }
             }
         }
         viewModelScope.launch {

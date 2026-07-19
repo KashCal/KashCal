@@ -74,16 +74,6 @@ object WeekdayRule : ParseRule {
     }
 
     /**
-     * Bare weekday: advance to the next occurrence. If today is the same day, advance 7 days.
-     * This fixes the natural-date-parser bug: uses <= 0 instead of < 0.
-     */
-    private fun resolveBareWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
-        val diff = target.value - refDate.dayOfWeek.value
-        val daysToAdd = if (diff <= 0) diff + 7 else diff
-        return refDate.plusDays(daysToAdd.toLong())
-    }
-
-    /**
      * "this [weekday]": next occurrence, but same-day returns today.
      */
     private fun resolveThisWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {

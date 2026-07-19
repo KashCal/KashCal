@@ -1,0 +1,4 @@
+• Quick Add understands more: "every 2nd Tuesday", "last day of the month", weekend and time phrases, plus inline notes with //
+• Choose "2nd Tuesday" or "Last Friday" for monthly repeats (#193)
+• Agenda shows Today and Tomorrow with a foldable week bar
+• New avatar menu with Accounts & Settings, your initials, theme, accent color, and app icon in one place

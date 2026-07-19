@@ -123,6 +123,7 @@
     <string name="view_month">माह</string>
     <string name="label_all_day">पूरा दिन</string>
     <string name="label_today">आज</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">तारीख पर जाएँ</string>
     <string name="label_week">स</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">अस्वीकृत</string>
     <string name="cd_event_state_past">बीता हुआ इवेंट</string>
     <string name="cd_loading_events">इवेंट लोड हो रहे हैं</string>
+    <string name="cd_collapse_week_bar">सप्ताह बार छिपाएँ</string>
+    <string name="cd_expand_week_bar">सप्ताह बार दिखाएँ</string>
     <string name="cd_event_untitled">बिना शीर्षक वाला इवेंट</string>
     <string name="cd_open_drawer">ड्रॉअर खोलें</string>
     <string name="cd_close_drawer">ड्रॉअर बंद करें</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">माह पर जाएँ</string>
     <string name="action_more_options">और विकल्प</string>
     <string name="quick_add_save_failed">इवेंट सहेजने में विफल</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">दिन</string>
     <string name="label_duration_hrs">घं.</string>
     <string name="label_duration_min">मि.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">दिन %1$d को</string>
     <string name="recurrence_on_last_day">माह के अंतिम दिन</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s को</string>
+    <string name="recurrence_which">कौन सा</string>
+    <string name="recurrence_weekday">सप्ताह का दिन</string>
     <string name="ordinal_1st">पहले</string>
     <string name="ordinal_2nd">दूसरे</string>
     <string name="ordinal_3rd">तीसरे</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">अधिक मेनू, %d आमंत्रण लंबित</item>
         <item quantity="other">अधिक मेनू, %d आमंत्रण लंबित</item>
     </plurals>
+    <string name="menu_privacy_security">गोपनीयता और सुरक्षा</string>
+    <string name="cd_edit_initials">अपने आद्याक्षर संपादित करें</string>
+    <string name="hub_initials_hint">अपने आद्याक्षर सेट करने के लिए टैप करें</string>
+    <string name="hub_initials_field_label">आद्याक्षर</string>
+    <string name="hub_initials_save">सहेजें</string>
+    <string name="hub_initials_cancel">रद्द करें</string>
+    <string name="hub_section_make_it_yours">इसे अपना बनाएँ</string>
+    <string name="hub_accounts_and_settings">अकाउंट और सेटिंग्स</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">उपलब्धता साझा करें</string>

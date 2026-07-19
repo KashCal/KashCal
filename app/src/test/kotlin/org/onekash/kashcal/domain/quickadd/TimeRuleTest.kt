@@ -330,4 +330,61 @@ class TimeRuleTest {
         // "est" should be consumed (index 2)
         assert(context.isConsumed(2))
     }
+
+    // ==================== Compact 24-hour "at HHMM" ====================
+
+    @Test
+    fun `at 1500 resolves to 15 colon 00`() {
+        // "1500" tokenizes as YEAR; the "at" lead-in reinterprets it as a clock time.
+        val ctx = parse("at 1500")
+        assertEquals(LocalTime.of(15, 0), ctx.resolveTime())
+    }
+
+    @Test
+    fun `at 0930 resolves to 09 colon 30`() {
+        // "0930" tokenizes as NUMBER(930); the 4-char text must be read for HHMM.
+        val ctx = parse("at 0930")
+        assertEquals(LocalTime.of(9, 30), ctx.resolveTime())
+    }
+
+    @Test
+    fun `at 2130 resolves to 21 colon 30`() {
+        val ctx = parse("at 2130")
+        assertEquals(LocalTime.of(21, 30), ctx.resolveTime())
+    }
+
+    @Test
+    fun `bare 1500 without at is not a time`() {
+        // Without the "at" lead-in, a 4-digit year must not be read as a clock time.
+        val ctx = parse("1500")
+        assertNull(ctx.resolveTime())
+    }
+
+    @Test
+    fun `at 2500 invalid clock is not a time`() {
+        val ctx = parse("at 2500")
+        assertNull(ctx.resolveTime())
+    }
+
+    @Test
+    fun `this 1500 is not a compact time - only at triggers it`() {
+        // A 4-digit run is far more often a year; only an explicit "at" lead-in
+        // reinterprets it as a clock time, so "this 1500" must not become 15:00.
+        val ctx = parse("this 1500")
+        assertNull(ctx.resolveTime())
+    }
+
+    // ==================== Part-of-day extras ====================
+
+    @Test
+    fun `after work resolves to 18 colon 00`() {
+        val ctx = parse("gym after work")
+        assertEquals(LocalTime.of(18, 0), ctx.resolveTime())
+    }
+
+    @Test
+    fun `lunchtime resolves to noon`() {
+        val ctx = parse("meet at lunchtime")
+        assertEquals(LocalTime.of(12, 0), ctx.resolveTime())
+    }
 }

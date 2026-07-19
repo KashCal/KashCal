@@ -123,6 +123,7 @@
     <string name="view_month">Mis</string>
     <string name="label_all_day">Drwy\'r dydd</string>
     <string name="label_today">Heddiw</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Mynd i ddyddiad</string>
     <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -984,6 +985,8 @@
     <string name="cd_event_state_declined">wedi\'i wrthod</string>
     <string name="cd_event_state_past">digwyddiad yn y gorffennol</string>
     <string name="cd_loading_events">Yn llwytho digwyddiadau</string>
+    <string name="cd_collapse_week_bar">Cuddio bar yr wythnos</string>
+    <string name="cd_expand_week_bar">Dangos bar yr wythnos</string>
     <string name="cd_event_untitled">Digwyddiad heb deitl</string>
     <string name="cd_open_drawer">Agor droir</string>
     <string name="cd_close_drawer">Cau droir</string>
@@ -998,6 +1001,7 @@
     <string name="label_go_to_month">Mynd i\'r mis</string>
     <string name="action_more_options">Mwy o opsiynau</string>
     <string name="quick_add_save_failed">Methu cadw digwyddiad</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dydd</string>
     <string name="label_duration_hrs">awr</string>
     <string name="label_duration_min">mun</string>
@@ -1006,6 +1010,8 @@
     <string name="recurrence_on_day">Ar ddiwrnod %1$d</string>
     <string name="recurrence_on_last_day">Ar ddiwrnod olaf y mis</string>
     <string name="recurrence_on_nth_weekday">Ar y %1$s %2$s</string>
+    <string name="recurrence_which">Pa un</string>
+    <string name="recurrence_weekday">Diwrnod o\'r wythnos</string>
     <string name="ordinal_1st">1af</string>
     <string name="ordinal_2nd">2il</string>
     <string name="ordinal_3rd">3ydd</string>
@@ -1330,6 +1336,14 @@
         <item quantity="many">Dewislen Rhagor, %d gwahoddiad yn aros</item>
         <item quantity="other">Dewislen Rhagor, %d gwahoddiad yn aros</item>
     </plurals>
+    <string name="menu_privacy_security">Preifatrwydd a diogelwch</string>
+    <string name="cd_edit_initials">Golygu eich llythrennau cyntaf</string>
+    <string name="hub_initials_hint">Tapiwch i osod eich llythrennau cyntaf</string>
+    <string name="hub_initials_field_label">Llythrennau cyntaf</string>
+    <string name="hub_initials_save">Cadw</string>
+    <string name="hub_initials_cancel">Canslo</string>
+    <string name="hub_section_make_it_yours">Gwna hi\'n un i ti</string>
+    <string name="hub_accounts_and_settings">Cyfrifon a gosodiadau</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Rhannu argaeledd</string>

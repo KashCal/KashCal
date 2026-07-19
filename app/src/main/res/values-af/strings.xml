@@ -123,6 +123,7 @@
     <string name="view_month">Maand</string>
     <string name="label_all_day">Heeldag</string>
     <string name="label_today">Vandag</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Gaan na datum</string>
     <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">afgewys</string>
     <string name="cd_event_state_past">afgelope gebeurtenis</string>
     <string name="cd_loading_events">Laai gebeurtenisse</string>
+    <string name="cd_collapse_week_bar">Versteek weekbalk</string>
+    <string name="cd_expand_week_bar">Wys weekbalk</string>
     <string name="cd_event_untitled">Gebeurtenis sonder titel</string>
     <string name="cd_open_drawer">Open laai</string>
     <string name="cd_close_drawer">Sluit laai</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Gaan na maand</string>
     <string name="action_more_options">Meer opsies</string>
     <string name="quick_add_save_failed">Kon nie gebeurtenis stoor nie</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dae</string>
     <string name="label_duration_hrs">ure</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Op dag %1$d</string>
     <string name="recurrence_on_last_day">Op laaste dag van maand</string>
     <string name="recurrence_on_nth_weekday">Op die %1$s %2$s</string>
+    <string name="recurrence_which">Watter</string>
+    <string name="recurrence_weekday">Weekdag</string>
     <string name="ordinal_1st">1ste</string>
     <string name="ordinal_2nd">2de</string>
     <string name="ordinal_3rd">3de</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Meer-kieslys, %d uitnodiging hangende</item>
         <item quantity="other">Meer-kieslys, %d uitnodigings hangende</item>
     </plurals>
+    <string name="menu_privacy_security">Privaatheid en sekuriteit</string>
+    <string name="cd_edit_initials">Wysig jou voorletters</string>
+    <string name="hub_initials_hint">Tik om jou voorletters te stel</string>
+    <string name="hub_initials_field_label">Voorletters</string>
+    <string name="hub_initials_save">Stoor</string>
+    <string name="hub_initials_cancel">Kanselleer</string>
+    <string name="hub_section_make_it_yours">Maak dit joune</string>
+    <string name="hub_accounts_and_settings">Rekeninge en instellings</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Deel beskikbaarheid</string>

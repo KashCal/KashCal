@@ -123,6 +123,7 @@
     <string name="view_month">Inyanga</string>
     <string name="label_all_day">Usuku lonke</string>
     <string name="label_today">Namuhla</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Iya osukwini</string>
     <string name="label_week">Iv</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">kwaliwe</string>
     <string name="cd_event_state_past">umcimbi odlule</string>
     <string name="cd_loading_events">Ilayisha imicimbi</string>
+    <string name="cd_collapse_week_bar">Fihla ibha yeviki</string>
+    <string name="cd_expand_week_bar">Bonisa ibha yeviki</string>
     <string name="cd_event_untitled">Umcimbi ongenasihloko</string>
     <string name="cd_open_drawer">Vula idrawer</string>
     <string name="cd_close_drawer">Vala idrawer</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Iya enyangeni</string>
     <string name="action_more_options">Ezinye izinketho</string>
     <string name="quick_add_save_failed">Yehlulekile ukugcina umcimbi</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">izinsuku</string>
     <string name="label_duration_hrs">amahora</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Ngosuku %1$d</string>
     <string name="recurrence_on_last_day">Ngosuku lokugcina lwenyanga</string>
     <string name="recurrence_on_nth_weekday">Nge-%1$s %2$s</string>
+    <string name="recurrence_which">Yiliphi</string>
+    <string name="recurrence_weekday">Usuku lweviki</string>
     <string name="ordinal_1st">ye-1</string>
     <string name="ordinal_2nd">yesi-2</string>
     <string name="ordinal_3rd">yesi-3</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Imenyu eyengeziwe, isimemo esingu-%d silindile</item>
         <item quantity="other">Imenyu eyengeziwe, izimemo ezingu-%d zilindile</item>
     </plurals>
+    <string name="menu_privacy_security">Ubumfihlo nokuphepha</string>
+    <string name="cd_edit_initials">Hlela izinhlamvu zakho zokuqala</string>
+    <string name="hub_initials_hint">Thepha ukuze usethe izinhlamvu zakho zokuqala</string>
+    <string name="hub_initials_field_label">Izinhlamvu zokuqala</string>
+    <string name="hub_initials_save">Londoloza</string>
+    <string name="hub_initials_cancel">Khansela</string>
+    <string name="hub_section_make_it_yours">Yenza ibe ngeyakho</string>
+    <string name="hub_accounts_and_settings">Ama-akhawunti nezilungiselelo</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Yabelana ngokutholakala</string>

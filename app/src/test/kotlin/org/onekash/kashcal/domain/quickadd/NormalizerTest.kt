@@ -146,4 +146,42 @@ class NormalizerTest {
         val chain = NormalizerChain()
         assertEquals("", chain.normalize("   "))
     }
+
+    // ==================== Fuzzy quantifiers ====================
+
+    @Test
+    fun `chain rewrites a couple to 2 before number-word normalization`() {
+        val chain = NormalizerChain()
+        // Must resolve "a couple" as a unit; the "a"->1 rule must not fire first.
+        assertEquals("in 2 hours", chain.normalize("in a couple hours"))
+    }
+
+    @Test
+    fun `chain rewrites a few to 3`() {
+        val chain = NormalizerChain()
+        assertEquals("in 3 days", chain.normalize("in a few days"))
+    }
+
+    @Test
+    fun `chain rewrites half an hour to 30 minutes`() {
+        val chain = NormalizerChain()
+        assertEquals("for 30 minutes", chain.normalize("for half an hour"))
+    }
+
+    @Test
+    fun `chain rewrites quarter of an hour to 15 minutes`() {
+        val chain = NormalizerChain()
+        assertEquals("in 15 minutes", chain.normalize("in a quarter of an hour"))
+    }
+
+    @Test
+    fun `several and dozen are not treated as fuzzy counts`() {
+        // "several"/"dozen" are deliberately NOT rewritten to numbers: a blanket
+        // substitution would corrupt ordinary titles ("a dozen eggs" → "12 eggs").
+        // ("a" → 1 is a separate, pre-existing NumberWordNormalizer rule and is not
+        // the fuzzy-count corruption guarded against here.)
+        val chain = NormalizerChain()
+        assertEquals("in several weeks", chain.normalize("in several weeks"))
+        assertEquals("dozen", chain.normalize("dozen"))
+    }
 }

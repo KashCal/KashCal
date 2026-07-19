@@ -123,6 +123,7 @@
     <string name="view_month">Mesiac</string>
     <string name="label_all_day">Celý deň</string>
     <string name="label_today">Dnes</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Prejsť na dátum</string>
     <string name="label_week">T</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -908,6 +909,8 @@
     <string name="cd_event_state_declined">odmietnuté</string>
     <string name="cd_event_state_past">minulá udalosť</string>
     <string name="cd_loading_events">Načítavanie udalostí</string>
+    <string name="cd_collapse_week_bar">Skryť týždennú lištu</string>
+    <string name="cd_expand_week_bar">Zobraziť týždennú lištu</string>
     <string name="cd_event_untitled">Udalosť bez názvu</string>
     <string name="cd_open_drawer">Otvoriť ponuku</string>
     <string name="cd_close_drawer">Zavrieť ponuku</string>
@@ -922,6 +925,7 @@
     <string name="label_go_to_month">Prejsť na mesiac</string>
     <string name="action_more_options">Ďalšie možnosti</string>
     <string name="quick_add_save_failed">Udalosť sa nepodarilo uložiť</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dní</string>
     <string name="label_duration_hrs">hod</string>
     <string name="label_duration_min">min</string>
@@ -930,6 +934,8 @@
     <string name="recurrence_on_day">%1$d. deň</string>
     <string name="recurrence_on_last_day">Posledný deň mesiaca</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Ktorý</string>
+    <string name="recurrence_weekday">Deň v týždni</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1232,6 +1238,14 @@
         <item quantity="many">Ponuka Viac, %d čakajúcich pozvánok</item>
         <item quantity="other">Ponuka Viac, %d čakajúcich pozvánok</item>
     </plurals>
+    <string name="menu_privacy_security">Súkromie a zabezpečenie</string>
+    <string name="cd_edit_initials">Upraviť svoje iniciálky</string>
+    <string name="hub_initials_hint">Ťuknutím nastavíte svoje iniciálky</string>
+    <string name="hub_initials_field_label">Iniciálky</string>
+    <string name="hub_initials_save">Uložiť</string>
+    <string name="hub_initials_cancel">Zrušiť</string>
+    <string name="hub_section_make_it_yours">Prispôsob si to</string>
+    <string name="hub_accounts_and_settings">Účty a nastavenia</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Zdieľať dostupnosť</string>

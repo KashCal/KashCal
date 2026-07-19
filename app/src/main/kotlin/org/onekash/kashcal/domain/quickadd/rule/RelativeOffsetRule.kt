@@ -13,7 +13,63 @@ object RelativeOffsetRule : ParseRule {
         if (tryInPattern(tokens, context)) return
 
         // Pattern 2: "NUMBER UNIT ago" (backward offset)
-        tryAgoPattern(tokens, context)
+        if (tryAgoPattern(tokens, context)) return
+
+        // Pattern 3: "NUMBER UNIT from now" / "NUMBER UNIT later" (forward offset)
+        tryForwardTrailerPattern(tokens, context)
+    }
+
+    /**
+     * "NUMBER UNIT from now" and "NUMBER UNIT later" — forward offsets equivalent
+     * to "in NUMBER UNIT". "from"/"now" are KEYWORDs; "later" is UNKNOWN.
+     */
+    private fun tryForwardTrailerPattern(tokens: List<Token>, context: ParseContext): Boolean {
+        for ((i, token) in tokens.withIndex()) {
+            if (context.isConsumed(i)) continue
+            if (token.type != TokenType.NUMBER) continue
+
+            val unitIndex = i + 1
+            if (unitIndex >= tokens.size) continue
+            if (context.isConsumed(unitIndex)) continue
+            val unitToken = tokens[unitIndex]
+            if (unitToken.type != TokenType.UNIT) continue
+
+            val amount = token.value as? Int ?: continue
+            val unit = unitToken.value as? ChronoUnit ?: continue
+
+            // "... from now"
+            val trailerIndex = unitIndex + 1
+            if (trailerIndex >= tokens.size) continue
+            val trailer = tokens[trailerIndex]
+            if (context.isConsumed(trailerIndex)) continue
+
+            val consumed = mutableListOf(i, unitIndex)
+            val matched = when {
+                trailer.type == TokenType.KEYWORD && trailer.value == "FROM" -> {
+                    val nowIndex = trailerIndex + 1
+                    if (nowIndex >= tokens.size || context.isConsumed(nowIndex)) false
+                    else {
+                        val nowToken = tokens[nowIndex]
+                        if (nowToken.type == TokenType.KEYWORD && nowToken.value == "NOW") {
+                            consumed.add(trailerIndex)
+                            consumed.add(nowIndex)
+                            true
+                        } else false
+                    }
+                }
+                trailer.type == TokenType.UNKNOWN && trailer.text.lowercase() == "later" -> {
+                    consumed.add(trailerIndex)
+                    true
+                }
+                else -> false
+            }
+            if (!matched) continue
+
+            applyOffset(context, amount.toLong(), unit, forward = true)
+            context.consume(consumed)
+            return true
+        }
+        return false
     }
 
     private fun tryInPattern(tokens: List<Token>, context: ParseContext): Boolean {
@@ -42,7 +98,7 @@ object RelativeOffsetRule : ParseRule {
         return false
     }
 
-    private fun tryAgoPattern(tokens: List<Token>, context: ParseContext) {
+    private fun tryAgoPattern(tokens: List<Token>, context: ParseContext): Boolean {
         for ((i, token) in tokens.withIndex()) {
             if (context.isConsumed(i)) continue
             if (token.type != TokenType.NUMBER) continue
@@ -64,8 +120,9 @@ object RelativeOffsetRule : ParseRule {
             context.consume(i)
             context.consume(unitIndex)
             context.consume(agoIndex)
-            return
+            return true
         }
+        return false
     }
 
     private fun applyOffset(context: ParseContext, amount: Long, unit: ChronoUnit, forward: Boolean) {

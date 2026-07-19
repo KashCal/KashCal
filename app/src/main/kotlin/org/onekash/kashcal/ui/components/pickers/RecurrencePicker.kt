@@ -48,6 +48,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -304,7 +306,8 @@ fun RecurrencePickerRow(
                         dayOfMonth = startDayOfMonth,
                         ordinalInMonth = startOrdinalInMonth,
                         weekday = startDayOfWeek,
-                        onPatternChange = { pattern -> selections = selections.copy(monthlyPattern = pattern); notifyChange() }
+                        onPatternChange = { pattern -> selections = selections.copy(monthlyPattern = pattern); notifyChange() },
+                        firstDayOfWeek = firstDayOfWeek
                     )
                 }
 
@@ -533,45 +536,60 @@ fun WeekdaySelector(
     ) {
         daysOrder.forEach { day ->
             val isSelected = day in selectedDays
-            val label = day.getDisplayName(TextStyle.NARROW, LocalLocale.current.platformLocale)
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.inverseSurface
-                        else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                    .then(
-                        if (!isSelected)
-                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                        else Modifier
-                    )
-                    .clickable {
-                        val newDays = if (isSelected) {
-                            // Don't allow deselecting the last day
-                            if (selectedDays.size > 1) selectedDays - day else selectedDays
-                        } else {
-                            selectedDays + day
-                        }
-                        onDaysChange(newDays)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
-                    else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            DayCircle(
+                day = day,
+                isSelected = isSelected,
+                onClick = {
+                    val newDays = if (isSelected) {
+                        // Don't allow deselecting the last day
+                        if (selectedDays.size > 1) selectedDays - day else selectedDays
+                    } else {
+                        selectedDays + day
+                    }
+                    onDaysChange(newDays)
+                }
+            )
         }
     }
 }
 
+/** Ordinals offered by the nth-weekday chip row: 1st-4th plus Last (-1). */
+private val NTH_WEEKDAY_ORDINALS = listOf(1, 2, 3, 4, -1)
+
+/**
+ * Localized label for an nth-weekday ordinal. 1-4 use the ordinal_* strings and
+ * -1 uses the "last" string. Values outside {1,2,3,4,-1} (a rare imported
+ * BYDAY=5FR) fall back to [R.string.ordinal_nth] so the rule renders faithfully
+ * in the radio label without being coerced onto a chip.
+ */
+@Composable
+private fun nthWeekdayOrdinalLabel(ordinal: Int): String = when (ordinal) {
+    1 -> stringResource(R.string.ordinal_1st)
+    2 -> stringResource(R.string.ordinal_2nd)
+    3 -> stringResource(R.string.ordinal_3rd)
+    4 -> stringResource(R.string.ordinal_4th)
+    -1 -> stringResource(R.string.rrule_ordinal_last)
+    else -> stringResource(R.string.ordinal_nth, ordinal)
+}
+
+/** The picker offers 1st-4th + Last; a start-date position of 5 clamps to Last. */
+private fun clampSeedOrdinal(ordinalInMonth: Int): Int =
+    if (ordinalInMonth in 1..4) ordinalInMonth else -1
+
 /**
  * Monthly pattern selector with radio options.
+ *
+ * The third option ("On the <ordinal> <weekday>") renders its ordinal and
+ * weekday from the current [pattern] when it is a [MonthlyPattern.NthWeekday],
+ * so an imported rule like `BYDAY=-1FR` shows "Last" + "Friday" regardless of
+ * the start date. [ordinalInMonth] and [weekday] are only the FALLBACK seed used
+ * when the user first switches into the nth-weekday option from a different
+ * pattern; [ordinalInMonth] is clamped to the offered set (5 -> Last).
+ *
+ * When the nth-weekday option is selected it expands inline (no dropdowns) into
+ * a single-select ordinal chip row (1st/2nd/3rd/4th/Last, mirroring
+ * [FrequencyChipRow]) and a single-select weekday circle row (the same 40dp
+ * circles the weekly [WeekdaySelector] uses, respecting [firstDayOfWeek]).
  */
 @Composable
 fun MonthlyPatternSelector(
@@ -580,23 +598,28 @@ fun MonthlyPatternSelector(
     ordinalInMonth: Int,
     weekday: DayOfWeek,
     onPatternChange: (MonthlyPattern) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    val ordinalLabel = when (ordinalInMonth) {
-        1 -> stringResource(R.string.ordinal_1st)
-        2 -> stringResource(R.string.ordinal_2nd)
-        3 -> stringResource(R.string.ordinal_3rd)
-        4 -> stringResource(R.string.ordinal_4th)
-        else -> stringResource(R.string.ordinal_nth, ordinalInMonth)
-    }
-    val weekdayLabel = weekday.getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
+    // Values shown by the nth-weekday option: the parsed rule wins; the
+    // (clamped) start-date position is only the seed for a fresh switch-in.
+    val activeOrdinal = (pattern as? MonthlyPattern.NthWeekday)?.ordinal
+        ?: clampSeedOrdinal(ordinalInMonth)
+    val activeWeekday = (pattern as? MonthlyPattern.NthWeekday)?.weekday ?: weekday
+    val activeOrdinalLabel = nthWeekdayOrdinalLabel(activeOrdinal)
+    val activeWeekdayLabel = activeWeekday.getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
+
+    // Day shown by the by-date option: the parsed rule's day wins so an imported
+    // BYMONTHDAY=9 reads "On day 9" even when the start date is the 18th; the
+    // start-date day is only the seed when the pattern isn't SameDay.
+    val activeDayOfMonth = (pattern as? MonthlyPattern.SameDay)?.dayOfMonth ?: dayOfMonth
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Option 1: Same day of month
         RadioOption(
-            label = stringResource(R.string.recurrence_on_day, dayOfMonth),
+            label = stringResource(R.string.recurrence_on_day, activeDayOfMonth),
             selected = pattern is MonthlyPattern.SameDay,
-            onClick = { onPatternChange(MonthlyPattern.SameDay(dayOfMonth)) }
+            onClick = { onPatternChange(MonthlyPattern.SameDay(activeDayOfMonth)) }
         )
 
         // Option 2: Last day of month
@@ -606,11 +629,166 @@ fun MonthlyPatternSelector(
             onClick = { onPatternChange(MonthlyPattern.LastDay) }
         )
 
-        // Option 3: Nth weekday
+        // Option 3: Nth weekday — label reflects the active ordinal/weekday so an
+        // imported "last Friday" reads correctly even when the start date differs.
+        val isNthWeekday = pattern is MonthlyPattern.NthWeekday
         RadioOption(
-            label = stringResource(R.string.recurrence_on_nth_weekday, ordinalLabel, weekdayLabel),
-            selected = pattern is MonthlyPattern.NthWeekday,
-            onClick = { onPatternChange(MonthlyPattern.NthWeekday(ordinalInMonth, weekday)) }
+            label = stringResource(R.string.recurrence_on_nth_weekday, activeOrdinalLabel, activeWeekdayLabel),
+            selected = isNthWeekday,
+            onClick = { onPatternChange(MonthlyPattern.NthWeekday(activeOrdinal, activeWeekday)) }
+        )
+
+        // Inline expansion for the nth-weekday option: ordinal chips + weekday
+        // circles, each under a caption at full width (no side-label column).
+        AnimatedVisibility(
+            visible = isNthWeekday,
+            enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
+            exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.recurrence_which),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OrdinalChipRow(
+                    selectedOrdinal = activeOrdinal,
+                    onSelect = { ordinal ->
+                        onPatternChange(MonthlyPattern.NthWeekday(ordinal, activeWeekday))
+                    }
+                )
+                Text(
+                    stringResource(R.string.recurrence_weekday),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                SingleWeekdaySelector(
+                    selectedDay = activeWeekday,
+                    onDaySelect = { day ->
+                        onPatternChange(MonthlyPattern.NthWeekday(activeOrdinal, day))
+                    },
+                    firstDayOfWeek = firstDayOfWeek
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Single-select ordinal chip row (1st / 2nd / 3rd / 4th / Last), full-width and
+ * flex-filled. Hand-built to mirror [FrequencyChipRow] so it reads as one visual
+ * group with the rest of the picker rather than a Material segmented control.
+ */
+@Composable
+private fun OrdinalChipRow(
+    selectedOrdinal: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        NTH_WEEKDAY_ORDINALS.forEach { ordinal ->
+            val isSelected = ordinal == selectedOrdinal
+            val label = nthWeekdayOrdinalLabel(ordinal)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.inverseSurface
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    .then(
+                        if (!isSelected)
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                        else Modifier
+                    )
+                    .clickable { onSelect(ordinal) }
+                    .semantics { selected = isSelected }
+                    .padding(vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Single-select weekday circle row for the monthly nth-weekday pattern. Reuses
+ * the visual [DayCircle] from the weekly [WeekdaySelector] and its SpaceEvenly /
+ * firstDayOfWeek-ordered layout, but with single-select semantics (tapping a day
+ * replaces the selection) — it deliberately does NOT share the weekly selector's
+ * "can't deselect the last day" accumulation rule, which has no meaning here.
+ */
+@Composable
+private fun SingleWeekdaySelector(
+    selectedDay: DayOfWeek,
+    onDaySelect: (DayOfWeek) -> Unit,
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+) {
+    val daysOrder = remember(firstDayOfWeek) {
+        DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
+    }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        daysOrder.forEach { day ->
+            DayCircle(
+                day = day,
+                isSelected = day == selectedDay,
+                onClick = { onDaySelect(day) }
+            )
+        }
+    }
+}
+
+/**
+ * One 40dp weekday circle with a NARROW day label. Visual-only; selection and
+ * click semantics are owned by the caller so both the multi-select weekly
+ * selector and the single-select monthly selector can share the same look.
+ */
+@Composable
+private fun DayCircle(
+    day: DayOfWeek,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val label = day.getDisplayName(TextStyle.NARROW, LocalLocale.current.platformLocale)
+    Box(
+        modifier = modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.inverseSurface
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .then(
+                if (!isSelected)
+                    Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                else Modifier
+            )
+            .clickable { onClick() }
+            .semantics { selected = isSelected },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -857,6 +1035,9 @@ fun RadioOption(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .clickable { onClick() }
+            // Expose selection to TalkBack (and tests) so state isn't conveyed by
+            // the filled dot alone.
+            .semantics { this.selected = selected }
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

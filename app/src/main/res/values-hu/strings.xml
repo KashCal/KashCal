@@ -123,6 +123,7 @@
     <string name="view_month">Hónap</string>
     <string name="label_all_day">Egész napos</string>
     <string name="label_today">Ma</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Ugrás dátumra</string>
     <string name="label_week">H</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">elutasítva</string>
     <string name="cd_event_state_past">múltbeli esemény</string>
     <string name="cd_loading_events">Események betöltése</string>
+    <string name="cd_collapse_week_bar">Heti sáv elrejtése</string>
+    <string name="cd_expand_week_bar">Heti sáv megjelenítése</string>
     <string name="cd_event_untitled">Névtelen esemény</string>
     <string name="cd_open_drawer">Fiók megnyitása</string>
     <string name="cd_close_drawer">Fiók bezárása</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Ugrás hónapra</string>
     <string name="action_more_options">További lehetőségek</string>
     <string name="quick_add_save_failed">Nem sikerült elmenteni az eseményt</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">nap</string>
     <string name="label_duration_hrs">óra</string>
     <string name="label_duration_min">perc</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">A hónap %1$d. napján</string>
     <string name="recurrence_on_last_day">A hónap utolsó napján</string>
     <string name="recurrence_on_nth_weekday">A(z) %1$s %2$s</string>
+    <string name="recurrence_which">Melyik</string>
+    <string name="recurrence_weekday">Hét napja</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1133,6 +1139,14 @@
         <item quantity="one">Egyéb menü, %d meghívó vár</item>
         <item quantity="other">Egyéb menü, %d meghívó vár</item>
     </plurals>
+    <string name="menu_privacy_security">Adatvédelem &amp; Biztonság</string>
+    <string name="cd_edit_initials">Monogram szerkesztése</string>
+    <string name="hub_initials_hint">Koppints a monogram beállításához</string>
+    <string name="hub_initials_field_label">Monogram</string>
+    <string name="hub_initials_save">Mentés</string>
+    <string name="hub_initials_cancel">Mégse</string>
+    <string name="hub_section_make_it_yours">Szabd testre</string>
+    <string name="hub_accounts_and_settings">Fiókok és beállítások</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Elérhetőség megosztása</string>

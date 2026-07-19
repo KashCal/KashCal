@@ -160,7 +160,7 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Accounts & Settings").assertIsDisplayed()
     }
 
     @Test
@@ -659,7 +659,7 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").performClick()
+        composeTestRule.onNodeWithText("Accounts & Settings").performClick()
         assert(settingsClicked)
     }
 
@@ -766,10 +766,10 @@ class HomeScreenComposeTest {
         composeTestRule.onNodeWithText("Syncing calendars...").assertDoesNotExist()
     }
 
-    // ==================== Overflow Sheet Tests ====================
+    // ==================== Account Hub Tests ====================
 
     @Test
-    fun homeScreen_topBarShowsOverflowButton() {
+    fun homeScreen_topBarShowsAvatarTrigger() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -787,7 +787,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_overflowAccessibilityLabelMatchesHelperWhenInvitesPending() {
+    fun homeScreen_avatarAccessibilityLabelMatchesHelperWhenInvitesPending() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -805,7 +805,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_tapOverflowRevealsAllSixSheetRows() {
+    fun homeScreen_tapAvatarRevealsAllHubRows() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -820,15 +820,17 @@ class HomeScreenComposeTest {
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
         composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Date").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Go to date").assertIsDisplayed()
         composeTestRule.onNodeWithText("Share availability").assertIsDisplayed()
         composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Accounts & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("About").assertIsDisplayed()
+        // Privacy & Security appears at the bottom of the hub.
+        composeTestRule.onNodeWithText("Privacy & Security").assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_sheetInvitesClickInvokesCallback() {
+    fun homeScreen_hubInvitesClickInvokesCallback() {
         var invitesClicked = false
 
         composeTestRule.setContent {
@@ -850,7 +852,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_sheetInsightsClickInvokesViewSelect() {
+    fun homeScreen_hubInsightsClickInvokesViewSelect() {
         var selectedView: ViewMode? = null
 
         composeTestRule.setContent {
@@ -872,7 +874,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_sheetSettingsClickInvokesCallback() {
+    fun homeScreen_hubSettingsClickInvokesCallback() {
         var settingsClicked = false
 
         composeTestRule.setContent {
@@ -889,12 +891,12 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").performClick()
+        composeTestRule.onNodeWithText("Accounts & Settings").performClick()
         assert(settingsClicked)
     }
 
     @Test
-    fun homeScreen_sheetInvitesItemHidesChipWhenCountZero() {
+    fun homeScreen_hubInvitesItemHidesChipWhenCountZero() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -914,7 +916,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_overflowButtonPresentInAgendaView() {
+    fun homeScreen_avatarTriggerPresentInAgendaView() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
@@ -931,7 +933,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_overflowSheetInsightsRowRendersWhileInInsightsView() {
+    fun homeScreen_hubInsightsRowRendersWhileInInsightsView() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(viewMode = ViewMode.INSIGHTS),
@@ -949,7 +951,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_backButtonClosesSheet() {
+    fun homeScreen_backButtonClosesHub() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -963,9 +965,9 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Accounts & Settings").assertIsDisplayed()
         Espresso.pressBack()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Accounts & Settings").assertDoesNotExist()
     }
 }

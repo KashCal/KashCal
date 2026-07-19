@@ -123,6 +123,7 @@
     <string name="view_month">Mesec</string>
     <string name="label_all_day">Ceo dan</string>
     <string name="label_today">Danas</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Idi na datum</string>
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -870,6 +871,8 @@
     <string name="cd_event_state_declined">odbijeno</string>
     <string name="cd_event_state_past">prošli događaj</string>
     <string name="cd_loading_events">Učitavanje događaja</string>
+    <string name="cd_collapse_week_bar">Sakrij traku sedmice</string>
+    <string name="cd_expand_week_bar">Prikaži traku sedmice</string>
     <string name="cd_event_untitled">Događaj bez naslova</string>
     <string name="cd_open_drawer">Otvori meni</string>
     <string name="cd_close_drawer">Zatvori meni</string>
@@ -884,6 +887,7 @@
     <string name="label_go_to_month">Idi na mesec</string>
     <string name="action_more_options">Više opcija</string>
     <string name="quick_add_save_failed">Događaj nije moguće sačuvati</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dana</string>
     <string name="label_duration_hrs">sati</string>
     <string name="label_duration_min">min</string>
@@ -892,6 +896,8 @@
     <string name="recurrence_on_day">%1$d. dan</string>
     <string name="recurrence_on_last_day">Poslednji dan meseca</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Koji</string>
+    <string name="recurrence_weekday">Dan u nedelji</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1183,6 +1189,14 @@
         <item quantity="few">Meni Više, %d pozivnice na čekanju</item>
         <item quantity="other">Meni Više, %d pozivnica na čekanju</item>
     </plurals>
+    <string name="menu_privacy_security">Privatnost i bezbednost</string>
+    <string name="cd_edit_initials">Izmeni svoje inicijale</string>
+    <string name="hub_initials_hint">Dodirnite da postavite inicijale</string>
+    <string name="hub_initials_field_label">Inicijali</string>
+    <string name="hub_initials_save">Sačuvaj</string>
+    <string name="hub_initials_cancel">Otkaži</string>
+    <string name="hub_section_make_it_yours">Prilagodi sebi</string>
+    <string name="hub_accounts_and_settings">Nalozi i podešavanja</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Podeli dostupnost</string>

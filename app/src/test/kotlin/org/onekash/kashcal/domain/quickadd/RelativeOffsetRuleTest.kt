@@ -98,4 +98,24 @@ class RelativeOffsetRuleTest {
         val ctx = parse("in forty-five minutes")
         assertEquals(LocalTime.of(10, 45), ctx.resolveTime())
     }
+
+    // ==================== "from now" / "later" (forward offset) ====================
+
+    @Test
+    fun `3 days from now resolves like in 3 days`() {
+        val ctx = parse("3 days from now")
+        assertEquals(LocalDate.of(2026, 4, 16), ctx.resolveDate())
+    }
+
+    @Test
+    fun `5 minutes later resolves forward`() {
+        val ctx = parse("5 minutes later")
+        assertEquals(LocalTime.of(10, 5), ctx.resolveTime())
+    }
+
+    @Test
+    fun `2 hours from now resolves forward`() {
+        val ctx = parse("2 hours from now")
+        assertEquals(LocalTime.of(12, 0), ctx.resolveTime())
+    }
 }

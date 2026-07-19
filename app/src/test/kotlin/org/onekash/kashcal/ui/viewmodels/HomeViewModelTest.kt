@@ -4673,4 +4673,45 @@ class HomeViewModelTest {
             ids
         )
     }
+
+    // ==================== Avatar Initials Tests ====================
+
+    @Test
+    fun `userInitials preference flows into uiState`() = runTest {
+        every { dataStore.userInitials } returns flowOf("KC")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals("KC", viewModel.uiState.value.userInitials)
+    }
+
+    @Test
+    fun `setUserInitials normalizes before persisting`() = runTest {
+        val saved = slot<String>()
+        coEvery { dataStore.setUserInitials(capture(saved)) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setUserInitials("john")
+        advanceUntilIdle()
+
+        // "john" -> first two letters, uppercased.
+        assertEquals("JO", saved.captured)
+    }
+
+    @Test
+    fun `setUserInitials persists empty to clear`() = runTest {
+        val saved = slot<String>()
+        coEvery { dataStore.setUserInitials(capture(saved)) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setUserInitials("  ")
+        advanceUntilIdle()
+
+        assertEquals("", saved.captured)
+    }
 }

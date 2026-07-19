@@ -110,6 +110,117 @@ class RruleBuilderRoundTripTest {
         }
     }
 
+    // ==================== Monthly nth-weekday: exact BYDAY string over the bounded space ====================
+
+    /** RFC 5545 day abbreviation for each DayOfWeek, for exact-string assertions. */
+    private fun abbrev(day: DayOfWeek): String = when (day) {
+        DayOfWeek.MONDAY -> "MO"
+        DayOfWeek.TUESDAY -> "TU"
+        DayOfWeek.WEDNESDAY -> "WE"
+        DayOfWeek.THURSDAY -> "TH"
+        DayOfWeek.FRIDAY -> "FR"
+        DayOfWeek.SATURDAY -> "SA"
+        DayOfWeek.SUNDAY -> "SU"
+    }
+
+    @Test
+    fun `monthly nth-weekday emits exact BYDAY and round-trips for every ordinal x weekday`() {
+        // Bounded, fully enumerable space: {1,2,3,4,-1} x 7 weekdays. Exhaustive
+        // enumeration beats random fuzzing here — it guarantees coverage. Asserts
+        // the EXACT BYDAY token (e.g. -1 -> "-1FR", 2 -> "2MO") and that parseRrule
+        // returns the identical NthWeekday.
+        for (ordinal in listOf(1, 2, 3, 4, -1)) {
+            for (day in DayOfWeek.entries) {
+                val prefix = if (ordinal == -1) "-1" else ordinal.toString()
+                val expected = "FREQ=MONTHLY;BYDAY=$prefix${abbrev(day)}"
+                val rrule = RruleBuilder.monthlyNthWeekday(ordinal, day)
+                assertEquals("emit($ordinal, $day)", expected, rrule)
+
+                val parsed = RruleBuilder.parseRrule(rrule, DayOfWeek.MONDAY, 1, 1)
+                assertEquals(
+                    "parse($rrule)",
+                    MonthlyPattern.NthWeekday(ordinal, day),
+                    parsed.monthlyPattern,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `monthly nth-weekday with interval emits canonical FREQ INTERVAL BYDAY order and round-trips`() {
+        // The CUSTOM(month) path threads interval. Assert the builder's REAL token
+        // order (FREQ, then INTERVAL, then BYDAY) rather than guessing it.
+        for (ordinal in listOf(1, 2, 3, 4, -1)) {
+            for (day in DayOfWeek.entries) {
+                val prefix = if (ordinal == -1) "-1" else ordinal.toString()
+                val expected = "FREQ=MONTHLY;INTERVAL=2;BYDAY=$prefix${abbrev(day)}"
+                val rrule = RruleBuilder.monthlyNthWeekday(ordinal, day, interval = 2)
+                assertEquals("emit($ordinal, $day, interval=2)", expected, rrule)
+
+                val parsed = RruleBuilder.parseRrule(rrule, DayOfWeek.MONDAY, 1, 1)
+                assertEquals(2, parsed.interval)
+                assertEquals(
+                    MonthlyPattern.NthWeekday(ordinal, day),
+                    parsed.monthlyPattern,
+                )
+            }
+        }
+    }
+
+    // ============ Parsed rule wins over start-date-derived defaults ============
+
+    @Test
+    fun `parseRrule BYDAY -1FR yields last Friday even when start is Saturday the 18th third occurrence`() {
+        // A "last Friday" rule opened on an event whose
+        // start date is Saturday the 18th (which is the 3rd Saturday) must parse
+        // to NthWeekday(-1, FRIDAY) — the rule wins, NOT the start-date-derived
+        // SATURDAY / ordinal 3.
+        val parsed = RruleBuilder.parseRrule(
+            "FREQ=MONTHLY;BYDAY=-1FR",
+            defaultWeekday = DayOfWeek.SATURDAY,
+            defaultDayOfMonth = 18,
+            defaultOrdinal = 3,
+        )
+        assertEquals(MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY), parsed.monthlyPattern)
+    }
+
+    @Test
+    fun `parseRrule BYDAY 2MO yields second Monday regardless of Saturday start`() {
+        val parsed = RruleBuilder.parseRrule(
+            "FREQ=MONTHLY;BYDAY=2MO",
+            defaultWeekday = DayOfWeek.SATURDAY,
+            defaultDayOfMonth = 18,
+            defaultOrdinal = 3,
+        )
+        assertEquals(MonthlyPattern.NthWeekday(2, DayOfWeek.MONDAY), parsed.monthlyPattern)
+    }
+
+    @Test
+    fun `parseRrule BYMONTHDAY wins over start-date defaults`() {
+        // Mirror for the by-date branch: BYMONTHDAY=9 must win over the start
+        // date's day-of-month (18).
+        val parsed = RruleBuilder.parseRrule(
+            "FREQ=MONTHLY;BYMONTHDAY=9",
+            defaultWeekday = DayOfWeek.SATURDAY,
+            defaultDayOfMonth = 18,
+            defaultOrdinal = 3,
+        )
+        assertEquals(MonthlyPattern.SameDay(9), parsed.monthlyPattern)
+    }
+
+    // ==================== Adversarial: 5FR (real but rare) round-trips uncoerced ====================
+
+    @Test
+    fun `monthly BYDAY 5FR round-trips verbatim and is not coerced to Last or 4th`() {
+        // A "5th Friday" rule is valid but rare. The picker offers only 1st-4th +
+        // Last, so it can't select it — but importing one must NOT silently coerce
+        // it to -1FR or 4FR. parse->build preserves BYDAY=5FR.
+        val parsed = RruleBuilder.parseRrule("FREQ=MONTHLY;BYDAY=5FR", DayOfWeek.MONDAY, 1, 1)
+        assertEquals(MonthlyPattern.NthWeekday(5, DayOfWeek.FRIDAY), parsed.monthlyPattern)
+        val rebuilt = RruleBuilder.monthlyNthWeekday(5, DayOfWeek.FRIDAY)
+        assertEquals("FREQ=MONTHLY;BYDAY=5FR", rebuilt)
+    }
+
     @Test
     fun `withCount roundtrip preserves count across boundaries`() {
         for (count in listOf(1, 2, 10, 52, 365, Int.MAX_VALUE)) {

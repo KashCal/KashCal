@@ -123,6 +123,7 @@
     <string name="view_month">Tháng</string>
     <string name="label_all_day">Cả ngày</string>
     <string name="label_today">Hôm nay</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Đi tới ngày</string>
     <string name="label_week">Tu</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">Đã từ chối</string>
     <string name="cd_event_state_past">Sự kiện đã qua</string>
     <string name="cd_loading_events">Đang tải sự kiện</string>
+    <string name="cd_collapse_week_bar">Ẩn thanh tuần</string>
+    <string name="cd_expand_week_bar">Hiện thanh tuần</string>
     <string name="cd_event_untitled">Sự kiện không có tiêu đề</string>
     <string name="cd_open_drawer">Mở ngăn kéo</string>
     <string name="cd_close_drawer">Đóng ngăn kéo</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">Đi tới tháng</string>
     <string name="action_more_options">Tùy chọn khác</string>
     <string name="quick_add_save_failed">Không thể lưu sự kiện</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ngày</string>
     <string name="label_duration_hrs">giờ</string>
     <string name="label_duration_min">phút</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">Ngày %1$d hàng tháng</string>
     <string name="recurrence_on_last_day">Ngày cuối cùng của tháng</string>
     <string name="recurrence_on_nth_weekday">%2$s thứ %1$s của tháng</string>
+    <string name="recurrence_which">Thứ mấy</string>
+    <string name="recurrence_weekday">Ngày trong tuần</string>
     <string name="ordinal_1st">1</string>
     <string name="ordinal_2nd">2</string>
     <string name="ordinal_3rd">3</string>
@@ -1084,6 +1090,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">Menu khác, %d lời mời đang chờ</item>
     </plurals>
+    <string name="menu_privacy_security">Quyền riêng tư và bảo mật</string>
+    <string name="cd_edit_initials">Chỉnh sửa chữ cái đầu của bạn</string>
+    <string name="hub_initials_hint">Chạm để đặt chữ cái đầu của bạn</string>
+    <string name="hub_initials_field_label">Chữ cái đầu</string>
+    <string name="hub_initials_save">Lưu</string>
+    <string name="hub_initials_cancel">Hủy</string>
+    <string name="hub_section_make_it_yours">Cá nhân hóa</string>
+    <string name="hub_accounts_and_settings">Tài khoản và cài đặt</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Chia sẻ thời gian rảnh</string>

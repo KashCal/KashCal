@@ -20,6 +20,7 @@ object WordTokenizer {
         "yesterday" to "yesterday", "yday" to "yesterday", "ystrday" to "yesterday",
         "day_before_yesterday" to "day_before_yesterday",
         "day_after_tomorrow" to "day_after_tomorrow",
+        "weekend" to "weekend",
         "all_day" to "ALL_DAY"
     )
 
@@ -61,10 +62,12 @@ object WordTokenizer {
 
     private val timeKeywords = mapOf(
         "noon" to LocalTime.NOON,
+        "lunchtime" to LocalTime.NOON,
         "midnight" to LocalTime.MIDNIGHT,
         "morning" to LocalTime.of(8, 0),
         "afternoon" to LocalTime.of(14, 0),
         "evening" to LocalTime.of(18, 0),
+        "after_work" to LocalTime.of(18, 0),
         "night" to LocalTime.of(20, 0),
         "tonight" to LocalTime.of(20, 0)
     )
@@ -129,6 +132,9 @@ object WordTokenizer {
         """(\d{1,2})(?::(\d{2}))\s*(am|pm|a\.m\.?|p\.m\.?)?|(\d{1,2})\.(\d{2})\s*(am|pm|a\.m\.?|p\.m\.?)|(\d{1,2})\s*(am|pm|a\.m\.?|p\.m\.?)""",
         RegexOption.IGNORE_CASE
     )
+
+    // H-notation compact time: "9h", "15h30" (24-hour). Minutes optional.
+    private val hNotationRegex = Regex("""(\d{1,2})h(\d{2})?""", RegexOption.IGNORE_CASE)
 
     // Year: 1000-2999
     private val yearRegex = Regex("""[12]\d{3}""")
@@ -217,6 +223,15 @@ object WordTokenizer {
         // 9. Time with meridiem ("3pm", "3:30pm", "15:00")
         timeRegex.matchEntire(word)?.let { match ->
             parseTime(word, match, originalText)?.let { return it }
+        }
+
+        // 9a. H-notation compact time ("9h", "15h30") — before year/number
+        hNotationRegex.matchEntire(word)?.let { match ->
+            val hour = match.groupValues[1].toIntOrNull()
+            val minute = match.groupValues[2].takeIf { it.isNotEmpty() }?.toIntOrNull() ?: 0
+            if (hour != null && hour in 0..23 && minute in 0..59) {
+                return Token(TokenType.TIME, word, LocalTime.of(hour, minute), originalText)
+            }
         }
 
         // 10. Year (1000-2999) — check before general numbers

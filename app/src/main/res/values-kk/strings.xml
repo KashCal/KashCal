@@ -123,6 +123,7 @@
     <string name="view_month">Ай</string>
     <string name="label_all_day">Күні бойы</string>
     <string name="label_today">Бүгін</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Күнге өту</string>
     <string name="label_week">А</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">қабылданбады</string>
     <string name="cd_event_state_past">өткен оқиға</string>
     <string name="cd_loading_events">Оқиғалар жүктелуде</string>
+    <string name="cd_collapse_week_bar">Апта жолағын жасыру</string>
+    <string name="cd_expand_week_bar">Апта жолағын көрсету</string>
     <string name="cd_event_untitled">Атаусыз оқиға</string>
     <string name="cd_open_drawer">Тартпаны ашу</string>
     <string name="cd_close_drawer">Тартпаны жабу</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Айға өту</string>
     <string name="action_more_options">Қосымша параметрлер</string>
     <string name="quick_add_save_failed">Оқиғаны сақтау мүмкін болмады</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">күн</string>
     <string name="label_duration_hrs">сағ</string>
     <string name="label_duration_min">мин</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">%1$d-күні</string>
     <string name="recurrence_on_last_day">Айдың соңғы күні</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Қайсы</string>
+    <string name="recurrence_weekday">Апта күні</string>
     <string name="ordinal_1st">1-ші</string>
     <string name="ordinal_2nd">2-ші</string>
     <string name="ordinal_3rd">3-ші</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Қосымша мәзір, %d шақыру күтілуде</item>
         <item quantity="other">Қосымша мәзір, %d шақыру күтілуде</item>
     </plurals>
+    <string name="menu_privacy_security">Құпиялылық және қауіпсіздік</string>
+    <string name="cd_edit_initials">Инициалдарыңызды өңдеу</string>
+    <string name="hub_initials_hint">Инициалдарыңызды орнату үшін түртіңіз</string>
+    <string name="hub_initials_field_label">Инициалдар</string>
+    <string name="hub_initials_save">Сақтау</string>
+    <string name="hub_initials_cancel">Бас тарту</string>
+    <string name="hub_section_make_it_yours">Өзіңізге бейімдеңіз</string>
+    <string name="hub_accounts_and_settings">Тіркелгілер және параметрлер</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Қолжетімділікті бөлісу</string>

@@ -123,6 +123,7 @@
     <string name="view_month">Hilabetea</string>
     <string name="label_all_day">Egun osoa</string>
     <string name="label_today">Gaur</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Datara joan</string>
     <string name="label_week">A</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">ezetsita</string>
     <string name="cd_event_state_past">iraganeko gertaera</string>
     <string name="cd_loading_events">Gertaerak kargatzen</string>
+    <string name="cd_collapse_week_bar">Ezkutatu asteko barra</string>
+    <string name="cd_expand_week_bar">Erakutsi asteko barra</string>
     <string name="cd_event_untitled">Izenbururik gabeko gertaera</string>
     <string name="cd_open_drawer">Tiradera ireki</string>
     <string name="cd_close_drawer">Tiradera itxi</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Hilabetera joan</string>
     <string name="action_more_options">Aukera gehiago</string>
     <string name="quick_add_save_failed">Ezin izan da gertaera gorde</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">egun</string>
     <string name="label_duration_hrs">ord</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">%1$d egunean</string>
     <string name="recurrence_on_last_day">Hilabeteko azken egunean</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Zein</string>
+    <string name="recurrence_weekday">Asteko eguna</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Gehiago menua, gonbidapen %d zain</item>
         <item quantity="other">Gehiago menua, %d gonbidapen zain</item>
     </plurals>
+    <string name="menu_privacy_security">Pribatutasuna eta segurtasuna</string>
+    <string name="cd_edit_initials">Editatu zure inizialak</string>
+    <string name="hub_initials_hint">Sakatu zure inizialak ezartzeko</string>
+    <string name="hub_initials_field_label">Inizialak</string>
+    <string name="hub_initials_save">Gorde</string>
+    <string name="hub_initials_cancel">Utzi</string>
+    <string name="hub_section_make_it_yours">Egin zeurea</string>
+    <string name="hub_accounts_and_settings">Kontuak eta ezarpenak</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Erabilgarritasuna partekatu</string>

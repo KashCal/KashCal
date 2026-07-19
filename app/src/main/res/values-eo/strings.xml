@@ -123,6 +123,7 @@
     <string name="view_month">Monato</string>
     <string name="label_all_day">Tuttaga</string>
     <string name="label_today">Hodiaŭ</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Iri al dato</string>
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">malakceptita</string>
     <string name="cd_event_state_past">pasinta evento</string>
     <string name="cd_loading_events">Ŝargado de eventoj</string>
+    <string name="cd_collapse_week_bar">Kaŝi la semajnan breton</string>
+    <string name="cd_expand_week_bar">Montri la semajnan breton</string>
     <string name="cd_event_untitled">Sentitola evento</string>
     <string name="cd_open_drawer">Malfermi tirkeston</string>
     <string name="cd_close_drawer">Fermi tirkeston</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Iri al monato</string>
     <string name="action_more_options">Pliaj elektoj</string>
     <string name="quick_add_save_failed">Malsukcesis konservi eventon</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">tagoj</string>
     <string name="label_duration_hrs">hor</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Je tago %1$d</string>
     <string name="recurrence_on_last_day">Je la lasta tago de la monato</string>
     <string name="recurrence_on_nth_weekday">Je la %1$s %2$s</string>
+    <string name="recurrence_which">Kiu</string>
+    <string name="recurrence_weekday">Semajntago</string>
     <string name="ordinal_1st">1-a</string>
     <string name="ordinal_2nd">2-a</string>
     <string name="ordinal_3rd">3-a</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Menuo Pli, %d invito atendas</item>
         <item quantity="other">Menuo Pli, %d invitoj atendas</item>
     </plurals>
+    <string name="menu_privacy_security">Privateco kaj sekureco</string>
+    <string name="cd_edit_initials">Redakti viajn inicialojn</string>
+    <string name="hub_initials_hint">Tuŝu por agordi viajn inicialojn</string>
+    <string name="hub_initials_field_label">Inicialoj</string>
+    <string name="hub_initials_save">Konservi</string>
+    <string name="hub_initials_cancel">Nuligi</string>
+    <string name="hub_section_make_it_yours">Personecigu</string>
+    <string name="hub_accounts_and_settings">Kontoj kaj agordoj</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Kunhavigi disponeblon</string>

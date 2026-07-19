@@ -123,6 +123,7 @@
     <string name="view_month">Kuukausi</string>
     <string name="label_all_day">Koko päivä</string>
     <string name="label_today">Tänään</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Siirry päivämäärään</string>
     <string name="label_week">VK</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">hylätty</string>
     <string name="cd_event_state_past">mennyt tapahtuma</string>
     <string name="cd_loading_events">Ladataan tapahtumia</string>
+    <string name="cd_collapse_week_bar">Piilota viikkopalkki</string>
+    <string name="cd_expand_week_bar">Näytä viikkopalkki</string>
     <string name="cd_event_untitled">Nimetön tapahtuma</string>
     <string name="cd_open_drawer">Avaa valikko</string>
     <string name="cd_close_drawer">Sulje valikko</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Siirry kuukauteen</string>
     <string name="action_more_options">Lisää vaihtoehtoja</string>
     <string name="quick_add_save_failed">Tapahtuman tallennus epäonnistui</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">pv</string>
     <string name="label_duration_hrs">t</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Päivänä %1$d</string>
     <string name="recurrence_on_last_day">Kuukauden viimeisenä päivänä</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Mikä</string>
+    <string name="recurrence_weekday">Viikonpäivä</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Lisää-valikko, %d kutsu odottaa</item>
         <item quantity="other">Lisää-valikko, %d kutsua odottaa</item>
     </plurals>
+    <string name="menu_privacy_security">Yksityisyys ja turvallisuus</string>
+    <string name="cd_edit_initials">Muokkaa nimikirjaimiasi</string>
+    <string name="hub_initials_hint">Aseta nimikirjaimesi napauttamalla</string>
+    <string name="hub_initials_field_label">Nimikirjaimet</string>
+    <string name="hub_initials_save">Tallenna</string>
+    <string name="hub_initials_cancel">Peruuta</string>
+    <string name="hub_section_make_it_yours">Tee siitä omasi</string>
+    <string name="hub_accounts_and_settings">Tilit ja asetukset</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Jaa saatavuus</string>

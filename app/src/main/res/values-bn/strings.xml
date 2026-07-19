@@ -123,6 +123,7 @@
     <string name="view_month">মাস</string>
     <string name="label_all_day">সারাদিন</string>
     <string name="label_today">আজ</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">তারিখে যান</string>
     <string name="label_week">স</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">প্রত্যাখ্যাত</string>
     <string name="cd_event_state_past">বিগত ইভেন্ট</string>
     <string name="cd_loading_events">ইভেন্ট লোড হচ্ছে</string>
+    <string name="cd_collapse_week_bar">সপ্তাহ বার লুকান</string>
+    <string name="cd_expand_week_bar">সপ্তাহ বার দেখান</string>
     <string name="cd_event_untitled">শিরোনামহীন ইভেন্ট</string>
     <string name="cd_open_drawer">ড্রয়ার খুলুন</string>
     <string name="cd_close_drawer">ড্রয়ার বন্ধ করুন</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">মাসে যান</string>
     <string name="action_more_options">আরও বিকল্প</string>
     <string name="quick_add_save_failed">ইভেন্ট সংরক্ষণ করা যায়নি</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">দিন</string>
     <string name="label_duration_hrs">ঘ.</string>
     <string name="label_duration_min">মি.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">%1$d তারিখে</string>
     <string name="recurrence_on_last_day">মাসের শেষ দিনে</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s-এ</string>
+    <string name="recurrence_which">কোনটি</string>
+    <string name="recurrence_weekday">সপ্তাহের দিন</string>
     <string name="ordinal_1st">১ম</string>
     <string name="ordinal_2nd">২য়</string>
     <string name="ordinal_3rd">৩য়</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">আরও মেনু, %d আমন্ত্রণ অপেক্ষমাণ</item>
         <item quantity="other">আরও মেনু, %d আমন্ত্রণ অপেক্ষমাণ</item>
     </plurals>
+    <string name="menu_privacy_security">গোপনীয়তা ও নিরাপত্তা</string>
+    <string name="cd_edit_initials">আপনার আদ্যক্ষর সম্পাদনা করুন</string>
+    <string name="hub_initials_hint">আপনার আদ্যক্ষর সেট করতে ট্যাপ করুন</string>
+    <string name="hub_initials_field_label">আদ্যক্ষর</string>
+    <string name="hub_initials_save">সংরক্ষণ করুন</string>
+    <string name="hub_initials_cancel">বাতিল করুন</string>
+    <string name="hub_section_make_it_yours">নিজের মতো সাজান</string>
+    <string name="hub_accounts_and_settings">অ্যাকাউন্ট এবং সেটিংস</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">প্রাপ্যতা শেয়ার করুন</string>

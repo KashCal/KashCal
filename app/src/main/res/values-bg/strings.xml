@@ -123,6 +123,7 @@
     <string name="view_month">Месец</string>
     <string name="label_all_day">Цял ден</string>
     <string name="label_today">Днес</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Отиди на дата</string>
     <string name="label_week">С</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">отказано</string>
     <string name="cd_event_state_past">минало събитие</string>
     <string name="cd_loading_events">Зареждане на събития</string>
+    <string name="cd_collapse_week_bar">Скриване на седмичната лента</string>
+    <string name="cd_expand_week_bar">Показване на седмичната лента</string>
     <string name="cd_event_untitled">Събитие без заглавие</string>
     <string name="cd_open_drawer">Отвори чекмеджето</string>
     <string name="cd_close_drawer">Затвори чекмеджето</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Отиди на месец</string>
     <string name="action_more_options">Повече опции</string>
     <string name="quick_add_save_failed">Неуспешно запазване на събитието</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">дни</string>
     <string name="label_duration_hrs">ч</string>
     <string name="label_duration_min">мин</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">На ден %1$d</string>
     <string name="recurrence_on_last_day">На последния ден от месеца</string>
     <string name="recurrence_on_nth_weekday">На %1$s %2$s</string>
+    <string name="recurrence_which">Кой</string>
+    <string name="recurrence_weekday">Ден от седмицата</string>
     <string name="ordinal_1st">1-ви</string>
     <string name="ordinal_2nd">2-ри</string>
     <string name="ordinal_3rd">3-ти</string>
@@ -1133,6 +1139,14 @@
         <item quantity="one">Меню „Още“, %d чакаща покана</item>
         <item quantity="other">Меню „Още“, %d чакащи покани</item>
     </plurals>
+    <string name="menu_privacy_security">Поверителност &amp; Сигурност</string>
+    <string name="cd_edit_initials">Редактиране на вашите инициали</string>
+    <string name="hub_initials_hint">Докоснете, за да зададете инициалите си</string>
+    <string name="hub_initials_field_label">Инициали</string>
+    <string name="hub_initials_save">Запази</string>
+    <string name="hub_initials_cancel">Отказ</string>
+    <string name="hub_section_make_it_yours">Персонализирайте</string>
+    <string name="hub_accounts_and_settings">Акаунти и настройки</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Споделяне на наличност</string>

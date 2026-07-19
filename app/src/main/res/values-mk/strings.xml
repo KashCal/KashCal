@@ -123,6 +123,7 @@
     <string name="view_month">Месец</string>
     <string name="label_all_day">Цел ден</string>
     <string name="label_today">Денес</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Оди на датум</string>
     <string name="label_week">С</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">одбиено</string>
     <string name="cd_event_state_past">изминат настан</string>
     <string name="cd_loading_events">Се вчитуваат настани</string>
+    <string name="cd_collapse_week_bar">Сокријте ја неделната лента</string>
+    <string name="cd_expand_week_bar">Прикажете ја неделната лента</string>
     <string name="cd_event_untitled">Настан без наслов</string>
     <string name="cd_open_drawer">Отвори фиока</string>
     <string name="cd_close_drawer">Затвори фиока</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Оди на месец</string>
     <string name="action_more_options">Повеќе опции</string>
     <string name="quick_add_save_failed">Не успеа да се зачува настан</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">дена</string>
     <string name="label_duration_hrs">ч</string>
     <string name="label_duration_min">мин</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">На ден %1$d</string>
     <string name="recurrence_on_last_day">На последниот ден од месецот</string>
     <string name="recurrence_on_nth_weekday">На %1$s %2$s</string>
+    <string name="recurrence_which">Кој</string>
+    <string name="recurrence_weekday">Ден од седмицата</string>
     <string name="ordinal_1st">1-ви</string>
     <string name="ordinal_2nd">2-ри</string>
     <string name="ordinal_3rd">3-ти</string>
@@ -1133,6 +1139,14 @@
         <item quantity="one">Мени „Повеќе“, %d покана чека</item>
         <item quantity="other">Мени „Повеќе“, %d покани чекаат</item>
     </plurals>
+    <string name="menu_privacy_security">Приватност &amp; Безбедност</string>
+    <string name="cd_edit_initials">Уредете ги вашите иницијали</string>
+    <string name="hub_initials_hint">Допрете за да ги поставите вашите иницијали</string>
+    <string name="hub_initials_field_label">Иницијали</string>
+    <string name="hub_initials_save">Зачувај</string>
+    <string name="hub_initials_cancel">Откажи</string>
+    <string name="hub_section_make_it_yours">Приспособи го</string>
+    <string name="hub_accounts_and_settings">Сметки и поставки</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Сподели достапност</string>

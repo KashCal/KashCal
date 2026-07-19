@@ -24,6 +24,11 @@ object QuickAddParser {
     private val normalizer = NormalizerChain()
     private val normalizerNoLowercase = NormalizerChain(lowercase = false)
 
+    // A note is everything after the first whitespace-preceded "//". The leading
+    // whitespace is required so pasted URLs ("https://…", "zoom.us//x") — which
+    // have no space before the slashes — are never split.
+    private val NOTE_DELIMITER = Regex("""\s//""")
+
     // Order matters: RecurrenceRule before WeekdayRule so "every Monday" is claimed as recurrence
     private val rules = listOf(
         RelativeDateRule,
@@ -52,9 +57,20 @@ object QuickAddParser {
             )
         }
 
-        // Extract #tags from the RAW input first: the normalizer's character
-        // cleanup strips '#', so a parse rule downstream could never see it.
-        val (detagged, categories) = TagTokenizer.extract(input)
+        // Split the inline note off the RAW input before anything else: the text
+        // after the first whitespace-preceded "//" is the note (stored verbatim,
+        // surrounding whitespace trimmed), and only the part before it is parsed —
+        // so date/time/location words inside the note can't move the schedule.
+        val delimiter = NOTE_DELIMITER.find(input)
+        val beforeNote = if (delimiter != null) input.substring(0, delimiter.range.first) else input
+        val note = delimiter
+            ?.let { input.substring(it.range.last + 1).trim() }
+            ?.ifEmpty { null }
+
+        // Extract #tags from the RAW (pre-note) input first: the normalizer's
+        // character cleanup strips '#', so a parse rule downstream could never see
+        // it. Running after the note split keeps a '#tag' inside the note verbatim.
+        val (detagged, categories) = TagTokenizer.extract(beforeNote)
 
         val normalized = normalizer.normalize(detagged)
         // Apply same transforms without lowercase, for original-case title extraction
@@ -71,6 +87,7 @@ object QuickAddParser {
                 startDate = reference.toLocalDate(),
                 startTime = null,
                 categories = categories,
+                note = note,
                 confidence = ParseConfidence.LOW
             )
         }
@@ -102,6 +119,7 @@ object QuickAddParser {
             rrule = context.rrule,
             categories = categories,
             emoji = emoji,
+            note = note,
             confidence = confidence
         )
     }

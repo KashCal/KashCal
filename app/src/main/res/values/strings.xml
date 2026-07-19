@@ -196,6 +196,8 @@
     <string name="label_all_day">All day</string>
     <!-- Navigation label: today's date -->
     <string name="label_today">Today</string>
+    <!-- Agenda day-group header combining a relative word and the date, e.g. "Today · Saturday, July 18". %1$s is the relative word (Today/Tomorrow), %2$s the full date. Translators may localize the middot separator. -->
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Go to date</string>
     <!-- Top-bar prefix for week view week-of-year label, e.g. "W21". Single letter so the label fits next to the month/year title (e.g. "May 2026 · W21"). -->
     <string name="label_week">W</string>
@@ -1165,6 +1167,10 @@
     <string name="cd_event_state_declined">declined</string>
     <string name="cd_event_state_past">past event</string>
     <string name="cd_loading_events">Loading events</string>
+    <!-- Accessibility label for the Agenda top-bar title button when the week bar is shown (tap collapses it) -->
+    <string name="cd_collapse_week_bar">Hide week bar</string>
+    <!-- Accessibility label for the Agenda top-bar title button when the week bar is hidden (tap expands it) -->
+    <string name="cd_expand_week_bar">Show week bar</string>
     <!-- Screen-reader fallback name for the event detail sheet when the event has no title -->
     <string name="cd_event_untitled">Untitled event</string>
     <string name="cd_open_drawer">Open drawer</string>
@@ -1188,6 +1194,8 @@
     <!-- QuickAddDialog -->
     <string name="action_more_options">More options</string>
     <string name="quick_add_save_failed">Failed to save event</string>
+    <!-- Character counter under the Quick Add field near the length cap; %1$d = current count, %2$d = maximum -->
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
 
     <!-- Duration wheel picker labels — abbreviated, lowercase -->
     <string name="label_duration_days">days</string>
@@ -1201,6 +1209,10 @@
     <string name="recurrence_on_last_day">On last day of month</string>
     <!-- %1$s = ordinal (1st, 2nd, etc.), %2$s = weekday name -->
     <string name="recurrence_on_nth_weekday">On the %1$s %2$s</string>
+    <!-- Caption above the ordinal chip row (1st/2nd/3rd/4th/Last) in the monthly nth-weekday selector -->
+    <string name="recurrence_which">Which</string>
+    <!-- Caption above the weekday circle row in the monthly nth-weekday selector -->
+    <string name="recurrence_weekday">Weekday</string>
     <!-- Ordinal numbers — localize to your language's ordinal system -->
     <string name="ordinal_1st">1st</string>
     <string name="ordinal_2nd">2nd</string>
@@ -1601,6 +1613,22 @@
         <item quantity="one">More menu, %d invite pending</item>
         <item quantity="other">More menu, %d invites pending</item>
     </plurals>
+    <!-- Menu item label that opens the privacy & security policy page in a browser -->
+    <string name="menu_privacy_security">Privacy &amp; Security</string>
+    <!-- Content description for the hero avatar in the account hub; tapping it edits initials -->
+    <string name="cd_edit_initials">Edit your initials</string>
+    <!-- Helper text under the avatar prompting the user to personalize it -->
+    <string name="hub_initials_hint">Tap to set your initials</string>
+    <!-- Label/hint for the two-letter initials text field -->
+    <string name="hub_initials_field_label">Initials</string>
+    <!-- Button that saves the edited initials -->
+    <string name="hub_initials_save">Save</string>
+    <!-- Button that discards the edited initials -->
+    <string name="hub_initials_cancel">Cancel</string>
+    <!-- Section header in the account hub grouping personalization (theme, accent color, app icon) -->
+    <string name="hub_section_make_it_yours">Make it yours</string>
+    <!-- Account hub row opening the settings screen, whose top section holds accounts and calendars -->
+    <string name="hub_accounts_and_settings">Accounts &amp; Settings</string>
 
     <!-- ==================== Share Availability ==================== -->
     <!-- Right rail item label that opens the share-availability sheet -->

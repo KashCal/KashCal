@@ -123,6 +123,7 @@
     <string name="view_month">月</string>
     <string name="label_all_day">整天</string>
     <string name="label_today">今天</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">前往日期</string>
     <string name="label_week">週</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">已拒絕</string>
     <string name="cd_event_state_past">已過去的行程</string>
     <string name="cd_loading_events">正在載入事件</string>
+    <string name="cd_collapse_week_bar">收合週列</string>
+    <string name="cd_expand_week_bar">展開週列</string>
     <string name="cd_event_untitled">無標題行程</string>
     <string name="cd_open_drawer">開啟抽屜</string>
     <string name="cd_close_drawer">關閉抽屜</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">前往月份</string>
     <string name="action_more_options">更多選項</string>
     <string name="quick_add_save_failed">無法儲存事件</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">天</string>
     <string name="label_duration_hrs">時</string>
     <string name="label_duration_min">分</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">每月第 %1$d 天</string>
     <string name="recurrence_on_last_day">每月最後一天</string>
     <string name="recurrence_on_nth_weekday">第 %1$s 個%2$s</string>
+    <string name="recurrence_which">第幾個</string>
+    <string name="recurrence_weekday">星期</string>
     <string name="ordinal_1st">1</string>
     <string name="ordinal_2nd">2</string>
     <string name="ordinal_3rd">3</string>
@@ -1084,6 +1090,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">更多選單,%d 個邀請待處理</item>
     </plurals>
+    <string name="menu_privacy_security">隱私與安全</string>
+    <string name="cd_edit_initials">編輯姓名縮寫</string>
+    <string name="hub_initials_hint">點按以設定姓名縮寫</string>
+    <string name="hub_initials_field_label">姓名縮寫</string>
+    <string name="hub_initials_save">儲存</string>
+    <string name="hub_initials_cancel">取消</string>
+    <string name="hub_section_make_it_yours">個人化設定</string>
+    <string name="hub_accounts_and_settings">帳戶與設定</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">分享可用時段</string>

@@ -14,7 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -42,7 +44,8 @@ fun QuickAddPreview(
         DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
     }
     val hasContent = result.title.isNotBlank() || result.startTime != null ||
-        result.location != null || result.categories.isNotEmpty()
+        result.location != null || result.categories.isNotEmpty() ||
+        !result.note.isNullOrBlank()
 
     if (!hasContent) return
 
@@ -115,6 +118,17 @@ fun QuickAddPreview(
                 text = result.location,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (!result.note.isNullOrBlank()) {
+            Text(
+                text = result.note,
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
         }
 

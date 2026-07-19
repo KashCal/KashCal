@@ -305,6 +305,14 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.THEME, theme)
     }
 
+    /** User's up-to-2-letter avatar initials; empty when unset (avatar shows its generic glyph). */
+    val userInitials: Flow<String>
+        get() = getPreference(PreferencesKeys.USER_INITIALS, "")
+
+    suspend fun setUserInitials(initials: String) {
+        setPreference(PreferencesKeys.USER_INITIALS, initials)
+    }
+
     /** Stored color-source value ("dynamic"/"seed"), or null if the user never chose one. */
     val colorSource: Flow<String?>
         get() = getOptionalPreference(PreferencesKeys.COLOR_SOURCE)
@@ -374,6 +382,17 @@ class KashCalDataStore(
 
     suspend fun setShowEventEmojis(show: Boolean) {
         setPreference(PreferencesKeys.SHOW_EVENT_EMOJIS, show)
+    }
+
+    /**
+     * Whether the Agenda view's top week bar is expanded (shown) vs collapsed.
+     * Default: true (expanded). Persisted so the user's last choice reopens.
+     */
+    val agendaWeekBarExpanded: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED, true)
+
+    suspend fun setAgendaWeekBarExpanded(expanded: Boolean) {
+        setPreference(PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED, expanded)
     }
 
     /**

@@ -1,8 +1,8 @@
 package org.onekash.kashcal.ui.components
 
 /**
- * Resolve the top-bar overflow IconButton's [contentDescription] from
- * the pending-invitation count.
+ * Resolve the top-bar hub trigger's [contentDescription] from the
+ * pending-invitation count.
  *
  * Returns [baseLabel] when [count] is zero so screen-reader users hear
  * the same announcement they'd hear if invitations weren't a feature

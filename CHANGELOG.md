@@ -1,3 +1,35 @@
+## [2026.07.19]
+
+This release of KashCal is about being understood.
+
+It is the thing everyone claims to want and almost no one delivers. Couples pay a therapist by the hour to translate "I'm fine" into its actual meaning. Ask any marriage that lasted forty years for the secret and you never hear "love" or "patience," you hear some version of the same quiet miracle: one person knowing what the other meant without being told twice. Being understood is the whole ballgame. Most software is not even parked outside the stadium.
+
+So we taught Quick Add to listen. We were going to tell you we made it "better." Scratch that. "Better" is what you call a slightly bigger button. This is Quick Add finally understanding what you meant.
+
+Type "lunch every 2nd Tuesday" and the right monthly repeat is just there, no dialog, no wheel-picker archaeology. Write "rent last day of the month" and it lands on the last day, every month, without you counting on your fingers. "Gym weekday at 7" already knows you mean Monday through Friday. Trail a thought after a " //" and everything past it slips quietly into the note. The box stretched to several lines with a character count, because sometimes the event is short and the story is not. And when you would rather point than type, a picker now lets you choose a "2nd Tuesday" or a "last Thursday" yourself. KashCal listens to [the whole sentence](https://kashcal.onekash.org/features/natural-language-add-event-calendar) and never once asks how that makes you feel.
+
+The rest of the app got easier to read while we were in there. The agenda greets you with "Today" and "Tomorrow" instead of bare dates, folds its week strip away when you want the room, and now reads those week cells aloud to screen readers. The old three-dots menu became a round avatar: tap it for a full-screen hub where you set your two initials, reach Accounts & Settings, jump to a date, share your availability, and pick your theme, accent color, and app icon, all in one place.
+
+We can't save your marriage. We can, at last, get "every 2nd Tuesday" right the first time.
+
+### Everything in this release
+
+- Quick Add: natural-language recurrence, weekend, and time parsing
+- Quick Add: multi-line notes field with a 500-character cap and counter
+- Quick Add: capture an inline note with a " //" delimiter
+- Quick Add: "…of this month" phrases resolve to a one-off date in the current month
+- Quick Add: "last day of the/every month" parses as the last day of the month
+- Quick Add: monthly recurrence anchors its start to the first occurrence
+- Recurrence: choose an ordinal weekday for monthly rules (1st–4th or Last), e.g. "2nd Tuesday" or "last Thursday" (#193)
+- Agenda: relative day headers ("Today"/"Tomorrow") and a collapsible week bar
+- Agenda: week-bar cell colors match the date picker, and week snapping is fixed
+- Accessibility: agenda week-bar cells are described to screen readers
+- The top-bar menu is now a circular avatar that opens a full-screen hub (Invites, Go to date, Share availability, Insights, Settings, About, Privacy & Security)
+- Set your own two-letter initials on the avatar; a neutral person glyph shows until you do
+- Theme, accent color, and app icon now live in a "Make it yours" section in the hub
+- An "Accounts & Settings" button at the top of the hub makes adding or managing an account easy to find
+- Settings backup now includes the agenda week-bar expanded/collapsed choice
+
 ## [2026.07.18]
 
 New app icon. The old one was three calendar cards in a loose pile, like they had just been dealt. Now they are a proper deck, squared up and stacked, matching the cards KashCal has always drawn on your share images. The top-bar logo got the same tidy-up and still counts off today's date; the supporter icon kept its gold card and its heart.

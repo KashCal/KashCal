@@ -123,6 +123,7 @@
     <string name="view_month">महिना</string>
     <string name="label_all_day">दिनभर</string>
     <string name="label_today">आज</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">मितिमा जानुहोस्</string>
     <string name="label_week">ह</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">अस्वीकृत</string>
     <string name="cd_event_state_past">विगतको कार्यक्रम</string>
     <string name="cd_loading_events">कार्यक्रमहरू लोड गर्दै</string>
+    <string name="cd_collapse_week_bar">हप्ता पट्टी लुकाउनुहोस्</string>
+    <string name="cd_expand_week_bar">हप्ता पट्टी देखाउनुहोस्</string>
     <string name="cd_event_untitled">शीर्षकविहीन कार्यक्रम</string>
     <string name="cd_open_drawer">ड्रअर खोल्नुहोस्</string>
     <string name="cd_close_drawer">ड्रअर बन्द गर्नुहोस्</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">महिनामा जानुहोस्</string>
     <string name="action_more_options">थप विकल्पहरू</string>
     <string name="quick_add_save_failed">कार्यक्रम बचत गर्न असफल</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">दिन</string>
     <string name="label_duration_hrs">घण्</string>
     <string name="label_duration_min">मि</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">दिन %1$d मा</string>
     <string name="recurrence_on_last_day">महिनाको अन्तिम दिनमा</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s मा</string>
+    <string name="recurrence_which">कुन</string>
+    <string name="recurrence_weekday">हप्ताको दिन</string>
     <string name="ordinal_1st">पहिलो</string>
     <string name="ordinal_2nd">दोस्रो</string>
     <string name="ordinal_3rd">तेस्रो</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">थप मेनु, %d निमन्त्रणा बाँकी</item>
         <item quantity="other">थप मेनु, %d निमन्त्रणाहरू बाँकी</item>
     </plurals>
+    <string name="menu_privacy_security">गोपनीयता र सुरक्षा</string>
+    <string name="cd_edit_initials">तपाईंको आद्याक्षर सम्पादन गर्नुहोस्</string>
+    <string name="hub_initials_hint">तपाईंको आद्याक्षर सेट गर्न ट्याप गर्नुहोस्</string>
+    <string name="hub_initials_field_label">आद्याक्षर</string>
+    <string name="hub_initials_save">सुरक्षित गर्नुहोस्</string>
+    <string name="hub_initials_cancel">रद्द गर्नुहोस्</string>
+    <string name="hub_section_make_it_yours">आफ्नो अनुसार बनाउनुहोस्</string>
+    <string name="hub_accounts_and_settings">खाता र सेटिङ</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">उपलब्धता साझेदारी गर्नुहोस्</string>

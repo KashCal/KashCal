@@ -787,37 +787,6 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Update the app theme choice. Persists the mode's string; the running app recolors
-     * because activities collect [themeMode] into KashCalTheme.
-     */
-    fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch {
-            dataStore.setTheme(mode.prefValue)
-        }
-    }
-
-    /**
-     * Pick an accent color. Persists the seed, switches the color source to seed-derived, and
-     * refreshes widgets so they recolor too. The running app recolors because activities collect
-     * [accentSeed]/[colorSource] into KashCalTheme.
-     */
-    fun setAccentSeed(seed: Int) {
-        viewModelScope.launch {
-            dataStore.setAccentSeed(seed)
-            dataStore.setColorSource(ColorSource.SEED.prefValue)
-            widgetUpdateManager.updateAllWidgetsForColorChange("accent_changed")
-        }
-    }
-
-    /** Switch the color source (e.g. back to dynamic Material You) and refresh widgets. */
-    fun setColorSource(source: ColorSource) {
-        viewModelScope.launch {
-            dataStore.setColorSource(source.prefValue)
-            widgetUpdateManager.updateAllWidgetsForColorChange("color_source_changed")
-        }
-    }
-
-    /**
      * Update the first day of week preference.
      */
     fun setFirstDayOfWeek(day: Int) {

@@ -123,6 +123,7 @@
     <string name="view_month">Mês</string>
     <string name="label_all_day">O dia todo</string>
     <string name="label_today">Hoje</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Ir para data</string>
     <string name="label_week">S</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -862,6 +863,8 @@
     <string name="cd_event_state_declined">recusado</string>
     <string name="cd_event_state_past">evento passado</string>
     <string name="cd_loading_events">A carregar eventos</string>
+    <string name="cd_collapse_week_bar">Ocultar a barra da semana</string>
+    <string name="cd_expand_week_bar">Mostrar a barra da semana</string>
     <string name="cd_event_untitled">Evento sem título</string>
     <string name="cd_open_drawer">Abrir menu</string>
     <string name="cd_close_drawer">Fechar menu</string>
@@ -876,6 +879,7 @@
     <string name="label_go_to_month">Ir para o mês</string>
     <string name="action_more_options">Mais opções</string>
     <string name="quick_add_save_failed">Falha ao guardar evento</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">dias</string>
     <string name="label_duration_hrs">hrs</string>
     <string name="label_duration_min">min</string>
@@ -884,6 +888,8 @@
     <string name="recurrence_on_day">No dia %1$d</string>
     <string name="recurrence_on_last_day">No último dia do mês</string>
     <string name="recurrence_on_nth_weekday">No %1$s %2$s</string>
+    <string name="recurrence_which">Qual</string>
+    <string name="recurrence_weekday">Dia da semana</string>
     <string name="ordinal_1st">1.º</string>
     <string name="ordinal_2nd">2.º</string>
     <string name="ordinal_3rd">3.º</string>
@@ -1172,6 +1178,14 @@
         <item quantity="one">Menu Mais, %d convite pendente</item>
         <item quantity="other">Menu Mais, %d convites pendentes</item>
     </plurals>
+    <string name="menu_privacy_security">Privacidade e segurança</string>
+    <string name="cd_edit_initials">Editar as tuas iniciais</string>
+    <string name="hub_initials_hint">Toca para definir as tuas iniciais</string>
+    <string name="hub_initials_field_label">Iniciais</string>
+    <string name="hub_initials_save">Guardar</string>
+    <string name="hub_initials_cancel">Cancelar</string>
+    <string name="hub_section_make_it_yours">Torne-o seu</string>
+    <string name="hub_accounts_and_settings">Contas e definições</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Partilhar disponibilidade</string>

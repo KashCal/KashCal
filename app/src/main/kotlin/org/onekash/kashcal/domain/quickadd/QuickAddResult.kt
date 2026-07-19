@@ -20,6 +20,7 @@ data class QuickAddResult(
     val rrule: String? = null,
     val categories: List<String> = emptyList(),
     val emoji: String? = null,
+    val note: String? = null,
     val isAllDay: Boolean = startTime == null,
     val confidence: ParseConfidence = ParseConfidence.LOW
 )

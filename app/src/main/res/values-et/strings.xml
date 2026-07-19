@@ -123,6 +123,7 @@
     <string name="view_month">Kuu</string>
     <string name="label_all_day">Terve päev</string>
     <string name="label_today">Täna</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Mine kuupäevale</string>
     <string name="label_week">N</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">tagasi lükatud</string>
     <string name="cd_event_state_past">möödunud sündmus</string>
     <string name="cd_loading_events">Sündmuste laadimine</string>
+    <string name="cd_collapse_week_bar">Peida nädalariba</string>
+    <string name="cd_expand_week_bar">Näita nädalariba</string>
     <string name="cd_event_untitled">Pealkirjata sündmus</string>
     <string name="cd_open_drawer">Ava menüü</string>
     <string name="cd_close_drawer">Sulge menüü</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Mine kuule</string>
     <string name="action_more_options">Rohkem valikuid</string>
     <string name="quick_add_save_failed">Sündmuse salvestamine ebaõnnestus</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">päeva</string>
     <string name="label_duration_hrs">t</string>
     <string name="label_duration_min">min</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">%1$d. kuupäeval</string>
     <string name="recurrence_on_last_day">Kuu viimasel päeval</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="recurrence_which">Milline</string>
+    <string name="recurrence_weekday">Nädalapäev</string>
     <string name="ordinal_1st">1.</string>
     <string name="ordinal_2nd">2.</string>
     <string name="ordinal_3rd">3.</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Menüü „Veel“, %d kutse ootel</item>
         <item quantity="other">Menüü „Veel“, %d kutset ootel</item>
     </plurals>
+    <string name="menu_privacy_security">Privaatsus ja turvalisus</string>
+    <string name="cd_edit_initials">Muuda oma initsiaale</string>
+    <string name="hub_initials_hint">Puuduta, et määrata oma initsiaalid</string>
+    <string name="hub_initials_field_label">Initsiaalid</string>
+    <string name="hub_initials_save">Salvesta</string>
+    <string name="hub_initials_cancel">Loobu</string>
+    <string name="hub_section_make_it_yours">Muuda omaks</string>
+    <string name="hub_accounts_and_settings">Kontod ja seaded</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Jaga saadavust</string>

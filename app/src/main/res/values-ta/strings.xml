@@ -123,6 +123,7 @@
     <string name="view_month">மாதம்</string>
     <string name="label_all_day">நாள் முழுவதும்</string>
     <string name="label_today">இன்று</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">தேதிக்குச் செல்</string>
     <string name="label_week">வா</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">மறுக்கப்பட்டது</string>
     <string name="cd_event_state_past">கடந்த நிகழ்வு</string>
     <string name="cd_loading_events">நிகழ்வுகள் ஏற்றப்படுகின்றன</string>
+    <string name="cd_collapse_week_bar">வார பட்டியை மறை</string>
+    <string name="cd_expand_week_bar">வார பட்டியைக் காட்டு</string>
     <string name="cd_event_untitled">தலைப்பில்லா நிகழ்வு</string>
     <string name="cd_open_drawer">டிராயர் திற</string>
     <string name="cd_close_drawer">டிராயர் மூடு</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">மாதத்திற்குச் செல்</string>
     <string name="action_more_options">மேலும் விருப்பங்கள்</string>
     <string name="quick_add_save_failed">நிகழ்வைச் சேமிக்க முடியவில்லை</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">நாட்கள்</string>
     <string name="label_duration_hrs">ம.</string>
     <string name="label_duration_min">நி.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">நாள் %1$d இல்</string>
     <string name="recurrence_on_last_day">மாதத்தின் கடைசி நாளில்</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s அன்று</string>
+    <string name="recurrence_which">எது</string>
+    <string name="recurrence_weekday">வாரநாள்</string>
     <string name="ordinal_1st">1வது</string>
     <string name="ordinal_2nd">2வது</string>
     <string name="ordinal_3rd">3வது</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">மேலும் மெனு, %d அழைப்பு நிலுவையில்</item>
         <item quantity="other">மேலும் மெனு, %d அழைப்புகள் நிலுவையில்</item>
     </plurals>
+    <string name="menu_privacy_security">தனியுரிமை &amp; பாதுகாப்பு</string>
+    <string name="cd_edit_initials">உங்கள் முதலெழுத்துகளைத் திருத்தவும்</string>
+    <string name="hub_initials_hint">உங்கள் முதலெழுத்துகளை அமைக்கத் தட்டவும்</string>
+    <string name="hub_initials_field_label">முதலெழுத்துகள்</string>
+    <string name="hub_initials_save">சேமி</string>
+    <string name="hub_initials_cancel">ரத்துசெய்</string>
+    <string name="hub_section_make_it_yours">உங்களுடையதாக்குங்கள்</string>
+    <string name="hub_accounts_and_settings">கணக்குகள் மற்றும் அமைப்புகள்</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">கிடைக்கும் நேரத்தைப் பகிர்</string>

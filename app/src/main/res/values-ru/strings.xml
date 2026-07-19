@@ -123,6 +123,7 @@
     <string name="view_month">Месяц</string>
     <string name="label_all_day">Весь день</string>
     <string name="label_today">Сегодня</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Перейти к дате</string>
     <string name="label_week">Н</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -908,6 +909,8 @@
     <string name="cd_event_state_declined">отклонено</string>
     <string name="cd_event_state_past">прошедшее событие</string>
     <string name="cd_loading_events">Загрузка событий</string>
+    <string name="cd_collapse_week_bar">Скрыть панель недели</string>
+    <string name="cd_expand_week_bar">Показать панель недели</string>
     <string name="cd_event_untitled">Событие без названия</string>
     <string name="cd_open_drawer">Открыть меню</string>
     <string name="cd_close_drawer">Закрыть меню</string>
@@ -922,6 +925,7 @@
     <string name="label_go_to_month">Перейти к месяцу</string>
     <string name="action_more_options">Ещё</string>
     <string name="quick_add_save_failed">Не удалось сохранить событие</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">дн.</string>
     <string name="label_duration_hrs">ч.</string>
     <string name="label_duration_min">мин.</string>
@@ -930,6 +934,8 @@
     <string name="recurrence_on_day">%1$d числа</string>
     <string name="recurrence_on_last_day">В последний день месяца</string>
     <string name="recurrence_on_nth_weekday">В %1$s %2$s</string>
+    <string name="recurrence_which">Какой</string>
+    <string name="recurrence_weekday">День недели</string>
     <string name="ordinal_1st">1-й</string>
     <string name="ordinal_2nd">2-й</string>
     <string name="ordinal_3rd">3-й</string>
@@ -1232,6 +1238,14 @@
         <item quantity="many">Меню «Ещё», %d приглашений ожидают</item>
         <item quantity="other">Меню «Ещё», %d приглашения ожидают</item>
     </plurals>
+    <string name="menu_privacy_security">Конфиденциальность и безопасность</string>
+    <string name="cd_edit_initials">Изменить инициалы</string>
+    <string name="hub_initials_hint">Нажми, чтобы указать инициалы</string>
+    <string name="hub_initials_field_label">Инициалы</string>
+    <string name="hub_initials_save">Сохранить</string>
+    <string name="hub_initials_cancel">Отмена</string>
+    <string name="hub_section_make_it_yours">Настрой под себя</string>
+    <string name="hub_accounts_and_settings">Аккаунты и настройки</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Поделиться доступностью</string>

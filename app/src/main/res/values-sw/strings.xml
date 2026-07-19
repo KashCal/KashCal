@@ -123,6 +123,7 @@
     <string name="view_month">Mwezi</string>
     <string name="label_all_day">Siku nzima</string>
     <string name="label_today">Leo</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Nenda tarehe</string>
     <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">imekataliwa</string>
     <string name="cd_event_state_past">tukio lililopita</string>
     <string name="cd_loading_events">Inapakia matukio</string>
+    <string name="cd_collapse_week_bar">Ficha upau wa wiki</string>
+    <string name="cd_expand_week_bar">Onyesha upau wa wiki</string>
     <string name="cd_event_untitled">Tukio lisilo na kichwa</string>
     <string name="cd_open_drawer">Fungua droo</string>
     <string name="cd_close_drawer">Funga droo</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">Nenda mwezi</string>
     <string name="action_more_options">Chaguo zaidi</string>
     <string name="quick_add_save_failed">Imeshindwa kuhifadhi tukio</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">siku</string>
     <string name="label_duration_hrs">saa</string>
     <string name="label_duration_min">dak</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">Siku ya %1$d</string>
     <string name="recurrence_on_last_day">Siku ya mwisho ya mwezi</string>
     <string name="recurrence_on_nth_weekday">%2$s ya %1$s</string>
+    <string name="recurrence_which">Ipi</string>
+    <string name="recurrence_weekday">Siku ya wiki</string>
     <string name="ordinal_1st">kwanza</string>
     <string name="ordinal_2nd">pili</string>
     <string name="ordinal_3rd">tatu</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">Menyu zaidi, mwaliko %d unasubiri</item>
         <item quantity="other">Menyu zaidi, mialiko %d inasubiri</item>
     </plurals>
+    <string name="menu_privacy_security">Faragha na Usalama</string>
+    <string name="cd_edit_initials">Hariri herufi zako za mwanzo</string>
+    <string name="hub_initials_hint">Gusa ili kuweka herufi zako za mwanzo</string>
+    <string name="hub_initials_field_label">Herufi za mwanzo</string>
+    <string name="hub_initials_save">Hifadhi</string>
+    <string name="hub_initials_cancel">Ghairi</string>
+    <string name="hub_section_make_it_yours">Ifanye yako</string>
+    <string name="hub_accounts_and_settings">Akaunti na mipangilio</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Shiriki upatikanaji</string>

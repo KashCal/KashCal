@@ -697,4 +697,35 @@ class WordTokenizerTest {
         assertEquals(5, parts.month)
         assertEquals(10, parts.day)
     }
+
+    // ==================== H-notation compact time ====================
+
+    @Test
+    fun `tokenizes 15h30 as TIME`() {
+        val tokens = WordTokenizer.tokenize("15h30")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME, tokens[0].type)
+        assertEquals(LocalTime.of(15, 30), tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes 9h as TIME on the hour`() {
+        val tokens = WordTokenizer.tokenize("9h")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME, tokens[0].type)
+        assertEquals(LocalTime.of(9, 0), tokens[0].value)
+    }
+
+    @Test
+    fun `9th is not tokenized as h-notation TIME`() {
+        // Guard: the ordinal "9th" must not collide with the h-notation regex.
+        val tokens = WordTokenizer.tokenize("9th")
+        assertNotEquals(TokenType.TIME, tokens[0].type)
+    }
+
+    @Test
+    fun `25h30 invalid hour does not tokenize as TIME`() {
+        val tokens = WordTokenizer.tokenize("25h30")
+        assertNotEquals(TokenType.TIME, tokens[0].type)
+    }
 }

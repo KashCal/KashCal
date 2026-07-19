@@ -76,8 +76,17 @@ class RandomRRuleGenerator(private val random: Random) {
             "MONTHLY" -> when (random.nextInt(3)) {
                 0 -> parts += "BYMONTHDAY=${dtStart.dayOfMonth}"
                 1 -> {
-                    // Ordinal of dtStart's weekday within its month (1..4; dom<=28).
-                    val ordinal = (dtStart.dayOfMonth - 1) / 7 + 1
+                    // Nth-weekday of dtStart's own weekday. DTSTART must satisfy the
+                    // rule or the recurrence set is undefined per RFC 5545 §3.8.5.3
+                    // and engines legitimately diverge (flaps). dom is clamped 1..28,
+                    // so the positional ordinal always matches; "last" (-1) only
+                    // matches when dtStart happens to BE the last <weekday> of its
+                    // month, so emit -1 solely in that case — this keeps -1FR-style
+                    // expansion in the differential oracle without introducing noise.
+                    val positional = (dtStart.dayOfMonth - 1) / 7 + 1
+                    val isLastOfWeekdayInMonth =
+                        dtStart.dayOfMonth + 7 > dtStart.toLocalDate().lengthOfMonth()
+                    val ordinal = if (isLastOfWeekdayInMonth && random.nextBoolean()) -1 else positional
                     parts += "BYDAY=$ordinal$dtWeekday"
                 }
                 else -> {} // plain monthly on the DTSTART day

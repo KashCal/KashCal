@@ -119,6 +119,21 @@ class QuickAddViewModelTest {
     }
 
     @Test
+    fun `undated input previews on the clicked day not today`() = runTest {
+        // The Quick Add preview itself must anchor on the day the user was viewing
+        // when the dialog opened, before they ever tap Expand. With no date word
+        // typed, startDate should be the reference day, not the real system date.
+        val viewedDay = LocalDate.of(2026, 8, 20)
+        viewModel.setReferenceTime(viewedDay.atTime(9, 0))
+        viewModel.onInputChanged("Lunch with Sam")
+        advanceUntilIdle()
+
+        val result = viewModel.parseResult.value
+        assertEquals("Lunch with Sam", result.title)
+        assertEquals(viewedDay, result.startDate)
+    }
+
+    @Test
     fun `onInputChanged uses system locale for ambiguous slash date - UK`() = runTest {
         Locale.setDefault(Locale.UK)
         viewModel.onInputChanged("meeting 5/10/2026")
@@ -586,6 +601,27 @@ class QuickAddViewModelTest {
     }
 
     @Test
+    fun `toCalendarIntentData without a typed date uses the reference day not today`() = runTest {
+        // Expand ("More options") must open the form on the day the user was
+        // viewing when they opened Quick Add, not today. A timed input keeps the
+        // instant local (all-day would store UTC midnight, a separate convention),
+        // so the reference day reads back cleanly. Reference is far from the real
+        // system date so a "today" regression can't pass by coincidence.
+        val viewedDay = LocalDate.of(2026, 8, 20)
+        viewModel.setReferenceTime(viewedDay.atTime(9, 0))
+        viewModel.onInputChanged("Lunch with Sam at 2pm")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertEquals("Lunch with Sam", intentData.title)
+        assertFalse(intentData.isAllDay)
+        val startDay = intentData.startTimeMillis!!
+            .let { java.time.Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+        assertEquals(viewedDay, startDay)
+    }
+
+    @Test
     fun `toCalendarIntentData with empty input returns minimal data`() = runTest {
         viewModel.onInputChanged("")
         advanceUntilIdle()
@@ -801,5 +837,90 @@ class QuickAddViewModelTest {
         val expectedStartTs = LocalDate.of(2026, 4, 13)
             .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         assertEquals(expectedStartTs, event.startTs)
+    }
+
+    // ==================== Inline note (" //" delimiter) ====================
+
+    @Test
+    fun `save sets description from parsed note`() = runTest {
+        viewModel.onInputChanged("Lunch with Sam tomorrow 1pm // bring the signed contract")
+        advanceUntilIdle()
+
+        val result = viewModel.save()
+        advanceUntilIdle()
+
+        val event = result.getOrNull()!!
+        assertEquals("Lunch with Sam", event.title)
+        assertEquals("bring the signed contract", event.description)
+    }
+
+    @Test
+    fun `save with no note leaves description null`() = runTest {
+        viewModel.onInputChanged("Coffee tomorrow at 3pm")
+        advanceUntilIdle()
+
+        val result = viewModel.save()
+        advanceUntilIdle()
+
+        val event = result.getOrNull()!!
+        assertNull(event.description)
+    }
+
+    @Test
+    fun `note date words do not move the event start time`() = runTest {
+        viewModel.onInputChanged("Standup tomorrow at 9am // remind him about Friday at 5pm")
+        advanceUntilIdle()
+
+        val result = viewModel.save()
+        advanceUntilIdle()
+
+        val event = result.getOrNull()!!
+        // Schedule comes only from the part before " //" (Apr 14, 9am).
+        val expectedStartTs = LocalDateTime.of(2026, 4, 14, 9, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        assertEquals(expectedStartTs, event.startTs)
+        assertEquals("remind him about Friday at 5pm", event.description)
+    }
+
+    @Test
+    fun `toCalendarIntentData carries note into description`() = runTest {
+        viewModel.onInputChanged("Lunch with Sam tomorrow 1pm // bring the signed contract")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertEquals("Lunch with Sam", intentData.title)
+        assertEquals("bring the signed contract", intentData.description)
+    }
+
+    @Test
+    fun `toCalendarIntentData carries note for note-only blank-title input`() = runTest {
+        // Blank title + a note must still carry the note through Expand — the
+        // nothingParsed early-return would otherwise drop it.
+        viewModel.onInputChanged(" // just a note")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertNull(intentData.title)
+        assertEquals("just a note", intentData.description)
+    }
+
+    @Test
+    fun `toCalendarIntentData with no note leaves description null`() = runTest {
+        viewModel.onInputChanged("Coffee tomorrow at 3pm")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertNull(intentData.description)
+    }
+
+    @Test
+    fun `seedInput with inline note captures the note`() = runTest {
+        viewModel.seedInput("Coffee tomorrow at 3pm // pastry order", null)
+        advanceUntilIdle()
+
+        assertEquals("pastry order", viewModel.parseResult.value.note)
     }
 }

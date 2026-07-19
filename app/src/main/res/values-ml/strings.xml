@@ -123,6 +123,7 @@
     <string name="view_month">മാസം</string>
     <string name="label_all_day">മുഴുവൻ ദിവസം</string>
     <string name="label_today">ഇന്ന്</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">തീയതിയിലേക്ക് പോകുക</string>
     <string name="label_week">ആ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">നിരസിച്ചു</string>
     <string name="cd_event_state_past">കഴിഞ്ഞ ഇവന്റ്</string>
     <string name="cd_loading_events">ഇവന്റുകൾ ലോഡ് ചെയ്യുന്നു</string>
+    <string name="cd_collapse_week_bar">വാര ബാർ മറയ്ക്കുക</string>
+    <string name="cd_expand_week_bar">വാര ബാർ കാണിക്കുക</string>
     <string name="cd_event_untitled">തലക്കെട്ടില്ലാത്ത ഇവന്റ്</string>
     <string name="cd_open_drawer">ഡ്രോയർ തുറക്കുക</string>
     <string name="cd_close_drawer">ഡ്രോയർ അടയ്ക്കുക</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">മാസത്തിലേക്ക് പോകുക</string>
     <string name="action_more_options">കൂടുതൽ ഓപ്ഷനുകൾ</string>
     <string name="quick_add_save_failed">ഇവന്റ് സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ദിവസം</string>
     <string name="label_duration_hrs">മ.</string>
     <string name="label_duration_min">മി.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">ദിവസം %1$d ന്</string>
     <string name="recurrence_on_last_day">മാസത്തിന്റെ അവസാന ദിവസം</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s ന്</string>
+    <string name="recurrence_which">ഏത്</string>
+    <string name="recurrence_weekday">ആഴ്ചയിലെ ദിവസം</string>
     <string name="ordinal_1st">1-ാം</string>
     <string name="ordinal_2nd">2-ാം</string>
     <string name="ordinal_3rd">3-ാം</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">കൂടുതൽ മെനു, %d ക്ഷണം തീർപ്പാക്കാത്തത്</item>
         <item quantity="other">കൂടുതൽ മെനു, %d ക്ഷണങ്ങൾ തീർപ്പാക്കാത്തവ</item>
     </plurals>
+    <string name="menu_privacy_security">സ്വകാര്യതയും സുരക്ഷയും</string>
+    <string name="cd_edit_initials">നിങ്ങളുടെ ഇനിഷ്യലുകൾ എഡിറ്റ് ചെയ്യുക</string>
+    <string name="hub_initials_hint">നിങ്ങളുടെ ഇനിഷ്യലുകൾ സജ്ജമാക്കാൻ ടാപ്പ് ചെയ്യുക</string>
+    <string name="hub_initials_field_label">ഇനിഷ്യലുകൾ</string>
+    <string name="hub_initials_save">സംരക്ഷിക്കുക</string>
+    <string name="hub_initials_cancel">റദ്ദാക്കുക</string>
+    <string name="hub_section_make_it_yours">നിങ്ങളുടേതാക്കുക</string>
+    <string name="hub_accounts_and_settings">അക്കൗണ്ടുകളും ക്രമീകരണങ്ങളും</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ലഭ്യത പങ്കിടുക</string>

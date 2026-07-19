@@ -123,6 +123,7 @@
     <string name="view_month">月</string>
     <string name="label_all_day">終日</string>
     <string name="label_today">今日</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">日付に移動</string>
     <string name="label_week">週</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
@@ -794,6 +795,8 @@
     <string name="cd_event_state_declined">辞退済み</string>
     <string name="cd_event_state_past">過去の予定</string>
     <string name="cd_loading_events">予定を読み込み中</string>
+    <string name="cd_collapse_week_bar">週バーを非表示</string>
+    <string name="cd_expand_week_bar">週バーを表示</string>
     <string name="cd_event_untitled">無題の予定</string>
     <string name="cd_open_drawer">ドロワーを開く</string>
     <string name="cd_close_drawer">ドロワーを閉じる</string>
@@ -808,6 +811,7 @@
     <string name="label_go_to_month">月に移動</string>
     <string name="action_more_options">その他のオプション</string>
     <string name="quick_add_save_failed">予定を保存できませんでした</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">日</string>
     <string name="label_duration_hrs">時間</string>
     <string name="label_duration_min">分</string>
@@ -816,6 +820,8 @@
     <string name="recurrence_on_day">毎月%1$d日</string>
     <string name="recurrence_on_last_day">毎月最終日</string>
     <string name="recurrence_on_nth_weekday">第%1$s %2$s</string>
+    <string name="recurrence_which">何番目</string>
+    <string name="recurrence_weekday">曜日</string>
     <string name="ordinal_1st">1</string>
     <string name="ordinal_2nd">2</string>
     <string name="ordinal_3rd">3</string>
@@ -1084,6 +1090,14 @@
     <plurals name="menu_more_with_invites">
         <item quantity="other">その他のメニュー、%d 件保留中</item>
     </plurals>
+    <string name="menu_privacy_security">プライバシーとセキュリティ</string>
+    <string name="cd_edit_initials">イニシャルを編集</string>
+    <string name="hub_initials_hint">タップしてイニシャルを設定</string>
+    <string name="hub_initials_field_label">イニシャル</string>
+    <string name="hub_initials_save">保存</string>
+    <string name="hub_initials_cancel">キャンセル</string>
+    <string name="hub_section_make_it_yours">自分仕様に</string>
+    <string name="hub_accounts_and_settings">アカウントと設定</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">空き状況を共有</string>

@@ -123,6 +123,7 @@
     <string name="view_month">Місяць</string>
     <string name="label_all_day">Увесь день</string>
     <string name="label_today">Сьогодні</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Перейти до дати</string>
     <string name="label_week">Т</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -908,6 +909,8 @@
     <string name="cd_event_state_declined">відхилено</string>
     <string name="cd_event_state_past">минула подія</string>
     <string name="cd_loading_events">Завантаження подій</string>
+    <string name="cd_collapse_week_bar">Сховати панель тижня</string>
+    <string name="cd_expand_week_bar">Показати панель тижня</string>
     <string name="cd_event_untitled">Подія без назви</string>
     <string name="cd_open_drawer">Відкрити меню</string>
     <string name="cd_close_drawer">Закрити меню</string>
@@ -922,6 +925,7 @@
     <string name="label_go_to_month">Перейти до місяця</string>
     <string name="action_more_options">Ще</string>
     <string name="quick_add_save_failed">Не вдалося зберегти подію</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">дн.</string>
     <string name="label_duration_hrs">год.</string>
     <string name="label_duration_min">хв.</string>
@@ -930,6 +934,8 @@
     <string name="recurrence_on_day">%1$d числа</string>
     <string name="recurrence_on_last_day">В останній день місяця</string>
     <string name="recurrence_on_nth_weekday">В %1$s %2$s</string>
+    <string name="recurrence_which">Який</string>
+    <string name="recurrence_weekday">День тижня</string>
     <string name="ordinal_1st">1-й</string>
     <string name="ordinal_2nd">2-й</string>
     <string name="ordinal_3rd">3-й</string>
@@ -1232,6 +1238,14 @@
         <item quantity="many">Меню «Ще», %d запрошень очікують</item>
         <item quantity="other">Меню «Ще», %d запрошення очікують</item>
     </plurals>
+    <string name="menu_privacy_security">Конфіденційність і безпека</string>
+    <string name="cd_edit_initials">Змінити ініціали</string>
+    <string name="hub_initials_hint">Натисни, щоб указати ініціали</string>
+    <string name="hub_initials_field_label">Ініціали</string>
+    <string name="hub_initials_save">Зберегти</string>
+    <string name="hub_initials_cancel">Скасувати</string>
+    <string name="hub_section_make_it_yours">Налаштуй під себе</string>
+    <string name="hub_accounts_and_settings">Облікові записи та налаштування</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">Поділитися доступністю</string>

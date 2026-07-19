@@ -1,11 +1,23 @@
 package org.onekash.kashcal.domain.quickadd.rule
 
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 internal fun isDotOnly(text: String): Boolean =
     text.contains('.') && !text.contains('/') && !text.contains('-')
+
+/**
+ * Resolve a bare weekday to its next occurrence relative to [refDate]. If [refDate]
+ * already falls on [target], advance a full week (uses `<= 0`, so "same day" rolls
+ * forward). Shared by the weekday and recurrence rules.
+ */
+internal fun resolveBareWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
+    val diff = target.value - refDate.dayOfWeek.value
+    val daysToAdd = if (diff <= 0) diff + 7 else diff
+    return refDate.plusDays(daysToAdd.toLong())
+}
 
 /**
  * @param firstDayOfWeek `java.util.Calendar` constant or 0 (system default);

@@ -123,6 +123,7 @@
     <string name="view_month">ମାସ</string>
     <string name="label_all_day">ସାରାଦିନ</string>
     <string name="label_today">ଆଜି</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ତାରିଖକୁ ଯାଆନ୍ତୁ</string>
     <string name="label_week">ସ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଛି</string>
     <string name="cd_event_state_past">ଅତୀତ ଇଭେଣ୍ଟ</string>
     <string name="cd_loading_events">ଇଭେଣ୍ଟ ଲୋଡ୍ ହେଉଛି</string>
+    <string name="cd_collapse_week_bar">ସପ୍ତାହ ବାର୍ ଲୁଚାନ୍ତୁ</string>
+    <string name="cd_expand_week_bar">ସପ୍ତାହ ବାର୍ ଦେଖାନ୍ତୁ</string>
     <string name="cd_event_untitled">ଶୀର୍ଷକହୀନ ଇଭେଣ୍ଟ</string>
     <string name="cd_open_drawer">ଡ୍ରୟର ଖୋଲନ୍ତୁ</string>
     <string name="cd_close_drawer">ଡ୍ରୟର ବନ୍ଦ କରନ୍ତୁ</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">ମାସକୁ ଯାଆନ୍ତୁ</string>
     <string name="action_more_options">ଅଧିକ ବିକଳ୍ପ</string>
     <string name="quick_add_save_failed">ଇଭେଣ୍ଟ ସଞ୍ଚୟ କରିବାରେ ବିଫଳ</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ଦିନ</string>
     <string name="label_duration_hrs">ଘ.</string>
     <string name="label_duration_min">ମି.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">ଦିନ %1$d ରେ</string>
     <string name="recurrence_on_last_day">ମାସର ଶେଷ ଦିନରେ</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s ରେ</string>
+    <string name="recurrence_which">କେଉଁଟି</string>
+    <string name="recurrence_weekday">ସପ୍ତାହର ଦିନ</string>
     <string name="ordinal_1st">1ମ</string>
     <string name="ordinal_2nd">2ୟ</string>
     <string name="ordinal_3rd">3ୟ</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
         <item quantity="other">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
     </plurals>
+    <string name="menu_privacy_security">ଗୋପନୀୟତା ଓ ସୁରକ୍ଷା</string>
+    <string name="cd_edit_initials">ଆପଣଙ୍କ ପ୍ରାରମ୍ଭିକ ଅକ୍ଷର ସମ୍ପାଦନ କରନ୍ତୁ</string>
+    <string name="hub_initials_hint">ଆପଣଙ୍କ ପ୍ରାରମ୍ଭିକ ଅକ୍ଷର ସେଟ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ</string>
+    <string name="hub_initials_field_label">ପ୍ରାରମ୍ଭିକ ଅକ୍ଷର</string>
+    <string name="hub_initials_save">ସେଭ୍ କରନ୍ତୁ</string>
+    <string name="hub_initials_cancel">ବାତିଲ୍ କରନ୍ତୁ</string>
+    <string name="hub_section_make_it_yours">ଏହାକୁ ନିଜର କରନ୍ତୁ</string>
+    <string name="hub_accounts_and_settings">ଆକାଉଣ୍ଟ ଏବଂ ସେଟିଂସ</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ଉପଲବ୍ଧତା ସେୟାର କରନ୍ତୁ</string>

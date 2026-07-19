@@ -260,7 +260,11 @@ data class HomeUiState(
     /** Show week numbers in month calendar grid */
     val showWeekNumbers: Boolean = false,
     /** Render the event form's tag row above the notes/attendees block */
-    val tagsAboveNotes: Boolean = false
+    val tagsAboveNotes: Boolean = false,
+    /** Whether the Agenda view's top week bar is expanded (shown). Default: expanded */
+    val agendaWeekBarExpanded: Boolean = true,
+    /** User's up-to-2-letter avatar initials; empty renders the generic glyph */
+    val userInitials: String = ""
 ) {
     /**
      * Format the current viewing month/year for display.

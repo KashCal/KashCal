@@ -1,0 +1,459 @@
+package org.onekash.kashcal.ui.components.hub
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AppShortcut
+import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Badge
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.onekash.kashcal.R
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.ui.appicon.AppIconUtility
+import org.onekash.kashcal.ui.components.formatBadgeCount
+import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
+import org.onekash.kashcal.ui.screens.settings.AppIconSheet
+import org.onekash.kashcal.ui.screens.settings.ThemeSheet
+import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.theme.ColorSource
+import org.onekash.kashcal.ui.theme.ThemeMode
+import org.onekash.kashcal.ui.viewmodels.AppearanceViewModel
+import org.onekash.kashcal.ui.viewmodels.ViewMode
+import org.onekash.kashcal.util.ExternalLinks
+
+/**
+ * Full-screen "account hub" that replaces the former overflow bottom sheet.
+ *
+ * Structured like the Insights destination: its own top bar with a back arrow
+ * (no title) and a [BackHandler] so the system back gesture/button dismiss it
+ * through the same [onBack] path as the arrow. A hero avatar at the top edits
+ * the user's initials inline; below are the same destinations the overflow menu
+ * offered, with a Privacy & Security link at the bottom of the list.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountHubScreen(
+    currentViewMode: ViewMode,
+    pendingInvitesCount: Int,
+    userInitials: String,
+    onInitialsChange: (String) -> Unit,
+    onInvitesClick: () -> Unit,
+    onJumpToDateClick: () -> Unit,
+    onShareAvailabilityClick: () -> Unit,
+    onInsightsClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onAboutClick: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BackHandler(onBack = onBack)
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            HubHero(
+                initials = userInitials,
+                onInitialsChange = onInitialsChange,
+            )
+
+            // Accounts + app configuration presented as a centered pill tied to
+            // the identity block above, so it reads as an action on "you" rather
+            // than a stray list row floating above the sections.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                OutlinedButton(onClick = onSettingsClick) {
+                    Text(stringResource(R.string.hub_accounts_and_settings))
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
+
+            // Personalization (theme, accent, app icon) sits next to the
+            // identity avatar.
+            HubSectionHeader(stringResource(R.string.hub_section_make_it_yours))
+            MakeItYoursSection()
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
+
+            HubDrawerItem(
+                label = stringResource(R.string.menu_invites),
+                icon = Icons.Default.MailOutline,
+                onClick = onInvitesClick,
+                badge = { formatBadgeCount(pendingInvitesCount)?.let { Badge { Text(it) } } },
+            )
+            HubDrawerItem(
+                label = stringResource(R.string.jump_to_date),
+                icon = Icons.Default.CalendarMonth,
+                onClick = onJumpToDateClick,
+            )
+            HubDrawerItem(
+                label = stringResource(R.string.share_availability_rail_label),
+                icon = Icons.Default.Share,
+                onClick = onShareAvailabilityClick,
+            )
+            HubDrawerItem(
+                label = stringResource(R.string.view_insights),
+                icon = Icons.Default.Insights,
+                onClick = onInsightsClick,
+                selected = currentViewMode == ViewMode.INSIGHTS,
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
+
+            HubDrawerItem(
+                label = stringResource(R.string.menu_about),
+                icon = Icons.Default.Info,
+                onClick = onAboutClick,
+            )
+            // Privacy & Security flows below About (not pinned) so it reads as
+            // part of the app/meta group rather than a stranded footer.
+            PrivacySecurityRow()
+        }
+    }
+}
+
+@Composable
+private fun HubDrawerItem(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    selected: Boolean = false,
+    badge: @Composable (() -> Unit)? = null,
+) {
+    NavigationDrawerItem(
+        label = { Text(label) },
+        icon = { Icon(icon, contentDescription = null) },
+        badge = badge,
+        selected = selected,
+        onClick = onClick,
+        modifier = Modifier.padding(horizontal = 12.dp),
+    )
+}
+
+@Composable
+private fun HubSectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 28.dp, top = 12.dp, bottom = 4.dp),
+    )
+}
+
+/**
+ * Personalization rows (theme, accent color, app icon) driven by
+ * [AppearanceViewModel]. Each row opens the same reusable sheet the settings
+ * screen used, so there's no duplicated picker logic; the sheets render on top
+ * of the hub and dismiss back to it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MakeItYoursSection() {
+    val vm: AppearanceViewModel = hiltViewModel()
+    val themeMode by vm.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val colorSource by vm.colorSource.collectAsStateWithLifecycle(initialValue = ColorSource.DYNAMIC)
+    val accentSeed by vm.accentSeed.collectAsStateWithLifecycle(initialValue = KashCalDataStore.ACCENT_SEED_DEFAULT)
+
+    val context = LocalContext.current
+    val appIconUtility = remember(context) { AppIconUtility(context) }
+    var currentAppIcon by remember { mutableStateOf(appIconUtility.currentPreset()) }
+
+    var showThemeSheet by rememberSaveable { mutableStateOf(false) }
+    var showAccentSheet by rememberSaveable { mutableStateOf(false) }
+    var showAppIconSheet by rememberSaveable { mutableStateOf(false) }
+
+    HubDrawerItem(
+        label = stringResource(R.string.settings_theme),
+        icon = Icons.Default.BrightnessMedium,
+        onClick = { showThemeSheet = true },
+        badge = { Text(stringResource(themeMode.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+    )
+    val accentSubtitle = when {
+        colorSource != ColorSource.SEED -> stringResource(R.string.settings_accent_color_dynamic)
+        // Brand teal isn't a CSS3 palette entry, so it would otherwise read as "Custom".
+        accentSeed == KashCalDataStore.ACCENT_SEED_DEFAULT -> stringResource(R.string.settings_accent_color_brand)
+        else -> stringResource(EventColorPalette.stringResIdForColor(accentSeed))
+    }
+    HubDrawerItem(
+        label = stringResource(R.string.settings_accent_color),
+        icon = Icons.Default.Palette,
+        onClick = { showAccentSheet = true },
+        badge = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(accentSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (colorSource == ColorSource.SEED) {
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(Color(accentSeed)),
+                    )
+                }
+            }
+        },
+    )
+    HubDrawerItem(
+        label = stringResource(R.string.settings_app_icon),
+        icon = Icons.Default.AppShortcut,
+        onClick = { showAppIconSheet = true },
+        badge = { Text(stringResource(currentAppIcon.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+    )
+
+    if (showThemeSheet) {
+        ThemeSheet(
+            sheetState = rememberModalBottomSheetState(),
+            currentMode = themeMode,
+            onModeSelect = { vm.setThemeMode(it) },
+            onDismiss = { showThemeSheet = false },
+        )
+    }
+    if (showAccentSheet) {
+        AccentColorSheet(
+            selectedArgb = accentSeed,
+            useDynamic = colorSource == ColorSource.DYNAMIC,
+            onColorSelected = { vm.setAccentSeed(it); showAccentSheet = false },
+            onUseDynamic = { vm.setColorSource(ColorSource.DYNAMIC); showAccentSheet = false },
+            onDismiss = { showAccentSheet = false },
+        )
+    }
+    if (showAppIconSheet) {
+        AppIconSheet(
+            // Open fully expanded so the icon options + support link + note are all
+            // visible at once, not half-height requiring a drag-up.
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            currentPreset = currentAppIcon,
+            onPresetSelect = { preset ->
+                // Skip the no-op: re-toggling the active alias needlessly refreshes
+                // the launcher (and can briefly restart the app).
+                if (preset != currentAppIcon) {
+                    appIconUtility.setAppIcon(preset)
+                    currentAppIcon = preset
+                }
+            },
+            onSupportClick = { ExternalLinks.openUrl(context, ExternalLinks.DONATE) },
+            onDismiss = { showAppIconSheet = false },
+        )
+    }
+}
+
+/**
+ * Hero header: a large avatar that swaps into an inline 2-letter editor when
+ * tapped. State transitions live in [InitialsEditorState] so they're unit
+ * tested off-device.
+ */
+@Composable
+private fun HubHero(
+    initials: String,
+    onInitialsChange: (String) -> Unit,
+) {
+    // Saveable so an in-progress edit survives rotation (the hub's showHub flag
+    // does too). Not keyed on `initials`: instead adopt external changes via
+    // syncCurrent, which no-ops mid-edit so a sync/backup re-emit can't wipe the
+    // user's draft.
+    val editor = rememberSaveable(saver = InitialsEditorState.Saver) {
+        InitialsEditorState(current = initials)
+    }
+    LaunchedEffect(initials) { editor.syncCurrent(initials) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (editor.isEditing) {
+            // The user tapped specifically to type their initials, so focus the
+            // field (which raises the soft keyboard) as soon as edit mode begins.
+            val focusRequester = remember { FocusRequester() }
+            LaunchedEffect(Unit) { focusRequester.requestFocus() }
+            OutlinedTextField(
+                value = editor.draft,
+                onValueChange = editor::onType,
+                singleLine = true,
+                label = { Text(stringResource(R.string.hub_initials_field_label)) },
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = KeyboardActions(onDone = { onInitialsChange(editor.save()) }),
+                modifier = Modifier
+                    .width(120.dp)
+                    .focusRequester(focusRequester),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = editor::cancel) {
+                    Text(stringResource(R.string.hub_initials_cancel))
+                }
+                OutlinedButton(onClick = { onInitialsChange(editor.save()) }) {
+                    Text(stringResource(R.string.hub_initials_save))
+                }
+            }
+        } else {
+            val editLabel = stringResource(R.string.cd_edit_initials)
+            Box(
+                // No clip here: the pencil badge sits at the bottom-end corner and a
+                // circular clip on this wrapper would cut it off. The avatar clips
+                // its own circular background internally.
+                modifier = Modifier
+                    .clickable(role = Role.Button, onClick = editor::start)
+                    // A real name (not just an onClick action label) so TalkBack
+                    // announces the hero — critical in the empty state, where the
+                    // avatar is a glyph with no text of its own.
+                    .semantics(mergeDescendants = true) { contentDescription = editLabel },
+            ) {
+                AccountAvatar(initials = initials, size = 76.dp, fontSize = 30.sp)
+                // Small pencil badge marks the avatar as an editable field in both
+                // the empty and set states (the hint text below only shows when empty).
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(26.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(2.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+            // Only prompt when there's nothing set yet; once initials exist the
+            // pencil badge alone signals the avatar is editable.
+            if (normalizeInitials(initials).isEmpty()) {
+                Text(
+                    text = stringResource(R.string.hub_initials_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+/** External link to the privacy & security policy, with an open-in-new affordance. */
+@Composable
+private fun PrivacySecurityRow() {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button) { ExternalLinks.openUrl(context, ExternalLinks.PRIVACY) }
+            .padding(horizontal = 28.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Shield,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(20.dp))
+        Text(
+            text = stringResource(R.string.menu_privacy_security),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}

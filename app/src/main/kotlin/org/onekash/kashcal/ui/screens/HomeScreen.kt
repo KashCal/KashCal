@@ -45,8 +45,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Badge
@@ -103,6 +103,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -112,6 +113,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -133,12 +136,20 @@ import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
 import org.onekash.kashcal.ui.components.InvitationInboxSheet
-import org.onekash.kashcal.ui.components.OverflowSheet
+import org.onekash.kashcal.ui.components.hub.AccountAvatar
+import org.onekash.kashcal.ui.components.hub.AccountHubScreen
 import org.onekash.kashcal.ui.components.formatBadgeCount
 import org.onekash.kashcal.ui.components.overflowContentDescription
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.TopBarLogoButton
+import org.onekash.kashcal.ui.components.AgendaDayHeader
+import org.onekash.kashcal.ui.components.AgendaDisplayItem
+import org.onekash.kashcal.ui.components.AgendaListModel
 import org.onekash.kashcal.ui.components.AgendaTitleMonth
+import org.onekash.kashcal.ui.components.AgendaWeekBar
+import org.onekash.kashcal.ui.components.AgendaWeekBarLogic
+import org.onekash.kashcal.ui.components.buildAgendaListModel
+import org.onekash.kashcal.ui.components.resolveScrollTargetIndex
 import org.onekash.kashcal.ui.components.TopBarTitleFormatter
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
@@ -230,10 +241,14 @@ fun HomeScreen(
     onDrawerToggleDeviceCalendarVisibility: (Long) -> Unit = {},
     // Info callbacks
     onInfoClick: () -> Unit = {},
+    // Avatar hub: persist edited initials
+    onInitialsChange: (String) -> Unit = {},
     // View picker callback
     onViewSelect: (ViewMode) -> Unit = {},
     // Year overlay callbacks
     onMonthHeaderClick: () -> Unit = {},
+    // Agenda week-bar collapse/expand toggle (persisted)
+    onAgendaWeekBarToggle: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
     // Week view callbacks (infinite day pager)
@@ -327,6 +342,40 @@ fun HomeScreen(
         derivedStateOf {
             val firstKey = agendaListState.layoutInfo.visibleItemsInfo.firstOrNull()?.key as? String
             AgendaTitleMonth.monthYearFromItemKey(firstKey, fallbackDate)
+        }
+    }
+
+    // Agenda week-bar state. The selected day (null = none in the shown week) is
+    // sticky and only changes on tap. While a tap-driven scroll animates, the bar
+    // holds the tapped week (agendaBarSuppressed + agendaBarHeldAnchor) so it
+    // doesn't flicker through intermediate weeks; otherwise it tracks the topmost
+    // visible list item.
+    var agendaSelectedDayCode by rememberSaveable(refreshKey) { mutableStateOf<Int?>(null) }
+    var agendaBarSuppressed by remember { mutableStateOf(false) }
+    var agendaBarHeldAnchor by remember { mutableStateOf<LocalDate?>(null) }
+    // Bumped per tap so a rapid second tap's scroll animation doesn't get its
+    // suppression cleared by the first tap's cancelled coroutine — only the
+    // latest tap's coroutine clears the flag.
+    var agendaTapGeneration by remember { mutableIntStateOf(0) }
+    // The agenda LazyColumn's top contentPadding lets the item just above the
+    // first fully-visible one peek into it, so skip peekers when picking the
+    // anchor (else tapping a week's first day snaps the bar to the prior week).
+    // Sourced from AGENDA_CONTENT_PADDING so it tracks the list's actual inset.
+    val agendaContentPaddingTopPx = with(LocalDensity.current) { AGENDA_CONTENT_PADDING.roundToPx() }
+    val agendaWeekDates by remember(refreshKey, uiState.firstDayOfWeek) {
+        val fallbackDate = LocalDate.now()
+        derivedStateOf {
+            val visible = agendaListState.layoutInfo.visibleItemsInfo.map {
+                AgendaWeekBarLogic.VisibleItem(it.key as? String, it.offset, it.size)
+            }
+            val topKey = AgendaWeekBarLogic.topmostAnchorKey(visible, agendaContentPaddingTopPx)
+            val anchor = AgendaWeekBarLogic.resolveAnchorDate(
+                topKey = topKey,
+                suppressed = agendaBarSuppressed,
+                heldAnchor = agendaBarHeldAnchor,
+                fallback = fallbackDate
+            )
+            AgendaWeekBarLogic.weekDates(anchor, uiState.firstDayOfWeek)
         }
     }
 
@@ -424,7 +473,7 @@ fun HomeScreen(
 
     val drawerScope = rememberCoroutineScope()
     var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
-    var showOverflowSheet by rememberSaveable { mutableStateOf(false) }
+    var showHub by rememberSaveable { mutableStateOf(false) }
 
     // Captures view mode + date right before "Jump to date" navigates so a
     // back press restores both. Cleared once consumed (or set to null when no
@@ -434,6 +483,9 @@ fun HomeScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
+        // Suppress the edge-swipe while the full-screen hub overlay is up, so a
+        // swipe can't slide the calendar drawer over it.
+        gesturesEnabled = !showHub,
         drawerContent = {
             CalendarDrawer(
                 currentViewMode = uiState.viewMode,
@@ -482,11 +534,14 @@ fun HomeScreen(
                     }
                 },
                 onGoToToday = onGoToToday,
-                onOverflowClick = { showOverflowSheet = true },
+                onOverflowClick = { showHub = true },
                 pendingInvitesCount = pendingInvitesCount,
                 onTitleClick = {
-                    if (uiState.viewMode.isTimeGrid) onWeekDatePickerRequest()
-                    else onMonthHeaderClick()
+                    when {
+                        uiState.viewMode == ViewMode.AGENDA -> onAgendaWeekBarToggle()
+                        uiState.viewMode.isTimeGrid -> onWeekDatePickerRequest()
+                        else -> onMonthHeaderClick()
+                    }
                 },
                 onViewSelect = onViewSelect
             )
@@ -597,6 +652,37 @@ fun HomeScreen(
 
                                 when (uiState.viewMode) {
                                     ViewMode.AGENDA -> {
+                                        // Pinned week bar above the list, collapsible via the top-bar
+                                        // title chevron (state persisted). Tapping a date selects it
+                                        // and scrolls the list to that day's header; the bar tracks
+                                        // the scrolled week otherwise.
+                                        if (uiState.agendaWeekBarExpanded) {
+                                            AgendaWeekBar(
+                                                weekDates = agendaWeekDates,
+                                                selectedDayCode = agendaSelectedDayCode,
+                                                todayDayCode = todayDayCode,
+                                                onDayClick = { tappedDayCode ->
+                                                    agendaSelectedDayCode = tappedDayCode
+                                                    agendaBarHeldAnchor = DayPagerUtils.dayCodeToLocalDate(tappedDayCode)
+                                                    agendaBarSuppressed = true
+                                                    val generation = ++agendaTapGeneration
+                                                    val model = buildAgendaListModel(agendaEvents.events, todayDayCode)
+                                                    val target = resolveScrollTargetIndex(tappedDayCode, model)
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            if (target >= 0) agendaListState.animateScrollToItem(target)
+                                                        } finally {
+                                                            // Only the latest tap clears suppression, so a
+                                                            // rapid double-tap can't unsuppress mid-animation.
+                                                            if (generation == agendaTapGeneration) {
+                                                                agendaBarSuppressed = false
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                         if (agendaEvents.isLoading) {
                                             val loadingLabel = stringResource(R.string.cd_loading_events)
                                             Box(
@@ -613,12 +699,15 @@ fun HomeScreen(
                                                 CircularProgressIndicator()
                                             }
                                         } else {
+                                            val agendaModel = remember(agendaEvents.events, todayDayCode) {
+                                                buildAgendaListModel(agendaEvents.events, todayDayCode)
+                                            }
                                             AgendaContent(
-                                                events = agendaEvents.events,
+                                                model = agendaModel,
+                                                todayDayCode = todayDayCode,
                                                 listState = agendaListState,
                                                 showEventEmojis = uiState.showEventEmojis,
                                                 timePattern = timePattern,
-                                                refreshKey = refreshKey,
                                                 onEventClick = { displayEvent ->
                                                     when (displayEvent) {
                                                         is DisplayEvent.Room -> onEventClick(displayEvent.event, displayEvent.occurrence.startTs)
@@ -919,6 +1008,9 @@ fun HomeScreen(
                 onViewSelect(ViewMode.DAY)
                 onWeekDateSelected(dateMs)
                 showJumpToDatePicker = false
+                // Picking a date navigates the calendar, so the hub (still mounted
+                // behind the picker) must close to reveal the result.
+                showHub = false
             },
             onDismiss = { showJumpToDatePicker = false },
             firstDayOfWeek = uiState.firstDayOfWeek
@@ -929,25 +1021,42 @@ fun HomeScreen(
     // user was on before the jump. Single-shot — clears the snapshot so a
     // second back press falls through to normal back behavior.
     val pending = preJumpViewMode
-    BackHandler(enabled = pending != null && !showJumpToDatePicker && !showOverflowSheet) {
+    BackHandler(enabled = pending != null && !showJumpToDatePicker && !showHub) {
         onViewSelect(pending!!)
         if (preJumpDate != 0L) onWeekDateSelected(preJumpDate)
         preJumpViewMode = null
         preJumpDate = 0L
     }
 
-    if (showOverflowSheet) {
-        OverflowSheet(
-            currentViewMode = uiState.viewMode,
-            pendingInvitesCount = pendingInvitesCount,
-            onInvitesClick = onOpenInvitationInbox,
-            onJumpToDateClick = { showJumpToDatePicker = true },
-            onShareAvailabilityClick = onShareAvailabilityClick,
-            onInsightsClick = { onViewSelect(ViewMode.INSIGHTS) },
-            onSettingsClick = onSettingsClick,
-            onAboutClick = onInfoClick,
-            onDismiss = { showOverflowSheet = false }
-        )
+    if (showHub) {
+        // Full-screen destination (like the Insights view) rendered as an opaque
+        // overlay above the Scaffold, so it covers the calendar's own top bar and
+        // FAB. A boolean flag is invisible to the top-bar `when` and the FAB's
+        // viewMode gate, so the overlay — not those branches — owns coverage.
+        // Surface (not a bare Box) is load-bearing here: its pointer-input barrier
+        // stops taps from reaching the FAB behind it, and gesturesEnabled=!showHub
+        // above suppresses the drawer edge-swipe. Keep both if this is refactored.
+        Surface(modifier = Modifier.fillMaxSize()) {
+            AccountHubScreen(
+                currentViewMode = uiState.viewMode,
+                pendingInvitesCount = pendingInvitesCount,
+                userInitials = uiState.userInitials,
+                onInitialsChange = onInitialsChange,
+                // Destinations that open a sheet/Activity ON TOP of the hub keep it
+                // mounted — the destination covers it, so there's no bare-calendar
+                // flash, and dismissing the destination returns to the hub. Only
+                // the destinations that change the calendar itself close the hub:
+                // Insights (a full-screen view swap) and Jump-to-date (closed when
+                // a date is actually picked, below).
+                onInvitesClick = onOpenInvitationInbox,
+                onJumpToDateClick = { showJumpToDatePicker = true },
+                onShareAvailabilityClick = onShareAvailabilityClick,
+                onInsightsClick = { showHub = false; onViewSelect(ViewMode.INSIGHTS) },
+                onSettingsClick = onSettingsClick,
+                onAboutClick = onInfoClick,
+                onBack = { showHub = false },
+            )
+        }
     }
 
     // Invitation inbox bottom sheet
@@ -1163,8 +1272,9 @@ private fun HomeTopAppBar(
                     }
                 },
                 actions = {
-                    OverflowButton(
+                    AvatarTrigger(
                         pendingInvitesCount = pendingInvitesCount,
+                        userInitials = uiState.userInitials,
                         onClick = onOverflowClick
                     )
                 }
@@ -1189,15 +1299,55 @@ private fun HomeTopAppBar(
                 yearLabel = yearLabel,
                 today = today,
             )
-            val isTitleTappable = uiState.viewMode != ViewMode.AGENDA && uiState.viewMode != ViewMode.YEAR
+            val isAgendaView = uiState.viewMode == ViewMode.AGENDA
             val titleFontSize = if (uiState.viewMode == ViewMode.WEEK) 18.sp else 20.sp
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        text = titleText,
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = titleFontSize),
-                        modifier = if (isTitleTappable) Modifier.clickable(onClick = onTitleClick) else Modifier,
-                    )
+                    if (isAgendaView) {
+                        // Chevron points up when the week bar is expanded (tap to
+                        // collapse), down when collapsed (tap to expand).
+                        val agendaChevronRotation by animateFloatAsState(
+                            targetValue = if (uiState.agendaWeekBarExpanded) 180f else 0f,
+                            animationSpec = tween(300),
+                            label = "agendaChevronRotation"
+                        )
+                        // onClickLabel describes the toggle action to TalkBack while
+                        // the title text ("July 2026") stays the node's spoken content.
+                        val toggleLabel = if (uiState.agendaWeekBarExpanded) {
+                            stringResource(R.string.cd_collapse_week_bar)
+                        } else {
+                            stringResource(R.string.cd_expand_week_bar)
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable(onClickLabel = toggleLabel, onClick = onTitleClick)
+                        ) {
+                            Text(
+                                text = titleText,
+                                style = MaterialTheme.typography.titleLarge.copy(fontSize = titleFontSize),
+                            )
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .padding(start = 2.dp)
+                                    .size(24.dp)
+                                    .graphicsLayer { rotationZ = agendaChevronRotation }
+                            )
+                        }
+                    } else {
+                        // Year has no title action; other date-driven views open a picker.
+                        val titleModifier = if (uiState.viewMode != ViewMode.YEAR) {
+                            Modifier.clickable(onClick = onTitleClick)
+                        } else {
+                            Modifier
+                        }
+                        Text(
+                            text = titleText,
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = titleFontSize),
+                            modifier = titleModifier,
+                        )
+                    }
                 },
                 navigationIcon = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1236,8 +1386,9 @@ private fun HomeTopAppBar(
                             modifier = Modifier.size(26.dp)
                         )
                     }
-                    OverflowButton(
+                    AvatarTrigger(
                         pendingInvitesCount = pendingInvitesCount,
+                        userInitials = uiState.userInitials,
                         onClick = onOverflowClick
                     )
                 }
@@ -1247,15 +1398,17 @@ private fun HomeTopAppBar(
 }
 
 /**
- * Top-bar overflow button. Renders the universal three-dot glyph with a
- * numeric badge when [pendingInvitesCount] > 0; tapping invokes [onClick]
- * to open the [OverflowSheet]. Accessibility label resolves through the
- * same [overflowContentDescription] helper the sheet's Invites row uses,
- * so the announcement and badge never disagree on the count.
+ * Top-bar trigger that opens the account hub. Renders the user's initials
+ * avatar (or a neutral glyph when unset) with a numeric badge when
+ * [pendingInvitesCount] > 0; tapping invokes [onClick]. The accessibility label
+ * still resolves through [overflowContentDescription] so the announcement and
+ * badge never disagree on the count, and TalkBack keeps the familiar "More
+ * menu" affordance even though the glyph is now an avatar.
  */
 @Composable
-private fun OverflowButton(
+private fun AvatarTrigger(
     pendingInvitesCount: Int,
+    userInitials: String,
     onClick: () -> Unit
 ) {
     val baseLabel = stringResource(R.string.menu_more)
@@ -1270,7 +1423,10 @@ private fun OverflowButton(
         withInvitesLabel = withInvitesLabel
     )
 
-    IconButton(onClick = onClick) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = triggerDescription }
+    ) {
         BadgedBox(
             badge = {
                 val badgeText = formatBadgeCount(pendingInvitesCount)
@@ -1279,11 +1435,10 @@ private fun OverflowButton(
                 }
             }
         ) {
-            Icon(
-                Icons.Default.MoreVert,
-                contentDescription = triggerDescription,
-                modifier = Modifier.size(26.dp)
-            )
+            // Tuned against the 26.dp sibling glyphs (Menu/Search): the disc is
+            // slightly larger but its inner content (glyph/monogram) is inset, so
+            // it reads at about the same visual weight rather than oversized.
+            AccountAvatar(initials = userInitials, size = 30.dp, fontSize = 13.sp)
         }
     }
 }
@@ -1895,73 +2050,39 @@ private fun SearchContent(
 }
 
 /**
- * Display item for agenda - represents one day of an event.
- * For multi-day events, one event becomes multiple display items.
+ * Uniform padding around the agenda list. The top inset is also the peek
+ * threshold the week bar uses to skip a previous item bleeding into the padding
+ * (see the anchor derivation in [HomeScreen]) — keep them sourced from here so
+ * the two can't drift.
  */
-private data class AgendaDisplayItem(
-    val displayEvent: DisplayEvent,
-    val displayDay: Int,      // YYYYMMDD for this display entry
-    val dayNumber: Int,       // 1, 2, 3... (which day of multi-day event)
-    val totalDays: Int        // Total days in event (1 for single-day)
-)
+private val AGENDA_CONTENT_PADDING = 16.dp
 
 /**
  * Agenda content - shows upcoming 90 days of occurrences.
  * Each recurring event instance is shown separately.
  * Multi-day events appear on each day they span with "Day X of Y" indicator.
- * Groups occurrences by date with date headers.
+ * Groups occurrences by date with date headers; today/tomorrow headers carry a
+ * relative word ("Today"/"Tomorrow") beside the full date.
+ *
+ * The expansion / dedup / grouping is precomputed into [model] by the caller so
+ * the same grouping (and its header-index map) drives both this list and the
+ * week bar's tap-to-scroll. [todayDayCode] is the single today reference shared
+ * with the header formatter and week bar.
  */
 @Composable
 private fun AgendaContent(
-    events: ImmutableList<DisplayEvent>,
+    model: AgendaListModel,
+    todayDayCode: Int,
     listState: LazyListState = rememberLazyListState(),
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
-    refreshKey: Int = 0,
     onEventClick: (DisplayEvent) -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("EEEEMMMMd"), Locale.getDefault()) }
+    val todayLabel = stringResource(R.string.label_today)
+    val tomorrowLabel = stringResource(R.string.label_tomorrow)
+    val relativeWithDateTemplate = stringResource(R.string.agenda_header_relative_with_date)
 
-    // Calculate today's day code for filtering - refreshes on resume via refreshKey
-    val todayDayCode = remember(refreshKey) {
-        val cal = JavaCalendar.getInstance()
-        cal.get(JavaCalendar.YEAR) * 10000 +
-            (cal.get(JavaCalendar.MONTH) + 1) * 100 +
-            cal.get(JavaCalendar.DAY_OF_MONTH)
-    }
-
-    // Expand multi-day events into separate display items per day
-    val expandedItems = remember(events, todayDayCode) {
-        events.flatMap { displayEvent ->
-            val isMultiDay = displayEvent.endDay > displayEvent.startDay
-            if (isMultiDay) {
-                // Create entry for each day the event spans
-                val items = mutableListOf<AgendaDisplayItem>()
-                var currentDay = displayEvent.startDay
-                var dayNum = 1
-                val total = Occurrence.calculateDaysBetween(displayEvent.startDay, displayEvent.endDay) + 1
-                while (currentDay <= displayEvent.endDay) {
-                    items.add(AgendaDisplayItem(displayEvent, currentDay, dayNum, total))
-                    currentDay = Occurrence.incrementDayCode(currentDay)
-                    dayNum++
-                }
-                items
-            } else {
-                listOf(AgendaDisplayItem(displayEvent, displayEvent.startDay, 1, 1))
-            }
-        }.filter { item ->
-            // Only show items from today onwards
-            item.displayDay >= todayDayCode
-        }.distinctBy { item ->
-            // Deduplicate: use identity-based key (startTs + title + displayDay)
-            "${item.displayEvent.title}-${item.displayEvent.startTs}-${item.displayDay}"
-        }.sortedWith(compareBy(
-            { it.displayDay },  // Primary: by date
-            { it.displayEvent.startTs }  // Secondary: by original start time
-        ))
-    }
-
-    if (expandedItems.isEmpty()) {
+    if (model.groups.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize().padding(32.dp),
             contentAlignment = Alignment.Center
@@ -1972,25 +2093,47 @@ private fun AgendaContent(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(AGENDA_CONTENT_PADDING),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Group by display day
-            val grouped = expandedItems.groupBy { it.displayDay }
-
-            grouped.forEach { (displayDay, dayItems) ->
+            model.groups.forEach { group ->
+                val displayDay = group.dayCode
                 item(key = "header_$displayDay", contentType = "header") {
-                    // Format the display day for header
-                    val headerDate = Occurrence.dayFormatToCalendar(displayDay).time
-                    Text(
-                        dateFormat.format(headerDate),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                    val parts = remember(displayDay, todayDayCode, todayLabel, tomorrowLabel) {
+                        AgendaDayHeader.format(displayDay, todayDayCode, todayLabel, tomorrowLabel)
+                    }
+                    if (parts.relativeLabel != null) {
+                        // Two-tone: accent the relative word, mute the rest. The
+                        // join + accent-range logic is reorder-safe (see
+                        // AgendaDayHeader.joinedHeader) so date-first locales work.
+                        val header = remember(parts, relativeWithDateTemplate) {
+                            AgendaDayHeader.joinedHeader(parts, relativeWithDateTemplate)
+                        }
+                        val accentColor = MaterialTheme.colorScheme.primary
+                        val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        Text(
+                            text = buildAnnotatedString {
+                                append(header.text)
+                                addStyle(SpanStyle(color = mutedColor), 0, header.text.length)
+                                if (header.hasAccent) {
+                                    addStyle(SpanStyle(color = accentColor), header.accentStart, header.accentEnd)
+                                }
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        Text(
+                            parts.dateText,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                 }
                 items(
-                    items = dayItems,
+                    items = group.items,
                     key = { item ->
                         when (val de = item.displayEvent) {
                             is DisplayEvent.Room -> "room_${de.event.id}_${de.occurrence.startTs}_${item.displayDay}"

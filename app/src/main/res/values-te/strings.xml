@@ -123,6 +123,7 @@
     <string name="view_month">నెల</string>
     <string name="label_all_day">రోజంతా</string>
     <string name="label_today">నేడు</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">తేదీకి వెళ్ళు</string>
     <string name="label_week">వా</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">తిరస్కరించబడింది</string>
     <string name="cd_event_state_past">గత ఈవెంట్</string>
     <string name="cd_loading_events">ఈవెంట్‌లు లోడ్ అవుతున్నాయి</string>
+    <string name="cd_collapse_week_bar">వారం బార్‌ను దాచు</string>
+    <string name="cd_expand_week_bar">వారం బార్‌ను చూపు</string>
     <string name="cd_event_untitled">శీర్షిక లేని ఈవెంట్</string>
     <string name="cd_open_drawer">డ్రాయర్ తెరువు</string>
     <string name="cd_close_drawer">డ్రాయర్ మూసివేయి</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">నెలకు వెళ్ళు</string>
     <string name="action_more_options">మరిన్ని ఎంపికలు</string>
     <string name="quick_add_save_failed">ఈవెంట్‌ను సేవ్ చేయడం విఫలమైంది</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">రోజులు</string>
     <string name="label_duration_hrs">గం.</string>
     <string name="label_duration_min">ని.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">రోజు %1$d న</string>
     <string name="recurrence_on_last_day">నెల చివరి రోజున</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s న</string>
+    <string name="recurrence_which">ఏది</string>
+    <string name="recurrence_weekday">వారపు రోజు</string>
     <string name="ordinal_1st">1వ</string>
     <string name="ordinal_2nd">2వ</string>
     <string name="ordinal_3rd">3వ</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">మరిన్ని మెను, %d ఆహ్వానం పెండింగ్‌లో ఉంది</item>
         <item quantity="other">మరిన్ని మెను, %d ఆహ్వానాలు పెండింగ్‌లో ఉన్నాయి</item>
     </plurals>
+    <string name="menu_privacy_security">గోప్యత &amp; భద్రత</string>
+    <string name="cd_edit_initials">మీ మొదటి అక్షరాలను సవరించండి</string>
+    <string name="hub_initials_hint">మీ మొదటి అక్షరాలను సెట్ చేయడానికి నొక్కండి</string>
+    <string name="hub_initials_field_label">మొదటి అక్షరాలు</string>
+    <string name="hub_initials_save">సేవ్ చేయండి</string>
+    <string name="hub_initials_cancel">రద్దు చేయండి</string>
+    <string name="hub_section_make_it_yours">మీ సొంతం చేసుకోండి</string>
+    <string name="hub_accounts_and_settings">ఖాతాలు మరియు సెట్టింగ్‌లు</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">అందుబాటును షేర్ చేయండి</string>

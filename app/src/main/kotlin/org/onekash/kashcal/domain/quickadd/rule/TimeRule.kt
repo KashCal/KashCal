@@ -12,9 +12,40 @@ object TimeRule : ParseRule {
     override fun apply(tokens: List<Token>, context: ParseContext) {
         if (handleQuarterHalfPattern(tokens, context)) return
 
+        // "at HHMM" compact 24h time (e.g. "at 1500", "at 0930"). A 4-digit run
+        // tokenizes as YEAR or NUMBER, so we only reinterpret it as a clock time
+        // when an "at" lead-in makes the intent unambiguous.
+        if (handleCompactAtTime(tokens, context)) return
+
         // Two-pass: explicit times + precise keywords first, fuzzy keywords second
         if (handleExplicitTime(tokens, context)) return
         handleFuzzyTimeKeyword(tokens, context)
+    }
+
+    private fun handleCompactAtTime(tokens: List<Token>, context: ParseContext): Boolean {
+        for ((index, token) in tokens.withIndex()) {
+            if (context.isConsumed(index)) continue
+            if (token.type != TokenType.YEAR && token.type != TokenType.NUMBER) continue
+            // Require a genuine "at" lead-in (not "this") — a 4-digit run is far more
+            // often a year than a clock time, so only an explicit "at" disambiguates.
+            if (!isPrecededByAtKeyword(tokens, index, context)) continue
+
+            // Read the ORIGINAL 4-char text; NUMBER("0930").value == 930 loses the
+            // leading zero, so parse the digits string directly.
+            val digits = token.text
+            if (digits.length != 4 || !digits.all { it.isDigit() }) continue
+            val hour = digits.substring(0, 2).toIntOrNull() ?: continue
+            val minute = digits.substring(2, 4).toIntOrNull() ?: continue
+            if (hour !in 0..23 || minute !in 0..59) continue
+
+            context.time = LocalTime.of(hour, minute)
+            context.timeSet = true
+            context.consume(index)
+            consumeFollowingTimezone(tokens, index, context)
+            consumePrecedingModifier(tokens, index, context)
+            return true
+        }
+        return false
     }
 
     private fun handleExplicitTime(tokens: List<Token>, context: ParseContext): Boolean {
@@ -221,6 +252,14 @@ object TimeRule : ParseRule {
             return true
         }
         return false
+    }
+
+    /** True only when the immediately preceding unconsumed token is the "at" keyword. */
+    private fun isPrecededByAtKeyword(tokens: List<Token>, currentIndex: Int, context: ParseContext): Boolean {
+        if (currentIndex == 0) return false
+        val prev = tokens[currentIndex - 1]
+        return !context.isConsumed(currentIndex - 1) &&
+            prev.type == TokenType.KEYWORD && prev.value == "AT"
     }
 
     private fun hasPrecedingAt(tokens: List<Token>, currentIndex: Int, context: ParseContext): Boolean {

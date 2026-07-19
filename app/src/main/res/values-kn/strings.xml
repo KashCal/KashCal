@@ -123,6 +123,7 @@
     <string name="view_month">ತಿಂಗಳು</string>
     <string name="label_all_day">ದಿನವಿಡೀ</string>
     <string name="label_today">ಇಂದು</string>
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ದಿನಾಂಕಕ್ಕೆ ಹೋಗಿ</string>
     <string name="label_week">ವ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
@@ -832,6 +833,8 @@
     <string name="cd_event_state_declined">ತಿರಸ್ಕರಿಸಲಾಗಿದೆ</string>
     <string name="cd_event_state_past">ಕಳೆದ ಈವೆಂಟ್</string>
     <string name="cd_loading_events">ಈವೆಂಟ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+    <string name="cd_collapse_week_bar">ವಾರ ಪಟ್ಟಿಯನ್ನು ಮರೆಮಾಡಿ</string>
+    <string name="cd_expand_week_bar">ವಾರ ಪಟ್ಟಿಯನ್ನು ತೋರಿಸಿ</string>
     <string name="cd_event_untitled">ಶೀರ್ಷಿಕೆ ಇಲ್ಲದ ಈವೆಂಟ್</string>
     <string name="cd_open_drawer">ಡ್ರಾಯರ್ ತೆರೆಯಿರಿ</string>
     <string name="cd_close_drawer">ಡ್ರಾಯರ್ ಮುಚ್ಚಿ</string>
@@ -846,6 +849,7 @@
     <string name="label_go_to_month">ತಿಂಗಳಿಗೆ ಹೋಗಿ</string>
     <string name="action_more_options">ಹೆಚ್ಚಿನ ಆಯ್ಕೆಗಳು</string>
     <string name="quick_add_save_failed">ಈವೆಂಟ್ ಉಳಿಸಲು ವಿಫಲವಾಗಿದೆ</string>
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
     <string name="label_duration_days">ದಿನಗಳು</string>
     <string name="label_duration_hrs">ಗಂ.</string>
     <string name="label_duration_min">ನಿ.</string>
@@ -854,6 +858,8 @@
     <string name="recurrence_on_day">ದಿನ %1$d ರಂದು</string>
     <string name="recurrence_on_last_day">ತಿಂಗಳ ಕೊನೆಯ ದಿನದಂದು</string>
     <string name="recurrence_on_nth_weekday">%1$s %2$s ರಂದು</string>
+    <string name="recurrence_which">ಯಾವುದು</string>
+    <string name="recurrence_weekday">ವಾರದ ದಿನ</string>
     <string name="ordinal_1st">1ನೇ</string>
     <string name="ordinal_2nd">2ನೇ</string>
     <string name="ordinal_3rd">3ನೇ</string>
@@ -1134,6 +1140,14 @@
         <item quantity="one">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣ ಬಾಕಿ ಇದೆ</item>
         <item quantity="other">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣಗಳು ಬಾಕಿ ಇವೆ</item>
     </plurals>
+    <string name="menu_privacy_security">ಗೌಪ್ಯತೆ &amp; ಭದ್ರತೆ</string>
+    <string name="cd_edit_initials">ನಿಮ್ಮ ಮೊದಲಕ್ಷರಗಳನ್ನು ಸಂಪಾದಿಸಿ</string>
+    <string name="hub_initials_hint">ನಿಮ್ಮ ಮೊದಲಕ್ಷರಗಳನ್ನು ಹೊಂದಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
+    <string name="hub_initials_field_label">ಮೊದಲಕ್ಷರಗಳು</string>
+    <string name="hub_initials_save">ಉಳಿಸಿ</string>
+    <string name="hub_initials_cancel">ರದ್ದುಮಾಡಿ</string>
+    <string name="hub_section_make_it_yours">ನಿಮ್ಮದಾಗಿಸಿ</string>
+    <string name="hub_accounts_and_settings">ಖಾತೆಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
 
     <!-- ==================== Share Availability ==================== -->
     <string name="share_availability_rail_label">ಲಭ್ಯತೆಯನ್ನು ಹಂಚಿಕೊಳ್ಳಿ</string>
