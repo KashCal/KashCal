@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.attendees
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -465,7 +466,10 @@ private fun AddTypedRow(email: String, onClick: () -> Unit) {
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                // The tonal fill can wash out against the surface for pale accent
+                // seeds; a hairline outline keeps the avatar edge defined on any theme.
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

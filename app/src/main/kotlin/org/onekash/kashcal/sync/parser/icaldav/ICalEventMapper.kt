@@ -114,14 +114,21 @@ object ICalEventMapper {
         // instant rolls back to the previous calendar day, so the wrong day is
         // excluded/added. Promoting it to the master's local time-of-day lands the
         // stored ms on the intended day. Same core helper as RECURRENCE-ID below.
-        val masterDtStart = icalEvent.dtStart
+        // EXDATE/RDATE reference the SAME component's DTSTART for value-type
+        // reconciliation (a master's own DTSTART defines the recurrence set),
+        // so this is deliberately the event's own dtStart — distinct from the
+        // [masterDtStart] parameter, which is a DIFFERENT recurring component's
+        // DTSTART supplied only when [icalEvent] is an exception. Naming this
+        // local `masterDtStart` previously shadowed that parameter and severed
+        // it from the RECURRENCE-ID normalization below.
+        val ownDtStart = icalEvent.dtStart
         val exdate = icalEvent.exdates
-            .map { normalizeToMasterValueType(it, masterDtStart).timestamp.toString() }
+            .map { normalizeToMasterValueType(it, ownDtStart).timestamp.toString() }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(",")
 
         val rdate = icalEvent.rdates
-            .map { normalizeToMasterValueType(it, masterDtStart).timestamp.toString() }
+            .map { normalizeToMasterValueType(it, ownDtStart).timestamp.toString() }
             .takeIf { it.isNotEmpty() }
             ?.joinToString(",")
 

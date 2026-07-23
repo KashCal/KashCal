@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
@@ -22,12 +23,14 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,7 +48,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -56,18 +58,17 @@ import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
-import org.onekash.kashcal.ui.screens.settings.AlertsSheet
-import org.onekash.kashcal.ui.screens.settings.BetaBadge
+import org.onekash.kashcal.ui.screens.settings.AlertPickerSheet
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
-import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
@@ -75,14 +76,16 @@ import org.onekash.kashcal.ui.screens.settings.SearchEmissionTracker
 import org.onekash.kashcal.ui.screens.settings.SearchEmptyState
 import org.onekash.kashcal.ui.screens.settings.SearchableSection
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
+import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
 import org.onekash.kashcal.ui.screens.settings.SettingsToggleRow
+import org.onekash.kashcal.ui.screens.settings.SyncFrequencySheet
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
-import org.onekash.kashcal.util.ExternalLinks
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
-import org.onekash.kashcal.ui.shared.formatDuration
-import org.onekash.kashcal.ui.shared.formatReminderShort
+import org.onekash.kashcal.ui.shared.formatReminderMedium
+import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
+import org.onekash.kashcal.ui.shared.getTimedReminderOptions
 import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.util.DateTimeUtils
 
@@ -303,84 +306,608 @@ fun AccountSettingsScreen(
             if (uiState.isLoading) {
                 LoadingContent()
             } else {
-                FlatSettingsContent(
-                    iCloudState = uiState.iCloudState,
-                    calDavAccounts = uiState.calDavAccounts,
-                    onNavigateToAccounts = onNavigateToAccounts,
-                    calendars = calendars,
-                    calendarGroups = calendarGroups,
-                    onToggleCalendar = onToggleCalendar,
-                    onShowAllCalendars = onShowAllCalendars,
-                    onHideAllCalendars = onHideAllCalendars,
-                    syncIntervalMs = syncIntervalMs,
-                    onSyncIntervalChange = onSyncIntervalChange,
-                    onForceFullSync = onForceFullSync,
-                    syncLookbackDays = syncLookbackDays,
-                    onSyncLookbackChange = onSyncLookbackChange,
-                    defaultCalendar = defaultCalendar,
-                    writableDeviceCalendarGroups = writableDeviceCalendarGroups,
-                    onDefaultCalendarSelect = onDefaultCalendarSelect,
-                    subscriptions = subscriptions,
-                    subscriptionSyncing = subscriptionSyncing,
-                    onAddSubscription = onAddSubscription,
-                    onDeleteSubscription = onDeleteSubscription,
-                    onToggleSubscription = onToggleSubscription,
-                    onRefreshSubscription = onRefreshSubscription,
-                    onUpdateSubscription = onUpdateSubscription,
-                    onSyncAllSubscriptions = onSyncAllSubscriptions,
-                    onShowSyncLogs = onShowSyncLogs,
-                    notificationsEnabled = notificationsEnabled,
-                    onRequestNotificationPermission = onRequestNotificationPermission,
-                    defaultReminderTimed = defaultReminderTimed,
-                    defaultReminderAllDay = defaultReminderAllDay,
-                    defaultEventDuration = defaultEventDuration,
-                    onDefaultReminderTimedChange = onDefaultReminderTimedChange,
-                    onDefaultReminderAllDayChange = onDefaultReminderAllDayChange,
-                    onDefaultEventDurationChange = onDefaultEventDurationChange,
-                    onImportCalendarFile = onImportCalendarFile,
-                    onExportCalendar = onExportCalendar,
-                    onBackupSettings = onBackupSettings,
-                    onRestoreSettings = onRestoreSettings,
-                    appLockEnabled = appLockEnabled,
-                    onToggleAppLock = onToggleAppLock,
-                    onNavigateToSubscriptions = onNavigateToSubscriptions,
-                    onNavigateToBirthdaysAnniversaries = onNavigateToBirthdaysAnniversaries,
-                    onNavigateToDeviceCalendars = onNavigateToDeviceCalendars,
-                    birthdayCount = birthdayCount,
-                    anniversaryCount = anniversaryCount,
-                    deviceCalendarsEnabled = deviceCalendarsEnabled,
-                    hasReadCalendarPermission = hasReadCalendarPermission,
-                    hasWriteCalendarPermission = hasWriteCalendarPermission,
-                    deviceCalendars = deviceCalendars,
-                    enabledDeviceCalendarIds = enabledDeviceCalendarIds,
-                    onToggleDeviceCalendars = onToggleDeviceCalendars,
-                    onToggleDeviceCalendar = onToggleDeviceCalendar,
-                    onRequestWriteCalendarPermission = onRequestWriteCalendarPermission,
-                    showDeclinedEvents = showDeclinedEvents,
-                    onToggleShowDeclinedEvents = onToggleShowDeclinedEvents,
-                    deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
-                    onToggleDeviceCalendarReminders = onToggleDeviceCalendarReminders,
-                    onRefreshDeviceCalendars = onRefreshDeviceCalendars,
-                    showEventEmojis = showEventEmojis,
-                    onShowEventEmojisChange = onShowEventEmojisChange,
-                    quickAddEnabled = quickAddEnabled,
-                    onQuickAddEnabledChange = onQuickAddEnabledChange,
-                    titleSuggestionsEnabled = titleSuggestionsEnabled,
-                    onTitleSuggestionsEnabledChange = onTitleSuggestionsEnabledChange,
-                    timeFormat = timeFormat,
-                    onTimeFormatChange = onTimeFormatChange,
-                    firstDayOfWeek = firstDayOfWeek,
-                    onFirstDayOfWeekChange = onFirstDayOfWeekChange,
-                    showWeekNumbers = showWeekNumbers,
-                    onShowWeekNumbersChange = onShowWeekNumbersChange,
-                    widgetMaxEventsPerDay = widgetMaxEventsPerDay,
-                    onWidgetMaxEventsPerDayChange = onWidgetMaxEventsPerDayChange,
-                    showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
-                    prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
-                    onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
-                    versionName = versionName,
-                    searchQuery = searchQuery
-                )
+                val scrollState = rememberScrollState()
+
+                // Sheet states
+                var showDefaultCalendarSheet by remember { mutableStateOf(false) }
+                var showTimedAlertSheet by remember { mutableStateOf(false) }
+                var showAllDayAlertSheet by remember { mutableStateOf(false) }
+                var showTimeFormatSheet by remember { mutableStateOf(false) }
+                var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
+                var showEventDurationSheet by remember { mutableStateOf(false) }
+                var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
+                var showDebugMenu by remember { mutableStateOf(false) }
+                var showAppInfoSheet by remember { mutableStateOf(false) }
+                var showAddSubscriptionDialog by remember { mutableStateOf(false) }
+                var showSyncLookbackSheet by remember { mutableStateOf(false) }
+                var showSyncFrequencySheet by remember { mutableStateOf(false) }
+
+                val defaultCalendarSheetState = rememberModalBottomSheetState()
+                // Alert sheets can swap to the scrollable wheel picker; skip the half-height
+                // partially-expanded state so the wheel sits in a stable full-height sheet.
+                val timedAlertSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                val allDayAlertSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                val timeFormatSheetState = rememberModalBottomSheetState()
+                val firstDayOfWeekSheetState = rememberModalBottomSheetState()
+                val eventDurationSheetState = rememberModalBottomSheetState()
+                val widgetEventLimitSheetState = rememberModalBottomSheetState()
+                val syncLookbackSheetState = rememberModalBottomSheetState()
+                val syncFrequencySheetState = rememberModalBottomSheetState()
+                val debugSheetState = rememberModalBottomSheetState()
+
+                // Derived values
+                val isConnected = uiState.iCloudState is ICloudConnectionState.Connected
+                val context = LocalContext.current
+                val resources = LocalResources.current
+
+                val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
+
+                // Memoized: resolve default calendar name (supports both Room and Device)
+                val defaultCalendarName = remember(calendars, deviceCalendars, defaultCalendar) {
+                    when (defaultCalendar) {
+                        is DefaultCalendar.Room ->
+                            calendars.find { it.id == defaultCalendar.calendarId }?.localizedDisplayName(resources)
+                        is DefaultCalendar.Device ->
+                            deviceCalendars.find { it.id == defaultCalendar.calendarId }?.displayName
+                        null -> null
+                    }
+                }
+
+                // Memoized: find local calendar for export
+                val localCalendar = remember(calendars) {
+                    calendars.find { it.caldavUrl == org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.LOCAL_CALENDAR_URL }
+                }
+
+                // Add Subscription Dialog - show if local trigger OR intent trigger
+                if (showAddSubscriptionDialog || uiState.showAddSubscriptionDialog) {
+                    AddSubscriptionDialog(
+                        initialUrl = uiState.prefillSubscriptionUrl,
+                        onDismiss = {
+                            showAddSubscriptionDialog = false
+                            onHideAddSubscriptionDialog()
+                        },
+                        onAdd = { url, name, color ->
+                            onAddSubscription(url, name, color)
+                            showAddSubscriptionDialog = false
+                            onHideAddSubscriptionDialog()
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                ) {
+                    // Track whether any SearchableSection emitted UI; if every section
+                    // collapses, render the empty-state composable. Driven by each
+                    // section's onEmitted callback so the value is correct regardless
+                    // of compose ordering — no imperative-var fragility.
+                    val emittedTracker = remember { SearchEmissionTracker() }
+                    emittedTracker.reset()
+
+                    // ==================== CALENDARS Section ====================
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_calendars),
+                        tracker = emittedTracker,
+                    ) {
+                        val accountCount = (if (isConnected) 1 else 0) + uiState.calDavAccounts.size
+                        val accountsSubtitle = if (accountCount == 0) stringResource(R.string.accounts_row_hint)
+                            else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount)
+                        row(label = stringResource(R.string.accounts_row_label), subtitle = accountsSubtitle, id = "accounts") {
+                            SettingsRow(
+                                icon = Icons.Default.Person,
+                                label = stringResource(R.string.accounts_row_label),
+                                subtitle = accountsSubtitle,
+                                onClick = onNavigateToAccounts,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val baSubtitle = buildList {
+                            if (birthdayCount > 0) add(pluralStringResource(R.plurals.birthday_count, birthdayCount, birthdayCount))
+                            if (anniversaryCount > 0) add(pluralStringResource(R.plurals.anniversary_count, anniversaryCount, anniversaryCount))
+                        }.joinToString(", ").ifEmpty { stringResource(R.string.birthdays_anniversaries_row_hint) }
+                        row(label = stringResource(R.string.birthdays_anniversaries_row_label), subtitle = baSubtitle, id = "birthdays") {
+                            SettingsRow(
+                                icon = Icons.Default.Cake,
+                                label = stringResource(R.string.birthdays_anniversaries_row_label),
+                                subtitle = baSubtitle,
+                                onClick = onNavigateToBirthdaysAnniversaries,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val subscriptionCount = subscriptions.size
+                        val subscriptionsSubtitle = if (subscriptionCount == 0) stringResource(R.string.subscriptions_row_hint)
+                            else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount)
+                        row(label = stringResource(R.string.subscriptions_row_label), subtitle = subscriptionsSubtitle, id = "subscriptions") {
+                            SettingsRow(
+                                icon = Icons.Default.Link,
+                                label = stringResource(R.string.subscriptions_row_label),
+                                subtitle = subscriptionsSubtitle,
+                                onClick = onNavigateToSubscriptions,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val deviceCalendarsSubtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else stringResource(R.string.settings_device_calendars_hint)
+                        row(label = stringResource(R.string.settings_device_calendars), subtitle = deviceCalendarsSubtitle, id = "device-calendars") {
+                            SettingsRow(
+                                icon = Icons.Default.CalendarMonth,
+                                label = stringResource(R.string.settings_device_calendars),
+                                subtitle = deviceCalendarsSubtitle,
+                                onClick = onNavigateToDeviceCalendars,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // ==================== APPEARANCE Section ====================
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_appearance),
+                        tracker = emittedTracker,
+                    ) {
+                        // Tap-to-open picker rows first, then the inline toggles (a group's
+                        // switches read cleanest clustered at the end).
+                        val timeFormatSubtitle = when (timeFormat) {
+                            KashCalDataStore.TIME_FORMAT_12H -> stringResource(R.string.option_12_hour)
+                            KashCalDataStore.TIME_FORMAT_24H -> stringResource(R.string.option_24_hour)
+                            else -> stringResource(R.string.option_system_default)
+                        }
+                        row(label = stringResource(R.string.settings_time_format), subtitle = timeFormatSubtitle, id = "time-format") {
+                            SettingsRow(
+                                icon = Icons.Filled.Tune,
+                                label = stringResource(R.string.settings_time_format),
+                                value = timeFormatSubtitle,
+                                onClick = { showTimeFormatSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val firstDaySubtitle = when (firstDayOfWeek) {
+                            java.util.Calendar.SUNDAY -> stringResource(R.string.option_sunday)
+                            java.util.Calendar.MONDAY -> stringResource(R.string.option_monday)
+                            java.util.Calendar.SATURDAY -> stringResource(R.string.option_saturday)
+                            else -> stringResource(R.string.option_system_default)
+                        }
+                        row(label = stringResource(R.string.settings_start_week_on), subtitle = firstDaySubtitle, id = "first-day") {
+                            SettingsRow(
+                                icon = Icons.Default.ViewWeek,
+                                label = stringResource(R.string.settings_start_week_on),
+                                value = firstDaySubtitle,
+                                onClick = { showFirstDayOfWeekSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val widgetLimitValue = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay)
+                        row(label = stringResource(R.string.settings_widget_event_limit), subtitle = widgetLimitValue, id = "widget-limit") {
+                            SettingsRow(
+                                icon = Icons.Default.Widgets,
+                                label = stringResource(R.string.settings_widget_event_limit),
+                                value = widgetLimitValue,
+                                onClick = { showWidgetEventLimitSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        row(label = stringResource(R.string.settings_week_numbers), id = "week-numbers") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.DateRange,
+                                label = stringResource(R.string.settings_week_numbers),
+                                checked = showWeekNumbers,
+                                onCheckedChange = onShowWeekNumbersChange,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        row(label = stringResource(R.string.settings_show_declined), id = "show-declined") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.EventBusy,
+                                label = stringResource(R.string.settings_show_declined),
+                                checked = showDeclinedEvents,
+                                onCheckedChange = onToggleShowDeclinedEvents,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val emojisInfo = SettingsRowInfo(
+                            title = stringResource(R.string.settings_event_emojis),
+                            text = stringResource(R.string.settings_event_emojis_info)
+                        )
+                        row(label = stringResource(R.string.settings_event_emojis), id = "emojis") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.SentimentSatisfied,
+                                label = stringResource(R.string.settings_event_emojis),
+                                checked = showEventEmojis,
+                                onCheckedChange = onShowEventEmojisChange,
+                                info = emojisInfo,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // ==================== EVENT PREFERENCES Section ====================
+                    // Default calendar and Default alerts require a calendar to target;
+                    // Default length doesn't.
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_creating_events),
+                        tracker = emittedTracker,
+                    ) {
+                        if (calendars.isNotEmpty()) {
+                            val defaultCalendarValue = defaultCalendarName ?: stringResource(R.string.settings_not_set)
+                            row(label = stringResource(R.string.settings_default_calendar), subtitle = defaultCalendarValue, id = "default-calendar") {
+                                SettingsRow(
+                                    icon = Icons.Default.Star,
+                                    label = stringResource(R.string.settings_default_calendar),
+                                    value = defaultCalendarValue,
+                                    onClick = { showDefaultCalendarSheet = true },
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
+                        }
+
+                        val durationValue = formatReminderMedium(defaultEventDuration, isAllDay = false, resources = resources)
+                        row(label = stringResource(R.string.settings_default_event_length), subtitle = durationValue, id = "default-length") {
+                            SettingsRow(
+                                icon = Icons.Default.Schedule,
+                                label = stringResource(R.string.settings_default_event_length),
+                                value = durationValue,
+                                onClick = { showEventDurationSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        if (calendars.isNotEmpty()) {
+                            val timedAlertValue = formatReminderMedium(defaultReminderTimed, isAllDay = false, resources = resources)
+                            row(label = stringResource(R.string.settings_timed_event_alert), subtitle = timedAlertValue, id = "timed-alert") {
+                                SettingsRow(
+                                    icon = Icons.Default.Notifications,
+                                    label = stringResource(R.string.settings_timed_event_alert),
+                                    value = timedAlertValue,
+                                    onClick = { showTimedAlertSheet = true },
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
+
+                            val allDayAlertValue = formatReminderMedium(defaultReminderAllDay, isAllDay = true, resources = resources)
+                            row(label = stringResource(R.string.settings_all_day_event_alert), subtitle = allDayAlertValue, id = "all-day-alert") {
+                                SettingsRow(
+                                    icon = Icons.Default.Notifications,
+                                    label = stringResource(R.string.settings_all_day_event_alert),
+                                    value = allDayAlertValue,
+                                    onClick = { showAllDayAlertSheet = true },
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
+                        }
+
+                        val quickAddInfo = SettingsRowInfo(
+                            title = stringResource(R.string.settings_quick_event_add),
+                            text = stringResource(R.string.settings_quick_event_add_info)
+                        )
+                        row(label = stringResource(R.string.settings_quick_event_add), id = "quick-add") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.Edit,
+                                label = stringResource(R.string.settings_quick_event_add),
+                                checked = quickAddEnabled,
+                                onCheckedChange = onQuickAddEnabledChange,
+                                info = quickAddInfo,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val suggestTitlesInfo = SettingsRowInfo(
+                            title = stringResource(R.string.settings_suggest_titles),
+                            text = stringResource(R.string.settings_suggest_titles_info)
+                        )
+                        row(label = stringResource(R.string.settings_suggest_titles), id = "suggest-titles") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.History,
+                                label = stringResource(R.string.settings_suggest_titles),
+                                checked = titleSuggestionsEnabled,
+                                onCheckedChange = onTitleSuggestionsEnabledChange,
+                                info = suggestTitlesInfo,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // ==================== NOTIFICATIONS & SYNC Section ====================
+                    // The former standalone Notifications row now leads this section so the
+                    // header describes both the notification and sync controls beneath it.
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_sync),
+                        tracker = emittedTracker,
+                    ) {
+                        val notifValue = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable)
+                        row(label = stringResource(R.string.settings_notifications), subtitle = notifValue, id = "notifications") {
+                            SettingsRow(
+                                icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                                label = stringResource(R.string.settings_notifications),
+                                value = notifValue,
+                                onClick = onRequestNotificationPermission,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val syncFrequencyValue = DateTimeUtils.formatSyncInterval(syncIntervalMs, resources)
+                        row(label = stringResource(R.string.settings_sync_frequency), subtitle = syncFrequencyValue, id = "sync-frequency") {
+                            SettingsRow(
+                                icon = Icons.Default.Refresh,
+                                label = stringResource(R.string.settings_sync_frequency),
+                                value = syncFrequencyValue,
+                                onClick = { showSyncFrequencySheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val syncLookbackValue = formatSyncLookback(syncLookbackDays, resources)
+                        row(label = stringResource(R.string.settings_sync_lookback), subtitle = syncLookbackValue, id = "sync-lookback") {
+                            SettingsRow(
+                                icon = Icons.Default.History,
+                                label = stringResource(R.string.settings_sync_lookback),
+                                value = syncLookbackValue,
+                                onClick = { showSyncLookbackSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // ==================== Backup & Restore Section ====================
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_data),
+                        tracker = emittedTracker,
+                    ) {
+                        localCalendar?.let { local ->
+                            row(label = stringResource(R.string.action_export_local_calendar), subtitle = stringResource(R.string.settings_export_subtitle), id = "export") {
+                                SettingsRow(
+                                    icon = Icons.Default.FileUpload,
+                                    label = stringResource(R.string.action_export_local_calendar),
+                                    subtitle = stringResource(R.string.settings_export_subtitle),
+                                    onClick = { onExportCalendar(local.id) },
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
+                        }
+                        row(label = stringResource(R.string.backup_settings_label), subtitle = stringResource(R.string.backup_settings_subtitle), id = "backup") {
+                            SettingsRow(
+                                icon = Icons.Default.Backup,
+                                label = stringResource(R.string.backup_settings_label),
+                                subtitle = stringResource(R.string.backup_settings_subtitle),
+                                onClick = onBackupSettings,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                        row(label = stringResource(R.string.action_import_from_file), subtitle = stringResource(R.string.settings_import_subtitle), id = "import") {
+                            SettingsRow(
+                                icon = Icons.Default.FileDownload,
+                                label = stringResource(R.string.action_import_from_file),
+                                subtitle = stringResource(R.string.settings_import_subtitle),
+                                onClick = onImportCalendarFile,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                        row(label = stringResource(R.string.restore_settings_label), subtitle = stringResource(R.string.restore_settings_subtitle), id = "restore") {
+                            SettingsRow(
+                                icon = Icons.Default.Restore,
+                                label = stringResource(R.string.restore_settings_label),
+                                subtitle = stringResource(R.string.restore_settings_subtitle),
+                                onClick = onRestoreSettings,
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // ==================== Privacy Section ====================
+                    SearchableSection(
+                        query = searchQuery,
+                        header = stringResource(R.string.settings_section_privacy),
+                        tracker = emittedTracker,
+                    ) {
+                        // The ⓘ explains what the toggle does; toggling on routes through the
+                        // host (capability / enrollment check) before the flag is actually set.
+                        val appLockInfo = SettingsRowInfo(
+                            title = stringResource(R.string.app_lock_label),
+                            text = stringResource(R.string.settings_app_lock_info)
+                        )
+                        row(label = stringResource(R.string.app_lock_label), id = "app-lock") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.Lock,
+                                label = stringResource(R.string.app_lock_label),
+                                checked = appLockEnabled,
+                                onCheckedChange = onToggleAppLock,
+                                info = appLockInfo,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+                    }
+
+                    // Empty-state when search is active and no section matched.
+                    if (searchQuery.isNotBlank() && !emittedTracker.anyEmitted) {
+                        SearchEmptyState(query = searchQuery)
+                    }
+
+                    // ==================== Version Footer ====================
+                    // Only render when not actively searching.
+                    if (versionName.isNotEmpty() && searchQuery.isBlank()) {
+                        VersionFooter(
+                            versionName = versionName,
+                            onClick = { showAppInfoSheet = true },
+                            onLongPress = { showDebugMenu = true }
+                        )
+                    }
+                }
+
+                // ==================== Bottom Sheets ====================
+
+                // Default Calendar Sheet (exclude read-only calendars like ICS subscriptions)
+                if (showDefaultCalendarSheet) {
+                    // Filter out read-only calendars from groups
+                    val writableGroups = remember(calendarGroups) {
+                        calendarGroups.mapNotNull { group: CalendarGroup ->
+                            val writableCals = group.calendars.filter { cal -> !cal.isReadOnly }
+                            if (writableCals.isNotEmpty()) {
+                                group.copy(calendars = writableCals)
+                            } else null
+                        }
+                    }
+                    DefaultCalendarSheet(
+                        sheetState = defaultCalendarSheetState,
+                        calendarGroups = writableGroups,
+                        deviceCalendarGroups = writableDeviceCalendarGroups,
+                        currentDefault = defaultCalendar,
+                        onSelectDefault = onDefaultCalendarSelect,
+                        onDismiss = { showDefaultCalendarSheet = false }
+                    )
+                }
+
+                // Timed event alert sheet (presets + Custom… wheel)
+                if (showTimedAlertSheet) {
+                    AlertPickerSheet(
+                        sheetState = timedAlertSheetState,
+                        title = stringResource(R.string.settings_timed_event_alert),
+                        options = getTimedReminderOptions(resources),
+                        currentValue = defaultReminderTimed,
+                        isAllDay = false,
+                        use24Hour = use24Hour,
+                        onSelect = onDefaultReminderTimedChange,
+                        onDismiss = { showTimedAlertSheet = false }
+                    )
+                }
+
+                // All-day event alert sheet (presets + Custom… wheel)
+                if (showAllDayAlertSheet) {
+                    AlertPickerSheet(
+                        sheetState = allDayAlertSheetState,
+                        title = stringResource(R.string.settings_all_day_event_alert),
+                        options = getAllDayReminderOptions(resources),
+                        currentValue = defaultReminderAllDay,
+                        isAllDay = true,
+                        use24Hour = use24Hour,
+                        onSelect = onDefaultReminderAllDayChange,
+                        onDismiss = { showAllDayAlertSheet = false }
+                    )
+                }
+
+                // Time Format Sheet
+                if (showTimeFormatSheet) {
+                    TimeFormatSheet(
+                        sheetState = timeFormatSheetState,
+                        currentFormat = timeFormat,
+                        onFormatSelect = onTimeFormatChange,
+                        onDismiss = { showTimeFormatSheet = false }
+                    )
+                }
+
+                // First Day of Week Sheet
+                if (showFirstDayOfWeekSheet) {
+                    FirstDayOfWeekSheet(
+                        sheetState = firstDayOfWeekSheetState,
+                        currentValue = firstDayOfWeek,
+                        onSelect = onFirstDayOfWeekChange,
+                        onDismiss = { showFirstDayOfWeekSheet = false }
+                    )
+                }
+
+                // Event Duration Sheet
+                if (showEventDurationSheet) {
+                    EventDurationSheet(
+                        sheetState = eventDurationSheetState,
+                        defaultEventDuration = defaultEventDuration,
+                        onEventDurationChange = onDefaultEventDurationChange,
+                        onDismiss = { showEventDurationSheet = false }
+                    )
+                }
+
+                // Widget Event Limit Sheet
+                if (showWidgetEventLimitSheet) {
+                    WidgetEventLimitSheet(
+                        sheetState = widgetEventLimitSheetState,
+                        currentLimit = widgetMaxEventsPerDay,
+                        onLimitChange = onWidgetMaxEventsPerDayChange,
+                        onDismiss = { showWidgetEventLimitSheet = false }
+                    )
+                }
+
+                // Sync Frequency Sheet
+                if (showSyncFrequencySheet) {
+                    SyncFrequencySheet(
+                        sheetState = syncFrequencySheetState,
+                        currentIntervalMs = syncIntervalMs,
+                        onSelect = onSyncIntervalChange,
+                        onDismiss = { showSyncFrequencySheet = false }
+                    )
+                }
+
+                // Sync Lookback Sheet
+                if (showSyncLookbackSheet) {
+                    SyncLookbackSheet(
+                        sheetState = syncLookbackSheetState,
+                        currentDays = syncLookbackDays,
+                        onSelect = onSyncLookbackChange,
+                        onDismiss = { showSyncLookbackSheet = false }
+                    )
+                }
+
+                // App Info Sheet (tap on version footer)
+                if (showAppInfoSheet) {
+                    AppInfoSheet(onDismiss = { showAppInfoSheet = false })
+                }
+
+                // Debug Menu Sheet
+                if (showDebugMenu) {
+                    DebugMenuSheet(
+                        sheetState = debugSheetState,
+                        onForceFullSync = onForceFullSync,
+                        onShowSyncLogs = onShowSyncLogs,
+                        onDismiss = { showDebugMenu = false }
+                    )
+                }
             }
         }
 
@@ -425,646 +952,5 @@ private fun LoadingContent() {
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
-    }
-}
-
-/**
- * Flat settings content - single column of tappable rows.
- *
- * Layout:
- * - iCloud row (connection status)
- * - Subscriptions row (badge count, navigates to detail screen)
- * - Add Calendar row (opens bottom sheet)
- * - Visible Calendars row (opens bottom sheet)
- * - Default Calendar row (opens bottom sheet)
- * - Default Alerts row (opens bottom sheet)
- * - Notifications row (status indicator)
- * - Version footer (long-press for debug)
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FlatSettingsContent(
-    iCloudState: ICloudConnectionState,
-    calDavAccounts: List<CalDavAccountUiModel>,
-    onNavigateToAccounts: () -> Unit,
-    calendars: List<Calendar>,
-    calendarGroups: List<CalendarGroup>,
-    onToggleCalendar: (Long, Boolean) -> Unit,
-    onShowAllCalendars: () -> Unit,
-    onHideAllCalendars: () -> Unit,
-    syncIntervalMs: Long,
-    onSyncIntervalChange: (Long) -> Unit,
-    onForceFullSync: () -> Unit,
-    syncLookbackDays: Int,
-    onSyncLookbackChange: (Int) -> Unit,
-    defaultCalendar: DefaultCalendar?,
-    writableDeviceCalendarGroups: List<CalendarGroup>,
-    onDefaultCalendarSelect: (DefaultCalendar) -> Unit,
-    subscriptions: List<IcsSubscriptionUiModel>,
-    subscriptionSyncing: Boolean,
-    onAddSubscription: (String, String, Int) -> Unit,
-    onDeleteSubscription: (Long) -> Unit,
-    onToggleSubscription: (Long, Boolean) -> Unit,
-    onRefreshSubscription: (Long) -> Unit,
-    onUpdateSubscription: (Long, String, Int, Int) -> Unit,
-    onSyncAllSubscriptions: () -> Unit,
-    onShowSyncLogs: () -> Unit,
-    notificationsEnabled: Boolean,
-    onRequestNotificationPermission: () -> Unit,
-    defaultReminderTimed: Int,
-    defaultReminderAllDay: Int,
-    defaultEventDuration: Int,
-    onDefaultReminderTimedChange: (Int) -> Unit,
-    onDefaultReminderAllDayChange: (Int) -> Unit,
-    onDefaultEventDurationChange: (Int) -> Unit,
-    onImportCalendarFile: () -> Unit,
-    onExportCalendar: (Long) -> Unit,
-    onBackupSettings: () -> Unit,
-    onRestoreSettings: () -> Unit,
-    appLockEnabled: Boolean,
-    onToggleAppLock: (Boolean) -> Unit,
-    onNavigateToSubscriptions: () -> Unit,
-    onNavigateToBirthdaysAnniversaries: () -> Unit,
-    onNavigateToDeviceCalendars: () -> Unit,
-    birthdayCount: Int,
-    anniversaryCount: Int,
-    deviceCalendarsEnabled: Boolean,
-    hasReadCalendarPermission: Boolean,
-    hasWriteCalendarPermission: Boolean,
-    deviceCalendars: List<DeviceCalendar>,
-    enabledDeviceCalendarIds: Set<Long>,
-    onToggleDeviceCalendars: (Boolean) -> Unit,
-    onToggleDeviceCalendar: (Long, Boolean) -> Unit,
-    onRequestWriteCalendarPermission: () -> Unit,
-    showDeclinedEvents: Boolean,
-    onToggleShowDeclinedEvents: (Boolean) -> Unit,
-    deviceCalendarRemindersEnabled: Boolean,
-    onToggleDeviceCalendarReminders: (Boolean) -> Unit,
-    onRefreshDeviceCalendars: () -> Unit,
-    showEventEmojis: Boolean,
-    onShowEventEmojisChange: (Boolean) -> Unit,
-    quickAddEnabled: Boolean,
-    onQuickAddEnabledChange: (Boolean) -> Unit,
-    titleSuggestionsEnabled: Boolean,
-    onTitleSuggestionsEnabledChange: (Boolean) -> Unit,
-    timeFormat: String,
-    onTimeFormatChange: (String) -> Unit,
-    firstDayOfWeek: Int,
-    onFirstDayOfWeekChange: (Int) -> Unit,
-    showWeekNumbers: Boolean,
-    onShowWeekNumbersChange: (Boolean) -> Unit,
-    widgetMaxEventsPerDay: Int,
-    onWidgetMaxEventsPerDayChange: (Int) -> Unit,
-    showAddSubscriptionDialogFromIntent: Boolean,
-    prefillSubscriptionUrl: String?,
-    onHideAddSubscriptionDialog: () -> Unit,
-    versionName: String,
-    searchQuery: String = "",
-) {
-    val scrollState = rememberScrollState()
-
-    // Sheet states
-    var showDefaultCalendarSheet by remember { mutableStateOf(false) }
-    var showAlertsSheet by remember { mutableStateOf(false) }
-    var showEventEmojisSheet by remember { mutableStateOf(false) }
-    var showTimeFormatSheet by remember { mutableStateOf(false) }
-    var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
-    var showEventDurationSheet by remember { mutableStateOf(false) }
-    var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
-    var showDebugMenu by remember { mutableStateOf(false) }
-    var showAppInfoSheet by remember { mutableStateOf(false) }
-    var showAddSubscriptionDialog by remember { mutableStateOf(false) }
-    var showSyncLookbackSheet by remember { mutableStateOf(false) }
-
-    val defaultCalendarSheetState = rememberModalBottomSheetState()
-    val alertsSheetState = rememberModalBottomSheetState()
-    val eventEmojisSheetState = rememberModalBottomSheetState()
-    val timeFormatSheetState = rememberModalBottomSheetState()
-    val firstDayOfWeekSheetState = rememberModalBottomSheetState()
-    val eventDurationSheetState = rememberModalBottomSheetState()
-    val widgetEventLimitSheetState = rememberModalBottomSheetState()
-    val syncLookbackSheetState = rememberModalBottomSheetState()
-    val debugSheetState = rememberModalBottomSheetState()
-
-    // Derived values
-    val isConnected = iCloudState is ICloudConnectionState.Connected
-    val context = LocalContext.current
-    val resources = LocalResources.current
-
-    val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
-
-    // Memoized: resolve default calendar name (supports both Room and Device)
-    val defaultCalendarName = remember(calendars, deviceCalendars, defaultCalendar) {
-        when (defaultCalendar) {
-            is DefaultCalendar.Room ->
-                calendars.find { it.id == defaultCalendar.calendarId }?.displayName
-            is DefaultCalendar.Device ->
-                deviceCalendars.find { it.id == defaultCalendar.calendarId }?.displayName
-            null -> null
-        }
-    }
-
-    // Memoized: find local calendar for export
-    val localCalendar = remember(calendars) {
-        calendars.find { it.caldavUrl == org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.LOCAL_CALENDAR_URL }
-    }
-
-    // Add Subscription Dialog - show if local trigger OR intent trigger
-    if (showAddSubscriptionDialog || showAddSubscriptionDialogFromIntent) {
-        AddSubscriptionDialog(
-            initialUrl = prefillSubscriptionUrl,
-            onDismiss = {
-                showAddSubscriptionDialog = false
-                onHideAddSubscriptionDialog()
-            },
-            onAdd = { url, name, color ->
-                onAddSubscription(url, name, color)
-                showAddSubscriptionDialog = false
-                onHideAddSubscriptionDialog()
-            }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-    ) {
-        // Track whether any SearchableSection emitted UI; if every section
-        // collapses, render the empty-state composable. Driven by each
-        // section's onEmitted callback so the value is correct regardless
-        // of compose ordering — no imperative-var fragility.
-        val emittedTracker = remember { SearchEmissionTracker() }
-        emittedTracker.reset()
-
-        // ==================== CALENDARS Section ====================
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_calendars),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            val accountCount = (if (isConnected) 1 else 0) + calDavAccounts.size
-            val accountsSubtitle = if (accountCount == 0) stringResource(R.string.accounts_row_hint)
-                else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount)
-            row(label = stringResource(R.string.accounts_row_label), subtitle = accountsSubtitle, id = "accounts") {
-                SettingsRow(
-                    icon = Icons.Default.Person,
-                    label = stringResource(R.string.accounts_row_label),
-                    subtitle = accountsSubtitle,
-                    onClick = onNavigateToAccounts,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val baSubtitle = buildList {
-                if (birthdayCount > 0) add(pluralStringResource(R.plurals.birthday_count, birthdayCount, birthdayCount))
-                if (anniversaryCount > 0) add(pluralStringResource(R.plurals.anniversary_count, anniversaryCount, anniversaryCount))
-            }.joinToString(", ").ifEmpty { stringResource(R.string.birthdays_anniversaries_row_hint) }
-            row(label = stringResource(R.string.birthdays_anniversaries_row_label), subtitle = baSubtitle, id = "birthdays") {
-                SettingsRow(
-                    icon = Icons.Default.Cake,
-                    label = stringResource(R.string.birthdays_anniversaries_row_label),
-                    subtitle = baSubtitle,
-                    onClick = onNavigateToBirthdaysAnniversaries,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val subscriptionCount = subscriptions.size
-            val subscriptionsSubtitle = if (subscriptionCount == 0) stringResource(R.string.subscriptions_row_hint)
-                else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount)
-            row(label = stringResource(R.string.subscriptions_row_label), subtitle = subscriptionsSubtitle, id = "subscriptions") {
-                SettingsRow(
-                    icon = Icons.Default.Link,
-                    label = stringResource(R.string.subscriptions_row_label),
-                    subtitle = subscriptionsSubtitle,
-                    onClick = onNavigateToSubscriptions,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val deviceCalendarsSubtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else stringResource(R.string.settings_device_calendars_hint)
-            row(label = stringResource(R.string.settings_device_calendars), subtitle = deviceCalendarsSubtitle, id = "device-calendars") {
-                SettingsRow(
-                    icon = Icons.Default.CalendarMonth,
-                    label = stringResource(R.string.settings_device_calendars),
-                    subtitle = deviceCalendarsSubtitle,
-                    onClick = onNavigateToDeviceCalendars,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== APPEARANCE Section ====================
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_appearance),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            val emojisSubtitle = if (showEventEmojis) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
-            row(label = stringResource(R.string.settings_event_emojis), subtitle = emojisSubtitle, id = "emojis") {
-                SettingsRow(
-                    icon = Icons.Default.SentimentSatisfied,
-                    label = stringResource(R.string.settings_event_emojis),
-                    subtitle = emojisSubtitle,
-                    onClick = { showEventEmojisSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val timeFormatSubtitle = when (timeFormat) {
-                KashCalDataStore.TIME_FORMAT_12H -> stringResource(R.string.option_12_hour)
-                KashCalDataStore.TIME_FORMAT_24H -> stringResource(R.string.option_24_hour)
-                else -> stringResource(R.string.option_system_default)
-            }
-            row(label = stringResource(R.string.settings_time_format), subtitle = timeFormatSubtitle, id = "time-format") {
-                SettingsRow(
-                    icon = Icons.Filled.Tune,
-                    label = stringResource(R.string.settings_time_format),
-                    subtitle = timeFormatSubtitle,
-                    onClick = { showTimeFormatSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val firstDaySubtitle = when (firstDayOfWeek) {
-                java.util.Calendar.SUNDAY -> stringResource(R.string.option_sunday)
-                java.util.Calendar.MONDAY -> stringResource(R.string.option_monday)
-                java.util.Calendar.SATURDAY -> stringResource(R.string.option_saturday)
-                else -> stringResource(R.string.option_system_default)
-            }
-            row(label = stringResource(R.string.settings_start_week_on), subtitle = firstDaySubtitle, id = "first-day") {
-                SettingsRow(
-                    icon = Icons.Default.ViewWeek,
-                    label = stringResource(R.string.settings_start_week_on),
-                    subtitle = firstDaySubtitle,
-                    onClick = { showFirstDayOfWeekSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val weekNumbersSubtitle = if (showWeekNumbers) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
-            row(label = stringResource(R.string.settings_week_numbers), subtitle = weekNumbersSubtitle, id = "week-numbers") {
-                SettingsRow(
-                    icon = Icons.Default.DateRange,
-                    label = stringResource(R.string.settings_week_numbers),
-                    subtitle = weekNumbersSubtitle,
-                    onClick = { onShowWeekNumbersChange(!showWeekNumbers) },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val showDeclinedSubtitle = if (showDeclinedEvents) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
-            row(label = stringResource(R.string.settings_show_declined), subtitle = showDeclinedSubtitle, id = "show-declined") {
-                SettingsRow(
-                    icon = Icons.Default.EventBusy,
-                    label = stringResource(R.string.settings_show_declined),
-                    subtitle = showDeclinedSubtitle,
-                    onClick = { onToggleShowDeclinedEvents(!showDeclinedEvents) },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val widgetLimitSubtitle = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay)
-            row(label = stringResource(R.string.settings_widget_event_limit), subtitle = widgetLimitSubtitle, id = "widget-limit") {
-                SettingsRow(
-                    icon = Icons.Default.CalendarMonth,
-                    label = stringResource(R.string.settings_widget_event_limit),
-                    subtitle = widgetLimitSubtitle,
-                    onClick = { showWidgetEventLimitSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== CREATING EVENTS Section ====================
-        // Default Calendar and Default Alerts require a calendar to target;
-        // Default length doesn't.
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_creating_events),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            if (calendars.isNotEmpty()) {
-                val defaultCalendarSubtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set)
-                row(label = stringResource(R.string.settings_default_calendar), subtitle = defaultCalendarSubtitle, id = "default-calendar") {
-                    SettingsRow(
-                        icon = Icons.Default.Star,
-                        label = stringResource(R.string.settings_default_calendar),
-                        subtitle = defaultCalendarSubtitle,
-                        onClick = { showDefaultCalendarSheet = true },
-                        showDivider = false,
-                        searchQuery = searchQuery
-                    )
-                }
-            }
-
-            val durationSubtitle = formatDuration(defaultEventDuration, resources)
-            row(label = stringResource(R.string.settings_default_event_length), subtitle = durationSubtitle, id = "default-length") {
-                SettingsRow(
-                    icon = Icons.Default.Schedule,
-                    label = stringResource(R.string.settings_default_event_length),
-                    subtitle = durationSubtitle,
-                    onClick = { showEventDurationSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            if (calendars.isNotEmpty()) {
-                val alertsSubtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources = resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, isAllDay = true, resources = resources)}"
-                row(label = stringResource(R.string.settings_default_alerts), subtitle = alertsSubtitle, id = "default-alerts") {
-                    SettingsRow(
-                        icon = Icons.Default.Notifications,
-                        label = stringResource(R.string.settings_default_alerts),
-                        subtitle = alertsSubtitle,
-                        onClick = { showAlertsSheet = true },
-                        showDivider = false,
-                        searchQuery = searchQuery
-                    )
-                }
-            }
-
-            val quickAddSubtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
-            row(label = stringResource(R.string.settings_quick_event_add), subtitle = quickAddSubtitle, id = "quick-add") {
-                SettingsRow(
-                    icon = Icons.Default.Edit,
-                    label = stringResource(R.string.settings_quick_event_add),
-                    subtitle = quickAddSubtitle,
-                    onClick = { onQuickAddEnabledChange(!quickAddEnabled) },
-                    badge = { BetaBadge() },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-
-            val suggestTitlesSubtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off)
-            row(label = stringResource(R.string.settings_suggest_titles), subtitle = suggestTitlesSubtitle, id = "suggest-titles") {
-                SettingsRow(
-                    icon = Icons.Default.History,
-                    label = stringResource(R.string.settings_suggest_titles),
-                    subtitle = suggestTitlesSubtitle,
-                    onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== NOTIFICATIONS (standalone, no header) ====================
-        // Top padding mirrors the gap other sections inherit from SectionHeader so
-        // this headerless section doesn't sit flush against the row above.
-        SearchableSection(
-            query = searchQuery,
-            modifier = Modifier.padding(top = 24.dp),
-            header = null,
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            val notifSubtitle = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable)
-            row(label = stringResource(R.string.settings_notifications), subtitle = notifSubtitle, id = "notifications") {
-                SettingsRow(
-                    icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                    label = stringResource(R.string.settings_notifications),
-                    subtitle = notifSubtitle,
-                    onClick = onRequestNotificationPermission,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== SYNC Section ====================
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_sync),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            val syncLookbackSubtitle = formatSyncLookback(syncLookbackDays, resources)
-            row(label = stringResource(R.string.settings_sync_lookback), subtitle = syncLookbackSubtitle, id = "sync-lookback") {
-                SettingsRow(
-                    icon = Icons.Default.Refresh,
-                    label = stringResource(R.string.settings_sync_lookback),
-                    subtitle = syncLookbackSubtitle,
-                    onClick = { showSyncLookbackSheet = true },
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== Backup & Restore Section ====================
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_data),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            localCalendar?.let { local ->
-                row(label = stringResource(R.string.action_export_local_calendar), subtitle = stringResource(R.string.settings_export_subtitle), id = "export") {
-                    SettingsRow(
-                        icon = Icons.Default.FileUpload,
-                        label = stringResource(R.string.action_export_local_calendar),
-                        subtitle = stringResource(R.string.settings_export_subtitle),
-                        onClick = { onExportCalendar(local.id) },
-                        showDivider = false,
-                        searchQuery = searchQuery
-                    )
-                }
-            }
-            row(label = stringResource(R.string.backup_settings_label), subtitle = stringResource(R.string.backup_settings_subtitle), id = "backup") {
-                SettingsRow(
-                    icon = Icons.Default.FileUpload,
-                    label = stringResource(R.string.backup_settings_label),
-                    subtitle = stringResource(R.string.backup_settings_subtitle),
-                    onClick = onBackupSettings,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-            row(label = stringResource(R.string.action_import_from_file), subtitle = stringResource(R.string.settings_import_subtitle), id = "import") {
-                SettingsRow(
-                    icon = Icons.Default.FileDownload,
-                    label = stringResource(R.string.action_import_from_file),
-                    subtitle = stringResource(R.string.settings_import_subtitle),
-                    onClick = onImportCalendarFile,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-            row(label = stringResource(R.string.restore_settings_label), subtitle = stringResource(R.string.restore_settings_subtitle), id = "restore") {
-                SettingsRow(
-                    icon = Icons.Default.FileDownload,
-                    label = stringResource(R.string.restore_settings_label),
-                    subtitle = stringResource(R.string.restore_settings_subtitle),
-                    onClick = onRestoreSettings,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // ==================== Privacy Section ====================
-        SearchableSection(
-            query = searchQuery,
-            header = stringResource(R.string.settings_section_privacy),
-            onEmitted = emittedTracker::onEmitted,
-        ) {
-            // Subtitle when on names the unlock methods; when off it states what
-            // the toggle does. Toggling on routes through the host (capability /
-            // enrollment check) before the flag is actually set.
-            val appLockSubtitle = if (appLockEnabled) {
-                stringResource(R.string.app_lock_subtitle_on)
-            } else {
-                stringResource(R.string.app_lock_subtitle_off)
-            }
-            row(label = stringResource(R.string.app_lock_label), subtitle = appLockSubtitle, id = "app-lock") {
-                SettingsToggleRow(
-                    icon = Icons.Default.Lock,
-                    label = stringResource(R.string.app_lock_label),
-                    subtitle = appLockSubtitle,
-                    checked = appLockEnabled,
-                    onCheckedChange = onToggleAppLock,
-                    showDivider = false,
-                    searchQuery = searchQuery
-                )
-            }
-        }
-
-        // Empty-state when search is active and no section matched.
-        if (searchQuery.isNotBlank() && !emittedTracker.anyEmitted) {
-            SearchEmptyState(query = searchQuery)
-        }
-
-        // ==================== Version Footer ====================
-        // Only render when not actively searching.
-        if (versionName.isNotEmpty() && searchQuery.isBlank()) {
-            VersionFooter(
-                versionName = versionName,
-                onClick = { showAppInfoSheet = true },
-                onLongPress = { showDebugMenu = true }
-            )
-        }
-    }
-
-    // ==================== Bottom Sheets ====================
-
-    // Default Calendar Sheet (exclude read-only calendars like ICS subscriptions)
-    if (showDefaultCalendarSheet) {
-        // Filter out read-only calendars from groups
-        val writableGroups = remember(calendarGroups) {
-            calendarGroups.mapNotNull { group: CalendarGroup ->
-                val writableCals = group.calendars.filter { cal -> !cal.isReadOnly }
-                if (writableCals.isNotEmpty()) {
-                    group.copy(calendars = writableCals)
-                } else null
-            }
-        }
-        DefaultCalendarSheet(
-            sheetState = defaultCalendarSheetState,
-            calendarGroups = writableGroups,
-            deviceCalendarGroups = writableDeviceCalendarGroups,
-            currentDefault = defaultCalendar,
-            onSelectDefault = onDefaultCalendarSelect,
-            onDismiss = { showDefaultCalendarSheet = false }
-        )
-    }
-
-    // Alerts Sheet
-    if (showAlertsSheet) {
-        AlertsSheet(
-            sheetState = alertsSheetState,
-            defaultReminderTimed = defaultReminderTimed,
-            defaultReminderAllDay = defaultReminderAllDay,
-            use24Hour = use24Hour,
-            onTimedReminderChange = onDefaultReminderTimedChange,
-            onAllDayReminderChange = onDefaultReminderAllDayChange,
-            onDismiss = { showAlertsSheet = false }
-        )
-    }
-
-    // Event Emojis Sheet
-    if (showEventEmojisSheet) {
-        EventEmojisSheet(
-            sheetState = eventEmojisSheetState,
-            showEventEmojis = showEventEmojis,
-            onShowEventEmojisChange = onShowEventEmojisChange,
-            onDismiss = { showEventEmojisSheet = false }
-        )
-    }
-
-    // Time Format Sheet
-    if (showTimeFormatSheet) {
-        TimeFormatSheet(
-            sheetState = timeFormatSheetState,
-            currentFormat = timeFormat,
-            onFormatSelect = onTimeFormatChange,
-            onDismiss = { showTimeFormatSheet = false }
-        )
-    }
-
-    // First Day of Week Sheet
-    if (showFirstDayOfWeekSheet) {
-        FirstDayOfWeekSheet(
-            sheetState = firstDayOfWeekSheetState,
-            currentValue = firstDayOfWeek,
-            onSelect = onFirstDayOfWeekChange,
-            onDismiss = { showFirstDayOfWeekSheet = false }
-        )
-    }
-
-    // Event Duration Sheet
-    if (showEventDurationSheet) {
-        EventDurationSheet(
-            sheetState = eventDurationSheetState,
-            defaultEventDuration = defaultEventDuration,
-            onEventDurationChange = onDefaultEventDurationChange,
-            onDismiss = { showEventDurationSheet = false }
-        )
-    }
-
-    // Widget Event Limit Sheet
-    if (showWidgetEventLimitSheet) {
-        WidgetEventLimitSheet(
-            sheetState = widgetEventLimitSheetState,
-            currentLimit = widgetMaxEventsPerDay,
-            onLimitChange = onWidgetMaxEventsPerDayChange,
-            onDismiss = { showWidgetEventLimitSheet = false }
-        )
-    }
-
-    // Sync Lookback Sheet
-    if (showSyncLookbackSheet) {
-        SyncLookbackSheet(
-            sheetState = syncLookbackSheetState,
-            currentDays = syncLookbackDays,
-            onSelect = onSyncLookbackChange,
-            onDismiss = { showSyncLookbackSheet = false }
-        )
-    }
-
-    // App Info Sheet (tap on version footer)
-    if (showAppInfoSheet) {
-        AppInfoSheet(onDismiss = { showAppInfoSheet = false })
-    }
-
-    // Debug Menu Sheet
-    if (showDebugMenu) {
-        DebugMenuSheet(
-            sheetState = debugSheetState,
-            syncIntervalMs = syncIntervalMs,
-            onSyncIntervalChange = onSyncIntervalChange,
-            onForceFullSync = onForceFullSync,
-            onShowSyncLogs = onShowSyncLogs,
-            onDismiss = { showDebugMenu = false }
-        )
     }
 }

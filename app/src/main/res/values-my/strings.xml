@@ -68,6 +68,7 @@
     <string name="action_view">ကြည့်</string>
     <string name="action_enable">ဖွင့်</string>
     <string name="action_done">ပြီးပြီ</string>
+    <string name="action_back">နောက်သို့</string>
     <string name="action_save">သိမ်း</string>
     <string name="action_add">ထည့်</string>
     <string name="action_edit">ပြင်ဆင်</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">အချိန်ပုံစံ</string>
     <string name="settings_start_week_on">အပတ်စ ရက်</string>
     <string name="settings_event_emojis">ပွဲ အီမိုဂျီ</string>
-    <string name="settings_emoji_subtitle">ပွဲခေါင်းစဉ်အပေါ် အခြေခံ၍ အီမိုဂျီ ပြပါ</string>
+    <string name="settings_event_emojis_info">\"မွေးနေ့\" အတွက် 🎂 ကဲ့သို့ ခေါင်းစဉ်ပေါ်မူတည်၍ ပွဲများသို့ အီမိုဂျီ ထည့်ပေးသည်။</string>
     <string name="settings_force_sync">အပြည့်အဝ အတင်းချိန်ကိုက်</string>
     <string name="settings_force_sync_subtitle">ပြက္ခဒိန်ဒေတာ အားလုံး ပြန်ဒေါင်းလုဒ်</string>
     <string name="settings_sync_history">ချိန်ကိုက်မှတ်တမ်း</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ပွဲများကို ICS ဖိုင်သို့ သိမ်းပါ</string>
     <string name="settings_birthday_reminder">မွေးနေ့ သတိပေးချက်</string>
     <string name="settings_use_device_timezone">စက် အချိန်ဇုန် သုံးရန်</string>
-    <string name="settings_section_calendars">ပြက္ခဒိန်များ</string>
+    <string name="settings_section_calendars">ပြက္ခဒိန်များ &amp; အကောင့်များ</string>
     <string name="settings_section_appearance">အသွင်အပြင်</string>
-    <string name="settings_section_creating_events">ပွဲများဖန်တီးခြင်း</string>
-    <string name="settings_section_sync">ချိန်ကိုက်</string>
+    <string name="settings_section_creating_events">ပွဲ ဦးစားပေးများ</string>
+    <string name="settings_section_sync">အသိပေးချက်များ &amp; ချိန်ကိုက်</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
     <string name="settings_section_privacy">ကိုယ်ရေးကိုယ်တာ</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">အက်ပ်လော့ခ်</string>
-    <string name="app_lock_subtitle_off">KashCal ဖွင့်ရန် လော့ခ်ဖွင့်ခြင်း လိုအပ်စေပါ</string>
-    <string name="app_lock_subtitle_on">လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ်ဖြင့် ဖွင့်ပါ</string>
+    <string name="settings_app_lock_info">KashCal ကို ဖွင့်ရန် စက်ပစ္စည်း အထောက်အထားစိစစ်ခြင်း လိုအပ်သည်။</string>
     <string name="app_lock_veil_locked">လော့ခ်ချထားသည်</string>
     <string name="app_lock_veil_unlock">လော့ခ်ဖွင့်ရန်</string>
     <string name="app_lock_veil_footnote">လက်ဗွေ၊ မျက်နှာ သို့မဟုတ် မျက်နှာပြင်လော့ခ်</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ဤအရန်ဖိုင်တွင် မမှန်ကန်သော ဒေတာ ပါဝင်နေပြီး ပြန်ယူ၍မရပါ။</string>
     <string name="restore_error_apply_failure">အရန်ဖိုင် အသုံးချနေစဉ် တစ်စုံတစ်ရာ မှားယွင်းခဲ့သည်။ အပြောင်းအလဲများ မသိမ်းဆည်းခဲ့ပါ။</string>
     <string name="backup_error_build_failed">အရန်ကူးယူခြင်း မအောင်မြင်ပါ</string>
-    <string name="backup_error_write_failed">အရန်ကူးယူခြင်း မအောင်မြင်ပါ — ဖိုင်ထဲသို့ ရေးသွင်း၍မရပါ</string>
+    <string name="backup_error_write_failed">အရန်သိမ်းခြင်း မအောင်မြင်ပါ။ ဖိုင်သို့ ရေးသားနိုင်ခြင်း မရှိပါ။</string>
     <string name="backup_error_read_failed">ဖိုင်ကို ဖတ်၍မရပါ</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">ကွန်ရက် အမှား၊ ထပ်စမ်းကြည့်ပါ</string>
     <string name="error_import_file_not_found">ဖိုင် မတွေ့ရှိ သို့မဟုတ် ဖတ်၍ မရပါ။</string>
     <string name="error_import_invalid_format">ပြက္ခဒိန် ဖိုင်ပုံစံ မမှန်ကန်ပါ။</string>
+    <string name="error_import_no_events">ဖိုင်တွင် ပွဲများ မတွေ့ရှိပါ</string>
+    <string name="error_import_failed">တင်သွင်းခြင်း မအောင်မြင်ပါ</string>
     <string name="error_import_partial">ပွဲ %1$d ခု တင်သွင်းပြီး၊ %2$d ခု မအောင်မြင်။</string>
     <string name="error_export_failed">ပွဲများ ထုတ်ယူ၍ မရပါ။</string>
     <string name="error_export_no_events">ထုတ်ယူရန် ပွဲများ မရှိပါ။</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">ပြက္ခဒိန် အမှား</string>
     <string name="error_device_calendar_write_failed">စက်ပြက္ခဒိန်သို့ သိမ်း၍ မရပါ။ ထပ်ကြိုးစားပါ။</string>
     <string name="error_device_calendar_permission">ပြက္ခဒိန် ရေးသားခွင့် လိုအပ်ပါသည်။ ဆက်တင်များတွင် ခွင့်ပြုပါ။</string>
+    <string name="error_device_calendar_permission_denied">ရေးသားခွင့် ပေးရန် ဆက်တင်များတွင် ပြက္ခဒိန်ခွင့်ပြုချက်ကို ပိတ်ပြီး ပြန်ဖွင့်ပါ</string>
     <string name="error_device_calendar_not_found">ပြက္ခဒိန် မတွေ့ရှိပါ။ ဖယ်ရှားလိုက်ပြီ ဖြစ်နိုင်ပါသည်။</string>
     <string name="error_device_event_not_found">ပွဲ မတွေ့ရှိပါ။ ဖျက်လိုက်ပြီ ဖြစ်နိုင်ပါသည်။</string>
     <string name="error_device_calendar_read_only">ဤပြက္ခဒိန်သည် ဖတ်ရုံသာ ဖြစ်ပါသည်။</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ရွေးချယ်ထား</string>
     <string name="cd_back">နောက်သို့</string>
+    <string name="cd_opens_in_browser">ဘရောက်ဇာတွင် ဖွင့်သည်</string>
     <string name="cd_search">ရှာဖွေ</string>
     <string name="cd_create_event">ပွဲ ဖန်တီး</string>
     <string name="cd_delete">ဖျက်</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">ထပ်ခါတလဲလဲ</string>
     <string name="cd_enabled">ဖွင့်ထား</string>
     <string name="cd_sync_error">ချိန်ကိုက် အမှား</string>
-    <string name="cd_select_option">ရွေးစရာ ရွေးချယ်</string>
     <string name="cd_select_label">%1$s ရွေးချယ်</string>
     <string name="cd_wheel_picker">ရွေးစရာ %1$d ခုပါ ဘီးရွေးချယ်ကိရိယာ</string>
     <string name="cd_time_entry_keyboard">အချိန်အတိအကျ ထည့်ပါ</string>
     <string name="time_entry_dialog_title">အချိန် ထည့်ပါ</string>
     <string name="time_entry_tap_to_edit">ပြင်ရန် တို့ပါ</string>
     <string name="cd_version_info">KashCal ဗားရှင်း %1$s။ ဒီဘတ်ရွေးစရာများအတွက် ကြာကြာ နှိပ်ပါ။</string>
+    <string name="cd_about_setting">%1$s အကြောင်း</string>
     <string name="cd_color_slider">အရောင်ဆလိုက်ဒါ၊ လက်ရှိ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ဒီဂရီ</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">အရောင်:</string>
     <string name="label_repeat">ထပ်ခါတလဲလဲ</string>
     <string name="label_sync_interval">ချိန်ကိုက် ကြားကာလ:</string>
-    <string name="label_scheduled_events">အချိန်ဇယားဆွဲထားသော ပွဲများ</string>
-    <string name="label_all_day_events">တစ်နေ့တာ ပွဲများ</string>
     <string name="label_server_url">ဆာဗာ URL</string>
     <string name="label_username">အသုံးပြုသူအမည်</string>
     <string name="label_password">စကားဝှက်</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">မြင်နိုင်သော ပြက္ခဒိန်များ</string>
     <string name="settings_default_calendar">မူရင်း ပြက္ခဒိန်</string>
     <string name="settings_default_event_length">မူရင်း ပွဲကြာချိန်</string>
-    <string name="settings_default_alerts">မူရင်း သတိပေးချက်များ</string>
+    <string name="settings_default_event_length_hint">ပွဲအသစ်များအတွက် မူရင်းကြာချိန်</string>
+    <string name="settings_timed_event_alert">အချိန်သတ်မှတ်ပွဲ သတိပေးချက်</string>
+    <string name="settings_all_day_event_alert">တစ်နေ့တာပွဲ သတိပေးချက်</string>
+    <string name="settings_custom_alert_value">စိတ်ကြိုက် (%1$s)</string>
     <string name="settings_notifications">အကြောင်းကြားချက်များ</string>
-    <string name="settings_new_events">ပွဲအသစ်များ</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">စနစ် မူရင်း</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="settings_device_calendars_hint">အခြားအက်ပ်များမှ ပြက္ခဒိန်များ</string>
-    <string name="settings_quick_event_add">ပွဲ အမြန်ထည့်</string>
+    <string name="settings_quick_event_add">စမတ် ပွဲ ထည့်ခြင်း</string>
+    <string name="settings_quick_event_add_info">သဘာဝအတိုင်း ရိုက်ထည့်ခြင်းဖြင့် ပွဲများ ဖန်တီးပါ။ \"Sam နှင့် သောကြာနေ့ မွန်းလွဲ ၁ နာရီ နေ့လယ်စာ\" က ခေါင်းစဉ်၊ ရက်စွဲနှင့် အချိန်ကို သင့်အတွက် ဖြည့်ပေးသည်။</string>
     <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
+    <string name="settings_suggest_titles_info">ပွဲအသစ်ကို အမည်ပေးနေစဉ် ယခင်က သင်သုံးခဲ့သော ခေါင်းစဉ်များကို အကြံပြုသည်၊ ထို့ကြောင့် ထပ်ခါထပ်ခါ ပွဲများသည် တစ်ချက်နှိပ်ရုံဖြင့် ရသည်။ သင် မည်မျှမကြာခဏနှင့် မကြာသေးမီက သုံးခဲ့သည်ကို အခြေခံ၍ အဆင့်သတ်မှတ်ထားသည်။</string>
     <string name="settings_week_numbers">အပတ် နံပါတ်များ</string>
     <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
     <string name="settings_widget_event_limit">ဝစ်ဂျက် ပွဲ ကန့်သတ်ချက်</string>
+    <string name="settings_widget_event_limit_hint">ဝိဂျက်များတွင် တစ်ရက်လျှင် ပြသမည့် အများဆုံးဖြစ်ရပ်များ</string>
     <string name="settings_sync_lookback">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ</string>
-    <string name="settings_auto_detect_emojis">အီမိုဂျီ အလိုအလျောက် ရှာ</string>
-    <string name="settings_events_per_day">တစ်နေ့လျှင် ပွဲများ</string>
+    <string name="settings_sync_lookback_hint">ဖြစ်ရပ်များကို မည်မျှ နောက်ပြန်ချိန်ကိုက်မည်</string>
     <string name="settings_not_set">မသတ်မှတ်ရ</string>
     <string name="settings_on">ဖွင့်</string>
     <string name="settings_off">ပိတ်</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">မလုံခြုံသော ချိတ်ဆက်မှုကို ယုံကြည်</string>
     <string name="action_add_another">နောက်ထပ် ထည့်</string>
     <string name="account_connected_found_calendars">%2$s အတွက် ပြက္ခဒိန် %1$d ခု တွေ့ရှိ။</string>
-    <string name="account_connected_syncing_hint">ချိန်ကိုက်နေသည် — ပွဲများ မကြာမီ ပေါ်လာပါမည်။</string>
+    <string name="account_connected_syncing_hint">စင့်ခ်လုပ်နေဆဲ ဖြစ်သည်။ ပွဲများ မကြာမီ ပေါ်လာပါမည်။</string>
     <string name="settings_time_format_currently_24h">လက်ရှိ: ၂၄ နာရီ (%1$s)</string>
     <string name="settings_time_format_currently_12h">လက်ရှိ: ၁၂ နာရီ (%1$s)</string>
     <string name="settings_time_format_example">ဥပမာ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">ဖတ်ရုံ (ပြက္ခဒိန်သည် ဖတ်ရုံသာ)</string>
     <string name="settings_developer_options">ဆော့ဖ်ဝဲရေးသားသူ ရွေးစရာများ</string>
     <string name="settings_sync_frequency">ချိန်ကိုက် အကြိမ်နှုန်း</string>
-    <string name="settings_preview">အကြိုကြည့်ရှု</string>
-    <string name="settings_n_events">ပွဲ %1$d ခု</string>
-    <string name="settings_n_events_default">ပွဲ %1$d ခု (မူရင်း)</string>
+    <string name="settings_sync_frequency_hint">နောက်ခံတွင် မည်မျှ မကြာခဏ ချိန်ကိုက်မည်</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ပြက္ခဒိန်များ</string>
     <string name="drawer_contacts">အဆက်အသွယ်များ</string>
     <string name="drawer_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="drawer_account_offline">အော့ဖ်လိုင်း</string>
+    <string name="calendar_local">စက်တွင်း</string>
     <string name="drawer_share_feedback">အကူအညီနှင့် စာရွက်စာတမ်း</string>
     <string name="event_title_fallback">ပွဲ</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s အလွန်</string>
     <string name="reminder_day_of_event_12h">ပွဲနေ့ မနက် 9 နာရီ</string>
     <string name="reminder_day_of_event_24h">ပွဲနေ့ 09:00</string>
+    <string name="reminder_day_of_event">ပွဲနေ့</string>
     <string name="reminder_before_at_12h">%1$s အလို မနက် 9 နာရီ</string>
     <string name="reminder_before_at_24h">%1$s အလို 09:00</string>
     <string name="reminder_short_off">ပိတ်</string>
@@ -885,6 +891,15 @@
     <string name="reminder_short_hours">%1$dန</string>
     <string name="reminder_short_days">%1$dရ</string>
     <string name="reminder_short_weeks">%1$dပ</string>
+    <string name="reminder_med_minutes">%1$d မိနစ်</string>
+    <string name="reminder_med_hours">%1$d နာရီ</string>
+    <string name="reminder_med_weeks">%1$d ပတ်</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ရက်</item>
+        <item quantity="other">%1$d ရက်</item>
+    </plurals>
+    <string name="reminder_med_day_of">နေ့</string>
+    <string name="all_day_alert_9am_hint">တစ်နေ့တာ သတိပေးချက်များသည် မနက် ၉ နာရီ (09:00) တွင် ပေါ်လာသည်။</string>
     <string name="reminder_summary_none">မရှိ</string>
     <string name="duration_compact">%1$dန %2$dမ</string>
     <string name="duration_compact_short">%1$dန%2$dမ</string>

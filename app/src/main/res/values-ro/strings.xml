@@ -68,6 +68,7 @@
     <string name="action_view">Vizualizează</string>
     <string name="action_enable">Activează</string>
     <string name="action_done">Gata</string>
+    <string name="action_back">Înapoi</string>
     <string name="action_save">Salvează</string>
     <string name="action_add">Adaugă</string>
     <string name="action_edit">Editează</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Format oră</string>
     <string name="settings_start_week_on">Săptămâna începe</string>
     <string name="settings_event_emojis">Emoji-uri pentru evenimente</string>
-    <string name="settings_emoji_subtitle">Afișează emoji-uri bazate pe titlurile evenimentelor</string>
+    <string name="settings_event_emojis_info">Adaugă un emoji la evenimente pe baza titlului, de exemplu 🎂 pentru \"Zi de naștere\".</string>
     <string name="settings_force_sync">Sincronizare completă forțată</string>
     <string name="settings_force_sync_subtitle">Redescarcă toate datele calendarului</string>
     <string name="settings_sync_history">Istoric sincronizări</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Salvează evenimentele într-un fișier ICS</string>
     <string name="settings_birthday_reminder">Memento zi de naștere</string>
     <string name="settings_use_device_timezone">Folosește fusul orar al dispozitivului</string>
-    <string name="settings_section_calendars">Calendare</string>
+    <string name="settings_section_calendars">Calendare și conturi</string>
     <string name="settings_section_appearance">Aspect</string>
-    <string name="settings_section_creating_events">Crearea evenimentelor</string>
-    <string name="settings_section_sync">Sincronizare</string>
+    <string name="settings_section_creating_events">Preferințe eveniment</string>
+    <string name="settings_section_sync">Notificări și sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
     <string name="settings_section_privacy">Confidențialitate</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Blocare aplicație</string>
-    <string name="app_lock_subtitle_off">Solicită deblocarea pentru a deschide KashCal</string>
-    <string name="app_lock_subtitle_on">Deblochează cu amprentă, față sau blocarea ecranului</string>
+    <string name="settings_app_lock_info">Solicită autentificarea dispozitivului pentru a deschide KashCal.</string>
     <string name="app_lock_veil_locked">Blocat</string>
     <string name="app_lock_veil_unlock">Deblochează</string>
     <string name="app_lock_veil_footnote">Amprentă, față sau blocarea ecranului</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Acest fișier de rezervă conține date nevalide și nu poate fi restaurat.</string>
     <string name="restore_error_apply_failure">Ceva a mers prost la aplicarea copiei de rezervă. Nicio modificare nu a fost salvată.</string>
     <string name="backup_error_build_failed">Copia de siguranță a eșuat</string>
-    <string name="backup_error_write_failed">Copia de siguranță a eșuat — nu s-a putut scrie în fișier</string>
+    <string name="backup_error_write_failed">Copierea de rezervă a eșuat. Nu s-a putut scrie în fișier.</string>
     <string name="backup_error_read_failed">Fișierul nu a putut fi citit</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Eroare de rețea, încercați din nou</string>
     <string name="error_import_file_not_found">Fișierul nu a fost găsit sau nu poate fi citit.</string>
     <string name="error_import_invalid_format">Format de fișier calendar invalid.</string>
+    <string name="error_import_no_events">Nu s-au găsit evenimente în fișier</string>
+    <string name="error_import_failed">Importul a eșuat</string>
     <string name="error_import_partial">%1$d evenimente importate, %2$d au eșuat.</string>
     <string name="error_export_failed">Exportul evenimentelor a eșuat.</string>
     <string name="error_export_no_events">Niciun eveniment de exportat.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Eroare calendar</string>
     <string name="error_device_calendar_write_failed">Nu s-a putut salva în calendarul dispozitivului. Încearcă din nou.</string>
     <string name="error_device_calendar_permission">Permisiune de scriere calendar necesară. Acordă permisiunea din Setări.</string>
+    <string name="error_device_calendar_permission_denied">Dezactivează și reactivează permisiunea Calendar din Setări pentru a acorda acces de scriere</string>
     <string name="error_device_calendar_not_found">Calendar negăsit. Poate a fost eliminat.</string>
     <string name="error_device_event_not_found">Eveniment negăsit. Poate a fost șters.</string>
     <string name="error_device_calendar_read_only">Acest calendar este doar pentru citire.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Selectat</string>
     <string name="cd_back">Înapoi</string>
+    <string name="cd_opens_in_browser">Se deschide în browser</string>
     <string name="cd_search">Caută</string>
     <string name="cd_create_event">Creează eveniment</string>
     <string name="cd_delete">Șterge</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Recurent</string>
     <string name="cd_enabled">Activat</string>
     <string name="cd_sync_error">Eroare de sincronizare</string>
-    <string name="cd_select_option">Selectează opțiune</string>
     <string name="cd_select_label">Selectează %1$s</string>
     <string name="cd_wheel_picker">Selector rotativ cu %1$d opțiuni</string>
     <string name="cd_time_entry_keyboard">Introdu ora exactă</string>
     <string name="time_entry_dialog_title">Introdu ora</string>
     <string name="time_entry_tap_to_edit">Atinge pentru editare</string>
     <string name="cd_version_info">KashCal versiunea %1$s. Apasă lung pentru opțiuni de depanare.</string>
+    <string name="cd_about_setting">Despre %1$s</string>
     <string name="cd_color_slider">Cursor culoare, acum %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grade</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Culoare:</string>
     <string name="label_repeat">Repetare</string>
     <string name="label_sync_interval">Interval sincronizare:</string>
-    <string name="label_scheduled_events">Evenimente programate</string>
-    <string name="label_all_day_events">Evenimente pe toată ziua</string>
     <string name="label_server_url">URL server</string>
     <string name="label_username">Nume utilizator</string>
     <string name="label_password">Parolă</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Calendare vizibile</string>
     <string name="settings_default_calendar">Calendar implicit</string>
     <string name="settings_default_event_length">Durata implicită a evenimentului</string>
-    <string name="settings_default_alerts">Alerte implicite</string>
+    <string name="settings_default_event_length_hint">Durata implicită pentru evenimente noi</string>
+    <string name="settings_timed_event_alert">Alertă pentru eveniment cu oră fixă</string>
+    <string name="settings_all_day_event_alert">Alertă pentru eveniment de o zi întreagă</string>
+    <string name="settings_custom_alert_value">Personalizat (%1$s)</string>
     <string name="settings_notifications">Notificări</string>
-    <string name="settings_new_events">Evenimente noi</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Implicit sistem</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendare dispozitiv</string>
     <string name="settings_device_calendars_hint">Calendare din alte aplicații</string>
-    <string name="settings_quick_event_add">Adăugare rapidă eveniment</string>
+    <string name="settings_quick_event_add">Adăugare inteligentă a evenimentelor</string>
+    <string name="settings_quick_event_add_info">Creează evenimente scriind natural. \"Prânz cu Sam vineri la 13:00\" completează pentru tine titlul, data și ora.</string>
     <string name="settings_suggest_titles">Sugerează titluri de evenimente</string>
+    <string name="settings_suggest_titles_info">Pe măsură ce denumești un eveniment nou, sugerează titluri folosite anterior, astfel încât evenimentele repetate să fie la o singură atingere. Clasificate după cât de des și cât de recent le-ai folosit.</string>
     <string name="settings_week_numbers">Numere săptămâni</string>
     <string name="settings_show_declined">Afișează evenimentele refuzate</string>
     <string name="settings_widget_event_limit">Limită evenimente widget</string>
+    <string name="settings_widget_event_limit_hint">Numărul maxim de evenimente afișate pe zi în widgeturi</string>
     <string name="settings_sync_lookback">Perioada de retrospectivă sincronizare</string>
-    <string name="settings_auto_detect_emojis">Detectare automată emoji-uri</string>
-    <string name="settings_events_per_day">Evenimente pe zi</string>
+    <string name="settings_sync_lookback_hint">Cât de mult în urmă se sincronizează evenimentele</string>
     <string name="settings_not_set">Nesetat</string>
     <string name="settings_on">Pornit</string>
     <string name="settings_off">Oprit</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Permite conexiune nesecurizată</string>
     <string name="action_add_another">Adaugă altul</string>
     <string name="account_connected_found_calendars">%1$d calendar(e) găsite pentru %2$s.</string>
-    <string name="account_connected_syncing_hint">Sincronizare în curs — evenimentele vor apărea în curând.</string>
+    <string name="account_connected_syncing_hint">Sincronizare în curs. Evenimentele vor apărea în curând.</string>
     <string name="settings_time_format_currently_24h">Acum: 24 ore (%1$s)</string>
     <string name="settings_time_format_currently_12h">Acum: 12 ore (%1$s)</string>
     <string name="settings_time_format_example">Exemplu: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Doar citire (calendar doar pentru citire)</string>
     <string name="settings_developer_options">Opțiuni dezvoltator</string>
     <string name="settings_sync_frequency">Frecvență sincronizare</string>
-    <string name="settings_preview">PREVIZUALIZARE</string>
-    <string name="settings_n_events">%1$d evenimente</string>
-    <string name="settings_n_events_default">%1$d evenimente (implicit)</string>
+    <string name="settings_sync_frequency_hint">Cât de des să se sincronizeze în fundal</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Calendare</string>
     <string name="drawer_contacts">Contacte</string>
     <string name="drawer_device_calendars">Calendare dispozitiv</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Local</string>
     <string name="drawer_share_feedback">Ajutor și documentație</string>
     <string name="event_title_fallback">Eveniment</string>
 
@@ -953,6 +958,7 @@
     <string name="reminder_time_after">Cu %1$s după</string>
     <string name="reminder_day_of_event_12h">9 AM în ziua evenimentului</string>
     <string name="reminder_day_of_event_24h">09:00 în ziua evenimentului</string>
+    <string name="reminder_day_of_event">În ziua evenimentului</string>
     <string name="reminder_before_at_12h">Cu %1$s înainte la 9 AM</string>
     <string name="reminder_before_at_24h">Cu %1$s înainte la 09:00</string>
     <string name="reminder_short_off">Oprit</string>
@@ -963,6 +969,16 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dz</string>
     <string name="reminder_short_weeks">%1$ds</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d h</string>
+    <string name="reminder_med_weeks">%1$d săpt</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d zi</item>
+        <item quantity="few">%1$d zile</item>
+        <item quantity="other">%1$d de zile</item>
+    </plurals>
+    <string name="reminder_med_day_of">În ziua respectivă</string>
+    <string name="all_day_alert_9am_hint">Alertele pentru toată ziua se declanșează la 9 AM (09:00).</string>
     <string name="reminder_summary_none">Niciunul</string>
     <string name="duration_compact">%1$do %2$dm</string>
     <string name="duration_compact_short">%1$do%2$dm</string>

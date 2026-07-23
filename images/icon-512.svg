@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 88 88">
   <rect width="88" height="88" rx="20" fill="#0e1116"/>
-  <g transform="translate(44 46) rotate(8)">
+  <g transform="translate(44 44) rotate(8)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#f2c14e"/>
   </g>
-  <g transform="translate(44 46) rotate(-7)">
+  <g transform="translate(44 44) rotate(-7)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#4a9bdc"/>
   </g>
-  <g transform="translate(44 46) rotate(-2)">
+  <g transform="translate(44 44) rotate(-2)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#2a8a7a"/>
     <rect x="-18" y="-21" width="36" height="9" rx="6" fill="#0d9488"/>
     <rect x="-18" y="-16" width="36" height="5" fill="#2a8a7a"/>

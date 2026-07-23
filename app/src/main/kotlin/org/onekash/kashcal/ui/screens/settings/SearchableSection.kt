@@ -10,11 +10,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
+import org.onekash.kashcal.ui.util.text.highlighted
+
+/** Test tag on the between-groups leading divider, so its presence/count is assertable. */
+internal const val SEARCHABLE_SECTION_LEADING_DIVIDER_TAG = "searchable_section_leading_divider"
 
 /**
  * Renders a settings section that participates in inline search.
@@ -29,47 +37,86 @@ import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
  * fires once during composition so the parent can track whether *any*
  * section produced UI (drives the empty-state fallback).
  *
- * Dividers are emitted by the section between consecutive visible rows;
- * callers MUST NOT pass `showDivider` to row composables — leaving the
- * default `false` gives the section sole control. This avoids the
- * orphan-divider artifact that would otherwise appear when search filters
- * out the source-last row but keeps an earlier row that had its
- * `showDivider` defaulted to true.
+ * Layout matches the account hub: a flat column of rows with a
+ * primary-colored header and no card background. A divider separates
+ * groups only — drawn *before* this section when an earlier section
+ * already emitted (tracked via [tracker]), so no rule hangs above the
+ * first group or below the last. The section reads [tracker] before
+ * recording its own emission, so the divider decision and the
+ * empty-state accounting stay in one place. Callers MUST NOT pass
+ * `showDivider` to row composables — leaving the default `false` keeps
+ * rows flush, which is what the between-groups-only rule requires.
  */
 @Composable
 fun SearchableSection(
     query: String,
     modifier: Modifier = Modifier,
     header: String? = null,
-    onEmitted: () -> Unit = {},
+    tracker: SearchEmissionTracker? = null,
     content: @Composable SearchableSectionScope.() -> Unit
 ) {
     val scope = SearchableSectionScope()
     scope.content()
 
-    val visibleRows = if (query.isBlank()) {
+    // A query that matches the section header surfaces the whole group, so a
+    // user searching "appearance" finds every setting under that header even
+    // when no individual row label contains the term.
+    val headerMatches = !query.isBlank() &&
+        header?.containsCaseInsensitive(query) == true
+    val visibleRows = if (query.isBlank() || headerMatches) {
         scope.rows
     } else {
         scope.rows.filter { it.matches(query) }
     }
     if (visibleRows.isEmpty()) return
 
-    onEmitted()
+    // Read emission state (did an earlier section render?) BEFORE recording
+    // this section's own emission, so the leading divider is drawn only
+    // between groups — never above the first or below the last.
+    val showLeadingDivider = tracker?.anyEmitted == true
+    tracker?.onEmitted()
 
     Column(modifier = modifier) {
-        if (header != null) SectionHeader(header)
-        SettingsCard {
-            visibleRows.forEachIndexed { index, row ->
-                key(row.id) { row.render() }
-                if (index < visibleRows.size - 1) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 52.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
-                }
-            }
+        if (showLeadingDivider) {
+            HorizontalDivider(
+                modifier = Modifier
+                    .testTag(SEARCHABLE_SECTION_LEADING_DIVIDER_TAG)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+        }
+        // Highlight the header only when the query actually matched it, so a
+        // header-driven hit shows the user why the section surfaced.
+        if (header != null) {
+            FlatSectionHeader(header, if (headerMatches) query else "")
+        }
+        visibleRows.forEach { row ->
+            key(row.id) { row.render() }
         }
     }
+}
+
+/**
+ * Section header in the account-hub style: a primary-colored [titleMedium]
+ * with no card wrapper. Kept local to the flat settings list so the shared
+ * [SectionHeader] (used by other screens with a different look) is untouched.
+ * When [highlightQuery] is non-blank, the matching substring is highlighted
+ * (used when the search query matched the header text itself).
+ */
+@Composable
+private fun FlatSectionHeader(text: String, highlightQuery: String = "") {
+    Text(
+        text = if (highlightQuery.isBlank()) {
+            AnnotatedString(text)
+        } else {
+            highlighted(text, highlightQuery, settingsSearchHighlightStyle())
+        },
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp)
+            .semantics { heading() }
+    )
 }
 
 /**

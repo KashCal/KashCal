@@ -55,12 +55,12 @@ fun TopBarLogoButton(
         val scale = this.size.width / 88f
 
         // Three equal-size cards (36×42) fanned around a shared center at
-        // (44,46) so the icon reads as a deck of dated pages rather than a
+        // (44,44) so the icon reads as a deck of dated pages rather than a
         // loose pile of mismatched cards. The back cards peek as uniform
         // edges; the tight ±7–8° fan keeps overall width in check. Gold and
         // blue behind, teal front with the header bar, today-dot, and the
         // day-of-month numeral.
-        translate(left = 44f * scale, top = 46f * scale) {
+        translate(left = 44f * scale, top = 44f * scale) {
             rotate(degrees = 8f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFFF2C14E),
@@ -71,7 +71,7 @@ fun TopBarLogoButton(
             }
         }
 
-        translate(left = 44f * scale, top = 46f * scale) {
+        translate(left = 44f * scale, top = 44f * scale) {
             rotate(degrees = -7f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFF4A9BDC),
@@ -82,7 +82,7 @@ fun TopBarLogoButton(
             }
         }
 
-        translate(left = 44f * scale, top = 46f * scale) {
+        translate(left = 44f * scale, top = 44f * scale) {
             rotate(degrees = -2f, pivot = Offset.Zero) {
                 drawRoundRect(
                     color = Color(0xFF2A8A7A),

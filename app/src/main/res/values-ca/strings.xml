@@ -68,6 +68,7 @@
     <string name="action_view">Veure</string>
     <string name="action_enable">Activar</string>
     <string name="action_done">Fet</string>
+    <string name="action_back">Enrere</string>
     <string name="action_save">Desar</string>
     <string name="action_add">Afegir</string>
     <string name="action_edit">Editar</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Format horari</string>
     <string name="settings_start_week_on">Començar setmana en</string>
     <string name="settings_event_emojis">Emojis d\'esdeveniments</string>
-    <string name="settings_emoji_subtitle">Mostra emojis basats en els títols dels esdeveniments</string>
+    <string name="settings_event_emojis_info">Afegeix un emoji als esdeveniments segons el títol, com 🎂 per a \"Aniversari\".</string>
     <string name="settings_force_sync">Forçar sincronització completa</string>
     <string name="settings_force_sync_subtitle">Tornar a baixar totes les dades del calendari</string>
     <string name="settings_sync_history">Historial de sincronització</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Desa esdeveniments en un fitxer ICS</string>
     <string name="settings_birthday_reminder">Recordatori d\'aniversari</string>
     <string name="settings_use_device_timezone">Usar zona horària del dispositiu</string>
-    <string name="settings_section_calendars">Calendaris</string>
+    <string name="settings_section_calendars">Calendaris i comptes</string>
     <string name="settings_section_appearance">Aparença</string>
-    <string name="settings_section_creating_events">Creació d\'esdeveniments</string>
-    <string name="settings_section_sync">Sincronització</string>
+    <string name="settings_section_creating_events">Preferències dels esdeveniments</string>
+    <string name="settings_section_sync">Notificacions i sincronització</string>
     <string name="settings_section_data">Còpia de seguretat i restauració</string>
     <string name="settings_section_privacy">Privadesa</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Bloqueig de l\'aplicació</string>
-    <string name="app_lock_subtitle_off">Cal desbloquejar per obrir KashCal</string>
-    <string name="app_lock_subtitle_on">Desbloqueja amb empremta, cara o bloqueig de pantalla</string>
+    <string name="settings_app_lock_info">Requereix l\'autenticació del dispositiu per obrir KashCal.</string>
     <string name="app_lock_veil_locked">Bloquejat</string>
     <string name="app_lock_veil_unlock">Desbloqueja</string>
     <string name="app_lock_veil_footnote">Empremta, cara o bloqueig de pantalla</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Aquest fitxer de còpia de seguretat conté dades no vàlides i no es pot restaurar.</string>
     <string name="restore_error_apply_failure">S\'ha produït un error en aplicar la còpia de seguretat. No s\'ha desat cap canvi.</string>
     <string name="backup_error_build_failed">La còpia de seguretat ha fallat</string>
-    <string name="backup_error_write_failed">La còpia de seguretat ha fallat — no s\'ha pogut escriure al fitxer</string>
+    <string name="backup_error_write_failed">La còpia de seguretat ha fallat. No s\'ha pogut escriure al fitxer.</string>
     <string name="backup_error_read_failed">No s\'ha pogut llegir el fitxer</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Error de xarxa, torneu-ho a provar</string>
     <string name="error_import_file_not_found">Fitxer no trobat o no es pot llegir.</string>
     <string name="error_import_invalid_format">Format de fitxer de calendari invàlid.</string>
+    <string name="error_import_no_events">No s\'ha trobat cap esdeveniment al fitxer</string>
+    <string name="error_import_failed">La importació ha fallat</string>
     <string name="error_import_partial">S\'han importat %1$d esdeveniments, %2$d han fallat.</string>
     <string name="error_export_failed">No s\'han pogut exportar els esdeveniments.</string>
     <string name="error_export_no_events">No hi ha esdeveniments per exportar.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Error de calendari</string>
     <string name="error_device_calendar_write_failed">No s\'ha pogut desar al calendari del dispositiu. Torna a provar.</string>
     <string name="error_device_calendar_permission">Es requereix permís d\'escriptura del calendari. Concedeix el permís a Configuració.</string>
+    <string name="error_device_calendar_permission_denied">Desactiva i torna a activar el permís de Calendari a Configuració per concedir accés d\'escriptura</string>
     <string name="error_device_calendar_not_found">Calendari no trobat. Pot haver estat eliminat.</string>
     <string name="error_device_event_not_found">Esdeveniment no trobat. Pot haver estat eliminat.</string>
     <string name="error_device_calendar_read_only">Aquest calendari és de només lectura.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Seleccionat</string>
     <string name="cd_back">Enrere</string>
+    <string name="cd_opens_in_browser">S\'obre al navegador</string>
     <string name="cd_search">Cercar</string>
     <string name="cd_create_event">Crear esdeveniment</string>
     <string name="cd_delete">Eliminar</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Recurrent</string>
     <string name="cd_enabled">Activat</string>
     <string name="cd_sync_error">Error de sincronització</string>
-    <string name="cd_select_option">Seleccionar opció</string>
     <string name="cd_select_label">Seleccionar %1$s</string>
     <string name="cd_wheel_picker">Selector rotatiu amb %1$d opcions</string>
     <string name="cd_time_entry_keyboard">Introdueix l\'hora exacta</string>
     <string name="time_entry_dialog_title">Introdueix l\'hora</string>
     <string name="time_entry_tap_to_edit">Toca per editar</string>
     <string name="cd_version_info">KashCal versió %1$s. Premeu llargament per a opcions de depuració.</string>
+    <string name="cd_about_setting">Quant a %1$s</string>
     <string name="cd_color_slider">Control lliscant de color, actualment %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graus</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Color:</string>
     <string name="label_repeat">Repetir</string>
     <string name="label_sync_interval">Interval de sincronització:</string>
-    <string name="label_scheduled_events">Esdeveniments programats</string>
-    <string name="label_all_day_events">Esdeveniments de tot el dia</string>
     <string name="label_server_url">URL del servidor</string>
     <string name="label_username">Nom d\'usuari</string>
     <string name="label_password">Contrasenya</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Calendaris visibles</string>
     <string name="settings_default_calendar">Calendari predeterminat</string>
     <string name="settings_default_event_length">Durada predeterminada</string>
-    <string name="settings_default_alerts">Alertes predeterminades</string>
+    <string name="settings_default_event_length_hint">Durada predeterminada per als nous esdeveniments</string>
+    <string name="settings_timed_event_alert">Alerta d\'esdeveniment amb hora</string>
+    <string name="settings_all_day_event_alert">Alerta d\'esdeveniment de tot el dia</string>
+    <string name="settings_custom_alert_value">Personalitzat (%1$s)</string>
     <string name="settings_notifications">Notificacions</string>
-    <string name="settings_new_events">Nous esdeveniments</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Per defecte del sistema</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendaris del dispositiu</string>
     <string name="settings_device_calendars_hint">Calendaris d\'altres aplicacions</string>
-    <string name="settings_quick_event_add">Afegir esdeveniment ràpid</string>
+    <string name="settings_quick_event_add">Afegir esdeveniments intel·ligent</string>
+    <string name="settings_quick_event_add_info">Crea esdeveniments escrivint de manera natural. \"Dinar amb Sam divendres a la 1 del migdia\" omple el títol, la data i l\'hora per tu.</string>
     <string name="settings_suggest_titles">Suggereix títols d\'esdeveniments</string>
+    <string name="settings_suggest_titles_info">En posar nom a un nou esdeveniment, suggereix títols que ja has fet servir, de manera que els esdeveniments repetits siguin a un sol toc. Ordenats segons la freqüència i la recència amb què els has utilitzat.</string>
     <string name="settings_week_numbers">Números de setmana</string>
     <string name="settings_show_declined">Mostra els esdeveniments rebutjats</string>
     <string name="settings_widget_event_limit">Límit d\'esdeveniments del widget</string>
+    <string name="settings_widget_event_limit_hint">Màxim d\'esdeveniments mostrats per dia als widgets</string>
     <string name="settings_sync_lookback">Sincronitzar retrospectivament</string>
-    <string name="settings_auto_detect_emojis">Detecció automàtica d\'emojis</string>
-    <string name="settings_events_per_day">Esdeveniments per dia</string>
+    <string name="settings_sync_lookback_hint">Fins a quan enrere sincronitzar els esdeveniments</string>
     <string name="settings_not_set">No configurat</string>
     <string name="settings_on">Activat</string>
     <string name="settings_off">Desactivat</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Confiar en connexió insegura</string>
     <string name="action_add_another">Afegir un altre</string>
     <string name="account_connected_found_calendars">S\'han trobat %1$d calendari(s) per a %2$s.</string>
-    <string name="account_connected_syncing_hint">Sincronització en curs — els esdeveniments apareixeran aviat.</string>
+    <string name="account_connected_syncing_hint">Sincronització en curs. Els esdeveniments apareixeran aviat.</string>
     <string name="settings_time_format_currently_24h">Actualment: 24 hores (%1$s)</string>
     <string name="settings_time_format_currently_12h">Actualment: 12 hores (%1$s)</string>
     <string name="settings_time_format_example">Exemple: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Només lectura (el calendari és de només lectura)</string>
     <string name="settings_developer_options">Opcions de desenvolupador</string>
     <string name="settings_sync_frequency">Freqüència de sincronització</string>
-    <string name="settings_preview">VISTA PRÈVIA</string>
-    <string name="settings_n_events">%1$d esdeveniments</string>
-    <string name="settings_n_events_default">%1$d esdeveniments (per defecte)</string>
+    <string name="settings_sync_frequency_hint">Cada quan sincronitzar en segon pla</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Calendaris</string>
     <string name="drawer_contacts">Contactes</string>
     <string name="drawer_device_calendars">Calendaris del dispositiu</string>
     <string name="drawer_account_offline">Fora de línia</string>
+    <string name="calendar_local">Local</string>
     <string name="drawer_share_feedback">Ajuda i documentació</string>
     <string name="event_title_fallback">Esdeveniment</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s després</string>
     <string name="reminder_day_of_event_12h">9 AM el dia de l\'esdeveniment</string>
     <string name="reminder_day_of_event_24h">09:00 el dia de l\'esdeveniment</string>
+    <string name="reminder_day_of_event">El dia de l\'esdeveniment</string>
     <string name="reminder_before_at_12h">%1$s abans a les 9 AM</string>
     <string name="reminder_before_at_24h">%1$s abans a les 09:00</string>
     <string name="reminder_short_off">Desactivat</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$ds</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d h</string>
+    <string name="reminder_med_weeks">%1$d set</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dia</item>
+        <item quantity="other">%1$d dies</item>
+    </plurals>
+    <string name="reminder_med_day_of">El dia</string>
+    <string name="all_day_alert_9am_hint">Les alertes de tot el dia s\'activen a les 9 AM (09:00).</string>
     <string name="reminder_summary_none">Cap</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

@@ -2,6 +2,7 @@ package org.onekash.icaldav.parser
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -222,6 +223,40 @@ class ICalParserTest {
         assertEquals(2, events.size)
         assertEquals("event-1", events[0].uid)
         assertEquals("event-2", events[1].uid)
+    }
+
+    @Test
+    fun `blank UID gets a unique generated UID per event so unrelated events do not collide`() {
+        // A present-but-empty UID must be treated like a missing one: each event
+        // gets its own generated UID. Otherwise both would share the "" key and
+        // downstream grouping (e.g. ICS import series-detection) could merge them.
+        val icalData = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:
+            DTSTAMP:20231215T100000Z
+            DTSTART:20231215T140000Z
+            SUMMARY:Blank UID One
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:
+            DTSTAMP:20231215T100000Z
+            DTSTART:20231216T140000Z
+            SUMMARY:Blank UID Two
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val result = parser.parseAllEvents(icalData)
+
+        assertTrue(result is ParseResult.Success)
+        val events = result.getOrNull()!!
+        assertEquals(2, events.size)
+        assertTrue(events[0].uid.isNotBlank(), "blank UID replaced")
+        assertTrue(events[1].uid.isNotBlank(), "blank UID replaced")
+        assertNotEquals(events[0].uid, events[1].uid, "each blank-UID event gets a distinct UID")
     }
 
     @Test

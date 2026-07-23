@@ -68,6 +68,7 @@
     <string name="action_view">Visa</string>
     <string name="action_enable">Aktivera</string>
     <string name="action_done">Klar</string>
+    <string name="action_back">Tillbaka</string>
     <string name="action_save">Spara</string>
     <string name="action_add">Lägg till</string>
     <string name="action_edit">Redigera</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Tidsformat</string>
     <string name="settings_start_week_on">Veckan börjar på</string>
     <string name="settings_event_emojis">Händelse-emojis</string>
-    <string name="settings_emoji_subtitle">Visa emojis baserat på händelsetitlar</string>
+    <string name="settings_event_emojis_info">Lägger till en emoji till händelser baserat på titeln, som 🎂 för \"Födelsedag\".</string>
     <string name="settings_force_sync">Fullständig synkronisering</string>
     <string name="settings_force_sync_subtitle">Ladda ner all kalenderdata igen</string>
     <string name="settings_sync_history">Synkhistorik</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Spara händelser i en ICS-fil</string>
     <string name="settings_birthday_reminder">Födelsedagspåminnelse</string>
     <string name="settings_use_device_timezone">Använd enhetens tidszon</string>
-    <string name="settings_section_calendars">Kalendrar</string>
+    <string name="settings_section_calendars">Kalendrar &amp; konton</string>
     <string name="settings_section_appearance">Utseende</string>
-    <string name="settings_section_creating_events">Skapa händelser</string>
-    <string name="settings_section_sync">Synkronisering</string>
+    <string name="settings_section_creating_events">Händelseinställningar</string>
+    <string name="settings_section_sync">Aviseringar &amp; synkronisering</string>
     <string name="settings_section_data">Säkerhetskopiering &amp; återställning</string>
     <string name="settings_section_privacy">Integritet</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Applås</string>
-    <string name="app_lock_subtitle_off">Kräv upplåsning för att öppna KashCal</string>
-    <string name="app_lock_subtitle_on">Lås upp med fingeravtryck, ansikte eller skärmlås</string>
+    <string name="settings_app_lock_info">Kräver enhetsautentisering för att öppna KashCal.</string>
     <string name="app_lock_veil_locked">Låst</string>
     <string name="app_lock_veil_unlock">Lås upp</string>
     <string name="app_lock_veil_footnote">Fingeravtryck, ansikte eller skärmlås</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Säkerhetskopian innehåller ogiltiga data och kan inte återställas.</string>
     <string name="restore_error_apply_failure">Något gick fel när säkerhetskopian skulle tillämpas. Inga ändringar sparades.</string>
     <string name="backup_error_build_failed">Säkerhetskopieringen misslyckades</string>
-    <string name="backup_error_write_failed">Säkerhetskopieringen misslyckades — kunde inte skriva till filen</string>
+    <string name="backup_error_write_failed">Säkerhetskopieringen misslyckades. Kunde inte skriva till filen.</string>
     <string name="backup_error_read_failed">Kunde inte läsa filen</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Nätverksfel, försök igen</string>
     <string name="error_import_file_not_found">Filen hittades inte eller kan inte läsas.</string>
     <string name="error_import_invalid_format">Ogiltigt kalenderfilformat.</string>
+    <string name="error_import_no_events">Inga händelser hittades i filen</string>
+    <string name="error_import_failed">Importen misslyckades</string>
     <string name="error_import_partial">%1$d händelser importerade, %2$d misslyckades.</string>
     <string name="error_export_failed">Export av händelser misslyckades.</string>
     <string name="error_export_no_events">Inga händelser att exportera.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalenderfel</string>
     <string name="error_device_calendar_write_failed">Kunde inte spara till enhetskalender. Försök igen.</string>
     <string name="error_device_calendar_permission">Kalenderbehörighet krävs. Ge behörighet i Inställningar.</string>
+    <string name="error_device_calendar_permission_denied">Slå av och på kalenderbehörigheten i Inställningar för att ge skrivåtkomst</string>
     <string name="error_device_calendar_not_found">Kalender hittades inte. Den kan ha tagits bort.</string>
     <string name="error_device_event_not_found">Händelse hittades inte. Den kan ha raderats.</string>
     <string name="error_device_calendar_read_only">Denna kalender är skrivskyddad.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Vald</string>
     <string name="cd_back">Tillbaka</string>
+    <string name="cd_opens_in_browser">Öppnas i webbläsare</string>
     <string name="cd_search">Sök</string>
     <string name="cd_create_event">Skapa händelse</string>
     <string name="cd_delete">Ta bort</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Återkommande</string>
     <string name="cd_enabled">Aktiverad</string>
     <string name="cd_sync_error">Synkroniseringsfel</string>
-    <string name="cd_select_option">Välj alternativ</string>
     <string name="cd_select_label">Välj %1$s</string>
     <string name="cd_wheel_picker">Hjulväljare med %1$d alternativ</string>
     <string name="cd_time_entry_keyboard">Ange exakt tid</string>
     <string name="time_entry_dialog_title">Ange tid</string>
     <string name="time_entry_tap_to_edit">Tryck för att redigera</string>
     <string name="cd_version_info">KashCal version %1$s. Tryck länge för debug-alternativ.</string>
+    <string name="cd_about_setting">Om %1$s</string>
     <string name="cd_color_slider">Färgskjutare, just nu %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grader</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Färg:</string>
     <string name="label_repeat">Upprepa</string>
     <string name="label_sync_interval">Synk-intervall:</string>
-    <string name="label_scheduled_events">Schemalagda händelser</string>
-    <string name="label_all_day_events">Heldagshändelser</string>
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Användarnamn</string>
     <string name="label_password">Lösenord</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Synliga kalendrar</string>
     <string name="settings_default_calendar">Standardkalender</string>
     <string name="settings_default_event_length">Standard händelselängd</string>
-    <string name="settings_default_alerts">Standardpåminnelser</string>
+    <string name="settings_default_event_length_hint">Standardlängd för nya händelser</string>
+    <string name="settings_timed_event_alert">Påminnelse för händelse med tid</string>
+    <string name="settings_all_day_event_alert">Påminnelse för heldagshändelse</string>
+    <string name="settings_custom_alert_value">Anpassad (%1$s)</string>
     <string name="settings_notifications">Aviseringar</string>
-    <string name="settings_new_events">Nya händelser</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
@@ -508,14 +512,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Enhetskalendrar</string>
     <string name="settings_device_calendars_hint">Kalendrar från andra appar</string>
-    <string name="settings_quick_event_add">Snabb händelsetillägg</string>
+    <string name="settings_quick_event_add">Smart händelsetillägg</string>
+    <string name="settings_quick_event_add_info">Skapa händelser genom att skriva naturligt. \"Lunch med Sam fredag 13:00\" fyller i titel, datum och tid åt dig.</string>
     <string name="settings_suggest_titles">Föreslå händelsetitlar</string>
+    <string name="settings_suggest_titles_info">När du namnger en ny händelse föreslås titlar du använt tidigare, så att återkommande händelser är ett tryck bort. Rangordnade efter hur ofta och hur nyligen du använt dem.</string>
     <string name="settings_week_numbers">Veckonummer</string>
     <string name="settings_show_declined">Visa avböjda händelser</string>
     <string name="settings_widget_event_limit">Widget-händelsegräns</string>
+    <string name="settings_widget_event_limit_hint">Flest händelser som visas per dag i widgetar</string>
     <string name="settings_sync_lookback">Synk-tillbakablick</string>
-    <string name="settings_auto_detect_emojis">Identifiera emojis automatiskt</string>
-    <string name="settings_events_per_day">Händelser per dag</string>
+    <string name="settings_sync_lookback_hint">Hur långt tillbaka händelser synkroniseras</string>
     <string name="settings_not_set">Ej inställd</string>
     <string name="settings_on">På</string>
     <string name="settings_off">Av</string>
@@ -528,7 +534,7 @@
     <string name="caldav_trust_insecure_label">Lita på osäker anslutning</string>
     <string name="action_add_another">Lägg till ytterligare</string>
     <string name="account_connected_found_calendars">Hittade %1$d kalend(rar) för %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronisering pågår — händelser visas snart.</string>
+    <string name="account_connected_syncing_hint">Synkronisering pågår. Händelser visas snart.</string>
     <string name="settings_time_format_currently_24h">Just nu: 24-timmar (%1$s)</string>
     <string name="settings_time_format_currently_12h">Just nu: 12-timmar (%1$s)</string>
     <string name="settings_time_format_example">Exempel: %1$s</string>
@@ -587,15 +593,14 @@
     <string name="device_calendars_read_only_calendar">Skrivskyddad (kalendern är skrivskyddad)</string>
     <string name="settings_developer_options">Utvecklaralternativ</string>
     <string name="settings_sync_frequency">Synkfrekvens</string>
-    <string name="settings_preview">FÖRHANDSGRANSKNING</string>
-    <string name="settings_n_events">%1$d händelser</string>
-    <string name="settings_n_events_default">%1$d händelser (standard)</string>
+    <string name="settings_sync_frequency_hint">Hur ofta synkronisering sker i bakgrunden</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendrar</string>
     <string name="drawer_contacts">Kontakter</string>
     <string name="drawer_device_calendars">Enhetskalendrar</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokal</string>
     <string name="drawer_share_feedback">Hjälp &amp; docs</string>
     <string name="event_title_fallback">Händelse</string>
 
@@ -913,6 +918,7 @@
     <string name="reminder_time_after">%1$s efter</string>
     <string name="reminder_day_of_event_12h">9 AM på händelsedagen</string>
     <string name="reminder_day_of_event_24h">09:00 på händelsedagen</string>
+    <string name="reminder_day_of_event">På dagen för händelsen</string>
     <string name="reminder_before_at_12h">%1$s innan kl. 9 AM</string>
     <string name="reminder_before_at_24h">%1$s innan kl. 09:00</string>
     <string name="reminder_short_off">Av</string>
@@ -923,6 +929,15 @@
     <string name="reminder_short_hours">%1$dt</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dv</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d tim</string>
+    <string name="reminder_med_weeks">%1$d v</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagar</item>
+    </plurals>
+    <string name="reminder_med_day_of">På dagen</string>
+    <string name="all_day_alert_9am_hint">Påminnelser för heldagar sker kl. 09:00.</string>
     <string name="reminder_summary_none">Ingen</string>
     <string name="duration_compact">%1$dt %2$dm</string>
     <string name="duration_compact_short">%1$dt%2$dm</string>

@@ -68,6 +68,7 @@
     <string name="action_view">බලන්න</string>
     <string name="action_enable">සක්‍රිය කරන්න</string>
     <string name="action_done">හරි</string>
+    <string name="action_back">ආපසු</string>
     <string name="action_save">සුරකින්න</string>
     <string name="action_add">එකතු කරන්න</string>
     <string name="action_edit">සංස්කරණය</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">කාල ආකෘතිය</string>
     <string name="settings_start_week_on">සතිය ආරම්භ කරන්න</string>
     <string name="settings_event_emojis">සිදුවීම් ඉමෝජි</string>
-    <string name="settings_emoji_subtitle">සිදුවීම් මාතෘකා මත පදනම්ව ඉමෝජි පෙන්වන්න</string>
+    <string name="settings_event_emojis_info">\"උපන්දිනය\" සඳහා 🎂 වැනි, මාතෘකාව මත පදනම්ව සිදුවීම්වලට ඉමෝජියක් එක් කරයි.</string>
     <string name="settings_force_sync">සම්පූර්ණ බලෙන් සමමුහුර්තය</string>
     <string name="settings_force_sync_subtitle">සේවාදායකයෙන් සියලු දින දර්ශන දත්ත නැවත බාගන්න</string>
     <string name="settings_sync_history">සමමුහුර්ත ඉතිහාසය</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">සිදුවීම් ICS ගොනුවකට සුරකින්න</string>
     <string name="settings_birthday_reminder">උපන්දින මතක්කිරීම</string>
     <string name="settings_use_device_timezone">උපාංග වේලා කලාපය භාවිත කරන්න</string>
-    <string name="settings_section_calendars">දින දර්ශන</string>
+    <string name="settings_section_calendars">දින දර්ශන &amp; ගිණුම්</string>
     <string name="settings_section_appearance">පෙනුම</string>
-    <string name="settings_section_creating_events">සිදුවීම් නිර්මාණය</string>
-    <string name="settings_section_sync">සමමුහුර්තය</string>
+    <string name="settings_section_creating_events">සිදුවීම් අභිප්‍රේත</string>
+    <string name="settings_section_sync">දැනුම්දීම් &amp; සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
     <string name="settings_section_privacy">පෞද්ගලිකත්වය</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">යෙදුම් අගුල</string>
-    <string name="app_lock_subtitle_off">KashCal විවෘත කිරීමට අගුළු හැරීම අවශ්‍ය කරන්න</string>
-    <string name="app_lock_subtitle_on">ඇඟිලි සලකුණ, මුහුණ හෝ තිර අගුලෙන් අගුළු හරින්න</string>
+    <string name="settings_app_lock_info">KashCal විවෘත කිරීමට උපාංග සත්‍යාපනය අවශ්‍ය වේ.</string>
     <string name="app_lock_veil_locked">අගුළු දමා ඇත</string>
     <string name="app_lock_veil_unlock">අගුළු හරින්න</string>
     <string name="app_lock_veil_footnote">ඇඟිලි සලකුණ, මුහුණ හෝ තිර අගුල</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">මෙම උපස්ථ ගොනුවේ අවලංගු දත්ත අඩංගු වන අතර ප්‍රතිසාධනය කළ නොහැක.</string>
     <string name="restore_error_apply_failure">උපස්ථය යෙදීමේදී යමක් වැරදී ඇත. කිසිදු වෙනසක් සුරකින ලද්දේ නැත.</string>
     <string name="backup_error_build_failed">උපස්ථය අසාර්ථක විය</string>
-    <string name="backup_error_write_failed">උපස්ථය අසාර්ථක විය — ගොනුවට ලිවීමට නොහැකි විය</string>
+    <string name="backup_error_write_failed">උපස්ථ කිරීම අසාර්ථක විය. ගොනුවට ලිවීමට නොහැකි විය.</string>
     <string name="backup_error_read_failed">ගොනුව කියවීමට නොහැකි විය</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">ජාල දෝෂයකි, නැවත උත්සාහ කරන්න</string>
     <string name="error_import_file_not_found">ගොනුව හමු නොවීය හෝ කියවිය නොහැක.</string>
     <string name="error_import_invalid_format">වලංගු නොවන දින දර්ශන ගොනු ආකෘතිය.</string>
+    <string name="error_import_no_events">ගොනුවේ සිදුවීම් හමු නොවීය</string>
+    <string name="error_import_failed">ආයාත කිරීම අසාර්ථකයි</string>
     <string name="error_import_partial">සිදුවීම් %1$d ක් ආයාත විය, %2$d අසාර්ථකයි.</string>
     <string name="error_export_failed">සිදුවීම් නිර්යාත කිරීමට අසමත්.</string>
     <string name="error_export_no_events">නිර්යාත කිරීමට සිදුවීම් නැත.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">දින දර්ශන දෝෂය</string>
     <string name="error_device_calendar_write_failed">උපාංග දින දර්ශනයට සුරැකීමට අසමත්. කරුණාකර නැවත උත්සාහ කරන්න.</string>
     <string name="error_device_calendar_permission">දින දර්ශන ලිවීමේ අවසරය අවශ්‍යයි. කරුණාකර සැකසීම් තුළ අවසරය ලබා දෙන්න.</string>
+    <string name="error_device_calendar_permission_denied">ලිවීමේ ප්‍රවේශය ලබා දීමට සැකසීම් තුළ දින දර්ශන අවසරය අක්‍රිය කර නැවත සක්‍රිය කරන්න</string>
     <string name="error_device_calendar_not_found">දින දර්ශනය හමු නොවීය. ඉවත් කර ඇති විය හැක.</string>
     <string name="error_device_event_not_found">සිදුවීම හමු නොවීය. මකා දමා ඇති විය හැක.</string>
     <string name="error_device_calendar_read_only">මෙම දින දර්ශනය කියවීමට පමණයි.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">තෝරාගත්</string>
     <string name="cd_back">ආපසු</string>
+    <string name="cd_opens_in_browser">බ්‍රව්සරයේ විවෘත වේ</string>
     <string name="cd_search">සොයන්න</string>
     <string name="cd_create_event">සිදුවීම සාදන්න</string>
     <string name="cd_delete">මකන්න</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">පුනරාවර්තන</string>
     <string name="cd_enabled">සක්‍රියයි</string>
     <string name="cd_sync_error">සමමුහුර්ත දෝෂය</string>
-    <string name="cd_select_option">විකල්පය තෝරන්න</string>
     <string name="cd_select_label">%1$s තෝරන්න</string>
     <string name="cd_wheel_picker">විකල්ප %1$d ක් සහිත රෝද තෝරනය</string>
     <string name="cd_time_entry_keyboard">නිශ්චිත වේලාව ඇතුළු කරන්න</string>
     <string name="time_entry_dialog_title">වේලාව ඇතුළු කරන්න</string>
     <string name="time_entry_tap_to_edit">සංස්කරණය කිරීමට තට්ටු කරන්න</string>
     <string name="cd_version_info">KashCal අනුවාදය %1$s. නිදොස්කරණ විකල්ප සඳහා දිගු ඔබන්න.</string>
+    <string name="cd_about_setting">%1$s පිළිබඳ</string>
     <string name="cd_color_slider">වර්ණ ස්ලයිඩරය, දැනට %1$s</string>
     <string name="cd_color_slider_state">%1$s, අංශක %2$d</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">වර්ණය:</string>
     <string name="label_repeat">පුනරාවර්තනය</string>
     <string name="label_sync_interval">සමමුහුර්ත කාල පරතරය:</string>
-    <string name="label_scheduled_events">උපලේඛිත සිදුවීම්</string>
-    <string name="label_all_day_events">මුළු දින සිදුවීම්</string>
     <string name="label_server_url">සේවාදායක URL</string>
     <string name="label_username">පරිශීලක නාමය</string>
     <string name="label_password">මුරපදය</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">දෘශ්‍ය දින දර්ශන</string>
     <string name="settings_default_calendar">පෙරනිමි දින දර්ශනය</string>
     <string name="settings_default_event_length">පෙරනිමි සිදුවීම් කාලය</string>
-    <string name="settings_default_alerts">පෙරනිමි ඇඟවීම්</string>
+    <string name="settings_default_event_length_hint">නව සිදුවීම් සඳහා පෙරනිමි කාලසීමාව</string>
+    <string name="settings_timed_event_alert">වේලාවකට නියමිත සිදුවීම් ඇඟවීම</string>
+    <string name="settings_all_day_event_alert">මුළු දින සිදුවීම් ඇඟවීම</string>
+    <string name="settings_custom_alert_value">අභිරුචි (%1$s)</string>
     <string name="settings_notifications">දැනුම්දීම්</string>
-    <string name="settings_new_events">නව සිදුවීම්</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">පද්ධති පෙරනිමිය</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>
     <string name="settings_device_calendars_hint">වෙනත් යෙදුම්වල දින දර්ශන</string>
-    <string name="settings_quick_event_add">ඉක්මන් සිදුවීම් එකතුව</string>
+    <string name="settings_quick_event_add">ස්මාට් සිදුවීම් එකතුව</string>
+    <string name="settings_quick_event_add_info">ස්වාභාවිකව ටයිප් කිරීමෙන් සිදුවීම් සාදන්න. \"Sam සමඟ සිකුරාදා දහවල් 1ට දිවා ආහාරය\" මගින් මාතෘකාව, දිනය සහ වේලාව ඔබ වෙනුවෙන් පුරවයි.</string>
     <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
+    <string name="settings_suggest_titles_info">ඔබ නව සිදුවීමක් නම් කරන විට, ඔබ මීට පෙර භාවිත කළ මාතෘකා යෝජනා කරයි, එවිට නැවත නැවත සිදුවන සිදුවීම් එක් ස්පර්ශයකින් සිදු වේ. ඔබ ඒවා කොපමණ නිතර සහ කොපමණ මෑතකදී භාවිත කළේද යන්න මත පදනම්ව ශ්‍රේණිගත කර ඇත.</string>
     <string name="settings_week_numbers">සතිය අංක</string>
     <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
     <string name="settings_widget_event_limit">විජට් සිදුවීම් සීමාව</string>
+    <string name="settings_widget_event_limit_hint">විජට්වල දිනකට පෙන්වන උපරිම සිදුවීම් ගණන</string>
     <string name="settings_sync_lookback">සමමුහුර්ත ආපසු බැලීම</string>
-    <string name="settings_auto_detect_emojis">ඉමෝජි ස්වයංක්‍රීය හඳුනාගැනීම</string>
-    <string name="settings_events_per_day">දිනකට සිදුවීම්</string>
+    <string name="settings_sync_lookback_hint">සිදුවීම් කොපමණ පසුපසට සමමුහුර්ත කරනවාද</string>
     <string name="settings_not_set">සකසා නැත</string>
     <string name="settings_on">සක්‍රියයි</string>
     <string name="settings_off">අක්‍රියයි</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">අනාරක්ෂිත සම්බන්ධතාවය විශ්වාස කරන්න</string>
     <string name="action_add_another">තවත් එකතු කරන්න</string>
     <string name="account_connected_found_calendars">%2$s සඳහා දින දර්ශන %1$d ක් හමු විය.</string>
-    <string name="account_connected_syncing_hint">සමමුහුර්ත වෙමින් — සිදුවීම් ඉක්මනින් පෙනෙනු ඇත.</string>
+    <string name="account_connected_syncing_hint">සමමුහුර්ත කිරීම ක්‍රියාත්මක වෙමින් පවතී. සිදුවීම් ඉක්මනින් දිස් වනු ඇත.</string>
     <string name="settings_time_format_currently_24h">දැනට: පැය 24 (%1$s)</string>
     <string name="settings_time_format_currently_12h">දැනට: පැය 12 (%1$s)</string>
     <string name="settings_time_format_example">උදාහරණ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">කියවීමට පමණයි (කියවීමට පමණක් දින දර්ශනය)</string>
     <string name="settings_developer_options">සංවර්ධක විකල්ප</string>
     <string name="settings_sync_frequency">සමමුහුර්ත වාරිකතාව</string>
-    <string name="settings_preview">පෙරදසුන</string>
-    <string name="settings_n_events">සිදුවීම් %1$d</string>
-    <string name="settings_n_events_default">සිදුවීම් %1$d (පෙරනිමි)</string>
+    <string name="settings_sync_frequency_hint">පසුබිමින් කොපමණ වාර ගණනක් සමමුහුර්ත කරනවාද</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">දින දර්ශන</string>
     <string name="drawer_contacts">සම්බන්ධතා</string>
     <string name="drawer_device_calendars">උපාංග දින දර්ශන</string>
     <string name="drawer_account_offline">මාර්ගගත නැත</string>
+    <string name="calendar_local">ස්ථානීය</string>
     <string name="drawer_share_feedback">උදව් සහ ලේඛන</string>
     <string name="event_title_fallback">සිදුවීම</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s පසුව</string>
     <string name="reminder_day_of_event_12h">සිදුවීමේ දින පෙ.ව. 9</string>
     <string name="reminder_day_of_event_24h">සිදුවීමේ දින 09:00</string>
+    <string name="reminder_day_of_event">සිදුවීමේ දිනය</string>
     <string name="reminder_before_at_12h">%1$s කලින් පෙ.ව. 9 ට</string>
     <string name="reminder_before_at_24h">%1$s කලින් 09:00 ට</string>
     <string name="reminder_short_off">අක්‍රිය</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dප</string>
     <string name="reminder_short_days">%1$dදි</string>
     <string name="reminder_short_weeks">%1$dස</string>
+    <string name="reminder_med_minutes">%1$d මිනි</string>
+    <string name="reminder_med_hours">%1$d පැය</string>
+    <string name="reminder_med_weeks">%1$d සති</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d දිනය</item>
+        <item quantity="other">%1$d දින</item>
+    </plurals>
+    <string name="reminder_med_day_of">දිනය</string>
+    <string name="all_day_alert_9am_hint">දිනපුරා ඇඟවීම් පෙරවරු 9ට (09:00) සක්‍රීය වේ.</string>
     <string name="reminder_summary_none">නැත</string>
     <string name="duration_compact">%1$dප %2$dමි</string>
     <string name="duration_compact_short">%1$dප%2$dමි</string>

@@ -68,6 +68,7 @@
     <string name="action_view">Ikusi</string>
     <string name="action_enable">Gaitu</string>
     <string name="action_done">Egina</string>
+    <string name="action_back">Atzera</string>
     <string name="action_save">Gorde</string>
     <string name="action_add">Gehitu</string>
     <string name="action_edit">Editatu</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Ordu-formatua</string>
     <string name="settings_start_week_on">Astea hasi hemen</string>
     <string name="settings_event_emojis">Gertaera emojiak</string>
-    <string name="settings_emoji_subtitle">Erakutsi emojiak gertaeren izenburuetan oinarrituta</string>
+    <string name="settings_event_emojis_info">Emoji bat gehitzen die gertaerei izenburuaren arabera, adibidez 🎂 \"Urtebetetzea\" izenerako.</string>
     <string name="settings_force_sync">Sinkronizazio osoa behartu</string>
     <string name="settings_force_sync_subtitle">Egutegiko datu guztiak berriro jaitsi</string>
     <string name="settings_sync_history">Sinkronizazio-historia</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Gorde ekitaldiak ICS fitxategi batean</string>
     <string name="settings_birthday_reminder">Urtebetetze-gogorarazlea</string>
     <string name="settings_use_device_timezone">Gailuaren ordu-zona erabili</string>
-    <string name="settings_section_calendars">Egutegiak</string>
+    <string name="settings_section_calendars">Egutegiak eta kontuak</string>
     <string name="settings_section_appearance">Itxura</string>
-    <string name="settings_section_creating_events">Gertaerak sortzea</string>
-    <string name="settings_section_sync">Sinkronizazioa</string>
+    <string name="settings_section_creating_events">Gertaeren hobespenak</string>
+    <string name="settings_section_sync">Jakinarazpenak eta sinkronizazioa</string>
     <string name="settings_section_data">Babeskopia eta leheneratzea</string>
     <string name="settings_section_privacy">Pribatutasuna</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Aplikazioaren blokeoa</string>
-    <string name="app_lock_subtitle_off">Desblokeatzea eskatu KashCal irekitzeko</string>
-    <string name="app_lock_subtitle_on">Desblokeatu hatz-markarekin, aurpegiarekin edo pantaila-blokeoarekin</string>
+    <string name="settings_app_lock_info">Gailuaren autentifikazioa eskatzen du KashCal irekitzeko.</string>
     <string name="app_lock_veil_locked">Blokeatuta</string>
     <string name="app_lock_veil_unlock">Desblokeatu</string>
     <string name="app_lock_veil_footnote">Hatz-marka, aurpegia edo pantaila-blokeoa</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Babeskopia-fitxategi honek baliogabeko datuak ditu eta ezin da leheneratu.</string>
     <string name="restore_error_apply_failure">Zerbait gaizki joan da babeskopia aplikatzean. Ez da aldaketarik gorde.</string>
     <string name="backup_error_build_failed">Babeskopiak huts egin du</string>
-    <string name="backup_error_write_failed">Babeskopiak huts egin du — ezin izan da fitxategian idatzi</string>
+    <string name="backup_error_write_failed">Babeskopiak huts egin du. Ezin izan da fitxategian idatzi.</string>
     <string name="backup_error_read_failed">Ezin izan da fitxategia irakurri</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Sare-errorea, saiatu berriro</string>
     <string name="error_import_file_not_found">Fitxategia ez da aurkitu edo ezin da irakurri.</string>
     <string name="error_import_invalid_format">Egutegi-fitxategiaren formatu baliogabea.</string>
+    <string name="error_import_no_events">Ez da ekitaldirik aurkitu fitxategian</string>
+    <string name="error_import_failed">Inportazioak huts egin du</string>
     <string name="error_import_partial">%1$d gertaera inportatu dira, %2$d huts egin du.</string>
     <string name="error_export_failed">Gertaerak esportatzeak huts egin du.</string>
     <string name="error_export_no_events">Ez dago esportatzeko gertaerarik.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Egutegi-errorea</string>
     <string name="error_device_calendar_write_failed">Gailuko egutegian gordetzeak huts egin du. Saiatu berriro.</string>
     <string name="error_device_calendar_permission">Egutegiaren idazte-baimena behar da. Eman baimena Ezarpenetan.</string>
+    <string name="error_device_calendar_permission_denied">Desaktibatu eta berraktibatu Egutegiaren baimena Ezarpenetan idazteko sarbidea emateko</string>
     <string name="error_device_calendar_not_found">Egutegia ez da aurkitu. Agian ezabatu egin da.</string>
     <string name="error_device_event_not_found">Gertaera ez da aurkitu. Agian ezabatu egin da.</string>
     <string name="error_device_calendar_read_only">Egutegi hau irakurtzeko soilik da.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Hautatuta</string>
     <string name="cd_back">Atzera</string>
+    <string name="cd_opens_in_browser">Arakatzailean irekitzen da</string>
     <string name="cd_search">Bilatu</string>
     <string name="cd_create_event">Gertaera sortu</string>
     <string name="cd_delete">Ezabatu</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Errepikakorra</string>
     <string name="cd_enabled">Gaituta</string>
     <string name="cd_sync_error">Sinkronizazio-errorea</string>
-    <string name="cd_select_option">Aukera hautatu</string>
     <string name="cd_select_label">%1$s hautatu</string>
     <string name="cd_wheel_picker">Gurpil-hautatzailea %1$d aukerarekin</string>
     <string name="cd_time_entry_keyboard">Sartu ordu zehatza</string>
     <string name="time_entry_dialog_title">Sartu ordua</string>
     <string name="time_entry_tap_to_edit">Sakatu editatzeko</string>
     <string name="cd_version_info">KashCal %1$s bertsioa. Luze sakatu arazketa-aukeretarako.</string>
+    <string name="cd_about_setting">%1$s(r)i buruz</string>
     <string name="cd_color_slider">Kolore-graduatzailea, unean %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradu</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Kolorea:</string>
     <string name="label_repeat">Errepikatu</string>
     <string name="label_sync_interval">Sinkronizazio-tartea:</string>
-    <string name="label_scheduled_events">Programatutako gertaerak</string>
-    <string name="label_all_day_events">Egun osoko gertaerak</string>
     <string name="label_server_url">Zerbitzariaren URL</string>
     <string name="label_username">Erabiltzaile-izena</string>
     <string name="label_password">Pasahitza</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Egutegi ikusgarriak</string>
     <string name="settings_default_calendar">Egutegi lehenetsia</string>
     <string name="settings_default_event_length">Gertaeraren iraupena lehenetsia</string>
-    <string name="settings_default_alerts">Alerta lehenetsiak</string>
+    <string name="settings_default_event_length_hint">Gertaera berrien iraupen lehenetsia</string>
+    <string name="settings_timed_event_alert">Orduduneko gertaeraren alerta</string>
+    <string name="settings_all_day_event_alert">Egun osoko gertaeraren alerta</string>
+    <string name="settings_custom_alert_value">Pertsonalizatua (%1$s)</string>
     <string name="settings_notifications">Jakinarazpenak</string>
-    <string name="settings_new_events">Gertaera berriak</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistemaren lehenetsia</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Gailuko egutegiak</string>
     <string name="settings_device_calendars_hint">Beste aplikazioetako egutegiak</string>
-    <string name="settings_quick_event_add">Gertaera azkar gehitu</string>
+    <string name="settings_quick_event_add">Gertaerak modu adimendunean gehitu</string>
+    <string name="settings_quick_event_add_info">Sortu gertaerak modu naturalean idatziz. \"Bazkaria Sam-ekin ostirala eguerdiko 1ean\" izenburua, data eta ordua betetzen ditu zuretzat.</string>
     <string name="settings_suggest_titles">Iradoki gertaeren izenburuak</string>
+    <string name="settings_suggest_titles_info">Gertaera berri bati izena jartzean, lehen erabili dituzun izenburuak iradokitzen ditu, errepikatzen diren gertaerak ukitu bakarrean egon daitezen. Zenbat aldiz eta noiz arte erabili dituzun arabera sailkatuta.</string>
     <string name="settings_week_numbers">Aste-zenbakiak</string>
     <string name="settings_show_declined">Erakutsi ezetsitako gertaerak</string>
     <string name="settings_widget_event_limit">Widget-eko gertaera-muga</string>
+    <string name="settings_widget_event_limit_hint">Widgetetan eguneko gehienez erakusten diren gertaerak</string>
     <string name="settings_sync_lookback">Sinkronizazio atzera-begirada</string>
-    <string name="settings_auto_detect_emojis">Emojien detekzio automatikoa</string>
-    <string name="settings_events_per_day">Gertaerak eguneko</string>
+    <string name="settings_sync_lookback_hint">Zenbateraino atzera sinkronizatu gertaerak</string>
     <string name="settings_not_set">Ezarri gabe</string>
     <string name="settings_on">Aktibatuta</string>
     <string name="settings_off">Desaktibatuta</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Konexio ez-seguruan fidatu</string>
     <string name="action_add_another">Beste bat gehitu</string>
     <string name="account_connected_found_calendars">%1$d egutegi aurkitu dira %2$s-en.</string>
-    <string name="account_connected_syncing_hint">Sinkronizazioa abian — gertaerak laster agertuko dira.</string>
+    <string name="account_connected_syncing_hint">Sinkronizazioa abian. Gertaerak laster agertuko dira.</string>
     <string name="settings_time_format_currently_24h">Unean: 24 ordu (%1$s)</string>
     <string name="settings_time_format_currently_12h">Unean: 12 ordu (%1$s)</string>
     <string name="settings_time_format_example">Adibidea: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Irakurtzeko soilik (egutegia irakurtzeko soilik da)</string>
     <string name="settings_developer_options">Garatzaile-aukerak</string>
     <string name="settings_sync_frequency">Sinkronizazio-maiztasuna</string>
-    <string name="settings_preview">AURREBISTA</string>
-    <string name="settings_n_events">%1$d gertaera</string>
-    <string name="settings_n_events_default">%1$d gertaera (lehenetsia)</string>
+    <string name="settings_sync_frequency_hint">Zenbatero sinkronizatu bigarren planoan</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Egutegiak</string>
     <string name="drawer_contacts">Kontaktuak</string>
     <string name="drawer_device_calendars">Gailuko egutegiak</string>
     <string name="drawer_account_offline">Lineaz kanpo</string>
+    <string name="calendar_local">Lokala</string>
     <string name="drawer_share_feedback">Laguntza eta dokumentazioa</string>
     <string name="event_title_fallback">Gertaera</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s geroago</string>
     <string name="reminder_day_of_event_12h">9 AM gertaeraren egunean</string>
     <string name="reminder_day_of_event_24h">09:00 gertaeraren egunean</string>
+    <string name="reminder_day_of_event">Gertaeraren egunean</string>
     <string name="reminder_before_at_12h">%1$s lehenago 9 AM-etan</string>
     <string name="reminder_before_at_24h">%1$s lehenago 09:00etan</string>
     <string name="reminder_short_off">Desaktibatuta</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$do</string>
     <string name="reminder_short_days">%1$de</string>
     <string name="reminder_short_weeks">%1$da</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d ord</string>
+    <string name="reminder_med_weeks">%1$d aste</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d egun</item>
+        <item quantity="other">%1$d egun</item>
+    </plurals>
+    <string name="reminder_med_day_of">Egunean</string>
+    <string name="all_day_alert_9am_hint">Egun osoko alertak 9 AM (09:00) jotzen dute.</string>
     <string name="reminder_summary_none">Bat ere ez</string>
     <string name="duration_compact">%1$do %2$dm</string>
     <string name="duration_compact_short">%1$do%2$dm</string>

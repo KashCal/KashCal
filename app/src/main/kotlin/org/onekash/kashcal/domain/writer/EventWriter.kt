@@ -47,6 +47,16 @@ class EventWriter @Inject constructor(
     private val pendingCancelsDao by lazy { database.pendingCancelsDao() }
 
     /**
+     * Result of [createImportedSeries]: the persisted master and its exception
+     * overrides, each with its assigned row id so callers can schedule
+     * reminders against the real events.
+     */
+    data class ImportedSeries(
+        val master: Event,
+        val exceptions: List<Event>
+    )
+
+    /**
      * Create a new event.
      *
      * @param event The event to create (id will be ignored)
@@ -101,6 +111,88 @@ class EventWriter @Inject constructor(
             }
 
             createdEvent
+        }
+    }
+
+    /**
+     * Persist an ICS-imported recurring event as one linked series: a master
+     * plus its RECURRENCE-ID exception overrides, all sharing a single UID.
+     *
+     * The caller (EventCoordinator) has already regenerated the shared UID
+     * (never the source file's UID — a fresh UID avoids duplicate-UID PUT
+     * collisions on servers like iCloud/Nextcloud) and resolved reminder
+     * defaults. This method only handles persistence + linkage:
+     *
+     * - Master: inserted, occurrences expanded from its RRULE, and (for a
+     *   synced calendar) a single CREATE queued. On push the exceptions ride
+     *   along in the master's resource — PushStrategy bundles events whose
+     *   [Event.originalEventId] is set rather than pushing them separately, so
+     *   no per-exception operation is queued here.
+     * - Each exception: inserted with the master's UID and row id as
+     *   [Event.originalEventId], its [Event.originalInstanceTime] preserved,
+     *   recurrence fields cleared, and marked [SyncStatus.SYNCED] locally
+     *   (bundled, not independently synced). [OccurrenceGenerator.linkException]
+     *   attaches it to the master's occurrence for that instant so the day
+     *   only renders the override, not both the RRULE instance and the
+     *   exception.
+     *
+     * All work runs in a single transaction.
+     *
+     * @param master The recurring master event (id ignored; must have a RRULE)
+     * @param exceptions The override events (id ignored; each must carry a
+     *   non-null [Event.originalInstanceTime])
+     * @param isLocal True if the target calendar is local-only (no sync)
+     * @return The persisted master and exceptions with assigned row ids
+     */
+    suspend fun createImportedSeries(
+        master: Event,
+        exceptions: List<Event>,
+        isLocal: Boolean = false
+    ): ImportedSeries {
+        require(master.rrule != null) { "createImportedSeries master must be recurring" }
+        return database.withTransaction {
+            val now = System.currentTimeMillis()
+
+            // The master persists exactly like any created event — insert, RRULE
+            // occurrence expansion, and (for a synced calendar) a single CREATE
+            // queued. createEvent stamps timestamps + syncStatus and joins this
+            // transaction, so there's nothing to re-implement here.
+            val savedMaster = createEvent(master, isLocal)
+            val masterId = savedMaster.id
+
+            val savedExceptions = exceptions.map { exception ->
+                // The caller only routes real RECURRENCE-ID overrides here.
+                val originalInstanceTime = requireNotNull(exception.originalInstanceTime) {
+                    "createImportedSeries exception must carry originalInstanceTime"
+                }
+                val exceptionToInsert = exception.copy(
+                    id = 0,
+                    uid = savedMaster.uid, // RFC 5545: exception shares master UID
+                    calendarId = savedMaster.calendarId,
+                    originalEventId = masterId,
+                    // originalInstanceTime preserved from the parsed RECURRENCE-ID.
+                    rrule = null,
+                    rdate = null,
+                    exdate = null,
+                    // Bundled with the master for sync — synced locally either way.
+                    syncStatus = SyncStatus.SYNCED,
+                    caldavUrl = null,
+                    etag = null,
+                    dtstamp = now,
+                    createdAt = now,
+                    updatedAt = now,
+                    localModifiedAt = if (isLocal) null else now
+                )
+                val exceptionId = eventsDao.insert(exceptionToInsert)
+                val savedException = exceptionToInsert.copy(id = exceptionId)
+
+                // Attach to the master's occurrence so the overridden instant
+                // renders once (the override), not both the RRULE instance and it.
+                occurrenceGenerator.linkException(masterId, originalInstanceTime, savedException)
+                savedException
+            }
+
+            ImportedSeries(savedMaster, savedExceptions)
         }
     }
 

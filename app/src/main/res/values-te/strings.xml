@@ -68,6 +68,7 @@
     <string name="action_view">చూడు</string>
     <string name="action_enable">ఆన్ చేయి</string>
     <string name="action_done">పూర్తి</string>
+    <string name="action_back">వెనుకకు</string>
     <string name="action_save">సేవ్ చేయి</string>
     <string name="action_add">జోడించు</string>
     <string name="action_edit">మార్చు</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">సమయ ఫార్మాట్</string>
     <string name="settings_start_week_on">వారం ప్రారంభం</string>
     <string name="settings_event_emojis">ఈవెంట్ ఇమోజీలు</string>
-    <string name="settings_emoji_subtitle">ఈవెంట్ శీర్షికల ఆధారంగా ఇమోజీలు చూపించు</string>
+    <string name="settings_event_emojis_info">శీర్షిక ఆధారంగా ఈవెంట్‌లకు ఒక ఇమోజీని జోడిస్తుంది, ఉదాహరణకు \"పుట్టినరోజు\" కోసం 🎂.</string>
     <string name="settings_force_sync">ఫోర్స్ ఫుల్ సింక్</string>
     <string name="settings_force_sync_subtitle">సర్వర్ నుండి మొత్తం క్యాలెండర్ డేటా మళ్ళీ డౌన్‌లోడ్ చేయి</string>
     <string name="settings_sync_history">సింక్ చరిత్ర</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ఈవెంట్‌లను ICS ఫైల్‌లో సేవ్ చేయి</string>
     <string name="settings_birthday_reminder">పుట్టినరోజు రిమైండర్</string>
     <string name="settings_use_device_timezone">పరికర టైమ్‌జోన్ ఉపయోగించు</string>
-    <string name="settings_section_calendars">క్యాలెండర్లు</string>
+    <string name="settings_section_calendars">క్యాలెండర్లు &amp; ఖాతాలు</string>
     <string name="settings_section_appearance">రూపం</string>
-    <string name="settings_section_creating_events">ఈవెంట్‌లను సృష్టించడం</string>
-    <string name="settings_section_sync">సింక్</string>
+    <string name="settings_section_creating_events">ఈవెంట్ ప్రాధాన్యతలు</string>
+    <string name="settings_section_sync">నోటిఫికేషన్‌లు &amp; సింక్</string>
     <string name="settings_section_data">బ్యాకప్ &amp; రీస్టోర్</string>
     <string name="settings_section_privacy">గోప్యత</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">యాప్ లాక్</string>
-    <string name="app_lock_subtitle_off">KashCal తెరవడానికి అన్‌లాక్ తప్పనిసరి చేయండి</string>
-    <string name="app_lock_subtitle_on">వేలిముద్ర, ముఖం లేదా స్క్రీన్ లాక్‌తో అన్‌లాక్ చేయండి</string>
+    <string name="settings_app_lock_info">KashCal తెరవడానికి పరికర ప్రామాణీకరణ అవసరం.</string>
     <string name="app_lock_veil_locked">లాక్ చేయబడింది</string>
     <string name="app_lock_veil_unlock">అన్‌లాక్ చేయండి</string>
     <string name="app_lock_veil_footnote">వేలిముద్ర, ముఖం లేదా స్క్రీన్ లాక్</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ఈ బ్యాకప్ ఫైల్‌లో చెల్లని డేటా ఉంది, దీనిని రీస్టోర్ చేయలేము.</string>
     <string name="restore_error_apply_failure">బ్యాకప్‌ను వర్తింపజేస్తున్నప్పుడు ఏదో తప్పు జరిగింది. మార్పులు సేవ్ చేయబడలేదు.</string>
     <string name="backup_error_build_failed">బ్యాక్‌అప్ విఫలమైంది</string>
-    <string name="backup_error_write_failed">బ్యాక్‌అప్ విఫలమైంది — ఫైల్‌కు రాయలేకపోయాం</string>
+    <string name="backup_error_write_failed">బ్యాకప్ విఫలమైంది. ఫైల్‌కు రాయడం సాధ్యం కాలేదు.</string>
     <string name="backup_error_read_failed">ఫైల్‌ను చదవలేకపోయాం</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">నెట్‌వర్క్ లోపం, దయచేసి మళ్లీ ప్రయత్నించండి</string>
     <string name="error_import_file_not_found">ఫైల్ కనుగొనబడలేదు లేదా చదవలేము.</string>
     <string name="error_import_invalid_format">చెల్లని క్యాలెండర్ ఫైల్ ఫార్మాట్.</string>
+    <string name="error_import_no_events">ఫైల్‌లో ఈవెంట్‌లు ఏవీ కనుగొనబడలేదు</string>
+    <string name="error_import_failed">దిగుమతి విఫలమైంది</string>
     <string name="error_import_partial">%1$d ఈవెంట్‌లు దిగుమతి చేయబడ్డాయి, %2$d విఫలమయ్యాయి.</string>
     <string name="error_export_failed">ఈవెంట్‌లు ఎగుమతి చేయడం విఫలమైంది.</string>
     <string name="error_export_no_events">ఎగుమతి చేయడానికి ఈవెంట్‌లు లేవు.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">క్యాలెండర్ లోపం</string>
     <string name="error_device_calendar_write_failed">పరికర క్యాలెండర్‌లో సేవ్ చేయడం విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి.</string>
     <string name="error_device_calendar_permission">క్యాలెండర్ వ్రాత అనుమతి అవసరం. దయచేసి సెట్టింగ్‌లలో అనుమతి ఇవ్వండి.</string>
+    <string name="error_device_calendar_permission_denied">వ్రాత యాక్సెస్ ఇవ్వడానికి సెట్టింగ్‌లలో క్యాలెండర్ అనుమతిని ఆఫ్ చేసి మళ్లీ ఆన్ చేయండి</string>
     <string name="error_device_calendar_not_found">క్యాలెండర్ కనుగొనబడలేదు. ఇది తొలగించబడి ఉండవచ్చు.</string>
     <string name="error_device_event_not_found">ఈవెంట్ కనుగొనబడలేదు. ఇది తొలగించబడి ఉండవచ్చు.</string>
     <string name="error_device_calendar_read_only">ఈ క్యాలెండర్ చదవడం-మాత్రమే.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ఎంపిక చేయబడింది</string>
     <string name="cd_back">వెనుకకు</string>
+    <string name="cd_opens_in_browser">బ్రౌజర్‌లో తెరుచుకుంటుంది</string>
     <string name="cd_search">శోధించు</string>
     <string name="cd_create_event">ఈవెంట్ సృష్టించు</string>
     <string name="cd_delete">తొలగించు</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">పునరావృత</string>
     <string name="cd_enabled">ఆన్ చేయబడింది</string>
     <string name="cd_sync_error">సింక్ లోపం</string>
-    <string name="cd_select_option">ఎంపిక ఎంచుకో</string>
     <string name="cd_select_label">%1$s ఎంచుకో</string>
     <string name="cd_wheel_picker">%1$d ఎంపికలతో వీల్ పికర్</string>
     <string name="cd_time_entry_keyboard">ఖచ్చితమైన సమయాన్ని నమోదు చేయండి</string>
     <string name="time_entry_dialog_title">సమయాన్ని నమోదు చేయండి</string>
     <string name="time_entry_tap_to_edit">సవరించడానికి నొక్కండి</string>
     <string name="cd_version_info">KashCal సంస్కరణ %1$s. డీబగ్ ఎంపికల కోసం ఎక్కువసేపు నొక్కండి.</string>
+    <string name="cd_about_setting">%1$s గురించి</string>
     <string name="cd_color_slider">రంగు స్లైడర్, ప్రస్తుతం %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d డిగ్రీలు</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">రంగు:</string>
     <string name="label_repeat">పునరావృతం</string>
     <string name="label_sync_interval">సింక్ విరామం:</string>
-    <string name="label_scheduled_events">షెడ్యూల్ చేయబడిన ఈవెంట్‌లు</string>
-    <string name="label_all_day_events">రోజంతా ఈవెంట్‌లు</string>
     <string name="label_server_url">సర్వర్ URL</string>
     <string name="label_username">వినియోగదారు పేరు</string>
     <string name="label_password">పాస్‌వర్డ్</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">కనిపించే క్యాలెండర్లు</string>
     <string name="settings_default_calendar">డీఫాల్ట్ క్యాలెండర్</string>
     <string name="settings_default_event_length">డీఫాల్ట్ ఈవెంట్ వ్యవధి</string>
-    <string name="settings_default_alerts">డీఫాల్ట్ హెచ్చరికలు</string>
+    <string name="settings_default_event_length_hint">కొత్త ఈవెంట్‌ల కోసం డిఫాల్ట్ వ్యవధి</string>
+    <string name="settings_timed_event_alert">సమయ నిర్ధారిత ఈవెంట్ హెచ్చరిక</string>
+    <string name="settings_all_day_event_alert">రోజంతా ఈవెంట్ హెచ్చరిక</string>
+    <string name="settings_custom_alert_value">కస్టమ్ (%1$s)</string>
     <string name="settings_notifications">నోటిఫికేషన్‌లు</string>
-    <string name="settings_new_events">కొత్త ఈవెంట్‌లు</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">సిస్టమ్ డీఫాల్ట్</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">పరికర క్యాలెండర్లు</string>
     <string name="settings_device_calendars_hint">ఇతర యాప్‌ల నుండి క్యాలెండర్లు</string>
-    <string name="settings_quick_event_add">త్వరిత ఈవెంట్ జోడింపు</string>
+    <string name="settings_quick_event_add">స్మార్ట్ ఈవెంట్ జోడింపు</string>
+    <string name="settings_quick_event_add_info">సహజంగా టైప్ చేసి ఈవెంట్‌లను సృష్టించండి. \"శుక్రవారం మధ్యాహ్నం 1 గంటకు Sam‌తో లంచ్\" మీ కోసం శీర్షిక, తేదీ, సమయాన్ని పూరిస్తుంది.</string>
     <string name="settings_suggest_titles">ఈవెంట్ శీర్షికలను సూచించండి</string>
+    <string name="settings_suggest_titles_info">మీరు కొత్త ఈవెంట్‌కు పేరు పెట్టేటప్పుడు, మీరు ఇంతకు ముందు ఉపయోగించిన శీర్షికలను సూచిస్తుంది, తద్వారా పునరావృత ఈవెంట్‌లు ఒకే ట్యాప్‌లో సిద్ధమవుతాయి. మీరు వాటిని ఎంత తరచుగా, ఎంత ఇటీవల ఉపయోగించారో దాని ఆధారంగా వరుసలో ఉంచబడతాయి.</string>
     <string name="settings_week_numbers">వారం సంఖ్యలు</string>
     <string name="settings_show_declined">తిరస్కరించిన ఈవెంట్‌లను చూపించు</string>
     <string name="settings_widget_event_limit">విడ్జెట్ ఈవెంట్ పరిమితి</string>
+    <string name="settings_widget_event_limit_hint">విడ్జెట్‌లలో రోజుకు చూపబడే గరిష్ఠ ఈవెంట్‌లు</string>
     <string name="settings_sync_lookback">సింక్ లుక్‌బ్యాక్</string>
-    <string name="settings_auto_detect_emojis">ఇమోజీలు ఆటో-గుర్తింపు</string>
-    <string name="settings_events_per_day">రోజుకు ఈవెంట్‌లు</string>
+    <string name="settings_sync_lookback_hint">ఈవెంట్‌లను ఎంత వెనుకకు సింక్ చేయాలి</string>
     <string name="settings_not_set">సెట్ చేయబడలేదు</string>
     <string name="settings_on">ఆన్</string>
     <string name="settings_off">ఆఫ్</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">అసురక్షిత కనెక్షన్‌ను విశ్వసించు</string>
     <string name="action_add_another">మరొకటి జోడించు</string>
     <string name="account_connected_found_calendars">%2$s కోసం %1$d క్యాలెండర్(లు) కనుగొనబడ్డాయి.</string>
-    <string name="account_connected_syncing_hint">సింక్ జరుగుతోంది — ఈవెంట్‌లు త్వరలో కనిపిస్తాయి.</string>
+    <string name="account_connected_syncing_hint">సింక్ జరుగుతోంది. ఈవెంట్‌లు త్వరలో కనిపిస్తాయి.</string>
     <string name="settings_time_format_currently_24h">ప్రస్తుతం: 24-గంటల (%1$s)</string>
     <string name="settings_time_format_currently_12h">ప్రస్తుతం: 12-గంటల (%1$s)</string>
     <string name="settings_time_format_example">ఉదాహరణ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">చదవడం మాత్రమే (క్యాలెండర్ చదవడం-మాత్రమే)</string>
     <string name="settings_developer_options">డెవలపర్ ఎంపికలు</string>
     <string name="settings_sync_frequency">సింక్ ఫ్రీక్వెన్సీ</string>
-    <string name="settings_preview">ప్రివ్యూ</string>
-    <string name="settings_n_events">%1$d ఈవెంట్‌లు</string>
-    <string name="settings_n_events_default">%1$d ఈవెంట్‌లు (డీఫాల్ట్)</string>
+    <string name="settings_sync_frequency_hint">బ్యాక్‌గ్రౌండ్‌లో ఎంత తరచుగా సింక్ చేయాలి</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">క్యాలెండర్లు</string>
     <string name="drawer_contacts">కాంటాక్ట్‌లు</string>
     <string name="drawer_device_calendars">పరికర క్యాలెండర్లు</string>
     <string name="drawer_account_offline">ఆఫ్‌లైన్</string>
+    <string name="calendar_local">స్థానికం</string>
     <string name="drawer_share_feedback">సహాయం &amp; పత్రాలు</string>
     <string name="event_title_fallback">ఈవెంట్</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s తర్వాత</string>
     <string name="reminder_day_of_event_12h">ఈవెంట్ రోజు 9 AM</string>
     <string name="reminder_day_of_event_24h">ఈవెంట్ రోజు 09:00</string>
+    <string name="reminder_day_of_event">ఈవెంట్ రోజు</string>
     <string name="reminder_before_at_12h">%1$s ముందు 9 AM కి</string>
     <string name="reminder_before_at_24h">%1$s ముందు 09:00 కి</string>
     <string name="reminder_short_off">ఆఫ్</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dగం.</string>
     <string name="reminder_short_days">%1$dరో.</string>
     <string name="reminder_short_weeks">%1$dవా.</string>
+    <string name="reminder_med_minutes">%1$d నిమి</string>
+    <string name="reminder_med_hours">%1$d గం</string>
+    <string name="reminder_med_weeks">%1$d వార</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d రోజు</item>
+        <item quantity="other">%1$d రోజులు</item>
+    </plurals>
+    <string name="reminder_med_day_of">ఆ రోజు</string>
+    <string name="all_day_alert_9am_hint">రోజంతా అలర్ట్‌లు 9 AM (09:00) కి వస్తాయి.</string>
     <string name="reminder_summary_none">ఏదీ లేదు</string>
     <string name="duration_compact">%1$dగం. %2$dని.</string>
     <string name="duration_compact_short">%1$dగం.%2$dని.</string>

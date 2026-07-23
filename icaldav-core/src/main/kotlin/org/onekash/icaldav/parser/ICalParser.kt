@@ -228,8 +228,8 @@ class ICalParser(
      */
     fun parseVTodo(vtodo: VToDo): ParseResult<ICalTodo> {
         return try {
-            // Get UID - generate random UUID if missing (non-compliant servers)
-            val uid = vtodo.getPropertyOrNull<Property>("UID")?.value
+            // Get UID - generate random UUID if missing or blank (non-compliant servers)
+            val uid = vtodo.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
             // Parse RECURRENCE-ID if present (modified instance)
@@ -450,8 +450,8 @@ class ICalParser(
      */
     fun parseVJournal(vjournal: VJournal): ParseResult<ICalJournal> {
         return try {
-            // Get UID - generate random UUID if missing (non-compliant servers)
-            val uid = vjournal.getPropertyOrNull<Property>("UID")?.value
+            // Get UID - generate random UUID if missing or blank (non-compliant servers)
+            val uid = vjournal.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
             // Parse RECURRENCE-ID if present (modified instance)
@@ -736,8 +736,10 @@ class ICalParser(
      */
     fun parseVEvent(vevent: VEvent): ParseResult<ICalEvent> {
         return try {
-            // Get UID - generate random UUID if missing (non-compliant servers)
-            val uid = vevent.getPropertyOrNull<Property>("UID")?.value
+            // Get UID - generate random UUID if missing or blank (non-compliant
+            // servers). A blank UID is treated as missing so unrelated events
+            // can't share an empty-string key downstream (e.g. import grouping).
+            val uid = vevent.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
             // Get DTSTART - fall back to DTEND if missing (non-compliant servers)

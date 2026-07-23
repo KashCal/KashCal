@@ -68,6 +68,7 @@
     <string name="action_view">ଦେଖନ୍ତୁ</string>
     <string name="action_enable">ଚାଲୁ କରନ୍ତୁ</string>
     <string name="action_done">ସମାପ୍ତ</string>
+    <string name="action_back">ପଛକୁ</string>
     <string name="action_save">ସେଭ କରନ୍ତୁ</string>
     <string name="action_add">ଯୋଡ଼ନ୍ତୁ</string>
     <string name="action_edit">ସମ୍ପାଦନା</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">ସମୟ ଫର୍ମାଟ</string>
     <string name="settings_start_week_on">ସପ୍ତାହ ଆରମ୍ଭ</string>
     <string name="settings_event_emojis">ଇଭେଣ୍ଟ ଇମୋଜି</string>
-    <string name="settings_emoji_subtitle">ଇଭେଣ୍ଟ ଶୀର୍ଷକ ଅନୁସାରେ ଇମୋଜି ଦେଖାନ୍ତୁ</string>
+    <string name="settings_event_emojis_info">ଶୀର୍ଷକ ଆଧାରରେ ଇଭେଣ୍ଟରେ ଏକ ଇମୋଜି ଯୋଡ଼େ, ଯେପରି \"ଜନ୍ମଦିନ\" ପାଇଁ 🎂.</string>
     <string name="settings_force_sync">ଫୋର୍ସ ଫୁଲ ସିଙ୍କ</string>
     <string name="settings_force_sync_subtitle">ସର୍ଭରଠାରୁ ସମସ୍ତ କ୍ୟାଲେଣ୍ଡର ଡାଟା ପୁଣି ଡାଉନଲୋଡ କରନ୍ତୁ</string>
     <string name="settings_sync_history">ସିଙ୍କ ଇତିହାସ</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ICS ଫାଇଲରେ ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="settings_birthday_reminder">ଜନ୍ମଦିନ ରିମାଇଣ୍ଡର</string>
     <string name="settings_use_device_timezone">ଡିଭାଇସ ଟାଇମଜୋନ ବ୍ୟବହାର କରନ୍ତୁ</string>
-    <string name="settings_section_calendars">କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ</string>
+    <string name="settings_section_calendars">କ୍ୟାଲେଣ୍ଡର ଓ ଆକାଉଣ୍ଟ</string>
     <string name="settings_section_appearance">ଚେହେରା</string>
-    <string name="settings_section_creating_events">ଇଭେଣ୍ଟ ସୃଷ୍ଟି</string>
-    <string name="settings_section_sync">ସିଙ୍କ</string>
+    <string name="settings_section_creating_events">ଇଭେଣ୍ଟ ପସନ୍ଦ</string>
+    <string name="settings_section_sync">ବିଜ୍ଞପ୍ତି ଓ ସିଙ୍କ</string>
     <string name="settings_section_data">ବ୍ୟାକଅପ ଏବଂ ପୁନରୁଦ୍ଧାର</string>
     <string name="settings_section_privacy">ଗୋପନୀୟତା</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ଆପ ଲକ</string>
-    <string name="app_lock_subtitle_off">KashCal ଖୋଲିବାକୁ ଅନଲକ ଆବଶ୍ୟକ କରନ୍ତୁ</string>
-    <string name="app_lock_subtitle_on">ଆଙ୍ଗୁଠି ଚିହ୍ନ, ମୁହଁ କିମ୍ବା ସ୍କ୍ରିନ ଲକ ସହିତ ଅନଲକ କରନ୍ତୁ</string>
+    <string name="settings_app_lock_info">KashCal ଖୋଲିବା ପାଇଁ ଡିଭାଇସ ପ୍ରାମାଣୀକରଣ ଆବଶ୍ୟକ.</string>
     <string name="app_lock_veil_locked">ଲକ ଅଛି</string>
     <string name="app_lock_veil_unlock">ଅନଲକ କରନ୍ତୁ</string>
     <string name="app_lock_veil_footnote">ଆଙ୍ଗୁଠି ଚିହ୍ନ, ମୁହଁ କିମ୍ବା ସ୍କ୍ରିନ ଲକ</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ଏହି ବ୍ୟାକଅପ ଫାଇଲରେ ଅବୈଧ ଡାଟା ଅଛି ଏବଂ ଏହାକୁ ପୁନରୁଦ୍ଧାର କରାଯାଇପାରିବ ନାହିଁ।</string>
     <string name="restore_error_apply_failure">ବ୍ୟାକଅପ ପ୍ରୟୋଗ କରିବା ସମୟରେ କିଛି ଭୁଲ ଘଟିଲା। କୌଣସି ପରିବର୍ତ୍ତନ ସଞ୍ଚୟ ହୋଇନାହିଁ।</string>
     <string name="backup_error_build_failed">ବ୍ୟାକଅପ୍ ବିଫଳ ହେଲା</string>
-    <string name="backup_error_write_failed">ବ୍ୟାକଅପ୍ ବିଫଳ ହେଲା — ଫାଇଲକୁ ଲେଖି ହୋଇପାରିଲା ନାହିଁ</string>
+    <string name="backup_error_write_failed">ବ୍ୟାକଅପ ବିଫଳ ହେଲା. ଫାଇଲରେ ଲେଖିହେଲା ନାହିଁ.</string>
     <string name="backup_error_read_failed">ଫାଇଲ ପଢ଼ି ହୋଇପାରିଲା ନାହିଁ</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">ନେଟୱାର୍କ ତ୍ରୁଟି, ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ</string>
     <string name="error_import_file_not_found">ଫାଇଲ ମିଳିଲା ନାହିଁ ବା ପଢ଼ିହେଉ ନାହିଁ।</string>
     <string name="error_import_invalid_format">ଅବୈଧ କ୍ୟାଲେଣ୍ଡର ଫାଇଲ ଫର୍ମାଟ।</string>
+    <string name="error_import_no_events">ଫାଇଲରେ କୌଣସି ଇଭେଣ୍ଟ ମିଳିଲା ନାହିଁ</string>
+    <string name="error_import_failed">ଆମଦାନୀ ବିଫଳ ହେଲା</string>
     <string name="error_import_partial">%1$d ଇଭେଣ୍ଟ ଆମଦାନୀ ହୋଇଛି, %2$d ବିଫଳ।</string>
     <string name="error_export_failed">ଇଭେଣ୍ଟ ରପ୍ତାନୀ ବିଫଳ।</string>
     <string name="error_export_no_events">ରପ୍ତାନୀ କରିବାକୁ ଇଭେଣ୍ଟ ନାହିଁ।</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">କ୍ୟାଲେଣ୍ଡର ତ୍ରୁଟି</string>
     <string name="error_device_calendar_write_failed">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡରରେ ସେଭ ବିଫଳ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="error_device_calendar_permission">କ୍ୟାଲେଣ୍ଡର ଲେଖିବା ଅନୁମତି ଆବଶ୍ୟକ। ଦୟାକରି ସେଟିଂସରେ ଅନୁମତି ଦିଅନ୍ତୁ।</string>
+    <string name="error_device_calendar_permission_denied">ଲେଖିବା ଆକ୍ସେସ୍ ଦେବା ପାଇଁ ସେଟିଂସରେ କ୍ୟାଲେଣ୍ଡର ଅନୁମତିକୁ ବନ୍ଦ କରି ପୁଣି ଚାଲୁ କରନ୍ତୁ</string>
     <string name="error_device_calendar_not_found">କ୍ୟାଲେଣ୍ଡର ମିଳିଲା ନାହିଁ। ଏହା ବାହାର ହୋଇଥାଇପାରେ।</string>
     <string name="error_device_event_not_found">ଇଭେଣ୍ଟ ମିଳିଲା ନାହିଁ। ଏହା ଡିଲିଟ ହୋଇଥାଇପାରେ।</string>
     <string name="error_device_calendar_read_only">ଏହି କ୍ୟାଲେଣ୍ଡର କେବଳ ପଢ଼ିବା ପାଇଁ।</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ଚୟନିତ</string>
     <string name="cd_back">ପଛକୁ</string>
+    <string name="cd_opens_in_browser">ବ୍ରାଉଜରରେ ଖୋଲେ</string>
     <string name="cd_search">ଖୋଜନ୍ତୁ</string>
     <string name="cd_create_event">ଇଭେଣ୍ଟ ତିଆରି କରନ୍ତୁ</string>
     <string name="cd_delete">ଡିଲିଟ</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">ପୁନରାବୃତ୍ତ</string>
     <string name="cd_enabled">ଚାଲୁ ଅଛି</string>
     <string name="cd_sync_error">ସିଙ୍କ ତ୍ରୁଟି</string>
-    <string name="cd_select_option">ବିକଳ୍ପ ବାଛନ୍ତୁ</string>
     <string name="cd_select_label">%1$s ବାଛନ୍ତୁ</string>
     <string name="cd_wheel_picker">%1$d ବିକଳ୍ପ ସହ ହୁଇଲ ପିକର</string>
     <string name="cd_time_entry_keyboard">ସଠିକ୍ ସମୟ ପ୍ରବେଶ କରନ୍ତୁ</string>
     <string name="time_entry_dialog_title">ସମୟ ପ୍ରବେଶ କରନ୍ତୁ</string>
     <string name="time_entry_tap_to_edit">ସମ୍ପାଦନା କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ</string>
     <string name="cd_version_info">KashCal ସଂସ୍କରଣ %1$s। ଡିବଗ ବିକଳ୍ପ ପାଇଁ ଅଧିକ ସମୟ ଧରି ଦବାନ୍ତୁ।</string>
+    <string name="cd_about_setting">%1$s ବିଷୟରେ</string>
     <string name="cd_color_slider">ରଙ୍ଗ ସ୍ଲାଇଡର, ବର୍ତ୍ତମାନ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ଡିଗ୍ରୀ</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">ରଙ୍ଗ:</string>
     <string name="label_repeat">ପୁନରାବୃତ୍ତି</string>
     <string name="label_sync_interval">ସିଙ୍କ ବିରତି:</string>
-    <string name="label_scheduled_events">ନିର୍ଦ୍ଧାରିତ ଇଭେଣ୍ଟ</string>
-    <string name="label_all_day_events">ସାରାଦିନ ଇଭେଣ୍ଟ</string>
     <string name="label_server_url">ସର୍ଭର URL</string>
     <string name="label_username">ବ୍ୟବହାରକାରୀ ନାମ</string>
     <string name="label_password">ପାସୱାର୍ଡ</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">ଦୃଶ୍ୟମାନ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="settings_default_calendar">ଡିଫଲ୍ଟ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="settings_default_event_length">ଡିଫଲ୍ଟ ଇଭେଣ୍ଟ ଅବଧି</string>
-    <string name="settings_default_alerts">ଡିଫଲ୍ଟ ସତର୍କତା</string>
+    <string name="settings_default_event_length_hint">ନୂଆ ଇଭେଣ୍ଟ ପାଇଁ ଡିଫଲ୍ଟ ଅବଧି</string>
+    <string name="settings_timed_event_alert">ସମୟ ନିର୍ଦ୍ଧାରିତ ଇଭେଣ୍ଟ ସତର୍କତା</string>
+    <string name="settings_all_day_event_alert">ସାରାଦିନର ଇଭେଣ୍ଟ ସତର୍କତା</string>
+    <string name="settings_custom_alert_value">କଷ୍ଟମ (%1$s)</string>
     <string name="settings_notifications">ବିଜ୍ଞପ୍ତି</string>
-    <string name="settings_new_events">ନୂଆ ଇଭେଣ୍ଟ</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">ସିଷ୍ଟମ ଡିଫଲ୍ଟ</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="settings_device_calendars_hint">ଅନ୍ୟ ଆପରୁ କ୍ୟାଲେଣ୍ଡର</string>
-    <string name="settings_quick_event_add">ତ୍ୱରିତ ଇଭେଣ୍ଟ ଯୋଡ଼ିବା</string>
+    <string name="settings_quick_event_add">ସ୍ମାର୍ଟ ଇଭେଣ୍ଟ ଯୋଡ଼ିବା</string>
+    <string name="settings_quick_event_add_info">ସ୍ୱାଭାବିକ ଭାବେ ଟାଇପ କରି ଇଭେଣ୍ଟ ତିଆରି କରନ୍ତୁ. \"ଶୁକ୍ରବାର ଅପରାହ୍ନ 1ଟାରେ Sam ସହିତ ମଧ୍ୟାହ୍ନ ଭୋଜନ\" ଆପଣଙ୍କ ପାଇଁ ଶୀର୍ଷକ, ତାରିଖ ଓ ସମୟ ପୂରଣ କରିଦିଏ.</string>
     <string name="settings_suggest_titles">ଇଭେଣ୍ଟ ଶୀର୍ଷକଗୁଡ଼ିକ ପରାମର୍ଶ ଦିଅନ୍ତୁ</string>
+    <string name="settings_suggest_titles_info">ଆପଣ ଏକ ନୂଆ ଇଭେଣ୍ଟର ନାମ ଦେବା ସମୟରେ, ଆପଣ ପୂର୍ବରୁ ବ୍ୟବହାର କରିଥିବା ଶୀର୍ଷକଗୁଡ଼ିକ ପରାମର୍ଶ ଦିଏ, ଯାହା ଫଳରେ ପୁନରାବୃତ୍ତ ଇଭେଣ୍ଟ ଏକ ଟ୍ୟାପରେ ତିଆରି ହୁଏ. ଆପଣ ସେଗୁଡ଼ିକୁ କେତେ ଥର ଓ କେତେ ନିକଟରେ ବ୍ୟବହାର କରିଛନ୍ତି ତାହା ଆଧାରରେ କ୍ରମବଦ୍ଧ କରାଯାଏ.</string>
     <string name="settings_week_numbers">ସପ୍ତାହ ସଂଖ୍ୟା</string>
     <string name="settings_show_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଥିବା ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="settings_widget_event_limit">ୱିଜେଟ ଇଭେଣ୍ଟ ସୀମା</string>
+    <string name="settings_widget_event_limit_hint">ୱିଜେଟରେ ଦିନକୁ ଦେଖାଯାଉଥିବା ସର୍ବାଧିକ ଇଭେଣ୍ଟ</string>
     <string name="settings_sync_lookback">ସିଙ୍କ ଲୁକବ୍ୟାକ</string>
-    <string name="settings_auto_detect_emojis">ଇମୋଜି ସ୍ୱୟଂ-ଚିହ୍ନଟ</string>
-    <string name="settings_events_per_day">ଦିନକୁ ଇଭେଣ୍ଟ</string>
+    <string name="settings_sync_lookback_hint">କେତେ ପଛକୁ ଇଭେଣ୍ଟ ସିଙ୍କ କରିବେ</string>
     <string name="settings_not_set">ସେଟ ହୋଇନାହିଁ</string>
     <string name="settings_on">ଚାଲୁ</string>
     <string name="settings_off">ବନ୍ଦ</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">ଅସୁରକ୍ଷିତ ସଂଯୋଗ ବିଶ୍ୱାସ କରନ୍ତୁ</string>
     <string name="action_add_another">ଆଉ ଗୋଟେ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="account_connected_found_calendars">%2$s ପାଇଁ %1$d କ୍ୟାଲେଣ୍ଡର(ଗୁଡ଼ିକ) ମିଳିଲା।</string>
-    <string name="account_connected_syncing_hint">ସିଙ୍କ ଚାଲିଛି — ଇଭେଣ୍ଟ ଶୀଘ୍ର ଦେଖାଯିବ।</string>
+    <string name="account_connected_syncing_hint">ସିଙ୍କ ଚାଲିଛି. ଇଭେଣ୍ଟଗୁଡ଼ିକ ଶୀଘ୍ର ଦେଖାଯିବ.</string>
     <string name="settings_time_format_currently_24h">ବର୍ତ୍ତମାନ: 24-ଘଣ୍ଟା (%1$s)</string>
     <string name="settings_time_format_currently_12h">ବର୍ତ୍ତମାନ: 12-ଘଣ୍ଟା (%1$s)</string>
     <string name="settings_time_format_example">ଉଦାହରଣ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">କେବଳ ପଢ଼ିବା (କ୍ୟାଲେଣ୍ଡର କେବଳ ପଢ଼ିବା)</string>
     <string name="settings_developer_options">ଡେଭଲପର ବିକଳ୍ପ</string>
     <string name="settings_sync_frequency">ସିଙ୍କ ଫ୍ରିକ୍ୱେନ୍ସି</string>
-    <string name="settings_preview">ପୂର୍ବଦର୍ଶନ</string>
-    <string name="settings_n_events">%1$d ଇଭେଣ୍ଟ</string>
-    <string name="settings_n_events_default">%1$d ଇଭେଣ୍ଟ (ଡିଫଲ୍ଟ)</string>
+    <string name="settings_sync_frequency_hint">ପୃଷ୍ଠଭୂମିରେ କେତେ ଥର ସିଙ୍କ କରିବେ</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">କ୍ୟାଲେଣ୍ଡର</string>
     <string name="drawer_contacts">ସମ୍ପର୍କ</string>
     <string name="drawer_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="drawer_account_offline">ଅଫଲାଇନ</string>
+    <string name="calendar_local">ସ୍ଥାନୀୟ</string>
     <string name="drawer_share_feedback">ସହାୟତା ଓ ଡକୁମେଣ୍ଟ</string>
     <string name="event_title_fallback">ଇଭେଣ୍ଟ</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s ପରେ</string>
     <string name="reminder_day_of_event_12h">ଇଭେଣ୍ଟ ଦିନରେ 9 AM</string>
     <string name="reminder_day_of_event_24h">ଇଭେଣ୍ଟ ଦିନରେ 09:00</string>
+    <string name="reminder_day_of_event">ଇଭେଣ୍ଟ ଦିନ</string>
     <string name="reminder_before_at_12h">%1$s ପୂର୍ବରୁ 9 AM ରେ</string>
     <string name="reminder_before_at_24h">%1$s ପୂର୍ବରୁ 09:00 ରେ</string>
     <string name="reminder_short_off">ବନ୍ଦ</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dଘ.</string>
     <string name="reminder_short_days">%1$dଦି.</string>
     <string name="reminder_short_weeks">%1$dସ.</string>
+    <string name="reminder_med_minutes">%1$d ମି</string>
+    <string name="reminder_med_hours">%1$d ଘ</string>
+    <string name="reminder_med_weeks">%1$d ସପ୍ତା</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ଦିନ</item>
+        <item quantity="other">%1$d ଦିନ</item>
+    </plurals>
+    <string name="reminder_med_day_of">ସେହିଦିନ</string>
+    <string name="all_day_alert_9am_hint">ସାରାଦିନ ଆଲର୍ଟ 9 AM (09:00) ରେ ଆସେ।</string>
     <string name="reminder_summary_none">କିଛି ନାହିଁ</string>
     <string name="duration_compact">%1$dଘ. %2$dମି.</string>
     <string name="duration_compact_short">%1$dଘ.%2$dମି.</string>

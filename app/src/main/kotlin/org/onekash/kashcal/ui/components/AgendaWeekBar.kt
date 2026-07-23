@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -158,6 +159,16 @@ private fun DateCell(
                 .size(34.dp)
                 .clip(CircleShape)
                 .then(if (fill != null) Modifier.background(fill, CircleShape) else Modifier)
+                // Today's tonal fill can wash out against the surface for pale accent
+                // seeds; a hairline outline keeps the ring visible on any theme. Selected
+                // uses inverseSurface (already high-contrast) so it needs no border.
+                .then(
+                    if (style == DayCellStyle.TODAY) {
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    } else {
+                        Modifier
+                    }
+                )
                 .clickable(onClickLabel = goToDateLabel, onClick = onClick)
                 .semantics(mergeDescendants = true) {
                     contentDescription = cellDescription

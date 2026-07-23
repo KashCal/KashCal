@@ -43,14 +43,10 @@ class FormConstantsTimeFormatTest {
     // ==================== formatReminderOption tests ====================
 
     @Test
-    fun `formatReminderOption -540 allDay use24Hour true returns 09 colon 00 day of event`() {
-        // Signed model: 9 AM day of event is -540 (after midnight).
-        assertEquals("09:00 day of event", formatReminderOption(-540, isAllDay = true, use24Hour = true, resources = resources))
-    }
-
-    @Test
-    fun `formatReminderOption -540 allDay use24Hour false returns 9 AM day of event`() {
-        assertEquals("9 AM day of event", formatReminderOption(-540, isAllDay = true, use24Hour = false, resources = resources))
+    fun `formatReminderOption -540 allDay returns Day of event`() {
+        // The 9 AM fire time is conveyed by the sheet hint, so the option label is
+        // terse and format-independent.
+        assertEquals("Day of event", formatReminderOption(-540, isAllDay = true, resources = resources))
     }
 
     @Test
@@ -63,24 +59,15 @@ class FormConstantsTimeFormatTest {
     // ==================== getAllDayReminderOptions tests ====================
 
     @Test
-    fun `getAllDayReminderOptions use24Hour true has 09 colon 00 label`() {
-        val options = getAllDayReminderOptions(use24Hour = true, resources = resources)
+    fun `getAllDayReminderOptions day-of label is Day of event`() {
+        val options = getAllDayReminderOptions(resources = resources)
         val dayOfOption = options.find { it.minutes == -540 } // 9 AM day of (after midnight)
-        assertEquals("09:00 day of event", dayOfOption?.label)
-    }
-
-    @Test
-    fun `getAllDayReminderOptions use24Hour false has 9 AM label`() {
-        val options = getAllDayReminderOptions(use24Hour = false, resources = resources)
-        val dayOfOption = options.find { it.minutes == -540 }
-        assertEquals("9 AM day of event", dayOfOption?.label)
+        assertEquals("Day of event", dayOfOption?.label)
     }
 
     @Test
     fun `getAllDayReminderOptions returns same count as ALL_DAY_REMINDER_MINUTES`() {
-        val options24 = getAllDayReminderOptions(use24Hour = true, resources = resources)
-        val options12 = getAllDayReminderOptions(use24Hour = false, resources = resources)
-        assertEquals(ALL_DAY_REMINDER_MINUTES.size, options24.size)
-        assertEquals(ALL_DAY_REMINDER_MINUTES.size, options12.size)
+        val options = getAllDayReminderOptions(resources = resources)
+        assertEquals(ALL_DAY_REMINDER_MINUTES.size, options.size)
     }
 }

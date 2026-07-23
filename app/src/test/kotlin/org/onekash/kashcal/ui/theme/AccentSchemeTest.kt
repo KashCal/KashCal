@@ -80,6 +80,20 @@ class AccentSchemeTest {
 
         // Accent must be VISIBLE against the surface (non-text UI: FAB, selection marks).
         pair(name, dark, "primary/surface", s.primary, s.surface, AA_UI, failures)
+
+        // Accent-colored TEXT on the surface must clear the stricter text threshold,
+        // not just the UI one: the account hub paints `primary` as readable text on
+        // the sheet surface in two places — the "Make it yours" section header and the
+        // Accounts pill's outlined label (no fill, so the accent IS the text). If this
+        // dips below AA text contrast for a seed, that copy becomes hard to read.
+        pair(name, dark, "primary/surface (text)", s.primary, s.surface, AA_TEXT, failures)
+
+        // The outline role must be VISIBLE against the surface: the account hub draws
+        // hairline borders on the avatar circle and the Accounts pill with it, because
+        // their tonal fills (primaryContainer / secondaryContainer) barely separate from
+        // the surface for many seeds and collapse entirely for the white/black extremes.
+        // If outline/surface drops below the UI threshold those shapes lose their edge.
+        pair(name, dark, "outline/surface", s.outline, s.surface, AA_UI, failures)
     }
 
     private fun pair(

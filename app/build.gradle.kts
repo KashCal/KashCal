@@ -95,6 +95,9 @@ android {
                 storePassword = keystorePassword
                 keyAlias = keyAliasValue
                 keyPassword = keyPasswordValue
+                // minSdk 31 is well above v3's API-28 floor; keep v1/v2 on for
+                // belt-and-suspenders. v3 is the prerequisite for future key rotation.
+                enableV3Signing = true
             }
         }
     }

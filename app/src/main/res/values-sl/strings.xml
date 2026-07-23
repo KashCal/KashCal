@@ -68,6 +68,7 @@
     <string name="action_view">Prikaži</string>
     <string name="action_enable">Omogoči</string>
     <string name="action_done">Končano</string>
+    <string name="action_back">Nazaj</string>
     <string name="action_save">Shrani</string>
     <string name="action_add">Dodaj</string>
     <string name="action_edit">Uredi</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Oblika časa</string>
     <string name="settings_start_week_on">Teden se začne</string>
     <string name="settings_event_emojis">Emodžiji dogodkov</string>
-    <string name="settings_emoji_subtitle">Prikaži emodžije glede na nazive dogodkov</string>
+    <string name="settings_event_emojis_info">Dogodkom doda emoji glede na naslov, na primer 🎂 za \"Rojstni dan\".</string>
     <string name="settings_force_sync">Prisilna popolna sinhronizacija</string>
     <string name="settings_force_sync_subtitle">Ponovno prenesi vse koledarske podatke</string>
     <string name="settings_sync_history">Zgodovina sinhronizacije</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Shrani dogodke v datoteko ICS</string>
     <string name="settings_birthday_reminder">Opomnik za rojstni dan</string>
     <string name="settings_use_device_timezone">Uporabi časovni pas naprave</string>
-    <string name="settings_section_calendars">Koledarji</string>
+    <string name="settings_section_calendars">Koledarji in računi</string>
     <string name="settings_section_appearance">Videz</string>
-    <string name="settings_section_creating_events">Ustvarjanje dogodkov</string>
-    <string name="settings_section_sync">Sinhronizacija</string>
+    <string name="settings_section_creating_events">Nastavitve dogodkov</string>
+    <string name="settings_section_sync">Obvestila in sinhronizacija</string>
     <string name="settings_section_data">Varnostna kopija in obnovitev</string>
     <string name="settings_section_privacy">Zasebnost</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zaklep aplikacije</string>
-    <string name="app_lock_subtitle_off">Zahtevaj odklepanje za odpiranje aplikacije KashCal</string>
-    <string name="app_lock_subtitle_on">Odklenite s prstnim odtisom, obrazom ali zaklepom zaslona</string>
+    <string name="settings_app_lock_info">Za odpiranje KashCal zahtevaj preverjanje pristnosti naprave.</string>
     <string name="app_lock_veil_locked">Zaklenjeno</string>
     <string name="app_lock_veil_unlock">Odkleni</string>
     <string name="app_lock_veil_footnote">Prstni odtis, obraz ali zaklep zaslona</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Ta datoteka varnostne kopije vsebuje neveljavne podatke in je ni mogoče obnoviti.</string>
     <string name="restore_error_apply_failure">Pri uporabi varnostne kopije je prišlo do napake. Nobene spremembe niso bile shranjene.</string>
     <string name="backup_error_build_failed">Izdelava varnostne kopije ni uspela</string>
-    <string name="backup_error_write_failed">Izdelava varnostne kopije ni uspela — pisanje v datoteko ni bilo mogoče</string>
+    <string name="backup_error_write_failed">Varnostno kopiranje ni uspelo. Ni bilo mogoče zapisati v datoteko.</string>
     <string name="backup_error_read_failed">Datoteke ni bilo mogoče prebrati</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Napaka omrežja, poskusite znova</string>
     <string name="error_import_file_not_found">Datoteka ni najdena ali je ni mogoče prebrati.</string>
     <string name="error_import_invalid_format">Neveljavna oblika koledarske datoteke.</string>
+    <string name="error_import_no_events">V datoteki ni najdenih dogodkov</string>
+    <string name="error_import_failed">Uvoz ni uspel</string>
     <string name="error_import_partial">Uvoženih %1$d dogodkov, %2$d neuspešnih.</string>
     <string name="error_export_failed">Izvoz dogodkov neuspešen.</string>
     <string name="error_export_no_events">Ni dogodkov za izvoz.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Napaka koledarja</string>
     <string name="error_device_calendar_write_failed">Shranjevanje v koledar naprave neuspešno. Poskusite znova.</string>
     <string name="error_device_calendar_permission">Potrebno dovoljenje za pisanje v koledar. Dodelite dovoljenje v Nastavitvah.</string>
+    <string name="error_device_calendar_permission_denied">Izklopite in znova vklopite dovoljenje za Koledar v Nastavitvah, da odobrite dostop za pisanje</string>
     <string name="error_device_calendar_not_found">Koledar ni najden. Morda je bil odstranjen.</string>
     <string name="error_device_event_not_found">Dogodek ni najden. Morda je bil izbrisan.</string>
     <string name="error_device_calendar_read_only">Ta koledar je samo za branje.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Izbrano</string>
     <string name="cd_back">Nazaj</string>
+    <string name="cd_opens_in_browser">Odpre se v pregledniku</string>
     <string name="cd_search">Iskanje</string>
     <string name="cd_create_event">Ustvari dogodek</string>
     <string name="cd_delete">Izbriši</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Ponavljajoč</string>
     <string name="cd_enabled">Omogočeno</string>
     <string name="cd_sync_error">Napaka sinhronizacije</string>
-    <string name="cd_select_option">Izberi možnost</string>
     <string name="cd_select_label">Izberi %1$s</string>
     <string name="cd_wheel_picker">Kolesce za izbiro z %1$d možnostmi</string>
     <string name="cd_time_entry_keyboard">Vnesite točen čas</string>
     <string name="time_entry_dialog_title">Vnesite čas</string>
     <string name="time_entry_tap_to_edit">Tapnite za urejanje</string>
     <string name="cd_version_info">KashCal različica %1$s. Dolg pritisk za možnosti odpravljanja napak.</string>
+    <string name="cd_about_setting">O %1$s</string>
     <string name="cd_color_slider">Drsnik barv, trenutno %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stopinj</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Barva:</string>
     <string name="label_repeat">Ponavljanje</string>
     <string name="label_sync_interval">Interval sinhronizacije:</string>
-    <string name="label_scheduled_events">Načrtovani dogodki</string>
-    <string name="label_all_day_events">Celodnevni dogodki</string>
     <string name="label_server_url">URL strežnika</string>
     <string name="label_username">Uporabniško ime</string>
     <string name="label_password">Geslo</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Vidni koledarji</string>
     <string name="settings_default_calendar">Privzeti koledar</string>
     <string name="settings_default_event_length">Privzeto trajanje dogodka</string>
-    <string name="settings_default_alerts">Privzeti opomniki</string>
+    <string name="settings_default_event_length_hint">Privzeta dolžina novih dogodkov</string>
+    <string name="settings_timed_event_alert">Opozorilo za časovni dogodek</string>
+    <string name="settings_all_day_event_alert">Opozorilo za celodnevni dogodek</string>
+    <string name="settings_custom_alert_value">Po meri (%1$s)</string>
     <string name="settings_notifications">Obvestila</string>
-    <string name="settings_new_events">Novi dogodki</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistemsko privzeto</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Koledarji naprave</string>
     <string name="settings_device_calendars_hint">Koledarji iz drugih aplikacij</string>
-    <string name="settings_quick_event_add">Hitro dodajanje dogodkov</string>
+    <string name="settings_quick_event_add">Pametno dodajanje dogodkov</string>
+    <string name="settings_quick_event_add_info">Ustvarjajte dogodke z naravnim tipkanjem. \"Kosilo s Sam v petek ob 13:00\" namesto vas izpolni naslov, datum in čas.</string>
     <string name="settings_suggest_titles">Predlagaj naslove dogodkov</string>
+    <string name="settings_suggest_titles_info">Ko poimenujete nov dogodek, predlaga naslove, ki ste jih že uporabili, tako da so ponavljajoči se dogodki en dotik. Razvrščeno glede na to, kako pogosto in kako nedavno ste jih uporabili.</string>
     <string name="settings_week_numbers">Številke tednov</string>
     <string name="settings_show_declined">Pokaži zavrnjene dogodke</string>
     <string name="settings_widget_event_limit">Omejitev dogodkov pripomočka</string>
+    <string name="settings_widget_event_limit_hint">Največ dogodkov, prikazanih na dan v gradnikih</string>
     <string name="settings_sync_lookback">Razpon sinhronizacije nazaj</string>
-    <string name="settings_auto_detect_emojis">Samodejno zaznavanje emodžijev</string>
-    <string name="settings_events_per_day">Dogodkov na dan</string>
+    <string name="settings_sync_lookback_hint">Kako daleč nazaj sinhronizirati dogodke</string>
     <string name="settings_not_set">Ni nastavljeno</string>
     <string name="settings_on">Vklj.</string>
     <string name="settings_off">Izklj.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Zaupaj nezaščiteni povezavi</string>
     <string name="action_add_another">Dodaj še enega</string>
     <string name="account_connected_found_calendars">Najdenih %1$d koledarjev za %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinhronizacija poteka — dogodki se bodo kmalu pojavili.</string>
+    <string name="account_connected_syncing_hint">Sinhronizacija poteka. Dogodki se bodo kmalu pojavili.</string>
     <string name="settings_time_format_currently_24h">Trenutno: 24-urni (%1$s)</string>
     <string name="settings_time_format_currently_12h">Trenutno: 12-urni (%1$s)</string>
     <string name="settings_time_format_example">Primer: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Samo za branje (koledar je samo za branje)</string>
     <string name="settings_developer_options">Razvojne možnosti</string>
     <string name="settings_sync_frequency">Pogostost sinhronizacije</string>
-    <string name="settings_preview">PREDOGLED</string>
-    <string name="settings_n_events">%1$d dogodkov</string>
-    <string name="settings_n_events_default">%1$d dogodkov (privzeto)</string>
+    <string name="settings_sync_frequency_hint">Kako pogosto sinhronizirati v ozadju</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Koledarji</string>
     <string name="drawer_contacts">Stiki</string>
     <string name="drawer_device_calendars">Koledarji naprave</string>
     <string name="drawer_account_offline">Brez povezave</string>
+    <string name="calendar_local">Lokalni</string>
     <string name="drawer_share_feedback">Pomoč in dokumenti</string>
     <string name="event_title_fallback">Dogodek</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9:00 na dan dogodka</string>
     <string name="reminder_day_of_event_24h">09:00 na dan dogodka</string>
+    <string name="reminder_day_of_event">Na dan dogodka</string>
     <string name="reminder_before_at_12h">%1$s prej ob 9:00</string>
     <string name="reminder_before_at_24h">%1$s prej ob 09:00</string>
     <string name="reminder_short_off">Izklj.</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d h</string>
+    <string name="reminder_med_weeks">%1$d ted.</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d d.</item>
+        <item quantity="two">%1$d d.</item>
+        <item quantity="few">%1$d d.</item>
+        <item quantity="other">%1$d d.</item>
+    </plurals>
+    <string name="reminder_med_day_of">Na dan</string>
+    <string name="all_day_alert_9am_hint">Celodnevni opomniki se sprožijo ob 9. uri (09:00).</string>
     <string name="reminder_summary_none">Brez</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

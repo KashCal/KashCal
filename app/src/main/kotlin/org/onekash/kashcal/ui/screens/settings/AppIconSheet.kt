@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -35,7 +37,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -67,7 +69,10 @@ fun AppIconSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                // Groups the icon option rows for TalkBack "N of M"; the footer link and
+                // info note aren't selectable, so they stay outside the radio group.
+                .selectableGroup(),
         ) {
             Text(
                 text = stringResource(R.string.settings_app_icon),
@@ -96,10 +101,17 @@ fun AppIconSheet(
             )
 
             // Footer: donate nudge for the supporter icons.
+            val supportCta = stringResource(R.string.app_icon_support_cta)
+            val opensInBrowser = stringResource(R.string.cd_opens_in_browser)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(role = Role.Button) { onSupportClick() }
+                    // The OpenInNew glyph is the only "leaves the app" cue and is
+                    // decorative to TalkBack, so fold it into the row's merged label.
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "$supportCta, $opensInBrowser"
+                    }
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -113,7 +125,7 @@ fun AppIconSheet(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = stringResource(R.string.app_icon_support_cta),
+                    text = supportCta,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
@@ -159,9 +171,9 @@ private fun AppIconOptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() }
-            // Expose selection to TalkBack so state isn't conveyed by the checkmark alone.
-            .semantics { selected = isSelected }
+            // Radio-button role + selected state so TalkBack announces the choice and its
+            // group position, not just the label (the checkmark alone is a sighted-only cue).
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 else Color.Transparent,
@@ -198,7 +210,8 @@ private fun AppIconOptionRow(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = stringResource(R.string.cd_selected),
+                // Decorative: the row's radio-button selected state already announces selection.
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp),
             )

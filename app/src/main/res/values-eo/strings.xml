@@ -68,6 +68,7 @@
     <string name="action_view">Vidi</string>
     <string name="action_enable">Ŝalti</string>
     <string name="action_done">Farita</string>
+    <string name="action_back">Reen</string>
     <string name="action_save">Konservi</string>
     <string name="action_add">Aldoni</string>
     <string name="action_edit">Redakti</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Hora formato</string>
     <string name="settings_start_week_on">Komenci semajnon je</string>
     <string name="settings_event_emojis">Eventaj emoĝioj</string>
-    <string name="settings_emoji_subtitle">Montri emoĝiojn bazitajn sur eventaj titoloj</string>
+    <string name="settings_event_emojis_info">Aldonas emoĝion al eventoj laŭ la titolo, kiel 🎂 por \"Naskiĝtago\".</string>
     <string name="settings_force_sync">Devigi plenan sinkronigon</string>
     <string name="settings_force_sync_subtitle">Re-elŝuti ĉiujn kalendarajn datumojn</string>
     <string name="settings_sync_history">Sinkroniga historio</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Konservi eventojn al ICS-dosiero</string>
     <string name="settings_birthday_reminder">Naskig̉taga rememorigo</string>
     <string name="settings_use_device_timezone">Uzi aparatan horzonon</string>
-    <string name="settings_section_calendars">Kalendaroj</string>
+    <string name="settings_section_calendars">Kalendaroj kaj kontoj</string>
     <string name="settings_section_appearance">Aspekto</string>
-    <string name="settings_section_creating_events">Krei eventojn</string>
-    <string name="settings_section_sync">Sinkronigo</string>
+    <string name="settings_section_creating_events">Eventaj preferoj</string>
+    <string name="settings_section_sync">Sciigoj kaj sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
     <string name="settings_section_privacy">Privateco</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Aplikaĵa ŝloso</string>
-    <string name="app_lock_subtitle_off">Postuli malŝloson por malfermi KashCal</string>
-    <string name="app_lock_subtitle_on">Malŝlosi per fingrospuro, vizaĝo aŭ ekranŝloso</string>
+    <string name="settings_app_lock_info">Postulas aparatan aŭtentikigon por malfermi KashCal.</string>
     <string name="app_lock_veil_locked">Ŝlosita</string>
     <string name="app_lock_veil_unlock">Malŝlosi</string>
     <string name="app_lock_veil_footnote">Fingrospuro, vizaĝo aŭ ekranŝloso</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Ĉi tiu sekurkopia dosiero enhavas nevalidajn datumojn kaj ne povas esti restarigita.</string>
     <string name="restore_error_apply_failure">Io malĝustis dum apliko de la sekurkopio. Neniuj ŝanĝoj estis konservitaj.</string>
     <string name="backup_error_build_failed">Sekurkopio malsukcesis</string>
-    <string name="backup_error_write_failed">Sekurkopio malsukcesis — ne eblis skribi al dosiero</string>
+    <string name="backup_error_write_failed">Sekurkopio malsukcesis. Ne eblis skribi al dosiero.</string>
     <string name="backup_error_read_failed">Ne eblis legi dosieron</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Reta eraro, bonvolu reprovi</string>
     <string name="error_import_file_not_found">Dosiero ne trovita aŭ ne legebla.</string>
     <string name="error_import_invalid_format">Nevalida kalendara dosiero-formato.</string>
+    <string name="error_import_no_events">Neniu evento trovita en la dosiero</string>
+    <string name="error_import_failed">Importado malsukcesis</string>
     <string name="error_import_partial">Importitaj %1$d eventoj, %2$d malsukcesis.</string>
     <string name="error_export_failed">Malsukcesis eksporti eventojn.</string>
     <string name="error_export_no_events">Neniuj eventoj por eksporti.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalendara eraro</string>
     <string name="error_device_calendar_write_failed">Malsukcesis konservi en aparata kalendaro. Bonvolu reprovi.</string>
     <string name="error_device_calendar_permission">Kalendara skribpermeso bezonata. Bonvolu doni permeson en Agordoj.</string>
+    <string name="error_device_calendar_permission_denied">Malŝaltu kaj reŝaltu la Kalendaran permeson en Agordoj por doni skribaliron</string>
     <string name="error_device_calendar_not_found">Kalendaro ne trovita. Ĝi eble estis forigita.</string>
     <string name="error_device_event_not_found">Evento ne trovita. Ĝi eble estis forigita.</string>
     <string name="error_device_calendar_read_only">Ĉi tiu kalendaro estas nurlega.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Elektita</string>
     <string name="cd_back">Reen</string>
+    <string name="cd_opens_in_browser">Malfermiĝas en retumilo</string>
     <string name="cd_search">Serĉi</string>
     <string name="cd_create_event">Krei eventon</string>
     <string name="cd_delete">Forigi</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Ripeta</string>
     <string name="cd_enabled">Ŝaltita</string>
     <string name="cd_sync_error">Sinkroniga eraro</string>
-    <string name="cd_select_option">Elekti elekton</string>
     <string name="cd_select_label">Elekti %1$s</string>
     <string name="cd_wheel_picker">Rada elektilo kun %1$d elektoj</string>
     <string name="cd_time_entry_keyboard">Entajpu precizan horon</string>
     <string name="time_entry_dialog_title">Entajpu horon</string>
     <string name="time_entry_tap_to_edit">Tuŝetu por redakti</string>
     <string name="cd_version_info">KashCal versio %1$s. Longe premu por sencimigaj elektoj.</string>
+    <string name="cd_about_setting">Pri %1$s</string>
     <string name="cd_color_slider">Kolora glitilo, nune %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradoj</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Koloro:</string>
     <string name="label_repeat">Ripeti</string>
     <string name="label_sync_interval">Sinkroniga intervalo:</string>
-    <string name="label_scheduled_events">Planitaj eventoj</string>
-    <string name="label_all_day_events">Tuttagaj eventoj</string>
     <string name="label_server_url">Servila URL</string>
     <string name="label_username">Uzantonomo</string>
     <string name="label_password">Pasvorto</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Videblaj kalendaroj</string>
     <string name="settings_default_calendar">Defaŭlta kalendaro</string>
     <string name="settings_default_event_length">Defaŭlta eventa daŭro</string>
-    <string name="settings_default_alerts">Defaŭltaj alarmoj</string>
+    <string name="settings_default_event_length_hint">Norma daŭro por novaj eventoj</string>
+    <string name="settings_timed_event_alert">Alerto pri tempohava evento</string>
+    <string name="settings_all_day_event_alert">Alerto pri tuttaga evento</string>
+    <string name="settings_custom_alert_value">Propra (%1$s)</string>
     <string name="settings_notifications">Sciigoj</string>
-    <string name="settings_new_events">Novaj eventoj</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistema defaŭlto</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Aparataj kalendaroj</string>
     <string name="settings_device_calendars_hint">Kalendaroj el aliaj aplikaĵoj</string>
-    <string name="settings_quick_event_add">Rapida eventaldono</string>
+    <string name="settings_quick_event_add">Inteligenta eventaldono</string>
+    <string name="settings_quick_event_add_info">Kreu eventojn per natura tajpado. \"Tagmanĝo kun Sam vendredon je la 1a posttagmeze\" plenigas la titolon, daton kaj horon por vi.</string>
     <string name="settings_suggest_titles">Sugesti eventajn titolojn</string>
+    <string name="settings_suggest_titles_info">Dum vi nomas novan eventon, ĝi sugestas titolojn kiujn vi jam uzis, tiel ke ripetaj eventoj estas je unu tuŝo. Ordigitaj laŭ kiom ofte kaj kiom lastatempe vi uzis ilin.</string>
     <string name="settings_week_numbers">Semajnaj numeroj</string>
     <string name="settings_show_declined">Montri malakceptitajn eventojn</string>
     <string name="settings_widget_event_limit">Fenestraĵa eventlimo</string>
+    <string name="settings_widget_event_limit_hint">Plej multaj eventoj montrataj tage en fenestraĵoj</string>
     <string name="settings_sync_lookback">Sinkroniga retrorigardo</string>
-    <string name="settings_auto_detect_emojis">Aŭtomata emogĝia detekto</string>
-    <string name="settings_events_per_day">Eventoj tage</string>
+    <string name="settings_sync_lookback_hint">Ĝis kiom retro sinkronigi eventojn</string>
     <string name="settings_not_set">Ne agordita</string>
     <string name="settings_on">Ŝaltita</string>
     <string name="settings_off">Malŝaltita</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Fidi malsekuran konekton</string>
     <string name="action_add_another">Aldoni alian</string>
     <string name="account_connected_found_calendars">Trovitaj %1$d kalendaro(j) por %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinkronigo en progreso — eventoj aperos baldaŭ.</string>
+    <string name="account_connected_syncing_hint">Sinkronigado en progreso. Eventoj aperos baldaŭ.</string>
     <string name="settings_time_format_currently_24h">Nune: 24-hora (%1$s)</string>
     <string name="settings_time_format_currently_12h">Nune: 12-hora (%1$s)</string>
     <string name="settings_time_format_example">Ekzemplo: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Nurlega (kalendaro estas nurlega)</string>
     <string name="settings_developer_options">Programistaj elektoj</string>
     <string name="settings_sync_frequency">Sinkroniga ofteco</string>
-    <string name="settings_preview">ANTAŬVIDO</string>
-    <string name="settings_n_events">%1$d eventoj</string>
-    <string name="settings_n_events_default">%1$d eventoj (defaŭlte)</string>
+    <string name="settings_sync_frequency_hint">Kiom ofte sinkronigi en la fono</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendaroj</string>
     <string name="drawer_contacts">Kontaktoj</string>
     <string name="drawer_device_calendars">Aparataj kalendaroj</string>
     <string name="drawer_account_offline">Eksterrete</string>
+    <string name="calendar_local">Loka</string>
     <string name="drawer_share_feedback">Helpo kaj dokumentoj</string>
     <string name="event_title_fallback">Evento</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s poste</string>
     <string name="reminder_day_of_event_12h">9 AM tage de la evento</string>
     <string name="reminder_day_of_event_24h">09:00 tage de la evento</string>
+    <string name="reminder_day_of_event">Tage de la evento</string>
     <string name="reminder_before_at_12h">%1$s antaŭe je 9 AM</string>
     <string name="reminder_before_at_24h">%1$s antaŭe je 09:00</string>
     <string name="reminder_short_off">Malŝaltita</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dt</string>
     <string name="reminder_short_weeks">%1$ds</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d h</string>
+    <string name="reminder_med_weeks">%1$d sem</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d tago</item>
+        <item quantity="other">%1$d tagoj</item>
+    </plurals>
+    <string name="reminder_med_day_of">Tage</string>
+    <string name="all_day_alert_9am_hint">Tuttagaj alarmoj eksonas je la 9 AM (09:00).</string>
     <string name="reminder_summary_none">Neniu</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

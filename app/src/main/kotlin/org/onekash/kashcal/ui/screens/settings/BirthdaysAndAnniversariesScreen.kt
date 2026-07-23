@@ -302,7 +302,7 @@ private fun ContactEventSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour, resources = resources),
+                        formatReminderOption(reminderMinutes, isAllDay = true, resources = resources),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -321,13 +321,14 @@ private fun ContactEventSection(
         SingleAlertPickerSheet(
             sheetState = reminderSheetState,
             title = reminderTitle,
-            options = getAllDayReminderOptions(use24Hour, resources),
+            options = getAllDayReminderOptions(resources),
             currentValue = reminderMinutes,
             onSelect = { minutes ->
                 onReminderChange(minutes)
                 showReminderPicker = false
             },
-            onDismiss = { showReminderPicker = false }
+            onDismiss = { showReminderPicker = false },
+            isAllDay = true
         )
     }
 

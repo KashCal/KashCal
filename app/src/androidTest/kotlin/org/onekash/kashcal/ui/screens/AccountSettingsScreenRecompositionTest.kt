@@ -23,7 +23,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
  * Tests that memoized calculations (using remember with keys) don't cause
  * unnecessary recalculations when unrelated state changes.
  *
- * These tests verify the pattern used in FlatSettingsContent:
+ * These tests verify the pattern used in AccountSettingsScreen:
  * - visibleCalendarCount = remember(calendars) { calendars.count { it.isVisible } }
  * - defaultCalendar = remember(calendars, defaultCalendarId) { calendars.find { ... } }
  */

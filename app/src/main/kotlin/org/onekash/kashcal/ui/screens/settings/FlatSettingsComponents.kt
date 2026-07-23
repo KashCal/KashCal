@@ -12,18 +12,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,8 +42,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.text.highlighted
 
@@ -147,13 +156,23 @@ fun SettingsRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Value text
+                // Value text — highlight the match when searching, since a row can
+                // match on its value alone (the value is registered as search text),
+                // and an unhighlighted match gives no cue why the row surfaced.
                 if (value != null) {
-                    Text(
-                        value,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (searchQuery.isBlank()) {
+                        Text(
+                            value,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            highlighted(value, searchQuery, settingsSearchHighlightStyle()),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 // Custom trailing or chevron
@@ -186,23 +205,31 @@ fun SettingsRow(
  * Used for boolean preferences that can be toggled on/off.
  * The entire row is clickable to toggle the switch.
  *
+ * The [Switch] opts out of the 48dp minimum interactive size so the row
+ * sits at single-line height, matching the neighbouring [SettingsRow]s
+ * instead of standing taller. The whole row is the touch target.
+ *
  * @param label Primary text label
- * @param subtitle Secondary text below label
  * @param checked Current toggle state
  * @param onCheckedChange Callback when toggle changes
+ * @param subtitle Optional secondary text below label (omit for single-line height)
  * @param icon Optional Material icon
  * @param iconEmoji Optional emoji icon (alternative to Material icon)
+ * @param info Optional rich-tooltip explanation shown by a trailing ⓘ button;
+ *   tapping ⓘ reveals the tooltip without toggling the row.
  * @param showDivider Whether to show bottom divider
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsToggleRow(
     label: String,
-    subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     icon: ImageVector? = null,
     iconEmoji: String? = null,
+    info: SettingsRowInfo? = null,
     showDivider: Boolean = true,
     searchQuery: String = ""
 ) {
@@ -236,37 +263,54 @@ fun SettingsToggleRow(
                     }
                 }
 
-                // Label and subtitle
+                // Label and (optional) subtitle
                 Column {
                     if (searchQuery.isBlank()) {
                         Text(
                             label,
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Text(
-                            subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     } else {
                         Text(
                             highlighted(label, searchQuery, settingsSearchHighlightStyle()),
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Text(
-                            highlighted(subtitle, searchQuery, settingsSearchHighlightStyle()),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    }
+                    if (subtitle != null) {
+                        if (searchQuery.isBlank()) {
+                            Text(
+                                subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Text(
+                                highlighted(subtitle, searchQuery, settingsSearchHighlightStyle()),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
 
-            // Toggle switch
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
+            // Trailing: optional info tooltip + toggle switch
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (info != null) {
+                    SettingsInfoButton(info)
+                }
+                // Opt the switch out of the 48dp minimum so the row keeps
+                // single-line height, matching sibling rows.
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    Switch(
+                        checked = checked,
+                        onCheckedChange = onCheckedChange
+                    )
+                }
+            }
         }
 
         // Divider
@@ -275,6 +319,55 @@ fun SettingsToggleRow(
                 modifier = Modifier.padding(start = 52.dp),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
+        }
+    }
+}
+
+/**
+ * Content for the trailing ⓘ tooltip on a settings row.
+ *
+ * @param title Tooltip title (also the ⓘ button's content description)
+ * @param text Supporting explanation shown inside the rich tooltip
+ */
+data class SettingsRowInfo(
+    val title: String,
+    val text: String
+)
+
+/**
+ * Trailing ⓘ button that anchors a dismissible [RichTooltip]. Tapping it
+ * shows the explanation in place (no sheet); it does not toggle the row
+ * because the click is consumed by this [IconButton].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsInfoButton(info: SettingsRowInfo) {
+    val tooltipState = rememberTooltipState(isPersistent = true)
+    val scope = rememberCoroutineScope()
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberRichTooltipPositionProvider(),
+        tooltip = {
+            RichTooltip(
+                title = { Text(info.title) },
+                text = { Text(info.text) }
+            )
+        },
+        state = tooltipState
+    ) {
+        // Opt the icon button out of the 48dp minimum touch target so it doesn't
+        // inflate the row above single-line height (same treatment as the Switch).
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            IconButton(
+                onClick = { scope.launch { tooltipState.show() } },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    Icons.Outlined.Info,
+                    contentDescription = stringResource(R.string.cd_about_setting, info.title),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
@@ -357,151 +450,11 @@ fun SettingsRowWithBadge(
 }
 
 /**
- * Settings row with dropdown selector.
- *
- * Shows label + current value, click opens dropdown menu with options.
- * Compact alternative to expanded radio lists for settings screens.
- *
- * @param label Primary text label
- * @param options List of available options
- * @param selectedOption Currently selected option
- * @param onOptionSelected Callback when an option is selected
- * @param optionLabel Function to get display label for each option
- * @param icon Optional Material icon
- * @param iconEmoji Optional emoji icon (alternative to Material icon)
- * @param showDivider Whether to show bottom divider
- */
-@Composable
-fun <T> SettingsDropdownRow(
-    label: String,
-    options: List<T>,
-    selectedOption: T,
-    onOptionSelected: (T) -> Unit,
-    optionLabel: (T) -> String,
-    modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    iconEmoji: String? = null,
-    showDivider: Boolean = true,
-    searchQuery: String = ""
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier) {
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true }
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Leading icon + label
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    // Icon (Material or Emoji)
-                    when {
-                        icon != null -> {
-                            Icon(
-                                icon,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        iconEmoji != null -> {
-                            Text(iconEmoji, fontSize = 20.sp)
-                        }
-                    }
-
-                    // Label
-                    if (searchQuery.isBlank()) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    } else {
-                        Text(
-                            highlighted(label, searchQuery, settingsSearchHighlightStyle()),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-
-                // Trailing: selected value + dropdown indicator
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (searchQuery.isBlank()) {
-                        Text(
-                            optionLabel(selectedOption),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        Text(
-                            highlighted(optionLabel(selectedOption), searchQuery, settingsSearchHighlightStyle()),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        Icons.Default.KeyboardArrowDown,
-                        contentDescription = stringResource(R.string.cd_select_option),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            // Dropdown menu
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                optionLabel(option),
-                                style = if (option == selectedOption) {
-                                    MaterialTheme.typography.bodyLarge.copy(
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                } else {
-                                    MaterialTheme.typography.bodyLarge
-                                }
-                            )
-                        },
-                        onClick = {
-                            onOptionSelected(option)
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }
-
-        // Divider
-        if (showDivider) {
-            HorizontalDivider(
-                modifier = Modifier.padding(start = 52.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-        }
-    }
-}
-
-/**
  * Highlight style for matched substrings during settings search. Uses
  * the primary container to read correctly under both light and dark.
  */
 @Composable
-private fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(
+internal fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(
     background = MaterialTheme.colorScheme.primaryContainer,
     color = MaterialTheme.colorScheme.onPrimaryContainer
 )

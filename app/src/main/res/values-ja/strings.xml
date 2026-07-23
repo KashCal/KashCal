@@ -68,6 +68,7 @@
     <string name="action_view">表示</string>
     <string name="action_enable">有効にする</string>
     <string name="action_done">完了</string>
+    <string name="action_back">戻る</string>
     <string name="action_save">保存</string>
     <string name="action_add">追加</string>
     <string name="action_edit">編集</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">時間の形式</string>
     <string name="settings_start_week_on">週の開始日</string>
     <string name="settings_event_emojis">予定絵文字</string>
-    <string name="settings_emoji_subtitle">予定タイトルに基づいて絵文字を表示</string>
+    <string name="settings_event_emojis_info">「誕生日」に 🎂 を付けるなど、タイトルに基づいて予定に絵文字を追加します。</string>
     <string name="settings_force_sync">フル同期を実行</string>
     <string name="settings_force_sync_subtitle">すべてのカレンダーデータを再ダウンロード</string>
     <string name="settings_sync_history">同期履歴</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ICSファイルに予定を保存します</string>
     <string name="settings_birthday_reminder">誕生日リマインダー</string>
     <string name="settings_use_device_timezone">デバイスのタイムゾーンを使用</string>
-    <string name="settings_section_calendars">カレンダー</string>
+    <string name="settings_section_calendars">カレンダーとアカウント</string>
     <string name="settings_section_appearance">外観</string>
-    <string name="settings_section_creating_events">予定の作成</string>
-    <string name="settings_section_sync">同期</string>
+    <string name="settings_section_creating_events">予定の設定</string>
+    <string name="settings_section_sync">通知と同期</string>
     <string name="settings_section_data">バックアップと復元</string>
     <string name="settings_section_privacy">プライバシー</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">アプリロック</string>
-    <string name="app_lock_subtitle_off">KashCalを開くにはロック解除が必要です</string>
-    <string name="app_lock_subtitle_on">指紋、顔、または画面ロックで解除します</string>
+    <string name="settings_app_lock_info">KashCal を開くにはデバイス認証が必要です。</string>
     <string name="app_lock_veil_locked">ロック中</string>
     <string name="app_lock_veil_unlock">ロック解除</string>
     <string name="app_lock_veil_footnote">指紋、顔、または画面ロック</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">このバックアップファイルには無効なデータが含まれており、復元できません。</string>
     <string name="restore_error_apply_failure">バックアップの適用中に問題が発生しました。変更は保存されていません。</string>
     <string name="backup_error_build_failed">バックアップに失敗しました</string>
-    <string name="backup_error_write_failed">バックアップに失敗しました：ファイルに書き込めませんでした</string>
+    <string name="backup_error_write_failed">バックアップに失敗しました。ファイルに書き込めませんでした。</string>
     <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">ネットワークエラーが発生しました。もう一度お試しください。</string>
     <string name="error_import_file_not_found">ファイルが見つからないか、読み取れません。</string>
     <string name="error_import_invalid_format">無効なカレンダーファイル形式です。</string>
+    <string name="error_import_no_events">ファイルに予定が見つかりませんでした</string>
+    <string name="error_import_failed">インポートに失敗しました</string>
     <string name="error_import_partial">%1$d件の予定をインポート、%2$d件が失敗しました。</string>
     <string name="error_export_failed">予定のエクスポートに失敗しました。</string>
     <string name="error_export_no_events">エクスポートする予定がありません。</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">カレンダーエラー</string>
     <string name="error_device_calendar_write_failed">デバイスカレンダーへの保存に失敗しました。もう一度お試しください。</string>
     <string name="error_device_calendar_permission">カレンダーの書き込み許可が必要です。設定で許可してください。</string>
+    <string name="error_device_calendar_permission_denied">書き込みアクセスを許可するには、設定でカレンダーの権限を一度オフにしてから再度オンにしてください</string>
     <string name="error_device_calendar_not_found">カレンダーが見つかりません。削除された可能性があります。</string>
     <string name="error_device_event_not_found">予定が見つかりません。削除された可能性があります。</string>
     <string name="error_device_calendar_read_only">このカレンダーは読み取り専用です。</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">選択済み</string>
     <string name="cd_back">戻る</string>
+    <string name="cd_opens_in_browser">ブラウザで開きます</string>
     <string name="cd_search">検索</string>
     <string name="cd_create_event">予定を作成</string>
     <string name="cd_delete">削除</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">繰り返し</string>
     <string name="cd_enabled">有効</string>
     <string name="cd_sync_error">同期エラー</string>
-    <string name="cd_select_option">オプションを選択</string>
     <string name="cd_select_label">%1$sを選択</string>
     <string name="cd_wheel_picker">%1$d個のオプションのホイールピッカー</string>
     <string name="cd_time_entry_keyboard">正確な時刻を入力する</string>
     <string name="time_entry_dialog_title">時刻を入力</string>
     <string name="time_entry_tap_to_edit">タップして編集</string>
     <string name="cd_version_info">KashCal バージョン%1$s。長押しでデバッグオプションを表示。</string>
+    <string name="cd_about_setting">%1$s について</string>
     <string name="cd_color_slider">カラースライダー、現在%1$s</string>
     <string name="cd_color_slider_state">%1$s、%2$d度</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">色:</string>
     <string name="label_repeat">繰り返し</string>
     <string name="label_sync_interval">同期間隔:</string>
-    <string name="label_scheduled_events">予定一覧</string>
-    <string name="label_all_day_events">終日予定</string>
     <string name="label_server_url">サーバーURL</string>
     <string name="label_username">ユーザー名</string>
     <string name="label_password">パスワード</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">表示するカレンダー</string>
     <string name="settings_default_calendar">デフォルトカレンダー</string>
     <string name="settings_default_event_length">デフォルトの予定時間</string>
-    <string name="settings_default_alerts">デフォルトのアラート</string>
+    <string name="settings_default_event_length_hint">新しい予定の既定の長さ</string>
+    <string name="settings_timed_event_alert">時刻指定の予定の通知</string>
+    <string name="settings_all_day_event_alert">終日予定の通知</string>
+    <string name="settings_custom_alert_value">カスタム (%1$s)</string>
     <string name="settings_notifications">通知</string>
-    <string name="settings_new_events">新しい予定</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">システムの既定値</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">デバイスカレンダー</string>
     <string name="settings_device_calendars_hint">他のアプリのカレンダー</string>
-    <string name="settings_quick_event_add">クイック予定追加</string>
+    <string name="settings_quick_event_add">スマート予定入力</string>
+    <string name="settings_quick_event_add_info">自然な入力で予定を作成できます。「Sam と金曜日の午後1時にランチ」と入力すると、タイトル、日付、時刻が自動的に入力されます。</string>
     <string name="settings_suggest_titles">予定のタイトルを提案</string>
+    <string name="settings_suggest_titles_info">新しい予定に名前を付けるときに、以前に使ったタイトルを提案するので、繰り返しの予定はワンタップです。使用頻度と最近使ったかどうかで並べ替えられます。</string>
     <string name="settings_week_numbers">週番号</string>
     <string name="settings_show_declined">辞退した予定を表示</string>
     <string name="settings_widget_event_limit">ウィジェットの予定上限</string>
+    <string name="settings_widget_event_limit_hint">ウィジェットに1日あたり表示する予定の最大数</string>
     <string name="settings_sync_lookback">同期の遡り期間</string>
-    <string name="settings_auto_detect_emojis">絵文字を自動検出</string>
-    <string name="settings_events_per_day">1日あたりの予定数</string>
+    <string name="settings_sync_lookback_hint">予定を同期する遡り期間</string>
     <string name="settings_not_set">未設定</string>
     <string name="settings_on">オン</string>
     <string name="settings_off">オフ</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">安全でない接続を信頼</string>
     <string name="action_add_another">別のアカウントを追加</string>
     <string name="account_connected_found_calendars">%2$sの%1$d件のカレンダーが見つかりました。</string>
-    <string name="account_connected_syncing_hint">同期中です — まもなく予定が表示されます。</string>
+    <string name="account_connected_syncing_hint">同期を実行中です。まもなく予定が表示されます。</string>
     <string name="settings_time_format_currently_24h">現在: 24時間 (%1$s)</string>
     <string name="settings_time_format_currently_12h">現在: 12時間 (%1$s)</string>
     <string name="settings_time_format_example">例: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">読み取り専用（カレンダーが読み取り専用）</string>
     <string name="settings_developer_options">開発者オプション</string>
     <string name="settings_sync_frequency">同期頻度</string>
-    <string name="settings_preview">プレビュー</string>
-    <string name="settings_n_events">%1$d件の予定</string>
-    <string name="settings_n_events_default">%1$d件の予定（デフォルト）</string>
+    <string name="settings_sync_frequency_hint">バックグラウンドで同期する頻度</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">カレンダー</string>
     <string name="drawer_contacts">連絡先</string>
     <string name="drawer_device_calendars">デバイスカレンダー</string>
     <string name="drawer_account_offline">オフライン</string>
+    <string name="calendar_local">この端末</string>
     <string name="drawer_share_feedback">ヘルプとドキュメント</string>
     <string name="event_title_fallback">予定</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s後</string>
     <string name="reminder_day_of_event_12h">当日 9 AM</string>
     <string name="reminder_day_of_event_24h">当日 09:00</string>
+    <string name="reminder_day_of_event">当日</string>
     <string name="reminder_before_at_12h">%1$s前の9 AM</string>
     <string name="reminder_before_at_24h">%1$s前の09:00</string>
     <string name="reminder_short_off">オフ</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$d時間</string>
     <string name="reminder_short_days">%1$d日</string>
     <string name="reminder_short_weeks">%1$d週</string>
+    <string name="reminder_med_minutes">%1$d分</string>
+    <string name="reminder_med_hours">%1$d時間</string>
+    <string name="reminder_med_weeks">%1$d週間</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d日</item>
+    </plurals>
+    <string name="reminder_med_day_of">当日</string>
+    <string name="all_day_alert_9am_hint">終日の通知は午前9時（09:00）に届きます。</string>
     <string name="reminder_summary_none">なし</string>
     <string name="duration_compact">%1$d時間%2$d分</string>
     <string name="duration_compact_short">%1$d時%2$d分</string>

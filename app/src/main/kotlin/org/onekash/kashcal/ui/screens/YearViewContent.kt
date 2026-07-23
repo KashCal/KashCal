@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -331,6 +332,9 @@ private fun MiniDayCell(
                     .size(14.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
+                    // The tonal fill alone can wash out against the surface for pale
+                    // accent seeds; a hairline outline keeps the today ring visible.
+                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             } else {
                 Modifier.size(14.dp)
             }

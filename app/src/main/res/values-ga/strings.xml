@@ -68,6 +68,7 @@
     <string name="action_view">Amharc</string>
     <string name="action_enable">Cumasaigh</string>
     <string name="action_done">Déanta</string>
+    <string name="action_back">Ar ais</string>
     <string name="action_save">Sábháil</string>
     <string name="action_add">Cuir Leis</string>
     <string name="action_edit">Cuir in Eagar</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Formáid Ama</string>
     <string name="settings_start_week_on">Tosaigh an tSeachtain Ar</string>
     <string name="settings_event_emojis">Emojis Imeachtaí</string>
-    <string name="settings_emoji_subtitle">Taispeáin emojis bunaithe ar theidil imeachtaí</string>
+    <string name="settings_event_emojis_info">Cuireann sé emoji le himeachtaí de réir an teidil, cosúil le 🎂 do \"Breithlá\".</string>
     <string name="settings_force_sync">Sioncronú Iomláin Éigeantach</string>
     <string name="settings_force_sync_subtitle">Ath-íoslódáil gach sonraí féilire</string>
     <string name="settings_sync_history">Stair Sioncronúithe</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Sábháil imeachtaí chuig comhad ICS</string>
     <string name="settings_birthday_reminder">Meabhrúchán Lá Breithe</string>
     <string name="settings_use_device_timezone">Úsáid crios ama na gléine</string>
-    <string name="settings_section_calendars">Féilirí</string>
+    <string name="settings_section_calendars">Féilirí agus cuntais</string>
     <string name="settings_section_appearance">Cuma</string>
-    <string name="settings_section_creating_events">Imeachtaí a chruthú</string>
-    <string name="settings_section_sync">Sioncronú</string>
+    <string name="settings_section_creating_events">Roghanna imeachtaí</string>
+    <string name="settings_section_sync">Fógraí agus sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
     <string name="settings_section_privacy">Príobháideachas</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Glas aip</string>
-    <string name="app_lock_subtitle_off">Éiligh díghlasáil chun KashCal a oscailt</string>
-    <string name="app_lock_subtitle_on">Díghlasáil le méarlorg, aghaidh nó glas scáileáin</string>
+    <string name="settings_app_lock_info">Éilíonn sé fíordheimhniú gléis chun KashCal a oscailt.</string>
     <string name="app_lock_veil_locked">Faoi ghlas</string>
     <string name="app_lock_veil_unlock">Díghlasáil</string>
     <string name="app_lock_veil_footnote">Méarlorg, aghaidh nó glas scáileáin</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Tá sonraí neamhbhailí sa chomhad cúltaca seo agus ní féidir é a athchóiriú.</string>
     <string name="restore_error_apply_failure">Chuaigh rud éigin mícheart agus an cúltaca á chur i bhfeidhm. Níor sábháladh aon athruithe.</string>
     <string name="backup_error_build_failed">Theip ar an gcúltaca</string>
-    <string name="backup_error_write_failed">Theip ar an gcúltaca — níorbh fhéidir scríobh chuig an gcomhad</string>
+    <string name="backup_error_write_failed">Theip ar an gcúltaca. Níorbh fhéidir scríobh chuig an gcomhad.</string>
     <string name="backup_error_read_failed">Níorbh fhéidir an comhad a léamh</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Earráid líonra, bain triail eile as</string>
     <string name="error_import_file_not_found">Comhad gan aimsiú nó ní féidir é a léamh.</string>
     <string name="error_import_invalid_format">Formáid chomhaid féilire neamhbhailí.</string>
+    <string name="error_import_no_events">Níor aimsíodh aon imeacht sa chomhad</string>
+    <string name="error_import_failed">Theip ar an iompórtáil</string>
     <string name="error_import_partial">%1$d imeacht iompórtáilte, theip ar %2$d.</string>
     <string name="error_export_failed">Theip ar eas-phortáil imeachtaí.</string>
     <string name="error_export_no_events">Gan imeachtaí le heas-phortáil.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Earráid Féilire</string>
     <string name="error_device_calendar_write_failed">Theip ar shábháil chuig féilire na gléine. Bain triail as arís.</string>
     <string name="error_device_calendar_permission">Tá cead scríofa féilire ag teastáil. Tabhair cead sna Socruithe.</string>
+    <string name="error_device_calendar_permission_denied">Múch agus las an cead Féilire sna Socruithe chun rochtain scríofa a thabhairt</string>
     <string name="error_device_calendar_not_found">Féilire gan aimsiú. B\'fhéidir gur baineadh é.</string>
     <string name="error_device_event_not_found">Imeacht gan aimsiú. B\'fhéidir gur scriosadh é.</string>
     <string name="error_device_calendar_read_only">Is féilire léitheoireachta amháin é seo.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Roghnaithe</string>
     <string name="cd_back">Ar ais</string>
+    <string name="cd_opens_in_browser">Osclaíonn i mbrabhsálaí</string>
     <string name="cd_search">Cuardaigh</string>
     <string name="cd_create_event">Cruthaigh imeacht</string>
     <string name="cd_delete">Scrios</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Athfhillteach</string>
     <string name="cd_enabled">Cumasaithe</string>
     <string name="cd_sync_error">Earráid sioncronúithe</string>
-    <string name="cd_select_option">Roghnaigh rogha</string>
     <string name="cd_select_label">Roghnaigh %1$s</string>
     <string name="cd_wheel_picker">Roghnóir rotha le %1$d rogha</string>
     <string name="cd_time_entry_keyboard">Cuir isteach an t-am beacht</string>
     <string name="time_entry_dialog_title">Cuir isteach an t-am</string>
     <string name="time_entry_tap_to_edit">Tapáil le heagrú</string>
     <string name="cd_version_info">KashCal leagan %1$s. Brúigh go fada le haghaidh roghanna dífhabhtaithe.</string>
+    <string name="cd_about_setting">Maidir le %1$s</string>
     <string name="cd_color_slider">Sleamhnán datha, %1$s faoi láthair</string>
     <string name="cd_color_slider_state">%1$s, %2$d céim</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Dath:</string>
     <string name="label_repeat">Athfhill</string>
     <string name="label_sync_interval">Eatramh Sioncronúithe:</string>
-    <string name="label_scheduled_events">Imeachtaí Sceidealta</string>
-    <string name="label_all_day_events">Imeachtaí Lá Iomláin</string>
     <string name="label_server_url">URL Freastalaí</string>
     <string name="label_username">Ainm úsáideora</string>
     <string name="label_password">Focal faire</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Féilirí Infheicthe</string>
     <string name="settings_default_calendar">Féilire Réamhshocrú</string>
     <string name="settings_default_event_length">Fad Réamhshocrú Imeachta</string>
-    <string name="settings_default_alerts">Foláirimh Réamhshocrú</string>
+    <string name="settings_default_event_length_hint">Fad réamhshocraithe d\'imeachtaí nua</string>
+    <string name="settings_timed_event_alert">Foláireamh imeachta ama</string>
+    <string name="settings_all_day_event_alert">Foláireamh imeachta lae iomláin</string>
+    <string name="settings_custom_alert_value">Saincheaptha (%1$s)</string>
     <string name="settings_notifications">Fógraí</string>
-    <string name="settings_new_events">Imeachtaí nua</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Réamhshocrú an chórais</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Féilirí na Gléine</string>
     <string name="settings_device_calendars_hint">Féilirí ó aipeanna eile</string>
-    <string name="settings_quick_event_add">Cuir Imeacht Tapa Leis</string>
+    <string name="settings_quick_event_add">Imeachtaí a chur leis go cliste</string>
+    <string name="settings_quick_event_add_info">Cruthaigh imeachtaí trí chlóscríobh go nádúrtha. Líonann \"Lón le Sam Dé hAoine 1in\" an teideal, an dáta agus an t-am duit.</string>
     <string name="settings_suggest_titles">Mol teidil imeachtaí</string>
+    <string name="settings_suggest_titles_info">Agus imeacht nua á ainmniú agat, molann sé teidil a d\'úsáid tú cheana, ionas nach bhfuil ach cnag amháin ag teastáil le himeachtaí athfhillteacha. Rangaithe de réir cé chomh minic agus cé chomh déanach a d\'úsáid tú iad.</string>
     <string name="settings_week_numbers">Uimhreacha Seachtaine</string>
     <string name="settings_show_declined">Taispeáin imeachtaí diúltaithe</string>
     <string name="settings_widget_event_limit">Teorainn Imeachtaí Giuirléide</string>
+    <string name="settings_widget_event_limit_hint">Uaslíon imeachtaí a thaispeántar in aghaidh an lae i ngiuirléidí</string>
     <string name="settings_sync_lookback">Féachaint Siar Sioncronúithe</string>
-    <string name="settings_auto_detect_emojis">Braith Emojis go Huathoibríoch</string>
-    <string name="settings_events_per_day">Imeachtaí in aghaidh an lae</string>
+    <string name="settings_sync_lookback_hint">Cé chomh fada siar is a shioncronaítear imeachtaí</string>
     <string name="settings_not_set">Gan socrú</string>
     <string name="settings_on">Air</string>
     <string name="settings_off">As</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Muinín as ceangal neamhshlán</string>
     <string name="action_add_another">Cuir Ceann Eile Leis</string>
     <string name="account_connected_found_calendars">Aimsíodh %1$d féilire do %2$s.</string>
-    <string name="account_connected_syncing_hint">Sioncronú ar siúl — beidh imeachtaí le feiceáil go luath.</string>
+    <string name="account_connected_syncing_hint">Sioncronú ar siúl. Taispeánfar imeachtaí go luath.</string>
     <string name="settings_time_format_currently_24h">Faoi láthair: 24 uair (%1$s)</string>
     <string name="settings_time_format_currently_12h">Faoi láthair: 12 uair (%1$s)</string>
     <string name="settings_time_format_example">Sampla: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Léitheoireacht amháin (féilire léitheoireachta amháin)</string>
     <string name="settings_developer_options">Roghanna Forbróra</string>
     <string name="settings_sync_frequency">Minicíocht Sioncronúithe</string>
-    <string name="settings_preview">RÉAMHAMHARC</string>
-    <string name="settings_n_events">%1$d imeacht</string>
-    <string name="settings_n_events_default">%1$d imeacht (réamhshocrú)</string>
+    <string name="settings_sync_frequency_hint">Cé chomh minic is a shioncronaítear sa chúlra</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Féilirí</string>
     <string name="drawer_contacts">Teagmhálaí</string>
     <string name="drawer_device_calendars">Féilirí na gléine</string>
     <string name="drawer_account_offline">As líne</string>
+    <string name="calendar_local">Áitiúil</string>
     <string name="drawer_share_feedback">Cabhair agus cáipéisí</string>
     <string name="event_title_fallback">Imeacht</string>
 
@@ -1031,6 +1036,7 @@
     <string name="reminder_time_after">%1$s i ndiaidh</string>
     <string name="reminder_day_of_event_12h">9 AM lá an imeachta</string>
     <string name="reminder_day_of_event_24h">09:00 lá an imeachta</string>
+    <string name="reminder_day_of_event">Lá an imeachta</string>
     <string name="reminder_before_at_12h">%1$s roimhe ag 9 AM</string>
     <string name="reminder_before_at_24h">%1$s roimhe ag 09:00</string>
     <string name="reminder_short_off">As</string>
@@ -1041,6 +1047,18 @@
     <string name="reminder_short_hours">%1$du</string>
     <string name="reminder_short_days">%1$dl</string>
     <string name="reminder_short_weeks">%1$ds</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d u</string>
+    <string name="reminder_med_weeks">%1$d scht</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d lá</item>
+        <item quantity="two">%1$d lá</item>
+        <item quantity="few">%1$d lá</item>
+        <item quantity="many">%1$d lá</item>
+        <item quantity="other">%1$d lá</item>
+    </plurals>
+    <string name="reminder_med_day_of">Lá an</string>
+    <string name="all_day_alert_9am_hint">Lasann foláirimh lae iomláin ag 9 AM (09:00).</string>
     <string name="reminder_summary_none">Ceann ar bith</string>
     <string name="duration_compact">%1$du %2$dn</string>
     <string name="duration_compact_short">%1$du%2$dn</string>

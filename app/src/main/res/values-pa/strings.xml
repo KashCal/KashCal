@@ -68,6 +68,7 @@
     <string name="action_view">ਦੇਖੋ</string>
     <string name="action_enable">ਸਮਰੱਥ ਕਰੋ</string>
     <string name="action_done">ਹੋ ਗਿਆ</string>
+    <string name="action_back">ਪਿੱਛੇ</string>
     <string name="action_save">ਸੇਵ ਕਰੋ</string>
     <string name="action_add">ਜੋੜੋ</string>
     <string name="action_edit">ਸੰਪਾਦਨ</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">ਸਮਾਂ ਫ਼ਾਰਮੈਟ</string>
     <string name="settings_start_week_on">ਹਫ਼ਤਾ ਸ਼ੁਰੂ ਕਰੋ</string>
     <string name="settings_event_emojis">ਘਟਨਾ ਇਮੋਜੀ</string>
-    <string name="settings_emoji_subtitle">ਘਟਨਾ ਸਿਰਲੇਖਾਂ ਦੇ ਆਧਾਰ \'ਤੇ ਇਮੋਜੀ ਦਿਖਾਓ</string>
+    <string name="settings_event_emojis_info">ਸਿਰਲੇਖ ਦੇ ਆਧਾਰ \'ਤੇ ਸਮਾਗਮਾਂ ਵਿੱਚ ਇਮੋਜੀ ਜੋੜਦਾ ਹੈ, ਜਿਵੇਂ \"ਜਨਮਦਿਨ\" ਲਈ 🎂।</string>
     <string name="settings_force_sync">ਪੂਰਾ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ</string>
     <string name="settings_force_sync_subtitle">ਸਰਵਰ ਤੋਂ ਸਾਰਾ ਕੈਲੰਡਰ ਡਾਟਾ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੋ</string>
     <string name="settings_sync_history">ਸਿੰਕ ਇਤਿਹਾਸ</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ਘਟਨਾਵਾਂ ICS ਫ਼ਾਈਲ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ</string>
     <string name="settings_birthday_reminder">ਜਨਮਦਿਨ ਯਾਦ-ਦਹਾਨੀ</string>
     <string name="settings_use_device_timezone">ਡਿਵਾਈਸ ਟਾਈਮਜ਼ੋਨ ਵਰਤੋ</string>
-    <string name="settings_section_calendars">ਕੈਲੰਡਰ</string>
+    <string name="settings_section_calendars">ਕੈਲੰਡਰ &amp; ਖਾਤੇ</string>
     <string name="settings_section_appearance">ਦਿੱਖ</string>
-    <string name="settings_section_creating_events">ਘਟਨਾ ਬਣਾਉਣਾ</string>
-    <string name="settings_section_sync">ਸਿੰਕ</string>
+    <string name="settings_section_creating_events">ਘਟਨਾ ਤਰਜੀਹਾਂ</string>
+    <string name="settings_section_sync">ਸੂਚਨਾਵਾਂ &amp; ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
     <string name="settings_section_privacy">ਪਰਦੇਦਾਰੀ</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ਐਪ ਲਾਕ</string>
-    <string name="app_lock_subtitle_off">KashCal ਖੋਲ੍ਹਣ ਲਈ ਅਣਲਾਕ ਲਾਜ਼ਮੀ ਕਰੋ</string>
-    <string name="app_lock_subtitle_on">ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰੇ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ ਨਾਲ ਅਣਲਾਕ ਕਰੋ</string>
+    <string name="settings_app_lock_info">KashCal ਖੋਲ੍ਹਣ ਲਈ ਡੀਵਾਈਸ ਪ੍ਰਮਾਣੀਕਰਨ ਲੋੜੀਂਦਾ ਹੈ।</string>
     <string name="app_lock_veil_locked">ਲਾਕ ਕੀਤਾ</string>
     <string name="app_lock_veil_unlock">ਅਣਲਾਕ ਕਰੋ</string>
     <string name="app_lock_veil_footnote">ਫਿੰਗਰਪ੍ਰਿੰਟ, ਚਿਹਰਾ ਜਾਂ ਸਕ੍ਰੀਨ ਲਾਕ</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ਇਸ ਬੈਕਅੱਪ ਫ਼ਾਈਲ ਵਿੱਚ ਅਵੈਧ ਡਾਟਾ ਹੈ ਅਤੇ ਇਸ ਨੂੰ ਰੀਸਟੋਰ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।</string>
     <string name="restore_error_apply_failure">ਬੈਕਅੱਪ ਲਾਗੂ ਕਰਦੇ ਸਮੇਂ ਕੁਝ ਗਲਤ ਹੋਇਆ। ਕੋਈ ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਹੋਏ।</string>
     <string name="backup_error_build_failed">ਬੈਕਅੱਪ ਅਸਫਲ ਹੋਇਆ</string>
-    <string name="backup_error_write_failed">ਬੈਕਅੱਪ ਅਸਫਲ ਹੋਇਆ — ਫਾਈਲ ਵਿੱਚ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ</string>
+    <string name="backup_error_write_failed">ਬੈਕਅੱਪ ਅਸਫਲ ਰਿਹਾ। ਫਾਈਲ ਵਿੱਚ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।</string>
     <string name="backup_error_read_failed">ਫਾਈਲ ਨਹੀਂ ਪੜ੍ਹ ਸਕੇ</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">ਨੈੱਟਵਰਕ ਗਲਤੀ, ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ</string>
     <string name="error_import_file_not_found">ਫ਼ਾਈਲ ਨਹੀਂ ਮਿਲੀ ਜਾਂ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ।</string>
     <string name="error_import_invalid_format">ਗਲਤ ਕੈਲੰਡਰ ਫ਼ਾਈਲ ਫ਼ਾਰਮੈਟ।</string>
+    <string name="error_import_no_events">ਫ਼ਾਈਲ ਵਿੱਚ ਕੋਈ ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ</string>
+    <string name="error_import_failed">ਇੰਪੋਰਟ ਅਸਫ਼ਲ</string>
     <string name="error_import_partial">%1$d ਘਟਨਾਵਾਂ ਇੰਪੋਰਟ ਹੋਈਆਂ, %2$d ਅਸਫ਼ਲ।</string>
     <string name="error_export_failed">ਘਟਨਾਵਾਂ ਐਕਸਪੋਰਟ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ।</string>
     <string name="error_export_no_events">ਐਕਸਪੋਰਟ ਕਰਨ ਲਈ ਕੋਈ ਘਟਨਾ ਨਹੀਂ।</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">ਕੈਲੰਡਰ ਗਲਤੀ</string>
     <string name="error_device_calendar_write_failed">ਡਿਵਾਈਸ ਕੈਲੰਡਰ ਵਿੱਚ ਸੇਵ ਕਰਨ ਵਿੱਚ ਅਸਫ਼ਲ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="error_device_calendar_permission">ਕੈਲੰਡਰ ਲਿਖਣ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
+    <string name="error_device_calendar_permission_denied">ਲਿਖਣ ਪਹੁੰਚ ਦੇਣ ਲਈ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਕੈਲੰਡਰ ਇਜਾਜ਼ਤ ਬੰਦ ਕਰਕੇ ਦੁਬਾਰਾ ਚਾਲੂ ਕਰੋ</string>
     <string name="error_device_calendar_not_found">ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ। ਹਟਾਇਆ ਗਿਆ ਹੋ ਸਕਦਾ ਹੈ।</string>
     <string name="error_device_event_not_found">ਘਟਨਾ ਨਹੀਂ ਮਿਲੀ। ਮਿਟਾਈ ਗਈ ਹੋ ਸਕਦੀ ਹੈ।</string>
     <string name="error_device_calendar_read_only">ਇਹ ਕੈਲੰਡਰ ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਹੈ।</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ਚੁਣਿਆ</string>
     <string name="cd_back">ਪਿੱਛੇ</string>
+    <string name="cd_opens_in_browser">ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੁੱਲ੍ਹਦਾ ਹੈ</string>
     <string name="cd_search">ਖੋਜ</string>
     <string name="cd_create_event">ਘਟਨਾ ਬਣਾਓ</string>
     <string name="cd_delete">ਮਿਟਾਓ</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">ਦੁਹਰਾਉਣ ਵਾਲਾ</string>
     <string name="cd_enabled">ਸਮਰੱਥ</string>
     <string name="cd_sync_error">ਸਿੰਕ ਗਲਤੀ</string>
-    <string name="cd_select_option">ਵਿਕਲਪ ਚੁਣੋ</string>
     <string name="cd_select_label">%1$s ਚੁਣੋ</string>
     <string name="cd_wheel_picker">%1$d ਵਿਕਲਪਾਂ ਵਾਲਾ ਵ੍ਹੀਲ ਪਿਕਰ</string>
     <string name="cd_time_entry_keyboard">ਸਹੀ ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
     <string name="time_entry_dialog_title">ਸਮਾਂ ਦਾਖਲ ਕਰੋ</string>
     <string name="time_entry_tap_to_edit">ਸੋਧਣ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="cd_version_info">KashCal ਸੰਸਕਰਣ %1$s। ਡੀਬੱਗ ਵਿਕਲਪਾਂ ਲਈ ਲੰਬਾ ਦਬਾਓ।</string>
+    <string name="cd_about_setting">%1$s ਬਾਰੇ</string>
     <string name="cd_color_slider">ਰੰਗ ਸਲਾਈਡਰ, ਮੌਜੂਦਾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ਡਿਗਰੀ</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">ਰੰਗ:</string>
     <string name="label_repeat">ਦੁਹਰਾਓ</string>
     <string name="label_sync_interval">ਸਿੰਕ ਅੰਤਰਾਲ:</string>
-    <string name="label_scheduled_events">ਤਹਿ ਘਟਨਾਵਾਂ</string>
-    <string name="label_all_day_events">ਸਾਰੇ ਦਿਨ ਦੀਆਂ ਘਟਨਾਵਾਂ</string>
     <string name="label_server_url">ਸਰਵਰ URL</string>
     <string name="label_username">ਯੂਜ਼ਰਨੇਮ</string>
     <string name="label_password">ਪਾਸਵਰਡ</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">ਦਿੱਸਣਯੋਗ ਕੈਲੰਡਰ</string>
     <string name="settings_default_calendar">ਡਿਫ਼ੌਲਟ ਕੈਲੰਡਰ</string>
     <string name="settings_default_event_length">ਡਿਫ਼ੌਲਟ ਘਟਨਾ ਸਮਾਂ</string>
-    <string name="settings_default_alerts">ਡਿਫ਼ੌਲਟ ਚੇਤਾਵਨੀਆਂ</string>
+    <string name="settings_default_event_length_hint">ਨਵੇਂ ਸਮਾਗਮਾਂ ਲਈ ਮੂਲ ਮਿਆਦ</string>
+    <string name="settings_timed_event_alert">ਸਮਾਂ-ਬੱਧ ਸਮਾਗਮ ਸੁਚੇਤਨਾ</string>
+    <string name="settings_all_day_event_alert">ਪੂਰੇ-ਦਿਨ ਦੇ ਸਮਾਗਮ ਦੀ ਸੁਚੇਤਨਾ</string>
+    <string name="settings_custom_alert_value">ਕਸਟਮ (%1$s)</string>
     <string name="settings_notifications">ਸੂਚਨਾਵਾਂ</string>
-    <string name="settings_new_events">ਨਵੀਆਂ ਘਟਨਾਵਾਂ</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">ਸਿਸਟਮ ਡਿਫ਼ੌਲਟ</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="settings_device_calendars_hint">ਹੋਰ ਐਪਾਂ ਦੇ ਕੈਲੰਡਰ</string>
-    <string name="settings_quick_event_add">ਤੁਰੰਤ ਘਟਨਾ ਜੋੜੋ</string>
+    <string name="settings_quick_event_add">ਸਮਾਰਟ ਘਟਨਾ ਜੋੜੋ</string>
+    <string name="settings_quick_event_add_info">ਕੁਦਰਤੀ ਤੌਰ \'ਤੇ ਟਾਈਪ ਕਰਕੇ ਸਮਾਗਮ ਬਣਾਓ। \"Sam ਨਾਲ ਸ਼ੁੱਕਰਵਾਰ ਦੁਪਹਿਰ 1 ਵਜੇ ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ\" ਤੁਹਾਡੇ ਲਈ ਸਿਰਲੇਖ, ਤਾਰੀਖ ਅਤੇ ਸਮਾਂ ਭਰ ਦਿੰਦਾ ਹੈ।</string>
     <string name="settings_suggest_titles">ਘਟਨਾ ਟਾਇਟਲ ਸੁਝਾਓ</string>
+    <string name="settings_suggest_titles_info">ਜਦੋਂ ਤੁਸੀਂ ਕਿਸੇ ਨਵੇਂ ਸਮਾਗਮ ਦਾ ਨਾਮ ਰੱਖਦੇ ਹੋ, ਤਾਂ ਉਹ ਸਿਰਲੇਖ ਸੁਝਾਉਂਦਾ ਹੈ ਜੋ ਤੁਸੀਂ ਪਹਿਲਾਂ ਵਰਤੇ ਹਨ, ਤਾਂ ਜੋ ਦੁਹਰਾਉਣ ਵਾਲੇ ਸਮਾਗਮ ਇੱਕ ਟੈਪ ਵਿੱਚ ਹੋਣ। ਇਹ ਇਸ ਆਧਾਰ \'ਤੇ ਦਰਜਾਬੰਦੀ ਕੀਤੇ ਜਾਂਦੇ ਹਨ ਕਿ ਤੁਸੀਂ ਉਹਨਾਂ ਨੂੰ ਕਿੰਨੀ ਵਾਰ ਅਤੇ ਕਿੰਨੀ ਹਾਲ ਹੀ ਵਿੱਚ ਵਰਤਿਆ ਹੈ।</string>
     <string name="settings_week_numbers">ਹਫ਼ਤਾ ਨੰਬਰ</string>
     <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
     <string name="settings_widget_event_limit">ਵਿਜੇਟ ਘਟਨਾ ਸੀਮਾ</string>
+    <string name="settings_widget_event_limit_hint">ਵਿਜੇਟਾਂ ਵਿੱਚ ਪ੍ਰਤੀ ਦਿਨ ਵੱਧ ਤੋਂ ਵੱਧ ਦਿਖਾਏ ਜਾਣ ਵਾਲੇ ਸਮਾਗਮ</string>
     <string name="settings_sync_lookback">ਸਿੰਕ ਲੁੱਕਬੈਕ</string>
-    <string name="settings_auto_detect_emojis">ਇਮੋਜੀ ਆਟੋ-ਖੋਜ</string>
-    <string name="settings_events_per_day">ਪ੍ਰਤੀ ਦਿਨ ਘਟਨਾਵਾਂ</string>
+    <string name="settings_sync_lookback_hint">ਸਮਾਗਮਾਂ ਨੂੰ ਕਿੰਨਾ ਪਿੱਛੇ ਤੱਕ ਸਿੰਕ ਕਰਨਾ ਹੈ</string>
     <string name="settings_not_set">ਸੈੱਟ ਨਹੀਂ ਹੈ</string>
     <string name="settings_on">ਚਾਲੂ</string>
     <string name="settings_off">ਬੰਦ</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">ਅਸੁਰੱਖਿਅਤ ਕਨੈਕਸ਼ਨ \'ਤੇ ਭਰੋਸਾ ਕਰੋ</string>
     <string name="action_add_another">ਹੋਰ ਜੋੜੋ</string>
     <string name="account_connected_found_calendars">%2$s ਲਈ %1$d ਕੈਲੰਡਰ ਮਿਲੇ।</string>
-    <string name="account_connected_syncing_hint">ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ — ਘਟਨਾਵਾਂ ਛੇਤੀ ਦਿਖਣਗੀਆਂ।</string>
+    <string name="account_connected_syncing_hint">ਸਿੰਕ ਜਾਰੀ ਹੈ। ਸਮਾਗਮ ਜਲਦੀ ਹੀ ਦਿਖਾਈ ਦੇਣਗੇ।</string>
     <string name="settings_time_format_currently_24h">ਮੌਜੂਦਾ: 24 ਘੰਟੇ (%1$s)</string>
     <string name="settings_time_format_currently_12h">ਮੌਜੂਦਾ: 12 ਘੰਟੇ (%1$s)</string>
     <string name="settings_time_format_example">ਉਦਾਹਰਨ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">ਸਿਰਫ਼ ਪੜ੍ਹਨ (ਸਿਰਫ਼-ਪੜ੍ਹਨਯੋਗ ਕੈਲੰਡਰ)</string>
     <string name="settings_developer_options">ਡਿਵੈਲਪਰ ਵਿਕਲਪ</string>
     <string name="settings_sync_frequency">ਸਿੰਕ ਵਾਰਵਾਰਤਾ</string>
-    <string name="settings_preview">ਪ੍ਰੀਵਿਊ</string>
-    <string name="settings_n_events">%1$d ਘਟਨਾਵਾਂ</string>
-    <string name="settings_n_events_default">%1$d ਘਟਨਾਵਾਂ (ਡਿਫ਼ੌਲਟ)</string>
+    <string name="settings_sync_frequency_hint">ਬੈਕਗ੍ਰਾਊਂਡ ਵਿੱਚ ਕਿੰਨੀ ਵਾਰ ਸਿੰਕ ਕਰਨਾ ਹੈ</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ਕੈਲੰਡਰ</string>
     <string name="drawer_contacts">ਸੰਪਰਕ</string>
     <string name="drawer_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="drawer_account_offline">ਆਫ਼ਲਾਈਨ</string>
+    <string name="calendar_local">ਸਥਾਨਕ</string>
     <string name="drawer_share_feedback">ਮਦਦ ਅਤੇ ਦਸਤਾਵੇਜ਼</string>
     <string name="event_title_fallback">ਘਟਨਾ</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s ਬਾਅਦ</string>
     <string name="reminder_day_of_event_12h">ਘਟਨਾ ਦੇ ਦਿਨ ਸਵੇਰੇ 9 ਵਜੇ</string>
     <string name="reminder_day_of_event_24h">ਘਟਨਾ ਦੇ ਦਿਨ 09:00</string>
+    <string name="reminder_day_of_event">ਘਟਨਾ ਦੇ ਦਿਨ</string>
     <string name="reminder_before_at_12h">%1$s ਪਹਿਲਾਂ ਸਵੇਰੇ 9 ਵਜੇ</string>
     <string name="reminder_before_at_24h">%1$s ਪਹਿਲਾਂ 09:00 ਵਜੇ</string>
     <string name="reminder_short_off">ਬੰਦ</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dਘੰ</string>
     <string name="reminder_short_days">%1$dਦਿ</string>
     <string name="reminder_short_weeks">%1$dਹ</string>
+    <string name="reminder_med_minutes">%1$d ਮਿੰਟ</string>
+    <string name="reminder_med_hours">%1$d ਘੰਟੇ</string>
+    <string name="reminder_med_weeks">%1$d ਹਫ਼ਤੇ</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ਦਿਨ</item>
+        <item quantity="other">%1$d ਦਿਨ</item>
+    </plurals>
+    <string name="reminder_med_day_of">ਦਿਨ</string>
+    <string name="all_day_alert_9am_hint">ਪੂਰੇ ਦਿਨ ਦੀਆਂ ਚੇਤਾਵਨੀਆਂ ਸਵੇਰੇ 9 ਵਜੇ (09:00) ਆਉਂਦੀਆਂ ਹਨ।</string>
     <string name="reminder_summary_none">ਕੋਈ ਨਹੀਂ</string>
     <string name="duration_compact">%1$dਘੰ %2$dਮਿ</string>
     <string name="duration_compact_short">%1$dਘੰ%2$dਮਿ</string>

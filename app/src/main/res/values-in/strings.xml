@@ -68,6 +68,7 @@
     <string name="action_view">Lihat</string>
     <string name="action_enable">Aktifkan</string>
     <string name="action_done">Selesai</string>
+    <string name="action_back">Kembali</string>
     <string name="action_save">Simpan</string>
     <string name="action_add">Tambah</string>
     <string name="action_edit">Edit</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Format Waktu</string>
     <string name="settings_start_week_on">Mulai Minggu Pada</string>
     <string name="settings_event_emojis">Emoji Acara</string>
-    <string name="settings_emoji_subtitle">Tampilkan emoji berdasarkan judul acara</string>
+    <string name="settings_event_emojis_info">Menambahkan emoji ke acara berdasarkan judulnya, seperti 🎂 untuk \"Ulang tahun\".</string>
     <string name="settings_force_sync">Sinkronisasi Paksa Penuh</string>
     <string name="settings_force_sync_subtitle">Unduh ulang semua data kalender</string>
     <string name="settings_sync_history">Riwayat Sinkronisasi</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Simpan acara ke file ICS</string>
     <string name="settings_birthday_reminder">Pengingat Ulang Tahun</string>
     <string name="settings_use_device_timezone">Gunakan zona waktu perangkat</string>
-    <string name="settings_section_calendars">Kalender</string>
+    <string name="settings_section_calendars">Kalender &amp; akun</string>
     <string name="settings_section_appearance">Tampilan</string>
-    <string name="settings_section_creating_events">Membuat acara</string>
-    <string name="settings_section_sync">Sinkronisasi</string>
+    <string name="settings_section_creating_events">Preferensi acara</string>
+    <string name="settings_section_sync">Notifikasi &amp; sinkronisasi</string>
     <string name="settings_section_data">Cadangkan &amp; Pulihkan</string>
     <string name="settings_section_privacy">Privasi</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kunci aplikasi</string>
-    <string name="app_lock_subtitle_off">Wajibkan buka kunci untuk membuka KashCal</string>
-    <string name="app_lock_subtitle_on">Buka kunci dengan sidik jari, wajah, atau kunci layar</string>
+    <string name="settings_app_lock_info">Wajibkan autentikasi perangkat untuk membuka KashCal.</string>
     <string name="app_lock_veil_locked">Terkunci</string>
     <string name="app_lock_veil_unlock">Buka kunci</string>
     <string name="app_lock_veil_footnote">Sidik jari, wajah, atau kunci layar</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">File cadangan ini berisi data tidak valid dan tidak dapat dipulihkan.</string>
     <string name="restore_error_apply_failure">Terjadi kesalahan saat menerapkan cadangan. Tidak ada perubahan yang disimpan.</string>
     <string name="backup_error_build_failed">Pencadangan gagal</string>
-    <string name="backup_error_write_failed">Pencadangan gagal — tidak dapat menulis ke berkas</string>
+    <string name="backup_error_write_failed">Pencadangan gagal. Tidak dapat menulis ke berkas.</string>
     <string name="backup_error_read_failed">Tidak dapat membaca berkas</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Kesalahan jaringan, silakan coba lagi</string>
     <string name="error_import_file_not_found">File tidak ditemukan atau tidak dapat dibaca.</string>
     <string name="error_import_invalid_format">Format file kalender tidak valid.</string>
+    <string name="error_import_no_events">Tidak ada acara dalam file</string>
+    <string name="error_import_failed">Impor gagal</string>
     <string name="error_import_partial">%1$d acara diimpor, %2$d gagal.</string>
     <string name="error_export_failed">Gagal mengekspor acara.</string>
     <string name="error_export_no_events">Tidak ada acara untuk diekspor.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kesalahan Kalender</string>
     <string name="error_device_calendar_write_failed">Gagal menyimpan ke kalender perangkat. Silakan coba lagi.</string>
     <string name="error_device_calendar_permission">Izin tulis kalender diperlukan. Silakan berikan izin di Pengaturan.</string>
+    <string name="error_device_calendar_permission_denied">Nonaktifkan lalu aktifkan kembali izin Kalender di Pengaturan untuk memberikan akses tulis</string>
     <string name="error_device_calendar_not_found">Kalender tidak ditemukan. Mungkin telah dihapus.</string>
     <string name="error_device_event_not_found">Acara tidak ditemukan. Mungkin telah dihapus.</string>
     <string name="error_device_calendar_read_only">Kalender ini hanya-baca.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Dipilih</string>
     <string name="cd_back">Kembali</string>
+    <string name="cd_opens_in_browser">Membuka di peramban</string>
     <string name="cd_search">Cari</string>
     <string name="cd_create_event">Buat acara</string>
     <string name="cd_delete">Hapus</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Berulang</string>
     <string name="cd_enabled">Diaktifkan</string>
     <string name="cd_sync_error">Kesalahan sinkronisasi</string>
-    <string name="cd_select_option">Pilih opsi</string>
     <string name="cd_select_label">Pilih %1$s</string>
     <string name="cd_wheel_picker">Pemilih roda dengan %1$d opsi</string>
     <string name="cd_time_entry_keyboard">Masukkan waktu persis</string>
     <string name="time_entry_dialog_title">Masukkan waktu</string>
     <string name="time_entry_tap_to_edit">Ketuk untuk mengedit</string>
     <string name="cd_version_info">KashCal versi %1$s. Tekan lama untuk opsi debug.</string>
+    <string name="cd_about_setting">Tentang %1$s</string>
     <string name="cd_color_slider">Penggeser warna, saat ini %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d derajat</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Warna:</string>
     <string name="label_repeat">Ulangi</string>
     <string name="label_sync_interval">Interval Sinkronisasi:</string>
-    <string name="label_scheduled_events">Acara Terjadwal</string>
-    <string name="label_all_day_events">Acara Sepanjang Hari</string>
     <string name="label_server_url">URL Server</string>
     <string name="label_username">Nama pengguna</string>
     <string name="label_password">Kata sandi</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Kalender Terlihat</string>
     <string name="settings_default_calendar">Kalender Default</string>
     <string name="settings_default_event_length">Durasi Acara Default</string>
-    <string name="settings_default_alerts">Peringatan Default</string>
+    <string name="settings_default_event_length_hint">Durasi bawaan untuk acara baru</string>
+    <string name="settings_timed_event_alert">Pengingat acara berwaktu</string>
+    <string name="settings_all_day_event_alert">Pengingat acara sepanjang hari</string>
+    <string name="settings_custom_alert_value">Kustom (%1$s)</string>
     <string name="settings_notifications">Notifikasi</string>
-    <string name="settings_new_events">Acara baru</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Default sistem</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalender Perangkat</string>
     <string name="settings_device_calendars_hint">Kalender dari aplikasi lain</string>
-    <string name="settings_quick_event_add">Tambah Acara Cepat</string>
+    <string name="settings_quick_event_add">Tambah acara cerdas</string>
+    <string name="settings_quick_event_add_info">Buat acara dengan mengetik secara alami. \"Makan siang dengan Sam Jumat jam 1 siang\" mengisi judul, tanggal, dan waktu untuk Anda.</string>
     <string name="settings_suggest_titles">Sarankan judul acara</string>
+    <string name="settings_suggest_titles_info">Saat Anda memberi nama acara baru, sarankan judul yang pernah Anda gunakan sebelumnya, sehingga acara berulang cukup satu ketukan. Diurutkan berdasarkan seberapa sering dan seberapa baru Anda menggunakannya.</string>
     <string name="settings_week_numbers">Nomor Minggu</string>
     <string name="settings_show_declined">Tampilkan acara yang ditolak</string>
     <string name="settings_widget_event_limit">Batas Acara Widget</string>
+    <string name="settings_widget_event_limit_hint">Jumlah acara terbanyak per hari di widget</string>
     <string name="settings_sync_lookback">Rentang Sinkronisasi Mundur</string>
-    <string name="settings_auto_detect_emojis">Deteksi Emoji Otomatis</string>
-    <string name="settings_events_per_day">Acara per hari</string>
+    <string name="settings_sync_lookback_hint">Seberapa jauh ke belakang menyinkronkan acara</string>
     <string name="settings_not_set">Belum diatur</string>
     <string name="settings_on">Aktif</string>
     <string name="settings_off">Nonaktif</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Percayai koneksi tidak aman</string>
     <string name="action_add_another">Tambah Lagi</string>
     <string name="account_connected_found_calendars">Ditemukan %1$d kalender untuk %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinkronisasi sedang berlangsung — acara akan segera muncul.</string>
+    <string name="account_connected_syncing_hint">Sinkronisasi sedang berlangsung. Acara akan segera muncul.</string>
     <string name="settings_time_format_currently_24h">Saat ini: 24 jam (%1$s)</string>
     <string name="settings_time_format_currently_12h">Saat ini: 12 jam (%1$s)</string>
     <string name="settings_time_format_example">Contoh: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Hanya-baca (kalender hanya-baca)</string>
     <string name="settings_developer_options">Opsi Pengembang</string>
     <string name="settings_sync_frequency">Frekuensi Sinkronisasi</string>
-    <string name="settings_preview">PRATINJAU</string>
-    <string name="settings_n_events">%1$d acara</string>
-    <string name="settings_n_events_default">%1$d acara (default)</string>
+    <string name="settings_sync_frequency_hint">Seberapa sering menyinkronkan di latar belakang</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalender</string>
     <string name="drawer_contacts">Kontak</string>
     <string name="drawer_device_calendars">Kalender perangkat</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokal</string>
     <string name="drawer_share_feedback">Bantuan &amp; dokumen</string>
     <string name="event_title_fallback">Acara</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s setelah</string>
     <string name="reminder_day_of_event_12h">9 AM hari acara</string>
     <string name="reminder_day_of_event_24h">09:00 hari acara</string>
+    <string name="reminder_day_of_event">Pada hari acara</string>
     <string name="reminder_before_at_12h">%1$s sebelum pukul 9 AM</string>
     <string name="reminder_before_at_24h">%1$s sebelum pukul 09:00</string>
     <string name="reminder_short_off">Mati</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$dj</string>
     <string name="reminder_short_days">%1$dh</string>
     <string name="reminder_short_weeks">%1$dmg</string>
+    <string name="reminder_med_minutes">%1$d mnt</string>
+    <string name="reminder_med_hours">%1$d jam</string>
+    <string name="reminder_med_weeks">%1$d mgg</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d hr</item>
+    </plurals>
+    <string name="reminder_med_day_of">Hari acara</string>
+    <string name="all_day_alert_9am_hint">Peringatan sepanjang hari dipicu pukul 9 pagi (09:00).</string>
     <string name="reminder_summary_none">Tidak ada</string>
     <string name="duration_compact">%1$dj %2$dm</string>
     <string name="duration_compact_short">%1$dj%2$dm</string>

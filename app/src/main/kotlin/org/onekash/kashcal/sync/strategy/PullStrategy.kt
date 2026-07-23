@@ -8,6 +8,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
@@ -31,6 +32,7 @@ import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.parser.ServerColorParser
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
@@ -1014,6 +1016,40 @@ class PullStrategy @Inject constructor(
         // master before storing originalInstanceTime.
         val uidToMasterDtStart = masterEvents
             .associate { it.parsed.uid to it.parsed.dtStart }
+
+        // Resolve the master DTSTART to normalize a value-type-mismatched
+        // RECURRENCE-ID against. Prefer the master parsed in THIS batch;
+        // otherwise reconstruct it from the master already in Room, so the
+        // incremental path (exception .ics pulled without its unchanged
+        // master) normalizes the same way the bundled path stored it, using
+        // the shared Room-Event→dtStart reconstruction so it can't drift from
+        // the wire serialization. A synthetic placeholder or a non-recurring
+        // row is not a usable reference — return null so normalizeRecurrenceId
+        // passes the RECURRENCE-ID through unchanged. RDATE-only masters are
+        // recurring too (RFC 5545 §3.8.5.2), so the guard checks rdate as well
+        // as rrule — Event.isRecurring covers only rrule.
+        fun masterDtStartFor(uid: String, resolvedMaster: Event?): ICalDateTime? {
+            uidToMasterDtStart[uid]?.let { return it }
+            val m = resolvedMaster ?: return null
+            val recurs = m.rrule != null || m.rdate != null
+            if (!recurs) return null
+            if (m.extraProperties?.get(PULL_SYNTHETIC_MASTER_EXTRA_KEY) == "true") return null
+            return EventToICalEventMapper.dtStartOf(m)
+        }
+
+        // Derive an exception's instance-time key: the RECURRENCE-ID normalized
+        // against the resolved master DTSTART. The lookup and the store both
+        // route through this so they can never disagree on the stored/queried
+        // value. (The orphan synthetic-master path below cannot use it — no
+        // master DTSTART exists yet — and deliberately anchors on the raw
+        // RECURRENCE-ID; masterDtStartFor's null-for-synthetic result keeps the
+        // two consistent for that case.)
+        fun resolveInstanceTime(parsed: ICalEvent, resolvedMaster: Event?): Long? =
+            ICalEventMapper.normalizeRecurrenceId(
+                recurrenceId = parsed.recurrenceId,
+                masterDtStart = masterDtStartFor(parsed.uid, resolvedMaster),
+            )?.timestamp
+
         for (meta in masterEvents) {
             // PRIMARY: UID lookup (stable across server hostname changes like p180 vs p181)
             // SECONDARY: caldavUrl lookup (fallback for edge cases)
@@ -1260,8 +1296,16 @@ class PullStrategy @Inject constructor(
                 )
             }
 
-            // Get original instance time from RECURRENCE-ID
-            val originalInstanceTime = meta.parsed.recurrenceId?.timestamp
+            // Get original instance time from RECURRENCE-ID. Normalize a
+            // value-type-mismatched RECURRENCE-ID (a DATE-form value against a
+            // timed master — RFC 5545 §3.8.4.4 says the types MUST match, but
+            // peer clients emit the mismatch and servers preserve it) against
+            // the master's DTSTART, exactly as the store path does when writing
+            // originalInstanceTime. Passing the resolved masterEvent lets this
+            // normalize on the incremental path too (exception pulled without
+            // its master in-batch); keying off the raw value would miss the
+            // stored row and re-add the exception as a new event.
+            val originalInstanceTime = resolveInstanceTime(meta.parsed, masterEvent)
 
             // Find existing exception by UID + instance time (RFC 5545 compliant)
             // Uses server-stable identifiers - doesn't break when master ID changes
@@ -1335,16 +1379,18 @@ class PullStrategy @Inject constructor(
             }
 
             // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper.
-            // Pass the master's DTSTART so the mapper can normalize a
+            // Pass the master's DTSTART so the mapper normalizes a
             // value-type-mismatched RECURRENCE-ID before writing
             // originalInstanceTime — see ICalEventMapper.normalizeRecurrenceId.
+            // Uses the same resolver as the lookup above so the stored key and
+            // the queried key are always derived identically.
             val mappedException = ICalEventMapper.toEntity(
                 icalEvent = meta.parsed,
                 rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
                 etag = meta.etag,
-                masterDtStart = uidToMasterDtStart[meta.parsed.uid],
+                masterDtStart = masterDtStartFor(meta.parsed.uid, masterEvent),
             )
             var event = mappedException.event
 
@@ -1463,6 +1509,87 @@ class PullStrategy @Inject constructor(
                 calendarColor = calendar.color,
                 isFromInitialSync = isInitialSync
             ))
+        }
+
+        // Fourth pass: prune local exceptions the server genuinely excluded.
+        // When a modified occurrence is deleted on another client, the server
+        // adds an EXDATE to the master (RFC 5545 §3.8.5.1) and drops the
+        // override VEVENT. Without pruning, the stale exception lingers on the
+        // calendar (the row survives because pass 3 only visits exceptions the
+        // server still sends).
+        //
+        // The prune fires ONLY when BOTH hold for a local exception:
+        //   (a) its instance is absent from the batch's exception set, AND
+        //   (b) the master's EXDATE now covers that instance.
+        // (b) is the load-bearing guard. Absent-alone is NOT sufficient — that
+        // would wrongly delete live overrides in two reachable cases:
+        //   • a server that violates RFC 4791 §4.1 by splitting same-UID
+        //     components across resources (only the master's resource is
+        //     re-fetched, so its overrides are absent from this batch), and
+        //   • an override VEVENT the parser dropped (parseAllEvents silently
+        //     skips unparseable components), which is present on the server but
+        //     absent from `present`.
+        // Requiring the EXDATE match means we only remove what the master
+        // itself declares excluded — matching EXDATE-precedence semantics and
+        // erring toward keeping data when the signals are ambiguous.
+        //
+        // Guarded to UIDs whose master arrived in this batch: §4.1 also permits
+        // a resource carrying ONLY overrides without the master, which is not
+        // authoritative for pruning.
+        val presentInstancesByUid = exceptionEvents
+            .groupBy { it.parsed.uid }
+            .mapValues { (_, metas) ->
+                metas.mapNotNull { resolveInstanceTime(it.parsed, uidToMasterEvent[it.parsed.uid]) }.toSet()
+            }
+        for (uid in uidsWithRegeneratedMaster) {
+            val master = uidToMasterEvent[uid] ?: continue
+            // CDN protection: if we just pushed this master's resource this
+            // cycle, a stale read may omit a bundled exception we added. Don't
+            // prune its exceptions now — pass 2 applies the same guard to the
+            // master, and bundled exception ids aren't tracked individually.
+            if (master.id in recentlyPushedEventIds) continue
+            val present = presentInstancesByUid[uid].orEmpty()
+            // Master EXDATE set (stored as epoch-ms CSV, normalized against the
+            // master's own DTSTART — the same basis as the exception instance
+            // keys, so directly comparable).
+            val exdateSet = master.exdate
+                ?.split(",")
+                ?.mapNotNull { it.trim().toLongOrNull() }
+                ?.toSet()
+                .orEmpty()
+            val localExceptions = eventsDao.getExceptionsForMaster(master.id)
+            for (ex in localExceptions) {
+                val instance = ex.originalInstanceTime ?: continue
+                if (instance in present) continue
+                // Only prune what the master's EXDATE actually excludes (see above).
+                if (instance !in exdateSet) continue
+                // Local-first: never drop an exception with unsynced local edits;
+                // it will be pushed (or resurrected) on the next cycle.
+                if (ex.hasPendingChanges()) continue
+                if (ex.id in recentlyPushedEventIds) continue
+                Log.d(TAG, "Pruning exception ${ex.id} (uid=$uid, instance=$instance) — EXDATE-excluded on master")
+                // Atomic: cancel the linked occurrence AND delete the row
+                // together, so a failure between them can't leave a cancelled
+                // occurrence with a surviving, still-linked exception row that
+                // no later etag-matching pass would revisit.
+                database.runInTransaction {
+                    database.occurrencesDao().markCancelledByException(ex.id)
+                    eventsDao.deleteById(ex.id)
+                }
+                // Emit the notification only after the delete committed.
+                changes.add(SyncChange(
+                    type = ChangeType.DELETED,
+                    eventId = null,
+                    eventTitle = ex.title,
+                    eventStartTs = ex.startTs,
+                    isAllDay = ex.isAllDay,
+                    isRecurring = true,
+                    calendarName = calendar.displayName,
+                    calendarColor = calendar.color,
+                    isFromInitialSync = isInitialSync
+                ))
+                sessionBuilder?.addDeleted(1)
+            }
         }
 
         return ProcessEventsResult(added, updated, changes)

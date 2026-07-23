@@ -68,6 +68,7 @@
     <string name="action_view">Näytä</string>
     <string name="action_enable">Ota käyttöön</string>
     <string name="action_done">Valmis</string>
+    <string name="action_back">Takaisin</string>
     <string name="action_save">Tallenna</string>
     <string name="action_add">Lisää</string>
     <string name="action_edit">Muokkaa</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Aikamuoto</string>
     <string name="settings_start_week_on">Viikko alkaa</string>
     <string name="settings_event_emojis">Tapahtumien emojit</string>
-    <string name="settings_emoji_subtitle">Näytä emojit tapahtumien otsikoiden perusteella</string>
+    <string name="settings_event_emojis_info">Lisää tapahtumiin emojin otsikon perusteella, esimerkiksi 🎂 otsikolle \"Syntymäpäivä\".</string>
     <string name="settings_force_sync">Pakota täysi synkronointi</string>
     <string name="settings_force_sync_subtitle">Lataa kaikki kalenteritiedot uudelleen</string>
     <string name="settings_sync_history">Synkronointihistoria</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Tallenna tapahtumat ICS-tiedostoon</string>
     <string name="settings_birthday_reminder">Syntymäpäivämuistutus</string>
     <string name="settings_use_device_timezone">Käytä laitteen aikavyöhykettä</string>
-    <string name="settings_section_calendars">Kalenterit</string>
+    <string name="settings_section_calendars">Kalenterit ja tilit</string>
     <string name="settings_section_appearance">Ulkoasu</string>
-    <string name="settings_section_creating_events">Tapahtumien luominen</string>
-    <string name="settings_section_sync">Synkronointi</string>
+    <string name="settings_section_creating_events">Tapahtuma-asetukset</string>
+    <string name="settings_section_sync">Ilmoitukset ja synkronointi</string>
     <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
     <string name="settings_section_privacy">Yksityisyys</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Sovelluslukko</string>
-    <string name="app_lock_subtitle_off">Vaadi avaaminen KashCalin avaamiseksi</string>
-    <string name="app_lock_subtitle_on">Avaa sormenjäljellä, kasvoilla tai näytön lukituksella</string>
+    <string name="settings_app_lock_info">Vaadi laitteen todennus KashCalin avaamiseen.</string>
     <string name="app_lock_veil_locked">Lukittu</string>
     <string name="app_lock_veil_unlock">Avaa lukitus</string>
     <string name="app_lock_veil_footnote">Sormenjälki, kasvot tai näytön lukitus</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Varmuuskopiotiedosto sisältää virheellisiä tietoja, eikä sitä voi palauttaa.</string>
     <string name="restore_error_apply_failure">Varmuuskopion käyttöönotossa tapahtui virhe. Muutoksia ei tallennettu.</string>
     <string name="backup_error_build_failed">Varmuuskopiointi epäonnistui</string>
-    <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui — tiedostoon ei voitu kirjoittaa</string>
+    <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui. Tiedostoon ei voitu kirjoittaa.</string>
     <string name="backup_error_read_failed">Tiedostoa ei voitu lukea</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Verkkovirhe, yritä uudelleen</string>
     <string name="error_import_file_not_found">Tiedostoa ei löytynyt tai sitä ei voi lukea.</string>
     <string name="error_import_invalid_format">Virheellinen kalenteritiedoston muoto.</string>
+    <string name="error_import_no_events">Tiedostosta ei löytynyt tapahtumia</string>
+    <string name="error_import_failed">Tuonti epäonnistui</string>
     <string name="error_import_partial">Tuotiin %1$d tapahtumaa, %2$d epäonnistui.</string>
     <string name="error_export_failed">Tapahtumien vienti epäonnistui.</string>
     <string name="error_export_no_events">Ei vietäviä tapahtumia.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalenterivirhe</string>
     <string name="error_device_calendar_write_failed">Laitteen kalenteriin tallentaminen epäonnistui. Yritä uudelleen.</string>
     <string name="error_device_calendar_permission">Kalenterin kirjoitusoikeus vaaditaan. Myönnä lupa asetuksissa.</string>
+    <string name="error_device_calendar_permission_denied">Poista kalenterin käyttöoikeus käytöstä ja ota se uudelleen käyttöön asetuksissa myöntääksesi kirjoitusoikeuden</string>
     <string name="error_device_calendar_not_found">Kalenteria ei löytynyt. Se on ehkä poistettu.</string>
     <string name="error_device_event_not_found">Tapahtumaa ei löytynyt. Se on ehkä poistettu.</string>
     <string name="error_device_calendar_read_only">Tämä kalenteri on vain luku -tilassa.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valittu</string>
     <string name="cd_back">Takaisin</string>
+    <string name="cd_opens_in_browser">Avautuu selaimessa</string>
     <string name="cd_search">Hae</string>
     <string name="cd_create_event">Luo tapahtuma</string>
     <string name="cd_delete">Poista</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Toistuva</string>
     <string name="cd_enabled">Käytössä</string>
     <string name="cd_sync_error">Synkronointivirhe</string>
-    <string name="cd_select_option">Valitse vaihtoehto</string>
     <string name="cd_select_label">Valitse %1$s</string>
     <string name="cd_wheel_picker">Pyöritettävä valitsin, %1$d vaihtoehtoa</string>
     <string name="cd_time_entry_keyboard">Syötä tarkka aika</string>
     <string name="time_entry_dialog_title">Syötä aika</string>
     <string name="time_entry_tap_to_edit">Muokkaa napauttamalla</string>
     <string name="cd_version_info">KashCal versio %1$s. Paina pitkään virheenkorjausvaihtoehtoja varten.</string>
+    <string name="cd_about_setting">Tietoja: %1$s</string>
     <string name="cd_color_slider">Väriliukusäädin, tällä hetkellä %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d astetta</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Väri:</string>
     <string name="label_repeat">Toista</string>
     <string name="label_sync_interval">Synkronointiväli:</string>
-    <string name="label_scheduled_events">Ajoitetut tapahtumat</string>
-    <string name="label_all_day_events">Koko päivän tapahtumat</string>
     <string name="label_server_url">Palvelimen URL</string>
     <string name="label_username">Käyttäjänimi</string>
     <string name="label_password">Salasana</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Näkyvät kalenterit</string>
     <string name="settings_default_calendar">Oletuskalenteri</string>
     <string name="settings_default_event_length">Tapahtuman oletuspituus</string>
-    <string name="settings_default_alerts">Oletusmuistutukset</string>
+    <string name="settings_default_event_length_hint">Uusien tapahtumien oletuskesto</string>
+    <string name="settings_timed_event_alert">Kellonaikaan sidotun tapahtuman muistutus</string>
+    <string name="settings_all_day_event_alert">Koko päivän tapahtuman muistutus</string>
+    <string name="settings_custom_alert_value">Mukautettu (%1$s)</string>
     <string name="settings_notifications">Ilmoitukset</string>
-    <string name="settings_new_events">Uudet tapahtumat</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Järjestelmän oletus</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Laitteen kalenterit</string>
     <string name="settings_device_calendars_hint">Muiden sovellusten kalenterit</string>
-    <string name="settings_quick_event_add">Nopea tapahtuman lisäys</string>
+    <string name="settings_quick_event_add">Älykäs tapahtuman lisäys</string>
+    <string name="settings_quick_event_add_info">Luo tapahtumia kirjoittamalla luonnollisesti. \"Lounas Samin kanssa perjantaina klo 13:00\" täyttää otsikon, päivämäärän ja kellonajan puolestasi.</string>
     <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
+    <string name="settings_suggest_titles_info">Kun nimeät uutta tapahtumaa, ehdota aiemmin käyttämiäsi otsikoita, jotta toistuvat tapahtumat syntyvät yhdellä napautuksella. Järjestetty sen mukaan, kuinka usein ja kuinka äskettäin olet käyttänyt niitä.</string>
     <string name="settings_week_numbers">Viikkonumerot</string>
     <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="settings_widget_event_limit">Widgetin tapahtumaraja</string>
+    <string name="settings_widget_event_limit_hint">Tapahtumien enimmäismäärä päivässä widgeteissä</string>
     <string name="settings_sync_lookback">Synkronoinnin takaisinkatse</string>
-    <string name="settings_auto_detect_emojis">Tunnista emojit automaattisesti</string>
-    <string name="settings_events_per_day">Tapahtumia päivässä</string>
+    <string name="settings_sync_lookback_hint">Kuinka kauas taakse tapahtumia synkronoidaan</string>
     <string name="settings_not_set">Ei asetettu</string>
     <string name="settings_on">Päällä</string>
     <string name="settings_off">Pois</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Luota turvattomaan yhteyteen</string>
     <string name="action_add_another">Lisää toinen</string>
     <string name="account_connected_found_calendars">Löydettiin %1$d kalenteria tilille %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronointi käynnissä — tapahtumat ilmestyvät pian.</string>
+    <string name="account_connected_syncing_hint">Synkronointi käynnissä. Tapahtumat ilmestyvät pian.</string>
     <string name="settings_time_format_currently_24h">Tällä hetkellä: 24 tunnin (%1$s)</string>
     <string name="settings_time_format_currently_12h">Tällä hetkellä: 12 tunnin (%1$s)</string>
     <string name="settings_time_format_example">Esimerkki: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Vain luku (kalenteri on vain luku -tilassa)</string>
     <string name="settings_developer_options">Kehittäjäasetukset</string>
     <string name="settings_sync_frequency">Synkronointitiheys</string>
-    <string name="settings_preview">ESIKATSELU</string>
-    <string name="settings_n_events">%1$d tapahtumaa</string>
-    <string name="settings_n_events_default">%1$d tapahtumaa (oletus)</string>
+    <string name="settings_sync_frequency_hint">Kuinka usein taustalla synkronoidaan</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalenterit</string>
     <string name="drawer_contacts">Yhteystiedot</string>
     <string name="drawer_device_calendars">Laitteen kalenterit</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Paikallinen</string>
     <string name="drawer_share_feedback">Ohje ja dokumentit</string>
     <string name="event_title_fallback">Tapahtuma</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s jälkeen</string>
     <string name="reminder_day_of_event_12h">9 AM tapahtumapäivänä</string>
     <string name="reminder_day_of_event_24h">09:00 tapahtumapäivänä</string>
+    <string name="reminder_day_of_event">Tapahtumapäivänä</string>
     <string name="reminder_before_at_12h">%1$s ennen klo 9 AM</string>
     <string name="reminder_before_at_24h">%1$s ennen klo 09:00</string>
     <string name="reminder_short_off">Pois</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dt</string>
     <string name="reminder_short_days">%1$dpv</string>
     <string name="reminder_short_weeks">%1$dvk</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d t</string>
+    <string name="reminder_med_weeks">%1$d vk</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d pv</item>
+        <item quantity="other">%1$d pv</item>
+    </plurals>
+    <string name="reminder_med_day_of">Samana päivänä</string>
+    <string name="all_day_alert_9am_hint">Koko päivän hälytykset tulevat klo 9 (09:00).</string>
     <string name="reminder_summary_none">Ei mitään</string>
     <string name="duration_compact">%1$dt %2$dmin</string>
     <string name="duration_compact_short">%1$dt%2$dmin</string>

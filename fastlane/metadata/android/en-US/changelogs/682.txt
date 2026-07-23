@@ -1,0 +1,4 @@
+• Settings redesigned: current values shown on each row, bottom-sheet pickers, and searchable section headers
+• Separate default alerts for timed and all-day events, plus sync frequency as its own row
+• Sync: editing one occurrence of a repeating event no longer multiplies into duplicate events
+• Import: recurring .ics events arrive as one linked series

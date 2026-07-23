@@ -58,6 +58,7 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
@@ -133,7 +134,7 @@ fun IcsImportSheet(
         cal?.displayName to cal?.color
     } else {
         val cal = writableCalendars.find { it.id == selectedCalendarId }
-        cal?.displayName to cal?.color
+        cal?.localizedDisplayName(LocalResources.current) to cal?.color
     }
 
     var showCalendarPicker by remember { mutableStateOf(false) }
@@ -367,7 +368,7 @@ private fun ImportCalendarPicker(
                     // Room calendars
                     writableCalendars.forEach { calendar ->
                         ImportCalendarItem(
-                            name = calendar.displayName,
+                            name = calendar.localizedDisplayName(LocalResources.current),
                             color = calendar.color,
                             isSelected = !selectedIsDevice && selectedCalendarId == calendar.id,
                             onClick = { onSelect(calendar.id, false) }

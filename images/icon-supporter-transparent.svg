@@ -3,14 +3,14 @@
   <!-- Supporter variant of the deck: gold front card, blue + teal peeking
        behind, a red heart in place of the today-dot, and a dark numeral for
        contrast on gold. Same equal-size (36x42) deck fanned around (44,46)
-       as the default icon. -->
-  <g transform="translate(44 46) rotate(-7)">
+       as the default icon, centered at (44,44). -->
+  <g transform="translate(44 44) rotate(-7)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#4a9bdc"/>
   </g>
-  <g transform="translate(44 46) rotate(8)">
+  <g transform="translate(44 44) rotate(8)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#2a8a7a"/>
   </g>
-  <g transform="translate(44 46) rotate(-2)">
+  <g transform="translate(44 44) rotate(-2)">
     <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#f2b72d"/>
     <text x="0" y="9" text-anchor="middle" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="22" font-weight="700" fill="#1c1c1e">31</text>
     <!-- Heart, centered near (13,-15), ~11 units wide. -->

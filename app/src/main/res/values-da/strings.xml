@@ -68,6 +68,7 @@
     <string name="action_view">Vis</string>
     <string name="action_enable">Aktiver</string>
     <string name="action_done">Færdig</string>
+    <string name="action_back">Tilbage</string>
     <string name="action_save">Gem</string>
     <string name="action_add">Tilføj</string>
     <string name="action_edit">Rediger</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Tidsformat</string>
     <string name="settings_start_week_on">Ugen starter</string>
     <string name="settings_event_emojis">Begivenheds-emojis</string>
-    <string name="settings_emoji_subtitle">Vis emojis baseret på begivenhedstitler</string>
+    <string name="settings_event_emojis_info">Tilføjer en emoji til begivenheder baseret på titlen, som 🎂 for \"Fødselsdag\".</string>
     <string name="settings_force_sync">Fuld synkronisering</string>
     <string name="settings_force_sync_subtitle">Download alle kalenderdata igen</string>
     <string name="settings_sync_history">Synkroniseringshistorik</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Gem begivenheder i en ICS-fil</string>
     <string name="settings_birthday_reminder">Fødselsdagspåmindelse</string>
     <string name="settings_use_device_timezone">Brug enhedens tidszone</string>
-    <string name="settings_section_calendars">Kalendere</string>
+    <string name="settings_section_calendars">Kalendere &amp; konti</string>
     <string name="settings_section_appearance">Udseende</string>
-    <string name="settings_section_creating_events">Oprettelse af begivenheder</string>
-    <string name="settings_section_sync">Synkronisering</string>
+    <string name="settings_section_creating_events">Begivenhedsindstillinger</string>
+    <string name="settings_section_sync">Notifikationer &amp; synkronisering</string>
     <string name="settings_section_data">Sikkerhedskopi &amp; gendannelse</string>
     <string name="settings_section_privacy">Privatliv</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App-lås</string>
-    <string name="app_lock_subtitle_off">Kræv oplåsning for at åbne KashCal</string>
-    <string name="app_lock_subtitle_on">Lås op med fingeraftryk, ansigt eller skærmlås</string>
+    <string name="settings_app_lock_info">Kræver enhedsgodkendelse for at åbne KashCal.</string>
     <string name="app_lock_veil_locked">Låst</string>
     <string name="app_lock_veil_unlock">Lås op</string>
     <string name="app_lock_veil_footnote">Fingeraftryk, ansigt eller skærmlås</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Sikkerhedskopien indeholder ugyldige data og kan ikke gendannes.</string>
     <string name="restore_error_apply_failure">Noget gik galt under gendannelsen. Ingen ændringer blev gemt.</string>
     <string name="backup_error_build_failed">Sikkerhedskopiering mislykkedes</string>
-    <string name="backup_error_write_failed">Sikkerhedskopiering mislykkedes — kunne ikke skrive til filen</string>
+    <string name="backup_error_write_failed">Sikkerhedskopiering mislykkedes. Kunne ikke skrive til filen.</string>
     <string name="backup_error_read_failed">Kunne ikke læse filen</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Netværksfejl, prøv igen</string>
     <string name="error_import_file_not_found">Filen blev ikke fundet eller kan ikke læses.</string>
     <string name="error_import_invalid_format">Ugyldigt kalenderfilformat.</string>
+    <string name="error_import_no_events">Ingen begivenheder fundet i filen</string>
+    <string name="error_import_failed">Import mislykkedes</string>
     <string name="error_import_partial">%1$d begivenheder importeret, %2$d mislykkedes.</string>
     <string name="error_export_failed">Eksport af begivenheder mislykkedes.</string>
     <string name="error_export_no_events">Ingen begivenheder at eksportere.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalenderfejl</string>
     <string name="error_device_calendar_write_failed">Kunne ikke gemme i enhedskalender. Prøv igen.</string>
     <string name="error_device_calendar_permission">Kalendertilladelse kræves. Giv tilladelse i Indstillinger.</string>
+    <string name="error_device_calendar_permission_denied">Slå kalendertilladelsen fra og til igen i Indstillinger for at give skriveadgang</string>
     <string name="error_device_calendar_not_found">Kalender ikke fundet. Den kan være fjernet.</string>
     <string name="error_device_event_not_found">Begivenhed ikke fundet. Den kan være slettet.</string>
     <string name="error_device_calendar_read_only">Denne kalender er skrivebeskyttet.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valgt</string>
     <string name="cd_back">Tilbage</string>
+    <string name="cd_opens_in_browser">Åbnes i browser</string>
     <string name="cd_search">Søg</string>
     <string name="cd_create_event">Opret begivenhed</string>
     <string name="cd_delete">Slet</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Tilbagevendende</string>
     <string name="cd_enabled">Aktiveret</string>
     <string name="cd_sync_error">Synkroniseringsfejl</string>
-    <string name="cd_select_option">Vælg mulighed</string>
     <string name="cd_select_label">Vælg %1$s</string>
     <string name="cd_wheel_picker">Hjulvælger med %1$d muligheder</string>
     <string name="cd_time_entry_keyboard">Indtast præcist klokkeslæt</string>
     <string name="time_entry_dialog_title">Indtast klokkeslæt</string>
     <string name="time_entry_tap_to_edit">Tryk for at redigere</string>
     <string name="cd_version_info">KashCal version %1$s. Tryk længe for debug-muligheder.</string>
+    <string name="cd_about_setting">Om %1$s</string>
     <string name="cd_color_slider">Farveskyder, aktuelt %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grader</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Farve:</string>
     <string name="label_repeat">Gentag</string>
     <string name="label_sync_interval">Synk-interval:</string>
-    <string name="label_scheduled_events">Planlagte begivenheder</string>
-    <string name="label_all_day_events">Heldagsbegivenheder</string>
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Brugernavn</string>
     <string name="label_password">Adgangskode</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Synlige kalendere</string>
     <string name="settings_default_calendar">Standardkalender</string>
     <string name="settings_default_event_length">Standard begivenhedslængde</string>
-    <string name="settings_default_alerts">Standard påmindelser</string>
+    <string name="settings_default_event_length_hint">Standardlængde for nye begivenheder</string>
+    <string name="settings_timed_event_alert">Påmindelse for begivenhed med tidspunkt</string>
+    <string name="settings_all_day_event_alert">Påmindelse for heldagsbegivenhed</string>
+    <string name="settings_custom_alert_value">Tilpasset (%1$s)</string>
     <string name="settings_notifications">Notifikationer</string>
-    <string name="settings_new_events">Nye begivenheder</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
@@ -508,14 +512,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Enhedskalendere</string>
     <string name="settings_device_calendars_hint">Kalendere fra andre apps</string>
-    <string name="settings_quick_event_add">Hurtig tilføjelse</string>
+    <string name="settings_quick_event_add">Smart tilføjelse af begivenheder</string>
+    <string name="settings_quick_event_add_info">Opret begivenheder ved at skrive naturligt. \"Frokost med Sam fredag 13:00\" udfylder titel, dato og tidspunkt for dig.</string>
     <string name="settings_suggest_titles">Foreslå begivenhedstitler</string>
+    <string name="settings_suggest_titles_info">Når du navngiver en ny begivenhed, foreslås titler, du har brugt før, så tilbagevendende begivenheder kun er ét tryk væk. Rangeret efter hvor ofte og hvor nyligt du har brugt dem.</string>
     <string name="settings_week_numbers">Ugenumre</string>
     <string name="settings_show_declined">Vis afslåede begivenheder</string>
     <string name="settings_widget_event_limit">Widget-begivenhedsgrænse</string>
+    <string name="settings_widget_event_limit_hint">Flest begivenheder vist pr. dag i widgets</string>
     <string name="settings_sync_lookback">Synk-tilbageblik</string>
-    <string name="settings_auto_detect_emojis">Automatisk genkend emojis</string>
-    <string name="settings_events_per_day">Begivenheder pr. dag</string>
+    <string name="settings_sync_lookback_hint">Hvor langt tilbage begivenheder synkroniseres</string>
     <string name="settings_not_set">Ikke angivet</string>
     <string name="settings_on">Til</string>
     <string name="settings_off">Fra</string>
@@ -528,7 +534,7 @@
     <string name="caldav_trust_insecure_label">Tillid til usikker forbindelse</string>
     <string name="action_add_another">Tilføj endnu en</string>
     <string name="account_connected_found_calendars">Fandt %1$d kalender(e) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronisering i gang — begivenheder vises snart.</string>
+    <string name="account_connected_syncing_hint">Synkronisering i gang. Begivenheder vises snart.</string>
     <string name="settings_time_format_currently_24h">Aktuelt: 24-timer (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktuelt: 12-timer (%1$s)</string>
     <string name="settings_time_format_example">Eksempel: %1$s</string>
@@ -587,15 +593,14 @@
     <string name="device_calendars_read_only_calendar">Skrivebeskyttet (kalenderen er skrivebeskyttet)</string>
     <string name="settings_developer_options">Udviklermuligheder</string>
     <string name="settings_sync_frequency">Synkroniseringsfrekvens</string>
-    <string name="settings_preview">FORHÅNDSVISNING</string>
-    <string name="settings_n_events">%1$d begivenheder</string>
-    <string name="settings_n_events_default">%1$d begivenheder (standard)</string>
+    <string name="settings_sync_frequency_hint">Hvor ofte der synkroniseres i baggrunden</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendere</string>
     <string name="drawer_contacts">Kontakter</string>
     <string name="drawer_device_calendars">Enhedskalendere</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokal</string>
     <string name="drawer_share_feedback">Hjælp &amp; docs</string>
     <string name="event_title_fallback">Begivenhed</string>
 
@@ -913,6 +918,7 @@
     <string name="reminder_time_after">%1$s efter</string>
     <string name="reminder_day_of_event_12h">9 AM på dagen for begivenheden</string>
     <string name="reminder_day_of_event_24h">09:00 på dagen for begivenheden</string>
+    <string name="reminder_day_of_event">På dagen for begivenheden</string>
     <string name="reminder_before_at_12h">%1$s før kl. 9 AM</string>
     <string name="reminder_before_at_24h">%1$s før kl. 09:00</string>
     <string name="reminder_short_off">Fra</string>
@@ -923,6 +929,15 @@
     <string name="reminder_short_hours">%1$dt</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$du</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d t</string>
+    <string name="reminder_med_weeks">%1$d v</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dage</item>
+    </plurals>
+    <string name="reminder_med_day_of">På dagen</string>
+    <string name="all_day_alert_9am_hint">Påmindelser for hele dage udløses kl. 09:00.</string>
     <string name="reminder_summary_none">Ingen</string>
     <string name="duration_compact">%1$dt %2$dm</string>
     <string name="duration_compact_short">%1$dt%2$dm</string>

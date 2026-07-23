@@ -68,6 +68,7 @@
     <string name="action_view">檢視</string>
     <string name="action_enable">啟用</string>
     <string name="action_done">完成</string>
+    <string name="action_back">返回</string>
     <string name="action_save">儲存</string>
     <string name="action_add">新增</string>
     <string name="action_edit">編輯</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">時間格式</string>
     <string name="settings_start_week_on">每週開始於</string>
     <string name="settings_event_emojis">事件表情符號</string>
-    <string name="settings_emoji_subtitle">根據事件標題顯示表情符號</string>
+    <string name="settings_event_emojis_info">根據標題為活動加入表情符號，例如為\"生日\"加入 🎂。</string>
     <string name="settings_force_sync">完整同步</string>
     <string name="settings_force_sync_subtitle">重新下載所有行事曆資料</string>
     <string name="settings_sync_history">同步紀錄</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">將事件儲存為 ICS 檔案</string>
     <string name="settings_birthday_reminder">生日提醒</string>
     <string name="settings_use_device_timezone">使用裝置時區</string>
-    <string name="settings_section_calendars">日曆</string>
+    <string name="settings_section_calendars">日曆與帳戶</string>
     <string name="settings_section_appearance">外觀</string>
-    <string name="settings_section_creating_events">建立事件</string>
-    <string name="settings_section_sync">同步</string>
+    <string name="settings_section_creating_events">事件偏好設定</string>
+    <string name="settings_section_sync">通知與同步</string>
     <string name="settings_section_data">備份與還原</string>
     <string name="settings_section_privacy">隱私</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">應用程式鎖</string>
-    <string name="app_lock_subtitle_off">開啟 KashCal 需要解鎖</string>
-    <string name="app_lock_subtitle_on">使用指紋、臉部或螢幕鎖解鎖</string>
+    <string name="settings_app_lock_info">開啟 KashCal 需要進行裝置驗證。</string>
     <string name="app_lock_veil_locked">已鎖定</string>
     <string name="app_lock_veil_unlock">解鎖</string>
     <string name="app_lock_veil_footnote">指紋、臉部或螢幕鎖</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">此備份檔案含有無效資料，無法還原。</string>
     <string name="restore_error_apply_failure">套用備份時發生問題。未儲存任何變更。</string>
     <string name="backup_error_build_failed">備份失敗</string>
-    <string name="backup_error_write_failed">備份失敗：無法寫入檔案</string>
+    <string name="backup_error_write_failed">備份失敗。無法寫入檔案。</string>
     <string name="backup_error_read_failed">無法讀取檔案</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">網路錯誤，請重試</string>
     <string name="error_import_file_not_found">找不到檔案或無法讀取。</string>
     <string name="error_import_invalid_format">行事曆檔案格式無效。</string>
+    <string name="error_import_no_events">檔案中找不到事件</string>
+    <string name="error_import_failed">匯入失敗</string>
     <string name="error_import_partial">已匯入 %1$d 個事件，%2$d 個失敗。</string>
     <string name="error_export_failed">事件匯出失敗。</string>
     <string name="error_export_no_events">沒有可匯出的事件。</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">行事曆錯誤</string>
     <string name="error_device_calendar_write_failed">無法儲存至裝置行事曆。請重試。</string>
     <string name="error_device_calendar_permission">需要行事曆寫入權限。請在設定中授權。</string>
+    <string name="error_device_calendar_permission_denied">請在設定中關閉再重新開啟行事曆權限，以授予寫入權限</string>
     <string name="error_device_calendar_not_found">找不到行事曆。可能已被移除。</string>
     <string name="error_device_event_not_found">找不到事件。可能已被刪除。</string>
     <string name="error_device_calendar_read_only">此行事曆為唯讀。</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">已選取</string>
     <string name="cd_back">返回</string>
+    <string name="cd_opens_in_browser">在瀏覽器中開啟</string>
     <string name="cd_search">搜尋</string>
     <string name="cd_create_event">建立事件</string>
     <string name="cd_delete">刪除</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">重複</string>
     <string name="cd_enabled">已啟用</string>
     <string name="cd_sync_error">同步錯誤</string>
-    <string name="cd_select_option">選擇選項</string>
     <string name="cd_select_label">選擇%1$s</string>
     <string name="cd_wheel_picker">有 %1$d 個選項的滾輪選取器</string>
     <string name="cd_time_entry_keyboard">輸入精確時間</string>
     <string name="time_entry_dialog_title">輸入時間</string>
     <string name="time_entry_tap_to_edit">輕觸以編輯</string>
     <string name="cd_version_info">KashCal 版本 %1$s。長按開啟偵錯選項。</string>
+    <string name="cd_about_setting">關於%1$s</string>
     <string name="cd_color_slider">顏色滑桿，目前為 %1$s</string>
     <string name="cd_color_slider_state">%1$s，%2$d 度</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">顏色：</string>
     <string name="label_repeat">重複</string>
     <string name="label_sync_interval">同步間隔：</string>
-    <string name="label_scheduled_events">排程事件</string>
-    <string name="label_all_day_events">整天事件</string>
     <string name="label_server_url">伺服器 URL</string>
     <string name="label_username">使用者名稱</string>
     <string name="label_password">密碼</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">可見行事曆</string>
     <string name="settings_default_calendar">預設行事曆</string>
     <string name="settings_default_event_length">預設事件時長</string>
-    <string name="settings_default_alerts">預設提醒</string>
+    <string name="settings_default_event_length_hint">新活動的預設時長</string>
+    <string name="settings_timed_event_alert">定時活動提醒</string>
+    <string name="settings_all_day_event_alert">全天活動提醒</string>
+    <string name="settings_custom_alert_value">自訂 (%1$s)</string>
     <string name="settings_notifications">通知</string>
-    <string name="settings_new_events">新事件</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">系統預設</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">裝置行事曆</string>
     <string name="settings_device_calendars_hint">其他應用程式的行事曆</string>
-    <string name="settings_quick_event_add">快速新增事件</string>
+    <string name="settings_quick_event_add">智慧新增事件</string>
+    <string name="settings_quick_event_add_info">用自然的方式輸入即可建立活動。輸入\"週五下午1點和 Sam 吃午餐\"，標題、日期和時間會自動填好。</string>
     <string name="settings_suggest_titles">建議事件標題</string>
+    <string name="settings_suggest_titles_info">在為新活動命名時，建議你以前用過的標題，讓重複的活動一鍵完成。依使用頻率和最近使用情況排序。</string>
     <string name="settings_week_numbers">週數</string>
     <string name="settings_show_declined">顯示已拒絕的活動</string>
     <string name="settings_widget_event_limit">小工具事件上限</string>
+    <string name="settings_widget_event_limit_hint">小工具中每天顯示的最多事件數</string>
     <string name="settings_sync_lookback">同步回溯範圍</string>
-    <string name="settings_auto_detect_emojis">自動偵測表情符號</string>
-    <string name="settings_events_per_day">每天事件數</string>
+    <string name="settings_sync_lookback_hint">同步事件的回溯時長</string>
     <string name="settings_not_set">未設定</string>
     <string name="settings_on">開</string>
     <string name="settings_off">關</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">信任不安全的連線</string>
     <string name="action_add_another">新增其他帳號</string>
     <string name="account_connected_found_calendars">為 %2$s 找到 %1$d 個行事曆。</string>
-    <string name="account_connected_syncing_hint">同步進行中 — 事件將很快顯示。</string>
+    <string name="account_connected_syncing_hint">正在同步。活動即將顯示。</string>
     <string name="settings_time_format_currently_24h">目前：24小時制 (%1$s)</string>
     <string name="settings_time_format_currently_12h">目前：12小時制 (%1$s)</string>
     <string name="settings_time_format_example">範例：%1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">唯讀（行事曆為唯讀）</string>
     <string name="settings_developer_options">開發人員選項</string>
     <string name="settings_sync_frequency">同步頻率</string>
-    <string name="settings_preview">預覽</string>
-    <string name="settings_n_events">%1$d 個事件</string>
-    <string name="settings_n_events_default">%1$d 個事件（預設）</string>
+    <string name="settings_sync_frequency_hint">背景同步的頻率</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">行事曆</string>
     <string name="drawer_contacts">聯絡人</string>
     <string name="drawer_device_calendars">裝置行事曆</string>
     <string name="drawer_account_offline">離線</string>
+    <string name="calendar_local">本機</string>
     <string name="drawer_share_feedback">說明與文件</string>
     <string name="event_title_fallback">事件</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s後</string>
     <string name="reminder_day_of_event_12h">當天上午9點</string>
     <string name="reminder_day_of_event_24h">當天09:00</string>
+    <string name="reminder_day_of_event">活動當天</string>
     <string name="reminder_before_at_12h">提前%1$s 上午9點</string>
     <string name="reminder_before_at_24h">提前%1$s 09:00</string>
     <string name="reminder_short_off">關</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$d時</string>
     <string name="reminder_short_days">%1$d天</string>
     <string name="reminder_short_weeks">%1$d週</string>
+    <string name="reminder_med_minutes">%1$d分鐘</string>
+    <string name="reminder_med_hours">%1$d小時</string>
+    <string name="reminder_med_weeks">%1$d週</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d天</item>
+    </plurals>
+    <string name="reminder_med_day_of">當天</string>
+    <string name="all_day_alert_9am_hint">全天提醒會在上午9點（09:00）觸發。</string>
     <string name="reminder_summary_none">無</string>
     <string name="duration_compact">%1$d小時%2$d分</string>
     <string name="duration_compact_short">%1$d時%2$d分</string>

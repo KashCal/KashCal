@@ -68,6 +68,7 @@
     <string name="action_view">보기</string>
     <string name="action_enable">활성화</string>
     <string name="action_done">완료</string>
+    <string name="action_back">뒤로</string>
     <string name="action_save">저장</string>
     <string name="action_add">추가</string>
     <string name="action_edit">편집</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">시간 형식</string>
     <string name="settings_start_week_on">주 시작 요일</string>
     <string name="settings_event_emojis">일정 이모지</string>
-    <string name="settings_emoji_subtitle">일정 제목에 따라 이모지를 표시해요</string>
+    <string name="settings_event_emojis_info">제목에 따라 일정에 이모지를 추가합니다. 예를 들어 \"생일\"에는 🎂를 붙여요.</string>
     <string name="settings_force_sync">전체 동기화</string>
     <string name="settings_force_sync_subtitle">모든 캘린더 데이터를 다시 다운로드</string>
     <string name="settings_sync_history">동기화 기록</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">일정을 ICS 파일로 저장해요</string>
     <string name="settings_birthday_reminder">생일 알림</string>
     <string name="settings_use_device_timezone">기기 시간대 사용</string>
-    <string name="settings_section_calendars">캘린더</string>
+    <string name="settings_section_calendars">캘린더 및 계정</string>
     <string name="settings_section_appearance">표시</string>
-    <string name="settings_section_creating_events">일정 만들기</string>
-    <string name="settings_section_sync">동기화</string>
+    <string name="settings_section_creating_events">일정 환경설정</string>
+    <string name="settings_section_sync">알림 및 동기화</string>
     <string name="settings_section_data">백업 &amp; 복원</string>
     <string name="settings_section_privacy">개인정보 보호</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">앱 잠금</string>
-    <string name="app_lock_subtitle_off">KashCal을 열려면 잠금 해제가 필요해요</string>
-    <string name="app_lock_subtitle_on">지문, 얼굴 또는 화면 잠금으로 잠금을 해제해요</string>
+    <string name="settings_app_lock_info">KashCal을 열려면 기기 인증이 필요해요.</string>
     <string name="app_lock_veil_locked">잠김</string>
     <string name="app_lock_veil_unlock">잠금 해제</string>
     <string name="app_lock_veil_footnote">지문, 얼굴 또는 화면 잠금</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">이 백업 파일에 잘못된 데이터가 있어 복원할 수 없어요.</string>
     <string name="restore_error_apply_failure">백업을 적용하는 중에 문제가 발생했어요. 변경 사항은 저장되지 않았어요.</string>
     <string name="backup_error_build_failed">백업에 실패했어요</string>
-    <string name="backup_error_write_failed">백업에 실패했어요：파일에 쓸 수 없어요</string>
+    <string name="backup_error_write_failed">백업에 실패했어요. 파일에 쓸 수 없어요.</string>
     <string name="backup_error_read_failed">파일을 읽을 수 없어요</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">네트워크 오류가 발생했어요. 다시 시도해 주세요.</string>
     <string name="error_import_file_not_found">파일을 찾을 수 없거나 읽을 수 없어요.</string>
     <string name="error_import_invalid_format">잘못된 캘린더 파일 형식이에요.</string>
+    <string name="error_import_no_events">파일에서 일정을 찾을 수 없어요</string>
+    <string name="error_import_failed">가져오기에 실패했어요</string>
     <string name="error_import_partial">일정 %1$d개 가져옴, %2$d개 실패.</string>
     <string name="error_export_failed">일정 내보내기에 실패했어요.</string>
     <string name="error_export_no_events">내보낼 일정이 없어요.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">캘린더 오류</string>
     <string name="error_device_calendar_write_failed">기기 캘린더에 저장하지 못했어요. 다시 시도해 주세요.</string>
     <string name="error_device_calendar_permission">캘린더 쓰기 권한이 필요해요. 설정에서 권한을 허용해 주세요.</string>
+    <string name="error_device_calendar_permission_denied">쓰기 권한을 허용하려면 설정에서 캘린더 권한을 껐다가 다시 켜 주세요</string>
     <string name="error_device_calendar_not_found">캘린더를 찾을 수 없어요. 삭제되었을 수 있어요.</string>
     <string name="error_device_event_not_found">일정을 찾을 수 없어요. 삭제되었을 수 있어요.</string>
     <string name="error_device_calendar_read_only">이 캘린더는 읽기 전용이에요.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">선택됨</string>
     <string name="cd_back">뒤로</string>
+    <string name="cd_opens_in_browser">브라우저에서 열기</string>
     <string name="cd_search">검색</string>
     <string name="cd_create_event">일정 만들기</string>
     <string name="cd_delete">삭제</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">반복</string>
     <string name="cd_enabled">활성화됨</string>
     <string name="cd_sync_error">동기화 오류</string>
-    <string name="cd_select_option">옵션 선택</string>
     <string name="cd_select_label">%1$s 선택</string>
     <string name="cd_wheel_picker">%1$d개 옵션의 휠 피커</string>
     <string name="cd_time_entry_keyboard">정확한 시간 입력하기</string>
     <string name="time_entry_dialog_title">시간 입력</string>
     <string name="time_entry_tap_to_edit">탭하여 편집하기</string>
     <string name="cd_version_info">KashCal 버전 %1$s. 길게 눌러 디버그 옵션 표시.</string>
+    <string name="cd_about_setting">%1$s 정보</string>
     <string name="cd_color_slider">색상 슬라이더, 현재 %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d도</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">색상:</string>
     <string name="label_repeat">반복</string>
     <string name="label_sync_interval">동기화 간격:</string>
-    <string name="label_scheduled_events">예약된 일정</string>
-    <string name="label_all_day_events">종일 일정</string>
     <string name="label_server_url">서버 URL</string>
     <string name="label_username">사용자 이름</string>
     <string name="label_password">비밀번호</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">표시할 캘린더</string>
     <string name="settings_default_calendar">기본 캘린더</string>
     <string name="settings_default_event_length">기본 일정 길이</string>
-    <string name="settings_default_alerts">기본 알림</string>
+    <string name="settings_default_event_length_hint">새 일정의 기본 길이</string>
+    <string name="settings_timed_event_alert">시간 지정 일정 알림</string>
+    <string name="settings_all_day_event_alert">종일 일정 알림</string>
+    <string name="settings_custom_alert_value">사용자 지정 (%1$s)</string>
     <string name="settings_notifications">알림</string>
-    <string name="settings_new_events">새 일정</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">시스템 기본값</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">기기 캘린더</string>
     <string name="settings_device_calendars_hint">다른 앱의 캘린더</string>
-    <string name="settings_quick_event_add">빠른 일정 추가</string>
+    <string name="settings_quick_event_add">스마트 일정 추가</string>
+    <string name="settings_quick_event_add_info">자연스럽게 입력해 일정을 만들어요. \"Sam과 금요일 오후 1시 점심\"이라고 입력하면 제목, 날짜, 시간이 자동으로 채워져요.</string>
     <string name="settings_suggest_titles">일정 제목 제안</string>
+    <string name="settings_suggest_titles_info">새 일정의 이름을 입력하는 동안 이전에 사용한 제목을 제안해, 반복되는 일정은 한 번의 탭으로 만들 수 있어요. 얼마나 자주, 얼마나 최근에 사용했는지에 따라 순위가 정해져요.</string>
     <string name="settings_week_numbers">주 번호</string>
     <string name="settings_show_declined">거절한 이벤트 표시</string>
     <string name="settings_widget_event_limit">위젯 일정 제한</string>
+    <string name="settings_widget_event_limit_hint">위젯에서 하루에 표시할 최대 일정 수</string>
     <string name="settings_sync_lookback">동기화 조회 기간</string>
-    <string name="settings_auto_detect_emojis">이모지 자동 감지</string>
-    <string name="settings_events_per_day">일별 일정 수</string>
+    <string name="settings_sync_lookback_hint">일정을 동기화할 기간</string>
     <string name="settings_not_set">설정 안 됨</string>
     <string name="settings_on">켜짐</string>
     <string name="settings_off">꺼짐</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">안전하지 않은 연결 허용</string>
     <string name="action_add_another">다른 계정 추가</string>
     <string name="account_connected_found_calendars">%2$s의 캘린더 %1$d개를 찾았어요.</string>
-    <string name="account_connected_syncing_hint">동기화 진행 중 — 곧 일정이 표시돼요.</string>
+    <string name="account_connected_syncing_hint">동기화가 진행 중이에요. 곧 일정이 표시돼요.</string>
     <string name="settings_time_format_currently_24h">현재: 24시간 (%1$s)</string>
     <string name="settings_time_format_currently_12h">현재: 12시간 (%1$s)</string>
     <string name="settings_time_format_example">예: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">읽기 전용 (읽기 전용 캘린더)</string>
     <string name="settings_developer_options">개발자 옵션</string>
     <string name="settings_sync_frequency">동기화 주기</string>
-    <string name="settings_preview">미리보기</string>
-    <string name="settings_n_events">일정 %1$d개</string>
-    <string name="settings_n_events_default">일정 %1$d개 (기본값)</string>
+    <string name="settings_sync_frequency_hint">백그라운드에서 동기화하는 주기</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">캘린더</string>
     <string name="drawer_contacts">연락처</string>
     <string name="drawer_device_calendars">기기 캘린더</string>
     <string name="drawer_account_offline">오프라인</string>
+    <string name="calendar_local">이 기기</string>
     <string name="drawer_share_feedback">도움말 및 문서</string>
     <string name="event_title_fallback">일정</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s 후</string>
     <string name="reminder_day_of_event_12h">당일 오전 9시</string>
     <string name="reminder_day_of_event_24h">당일 09:00</string>
+    <string name="reminder_day_of_event">당일</string>
     <string name="reminder_before_at_12h">%1$s 전 오전 9시</string>
     <string name="reminder_before_at_24h">%1$s 전 09:00</string>
     <string name="reminder_short_off">끔</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$d시간</string>
     <string name="reminder_short_days">%1$d일</string>
     <string name="reminder_short_weeks">%1$d주</string>
+    <string name="reminder_med_minutes">%1$d분</string>
+    <string name="reminder_med_hours">%1$d시간</string>
+    <string name="reminder_med_weeks">%1$d주</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <string name="reminder_med_day_of">당일</string>
+    <string name="all_day_alert_9am_hint">종일 알림은 오전 9시(09:00)에 울려요.</string>
     <string name="reminder_summary_none">없음</string>
     <string name="duration_compact">%1$d시간 %2$d분</string>
     <string name="duration_compact_short">%1$d시%2$d분</string>

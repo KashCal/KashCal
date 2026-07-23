@@ -61,6 +61,7 @@ class InsightsRepositoryRangeOverloadTest {
         dataStore = KashCalDataStore(context)
         coEvery { calendarProviderRepository.getInstancesForDayRange(any(), any(), any(), any()) } returns emptyList()
         repository = InsightsRepository(
+            context = context,
             occurrencesDao = database.occurrencesDao(),
             calendarsDao = database.calendarsDao(),
             calendarProviderRepository = calendarProviderRepository,

@@ -68,6 +68,7 @@
     <string name="action_view">Bekyk</string>
     <string name="action_enable">Aktiveer</string>
     <string name="action_done">Klaar</string>
+    <string name="action_back">Terug</string>
     <string name="action_save">Stoor</string>
     <string name="action_add">Voeg By</string>
     <string name="action_edit">Wysig</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Tydformaat</string>
     <string name="settings_start_week_on">Begin Week Op</string>
     <string name="settings_event_emojis">Gebeurtenis-emojis</string>
-    <string name="settings_emoji_subtitle">Wys emojis gebaseer op gebeurtenistitels</string>
+    <string name="settings_event_emojis_info">Voeg \'n emoji by gebeurtenisse gebaseer op die titel, soos 🎂 vir \"Verjaarsdag\".</string>
     <string name="settings_force_sync">Forseer Volle Sinkronisering</string>
     <string name="settings_force_sync_subtitle">Herlaai alle kalenderdata</string>
     <string name="settings_sync_history">Sinkroniseringsgeskiedenis</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Stoor gebeurtenisse na \'n ICS-lêer</string>
     <string name="settings_birthday_reminder">Verjaarsdagherinnering</string>
     <string name="settings_use_device_timezone">Gebruik toesteltydzone</string>
-    <string name="settings_section_calendars">Kalenders</string>
+    <string name="settings_section_calendars">Kalenders &amp; rekeninge</string>
     <string name="settings_section_appearance">Voorkoms</string>
-    <string name="settings_section_creating_events">Gebeurtenisse skep</string>
-    <string name="settings_section_sync">Sinkronisering</string>
+    <string name="settings_section_creating_events">Gebeurtenisvoorkeure</string>
+    <string name="settings_section_sync">Kennisgewings &amp; sinkronisering</string>
     <string name="settings_section_data">Rugsteun &amp; Herstel</string>
     <string name="settings_section_privacy">Privaatheid</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Toeslot</string>
-    <string name="app_lock_subtitle_off">Vereis ontsluiting om KashCal oop te maak</string>
-    <string name="app_lock_subtitle_on">Ontsluit met vingerafdruk, gesig of skermslot</string>
+    <string name="settings_app_lock_info">Vereis toestelverifikasie om KashCal oop te maak.</string>
     <string name="app_lock_veil_locked">Gesluit</string>
     <string name="app_lock_veil_unlock">Ontsluit</string>
     <string name="app_lock_veil_footnote">Vingerafdruk, gesig of skermslot</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Hierdie rugsteunlêer bevat ongeldige data en kan nie herstel word nie.</string>
     <string name="restore_error_apply_failure">Iets het verkeerd gegaan tydens die toepassing van die rugsteun. Geen veranderinge is gestoor nie.</string>
     <string name="backup_error_build_failed">Rugsteun het misluk</string>
-    <string name="backup_error_write_failed">Rugsteun het misluk — kon nie na lêer skryf nie</string>
+    <string name="backup_error_write_failed">Rugsteun het misluk. Kon nie na lêer skryf nie.</string>
     <string name="backup_error_read_failed">Kon nie lêer lees nie</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Netwerkfout, probeer asseblief weer</string>
     <string name="error_import_file_not_found">Lêer nie gevind nie of kan nie gelees word nie.</string>
     <string name="error_import_invalid_format">Ongeldige kalenderlêerformaat.</string>
+    <string name="error_import_no_events">Geen gebeurtenisse in lêer gevind nie</string>
+    <string name="error_import_failed">Invoer het misluk</string>
     <string name="error_import_partial">%1$d gebeurtenisse ingevoer, %2$d het misluk.</string>
     <string name="error_export_failed">Kon nie gebeurtenisse uitvoer nie.</string>
     <string name="error_export_no_events">Geen gebeurtenisse om uit te voer nie.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalenderfout</string>
     <string name="error_device_calendar_write_failed">Kon nie na toestelkalender stoor nie. Probeer asseblief weer.</string>
     <string name="error_device_calendar_permission">Kalenderskryftoestemming benodig. Verleen asseblief toestemming in Instellings.</string>
+    <string name="error_device_calendar_permission_denied">Skakel Kalender-toestemming af/aan in Instellings om skryftoegang te verleen</string>
     <string name="error_device_calendar_not_found">Kalender nie gevind nie. Dit is dalk verwyder.</string>
     <string name="error_device_event_not_found">Gebeurtenis nie gevind nie. Dit is dalk verwyder.</string>
     <string name="error_device_calendar_read_only">Hierdie kalender is leesalleen.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Gekies</string>
     <string name="cd_back">Terug</string>
+    <string name="cd_opens_in_browser">Open in blaaier</string>
     <string name="cd_search">Soek</string>
     <string name="cd_create_event">Skep gebeurtenis</string>
     <string name="cd_delete">Verwyder</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Herhalend</string>
     <string name="cd_enabled">Geaktiveer</string>
     <string name="cd_sync_error">Sinkroniseringsfout</string>
-    <string name="cd_select_option">Kies opsie</string>
     <string name="cd_select_label">Kies %1$s</string>
     <string name="cd_wheel_picker">Wielkieser met %1$d opsies</string>
     <string name="cd_time_entry_keyboard">Voer presiese tyd in</string>
     <string name="time_entry_dialog_title">Voer tyd in</string>
     <string name="time_entry_tap_to_edit">Tik om te wysig</string>
     <string name="cd_version_info">KashCal weergawe %1$s. Hou lank in vir ontfoutopsies.</string>
+    <string name="cd_about_setting">Oor %1$s</string>
     <string name="cd_color_slider">Kleurskuifbalk, tans %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grade</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Kleur:</string>
     <string name="label_repeat">Herhaal</string>
     <string name="label_sync_interval">Sinkroniseringsinterval:</string>
-    <string name="label_scheduled_events">Geskeduleerde Gebeurtenisse</string>
-    <string name="label_all_day_events">Heeldag-gebeurtenisse</string>
     <string name="label_server_url">Bediener-URL</string>
     <string name="label_username">Gebruikersnaam</string>
     <string name="label_password">Wagwoord</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Sigbare Kalenders</string>
     <string name="settings_default_calendar">Verstek Kalender</string>
     <string name="settings_default_event_length">Verstek Gebeurtenislengte</string>
-    <string name="settings_default_alerts">Verstek Waarskuwings</string>
+    <string name="settings_default_event_length_hint">Verstek lengte vir nuwe gebeurtenisse</string>
+    <string name="settings_timed_event_alert">Tydgebonde gebeurtenis-waarskuwing</string>
+    <string name="settings_all_day_event_alert">Heeldag-gebeurtenis-waarskuwing</string>
+    <string name="settings_custom_alert_value">Aangepas (%1$s)</string>
     <string name="settings_notifications">Kennisgewings</string>
-    <string name="settings_new_events">Nuwe gebeurtenisse</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Stelselverstek</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Toestelkalenders</string>
     <string name="settings_device_calendars_hint">Kalenders vanuit ander programme</string>
-    <string name="settings_quick_event_add">Vinnige Gebeurtenis Byvoeging</string>
+    <string name="settings_quick_event_add">Slim gebeurtenis byvoeg</string>
+    <string name="settings_quick_event_add_info">Skep gebeurtenisse deur natuurlik te tik. \"Middagete met Sam Vrydag 13:00\" vul die titel, datum en tyd vir jou in.</string>
     <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
+    <string name="settings_suggest_titles_info">Terwyl jy \'n nuwe gebeurtenis benoem, stel titels voor wat jy voorheen gebruik het, sodat herhalende gebeurtenisse een tik is. Gerangskik volgens hoe gereeld en hoe onlangs jy hulle gebruik het.</string>
     <string name="settings_week_numbers">Weeknommers</string>
     <string name="settings_show_declined">Wys afgewysde gebeurtenisse</string>
     <string name="settings_widget_event_limit">Widget-gebeurtenislimiet</string>
+    <string name="settings_widget_event_limit_hint">Meeste gebeurtenisse per dag in legstukke gewys</string>
     <string name="settings_sync_lookback">Sinkroniseringsrugsig</string>
-    <string name="settings_auto_detect_emojis">Outomaties Emojis Opspoor</string>
-    <string name="settings_events_per_day">Gebeurtenisse per dag</string>
+    <string name="settings_sync_lookback_hint">Hoe ver terug om gebeurtenisse te sinkroniseer</string>
     <string name="settings_not_set">Nie gestel nie</string>
     <string name="settings_on">Aan</string>
     <string name="settings_off">Af</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Vertrou onveilige verbinding</string>
     <string name="action_add_another">Voeg Nog Een By</string>
     <string name="account_connected_found_calendars">%1$d kalender(s) gevind vir %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinkronisering is aan die gang — gebeurtenisse sal binnekort verskyn.</string>
+    <string name="account_connected_syncing_hint">Sinkronisering aan die gang. Gebeurtenisse sal binnekort verskyn.</string>
     <string name="settings_time_format_currently_24h">Tans: 24-uur (%1$s)</string>
     <string name="settings_time_format_currently_12h">Tans: 12-uur (%1$s)</string>
     <string name="settings_time_format_example">Voorbeeld: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Leesalleen (kalender is leesalleen)</string>
     <string name="settings_developer_options">Ontwikkelaaropsies</string>
     <string name="settings_sync_frequency">Sinkroniseringsfrekwensie</string>
-    <string name="settings_preview">VOORSKOU</string>
-    <string name="settings_n_events">%1$d gebeurtenisse</string>
-    <string name="settings_n_events_default">%1$d gebeurtenisse (verstek)</string>
+    <string name="settings_sync_frequency_hint">Hoe dikwels om op die agtergrond te sinkroniseer</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalenders</string>
     <string name="drawer_contacts">Kontakte</string>
     <string name="drawer_device_calendars">Toestelkalenders</string>
     <string name="drawer_account_offline">Vanlyn</string>
+    <string name="calendar_local">Plaaslik</string>
     <string name="drawer_share_feedback">Hulp &amp; dokumente</string>
     <string name="event_title_fallback">Gebeurtenis</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s na</string>
     <string name="reminder_day_of_event_12h">9 VM dag van gebeurtenis</string>
     <string name="reminder_day_of_event_24h">09:00 dag van gebeurtenis</string>
+    <string name="reminder_day_of_event">Day of event</string>
     <string name="reminder_before_at_12h">%1$s voor om 9 VM</string>
     <string name="reminder_before_at_24h">%1$s voor om 09:00</string>
     <string name="reminder_short_off">Af</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$du</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d u</string>
+    <string name="reminder_med_weeks">%1$d wk</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dae</item>
+    </plurals>
+    <string name="reminder_med_day_of">Day of</string>
+    <string name="all_day_alert_9am_hint">All-day alerts fire at 9 AM (09:00).</string>
     <string name="reminder_summary_none">Geen</string>
     <string name="duration_compact">%1$du %2$dm</string>
     <string name="duration_compact_short">%1$du%2$dm</string>

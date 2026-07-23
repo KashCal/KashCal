@@ -2,13 +2,14 @@ package org.onekash.kashcal.ui.screens.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,8 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.theme.ThemeMode
@@ -68,7 +68,8 @@ fun ThemeSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp)
+                .selectableGroup(),
         ) {
             Text(
                 text = stringResource(R.string.settings_theme),
@@ -103,9 +104,9 @@ private fun ThemeOptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() }
-            // Expose selection to TalkBack so the state isn't conveyed by the checkmark alone.
-            .semantics { selected = isSelected }
+            // Radio-button role + selected state so TalkBack announces the choice and its
+            // group position, not just the label (the checkmark alone is a sighted-only cue).
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 else Color.Transparent,
@@ -128,7 +129,8 @@ private fun ThemeOptionRow(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = stringResource(R.string.cd_selected),
+                // Decorative: the row's radio-button selected state already announces selection.
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp),
             )

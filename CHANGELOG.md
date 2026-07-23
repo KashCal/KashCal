@@ -1,3 +1,38 @@
+## [2026.07.22]
+
+Every family has the sibling who peaked early and the one who spent the summer reinventing themselves.
+
+In KashCal, those siblings are the account hub and Settings. The hub is the one that showed up recently in a full-screen makeover, all round avatar and tidy sections, and collected the compliments. Settings, meanwhile, had been wearing the same nested-menus-and-dropdowns outfit since roughly the invention of the dropdown, and it had feelings about the attention.
+
+So this release, Settings went for it. Every row now wears its current value on the right, so you read your whole setup at a glance instead of opening each one to check. Tap a row and a picker slides up from the bottom instead of a menu unfolding on top of everything. The section headers learned to search, so "which screen was the widget limit on again" is a question you type, not a scavenger hunt. Default alerts split into one for timed events and one for all-day, because "remind me 10 minutes before" and "remind me the morning of" were never the same wish. Sync frequency, which used to hide, now sits out in the open as its own row. And the custom-alert wheel stopped dismissing itself mid-spin, waiting politely for you to say Done.
+
+Not to be upstaged, the hub tailored its own outfit. The Accounts entry wears a proper button now so adding or managing an account is easy to find, external links speak up for screen readers, and the small things got straightened out, a clipped pencil badge and an avatar that used to vanish on pale themes. We will let you decide which sibling looks better. We are not picking sides at family dinner.
+
+While the two of them fussed over mirrors, the quieter work happened in the plumbing, and it matters more than any button. Edit a single occurrence of a repeating event and it stays a single edit, instead of quietly multiplying into duplicate or brand-new events on the next sync. When your server drops an exception from a recurring series, KashCal prunes its local copy to match instead of keeping a ghost. Import an .ics file full of a repeating event and it arrives as one linked series, and events that came with no unique ID no longer collide and overwrite each other.
+
+Two siblings, one fresh coat of paint each, and a calendar underneath that finally keeps repeating events straight.
+
+### Everything in this release
+
+- Added a current-value display on the right of every Settings row, with the search match highlighted
+- Changed Settings rows to open a bottom-sheet picker instead of a dropdown menu
+- Added searchable Settings section headers that surface the whole group on a match
+- Split the default alert into separate timed-event and all-day defaults, with an all-day 9 AM hint
+- Added sync frequency as a visible Settings row instead of a hidden control
+- Fixed the custom-alert wheel to commit only on `Done`, stop dismissing the sheet mid-scroll, and preserve off-grid or unchanged alert values
+- Improved Settings layout: inlined the emoji and app-lock toggles, clearer labels, tighter grouping, and consistent row units
+- Changed the backup, restore, and widget-limit rows to use distinct icons
+- Added screen-reader announcements for Settings picker selection state and for external links that open in the browser
+- Changed the account hub's Accounts entry to a clearly outlined button that is easier to find
+- Fixed a clipped pencil badge and added an outline to the hub avatar and Accounts pill so they stay visible on pale accent themes
+- Fixed the "today" highlight to stay visible on pale accent colors by outlining it
+- Added translation of the built-in "Local" calendar name in each language
+- Fixed editing a single occurrence of a recurring event multiplying into duplicate or new events on sync
+- Fixed local exceptions lingering after the server dropped them from a recurring series; they are now pruned to match
+- Fixed importing an `.ics` recurring event with changed occurrences so it arrives as one linked series
+- Fixed imported events with a blank or missing UID colliding and overwriting each other
+- Localized the import and calendar-permission messages
+
 ## [2026.07.19]
 
 This release of KashCal is about being understood.

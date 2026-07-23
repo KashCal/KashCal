@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -1230,6 +1231,158 @@ class EventCoordinatorTest {
             )
         }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    // ===== Recurring-series import: master + RECURRENCE-ID overrides =====
+
+    @Test
+    fun `importIcsEvents groups master and its exceptions into one linked series`() = runTest {
+        val sharedUid = "series@source.ics"
+        val master = testEvent.copy(
+            id = 0L, uid = sharedUid, title = "Weekly", rrule = "FREQ=WEEKLY;COUNT=5",
+            reminders = null, originalInstanceTime = null
+        )
+        val exception1 = testEvent.copy(
+            id = 0L, uid = sharedUid, title = "Moved wk2",
+            rrule = null, originalInstanceTime = master.startTs + 7 * 86400000L, reminders = null
+        )
+        val exception2 = testEvent.copy(
+            id = 0L, uid = sharedUid, title = "Moved wk3",
+            rrule = null, originalInstanceTime = master.startTs + 14 * 86400000L, reminders = null
+        )
+
+        val seriesSlot = slot<Event>()
+        val exceptionsSlot = slot<List<Event>>()
+        coEvery {
+            eventWriter.createImportedSeries(capture(seriesSlot), capture(exceptionsSlot), any())
+        } answers {
+            val m = seriesSlot.captured.copy(id = 500L)
+            val exs = exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) }
+            EventWriter.ImportedSeries(m, exs)
+        }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
+
+        val count = coordinator.importIcsEvents(listOf(master, exception1, exception2), localCalendarId)
+
+        assertEquals("master + 2 exceptions persisted", 3, count)
+        coVerify(exactly = 1) { eventWriter.createImportedSeries(any(), any(), any()) }
+        coVerify(exactly = 0) { eventWriter.createEvent(any(), any()) }
+        // One freshly generated UID, shared across master + exceptions, never the source UID.
+        assertNotEquals(sharedUid, seriesSlot.captured.uid)
+        assertTrue(seriesSlot.captured.uid.endsWith("@kashcal.onekash.org"))
+        assertTrue(exceptionsSlot.captured.all { it.uid == seriesSlot.captured.uid })
+        // Exception instance times preserved.
+        assertEquals(
+            setOf(master.startTs + 7 * 86400000L, master.startTs + 14 * 86400000L),
+            exceptionsSlot.captured.mapNotNull { it.originalInstanceTime }.toSet()
+        )
+    }
+
+    @Test
+    fun `importIcsEvents imports orphan exception (no master) as standalone`() = runTest {
+        // Google truncated-window export: an override whose master fell outside
+        // the export window. Must still import, not be silently dropped.
+        val orphan = testEvent.copy(
+            id = 0L, uid = "orphan@source.ics", title = "Orphan override",
+            rrule = null, originalInstanceTime = 1704067200000L + 7 * 86400000L, reminders = null
+        )
+        coEvery { eventWriter.createEvent(any(), any()) } returns orphan.copy(id = 700L, uid = "new@kashcal.onekash.org")
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        val count = coordinator.importIcsEvents(listOf(orphan), localCalendarId)
+
+        assertEquals(1, count)
+        coVerify(exactly = 0) { eventWriter.createImportedSeries(any(), any(), any()) }
+        coVerify(exactly = 1) { eventWriter.createEvent(any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents imports two same-UID masters as separate events with distinct UIDs`() = runTest {
+        // Google duplicate-UID quirk: two distinct non-exception VEVENTs sharing
+        // a UID. Both must import, each with its own fresh UID.
+        val uid = "dup@source.ics"
+        val masterA = testEvent.copy(id = 0L, uid = uid, title = "A", rrule = null, originalInstanceTime = null, reminders = null)
+        val masterB = testEvent.copy(id = 0L, uid = uid, title = "B", rrule = null, originalInstanceTime = null, reminders = null)
+
+        val uidsSeen = mutableListOf<String>()
+        coEvery { eventWriter.createEvent(any(), any()) } answers {
+            val e = firstArg<Event>()
+            uidsSeen += e.uid
+            e.copy(id = (800L + uidsSeen.size))
+        }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        val count = coordinator.importIcsEvents(listOf(masterA, masterB), localCalendarId)
+
+        assertEquals(2, count)
+        coVerify(exactly = 0) { eventWriter.createImportedSeries(any(), any(), any()) }
+        coVerify(exactly = 2) { eventWriter.createEvent(any(), any()) }
+        assertEquals("two distinct fresh UIDs", 2, uidsSeen.toSet().size)
+        assertFalse("source UID never reused", uidsSeen.contains(uid))
+    }
+
+    @Test
+    fun `importIcsEvents does not form a series from a non-recurring master plus orphan exception`() = runTest {
+        // A non-recurring event sharing a UID with an orphan RECURRENCE-ID must
+        // NOT be treated as a series (no RRULE to expand). Both go standalone.
+        val uid = "notseries@source.ics"
+        val plain = testEvent.copy(id = 0L, uid = uid, title = "Plain", rrule = null, originalInstanceTime = null, reminders = null)
+        val orphanEx = testEvent.copy(id = 0L, uid = uid, title = "Orphan", rrule = null, originalInstanceTime = 1704067200000L + 86400000L, reminders = null)
+
+        coEvery { eventWriter.createEvent(any(), any()) } answers { firstArg<Event>().copy(id = 900L) }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        val count = coordinator.importIcsEvents(listOf(plain, orphanEx), localCalendarId)
+
+        assertEquals(2, count)
+        coVerify(exactly = 0) { eventWriter.createImportedSeries(any(), any(), any()) }
+        coVerify(exactly = 2) { eventWriter.createEvent(any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents series exception with no VALARM inherits master's effective default reminders`() = runTest {
+        // setup() stubs the timed default at 15 minutes. The master had no
+        // VALARM so it takes the default; an override with no VALARM must alarm
+        // consistently with its sibling occurrences, i.e. inherit that default.
+        val sharedUid = "series-rem@source.ics"
+        val master = testEvent.copy(id = 0L, uid = sharedUid, isAllDay = false, rrule = "FREQ=DAILY;COUNT=3", reminders = null, originalInstanceTime = null)
+        val exception = testEvent.copy(id = 0L, uid = sharedUid, rrule = null, originalInstanceTime = master.startTs + 86400000L, reminders = null)
+
+        val seriesSlot = slot<Event>()
+        val exceptionsSlot = slot<List<Event>>()
+        coEvery {
+            eventWriter.createImportedSeries(capture(seriesSlot), capture(exceptionsSlot), any())
+        } answers {
+            EventWriter.ImportedSeries(seriesSlot.captured.copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
+        }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
+
+        coordinator.importIcsEvents(listOf(master, exception), localCalendarId)
+
+        assertEquals("master takes timed default", listOf("-PT15M"), seriesSlot.captured.reminders)
+        assertEquals("exception inherits master effective reminders", listOf("-PT15M"), exceptionsSlot.captured[0].reminders)
+    }
+
+    @Test
+    fun `importIcsEvents series exception keeps its own VALARM reminders`() = runTest {
+        val sharedUid = "series-own-rem@source.ics"
+        val master = testEvent.copy(id = 0L, uid = sharedUid, rrule = "FREQ=DAILY;COUNT=3", reminders = null, originalInstanceTime = null)
+        val exception = testEvent.copy(id = 0L, uid = sharedUid, rrule = null, originalInstanceTime = master.startTs + 86400000L, reminders = listOf("-PT5M"))
+
+        val exceptionsSlot = slot<List<Event>>()
+        coEvery {
+            eventWriter.createImportedSeries(any(), capture(exceptionsSlot), any())
+        } answers {
+            EventWriter.ImportedSeries(firstArg<Event>().copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
+        }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
+
+        coordinator.importIcsEvents(listOf(master, exception), localCalendarId)
+
+        assertEquals("override keeps its own VALARM", listOf("-PT5M"), exceptionsSlot.captured[0].reminders)
     }
 
     // ==================== Account Reminder Cleanup Tests (v16.4.1) ====================

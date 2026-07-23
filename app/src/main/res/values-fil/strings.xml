@@ -68,6 +68,7 @@
     <string name="action_view">Tingnan</string>
     <string name="action_enable">I-enable</string>
     <string name="action_done">Tapos Na</string>
+    <string name="action_back">Bumalik</string>
     <string name="action_save">I-save</string>
     <string name="action_add">Idagdag</string>
     <string name="action_edit">I-edit</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Format ng Oras</string>
     <string name="settings_start_week_on">Simula ng Linggo</string>
     <string name="settings_event_emojis">Mga Emoji ng Event</string>
-    <string name="settings_emoji_subtitle">Magpakita ng mga emoji base sa mga pamagat ng event</string>
+    <string name="settings_event_emojis_info">Nagdaragdag ng emoji sa mga kaganapan batay sa pamagat, tulad ng 🎂 para sa \"Kaarawan\".</string>
     <string name="settings_force_sync">Force Full Sync</string>
     <string name="settings_force_sync_subtitle">I-download muli ang lahat ng data ng kalendaryo</string>
     <string name="settings_sync_history">Kasaysayan ng Sync</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">I-save ang mga event sa ICS file</string>
     <string name="settings_birthday_reminder">Paalala ng Kaarawan</string>
     <string name="settings_use_device_timezone">Gamitin ang timezone ng device</string>
-    <string name="settings_section_calendars">Mga Kalendaryo</string>
+    <string name="settings_section_calendars">Mga kalendaryo &amp; account</string>
     <string name="settings_section_appearance">Hitsura</string>
-    <string name="settings_section_creating_events">Paggawa ng mga event</string>
-    <string name="settings_section_sync">Sync</string>
+    <string name="settings_section_creating_events">Mga kagustuhan sa kaganapan</string>
+    <string name="settings_section_sync">Mga notipikasyon &amp; sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
     <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Lock ng app</string>
-    <string name="app_lock_subtitle_off">Hilingin ang pag-unlock para buksan ang KashCal</string>
-    <string name="app_lock_subtitle_on">I-unlock gamit ang fingerprint, mukha, o screen lock</string>
+    <string name="settings_app_lock_info">Kailanganin ang pagpapatotoo ng device para buksan ang KashCal.</string>
     <string name="app_lock_veil_locked">Naka-lock</string>
     <string name="app_lock_veil_unlock">I-unlock</string>
     <string name="app_lock_veil_footnote">Fingerprint, mukha, o screen lock</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Naglalaman ng invalid na data ang backup file na ito at hindi ma-restore.</string>
     <string name="restore_error_apply_failure">May nangyaring mali habang inilalapat ang backup. Walang mga pagbabagong nai-save.</string>
     <string name="backup_error_build_failed">Nabigo ang backup</string>
-    <string name="backup_error_write_failed">Nabigo ang backup — hindi maisulat sa file</string>
+    <string name="backup_error_write_failed">Nabigo ang backup. Hindi maisulat sa file.</string>
     <string name="backup_error_read_failed">Hindi mabasa ang file</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Error sa network, subukan ulit</string>
     <string name="error_import_file_not_found">Hindi natagpuan o hindi mabasa ang file.</string>
     <string name="error_import_invalid_format">Hindi wasto ang format ng calendar file.</string>
+    <string name="error_import_no_events">Walang event na natagpuan sa file</string>
+    <string name="error_import_failed">Nabigo ang pag-import</string>
     <string name="error_import_partial">Na-import ang %1$d event, %2$d ang nabigo.</string>
     <string name="error_export_failed">Nabigong i-export ang mga event.</string>
     <string name="error_export_no_events">Walang event na i-e-export.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Calendar Error</string>
     <string name="error_device_calendar_write_failed">Nabigong i-save sa device calendar. Pakisubukang muli.</string>
     <string name="error_device_calendar_permission">Kailangan ng calendar write permission. Pakibigay ang permission sa Settings.</string>
+    <string name="error_device_calendar_permission_denied">I-off tapos i-on muli ang Calendar permission sa Mga Setting para magbigay ng write access</string>
     <string name="error_device_calendar_not_found">Hindi natagpuan ang kalendaryo. Maaaring naalis na ito.</string>
     <string name="error_device_event_not_found">Hindi natagpuan ang event. Maaaring nabura na ito.</string>
     <string name="error_device_calendar_read_only">Read-only ang kalendaryong ito.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Napili</string>
     <string name="cd_back">Bumalik</string>
+    <string name="cd_opens_in_browser">Bubukas sa browser</string>
     <string name="cd_search">Maghanap</string>
     <string name="cd_create_event">Gumawa ng event</string>
     <string name="cd_delete">Burahin</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Paulit-ulit</string>
     <string name="cd_enabled">Naka-enable</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_select_option">Pumili ng opsyon</string>
     <string name="cd_select_label">Piliin ang %1$s</string>
     <string name="cd_wheel_picker">Wheel picker na may %1$d opsyon</string>
     <string name="cd_time_entry_keyboard">Ilagay ang eksaktong oras</string>
     <string name="time_entry_dialog_title">Ilagay ang oras</string>
     <string name="time_entry_tap_to_edit">I-tap para i-edit</string>
     <string name="cd_version_info">KashCal bersyon %1$s. Pindutin nang matagal para sa mga debug option.</string>
+    <string name="cd_about_setting">Tungkol sa %1$s</string>
     <string name="cd_color_slider">Color slider, kasalukuyang %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d degrees</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Kulay:</string>
     <string name="label_repeat">Ulitin</string>
     <string name="label_sync_interval">Interval ng Sync:</string>
-    <string name="label_scheduled_events">Naka-schedule na Event</string>
-    <string name="label_all_day_events">Buong Araw na Event</string>
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Mga Nakikitang Kalendaryo</string>
     <string name="settings_default_calendar">Default na Kalendaryo</string>
     <string name="settings_default_event_length">Default na Haba ng Event</string>
-    <string name="settings_default_alerts">Default na Mga Alerto</string>
+    <string name="settings_default_event_length_hint">Default na haba para sa mga bagong kaganapan</string>
+    <string name="settings_timed_event_alert">Alerto sa naka-iskedyul na kaganapan</string>
+    <string name="settings_all_day_event_alert">Alerto sa kaganapang buong araw</string>
+    <string name="settings_custom_alert_value">Custom (%1$s)</string>
     <string name="settings_notifications">Mga Notification</string>
-    <string name="settings_new_events">Mga bagong event</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Default ng system</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Mga Device Calendar</string>
     <string name="settings_device_calendars_hint">Mga kalendaryo mula sa ibang app</string>
-    <string name="settings_quick_event_add">Mabilis na Pagdagdag ng Event</string>
+    <string name="settings_quick_event_add">Matalinong pagdagdag ng kaganapan</string>
+    <string name="settings_quick_event_add_info">Gumawa ng mga kaganapan sa pamamagitan ng natural na pag-type. Ang \"Tanghalian kasama si Sam Biyernes ng 1pm\" ay pinupunan ang pamagat, petsa, at oras para sa iyo.</string>
     <string name="settings_suggest_titles">Magmungkahi ng mga pamagat ng event</string>
+    <string name="settings_suggest_titles_info">Habang pinapangalanan mo ang bagong kaganapan, magmumungkahi ng mga pamagat na nagamit mo na dati, kaya ang mga paulit-ulit na kaganapan ay isang tap na lang. Isinaayos ayon sa dalas at kamakailang paggamit mo sa mga ito.</string>
     <string name="settings_week_numbers">Mga Numero ng Linggo</string>
     <string name="settings_show_declined">Ipakita ang mga tinanggihang kaganapan</string>
     <string name="settings_widget_event_limit">Limitasyon ng Widget Event</string>
+    <string name="settings_widget_event_limit_hint">Pinakamaraming kaganapan bawat araw sa mga widget</string>
     <string name="settings_sync_lookback">Saklaw ng Sync Lookback</string>
-    <string name="settings_auto_detect_emojis">Auto-detect ng Emoji</string>
-    <string name="settings_events_per_day">Mga event bawat araw</string>
+    <string name="settings_sync_lookback_hint">Gaano kalayo pabalik i-sync ang mga kaganapan</string>
     <string name="settings_not_set">Hindi pa naka-set</string>
     <string name="settings_on">Bukas</string>
     <string name="settings_off">Sarado</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Pagkatiwalaan ang hindi secure na koneksyon</string>
     <string name="action_add_another">Magdagdag Pa</string>
     <string name="account_connected_found_calendars">Nakakita ng %1$d kalendaryo para sa %2$s.</string>
-    <string name="account_connected_syncing_hint">Sini-sync na — lalabas na ang mga event.</string>
+    <string name="account_connected_syncing_hint">Kasalukuyang nagsi-sync. Malapit nang lumitaw ang mga kaganapan.</string>
     <string name="settings_time_format_currently_24h">Kasalukuyan: 24 oras (%1$s)</string>
     <string name="settings_time_format_currently_12h">Kasalukuyan: 12 oras (%1$s)</string>
     <string name="settings_time_format_example">Halimbawa: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Read only (read-only ang kalendaryo)</string>
     <string name="settings_developer_options">Mga Developer Option</string>
     <string name="settings_sync_frequency">Dalas ng Sync</string>
-    <string name="settings_preview">PREVIEW</string>
-    <string name="settings_n_events">%1$d event</string>
-    <string name="settings_n_events_default">%1$d event (default)</string>
+    <string name="settings_sync_frequency_hint">Gaano kadalas mag-sync sa background</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Mga Kalendaryo</string>
     <string name="drawer_contacts">Mga Contact</string>
     <string name="drawer_device_calendars">Mga device calendar</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokal</string>
     <string name="drawer_share_feedback">Tulong at dokumento</string>
     <string name="event_title_fallback">Event</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s pagkatapos</string>
     <string name="reminder_day_of_event_12h">9 AM araw ng kaganapan</string>
     <string name="reminder_day_of_event_24h">09:00 araw ng kaganapan</string>
+    <string name="reminder_day_of_event">Araw ng kaganapan</string>
     <string name="reminder_before_at_12h">%1$s bago ng 9 AM</string>
     <string name="reminder_before_at_24h">%1$s bago ng 09:00</string>
     <string name="reminder_short_off">Naka-off</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$do</string>
     <string name="reminder_short_days">%1$da</string>
     <string name="reminder_short_weeks">%1$dl</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d oras</string>
+    <string name="reminder_med_weeks">%1$d linggo</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d araw</item>
+        <item quantity="other">%1$d araw</item>
+    </plurals>
+    <string name="reminder_med_day_of">Araw ng</string>
+    <string name="all_day_alert_9am_hint">Ang mga alerto para sa buong araw ay lumalabas nang 9 AM (09:00).</string>
     <string name="reminder_summary_none">Wala</string>
     <string name="duration_compact">%1$do %2$dm</string>
     <string name="duration_compact_short">%1$do%2$dm</string>

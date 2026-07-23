@@ -68,6 +68,7 @@
     <string name="action_view">Vaata</string>
     <string name="action_enable">Luba</string>
     <string name="action_done">Valmis</string>
+    <string name="action_back">Tagasi</string>
     <string name="action_save">Salvesta</string>
     <string name="action_add">Lisa</string>
     <string name="action_edit">Muuda</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Kellaaja vorming</string>
     <string name="settings_start_week_on">Nädal algab</string>
     <string name="settings_event_emojis">Sündmuste emotikonid</string>
-    <string name="settings_emoji_subtitle">Kuva emotikone sündmuste pealkirjade põhjal</string>
+    <string name="settings_event_emojis_info">Lisab sündmustele pealkirja põhjal emoji, näiteks 🎂 pealkirjale \"Sünnipäev\".</string>
     <string name="settings_force_sync">Sundige täielik sünkroonimine</string>
     <string name="settings_force_sync_subtitle">Laadi kõik kalendriandmed uuesti alla</string>
     <string name="settings_sync_history">Sünkroonimise ajalugu</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Salvesta sündmused ICS-faili</string>
     <string name="settings_birthday_reminder">Sünnipäeva meeldetuletus</string>
     <string name="settings_use_device_timezone">Kasuta seadme ajavööndit</string>
-    <string name="settings_section_calendars">Kalendrid</string>
+    <string name="settings_section_calendars">Kalendrid ja kontod</string>
     <string name="settings_section_appearance">Välimus</string>
-    <string name="settings_section_creating_events">Sündmuste loomine</string>
-    <string name="settings_section_sync">Sünkroonimine</string>
+    <string name="settings_section_creating_events">Sündmuste seaded</string>
+    <string name="settings_section_sync">Teavitused ja sünkroonimine</string>
     <string name="settings_section_data">Varundus ja taastamine</string>
     <string name="settings_section_privacy">Privaatsus</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Rakenduse lukk</string>
-    <string name="app_lock_subtitle_off">Nõua KashCali avamiseks avamist</string>
-    <string name="app_lock_subtitle_on">Ava sõrmejälje, näo või ekraaniluku abil</string>
+    <string name="settings_app_lock_info">Nõua KashCali avamiseks seadme autentimist.</string>
     <string name="app_lock_veil_locked">Lukus</string>
     <string name="app_lock_veil_unlock">Ava</string>
     <string name="app_lock_veil_footnote">Sõrmejälg, nägu või ekraanilukk</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Varundusfail sisaldab vigaseid andmeid ja seda ei saa taastada.</string>
     <string name="restore_error_apply_failure">Varukoopia rakendamisel tekkis tõrge. Muudatusi ei salvestatud.</string>
     <string name="backup_error_build_failed">Varukoopia ebaõnnestus</string>
-    <string name="backup_error_write_failed">Varukoopia ebaõnnestus — faili ei saanud kirjutada</string>
+    <string name="backup_error_write_failed">Varundamine ebaõnnestus. Faili ei saanud kirjutada.</string>
     <string name="backup_error_read_failed">Faili ei saanud lugeda</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Võrguviga, proovi uuesti</string>
     <string name="error_import_file_not_found">Faili ei leitud või ei saa lugeda.</string>
     <string name="error_import_invalid_format">Vigane kalendrifaili vorming.</string>
+    <string name="error_import_no_events">Failist ei leitud ühtegi sündmust</string>
+    <string name="error_import_failed">Importimine ebaõnnestus</string>
     <string name="error_import_partial">Imporditud %1$d sündmust, %2$d ebaõnnestus.</string>
     <string name="error_export_failed">Sündmuste eksport ebaõnnestus.</string>
     <string name="error_export_no_events">Eksporditavaid sündmusi pole.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalendri viga</string>
     <string name="error_device_calendar_write_failed">Seadme kalendrisse salvestamine ebaõnnestus. Palun proovige uuesti.</string>
     <string name="error_device_calendar_permission">Kalendri kirjutamisõigus on vajalik. Palun andke luba seadetes.</string>
+    <string name="error_device_calendar_permission_denied">Lülita seadetes kalendriluba välja ja uuesti sisse, et anda kirjutamisõigus</string>
     <string name="error_device_calendar_not_found">Kalendrit ei leitud. See võib olla eemaldatud.</string>
     <string name="error_device_event_not_found">Sündmust ei leitud. See võib olla kustutatud.</string>
     <string name="error_device_calendar_read_only">See kalender on kirjutuskaitstud.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valitud</string>
     <string name="cd_back">Tagasi</string>
+    <string name="cd_opens_in_browser">Avaneb brauseris</string>
     <string name="cd_search">Otsi</string>
     <string name="cd_create_event">Loo sündmus</string>
     <string name="cd_delete">Kustuta</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Korduv</string>
     <string name="cd_enabled">Lubatud</string>
     <string name="cd_sync_error">Sünkroonimise viga</string>
-    <string name="cd_select_option">Vali valik</string>
     <string name="cd_select_label">Vali %1$s</string>
     <string name="cd_wheel_picker">Rullikvalija %1$d valikuga</string>
     <string name="cd_time_entry_keyboard">Sisesta täpne aeg</string>
     <string name="time_entry_dialog_title">Sisesta aeg</string>
     <string name="time_entry_tap_to_edit">Puuduta muutmiseks</string>
     <string name="cd_version_info">KashCal versioon %1$s. Pikk vajutus silumisvalikute jaoks.</string>
+    <string name="cd_about_setting">Teave: %1$s</string>
     <string name="cd_color_slider">Värvi liugur, praegu %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d kraadi</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Värv:</string>
     <string name="label_repeat">Korda</string>
     <string name="label_sync_interval">Sünkroonimise intervall:</string>
-    <string name="label_scheduled_events">Ajastatud sündmused</string>
-    <string name="label_all_day_events">Kogu päeva sündmused</string>
     <string name="label_server_url">Serveri URL</string>
     <string name="label_username">Kasutajanimi</string>
     <string name="label_password">Parool</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Nähtavad kalendrid</string>
     <string name="settings_default_calendar">Vaikekalender</string>
     <string name="settings_default_event_length">Sündmuse vaikepikkus</string>
-    <string name="settings_default_alerts">Vaikemeeldetuletused</string>
+    <string name="settings_default_event_length_hint">Uute sündmuste vaikepikkus</string>
+    <string name="settings_timed_event_alert">Kellaajaga sündmuse märguanne</string>
+    <string name="settings_all_day_event_alert">Kogu päeva sündmuse märguanne</string>
+    <string name="settings_custom_alert_value">Kohandatud (%1$s)</string>
     <string name="settings_notifications">Teavitused</string>
-    <string name="settings_new_events">Uued sündmused</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Süsteemi vaikeväärtus</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Seadme kalendrid</string>
     <string name="settings_device_calendars_hint">Kalendrid teistest rakendustest</string>
-    <string name="settings_quick_event_add">Kiire sündmuse lisamine</string>
+    <string name="settings_quick_event_add">Nutikas sündmuse lisamine</string>
+    <string name="settings_quick_event_add_info">Loo sündmusi loomulikku teksti kirjutades. \"Lõuna Samiga reedel kell 13:00\" täidab sinu eest pealkirja, kuupäeva ja kellaaja.</string>
     <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
+    <string name="settings_suggest_titles_info">Uut sündmust nimetades pakub varem kasutatud pealkirju, nii et korduvad sündmused tekivad ühe puudutusega. Järjestatud selle järgi, kui sageli ja kui hiljuti oled neid kasutanud.</string>
     <string name="settings_week_numbers">Nädalanumbrid</string>
     <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
     <string name="settings_widget_event_limit">Vidina sündmuste limiit</string>
+    <string name="settings_widget_event_limit_hint">Sündmuste maksimum päevas vidinates</string>
     <string name="settings_sync_lookback">Sünkroonimise tagasivaade</string>
-    <string name="settings_auto_detect_emojis">Tuvasta emotikonid automaatselt</string>
-    <string name="settings_events_per_day">Sündmusi päevas</string>
+    <string name="settings_sync_lookback_hint">Kui kaugele tagasi sündmusi sünkroonida</string>
     <string name="settings_not_set">Pole seatud</string>
     <string name="settings_on">Sees</string>
     <string name="settings_off">Väljas</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Usalda ebaturvalist ühendust</string>
     <string name="action_add_another">Lisa veel</string>
     <string name="account_connected_found_calendars">Leiti %1$d kalendrit kontole %2$s.</string>
-    <string name="account_connected_syncing_hint">Sünkroonimine käib — sündmused ilmuvad peagi.</string>
+    <string name="account_connected_syncing_hint">Sünkroonimine on käimas. Sündmused ilmuvad peagi.</string>
     <string name="settings_time_format_currently_24h">Praegu: 24-tunnine (%1$s)</string>
     <string name="settings_time_format_currently_12h">Praegu: 12-tunnine (%1$s)</string>
     <string name="settings_time_format_example">Näide: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Ainult lugemine (kalender on kirjutuskaitstud)</string>
     <string name="settings_developer_options">Arendaja valikud</string>
     <string name="settings_sync_frequency">Sünkroonimise sagedus</string>
-    <string name="settings_preview">EELVAADE</string>
-    <string name="settings_n_events">%1$d sündmust</string>
-    <string name="settings_n_events_default">%1$d sündmust (vaikimisi)</string>
+    <string name="settings_sync_frequency_hint">Kui sageli taustal sünkroonida</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendrid</string>
     <string name="drawer_contacts">Kontaktid</string>
     <string name="drawer_device_calendars">Seadme kalendrid</string>
     <string name="drawer_account_offline">Võrguühenduseta</string>
+    <string name="calendar_local">Kohalik</string>
     <string name="drawer_share_feedback">Abi ja dokumendid</string>
     <string name="event_title_fallback">Sündmus</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s pärast</string>
     <string name="reminder_day_of_event_12h">9 AM sündmuse päeval</string>
     <string name="reminder_day_of_event_24h">09:00 sündmuse päeval</string>
+    <string name="reminder_day_of_event">Sündmuse päeval</string>
     <string name="reminder_before_at_12h">%1$s enne kell 9 AM</string>
     <string name="reminder_before_at_24h">%1$s enne kell 09:00</string>
     <string name="reminder_short_off">Väljas</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dt</string>
     <string name="reminder_short_days">%1$dp</string>
     <string name="reminder_short_weeks">%1$dnäd</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d t</string>
+    <string name="reminder_med_weeks">%1$d näd</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d p</item>
+        <item quantity="other">%1$d p</item>
+    </plurals>
+    <string name="reminder_med_day_of">Samal päeval</string>
+    <string name="all_day_alert_9am_hint">Kogu päeva märguanded saabuvad kell 9 (09:00).</string>
     <string name="reminder_summary_none">Puudub</string>
     <string name="duration_compact">%1$dt %2$dmin</string>
     <string name="duration_compact_short">%1$dt%2$dmin</string>

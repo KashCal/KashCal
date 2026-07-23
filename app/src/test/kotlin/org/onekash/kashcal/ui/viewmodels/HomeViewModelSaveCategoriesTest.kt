@@ -130,6 +130,22 @@ class HomeViewModelSaveCategoriesTest {
     }
 
     @Test
+    fun `create path delegates UID minting to the writer by passing a blank uid`() =
+        runTest(testDispatcher) {
+            // The event form must not mint its own UID — it hands a blank uid so
+            // EventWriter.generateUid() is the single source of truth (and applies
+            // the @kashcal.onekash.org domain). A bare UUID minted here would sync
+            // to the server without the domain and diverge from every other path.
+            val captured = slot<Event>()
+            coEvery { eventCoordinator.createEvent(capture(captured), any(), any()) } answers { captured.captured }
+
+            val vm = createViewModel()
+            vm.saveEvent(EventFormState(title = "Standup", selectedCalendarId = 1L))
+
+            assertEquals("", captured.captured.uid)
+        }
+
+    @Test
     fun `same-calendar update path persists categories`() = runTest(testDispatcher) {
         val existing = Event(
             id = 42L,

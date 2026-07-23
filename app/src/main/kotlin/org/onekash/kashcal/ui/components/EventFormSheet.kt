@@ -94,6 +94,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
+import android.content.res.Resources
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.identity.matchesAttendee
@@ -110,6 +111,7 @@ import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
 import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
@@ -370,6 +372,22 @@ internal fun resolveDefaultCalendar(
         }
     }
 }
+
+/**
+ * The display name for a resolved default calendar, localized for Room calendars.
+ *
+ * [resolveDefaultCalendar] is kept pure (no Android [Resources]), so it returns the raw
+ * stored name. Localization happens here: for a Room calendar we re-find the entity and
+ * apply [localizedDisplayName] (which localizes the built-in on-device calendar). Device
+ * calendars pass through unchanged — they carry their own name and their id lives in a
+ * separate space from Room ids, so looking one up in the Room list could collide and
+ * mislabel it.
+ */
+private fun ResolvedCalendar.localizedName(
+    writableCalendars: List<Calendar>,
+    resources: Resources
+): String = if (isDevice) name
+    else writableCalendars.find { it.id == id }?.localizedDisplayName(resources) ?: name
 
 /**
  * Event creation/editing bottom sheet with a wheel-picker UI.
@@ -1073,7 +1091,7 @@ fun EventFormContent(
                     endHour = endCal.get(JavaCalendar.HOUR_OF_DAY),
                     endMinute = endCal.get(JavaCalendar.MINUTE),
                     selectedCalendarId = event.calendarId,
-                    selectedCalendarName = eventCalendar?.displayName.orEmpty(),
+                    selectedCalendarName = eventCalendar?.localizedDisplayName(context.resources).orEmpty(),
                     selectedCalendarColor = eventCalendar?.color,
                     isAllDay = event.isAllDay,
                     timezone = event.timezone,
@@ -1123,7 +1141,7 @@ fun EventFormContent(
 
             newState = newState.copy(
                 selectedCalendarId = resolvedCal.id,
-                selectedCalendarName = resolvedCal.name,
+                selectedCalendarName = resolvedCal.localizedName(writableCalendars, context.resources),
                 selectedCalendarColor = resolvedCal.color,
                 isDeviceCalendar = resolvedCal.isDevice,
                 reminders = if (defaultReminderTimed == REMINDER_OFF) emptyList() else listOf(defaultReminderTimed),
@@ -1171,7 +1189,8 @@ fun EventFormContent(
                 // Use source calendar if writable, otherwise fall back to resolved default
                 val sourceCalendar = writableCalendars.find { it.id == duplicateFrom.calendarId }
                 val sourceCalId = sourceCalendar?.id ?: resolvedCal.id
-                val sourceCalName = sourceCalendar?.displayName ?: resolvedCal.name
+                val sourceCalName = sourceCalendar?.localizedDisplayName(context.resources)
+                    ?: resolvedCal.localizedName(writableCalendars, context.resources)
                 val sourceCalColor = sourceCalendar?.color ?: resolvedCal.color
 
                 newState = newState.copy(
@@ -1285,7 +1304,7 @@ fun EventFormContent(
             val resolved = resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
             state = state.copy(
                 selectedCalendarId = resolved.id,
-                selectedCalendarName = resolved.name,
+                selectedCalendarName = resolved.localizedName(writableCalendars, context.resources),
                 selectedCalendarColor = resolved.color,
                 isDeviceCalendar = resolved.isDevice
             )
@@ -1300,7 +1319,7 @@ fun EventFormContent(
             val cal = calendars.find { it.id == state.selectedCalendarId }
             if (cal != null) {
                 state = state.copy(
-                    selectedCalendarName = cal.displayName,
+                    selectedCalendarName = cal.localizedDisplayName(context.resources),
                     selectedCalendarColor = cal.color
                 )
             }

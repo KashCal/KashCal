@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -68,6 +69,7 @@ import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.lock.AppLockVeil
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.KashCalTheme
@@ -704,7 +706,8 @@ class MainActivity : FragmentActivity() {
                     val event = quickViewEvent!!
                     val calendar = uiState.calendars.find { it.id == event.calendarId }
                     val calendarColor = calendar?.color ?: 0xFF6200EE.toInt()
-                    val calendarName = calendar?.displayName ?: "Calendar"
+                    val calendarName = calendar?.localizedDisplayName(LocalContext.current.resources)
+                        ?: stringResource(R.string.label_calendar)
 
                     EventQuickViewSheet(
                         event = event,

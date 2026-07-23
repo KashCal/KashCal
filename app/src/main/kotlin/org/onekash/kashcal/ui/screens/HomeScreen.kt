@@ -10,6 +10,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -1560,6 +1561,16 @@ private fun CalendarGrid(
                                             isSelected -> MaterialTheme.colorScheme.inverseSurface
                                             isToday -> MaterialTheme.colorScheme.primaryContainer
                                             else -> Color.Transparent
+                                        }
+                                    )
+                                    // The today fill can wash out against the surface for pale accent
+                                    // seeds; a hairline outline keeps the cell visible on any theme
+                                    // (selected uses a strong fill and needs no border).
+                                    .then(
+                                        if (isToday && !isSelected) {
+                                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                                        } else {
+                                            Modifier
                                         }
                                     )
                                     .clickable {

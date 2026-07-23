@@ -78,8 +78,8 @@ class FormConstantsTest {
     }
 
     @Test
-    fun `getAllDayReminderOptionsI18n returns options for all-day events`() {
-        val options = getAllDayReminderOptionsI18n(use24Hour = false, resources)
+    fun `getAllDayReminderOptions returns options for all-day events`() {
+        val options = getAllDayReminderOptions(resources)
         assertEquals(ALL_DAY_REMINDER_MINUTES.size, options.size)
         assertTrue("-540 (9 AM day of) should be an all-day option", options.any { it.minutes == -540 })
         assertFalse("15 min should NOT be valid for all-day", options.any { it.minutes == 15 })
@@ -445,7 +445,8 @@ class FormConstantsTest {
 
     @Test
     fun `formatReminderOption labels the new all-day values (not raw hours)`() {
-        assertEquals("9 AM day of event", formatReminderOption(-540, isAllDay = true, resources = resources))
+        // Day-of label is terse ("Day of event"); the 9 AM fire time is shown by the sheet hint.
+        assertEquals("Day of event", formatReminderOption(-540, isAllDay = true, resources = resources))
         assertEquals("1 day before", formatReminderOption(900, isAllDay = true, resources = resources))
         assertEquals("2 days before", formatReminderOption(2340, isAllDay = true, resources = resources))
         assertEquals("1 week before", formatReminderOption(9540, isAllDay = true, resources = resources))

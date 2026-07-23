@@ -33,6 +33,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
 import java.util.TimeZone
+import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class QuickAddViewModelTest {
@@ -66,10 +67,15 @@ class QuickAddViewModelTest {
         coEvery { dataStore.getDefaultCalendar() } returns DefaultCalendar.Room(1L)
         coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
 
-        // createEvent returns the event passed in (with id set)
+        // createEvent returns the event passed in (with id set). Mirror the real
+        // coordinator/EventWriter contract: a blank uid is minted with the
+        // canonical @kashcal.onekash.org domain, so the returned event always
+        // carries a non-blank domain uid.
         val eventSlot = slot<Event>()
         coEvery { eventCoordinator.createEvent(capture(eventSlot), any()) } answers {
-            eventSlot.captured.copy(id = 42L)
+            val e = eventSlot.captured
+            val minted = if (e.uid.isBlank()) "${UUID.randomUUID()}@kashcal.onekash.org" else e.uid
+            e.copy(id = 42L, uid = minted)
         }
 
         viewModel = QuickAddViewModel(eventCoordinator, dataStore, testDispatcher)
@@ -461,6 +467,25 @@ class QuickAddViewModelTest {
         advanceUntilIdle()
 
         coVerify { eventCoordinator.createEvent(any(), eq(1L)) }
+    }
+
+    @Test
+    fun `save delegates UID minting to the writer by passing a blank uid`() = runTest {
+        // The UI layer must not mint UIDs — it hands a blank uid so
+        // EventWriter.generateUid() is the single source of truth (and applies
+        // the @kashcal.onekash.org domain). A bare UUID minted here would sync
+        // to the server without the domain and diverge from every other path.
+        val captured = slot<Event>()
+        coEvery { eventCoordinator.createEvent(capture(captured), any()) } answers {
+            captured.captured.copy(id = 42L)
+        }
+
+        viewModel.onInputChanged("Coffee tomorrow at 3pm")
+        advanceUntilIdle()
+        viewModel.save()
+        advanceUntilIdle()
+
+        assertEquals("", captured.captured.uid)
     }
 
     // ==================== save() — all-day event ====================

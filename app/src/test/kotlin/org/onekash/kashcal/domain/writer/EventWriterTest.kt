@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -184,6 +185,146 @@ class EventWriterTest {
         val pendingOps = database.pendingOperationsDao().getForEvent(created.id)
         assertEquals(1, pendingOps.size)
         assertEquals(PendingOperation.OPERATION_CREATE, pendingOps[0].operation)
+    }
+
+    // ========== createImportedSeries (ICS file import: master + exceptions) ==========
+
+    /**
+     * Build a master + N exception events as they arrive from an ICS file
+     * import: all sharing one source UID, exceptions distinguished by
+     * originalInstanceTime, originalEventId not yet set (the writer sets it
+     * after inserting the master). The caller (EventCoordinator) has already
+     * regenerated the shared UID; this method just persists the linked series.
+     */
+    private fun importMasterWithExceptions(
+        calendarId: Long,
+        sharedUid: String,
+        rrule: String = "FREQ=DAILY;COUNT=5"
+    ): Pair<Event, List<Event>> {
+        val now = System.currentTimeMillis()
+        val start = now + 86400000
+        val master = Event(
+            uid = sharedUid,
+            calendarId = calendarId,
+            title = "Imported Series",
+            startTs = start,
+            endTs = start + 3600000,
+            rrule = rrule,
+            dtstamp = now
+        )
+        // Override the 3rd daily instance (start + 2 days), moved 2 hours later.
+        val overriddenInstance = start + 2 * 86400000
+        val exception = Event(
+            uid = sharedUid,
+            calendarId = calendarId,
+            title = "Moved Instance",
+            startTs = overriddenInstance + 2 * 3600000,
+            endTs = overriddenInstance + 3 * 3600000,
+            originalInstanceTime = overriddenInstance,
+            dtstamp = now
+        )
+        return master to listOf(exception)
+    }
+
+    @Test
+    fun `createImportedSeries persists master with occurrences from RRULE`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(localCalendarId, "series-1@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = true)
+
+        assertTrue("master row id assigned", saved.master.id > 0)
+        // 5 daily occurrences; the overridden one is linked, not duplicated.
+        val occurrences = database.occurrencesDao().getForEvent(saved.master.id)
+        assertEquals(5, occurrences.size)
+    }
+
+    @Test
+    fun `createImportedSeries links exception to master and shares UID`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(localCalendarId, "series-2@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = true)
+
+        assertEquals("one exception persisted", 1, saved.exceptions.size)
+        val savedException = saved.exceptions[0]
+        assertTrue("exception row id assigned", savedException.id > 0)
+        assertEquals("exception shares master UID", saved.master.uid, savedException.uid)
+        assertEquals("exception links to master", saved.master.id, savedException.originalEventId)
+        assertEquals(
+            "originalInstanceTime preserved",
+            exceptions[0].originalInstanceTime,
+            savedException.originalInstanceTime
+        )
+        assertNull("exception has no RRULE", savedException.rrule)
+    }
+
+    @Test
+    fun `createImportedSeries renders overridden occurrence once via linkException`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(localCalendarId, "series-3@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = true)
+
+        val overriddenTime = exceptions[0].originalInstanceTime!!
+        // The master's occurrence at the overridden instance time must carry the
+        // exception link (Model B) — not a second standalone occurrence row.
+        val linked = database.occurrencesDao().getForEvent(saved.master.id)
+            .filter { it.exceptionEventId == saved.exceptions[0].id }
+        assertEquals("exactly one linked occurrence", 1, linked.size)
+        // No standalone occurrence rows under the exception's own event id.
+        val standaloneUnderException = database.occurrencesDao().getForEvent(saved.exceptions[0].id)
+        assertTrue("no standalone occurrence for exception", standaloneUnderException.isEmpty())
+        // Total occurrence count for the series stays at the RRULE count.
+        assertEquals(5, database.occurrencesDao().getForEvent(saved.master.id).size)
+        // The linked occurrence was moved to the exception's modified start time,
+        // not left at the original RRULE instant.
+        assertEquals(
+            "linked occurrence carries the exception's moved start time",
+            saved.exceptions[0].startTs,
+            linked.first().startTs
+        )
+        assertNotEquals(
+            "override was actually moved off the original instant",
+            overriddenTime,
+            linked.first().startTs
+        )
+    }
+
+    @Test
+    fun `createImportedSeries on CalDAV queues one CREATE for master and none for exceptions`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(testCalendarId, "series-4@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = false)
+
+        val masterOps = database.pendingOperationsDao().getForEvent(saved.master.id)
+        assertEquals("one CREATE queued on master", 1, masterOps.size)
+        assertEquals(PendingOperation.OPERATION_CREATE, masterOps[0].operation)
+
+        val exceptionOps = database.pendingOperationsDao().getForEvent(saved.exceptions[0].id)
+        assertTrue("no pending op queued for exception (bundled by push)", exceptionOps.isEmpty())
+    }
+
+    @Test
+    fun `createImportedSeries marks master pending and exceptions SYNCED on CalDAV`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(testCalendarId, "series-5@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = false)
+
+        assertEquals(SyncStatus.PENDING_CREATE, database.eventsDao().getById(saved.master.id)!!.syncStatus)
+        assertEquals(
+            "exception is SYNCED locally (bundled with master)",
+            SyncStatus.SYNCED,
+            database.eventsDao().getById(saved.exceptions[0].id)!!.syncStatus
+        )
+    }
+
+    @Test
+    fun `createImportedSeries marks master SYNCED on local calendar`() = runTest {
+        val (master, exceptions) = importMasterWithExceptions(localCalendarId, "series-6@import")
+
+        val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = true)
+
+        assertEquals(SyncStatus.SYNCED, database.eventsDao().getById(saved.master.id)!!.syncStatus)
+        // No pending operations for a local series.
+        assertTrue(database.pendingOperationsDao().getForEvent(saved.master.id).isEmpty())
     }
 
     @Test

@@ -68,6 +68,7 @@
     <string name="action_view">Görüntüle</string>
     <string name="action_enable">Etkinleştir</string>
     <string name="action_done">Tamam</string>
+    <string name="action_back">Geri</string>
     <string name="action_save">Kaydet</string>
     <string name="action_add">Ekle</string>
     <string name="action_edit">Düzenle</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Saat Biçimi</string>
     <string name="settings_start_week_on">Haftayı Başlat</string>
     <string name="settings_event_emojis">Etkinlik Emojileri</string>
-    <string name="settings_emoji_subtitle">Etkinlik başlıklarına göre emoji göster</string>
+    <string name="settings_event_emojis_info">Başlığa göre etkinliklere bir emoji ekler, örneğin \"Doğum günü\" için 🎂.</string>
     <string name="settings_force_sync">Tam Eşitlemeyi Zorla</string>
     <string name="settings_force_sync_subtitle">Tüm takvim verilerini yeniden indir</string>
     <string name="settings_sync_history">Eşitleme Geçmişi</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Etkinlikleri ICS dosyasına kaydet</string>
     <string name="settings_birthday_reminder">Doğum Günü Hatırlatıcısı</string>
     <string name="settings_use_device_timezone">Cihaz saat dilimini kullan</string>
-    <string name="settings_section_calendars">Takvimler</string>
+    <string name="settings_section_calendars">Takvimler ve hesaplar</string>
     <string name="settings_section_appearance">Görünüm</string>
-    <string name="settings_section_creating_events">Etkinlik oluşturma</string>
-    <string name="settings_section_sync">Eşitleme</string>
+    <string name="settings_section_creating_events">Etkinlik tercihleri</string>
+    <string name="settings_section_sync">Bildirimler ve eşitleme</string>
     <string name="settings_section_data">Yedekle ve Geri Yükle</string>
     <string name="settings_section_privacy">Gizlilik</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Uygulama kilidi</string>
-    <string name="app_lock_subtitle_off">KashCal\'i açmak için kilit açma gereksin</string>
-    <string name="app_lock_subtitle_on">Parmak izi, yüz veya ekran kilidiyle aç</string>
+    <string name="settings_app_lock_info">KashCal\'i açmak için cihaz kimlik doğrulaması iste.</string>
     <string name="app_lock_veil_locked">Kilitli</string>
     <string name="app_lock_veil_unlock">Kilidi aç</string>
     <string name="app_lock_veil_footnote">Parmak izi, yüz veya ekran kilidi</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Bu yedek dosyası geçersiz veri içeriyor ve geri yüklenemez.</string>
     <string name="restore_error_apply_failure">Yedek uygulanırken bir sorun oluştu. Hiçbir değişiklik kaydedilmedi.</string>
     <string name="backup_error_build_failed">Yedekleme başarısız oldu</string>
-    <string name="backup_error_write_failed">Yedekleme başarısız oldu — dosyaya yazılamadı</string>
+    <string name="backup_error_write_failed">Yedekleme başarısız oldu. Dosyaya yazılamadı.</string>
     <string name="backup_error_read_failed">Dosya okunamadı</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Ağ hatası, lütfen tekrar deneyin</string>
     <string name="error_import_file_not_found">Dosya bulunamadı veya okunamıyor.</string>
     <string name="error_import_invalid_format">Geçersiz takvim dosyası biçimi.</string>
+    <string name="error_import_no_events">Dosyada etkinlik bulunamadı</string>
+    <string name="error_import_failed">İçe aktarma başarısız oldu</string>
     <string name="error_import_partial">%1$d etkinlik içe aktarıldı, %2$d başarısız.</string>
     <string name="error_export_failed">Etkinlikler dışa aktarılamadı.</string>
     <string name="error_export_no_events">Dışa aktarılacak etkinlik yok.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Takvim Hatası</string>
     <string name="error_device_calendar_write_failed">Cihaz takvimine kaydedilemedi. Tekrar dene.</string>
     <string name="error_device_calendar_permission">Takvim yazma izni gerekli. Ayarlardan izin ver.</string>
+    <string name="error_device_calendar_permission_denied">Yazma erişimi vermek için Ayarlar\'da Takvim iznini kapatıp yeniden aç</string>
     <string name="error_device_calendar_not_found">Takvim bulunamadı. Kaldırılmış olabilir.</string>
     <string name="error_device_event_not_found">Etkinlik bulunamadı. Silinmiş olabilir.</string>
     <string name="error_device_calendar_read_only">Bu takvim salt okunur.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Seçili</string>
     <string name="cd_back">Geri</string>
+    <string name="cd_opens_in_browser">Tarayıcıda açılır</string>
     <string name="cd_search">Ara</string>
     <string name="cd_create_event">Etkinlik oluştur</string>
     <string name="cd_delete">Sil</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Tekrarlanan</string>
     <string name="cd_enabled">Etkin</string>
     <string name="cd_sync_error">Eşitleme hatası</string>
-    <string name="cd_select_option">Seçenek seç</string>
     <string name="cd_select_label">%1$s seç</string>
     <string name="cd_wheel_picker">%1$d seçenekli tekerlek seçici</string>
     <string name="cd_time_entry_keyboard">Tam saati gir</string>
     <string name="time_entry_dialog_title">Saati gir</string>
     <string name="time_entry_tap_to_edit">Düzenlemek için dokun</string>
     <string name="cd_version_info">KashCal sürüm %1$s. Hata ayıklama seçenekleri için uzun bas.</string>
+    <string name="cd_about_setting">%1$s hakkında</string>
     <string name="cd_color_slider">Renk kaydırıcı, şu anda %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d derece</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Renk:</string>
     <string name="label_repeat">Tekrar</string>
     <string name="label_sync_interval">Eşitleme Aralığı:</string>
-    <string name="label_scheduled_events">Zamanlı Etkinlikler</string>
-    <string name="label_all_day_events">Tüm Gün Etkinlikleri</string>
     <string name="label_server_url">Sunucu URL</string>
     <string name="label_username">Kullanıcı Adı</string>
     <string name="label_password">Parola</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Görünür Takvimler</string>
     <string name="settings_default_calendar">Varsayılan Takvim</string>
     <string name="settings_default_event_length">Varsayılan Etkinlik Süresi</string>
-    <string name="settings_default_alerts">Varsayılan Uyarılar</string>
+    <string name="settings_default_event_length_hint">Yeni etkinlikler için varsayılan süre</string>
+    <string name="settings_timed_event_alert">Zamanlı etkinlik uyarısı</string>
+    <string name="settings_all_day_event_alert">Tüm gün etkinlik uyarısı</string>
+    <string name="settings_custom_alert_value">Özel (%1$s)</string>
     <string name="settings_notifications">Bildirimler</string>
-    <string name="settings_new_events">Yeni etkinlikler</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistem varsayılanı</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Cihaz Takvimleri</string>
     <string name="settings_device_calendars_hint">Diğer uygulamalardaki takvimler</string>
-    <string name="settings_quick_event_add">Hızlı Etkinlik Ekleme</string>
+    <string name="settings_quick_event_add">Akıllı etkinlik ekleme</string>
+    <string name="settings_quick_event_add_info">Doğal yazarak etkinlik oluştur. \"Cuma 13.00 Sam ile öğle yemeği\" senin için başlığı, tarihi ve saati doldurur.</string>
     <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
+    <string name="settings_suggest_titles_info">Yeni bir etkinliğe ad verirken daha önce kullandığın başlıkları öner, böylece tekrarlanan etkinlikler tek dokunuş olur. Ne sıklıkta ve ne kadar yakın zamanda kullandığına göre sıralanır.</string>
     <string name="settings_week_numbers">Hafta Numaraları</string>
     <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="settings_widget_event_limit">Widget Etkinlik Sınırı</string>
+    <string name="settings_widget_event_limit_hint">Widget\'larda günde gösterilen en fazla etkinlik</string>
     <string name="settings_sync_lookback">Eşitleme Geçmişi Süresi</string>
-    <string name="settings_auto_detect_emojis">Emojileri Otomatik Algıla</string>
-    <string name="settings_events_per_day">Günlük etkinlik</string>
+    <string name="settings_sync_lookback_hint">Etkinlikler ne kadar geriye eşitlenecek</string>
     <string name="settings_not_set">Ayarlanmadı</string>
     <string name="settings_on">Açık</string>
     <string name="settings_off">Kapalı</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Güvensiz bağlantıya güven</string>
     <string name="action_add_another">Bir Tane Daha Ekle</string>
     <string name="account_connected_found_calendars">%2$s için %1$d takvim bulundu.</string>
-    <string name="account_connected_syncing_hint">Eşitleme devam ediyor — etkinlikler kısa süre içinde görünecek.</string>
+    <string name="account_connected_syncing_hint">Eşitleme sürüyor. Etkinlikler birazdan görünecek.</string>
     <string name="settings_time_format_currently_24h">Şu anda: 24 saat (%1$s)</string>
     <string name="settings_time_format_currently_12h">Şu anda: 12 saat (%1$s)</string>
     <string name="settings_time_format_example">Örnek: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Salt okunur (takvim salt okunur)</string>
     <string name="settings_developer_options">Geliştirici Seçenekleri</string>
     <string name="settings_sync_frequency">Eşitleme Sıklığı</string>
-    <string name="settings_preview">ÖNİZLEME</string>
-    <string name="settings_n_events">%1$d etkinlik</string>
-    <string name="settings_n_events_default">%1$d etkinlik (varsayılan)</string>
+    <string name="settings_sync_frequency_hint">Arka planda ne sıklıkla eşitleneceği</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Takvimler</string>
     <string name="drawer_contacts">Kişiler</string>
     <string name="drawer_device_calendars">Cihaz takvimleri</string>
     <string name="drawer_account_offline">Çevrimdışı</string>
+    <string name="calendar_local">Yerel</string>
     <string name="drawer_share_feedback">Yardım ve belgeler</string>
     <string name="event_title_fallback">Etkinlik</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s sonra</string>
     <string name="reminder_day_of_event_12h">Etkinlik günü 9 AM</string>
     <string name="reminder_day_of_event_24h">Etkinlik günü 09:00</string>
+    <string name="reminder_day_of_event">Etkinlik günü</string>
     <string name="reminder_before_at_12h">%1$s önce 9 AM\'de</string>
     <string name="reminder_before_at_24h">%1$s önce 09:00\'da</string>
     <string name="reminder_short_off">Kapalı</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$ds</string>
     <string name="reminder_short_days">%1$dg</string>
     <string name="reminder_short_weeks">%1$dh</string>
+    <string name="reminder_med_minutes">%1$d dk</string>
+    <string name="reminder_med_hours">%1$d sa</string>
+    <string name="reminder_med_weeks">%1$d hf</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d gün</item>
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <string name="reminder_med_day_of">O gün</string>
+    <string name="all_day_alert_9am_hint">Tüm gün uyarıları 9 AM (09:00)\'da gönderilir.</string>
     <string name="reminder_summary_none">Yok</string>
     <string name="duration_compact">%1$ds %2$dd</string>
     <string name="duration_compact_short">%1$ds%2$dd</string>

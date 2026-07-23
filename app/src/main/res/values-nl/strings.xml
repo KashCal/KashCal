@@ -68,6 +68,7 @@
     <string name="action_view">Bekijken</string>
     <string name="action_enable">Inschakelen</string>
     <string name="action_done">Klaar</string>
+    <string name="action_back">Terug</string>
     <string name="action_save">Opslaan</string>
     <string name="action_add">Toevoegen</string>
     <string name="action_edit">Bewerken</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Tijdnotatie</string>
     <string name="settings_start_week_on">Week begint op</string>
     <string name="settings_event_emojis">Afspraak-emoji\'s</string>
-    <string name="settings_emoji_subtitle">Emoji\'s tonen op basis van afspraaktitels</string>
+    <string name="settings_event_emojis_info">Voegt een emoji toe aan afspraken op basis van de titel, zoals 🎂 voor \"Verjaardag\".</string>
     <string name="settings_force_sync">Volledige synchronisatie</string>
     <string name="settings_force_sync_subtitle">Alle agendagegevens opnieuw downloaden</string>
     <string name="settings_sync_history">Synchronisatiegeschiedenis</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Afspraken opslaan in een ICS-bestand</string>
     <string name="settings_birthday_reminder">Verjaardagsherinnering</string>
     <string name="settings_use_device_timezone">Apparaattijdzone gebruiken</string>
-    <string name="settings_section_calendars">Agenda\'s</string>
+    <string name="settings_section_calendars">Agenda\'s &amp; accounts</string>
     <string name="settings_section_appearance">Weergave</string>
-    <string name="settings_section_creating_events">Afspraken maken</string>
-    <string name="settings_section_sync">Synchronisatie</string>
+    <string name="settings_section_creating_events">Afspraakvoorkeuren</string>
+    <string name="settings_section_sync">Meldingen &amp; synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
     <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App-vergrendeling</string>
-    <string name="app_lock_subtitle_off">Ontgrendelen vereist om KashCal te openen</string>
-    <string name="app_lock_subtitle_on">Ontgrendelen met vingerafdruk, gezicht of schermvergrendeling</string>
+    <string name="settings_app_lock_info">Vereist apparaatverificatie om KashCal te openen.</string>
     <string name="app_lock_veil_locked">Vergrendeld</string>
     <string name="app_lock_veil_unlock">Ontgrendelen</string>
     <string name="app_lock_veil_footnote">Vingerafdruk, gezicht of schermvergrendeling</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Dit back-upbestand bevat ongeldige gegevens en kan niet worden hersteld.</string>
     <string name="restore_error_apply_failure">Er ging iets mis bij het toepassen van de back-up. Er zijn geen wijzigingen opgeslagen.</string>
     <string name="backup_error_build_failed">Back-up mislukt</string>
-    <string name="backup_error_write_failed">Back-up mislukt — kan niet naar bestand schrijven</string>
+    <string name="backup_error_write_failed">Back-up mislukt. Kan niet naar bestand schrijven.</string>
     <string name="backup_error_read_failed">Kan bestand niet lezen</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Netwerkfout, probeer het opnieuw</string>
     <string name="error_import_file_not_found">Bestand niet gevonden of kan niet worden gelezen.</string>
     <string name="error_import_invalid_format">Ongeldig agendabestandsformaat.</string>
+    <string name="error_import_no_events">Geen afspraken gevonden in bestand</string>
+    <string name="error_import_failed">Importeren mislukt</string>
     <string name="error_import_partial">%1$d afspraken geïmporteerd, %2$d mislukt.</string>
     <string name="error_export_failed">Exporteren van afspraken mislukt.</string>
     <string name="error_export_no_events">Geen afspraken om te exporteren.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Agendafout</string>
     <string name="error_device_calendar_write_failed">Opslaan naar apparaatagenda mislukt. Probeer het opnieuw.</string>
     <string name="error_device_calendar_permission">Agendatoestemming vereist. Geef toestemming in Instellingen.</string>
+    <string name="error_device_calendar_permission_denied">Zet de agendatoestemming in Instellingen uit en weer aan om schrijftoegang te geven</string>
     <string name="error_device_calendar_not_found">Agenda niet gevonden. Deze is mogelijk verwijderd.</string>
     <string name="error_device_event_not_found">Afspraak niet gevonden. Deze is mogelijk verwijderd.</string>
     <string name="error_device_calendar_read_only">Deze agenda is alleen-lezen.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Geselecteerd</string>
     <string name="cd_back">Terug</string>
+    <string name="cd_opens_in_browser">Wordt geopend in browser</string>
     <string name="cd_search">Zoeken</string>
     <string name="cd_create_event">Afspraak maken</string>
     <string name="cd_delete">Verwijderen</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Terugkerend</string>
     <string name="cd_enabled">Ingeschakeld</string>
     <string name="cd_sync_error">Synchronisatiefout</string>
-    <string name="cd_select_option">Optie selecteren</string>
     <string name="cd_select_label">%1$s selecteren</string>
     <string name="cd_wheel_picker">Wielkiezer met %1$d opties</string>
     <string name="cd_time_entry_keyboard">Exacte tijd invoeren</string>
     <string name="time_entry_dialog_title">Tijd invoeren</string>
     <string name="time_entry_tap_to_edit">Tik om te bewerken</string>
     <string name="cd_version_info">KashCal versie %1$s. Houd ingedrukt voor debug-opties.</string>
+    <string name="cd_about_setting">Over %1$s</string>
     <string name="cd_color_slider">Kleurschuif, momenteel %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graden</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Kleur:</string>
     <string name="label_repeat">Herhalen</string>
     <string name="label_sync_interval">Sync-interval:</string>
-    <string name="label_scheduled_events">Geplande afspraken</string>
-    <string name="label_all_day_events">Hele dag afspraken</string>
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Gebruikersnaam</string>
     <string name="label_password">Wachtwoord</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Zichtbare agenda\'s</string>
     <string name="settings_default_calendar">Standaardagenda</string>
     <string name="settings_default_event_length">Standaard afspraakduur</string>
-    <string name="settings_default_alerts">Standaard herinneringen</string>
+    <string name="settings_default_event_length_hint">Standaardduur voor nieuwe afspraken</string>
+    <string name="settings_timed_event_alert">Herinnering voor afspraak met tijd</string>
+    <string name="settings_all_day_event_alert">Herinnering voor afspraak van hele dag</string>
+    <string name="settings_custom_alert_value">Aangepast (%1$s)</string>
     <string name="settings_notifications">Meldingen</string>
-    <string name="settings_new_events">Nieuwe afspraken</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systeemstandaard</string>
@@ -508,14 +512,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Apparaatagenda\'s</string>
     <string name="settings_device_calendars_hint">Agenda\'s uit andere apps</string>
-    <string name="settings_quick_event_add">Snel afspraak toevoegen</string>
+    <string name="settings_quick_event_add">Slim afspraken toevoegen</string>
+    <string name="settings_quick_event_add_info">Maak afspraken door natuurlijk te typen. \"Lunch met Sam vrijdag 13:00\" vult de titel, datum en tijd voor je in.</string>
     <string name="settings_suggest_titles">Titels van afspraken voorstellen</string>
+    <string name="settings_suggest_titles_info">Terwijl je een nieuwe afspraak een naam geeft, stelt de app titels voor die je eerder hebt gebruikt, zodat terugkerende afspraken één tik zijn. Gerangschikt op hoe vaak en hoe recent je ze hebt gebruikt.</string>
     <string name="settings_week_numbers">Weeknummers</string>
     <string name="settings_show_declined">Geweigerde afspraken tonen</string>
     <string name="settings_widget_event_limit">Widget-afspraklimiet</string>
+    <string name="settings_widget_event_limit_hint">Maximaal aantal afspraken per dag in widgets</string>
     <string name="settings_sync_lookback">Sync-terugblik</string>
-    <string name="settings_auto_detect_emojis">Emoji\'s automatisch herkennen</string>
-    <string name="settings_events_per_day">Afspraken per dag</string>
+    <string name="settings_sync_lookback_hint">Hoe ver terug afspraken worden gesynchroniseerd</string>
     <string name="settings_not_set">Niet ingesteld</string>
     <string name="settings_on">Aan</string>
     <string name="settings_off">Uit</string>
@@ -528,7 +534,7 @@
     <string name="caldav_trust_insecure_label">Onveilige verbinding vertrouwen</string>
     <string name="action_add_another">Nog een toevoegen</string>
     <string name="account_connected_found_calendars">%1$d agenda(\'s) gevonden voor %2$s.</string>
-    <string name="account_connected_syncing_hint">Synchronisatie bezig — afspraken verschijnen binnenkort.</string>
+    <string name="account_connected_syncing_hint">Synchronisatie bezig. Afspraken verschijnen zo.</string>
     <string name="settings_time_format_currently_24h">Momenteel: 24-uurs (%1$s)</string>
     <string name="settings_time_format_currently_12h">Momenteel: 12-uurs (%1$s)</string>
     <string name="settings_time_format_example">Voorbeeld: %1$s</string>
@@ -587,15 +593,14 @@
     <string name="device_calendars_read_only_calendar">Alleen lezen (agenda is alleen-lezen)</string>
     <string name="settings_developer_options">Ontwikkelaarsopties</string>
     <string name="settings_sync_frequency">Synchronisatiefrequentie</string>
-    <string name="settings_preview">VOORBEELD</string>
-    <string name="settings_n_events">%1$d afspraken</string>
-    <string name="settings_n_events_default">%1$d afspraken (standaard)</string>
+    <string name="settings_sync_frequency_hint">Hoe vaak op de achtergrond wordt gesynchroniseerd</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Agenda\'s</string>
     <string name="drawer_contacts">Contacten</string>
     <string name="drawer_device_calendars">Apparaatagenda\'s</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokaal</string>
     <string name="drawer_share_feedback">Help &amp; docs</string>
     <string name="event_title_fallback">Afspraak</string>
 
@@ -913,6 +918,7 @@
     <string name="reminder_time_after">%1$s na</string>
     <string name="reminder_day_of_event_12h">9 AM op de dag van de afspraak</string>
     <string name="reminder_day_of_event_24h">09:00 op de dag van de afspraak</string>
+    <string name="reminder_day_of_event">Op de dag van de afspraak</string>
     <string name="reminder_before_at_12h">%1$s van tevoren om 9 AM</string>
     <string name="reminder_before_at_24h">%1$s van tevoren om 09:00</string>
     <string name="reminder_short_off">Uit</string>
@@ -923,6 +929,15 @@
     <string name="reminder_short_hours">%1$du</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d u</string>
+    <string name="reminder_med_weeks">%1$d wk</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagen</item>
+    </plurals>
+    <string name="reminder_med_day_of">Op de dag</string>
+    <string name="all_day_alert_9am_hint">Herinneringen voor hele dagen komen om 09:00 uur.</string>
     <string name="reminder_summary_none">Geen</string>
     <string name="duration_compact">%1$du %2$dm</string>
     <string name="duration_compact_short">%1$du%2$dm</string>

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MailOutline
+import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
@@ -109,6 +110,10 @@ fun AccountHubScreen(
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    // Personalization rows are hoisted as a slot so they can be stubbed in tests:
+    // the real section pulls an AppearanceViewModel via hiltViewModel(), which a
+    // plain Compose test has no graph to satisfy.
+    makeItYours: @Composable () -> Unit = { MakeItYoursSection() },
 ) {
     BackHandler(onBack = onBack)
 
@@ -141,7 +146,12 @@ fun AccountHubScreen(
 
             // Accounts + app configuration presented as a centered pill tied to
             // the identity block above, so it reads as an action on "you" rather
-            // than a stray list row floating above the sections.
+            // than a stray list row floating above the sections. An outlined button
+            // gives a clear tap affordance (the border) without the heavy solid
+            // fill of a primary button, which dominated the hub. Its accent-colored
+            // label matches the "Make it yours" header below it — the pill and the
+            // section headers share one accent tone, so they read as a coherent
+            // identity block. A leading glyph aids scannability.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -149,7 +159,16 @@ fun AccountHubScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 OutlinedButton(onClick = onSettingsClick) {
-                    Text(stringResource(R.string.hub_accounts_and_settings))
+                    Icon(
+                        Icons.Default.ManageAccounts,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.hub_accounts_and_settings),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                 }
             }
 
@@ -158,7 +177,7 @@ fun AccountHubScreen(
             // Personalization (theme, accent, app icon) sits next to the
             // identity avatar.
             HubSectionHeader(stringResource(R.string.hub_section_make_it_yours))
-            MakeItYoursSection()
+            makeItYours()
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
@@ -430,10 +449,15 @@ private fun HubHero(
 @Composable
 private fun PrivacySecurityRow() {
     val context = LocalContext.current
+    val label = stringResource(R.string.menu_privacy_security)
+    val opensInBrowser = stringResource(R.string.cd_opens_in_browser)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button) { ExternalLinks.openUrl(context, ExternalLinks.PRIVACY) }
+            // The OpenInNew glyph is the only "leaves the app" cue and is decorative
+            // to TalkBack, so fold "Opens in browser" into the row's merged label.
+            .semantics(mergeDescendants = true) { contentDescription = "$label, $opensInBrowser" }
             .padding(horizontal = 28.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -445,7 +469,7 @@ private fun PrivacySecurityRow() {
         )
         Spacer(Modifier.width(20.dp))
         Text(
-            text = stringResource(R.string.menu_privacy_security),
+            text = label,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )

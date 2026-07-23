@@ -68,6 +68,7 @@
     <string name="action_view">Anzeigen</string>
     <string name="action_enable">Aktivieren</string>
     <string name="action_done">Fertig</string>
+    <string name="action_back">Zurück</string>
     <string name="action_save">Speichern</string>
     <string name="action_add">Hinzufügen</string>
     <string name="action_edit">Bearbeiten</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Zeitformat</string>
     <string name="settings_start_week_on">Woche beginnt am</string>
     <string name="settings_event_emojis">Termin-Emojis</string>
-    <string name="settings_emoji_subtitle">Emojis anhand von Terminnamen anzeigen</string>
+    <string name="settings_event_emojis_info">Fügt Terminen basierend auf dem Titel ein Emoji hinzu, wie 🎂 für \"Geburtstag\".</string>
     <string name="settings_force_sync">Vollständige Synchronisierung</string>
     <string name="settings_force_sync_subtitle">Alle Kalenderdaten erneut herunterladen</string>
     <string name="settings_sync_history">Sync-Verlauf</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Termine in einer ICS-Datei speichern</string>
     <string name="settings_birthday_reminder">Geburtstagserinnerung</string>
     <string name="settings_use_device_timezone">Geräte-Zeitzone verwenden</string>
-    <string name="settings_section_calendars">Kalender</string>
+    <string name="settings_section_calendars">Kalender &amp; Konten</string>
     <string name="settings_section_appearance">Aussehen</string>
-    <string name="settings_section_creating_events">Termine erstellen</string>
-    <string name="settings_section_sync">Synchronisierung</string>
+    <string name="settings_section_creating_events">Termineinstellungen</string>
+    <string name="settings_section_sync">Benachrichtigungen &amp; Synchronisierung</string>
     <string name="settings_section_data">Sichern &amp; Wiederherstellen</string>
     <string name="settings_section_privacy">Datenschutz</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App-Sperre</string>
-    <string name="app_lock_subtitle_off">Entsperren nötig, um KashCal zu öffnen</string>
-    <string name="app_lock_subtitle_on">Mit Fingerabdruck, Gesicht oder Bildschirmsperre entsperren</string>
+    <string name="settings_app_lock_info">Verlangt eine Geräteauthentifizierung, um KashCal zu öffnen.</string>
     <string name="app_lock_veil_locked">Gesperrt</string>
     <string name="app_lock_veil_unlock">Entsperren</string>
     <string name="app_lock_veil_footnote">Fingerabdruck, Gesicht oder Bildschirmsperre</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Diese Sicherungsdatei enthält ungültige Daten und kann nicht wiederhergestellt werden.</string>
     <string name="restore_error_apply_failure">Beim Anwenden der Sicherung ist etwas schiefgelaufen. Es wurden keine Änderungen gespeichert.</string>
     <string name="backup_error_build_failed">Sicherung fehlgeschlagen</string>
-    <string name="backup_error_write_failed">Sicherung fehlgeschlagen — Datei konnte nicht geschrieben werden</string>
+    <string name="backup_error_write_failed">Sicherung fehlgeschlagen. Datei konnte nicht geschrieben werden.</string>
     <string name="backup_error_read_failed">Datei konnte nicht gelesen werden</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Netzwerkfehler, bitte versuche es erneut</string>
     <string name="error_import_file_not_found">Datei nicht gefunden oder nicht lesbar.</string>
     <string name="error_import_invalid_format">Ungültiges Kalenderdateiformat.</string>
+    <string name="error_import_no_events">Keine Termine in der Datei gefunden</string>
+    <string name="error_import_failed">Import fehlgeschlagen</string>
     <string name="error_import_partial">%1$d Termine importiert, %2$d fehlgeschlagen.</string>
     <string name="error_export_failed">Export der Termine fehlgeschlagen.</string>
     <string name="error_export_no_events">Keine Termine zum Exportieren.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalenderfehler</string>
     <string name="error_device_calendar_write_failed">Speichern im Gerätekalender fehlgeschlagen. Bitte versuche es erneut.</string>
     <string name="error_device_calendar_permission">Kalenderschreibberechtigung erforderlich. Bitte erteile die Berechtigung in den Einstellungen.</string>
+    <string name="error_device_calendar_permission_denied">Schalte die Kalenderberechtigung in den Einstellungen aus und wieder ein, um Schreibzugriff zu erteilen</string>
     <string name="error_device_calendar_not_found">Kalender nicht gefunden. Er wurde möglicherweise entfernt.</string>
     <string name="error_device_event_not_found">Termin nicht gefunden. Er wurde möglicherweise gelöscht.</string>
     <string name="error_device_calendar_read_only">Dieser Kalender ist schreibgeschützt.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Ausgewählt</string>
     <string name="cd_back">Zurück</string>
+    <string name="cd_opens_in_browser">Wird im Browser geöffnet</string>
     <string name="cd_search">Suche</string>
     <string name="cd_create_event">Termin erstellen</string>
     <string name="cd_delete">Löschen</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Wiederkehrend</string>
     <string name="cd_enabled">Aktiviert</string>
     <string name="cd_sync_error">Sync-Fehler</string>
-    <string name="cd_select_option">Option auswählen</string>
     <string name="cd_select_label">%1$s auswählen</string>
     <string name="cd_wheel_picker">Auswahlrad mit %1$d Optionen</string>
     <string name="cd_time_entry_keyboard">Genaue Uhrzeit eingeben</string>
     <string name="time_entry_dialog_title">Uhrzeit eingeben</string>
     <string name="time_entry_tap_to_edit">Zum Bearbeiten tippen</string>
     <string name="cd_version_info">KashCal Version %1$s. Lange drücken für Debug-Optionen.</string>
+    <string name="cd_about_setting">Über %1$s</string>
     <string name="cd_color_slider">Farbregler, aktuell %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d Grad</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Farbe:</string>
     <string name="label_repeat">Wiederholen</string>
     <string name="label_sync_interval">Sync-Intervall:</string>
-    <string name="label_scheduled_events">Geplante Termine</string>
-    <string name="label_all_day_events">Ganztägige Termine</string>
     <string name="label_server_url">Server-URL</string>
     <string name="label_username">Benutzername</string>
     <string name="label_password">Passwort</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Sichtbare Kalender</string>
     <string name="settings_default_calendar">Standardkalender</string>
     <string name="settings_default_event_length">Standard-Terminlänge</string>
-    <string name="settings_default_alerts">Standard-Erinnerungen</string>
+    <string name="settings_default_event_length_hint">Standardlänge für neue Termine</string>
+    <string name="settings_timed_event_alert">Erinnerung für Termin mit Uhrzeit</string>
+    <string name="settings_all_day_event_alert">Erinnerung für ganztägigen Termin</string>
+    <string name="settings_custom_alert_value">Benutzerdefiniert (%1$s)</string>
     <string name="settings_notifications">Benachrichtigungen</string>
-    <string name="settings_new_events">Neue Termine</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Systemstandard</string>
@@ -508,14 +512,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Gerätekalender</string>
     <string name="settings_device_calendars_hint">Kalender aus anderen Apps</string>
-    <string name="settings_quick_event_add">Schnelleingabe</string>
+    <string name="settings_quick_event_add">Intelligentes Hinzufügen</string>
+    <string name="settings_quick_event_add_info">Erstelle Termine durch natürliche Eingabe. \"Mittagessen mit Sam Freitag 13:00\" füllt Titel, Datum und Uhrzeit für dich aus.</string>
     <string name="settings_suggest_titles">Terminnamen vorschlagen</string>
+    <string name="settings_suggest_titles_info">Während du einen neuen Termin benennst, werden dir bereits verwendete Titel vorgeschlagen, sodass wiederkehrende Termine nur einen Tipp entfernt sind. Sortiert danach, wie oft und wie kürzlich du sie verwendet hast.</string>
     <string name="settings_week_numbers">Kalenderwochen</string>
     <string name="settings_show_declined">Abgelehnte Termine anzeigen</string>
     <string name="settings_widget_event_limit">Widget-Terminlimit</string>
+    <string name="settings_widget_event_limit_hint">Maximale Anzahl Termine pro Tag in Widgets</string>
     <string name="settings_sync_lookback">Sync-Rückblick</string>
-    <string name="settings_auto_detect_emojis">Emojis automatisch erkennen</string>
-    <string name="settings_events_per_day">Termine pro Tag</string>
+    <string name="settings_sync_lookback_hint">Wie weit zurück Termine synchronisiert werden</string>
     <string name="settings_not_set">Nicht festgelegt</string>
     <string name="settings_on">An</string>
     <string name="settings_off">Aus</string>
@@ -528,7 +534,7 @@
     <string name="caldav_trust_insecure_label">Unsicherer Verbindung vertrauen</string>
     <string name="action_add_another">Weiteres hinzufügen</string>
     <string name="account_connected_found_calendars">%1$d Kalender für %2$s gefunden.</string>
-    <string name="account_connected_syncing_hint">Synchronisierung läuft — Termine erscheinen in Kürze.</string>
+    <string name="account_connected_syncing_hint">Synchronisierung läuft. Termine werden in Kürze angezeigt.</string>
     <string name="settings_time_format_currently_24h">Aktuell: 24-Stunden (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktuell: 12-Stunden (%1$s)</string>
     <string name="settings_time_format_example">Beispiel: %1$s</string>
@@ -587,15 +593,14 @@
     <string name="device_calendars_read_only_calendar">Nur Lesen (Kalender ist schreibgeschützt)</string>
     <string name="settings_developer_options">Entwickleroptionen</string>
     <string name="settings_sync_frequency">Sync-Häufigkeit</string>
-    <string name="settings_preview">VORSCHAU</string>
-    <string name="settings_n_events">%1$d Termine</string>
-    <string name="settings_n_events_default">%1$d Termine (Standard)</string>
+    <string name="settings_sync_frequency_hint">Wie oft im Hintergrund synchronisiert wird</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalender</string>
     <string name="drawer_contacts">Kontakte</string>
     <string name="drawer_device_calendars">Gerätekalender</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokal</string>
     <string name="drawer_share_feedback">Hilfe &amp; Doku</string>
     <string name="event_title_fallback">Termin</string>
 
@@ -913,6 +918,7 @@
     <string name="reminder_time_after">%1$s danach</string>
     <string name="reminder_day_of_event_12h">9 AM am Tag des Termins</string>
     <string name="reminder_day_of_event_24h">09:00 am Tag des Termins</string>
+    <string name="reminder_day_of_event">Am Tag des Termins</string>
     <string name="reminder_before_at_12h">%1$s vorher um 9 AM</string>
     <string name="reminder_before_at_24h">%1$s vorher um 09:00</string>
     <string name="reminder_short_off">Aus</string>
@@ -923,6 +929,15 @@
     <string name="reminder_short_hours">%1$dStd</string>
     <string name="reminder_short_days">%1$dT</string>
     <string name="reminder_short_weeks">%1$dW</string>
+    <string name="reminder_med_minutes">%1$d Min</string>
+    <string name="reminder_med_hours">%1$d Std.</string>
+    <string name="reminder_med_weeks">%1$d Wo.</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d Tag</item>
+        <item quantity="other">%1$d Tage</item>
+    </plurals>
+    <string name="reminder_med_day_of">Am Tag</string>
+    <string name="all_day_alert_9am_hint">Ganztägige Erinnerungen erfolgen um 09:00 Uhr.</string>
     <string name="reminder_summary_none">Keine</string>
     <string name="duration_compact">%1$dStd %2$dMin</string>
     <string name="duration_compact_short">%1$dStd%2$dMin</string>

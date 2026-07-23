@@ -1,12 +1,5 @@
 package org.onekash.kashcal.ui.screens.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,12 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -37,15 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
-import org.onekash.kashcal.ui.shared.getSyncOptions
-import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
 
 /**
  * Debug menu bottom sheet.
@@ -54,11 +38,8 @@ import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
  * Contains developer options not shown to regular users:
  * - Force Full Sync
  * - Sync Log viewer
- * - Sync Frequency selector (moved from main UI)
  *
  * @param sheetState Material3 sheet state for controlling visibility
- * @param syncIntervalMs Current sync interval in milliseconds
- * @param onSyncIntervalChange Callback when sync interval changes
  * @param onForceFullSync Callback to trigger full sync
  * @param onShowSyncLogs Callback to navigate to sync logs
  * @param onDismiss Callback when sheet is dismissed
@@ -67,13 +48,10 @@ import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
 @Composable
 fun DebugMenuSheet(
     sheetState: SheetState,
-    syncIntervalMs: Long,
-    onSyncIntervalChange: (Long) -> Unit,
     onForceFullSync: () -> Unit,
     onShowSyncLogs: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var showSyncOptions by remember { mutableStateOf(false) }
     var showForceFullSyncDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
@@ -119,76 +97,6 @@ fun DebugMenuSheet(
                     onDismiss()
                 }
             )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(start = 52.dp),
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-            )
-
-            // Sync Frequency (expandable)
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showSyncOptions = !showSyncOptions }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Sync,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Column {
-                            Text(
-                                stringResource(R.string.settings_sync_frequency),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                formatSyncInterval(syncIntervalMs, LocalResources.current),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    Icon(
-                        if (showSyncOptions) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                // Expandable sync options
-                AnimatedVisibility(
-                    visible = showSyncOptions,
-                    enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
-                    exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 52.dp, end = 16.dp)
-                    ) {
-                        getSyncOptions(LocalResources.current).forEach { option ->
-                            SyncOptionRow(
-                                label = option.label,
-                                isSelected = option.intervalMs == syncIntervalMs,
-                                onClick = {
-                                    onSyncIntervalChange(option.intervalMs)
-                                    showSyncOptions = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -272,43 +180,5 @@ private fun DebugMenuItem(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
         )
-    }
-}
-
-/**
- * Single sync option row in the expandable list.
- */
-@Composable
-private fun SyncOptionRow(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .clickable { onClick() }
-            .background(
-                if (isSelected)
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                else Color.Transparent
-            )
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        if (isSelected) {
-            Icon(
-                Icons.Default.Check,
-                contentDescription = stringResource(R.string.cd_selected),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
     }
 }

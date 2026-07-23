@@ -9,7 +9,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
  * Unit tests for AccountSettingsScreen derived state calculations.
  *
  * These tests verify the correctness of the underlying calculations
- * used in FlatSettingsContent. Recomposition behavior is tested
+ * used in AccountSettingsScreen. Recomposition behavior is tested
  * separately in instrumentation tests.
  */
 class AccountSettingsScreenTest {

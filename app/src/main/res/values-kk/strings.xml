@@ -68,6 +68,7 @@
     <string name="action_view">Көру</string>
     <string name="action_enable">Қосу</string>
     <string name="action_done">Дайын</string>
+    <string name="action_back">Артқа</string>
     <string name="action_save">Сақтау</string>
     <string name="action_add">Қосу</string>
     <string name="action_edit">Өңдеу</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Уақыт пішімі</string>
     <string name="settings_start_week_on">Апта басталады</string>
     <string name="settings_event_emojis">Оқиға эмодзилері</string>
-    <string name="settings_emoji_subtitle">Оқиға атаулары негізінде эмодзи көрсету</string>
+    <string name="settings_event_emojis_info">Тақырыпқа сәйкес оқиғаларға эмодзи қосады, мысалы \"Туған күн\" үшін 🎂.</string>
     <string name="settings_force_sync">Мәжбүрлі толық синхрондау</string>
     <string name="settings_force_sync_subtitle">Барлық күнтізбе деректерін қайта жүктеу</string>
     <string name="settings_sync_history">Синхрондау тарихы</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Оқиғаларды ICS файлына сақтау</string>
     <string name="settings_birthday_reminder">Туған күн еске салғышы</string>
     <string name="settings_use_device_timezone">Құрылғы уақыт белдеуін пайдалану</string>
-    <string name="settings_section_calendars">Күнтізбелер</string>
+    <string name="settings_section_calendars">Күнтізбелер &amp; тіркелгілер</string>
     <string name="settings_section_appearance">Безендіру</string>
-    <string name="settings_section_creating_events">Оқиғалар жасау</string>
-    <string name="settings_section_sync">Синхрондау</string>
+    <string name="settings_section_creating_events">Оқиға параметрлері</string>
+    <string name="settings_section_sync">Хабарландырулар &amp; синхрондау</string>
     <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
     <string name="settings_section_privacy">Құпиялылық</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Қолданба құлпы</string>
-    <string name="app_lock_subtitle_off">KashCal ашу үшін құлыпты ашу қажет</string>
-    <string name="app_lock_subtitle_on">Саусақ ізімен, бетпен немесе экран құлпымен ашыңыз</string>
+    <string name="settings_app_lock_info">KashCal ашу үшін құрылғыны растау қажет.</string>
     <string name="app_lock_veil_locked">Құлыпталған</string>
     <string name="app_lock_veil_unlock">Ашу</string>
     <string name="app_lock_veil_footnote">Саусақ ізі, бет немесе экран құлпы</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Бұл сақтық көшірме файлында жарамсыз деректер бар, қалпына келтіру мүмкін емес.</string>
     <string name="restore_error_apply_failure">Сақтық көшірмені қолдану кезінде бір нәрсе бұзылды. Ешқандай өзгерістер сақталмады.</string>
     <string name="backup_error_build_failed">Сақтық көшірме сәтсіз аяқталды</string>
-    <string name="backup_error_write_failed">Сақтық көшірме сәтсіз аяқталды — файлға жазу мүмкін емес</string>
+    <string name="backup_error_write_failed">Сақтық көшірме сәтсіз аяқталды. Файлға жазу мүмкін болмады.</string>
     <string name="backup_error_read_failed">Файлды оқу мүмкін болмады</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Желі қатесі, қайталап көріңіз</string>
     <string name="error_import_file_not_found">Файл табылмады немесе оқу мүмкін емес.</string>
     <string name="error_import_invalid_format">Жарамсыз күнтізбе файл пішімі.</string>
+    <string name="error_import_no_events">Файлдан оқиғалар табылмады</string>
+    <string name="error_import_failed">Импорттау сәтсіз аяқталды</string>
     <string name="error_import_partial">%1$d оқиға импортталды, %2$d сәтсіз.</string>
     <string name="error_export_failed">Оқиғаларды экспорттау сәтсіз болды.</string>
     <string name="error_export_no_events">Экспорттауға оқиғалар жоқ.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Күнтізбе қатесі</string>
     <string name="error_device_calendar_write_failed">Құрылғы күнтізбесіне сақтау сәтсіз болды. Қайта байқап көріңіз.</string>
     <string name="error_device_calendar_permission">Күнтізбеге жазу рұқсаты қажет. Параметрлерден рұқсат беріңіз.</string>
+    <string name="error_device_calendar_permission_denied">Жазу рұқсатын беру үшін Параметрлерден Күнтізбе рұқсатын өшіріп, қайта қосыңыз</string>
     <string name="error_device_calendar_not_found">Күнтізбе табылмады. Жойылған болуы мүмкін.</string>
     <string name="error_device_event_not_found">Оқиға табылмады. Жойылған болуы мүмкін.</string>
     <string name="error_device_calendar_read_only">Бұл күнтізбе тек оқуға арналған.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Таңдалды</string>
     <string name="cd_back">Артқа</string>
+    <string name="cd_opens_in_browser">Браузерде ашылады</string>
     <string name="cd_search">Іздеу</string>
     <string name="cd_create_event">Оқиға жасау</string>
     <string name="cd_delete">Жою</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Қайталанатын</string>
     <string name="cd_enabled">Қосулы</string>
     <string name="cd_sync_error">Синхрондау қатесі</string>
-    <string name="cd_select_option">Опцияны таңдау</string>
     <string name="cd_select_label">%1$s таңдау</string>
     <string name="cd_wheel_picker">%1$d опциялы дөңгелек таңдағыш</string>
     <string name="cd_time_entry_keyboard">Нақты уақытты енгізу</string>
     <string name="time_entry_dialog_title">Уақытты енгізу</string>
     <string name="time_entry_tap_to_edit">Өзгерту үшін түртіңіз</string>
     <string name="cd_version_info">KashCal нұсқасы %1$s. Жөндеу параметрлері үшін ұзақ басыңыз.</string>
+    <string name="cd_about_setting">%1$s туралы</string>
     <string name="cd_color_slider">Түс жүгірткісі, қазіргі %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градус</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Түс:</string>
     <string name="label_repeat">Қайталау</string>
     <string name="label_sync_interval">Синхрондау аралығы:</string>
-    <string name="label_scheduled_events">Жоспарланған оқиғалар</string>
-    <string name="label_all_day_events">Күні бойғы оқиғалар</string>
     <string name="label_server_url">Сервер URL</string>
     <string name="label_username">Пайдаланушы аты</string>
     <string name="label_password">Құпия сөз</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Көрінетін күнтізбелер</string>
     <string name="settings_default_calendar">Әдепкі күнтізбе</string>
     <string name="settings_default_event_length">Әдепкі оқиға ұзақтығы</string>
-    <string name="settings_default_alerts">Әдепкі ескертулер</string>
+    <string name="settings_default_event_length_hint">Жаңа оқиғалардың әдепкі ұзақтығы</string>
+    <string name="settings_timed_event_alert">Уақыты белгіленген оқиға туралы ескерту</string>
+    <string name="settings_all_day_event_alert">Күні бойы оқиға туралы ескерту</string>
+    <string name="settings_custom_alert_value">Таңдамалы (%1$s)</string>
     <string name="settings_notifications">Хабарландырулар</string>
-    <string name="settings_new_events">Жаңа оқиғалар</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Жүйе әдепкісі</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Құрылғы күнтізбелері</string>
     <string name="settings_device_calendars_hint">Басқа қолданбалардан күнтізбелер</string>
-    <string name="settings_quick_event_add">Жылдам оқиға қосу</string>
+    <string name="settings_quick_event_add">Ақылды оқиға қосу</string>
+    <string name="settings_quick_event_add_info">Табиғи түрде теру арқылы оқиғалар жасаңыз. \"Sam-мен түскі ас жұма 13:00\" тақырыпты, күнді және уақытты сіз үшін толтырады.</string>
     <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
+    <string name="settings_suggest_titles_info">Жаңа оқиғаны атаған кезде, бұрын пайдаланған тақырыптарды ұсынады, сонда қайталанатын оқиғалар бір түртумен жасалады. Оларды қаншалықты жиі және қаншалықты жақында пайдаланғаныңызға қарай сұрыпталады.</string>
     <string name="settings_week_numbers">Апта нөмірлері</string>
     <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="settings_widget_event_limit">Виджет оқиға шектеуі</string>
+    <string name="settings_widget_event_limit_hint">Виджеттерде күніне көрсетілетін оқиғалардың ең көбі</string>
     <string name="settings_sync_lookback">Синхрондау кері кезеңі</string>
-    <string name="settings_auto_detect_emojis">Эмодзиді автоматты анықтау</string>
-    <string name="settings_events_per_day">Күніне оқиғалар</string>
+    <string name="settings_sync_lookback_hint">Оқиғаларды қаншалықты кері синхрондау</string>
     <string name="settings_not_set">Орнатылмаған</string>
     <string name="settings_on">Қосулы</string>
     <string name="settings_off">Өшірулі</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Қауіпсіз емес қосылымға сену</string>
     <string name="action_add_another">Тағы бір қосу</string>
     <string name="account_connected_found_calendars">%2$s үшін %1$d күнтізбе табылды.</string>
-    <string name="account_connected_syncing_hint">Синхрондау жүріп жатыр — оқиғалар жақын арада көрінеді.</string>
+    <string name="account_connected_syncing_hint">Синхрондау орындалуда. Оқиғалар жақын арада пайда болады.</string>
     <string name="settings_time_format_currently_24h">Қазіргі: 24 сағат (%1$s)</string>
     <string name="settings_time_format_currently_12h">Қазіргі: 12 сағат (%1$s)</string>
     <string name="settings_time_format_example">Мысал: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Тек оқу (күнтізбе тек оқуға арналған)</string>
     <string name="settings_developer_options">Әзірлеуші параметрлері</string>
     <string name="settings_sync_frequency">Синхрондау жиілігі</string>
-    <string name="settings_preview">АЛДЫН АЛА ҚАРАУ</string>
-    <string name="settings_n_events">%1$d оқиға</string>
-    <string name="settings_n_events_default">%1$d оқиға (әдепкі)</string>
+    <string name="settings_sync_frequency_hint">Фондық режимде қаншалықты жиі синхрондау керектігі</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Күнтізбелер</string>
     <string name="drawer_contacts">Контактілер</string>
     <string name="drawer_device_calendars">Құрылғы күнтізбелері</string>
     <string name="drawer_account_offline">Желіден тыс</string>
+    <string name="calendar_local">Жергілікті</string>
     <string name="drawer_share_feedback">Анықтама &amp; құжаттар</string>
     <string name="event_title_fallback">Оқиға</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s кейін</string>
     <string name="reminder_day_of_event_12h">9 AM оқиға күні</string>
     <string name="reminder_day_of_event_24h">09:00 оқиға күні</string>
+    <string name="reminder_day_of_event">Day of event</string>
     <string name="reminder_before_at_12h">%1$s бұрын 9 AM-де</string>
     <string name="reminder_before_at_24h">%1$s бұрын 09:00-де</string>
     <string name="reminder_short_off">Өшірулі</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dс</string>
     <string name="reminder_short_days">%1$dк</string>
     <string name="reminder_short_weeks">%1$dап</string>
+    <string name="reminder_med_minutes">%1$d мин</string>
+    <string name="reminder_med_hours">%1$d сағ</string>
+    <string name="reminder_med_weeks">%1$d апт</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d күн</item>
+        <item quantity="other">%1$d күн</item>
+    </plurals>
+    <string name="reminder_med_day_of">Day of</string>
+    <string name="all_day_alert_9am_hint">All-day alerts fire at 9 AM (09:00).</string>
     <string name="reminder_summary_none">Жоқ</string>
     <string name="duration_compact">%1$dс %2$dм</string>
     <string name="duration_compact_short">%1$dс%2$dм</string>

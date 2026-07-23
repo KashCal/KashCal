@@ -68,6 +68,7 @@
     <string name="action_view">Skoða</string>
     <string name="action_enable">Virkja</string>
     <string name="action_done">Lokið</string>
+    <string name="action_back">Til baka</string>
     <string name="action_save">Vista</string>
     <string name="action_add">Bæta við</string>
     <string name="action_edit">Breyta</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Tímasnið</string>
     <string name="settings_start_week_on">Vika byrjar á</string>
     <string name="settings_event_emojis">Viðburða-emojis</string>
-    <string name="settings_emoji_subtitle">Sýna emojis út frá titlum viðburða</string>
+    <string name="settings_event_emojis_info">Bætir emoji við viðburði út frá heitinu, eins og 🎂 fyrir \"Afmæli\".</string>
     <string name="settings_force_sync">Fullkomin samstilling</string>
     <string name="settings_force_sync_subtitle">Hlaða niður öllum dagatalsupplýsingum aftur</string>
     <string name="settings_sync_history">Samstillingarsaga</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Vista viðburði í ICS-skrá</string>
     <string name="settings_birthday_reminder">Afmælisáminning</string>
     <string name="settings_use_device_timezone">Nota tímabelti tækis</string>
-    <string name="settings_section_calendars">Dagatöl</string>
+    <string name="settings_section_calendars">Dagatöl &amp; reikningar</string>
     <string name="settings_section_appearance">Útlit</string>
-    <string name="settings_section_creating_events">Búa til viðburði</string>
-    <string name="settings_section_sync">Samstilling</string>
+    <string name="settings_section_creating_events">Stillingar viðburða</string>
+    <string name="settings_section_sync">Tilkynningar &amp; samstilling</string>
     <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
     <string name="settings_section_privacy">Persónuvernd</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Forritslæsing</string>
-    <string name="app_lock_subtitle_off">Krefjast aflæsingar til að opna KashCal</string>
-    <string name="app_lock_subtitle_on">Aflæstu með fingrafari, andliti eða skjálæsingu</string>
+    <string name="settings_app_lock_info">Krefst auðkenningar tækis til að opna KashCal.</string>
     <string name="app_lock_veil_locked">Læst</string>
     <string name="app_lock_veil_unlock">Aflæsa</string>
     <string name="app_lock_veil_footnote">Fingrafar, andlit eða skjálæsing</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Öryggisafritaskráin inniheldur ógild gögn og er ekki hægt að endurheimta.</string>
     <string name="restore_error_apply_failure">Eitthvað fór úrskeiðis þegar öryggisafritið var notað. Engar breytingar voru vistaðar.</string>
     <string name="backup_error_build_failed">Afritun mistókst</string>
-    <string name="backup_error_write_failed">Afritun mistókst — ekki tókst að skrifa í skrá</string>
+    <string name="backup_error_write_failed">Afritun mistókst. Ekki tókst að skrifa í skrána.</string>
     <string name="backup_error_read_failed">Ekki tókst að lesa skrána</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Netvilla, reyndu aftur</string>
     <string name="error_import_file_not_found">Skrá fannst ekki eða verður ekki lesin.</string>
     <string name="error_import_invalid_format">Ógilt dagatalsskráarsnið.</string>
+    <string name="error_import_no_events">Engir viðburðir fundust í skránni</string>
+    <string name="error_import_failed">Innflutningur mistókst</string>
     <string name="error_import_partial">%1$d viðburðir fluttir inn, %2$d mistókust.</string>
     <string name="error_export_failed">Útflutningur viðburða mistókst.</string>
     <string name="error_export_no_events">Engir viðburðir til að flytja út.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Dagatalsvilla</string>
     <string name="error_device_calendar_write_failed">Mistókst að vista í dagatal tækis. Reyndu aftur.</string>
     <string name="error_device_calendar_permission">Dagatalsheimild nauðsynleg. Veittu heimild í Stillingum.</string>
+    <string name="error_device_calendar_permission_denied">Slökktu og kveiktu á dagatalsheimildinni í Stillingum til að veita skrifaðgang</string>
     <string name="error_device_calendar_not_found">Dagatal fannst ekki. Það gæti hafa verið fjarlægt.</string>
     <string name="error_device_event_not_found">Viðburður fannst ekki. Honum gæti hafa verið eytt.</string>
     <string name="error_device_calendar_read_only">Þetta dagatal er skrifvarið.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valið</string>
     <string name="cd_back">Til baka</string>
+    <string name="cd_opens_in_browser">Opnast í vafra</string>
     <string name="cd_search">Leita</string>
     <string name="cd_create_event">Búa til viðburð</string>
     <string name="cd_delete">Eyða</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Endurtekinn</string>
     <string name="cd_enabled">Virkt</string>
     <string name="cd_sync_error">Samstillingarvilla</string>
-    <string name="cd_select_option">Velja valkost</string>
     <string name="cd_select_label">Velja %1$s</string>
     <string name="cd_wheel_picker">Hjólveljari með %1$d valkostum</string>
     <string name="cd_time_entry_keyboard">Slá inn nákvæman tíma</string>
     <string name="time_entry_dialog_title">Slá inn tíma</string>
     <string name="time_entry_tap_to_edit">Ýttu til að breyta</string>
     <string name="cd_version_info">KashCal útgáfa %1$s. Haltu lengi inni fyrir villuleitarvalkosti.</string>
+    <string name="cd_about_setting">Um %1$s</string>
     <string name="cd_color_slider">Litasleði, núna %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d gráður</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Litur:</string>
     <string name="label_repeat">Endurtaka</string>
     <string name="label_sync_interval">Samstillingarbil:</string>
-    <string name="label_scheduled_events">Áætlaðir viðburðir</string>
-    <string name="label_all_day_events">Heildagsviðburðir</string>
     <string name="label_server_url">URL þjóns</string>
     <string name="label_username">Notandanafn</string>
     <string name="label_password">Lykilorð</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Sýnileg dagatöl</string>
     <string name="settings_default_calendar">Sjálfgefið dagatal</string>
     <string name="settings_default_event_length">Sjálfgefin viðburðarlengd</string>
-    <string name="settings_default_alerts">Sjálfgefnar áminningar</string>
+    <string name="settings_default_event_length_hint">Sjálfgefin lengd fyrir nýja viðburði</string>
+    <string name="settings_timed_event_alert">Áminning fyrir viðburð með tíma</string>
+    <string name="settings_all_day_event_alert">Áminning fyrir heilsdagsviðburð</string>
+    <string name="settings_custom_alert_value">Sérsniðið (%1$s)</string>
     <string name="settings_notifications">Tilkynningar</string>
-    <string name="settings_new_events">Nýir viðburðir</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sjálfgefið kerfis</string>
@@ -508,14 +512,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Dagatöl tækis</string>
     <string name="settings_device_calendars_hint">Dagatöl úr öðrum forritum</string>
-    <string name="settings_quick_event_add">Flýtiskráning viðburðar</string>
+    <string name="settings_quick_event_add">Snjöll viðburðaskráning</string>
+    <string name="settings_quick_event_add_info">Búðu til viðburði með því að skrifa á eðlilegan hátt. \"Hádegismatur með Sam föstudag 13:00\" fyllir út heiti, dagsetningu og tíma fyrir þig.</string>
     <string name="settings_suggest_titles">Stinga upp á heiti viðburða</string>
+    <string name="settings_suggest_titles_info">Þegar þú nefnir nýjan viðburð eru lögð til heiti sem þú hefur notað áður, svo endurteknir viðburðir eru aðeins eitt bank í burtu. Raðað eftir því hversu oft og hversu nýlega þú hefur notað þau.</string>
     <string name="settings_week_numbers">Vikunúmer</string>
     <string name="settings_show_declined">Sýna höfnuð atvik</string>
     <string name="settings_widget_event_limit">Viðburðahámark græju</string>
+    <string name="settings_widget_event_limit_hint">Flestir viðburðir sýndir á dag í græjum</string>
     <string name="settings_sync_lookback">Samstillingarsvið aftur í tíma</string>
-    <string name="settings_auto_detect_emojis">Greina emojis sjálfvirkt</string>
-    <string name="settings_events_per_day">Viðburðir á dag</string>
+    <string name="settings_sync_lookback_hint">Hversu langt aftur viðburðir eru samstilltir</string>
     <string name="settings_not_set">Ekki stillt</string>
     <string name="settings_on">Kveikt</string>
     <string name="settings_off">Slökkt</string>
@@ -528,7 +534,7 @@
     <string name="caldav_trust_insecure_label">Treysta óöruggri tengingu</string>
     <string name="action_add_another">Bæta við öðru</string>
     <string name="account_connected_found_calendars">Fann %1$d dagatal fyrir %2$s.</string>
-    <string name="account_connected_syncing_hint">Samstilling í gangi — viðburðir birtast bráðlega.</string>
+    <string name="account_connected_syncing_hint">Samstilling í gangi. Viðburðir birtast fljótlega.</string>
     <string name="settings_time_format_currently_24h">Núna: 24 klst. (%1$s)</string>
     <string name="settings_time_format_currently_12h">Núna: 12 klst. (%1$s)</string>
     <string name="settings_time_format_example">Dæmi: %1$s</string>
@@ -587,15 +593,14 @@
     <string name="device_calendars_read_only_calendar">Skrifvarið (dagatalið er skrifvarið)</string>
     <string name="settings_developer_options">Þróunarvalkostir</string>
     <string name="settings_sync_frequency">Samstillingartíðni</string>
-    <string name="settings_preview">FORSKOÐUN</string>
-    <string name="settings_n_events">%1$d viðburðir</string>
-    <string name="settings_n_events_default">%1$d viðburðir (sjálfgefið)</string>
+    <string name="settings_sync_frequency_hint">Hversu oft er samstillt í bakgrunni</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Dagatöl</string>
     <string name="drawer_contacts">Tengiliðir</string>
     <string name="drawer_device_calendars">Dagatöl tækis</string>
     <string name="drawer_account_offline">Ónettengdur</string>
+    <string name="calendar_local">Staðbundið</string>
     <string name="drawer_share_feedback">Hjálp &amp; skjöl</string>
     <string name="event_title_fallback">Viðburður</string>
 
@@ -913,6 +918,7 @@
     <string name="reminder_time_after">%1$s eftir</string>
     <string name="reminder_day_of_event_12h">9 AM á degi viðburðarins</string>
     <string name="reminder_day_of_event_24h">09:00 á degi viðburðarins</string>
+    <string name="reminder_day_of_event">Á degi viðburðarins</string>
     <string name="reminder_before_at_12h">%1$s áður kl. 9 AM</string>
     <string name="reminder_before_at_24h">%1$s áður kl. 09:00</string>
     <string name="reminder_short_off">Af</string>
@@ -923,6 +929,15 @@
     <string name="reminder_short_hours">%1$dklst</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dv</string>
+    <string name="reminder_med_minutes">%1$d mín</string>
+    <string name="reminder_med_hours">%1$d klst</string>
+    <string name="reminder_med_weeks">%1$d vika</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dagur</item>
+        <item quantity="other">%1$d dagar</item>
+    </plurals>
+    <string name="reminder_med_day_of">Á deginum</string>
+    <string name="all_day_alert_9am_hint">Áminningar fyrir heilsdagsviðburði berast kl. 09:00.</string>
     <string name="reminder_summary_none">Engin</string>
     <string name="duration_compact">%1$dklst %2$dmín</string>
     <string name="duration_compact_short">%1$dklst%2$dmín</string>

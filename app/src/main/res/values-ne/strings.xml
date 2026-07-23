@@ -68,6 +68,7 @@
     <string name="action_view">हेर्नुहोस्</string>
     <string name="action_enable">सक्षम गर्नुहोस्</string>
     <string name="action_done">सकियो</string>
+    <string name="action_back">पछाडि</string>
     <string name="action_save">सुरक्षित गर्नुहोस्</string>
     <string name="action_add">थप्नुहोस्</string>
     <string name="action_edit">सम्पादन</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">समय ढाँचा</string>
     <string name="settings_start_week_on">हप्ता सुरु हुने दिन</string>
     <string name="settings_event_emojis">कार्यक्रम इमोजी</string>
-    <string name="settings_emoji_subtitle">कार्यक्रम शीर्षकमा आधारित इमोजी देखाउनुहोस्</string>
+    <string name="settings_event_emojis_info">शीर्षकको आधारमा घटनाहरूमा इमोजी थप्छ, जस्तै \"जन्मदिन\" का लागि 🎂।</string>
     <string name="settings_force_sync">पूर्ण बलपूर्वक सिंक</string>
     <string name="settings_force_sync_subtitle">सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नुहोस्</string>
     <string name="settings_sync_history">सिंक इतिहास</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">कार्यक्रमहरू ICS फाइलमा सुरक्षित गर्नुहोस्</string>
     <string name="settings_birthday_reminder">जन्मदिन सम्झना</string>
     <string name="settings_use_device_timezone">उपकरणको समय क्षेत्र प्रयोग गर्नुहोस्</string>
-    <string name="settings_section_calendars">पात्राहरू</string>
+    <string name="settings_section_calendars">पात्राहरू &amp; खाताहरू</string>
     <string name="settings_section_appearance">रूप</string>
-    <string name="settings_section_creating_events">कार्यक्रमहरू सिर्जना गर्ने</string>
-    <string name="settings_section_sync">सिंक</string>
+    <string name="settings_section_creating_events">कार्यक्रम प्राथमिकताहरू</string>
+    <string name="settings_section_sync">सूचनाहरू &amp; सिंक</string>
     <string name="settings_section_data">ब्याकअप &amp; रिस्टोर</string>
     <string name="settings_section_privacy">गोपनीयता</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">एप लक</string>
-    <string name="app_lock_subtitle_off">KashCal खोल्न अनलक आवश्यक बनाउनुहोस्</string>
-    <string name="app_lock_subtitle_on">फिंगरप्रिन्ट, अनुहार वा स्क्रिन लकले अनलक गर्नुहोस्</string>
+    <string name="settings_app_lock_info">KashCal खोल्न यन्त्र प्रमाणीकरण आवश्यक छ।</string>
     <string name="app_lock_veil_locked">लक गरिएको</string>
     <string name="app_lock_veil_unlock">अनलक गर्नुहोस्</string>
     <string name="app_lock_veil_footnote">फिंगरप्रिन्ट, अनुहार वा स्क्रिन लक</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">यो ब्याकअप फाइलमा अवैध डेटा छ र रिस्टोर गर्न सकिँदैन।</string>
     <string name="restore_error_apply_failure">ब्याकअप लागू गर्दा केही गलत भयो। कुनै परिवर्तन सुरक्षित गरिएन।</string>
     <string name="backup_error_build_failed">ब्याकअप असफल भयो</string>
-    <string name="backup_error_write_failed">ब्याकअप असफल भयो — फाइलमा लेख्न सकिएन</string>
+    <string name="backup_error_write_failed">ब्याकअप असफल भयो। फाइलमा लेख्न सकिएन।</string>
     <string name="backup_error_read_failed">फाइल पढ्न सकिएन</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">नेटवर्क त्रुटि, फेरि प्रयास गर्नुहोस्</string>
     <string name="error_import_file_not_found">फाइल भेटिएन वा पढ्न सकिएन।</string>
     <string name="error_import_invalid_format">अमान्य क्यालेन्डर फाइल ढाँचा।</string>
+    <string name="error_import_no_events">फाइलमा कुनै कार्यक्रम भेटिएन</string>
+    <string name="error_import_failed">आयात असफल भयो</string>
     <string name="error_import_partial">%1$d कार्यक्रम आयात भयो, %2$d असफल।</string>
     <string name="error_export_failed">कार्यक्रमहरू निर्यात गर्न असफल।</string>
     <string name="error_export_no_events">निर्यात गर्न कार्यक्रम छैन।</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">क्यालेन्डर त्रुटि</string>
     <string name="error_device_calendar_write_failed">उपकरण क्यालेन्डरमा बचत गर्न असफल। कृपया फेरि प्रयास गर्नुहोस्।</string>
     <string name="error_device_calendar_permission">क्यालेन्डर लेख्ने अनुमति आवश्यक। कृपया सेटिङमा अनुमति दिनुहोस्।</string>
+    <string name="error_device_calendar_permission_denied">लेख्ने पहुँच दिन सेटिङमा क्यालेन्डर अनुमति निष्क्रिय गरी पुनः सक्रिय गर्नुहोस्</string>
     <string name="error_device_calendar_not_found">क्यालेन्डर भेटिएन। हटाइएको हुन सक्छ।</string>
     <string name="error_device_event_not_found">कार्यक्रम भेटिएन। मेटिएको हुन सक्छ।</string>
     <string name="error_device_calendar_read_only">यो क्यालेन्डर पढ्ने-मात्र हो।</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">चयन गरिएको</string>
     <string name="cd_back">पछाडि</string>
+    <string name="cd_opens_in_browser">ब्राउजरमा खुल्छ</string>
     <string name="cd_search">खोज</string>
     <string name="cd_create_event">कार्यक्रम बनाउनुहोस्</string>
     <string name="cd_delete">मेट्नुहोस्</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">दोहोरिने</string>
     <string name="cd_enabled">सक्षम</string>
     <string name="cd_sync_error">सिंक त्रुटि</string>
-    <string name="cd_select_option">विकल्प चयन गर्नुहोस्</string>
     <string name="cd_select_label">%1$s चयन गर्नुहोस्</string>
     <string name="cd_wheel_picker">%1$d विकल्प भएको ह्वील पिकर</string>
     <string name="cd_time_entry_keyboard">ठ्याक्कै समय प्रविष्ट गर्नुहोस्</string>
     <string name="time_entry_dialog_title">समय प्रविष्ट गर्नुहोस्</string>
     <string name="time_entry_tap_to_edit">सम्पादन गर्न ट्याप गर्नुहोस्</string>
     <string name="cd_version_info">KashCal संस्करण %1$s। डिबग विकल्पका लागि लामो समय थिच्नुहोस्।</string>
+    <string name="cd_about_setting">%1$s का बारेमा</string>
     <string name="cd_color_slider">रंग स्लाइडर, हाल %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d डिग्री</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">रंग:</string>
     <string name="label_repeat">दोहोर्याउनुहोस्</string>
     <string name="label_sync_interval">सिंक अन्तराल:</string>
-    <string name="label_scheduled_events">तालिकाबद्ध कार्यक्रमहरू</string>
-    <string name="label_all_day_events">दिनभरका कार्यक्रमहरू</string>
     <string name="label_server_url">सर्भर URL</string>
     <string name="label_username">प्रयोगकर्ता नाम</string>
     <string name="label_password">पासवर्ड</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">दृश्य क्यालेन्डरहरू</string>
     <string name="settings_default_calendar">पूर्वनिर्धारित क्यालेन्डर</string>
     <string name="settings_default_event_length">पूर्वनिर्धारित कार्यक्रम अवधि</string>
-    <string name="settings_default_alerts">पूर्वनिर्धारित सतर्कताहरू</string>
+    <string name="settings_default_event_length_hint">नयाँ घटनाहरूको लागि पूर्वनिर्धारित अवधि</string>
+    <string name="settings_timed_event_alert">समयबद्ध घटना अलर्ट</string>
+    <string name="settings_all_day_event_alert">दिनभरको घटना अलर्ट</string>
+    <string name="settings_custom_alert_value">अनुकूलन (%1$s)</string>
     <string name="settings_notifications">सूचनाहरू</string>
-    <string name="settings_new_events">नयाँ कार्यक्रमहरू</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">प्रणाली पूर्वनिर्धारित</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">उपकरण क्यालेन्डरहरू</string>
     <string name="settings_device_calendars_hint">अन्य एपहरूका क्यालेन्डरहरू</string>
-    <string name="settings_quick_event_add">द्रुत कार्यक्रम थप</string>
+    <string name="settings_quick_event_add">स्मार्ट कार्यक्रम थप</string>
+    <string name="settings_quick_event_add_info">स्वाभाविक रूपमा टाइप गरेर घटनाहरू सिर्जना गर्नुहोस्। \"Sam सँग शुक्रबार दिउँसो १ बजे खाजा\" ले तपाईंको लागि शीर्षक, मिति र समय भर्छ।</string>
     <string name="settings_suggest_titles">कार्यक्रम शीर्षकहरू सुझाव</string>
+    <string name="settings_suggest_titles_info">तपाईंले नयाँ घटनालाई नाम दिँदा, तपाईंले पहिले प्रयोग गरेका शीर्षकहरू सुझाव दिन्छ, ताकि दोहोरिने घटनाहरू एक ट्यापमै हुन्छन्। तपाईंले कति पटक र कति भर्खरै प्रयोग गर्नुभयो भन्ने आधारमा क्रमबद्ध गरिएको।</string>
     <string name="settings_week_numbers">हप्ता नम्बरहरू</string>
     <string name="settings_show_declined">अस्वीकार गरिएका कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="settings_widget_event_limit">विजेट कार्यक्रम सीमा</string>
+    <string name="settings_widget_event_limit_hint">विजेटमा प्रति दिन देखाइने अधिकतम घटनाहरू</string>
     <string name="settings_sync_lookback">सिंक लुकब्याक</string>
-    <string name="settings_auto_detect_emojis">इमोजी स्वचालित पत्ता</string>
-    <string name="settings_events_per_day">प्रतिदिन कार्यक्रम</string>
+    <string name="settings_sync_lookback_hint">घटनाहरू कति पछाडिसम्म सिंक गर्ने</string>
     <string name="settings_not_set">सेट गरिएको छैन</string>
     <string name="settings_on">खुला</string>
     <string name="settings_off">बन्द</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">असुरक्षित जडान विश्वास गर्नुहोस्</string>
     <string name="action_add_another">अर्को थप्नुहोस्</string>
     <string name="account_connected_found_calendars">%2$s का लागि %1$d क्यालेन्डर भेटियो।</string>
-    <string name="account_connected_syncing_hint">सिंक हुँदैछ — कार्यक्रमहरू छिट्टै देखिनेछन्।</string>
+    <string name="account_connected_syncing_hint">सिंक जारी छ। घटनाहरू छिट्टै देखा पर्नेछन्।</string>
     <string name="settings_time_format_currently_24h">हाल: २४ घण्टा (%1$s)</string>
     <string name="settings_time_format_currently_12h">हाल: १२ घण्टा (%1$s)</string>
     <string name="settings_time_format_example">उदाहरण: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">पढ्ने मात्र (पढ्ने-मात्र क्यालेन्डर)</string>
     <string name="settings_developer_options">विकासकर्ता विकल्पहरू</string>
     <string name="settings_sync_frequency">सिंक आवृत्ति</string>
-    <string name="settings_preview">पूर्वावलोकन</string>
-    <string name="settings_n_events">%1$d कार्यक्रम</string>
-    <string name="settings_n_events_default">%1$d कार्यक्रम (पूर्वनिर्धारित)</string>
+    <string name="settings_sync_frequency_hint">पृष्ठभूमिमा कति पटक सिंक गर्ने</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">क्यालेन्डरहरू</string>
     <string name="drawer_contacts">सम्पर्कहरू</string>
     <string name="drawer_device_calendars">उपकरण क्यालेन्डरहरू</string>
     <string name="drawer_account_offline">अफलाइन</string>
+    <string name="calendar_local">स्थानीय</string>
     <string name="drawer_share_feedback">मद्दत र कागजात</string>
     <string name="event_title_fallback">कार्यक्रम</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s पछि</string>
     <string name="reminder_day_of_event_12h">कार्यक्रमको दिन बिहान 9 बजे</string>
     <string name="reminder_day_of_event_24h">कार्यक्रमको दिन 09:00</string>
+    <string name="reminder_day_of_event">कार्यक्रमको दिन</string>
     <string name="reminder_before_at_12h">%1$s अघि बिहान 9 बजे</string>
     <string name="reminder_before_at_24h">%1$s अघि 09:00 मा</string>
     <string name="reminder_short_off">बन्द</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dघ</string>
     <string name="reminder_short_days">%1$dदि</string>
     <string name="reminder_short_weeks">%1$dह</string>
+    <string name="reminder_med_minutes">%1$d मिनेट</string>
+    <string name="reminder_med_hours">%1$d घण्टा</string>
+    <string name="reminder_med_weeks">%1$d हप्ता</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <string name="reminder_med_day_of">दिन</string>
+    <string name="all_day_alert_9am_hint">दिनभरका सूचनाहरू बिहान ९ बजे (09:00) आउँछन्।</string>
     <string name="reminder_summary_none">कुनै छैन</string>
     <string name="duration_compact">%1$dघ %2$dमि</string>
     <string name="duration_compact_short">%1$dघ%2$dमि</string>

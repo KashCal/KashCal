@@ -47,30 +47,18 @@ fun getTimedReminderOptions(resources: Resources): List<ReminderOption> =
  * Note: Legacy value (2880 - 2 days before) is still valid for existing events
  * from external calendars or older app versions - it just isn't shown in the picker.
  *
- * For time-format-aware labels, use [getAllDayReminderOptions] instead.
+ * Labels are terse and time-independent ("Day of event", "1 day before"); the
+ * 9 AM fire time is conveyed by the picker sheet's hint.
  */
 // Signed "minutes before start" (Android CalendarProvider convention): positive = before midnight,
 // negative = after midnight. 9AM-day-of fires after midnight so it is negative (-540).
 // 1d/2d/1w fire 9 AM on the prior day(s) = hour-based before-offsets (DST-stable).
 val ALL_DAY_REMINDER_MINUTES = listOf(REMINDER_OFF, -540, 900, 2340, 9540)
 
-fun getAllDayReminderOptionsI18n(use24Hour: Boolean, resources: Resources): List<ReminderOption> =
+fun getAllDayReminderOptions(resources: Resources): List<ReminderOption> =
     ALL_DAY_REMINDER_MINUTES.map { minutes ->
-        ReminderOption(formatReminderOption(minutes, isAllDay = true, use24Hour = use24Hour, resources = resources), minutes)
+        ReminderOption(formatReminderOption(minutes, isAllDay = true, resources = resources), minutes)
     }
-
-/**
- * Returns all-day reminder options with time-format-aware labels.
- *
- * The "9 AM day of event" option (stored as -540) label changes based on [use24Hour]:
- * - 24-hour format: "09:00 day of event"
- * - 12-hour format: "9 AM day of event"
- *
- * @param use24Hour Whether to use 24-hour time format
- * @return List of [ReminderOption] with appropriate labels
- */
-fun getAllDayReminderOptions(use24Hour: Boolean, resources: Resources): List<ReminderOption> =
-    getAllDayReminderOptionsI18n(use24Hour, resources)
 
 /**
  * Format reminder option for display.
@@ -79,15 +67,16 @@ fun getAllDayReminderOptions(use24Hour: Boolean, resources: Resources): List<Rem
  *
  * @param minutes Reminder minutes value
  * @param isAllDay Whether the event is all-day
- * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
  * @return Human-readable label for the reminder
  */
-fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false, resources: Resources): String {
+fun formatReminderOption(minutes: Int, isAllDay: Boolean, resources: Resources): String {
     // All-day reminders use signed "minutes before midnight": negative = after the
     // event's local midnight (e.g. -540 = 9 AM day of), positive = before.
     if (isAllDay) {
+        // The 9 AM fire time is conveyed by the sheet hint, so labels are terse and
+        // format-independent.
         when (minutes) {
-            -540 -> return resources.getString(if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h)
+            -540 -> return resources.getString(R.string.reminder_day_of_event)
             900 -> return resources.getQuantityString(R.plurals.reminder_days_before, 1, 1)
             2340 -> return resources.getQuantityString(R.plurals.reminder_days_before, 2, 2)
             9540 -> return resources.getQuantityString(R.plurals.reminder_weeks_before, 1, 1)
@@ -157,6 +146,42 @@ private fun reminderShortByMagnitude(minutes: Int, resources: Resources): String
     minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
     minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
     else -> resources.getString(R.string.reminder_short_minutes, minutes)
+}
+
+/**
+ * Medium-length reminder/duration label for Settings row values: abbreviated words
+ * ("30 min", "1 hr", "1 day"/"2 days", "1 wk") — longer than the compact chip form
+ * ([formatReminderShort]) used in the event form, shorter than the sheet's full
+ * "N minutes before" phrasing.
+ *
+ * All-day 9 AM offsets map to their day/week meaning (900 -> "1 day"), matching the
+ * picker labels; the day-of case ([REMINDER_OFF] aside) reads "Day of" (the 9 AM
+ * fire time is conveyed by the sheet hint, not the row). Mirrors the explicit
+ * offset handling in [formatReminderShort] so an all-day value never renders by its
+ * raw magnitude (e.g. 900 must not read "15 hr").
+ */
+fun formatReminderMedium(minutes: Int, isAllDay: Boolean, resources: Resources): String {
+    if (isAllDay && minutes != REMINDER_OFF) {
+        return when (minutes) {
+            -540 -> resources.getString(R.string.reminder_med_day_of)
+            900 -> resources.getQuantityString(R.plurals.reminder_med_days, 1, 1)
+            2340 -> resources.getQuantityString(R.plurals.reminder_med_days, 2, 2)
+            9540 -> resources.getString(R.string.reminder_med_weeks, 1)
+            else -> reminderMediumByMagnitude(kotlin.math.abs(minutes), resources)
+        }
+    }
+    return when (minutes) {
+        REMINDER_OFF -> resources.getString(R.string.reminder_short_off)
+        0 -> resources.getString(R.string.reminder_short_at_event)
+        else -> reminderMediumByMagnitude(minutes, resources)
+    }
+}
+
+private fun reminderMediumByMagnitude(minutes: Int, resources: Resources): String = when {
+    minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_med_weeks, minutes / 10080)
+    minutes >= 1440 && minutes % 1440 == 0 -> resources.getQuantityString(R.plurals.reminder_med_days, minutes / 1440, minutes / 1440)
+    minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_med_hours, minutes / 60)
+    else -> resources.getString(R.string.reminder_med_minutes, minutes)
 }
 
 // ==================== Custom Reminders: Duration Helpers ====================

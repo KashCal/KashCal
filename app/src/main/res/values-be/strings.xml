@@ -68,6 +68,7 @@
     <string name="action_view">Прагляд</string>
     <string name="action_enable">Уключыць</string>
     <string name="action_done">Гатова</string>
+    <string name="action_back">Назад</string>
     <string name="action_save">Захаваць</string>
     <string name="action_add">Дадаць</string>
     <string name="action_edit">Змяніць</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Фармат часу</string>
     <string name="settings_start_week_on">Пачатак тыдня</string>
     <string name="settings_event_emojis">Эмодзі падзей</string>
-    <string name="settings_emoji_subtitle">Паказваць эмодзі паводле назвы падзеі</string>
+    <string name="settings_event_emojis_info">Дадае да падзей эмодзі паводле назвы, напрыклад 🎂 для \"Дзень нараджэння\".</string>
     <string name="settings_force_sync">Поўная сінхранізацыя</string>
     <string name="settings_force_sync_subtitle">Перазагрузіць усе дадзеныя</string>
     <string name="settings_sync_history">Гісторыя сінхранізацыі</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Захаваць падзеі ў файл ICS</string>
     <string name="settings_birthday_reminder">Напамінанне пра дзень нараджэння</string>
     <string name="settings_use_device_timezone">Часавы пояс прылады</string>
-    <string name="settings_section_calendars">Календары</string>
+    <string name="settings_section_calendars">Календары і акаўнты</string>
     <string name="settings_section_appearance">Выгляд</string>
-    <string name="settings_section_creating_events">Стварэнне падзей</string>
-    <string name="settings_section_sync">Сінхранізацыя</string>
+    <string name="settings_section_creating_events">Налады падзей</string>
+    <string name="settings_section_sync">Апавяшчэнні і сінхранізацыя</string>
     <string name="settings_section_data">Рэзервовае капіяванне і аднаўленне</string>
     <string name="settings_section_privacy">Прыватнасць</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Блакіроўка праграмы</string>
-    <string name="app_lock_subtitle_off">Патрабаваць разблакіроўку для адкрыцця KashCal</string>
-    <string name="app_lock_subtitle_on">Разблакіроўка адбіткам, тварам або блакіроўкай экрана</string>
+    <string name="settings_app_lock_info">Патрабаваць аўтэнтыфікацыю прылады для адкрыцця KashCal.</string>
     <string name="app_lock_veil_locked">Заблакіравана</string>
     <string name="app_lock_veil_unlock">Разблакіраваць</string>
     <string name="app_lock_veil_footnote">Адбітак, твар або блакіроўка экрана</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">У файле рэзервовай копіі няправільныя даныя, яго нельга аднавіць.</string>
     <string name="restore_error_apply_failure">Пры аднаўленні нешта пайшло не так. Змены не захаваны.</string>
     <string name="backup_error_build_failed">Не ўдалося стварыць рэзервную копію</string>
-    <string name="backup_error_write_failed">Не ўдалося стварыць рэзервную копію — не ўдалося запісаць у файл</string>
+    <string name="backup_error_write_failed">Не ўдалося стварыць рэзервовую копію. Не ўдалося запісаць файл.</string>
     <string name="backup_error_read_failed">Не ўдалося прачытаць файл</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Памылка сеткі, паспрабуйце зноў</string>
     <string name="error_import_file_not_found">Файл не знойдзены або не можа быць прачытаны.</string>
     <string name="error_import_invalid_format">Няправільны фармат файла календара.</string>
+    <string name="error_import_no_events">У файле няма падзей</string>
+    <string name="error_import_failed">Не ўдалося імпартаваць</string>
     <string name="error_import_partial">Імпартавана падзей: %1$d, памылак: %2$d.</string>
     <string name="error_export_failed">Не ўдалося экспартаваць падзеі.</string>
     <string name="error_export_no_events">Няма падзей для экспарту.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Памылка календара</string>
     <string name="error_device_calendar_write_failed">Не ўдалося захаваць у каляндар прылады. Паспрабуйце зноў.</string>
     <string name="error_device_calendar_permission">Патрэбен дазвол на запіс у каляндар. Дайце доступ у наладах.</string>
+    <string name="error_device_calendar_permission_denied">Выключыце і зноў уключыце дазвол «Каляндар» у наладах, каб даць доступ на запіс</string>
     <string name="error_device_calendar_not_found">Каляндар не знойдзены. Магчыма, ён быў выдалены.</string>
     <string name="error_device_event_not_found">Падзея не знойдзена. Магчыма, яна была выдалена.</string>
     <string name="error_device_calendar_read_only">Гэты каляндар толькі для чытання.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Выбрана</string>
     <string name="cd_back">Назад</string>
+    <string name="cd_opens_in_browser">Адкрываецца ў браўзеры</string>
     <string name="cd_search">Пошук</string>
     <string name="cd_create_event">Стварыць падзею</string>
     <string name="cd_delete">Выдаліць</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Паўтаральная</string>
     <string name="cd_enabled">Уключана</string>
     <string name="cd_sync_error">Памылка сінхранізацыі</string>
-    <string name="cd_select_option">Выбраць варыянт</string>
     <string name="cd_select_label">Выбраць %1$s</string>
     <string name="cd_wheel_picker">Колца выбару, варыянтаў: %1$d</string>
     <string name="cd_time_entry_keyboard">Увесці дакладны час</string>
     <string name="time_entry_dialog_title">Увод часу</string>
     <string name="time_entry_tap_to_edit">Націсніце, каб змяніць</string>
     <string name="cd_version_info">KashCal версія %1$s. Доўгае націсканне для адладкі.</string>
+    <string name="cd_about_setting">Пра %1$s</string>
     <string name="cd_color_slider">Паўзунок колеру, зараз %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градусаў</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Колер:</string>
     <string name="label_repeat">Паўтарэнне</string>
     <string name="label_sync_interval">Інтэрвал сінхранізацыі:</string>
-    <string name="label_scheduled_events">Запланаваныя падзеі</string>
-    <string name="label_all_day_events">Падзеі на ўвесь дзень</string>
     <string name="label_server_url">URL сервера</string>
     <string name="label_username">Імя карыстальніка</string>
     <string name="label_password">Пароль</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Бачныя календары</string>
     <string name="settings_default_calendar">Каляндар па змаўчанні</string>
     <string name="settings_default_event_length">Працягласць падзеі па змаўчанні</string>
-    <string name="settings_default_alerts">Напамінанні па змаўчанні</string>
+    <string name="settings_default_event_length_hint">Прадвызначаная працягласць новых падзей</string>
+    <string name="settings_timed_event_alert">Абвестка пра падзею з часам</string>
+    <string name="settings_all_day_event_alert">Абвестка пра падзею на ўвесь дзень</string>
+    <string name="settings_custom_alert_value">Іншае (%1$s)</string>
     <string name="settings_notifications">Апавяшчэнні</string>
-    <string name="settings_new_events">Новыя падзеі</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Сістэмнае</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календары прылады</string>
     <string name="settings_device_calendars_hint">Календары з іншых праграм</string>
-    <string name="settings_quick_event_add">Хуткае даданне</string>
+    <string name="settings_quick_event_add">Разумнае даданне падзей</string>
+    <string name="settings_quick_event_add_info">Стварайце падзеі, набіраючы звычайны тэкст. \"Абед са Sam у пятніцу ў 13:00\" запоўніць назву, дату і час.</string>
     <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
+    <string name="settings_suggest_titles_info">Калі вы ўводзіце назву новай падзеі, прапаноўваць назвы, якія вы ўжо выкарыстоўвалі, каб паўтаральныя падзеі ствараліся адным дотыкам. Сартуюцца паводле частаты і нядаўнасці выкарыстання.</string>
     <string name="settings_week_numbers">Нумары тыдняў</string>
     <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="settings_widget_event_limit">Ліміт падзей у віджэце</string>
+    <string name="settings_widget_event_limit_hint">Максімум падзей у дзень у віджэтах</string>
     <string name="settings_sync_lookback">Глыбіня сінхранізацыі</string>
-    <string name="settings_auto_detect_emojis">Аўтавызначэнне эмодзі</string>
-    <string name="settings_events_per_day">Падзей за дзень</string>
+    <string name="settings_sync_lookback_hint">Наколькі даўнія падзеі сінхранізаваць</string>
     <string name="settings_not_set">Не зададзена</string>
     <string name="settings_on">Укл.</string>
     <string name="settings_off">Выкл.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Давяраць небяспечнаму злучэнню</string>
     <string name="action_add_another">Дадаць яшчэ</string>
     <string name="account_connected_found_calendars">Знойдзена %1$d календароў для %2$s.</string>
-    <string name="account_connected_syncing_hint">Ідзе сінхранізацыя — падзеі з\'явяцца хутка.</string>
+    <string name="account_connected_syncing_hint">Ідзе сінхранізацыя. Падзеі неўзабаве зʼявяцца.</string>
     <string name="settings_time_format_currently_24h">Зараз: 24-гадзінны (%1$s)</string>
     <string name="settings_time_format_currently_12h">Зараз: 12-гадзінны (%1$s)</string>
     <string name="settings_time_format_example">Прыклад: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Толькі чытанне (каляндар толькі для чытання)</string>
     <string name="settings_developer_options">Для распрацоўнікаў</string>
     <string name="settings_sync_frequency">Частата сінхранізацыі</string>
-    <string name="settings_preview">ПАПЯРЭДНІ ПРАГЛЯД</string>
-    <string name="settings_n_events">Падзей: %1$d</string>
-    <string name="settings_n_events_default">Падзей: %1$d (па змаўчанні)</string>
+    <string name="settings_sync_frequency_hint">Як часта сінхранізаваць у фоне</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Календары</string>
     <string name="drawer_contacts">Кантакты</string>
     <string name="drawer_device_calendars">Календары прылады</string>
     <string name="drawer_account_offline">Няма сеткі</string>
+    <string name="calendar_local">Лакальны</string>
     <string name="drawer_share_feedback">Даведка і дакументы</string>
     <string name="event_title_fallback">Падзея</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">Праз %1$s пасля</string>
     <string name="reminder_day_of_event_12h">9 AM у дзень падзеі</string>
     <string name="reminder_day_of_event_24h">09:00 у дзень падзеі</string>
+    <string name="reminder_day_of_event">У дзень падзеі</string>
     <string name="reminder_before_at_12h">За %1$s да а 9 AM</string>
     <string name="reminder_before_at_24h">За %1$s да а 09:00</string>
     <string name="reminder_short_off">Выкл</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dгадз</string>
     <string name="reminder_short_days">%1$dд</string>
     <string name="reminder_short_weeks">%1$dтыд</string>
+    <string name="reminder_med_minutes">%1$d хв</string>
+    <string name="reminder_med_hours">%1$d гадз</string>
+    <string name="reminder_med_weeks">%1$d тыдз</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d дз</item>
+        <item quantity="few">%1$d дз</item>
+        <item quantity="many">%1$d дз</item>
+        <item quantity="other">%1$d дз</item>
+    </plurals>
+    <string name="reminder_med_day_of">У дзень</string>
+    <string name="all_day_alert_9am_hint">Абвесткі пра падзеі на ўвесь дзень прыходзяць у 9:00 (09:00).</string>
     <string name="reminder_summary_none">Няма</string>
     <string name="duration_compact">%1$dгадз %2$dхв</string>
     <string name="duration_compact_short">%1$dгадз%2$dхв</string>

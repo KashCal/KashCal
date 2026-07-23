@@ -68,6 +68,7 @@
     <string name="action_view">Gweld</string>
     <string name="action_enable">Galluogi</string>
     <string name="action_done">Gorffen</string>
+    <string name="action_back">Yn ôl</string>
     <string name="action_save">Cadw</string>
     <string name="action_add">Ychwanegu</string>
     <string name="action_edit">Golygu</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Fformat Amser</string>
     <string name="settings_start_week_on">Dechrau\'r Wythnos Ar</string>
     <string name="settings_event_emojis">Emojis Digwyddiadau</string>
-    <string name="settings_emoji_subtitle">Dangos emojis yn seiliedig ar deitlau digwyddiadau</string>
+    <string name="settings_event_emojis_info">Yn ychwanegu emoji at ddigwyddiadau yn ôl y teitl, fel 🎂 ar gyfer \"Pen-blwydd\".</string>
     <string name="settings_force_sync">Gorfodi Cysoni Llawn</string>
     <string name="settings_force_sync_subtitle">Ail-lwytho\'r holl ddata calendr</string>
     <string name="settings_sync_history">Hanes Cysoni</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Cadw digwyddiadau i ffeil ICS</string>
     <string name="settings_birthday_reminder">Atgoffa Pen-blwydd</string>
     <string name="settings_use_device_timezone">Defnyddio cylchfa amser y ddyfais</string>
-    <string name="settings_section_calendars">Calendrau</string>
+    <string name="settings_section_calendars">Calendrau a chyfrifon</string>
     <string name="settings_section_appearance">Golwg</string>
-    <string name="settings_section_creating_events">Creu digwyddiadau</string>
-    <string name="settings_section_sync">Cysoni</string>
+    <string name="settings_section_creating_events">Dewisiadau digwyddiadau</string>
+    <string name="settings_section_sync">Hysbysiadau a chysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
     <string name="settings_section_privacy">Preifatrwydd</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Clo\'r ap</string>
-    <string name="app_lock_subtitle_off">Mynnu datgloi i agor KashCal</string>
-    <string name="app_lock_subtitle_on">Datgloi ag olion bysedd, wyneb neu glo sgrin</string>
+    <string name="settings_app_lock_info">Angen dilysu\'r ddyfais i agor KashCal.</string>
     <string name="app_lock_veil_locked">Ar glo</string>
     <string name="app_lock_veil_unlock">Datgloi</string>
     <string name="app_lock_veil_footnote">Olion bysedd, wyneb neu glo sgrin</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Mae\'r ffeil copi wrth gefn hon yn cynnwys data annilys ac ni ellir ei hadfer.</string>
     <string name="restore_error_apply_failure">Aeth rhywbeth o\'i le wrth roi\'r copi wrth gefn ar waith. Ni chadwyd unrhyw newidiadau.</string>
     <string name="backup_error_build_failed">Methodd y copi wrth gefn</string>
-    <string name="backup_error_write_failed">Methodd y copi wrth gefn — methwyd ysgrifennu i\'r ffeil</string>
+    <string name="backup_error_write_failed">Methodd y copi wrth gefn. Methu ysgrifennu i\'r ffeil.</string>
     <string name="backup_error_read_failed">Methwyd darllen y ffeil</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Gwall rhwydwaith, rhowch gynnig arall arni</string>
     <string name="error_import_file_not_found">Ffeil heb ei chanfod neu methu ei darllen.</string>
     <string name="error_import_invalid_format">Fformat ffeil calendr annilys.</string>
+    <string name="error_import_no_events">Ni chafwyd unrhyw ddigwyddiadau yn y ffeil</string>
+    <string name="error_import_failed">Methodd y mewnforio</string>
     <string name="error_import_partial">Wedi mewnforio %1$d digwyddiad, %2$d wedi methu.</string>
     <string name="error_export_failed">Wedi methu allforio digwyddiadau.</string>
     <string name="error_export_no_events">Dim digwyddiadau i\'w hallforio.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Gwall Calendr</string>
     <string name="error_device_calendar_write_failed">Wedi methu cadw i galendr y ddyfais. Ceisiwch eto.</string>
     <string name="error_device_calendar_permission">Mae angen caniatâd ysgrifennu calendr. Rhowch ganiatâd yn y Gosodiadau.</string>
+    <string name="error_device_calendar_permission_denied">Diffoddwch ac ailgychwyn y caniatâd Calendr yn y Gosodiadau i roi mynediad ysgrifennu</string>
     <string name="error_device_calendar_not_found">Calendr heb ei ganfod. Efallai ei fod wedi\'i ddileu.</string>
     <string name="error_device_event_not_found">Digwyddiad heb ei ganfod. Efallai ei fod wedi\'i ddileu.</string>
     <string name="error_device_calendar_read_only">Mae\'r calendr hwn yn ddarllen-yn-unig.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Wedi\'i ddewis</string>
     <string name="cd_back">Yn ôl</string>
+    <string name="cd_opens_in_browser">Yn agor mewn porwr</string>
     <string name="cd_search">Chwilio</string>
     <string name="cd_create_event">Creu digwyddiad</string>
     <string name="cd_delete">Dileu</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Ailadroddol</string>
     <string name="cd_enabled">Wedi\'i alluogi</string>
     <string name="cd_sync_error">Gwall cysoni</string>
-    <string name="cd_select_option">Dewis opsiwn</string>
     <string name="cd_select_label">Dewis %1$s</string>
     <string name="cd_wheel_picker">Dewisydd olwyn gyda %1$d opsiwn</string>
     <string name="cd_time_entry_keyboard">Nodi\'r union amser</string>
     <string name="time_entry_dialog_title">Nodi amser</string>
     <string name="time_entry_tap_to_edit">Tapiwch i olygu</string>
     <string name="cd_version_info">KashCal fersiwn %1$s. Pwyswch yn hir am opsiynau dadfygio.</string>
+    <string name="cd_about_setting">Ynghylch %1$s</string>
     <string name="cd_color_slider">Llithrydd lliw, %1$s ar hyn o bryd</string>
     <string name="cd_color_slider_state">%1$s, %2$d gradd</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Lliw:</string>
     <string name="label_repeat">Ailadrodd</string>
     <string name="label_sync_interval">Cyfwng Cysoni:</string>
-    <string name="label_scheduled_events">Digwyddiadau Wedi\'u Trefnu</string>
-    <string name="label_all_day_events">Digwyddiadau Drwy\'r Dydd</string>
     <string name="label_server_url">URL Gweinydd</string>
     <string name="label_username">Enw defnyddiwr</string>
     <string name="label_password">Cyfrinair</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Calendrau Gweladwy</string>
     <string name="settings_default_calendar">Calendr Rhagosodedig</string>
     <string name="settings_default_event_length">Hyd Digwyddiad Rhagosodedig</string>
-    <string name="settings_default_alerts">Rhybuddion Rhagosodedig</string>
+    <string name="settings_default_event_length_hint">Hyd rhagosodedig ar gyfer digwyddiadau newydd</string>
+    <string name="settings_timed_event_alert">Rhybudd digwyddiad ag amser</string>
+    <string name="settings_all_day_event_alert">Rhybudd digwyddiad drwy\'r dydd</string>
+    <string name="settings_custom_alert_value">Personol (%1$s)</string>
     <string name="settings_notifications">Hysbysiadau</string>
-    <string name="settings_new_events">Digwyddiadau newydd</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Rhagosodiad y system</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendrau\'r Ddyfais</string>
     <string name="settings_device_calendars_hint">Calendrau o apiau eraill</string>
-    <string name="settings_quick_event_add">Ychwanegu Digwyddiad Cyflym</string>
+    <string name="settings_quick_event_add">Ychwanegu digwyddiad clyfar</string>
+    <string name="settings_quick_event_add_info">Crëwch ddigwyddiadau drwy deipio\'n naturiol. Mae \"Cinio gyda Sam dydd Gwener 1yh\" yn llenwi\'r teitl, y dyddiad a\'r amser i chi.</string>
     <string name="settings_suggest_titles">Awgrymu teitlau digwyddiadau</string>
+    <string name="settings_suggest_titles_info">Wrth i chi enwi digwyddiad newydd, mae\'n awgrymu teitlau rydych wedi\'u defnyddio o\'r blaen, fel bod digwyddiadau ailadroddus yn un tap. Wedi\'u trefnu yn ôl pa mor aml a pha mor ddiweddar rydych wedi\'u defnyddio.</string>
     <string name="settings_week_numbers">Rhifau Wythnosau</string>
     <string name="settings_show_declined">Dangos digwyddiadau a wrthodwyd</string>
     <string name="settings_widget_event_limit">Terfyn Digwyddiadau Widget</string>
+    <string name="settings_widget_event_limit_hint">Y mwyaf o ddigwyddiadau a ddangosir bob dydd mewn widgets</string>
     <string name="settings_sync_lookback">Edrych yn Ôl Cysoni</string>
-    <string name="settings_auto_detect_emojis">Canfod Emojis yn Awtomatig</string>
-    <string name="settings_events_per_day">Digwyddiadau y dydd</string>
+    <string name="settings_sync_lookback_hint">Pa mor bell yn ôl i gysoni digwyddiadau</string>
     <string name="settings_not_set">Heb ei osod</string>
     <string name="settings_on">Ymlaen</string>
     <string name="settings_off">I ffwrdd</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Ymddiried mewn cysylltiad anniogel</string>
     <string name="action_add_another">Ychwanegu Un Arall</string>
     <string name="account_connected_found_calendars">Wedi canfod %1$d calendr(au) ar gyfer %2$s.</string>
-    <string name="account_connected_syncing_hint">Cysoni ar waith — bydd digwyddiadau\'n ymddangos yn fuan.</string>
+    <string name="account_connected_syncing_hint">Cydweddu ar y gweill. Bydd digwyddiadau\'n ymddangos cyn bo hir.</string>
     <string name="settings_time_format_currently_24h">Ar hyn o bryd: 24 awr (%1$s)</string>
     <string name="settings_time_format_currently_12h">Ar hyn o bryd: 12 awr (%1$s)</string>
     <string name="settings_time_format_example">Enghraifft: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Darllen yn unig (calendr darllen-yn-unig)</string>
     <string name="settings_developer_options">Opsiynau Datblygwr</string>
     <string name="settings_sync_frequency">Amlder Cysoni</string>
-    <string name="settings_preview">RHAGOLWG</string>
-    <string name="settings_n_events">%1$d digwyddiad</string>
-    <string name="settings_n_events_default">%1$d digwyddiad (rhagosodedig)</string>
+    <string name="settings_sync_frequency_hint">Pa mor aml i gysoni yn y cefndir</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Calendrau</string>
     <string name="drawer_contacts">Cysylltiadau</string>
     <string name="drawer_device_calendars">Calendrau\'r ddyfais</string>
     <string name="drawer_account_offline">All-lein</string>
+    <string name="calendar_local">Lleol</string>
     <string name="drawer_share_feedback">Cymorth a dogfennau</string>
     <string name="event_title_fallback">Digwyddiad</string>
 
@@ -1070,6 +1075,7 @@
     <string name="reminder_time_after">%1$s ar ôl</string>
     <string name="reminder_day_of_event_12h">9 AM diwrnod y digwyddiad</string>
     <string name="reminder_day_of_event_24h">09:00 diwrnod y digwyddiad</string>
+    <string name="reminder_day_of_event">Diwrnod y digwyddiad</string>
     <string name="reminder_before_at_12h">%1$s cyn am 9 AM</string>
     <string name="reminder_before_at_24h">%1$s cyn am 09:00</string>
     <string name="reminder_short_off">Diffodd</string>
@@ -1080,6 +1086,19 @@
     <string name="reminder_short_hours">%1$da</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d awr</string>
+    <string name="reminder_med_weeks">%1$d wsn</string>
+    <plurals name="reminder_med_days">
+        <item quantity="zero">%1$d diw</item>
+        <item quantity="one">%1$d diw</item>
+        <item quantity="two">%1$d ddiw</item>
+        <item quantity="few">%1$d diw</item>
+        <item quantity="many">%1$d diw</item>
+        <item quantity="other">%1$d diw</item>
+    </plurals>
+    <string name="reminder_med_day_of">Diwrnod</string>
+    <string name="all_day_alert_9am_hint">Mae rhybuddion drwy\'r dydd yn tanio am 9 AM (09:00).</string>
     <string name="reminder_summary_none">Dim</string>
     <string name="duration_compact">%1$da %2$dm</string>
     <string name="duration_compact_short">%1$da%2$dm</string>

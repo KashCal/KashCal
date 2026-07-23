@@ -68,6 +68,7 @@
     <string name="action_view">Skatīt</string>
     <string name="action_enable">Iespējot</string>
     <string name="action_done">Gatavs</string>
+    <string name="action_back">Atpakaļ</string>
     <string name="action_save">Saglabāt</string>
     <string name="action_add">Pievienot</string>
     <string name="action_edit">Rediģēt</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Laika formāts</string>
     <string name="settings_start_week_on">Nedēļa sākas</string>
     <string name="settings_event_emojis">Notikumu emocijzīmes</string>
-    <string name="settings_emoji_subtitle">Rādīt emocijzīmes pēc notikumu nosaukumiem</string>
+    <string name="settings_event_emojis_info">Pievieno notikumiem emocijzīmi pēc nosaukuma, piemēram, 🎂 nosaukumam \"Dzimšanas diena\".</string>
     <string name="settings_force_sync">Piespiedu pilna sinhronizācija</string>
     <string name="settings_force_sync_subtitle">Lejupielādēt visus kalendāra datus no jauna</string>
     <string name="settings_sync_history">Sinhronizācijas vēsture</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Saglabāt notikumus ICS failā</string>
     <string name="settings_birthday_reminder">Dzimšanas dienas atgādinājums</string>
     <string name="settings_use_device_timezone">Izmantot ierīces laika joslu</string>
-    <string name="settings_section_calendars">Kalendāri</string>
+    <string name="settings_section_calendars">Kalendāri un konti</string>
     <string name="settings_section_appearance">Izskats</string>
-    <string name="settings_section_creating_events">Notikumu izveide</string>
-    <string name="settings_section_sync">Sinhronizācija</string>
+    <string name="settings_section_creating_events">Notikumu iestatījumi</string>
+    <string name="settings_section_sync">Paziņojumi un sinhronizācija</string>
     <string name="settings_section_data">Dublēšana un atjaunošana</string>
     <string name="settings_section_privacy">Konfidencialitāte</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Lietotnes bloķēšana</string>
-    <string name="app_lock_subtitle_off">Pieprasīt atbloķēšanu, lai atvērtu KashCal</string>
-    <string name="app_lock_subtitle_on">Atbloķēt ar pirksta nospiedumu, seju vai ekrāna bloķēšanu</string>
+    <string name="settings_app_lock_info">Pieprasīt ierīces autentifikāciju, lai atvērtu KashCal.</string>
     <string name="app_lock_veil_locked">Bloķēts</string>
     <string name="app_lock_veil_unlock">Atbloķēt</string>
     <string name="app_lock_veil_footnote">Pirksta nospiedums, seja vai ekrāna bloķēšana</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Dublējuma failā ir nederīgi dati, un to nevar atjaunot.</string>
     <string name="restore_error_apply_failure">Dublējuma piemērošanas laikā radās kļūda. Izmaiņas netika saglabātas.</string>
     <string name="backup_error_build_failed">Dublēšana neizdevās</string>
-    <string name="backup_error_write_failed">Dublēšana neizdevās — neizdevās ierakstīt failā</string>
+    <string name="backup_error_write_failed">Neizdevās izveidot dublējumu. Neizdevās ierakstīt failā.</string>
     <string name="backup_error_read_failed">Neizdevās nolasīt failu</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Tīkla kļūda, mēģiniet vēlreiz</string>
     <string name="error_import_file_not_found">Fails nav atrasts vai nav lasāms.</string>
     <string name="error_import_invalid_format">Nederīgs kalendāra faila formāts.</string>
+    <string name="error_import_no_events">Failā nav atrasts neviens notikums</string>
+    <string name="error_import_failed">Importēšana neizdevās</string>
     <string name="error_import_partial">Importēti %1$d notikumi, %2$d neizdevās.</string>
     <string name="error_export_failed">Neizdevās eksportēt notikumus.</string>
     <string name="error_export_no_events">Nav notikumu eksportēšanai.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalendāra kļūda</string>
     <string name="error_device_calendar_write_failed">Neizdevās saglabāt ierīces kalendārā. Lūdzu, mēģiniet vēlreiz.</string>
     <string name="error_device_calendar_permission">Nepieciešama kalendāra rakstīšanas atļauja. Lūdzu, piešķiriet atļauju iestatījumos.</string>
+    <string name="error_device_calendar_permission_denied">Iestatījumos izslēdz un atkal ieslēdz kalendāra atļauju, lai piešķirtu rakstīšanas piekļuvi</string>
     <string name="error_device_calendar_not_found">Kalendārs nav atrasts. Iespējams, tas tika noņemts.</string>
     <string name="error_device_event_not_found">Notikums nav atrasts. Iespējams, tas tika dzēsts.</string>
     <string name="error_device_calendar_read_only">Šis kalendārs ir tikai lasāms.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Atlasīts</string>
     <string name="cd_back">Atpakaļ</string>
+    <string name="cd_opens_in_browser">Atveras pārlūkā</string>
     <string name="cd_search">Meklēt</string>
     <string name="cd_create_event">Izveidot notikumu</string>
     <string name="cd_delete">Dzēst</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Atkārtojošs</string>
     <string name="cd_enabled">Iespējots</string>
     <string name="cd_sync_error">Sinhronizācijas kļūda</string>
-    <string name="cd_select_option">Izvēlēties iespēju</string>
     <string name="cd_select_label">Izvēlēties %1$s</string>
     <string name="cd_wheel_picker">Ritenīša izvēle ar %1$d iespējām</string>
     <string name="cd_time_entry_keyboard">Ievadīt precīzu laiku</string>
     <string name="time_entry_dialog_title">Ievadīt laiku</string>
     <string name="time_entry_tap_to_edit">Pieskarieties, lai rediģētu</string>
     <string name="cd_version_info">KashCal versija %1$s. Ilgi turiet, lai atvērtu atkļūdošanas iespējas.</string>
+    <string name="cd_about_setting">Par %1$s</string>
     <string name="cd_color_slider">Krāsu slīdnis, pašlaik %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d grādi</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Krāsa:</string>
     <string name="label_repeat">Atkārtot</string>
     <string name="label_sync_interval">Sinhronizācijas intervāls:</string>
-    <string name="label_scheduled_events">Ieplānotie notikumi</string>
-    <string name="label_all_day_events">Visas dienas notikumi</string>
     <string name="label_server_url">Servera URL</string>
     <string name="label_username">Lietotājvārds</string>
     <string name="label_password">Parole</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Redzamie kalendāri</string>
     <string name="settings_default_calendar">Noklusējuma kalendārs</string>
     <string name="settings_default_event_length">Noklusējuma notikuma garums</string>
-    <string name="settings_default_alerts">Noklusējuma atgādinājumi</string>
+    <string name="settings_default_event_length_hint">Noklusējuma ilgums jauniem notikumiem</string>
+    <string name="settings_timed_event_alert">Notikuma ar laiku brīdinājums</string>
+    <string name="settings_all_day_event_alert">Visas dienas notikuma brīdinājums</string>
+    <string name="settings_custom_alert_value">Pielāgots (%1$s)</string>
     <string name="settings_notifications">Paziņojumi</string>
-    <string name="settings_new_events">Jauni notikumi</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistēmas noklusējums</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ierīces kalendāri</string>
     <string name="settings_device_calendars_hint">Kalendāri no citām lietotnēm</string>
-    <string name="settings_quick_event_add">Ātrā notikuma pievienošana</string>
+    <string name="settings_quick_event_add">Vieda notikumu pievienošana</string>
+    <string name="settings_quick_event_add_info">Veidojiet notikumus, rakstot dabiskā valodā. \"Pusdienas ar Sam piektdien plkst. 13:00\" aizpilda nosaukumu, datumu un laiku jūsu vietā.</string>
     <string name="settings_suggest_titles">Ieteikt notikumu nosaukumus</string>
+    <string name="settings_suggest_titles_info">Kad nosaucat jaunu notikumu, piedāvāt jau iepriekš izmantotus nosaukumus, lai atkārtotus notikumus izveidotu ar vienu pieskārienu. Sakārtoti pēc tā, cik bieži un cik nesen tos esat izmantojis.</string>
     <string name="settings_week_numbers">Nedēļu numuri</string>
     <string name="settings_show_declined">Rādīt noraidītos notikumus</string>
     <string name="settings_widget_event_limit">Logrīka notikumu limits</string>
+    <string name="settings_widget_event_limit_hint">Maksimālais notikumu skaits dienā logrīkos</string>
     <string name="settings_sync_lookback">Sinhronizācijas atskats</string>
-    <string name="settings_auto_detect_emojis">Automātiski noteikt emocijzīmes</string>
-    <string name="settings_events_per_day">Notikumi dienā</string>
+    <string name="settings_sync_lookback_hint">Cik senus notikumus sinhronizēt</string>
     <string name="settings_not_set">Nav iestatīts</string>
     <string name="settings_on">Ieslēgts</string>
     <string name="settings_off">Izslēgts</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Uzticēties nedrošam savienojumam</string>
     <string name="action_add_another">Pievienot vēl</string>
     <string name="account_connected_found_calendars">Atrasti %1$d kalendāri kontam %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinhronizācija notiek — notikumi drīz parādīsies.</string>
+    <string name="account_connected_syncing_hint">Notiek sinhronizācija. Notikumi drīz parādīsies.</string>
     <string name="settings_time_format_currently_24h">Pašlaik: 24 stundu (%1$s)</string>
     <string name="settings_time_format_currently_12h">Pašlaik: 12 stundu (%1$s)</string>
     <string name="settings_time_format_example">Piemērs: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Tikai lasāms (kalendārs ir tikai lasāms)</string>
     <string name="settings_developer_options">Izstrādātāja iespējas</string>
     <string name="settings_sync_frequency">Sinhronizācijas biežums</string>
-    <string name="settings_preview">PRIEKŠSKATĪJUMS</string>
-    <string name="settings_n_events">%1$d notikumi</string>
-    <string name="settings_n_events_default">%1$d notikumi (noklusējums)</string>
+    <string name="settings_sync_frequency_hint">Cik bieži sinhronizēt fonā</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendāri</string>
     <string name="drawer_contacts">Kontakti</string>
     <string name="drawer_device_calendars">Ierīces kalendāri</string>
     <string name="drawer_account_offline">Bezsaistē</string>
+    <string name="calendar_local">Vietējais</string>
     <string name="drawer_share_feedback">Palīdzība un dokumenti</string>
     <string name="event_title_fallback">Notikums</string>
 
@@ -953,6 +958,7 @@
     <string name="reminder_time_after">%1$s pēc</string>
     <string name="reminder_day_of_event_12h">9 AM notikuma dienā</string>
     <string name="reminder_day_of_event_24h">09:00 notikuma dienā</string>
+    <string name="reminder_day_of_event">Notikuma dienā</string>
     <string name="reminder_before_at_12h">%1$s pirms plkst. 9 AM</string>
     <string name="reminder_before_at_24h">%1$s pirms plkst. 09:00</string>
     <string name="reminder_short_off">Izsl.</string>
@@ -963,6 +969,16 @@
     <string name="reminder_short_hours">%1$dst</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dned</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d st</string>
+    <string name="reminder_med_weeks">%1$d ned</string>
+    <plurals name="reminder_med_days">
+        <item quantity="zero">%1$d d</item>
+        <item quantity="one">%1$d d</item>
+        <item quantity="other">%1$d d</item>
+    </plurals>
+    <string name="reminder_med_day_of">Tajā dienā</string>
+    <string name="all_day_alert_9am_hint">Visas dienas brīdinājumi tiek nosūtīti plkst. 9 (09:00).</string>
     <string name="reminder_summary_none">Nav</string>
     <string name="duration_compact">%1$dst %2$dmin</string>
     <string name="duration_compact_short">%1$dst%2$dmin</string>

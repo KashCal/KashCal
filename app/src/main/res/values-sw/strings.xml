@@ -68,6 +68,7 @@
     <string name="action_view">Tazama</string>
     <string name="action_enable">Washa</string>
     <string name="action_done">Imekamilika</string>
+    <string name="action_back">Rudi</string>
     <string name="action_save">Hifadhi</string>
     <string name="action_add">Ongeza</string>
     <string name="action_edit">Hariri</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Muundo wa Saa</string>
     <string name="settings_start_week_on">Anza Wiki Siku ya</string>
     <string name="settings_event_emojis">Emoji za Matukio</string>
-    <string name="settings_emoji_subtitle">Onyesha emoji kulingana na vichwa vya matukio</string>
+    <string name="settings_event_emojis_info">Huongeza emoji kwenye matukio kulingana na kichwa, kama 🎂 kwa \"Siku ya kuzaliwa\".</string>
     <string name="settings_force_sync">Sawazisha Kamili kwa Nguvu</string>
     <string name="settings_force_sync_subtitle">Pakua upya data yote ya kalenda</string>
     <string name="settings_sync_history">Historia ya Kusawazisha</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Hifadhi matukio kwenye faili ya ICS</string>
     <string name="settings_birthday_reminder">Ukumbusho wa Siku ya Kuzaliwa</string>
     <string name="settings_use_device_timezone">Tumia eneo la saa la kifaa</string>
-    <string name="settings_section_calendars">Kalenda</string>
+    <string name="settings_section_calendars">Kalenda &amp; akaunti</string>
     <string name="settings_section_appearance">Mwonekano</string>
-    <string name="settings_section_creating_events">Kuunda matukio</string>
-    <string name="settings_section_sync">Kusawazisha</string>
+    <string name="settings_section_creating_events">Mapendeleo ya tukio</string>
+    <string name="settings_section_sync">Arifa &amp; kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
     <string name="settings_section_privacy">Faragha</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kufuli ya programu</string>
-    <string name="app_lock_subtitle_off">Hitaji kufungua ili kufungua KashCal</string>
-    <string name="app_lock_subtitle_on">Fungua kwa alama ya kidole, uso, au kufuli ya skrini</string>
+    <string name="settings_app_lock_info">Hitaji uthibitishaji wa kifaa ili kufungua KashCal.</string>
     <string name="app_lock_veil_locked">Imefungwa</string>
     <string name="app_lock_veil_unlock">Fungua</string>
     <string name="app_lock_veil_footnote">Alama ya kidole, uso, au kufuli ya skrini</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Faili hii ya nakala rudufu ina data batili na haiwezi kurejeshwa.</string>
     <string name="restore_error_apply_failure">Kitu kimekwenda vibaya wakati wa kutumia nakala rudufu. Hakuna mabadiliko yaliyohifadhiwa.</string>
     <string name="backup_error_build_failed">Hifadhi rudufu imeshindikana</string>
-    <string name="backup_error_write_failed">Hifadhi rudufu imeshindikana — haikuweza kuandika kwenye faili</string>
+    <string name="backup_error_write_failed">Hifadhi rudufu imeshindwa. Haikuweza kuandika kwenye faili.</string>
     <string name="backup_error_read_failed">Haikuweza kusoma faili</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Hitilafu ya mtandao, jaribu tena</string>
     <string name="error_import_file_not_found">Faili haijapatikana au haiwezi kusomwa.</string>
     <string name="error_import_invalid_format">Muundo wa faili ya kalenda si sahihi.</string>
+    <string name="error_import_no_events">Hakuna matukio yaliyopatikana kwenye faili</string>
+    <string name="error_import_failed">Uingizaji umeshindikana</string>
     <string name="error_import_partial">Matukio %1$d yameingizwa, %2$d yameshindikana.</string>
     <string name="error_export_failed">Imeshindwa kuhamisha matukio.</string>
     <string name="error_export_no_events">Hakuna matukio ya kuhamisha.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Hitilafu ya Kalenda</string>
     <string name="error_device_calendar_write_failed">Imeshindwa kuhifadhi kwenye kalenda ya kifaa. Tafadhali jaribu tena.</string>
     <string name="error_device_calendar_permission">Ruhusa ya kuandika kalenda inahitajika. Tafadhali ruhusa katika Mipangilio.</string>
+    <string name="error_device_calendar_permission_denied">Zima kisha uwashe tena ruhusa ya Kalenda katika Mipangilio ili kutoa ufikiaji wa kuandika</string>
     <string name="error_device_calendar_not_found">Kalenda haijapatikana. Inaweza kuwa imeondolewa.</string>
     <string name="error_device_event_not_found">Tukio halijapatikana. Linaweza kuwa limefutwa.</string>
     <string name="error_device_calendar_read_only">Kalenda hii ni ya kusoma tu.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Imechaguliwa</string>
     <string name="cd_back">Rudi</string>
+    <string name="cd_opens_in_browser">Hufunguliwa katika kivinjari</string>
     <string name="cd_search">Tafuta</string>
     <string name="cd_create_event">Unda tukio</string>
     <string name="cd_delete">Futa</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Inarudia</string>
     <string name="cd_enabled">Imewashwa</string>
     <string name="cd_sync_error">Hitilafu ya kusawazisha</string>
-    <string name="cd_select_option">Chagua chaguo</string>
     <string name="cd_select_label">Chagua %1$s</string>
     <string name="cd_wheel_picker">Kichagua gurudumu chenye chaguo %1$d</string>
     <string name="cd_time_entry_keyboard">Weka saa kamili</string>
     <string name="time_entry_dialog_title">Weka saa</string>
     <string name="time_entry_tap_to_edit">Gusa ili kuhariri</string>
     <string name="cd_version_info">KashCal toleo %1$s. Bonyeza kwa muda mrefu kwa chaguo za utatuzi.</string>
+    <string name="cd_about_setting">Kuhusu %1$s</string>
     <string name="cd_color_slider">Kitelezi cha rangi, sasa hivi %1$s</string>
     <string name="cd_color_slider_state">%1$s, digrii %2$d</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Rangi:</string>
     <string name="label_repeat">Rudia</string>
     <string name="label_sync_interval">Muda wa Kusawazisha:</string>
-    <string name="label_scheduled_events">Matukio Yaliyopangwa</string>
-    <string name="label_all_day_events">Matukio ya Siku Nzima</string>
     <string name="label_server_url">URL ya Seva</string>
     <string name="label_username">Jina la mtumiaji</string>
     <string name="label_password">Nenosiri</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Kalenda Zinazoonekana</string>
     <string name="settings_default_calendar">Kalenda Chaguomsingi</string>
     <string name="settings_default_event_length">Urefu wa Tukio Chaguomsingi</string>
-    <string name="settings_default_alerts">Tahadhari Chaguomsingi</string>
+    <string name="settings_default_event_length_hint">Muda chaguo-msingi kwa matukio mapya</string>
+    <string name="settings_timed_event_alert">Arifa ya tukio lenye muda</string>
+    <string name="settings_all_day_event_alert">Arifa ya tukio la siku nzima</string>
+    <string name="settings_custom_alert_value">Maalum (%1$s)</string>
     <string name="settings_notifications">Arifa</string>
-    <string name="settings_new_events">Matukio mapya</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Chaguomsingi ya mfumo</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalenda za Kifaa</string>
     <string name="settings_device_calendars_hint">Kalenda kutoka kwa programu zingine</string>
-    <string name="settings_quick_event_add">Ongeza Tukio Haraka</string>
+    <string name="settings_quick_event_add">Ongeza tukio kwa ubunifu</string>
+    <string name="settings_quick_event_add_info">Unda matukio kwa kuandika kwa njia ya kawaida. \"Chakula cha mchana na Sam Ijumaa saa 7 mchana\" hujaza kichwa, tarehe, na muda kwa ajili yako.</string>
     <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
+    <string name="settings_suggest_titles_info">Unapotaja tukio jipya, hupendekeza vichwa ulivyotumia awali, ili matukio yanayojirudia yawe gusa moja tu. Vimepangwa kulingana na mara ngapi na hivi karibuni kiasi gani umevitumia.</string>
     <string name="settings_week_numbers">Nambari za Wiki</string>
     <string name="settings_show_declined">Onyesha matukio yaliyokataliwa</string>
     <string name="settings_widget_event_limit">Kikomo cha Matukio ya Wijeti</string>
+    <string name="settings_widget_event_limit_hint">Idadi kubwa ya matukio yanayoonyeshwa kwa siku katika wijeti</string>
     <string name="settings_sync_lookback">Muda wa Kusawazisha Nyuma</string>
-    <string name="settings_auto_detect_emojis">Tambua Emoji Kiotomatiki</string>
-    <string name="settings_events_per_day">Matukio kwa siku</string>
+    <string name="settings_sync_lookback_hint">Kiasi cha nyuma cha kusawazisha matukio</string>
     <string name="settings_not_set">Haijawekwa</string>
     <string name="settings_on">Washa</string>
     <string name="settings_off">Zima</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Amini muunganisho usio salama</string>
     <string name="action_add_another">Ongeza Nyingine</string>
     <string name="account_connected_found_calendars">Kalenda %1$d zimepatikana kwa %2$s.</string>
-    <string name="account_connected_syncing_hint">Inasawazisha — matukio yataonekana hivi karibuni.</string>
+    <string name="account_connected_syncing_hint">Usawazishaji unaendelea. Matukio yataonekana hivi karibuni.</string>
     <string name="settings_time_format_currently_24h">Sasa hivi: Saa 24 (%1$s)</string>
     <string name="settings_time_format_currently_12h">Sasa hivi: Saa 12 (%1$s)</string>
     <string name="settings_time_format_example">Mfano: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Kusoma tu (kalenda ya kusoma tu)</string>
     <string name="settings_developer_options">Chaguo za Msanidi</string>
     <string name="settings_sync_frequency">Mzunguko wa Kusawazisha</string>
-    <string name="settings_preview">HAKIKI</string>
-    <string name="settings_n_events">matukio %1$d</string>
-    <string name="settings_n_events_default">matukio %1$d (chaguomsingi)</string>
+    <string name="settings_sync_frequency_hint">Mara ngapi kusawazisha chinichini</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalenda</string>
     <string name="drawer_contacts">Anwani</string>
     <string name="drawer_device_calendars">Kalenda za kifaa</string>
     <string name="drawer_account_offline">Nje ya mtandao</string>
+    <string name="calendar_local">Ndani ya kifaa</string>
     <string name="drawer_share_feedback">Usaidizi na hati</string>
     <string name="event_title_fallback">Tukio</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s baadaye</string>
     <string name="reminder_day_of_event_12h">Saa 3 asubuhi siku ya tukio</string>
     <string name="reminder_day_of_event_24h">09:00 siku ya tukio</string>
+    <string name="reminder_day_of_event">Siku ya tukio</string>
     <string name="reminder_before_at_12h">%1$s kabla saa 3 asubuhi</string>
     <string name="reminder_before_at_24h">%1$s kabla saa 09:00</string>
     <string name="reminder_short_off">Zima</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$ds</string>
     <string name="reminder_short_days">%1$dsk</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d dk</string>
+    <string name="reminder_med_hours">%1$d saa</string>
+    <string name="reminder_med_weeks">%1$d wiki</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">siku %1$d</item>
+        <item quantity="other">siku %1$d</item>
+    </plurals>
+    <string name="reminder_med_day_of">Siku ya</string>
+    <string name="all_day_alert_9am_hint">Arifa za siku nzima huwaka saa 3 asubuhi (09:00).</string>
     <string name="reminder_summary_none">Hakuna</string>
     <string name="duration_compact">%1$ds %2$dd</string>
     <string name="duration_compact_short">%1$ds%2$dd</string>

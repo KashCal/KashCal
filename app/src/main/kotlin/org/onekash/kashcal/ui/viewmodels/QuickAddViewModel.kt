@@ -26,7 +26,6 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
-import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -185,7 +184,10 @@ class QuickAddViewModel @Inject constructor(
 
                 val now = System.currentTimeMillis()
                 val event = Event(
-                    uid = UUID.randomUUID().toString(),
+                    // Blank uid: EventWriter mints the canonical
+                    // @kashcal.onekash.org UID so the UI layer isn't a second
+                    // minting authority.
+                    uid = "",
                     calendarId = calendarId,
                     title = result.title,
                     startTs = startTs,

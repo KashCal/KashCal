@@ -2,6 +2,7 @@ package org.onekash.kashcal.sync.parser.icaldav
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -271,6 +272,189 @@ class ICalEventMapperTest {
         assertTrue(
             "ImportId should start with UID",
             importId.startsWith("recid-001@kashcal.test")
+        )
+    }
+
+    @Test
+    fun `stored EXDATE and stored originalInstanceTime agree for the same excluded slot - TZID datetime`() {
+        // Guards the prune's EXDATE-gate for the real device shape: master
+        // DTSTART, EXDATE, and RECURRENCE-ID are all TZID=America/Chicago
+        // datetimes at the SAME original slot. The prune compares an exception's
+        // stored originalInstanceTime (normalized via normalizeRecurrenceId
+        // against the resolved master) against the master's stored exdate set
+        // (normalized via normalizeToMasterValueType against the master's own
+        // DTSTART). Those are two different code paths; if they ever produced
+        // different ms for the same slot, the prune would silently never fire
+        // and the "occurrence not deleted" bug would return. Assert they agree.
+        val masterIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:tz-prune-uid
+            DTSTAMP:20260721T000000Z
+            DTSTART;TZID=America/Chicago:20260720T200000
+            DTEND;TZID=America/Chicago:20260720T203000
+            RRULE:FREQ=DAILY;COUNT=10
+            EXDATE;TZID=America/Chicago:20260722T200000
+            SUMMARY:Recur
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+        val exceptionIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:tz-prune-uid
+            DTSTAMP:20260721T000000Z
+            RECURRENCE-ID;TZID=America/Chicago:20260722T200000
+            DTSTART;TZID=America/Chicago:20260722T085500
+            DTEND;TZID=America/Chicago:20260722T092500
+            SUMMARY:Recur edited
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val master = parser.parseAllEvents(masterIcs).getOrNull()!!.first()
+        val exception = parser.parseAllEvents(exceptionIcs).getOrNull()!!.first()
+
+        // Master stored exdate (the set the prune's exdateSet is parsed from).
+        val storedExdate = ICalEventMapper.toEntity(master, masterIcs, 1L, null, null)
+            .event.exdate!!.split(",").map { it.trim().toLong() }.toSet()
+
+        // Exception stored originalInstanceTime (what the prune tests membership of).
+        val storedInstance = ICalEventMapper.toEntity(
+            exception, exceptionIcs, 1L, null, null, masterDtStart = master.dtStart
+        ).event.originalInstanceTime
+
+        assertNotNull(storedInstance)
+        assertTrue(
+            "EXDATE-gate would never fire: master exdate set $storedExdate does not contain the " +
+                "exception's stored originalInstanceTime $storedInstance for the same excluded slot.",
+            storedInstance in storedExdate
+        )
+    }
+
+    @Test
+    fun `normalized lookup key matches stored originalInstanceTime for value-type-mismatched RECURRENCE-ID`() {
+        // Timed master, but the exception carries a DATE-form RECURRENCE-ID
+        // (value-type mismatch: RFC 5545 §3.8.4.4 says RECURRENCE-ID MUST share
+        // DTSTART's value type, but peer clients emit the mismatch and servers
+        // preserve it). The mapper NORMALIZES the stored originalInstanceTime to
+        // the master's local time-of-day. The exception pull-back LOOKUP must
+        // normalize the same way, or the raw midnight-UTC key misses the stored
+        // row and the exception is wrongly treated as NEW. This asserts the two
+        // derivations agree once both are normalized against the master DTSTART.
+        val masterIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:mismatch-001@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            RRULE:FREQ=DAILY
+            SUMMARY:Daily Timed Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val exceptionIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:mismatch-001@kashcal.test
+            DTSTAMP:20251226T100000Z
+            RECURRENCE-ID;VALUE=DATE:20251226
+            DTSTART:20251226T160000Z
+            DTEND:20251226T170000Z
+            SUMMARY:Moved Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val master = parser.parseAllEvents(masterIcs).getOrNull()!!.first()
+        val exception = parser.parseAllEvents(exceptionIcs).getOrNull()!!.first()
+
+        // What the mapper STORES. The caller passes the MASTER's DTSTART; the
+        // stored originalInstanceTime must be normalized against THAT, not the
+        // exception's own DTSTART. (Regression guard: a local named masterDtStart
+        // once shadowed this parameter and normalized against the exception's own
+        // DTSTART, severing the caller's value.)
+        val storedInstanceTime = ICalEventMapper.toEntity(
+            icalEvent = exception,
+            rawIcal = exceptionIcs,
+            calendarId = 1L,
+            caldavUrl = null,
+            etag = null,
+            masterDtStart = master.dtStart,
+        ).event.originalInstanceTime
+
+        // The lookup key PullStrategy builds: RECURRENCE-ID normalized against the
+        // master DTSTART. The store path must agree with it or the exception
+        // pull-back lookup misses the stored row and re-adds it as a NEW event.
+        val normalizedLookupTime = ICalEventMapper.normalizeRecurrenceId(
+            recurrenceId = exception.recurrenceId,
+            masterDtStart = master.dtStart,
+        )?.timestamp
+
+        // Guard: the raw midnight-UTC form genuinely diverges from the normalized
+        // value, so this fixture exercises a real mismatch, not a trivial equality.
+        assertNotEquals(
+            "Fixture must exercise a real value-type mismatch (raw != normalized)",
+            normalizedLookupTime, exception.recurrenceId?.timestamp
+        )
+
+        assertNotNull(storedInstanceTime)
+        assertNotNull(normalizedLookupTime)
+        assertEquals(
+            "Stored originalInstanceTime must be normalized against the MASTER DTSTART " +
+                "(the caller's parameter), matching the lookup key. " +
+                "stored=$storedInstanceTime normalizedLookup=$normalizedLookupTime",
+            normalizedLookupTime, storedInstanceTime
+        )
+    }
+
+    @Test
+    fun `toEntity with null masterDtStart falls back to raw RECURRENCE-ID timestamp`() {
+        // Documented fallback: when the master DTSTART isn't available (orphan
+        // exception, or master not resolved), the mapper stores the RECURRENCE-ID
+        // verbatim. The pull-side lookup uses the same null-master fallback, so
+        // both still agree. Guards normalizeRecurrenceId's masterDtStart==null
+        // pass-through branch.
+        val exceptionIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:mismatch-002@kashcal.test
+            DTSTAMP:20251226T100000Z
+            RECURRENCE-ID;VALUE=DATE:20251226
+            DTSTART:20251226T160000Z
+            DTEND:20251226T170000Z
+            SUMMARY:Orphan Moved Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val exception = parser.parseAllEvents(exceptionIcs).getOrNull()!!.first()
+
+        val stored = ICalEventMapper.toEntity(
+            icalEvent = exception,
+            rawIcal = exceptionIcs,
+            calendarId = 1L,
+            caldavUrl = null,
+            etag = null,
+            masterDtStart = null,
+        ).event.originalInstanceTime
+
+        assertEquals(
+            "With no master DTSTART, stored originalInstanceTime must equal the raw " +
+                "RECURRENCE-ID timestamp (pass-through).",
+            exception.recurrenceId?.timestamp, stored
         )
     }
 

@@ -68,6 +68,7 @@
     <string name="action_view">Xem</string>
     <string name="action_enable">Bật</string>
     <string name="action_done">Xong</string>
+    <string name="action_back">Quay lại</string>
     <string name="action_save">Lưu</string>
     <string name="action_add">Thêm</string>
     <string name="action_edit">Sửa</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Định dạng thời gian</string>
     <string name="settings_start_week_on">Bắt đầu tuần vào</string>
     <string name="settings_event_emojis">Biểu tượng sự kiện</string>
-    <string name="settings_emoji_subtitle">Hiển thị biểu tượng dựa trên tên sự kiện</string>
+    <string name="settings_event_emojis_info">Thêm biểu tượng cảm xúc vào sự kiện dựa trên tiêu đề, như 🎂 cho \"Sinh nhật\".</string>
     <string name="settings_force_sync">Đồng bộ toàn bộ</string>
     <string name="settings_force_sync_subtitle">Tải lại toàn bộ dữ liệu lịch</string>
     <string name="settings_sync_history">Lịch sử đồng bộ</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Lưu sự kiện ra tệp ICS</string>
     <string name="settings_birthday_reminder">Nhắc nhở sinh nhật</string>
     <string name="settings_use_device_timezone">Dùng múi giờ thiết bị</string>
-    <string name="settings_section_calendars">Lịch</string>
+    <string name="settings_section_calendars">Lịch và tài khoản</string>
     <string name="settings_section_appearance">Giao diện</string>
-    <string name="settings_section_creating_events">Tạo sự kiện</string>
-    <string name="settings_section_sync">Đồng bộ</string>
+    <string name="settings_section_creating_events">Tùy chọn sự kiện</string>
+    <string name="settings_section_sync">Thông báo và đồng bộ</string>
     <string name="settings_section_data">Sao lưu &amp; khôi phục</string>
     <string name="settings_section_privacy">Quyền riêng tư</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Khóa ứng dụng</string>
-    <string name="app_lock_subtitle_off">Yêu cầu mở khóa để mở KashCal</string>
-    <string name="app_lock_subtitle_on">Mở khóa bằng vân tay, khuôn mặt hoặc khóa màn hình</string>
+    <string name="settings_app_lock_info">Yêu cầu xác thực thiết bị để mở KashCal.</string>
     <string name="app_lock_veil_locked">Đã khóa</string>
     <string name="app_lock_veil_unlock">Mở khóa</string>
     <string name="app_lock_veil_footnote">Vân tay, khuôn mặt hoặc khóa màn hình</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Tệp sao lưu này chứa dữ liệu không hợp lệ và không thể khôi phục.</string>
     <string name="restore_error_apply_failure">Đã xảy ra lỗi khi áp dụng bản sao lưu. Không có thay đổi nào được lưu.</string>
     <string name="backup_error_build_failed">Sao lưu không thành công</string>
-    <string name="backup_error_write_failed">Sao lưu không thành công — không thể ghi vào tệp</string>
+    <string name="backup_error_write_failed">Sao lưu thất bại. Không thể ghi vào tệp.</string>
     <string name="backup_error_read_failed">Không thể đọc tệp</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Lỗi mạng, vui lòng thử lại</string>
     <string name="error_import_file_not_found">Không tìm thấy tệp hoặc không thể đọc.</string>
     <string name="error_import_invalid_format">Định dạng tệp lịch không hợp lệ.</string>
+    <string name="error_import_no_events">Không tìm thấy sự kiện nào trong tệp</string>
+    <string name="error_import_failed">Nhập không thành công</string>
     <string name="error_import_partial">Đã nhập %1$d sự kiện, %2$d thất bại.</string>
     <string name="error_export_failed">Xuất sự kiện thất bại.</string>
     <string name="error_export_no_events">Không có sự kiện để xuất.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Lỗi lịch</string>
     <string name="error_device_calendar_write_failed">Lưu vào lịch thiết bị thất bại. Vui lòng thử lại.</string>
     <string name="error_device_calendar_permission">Cần quyền ghi lịch. Vui lòng cấp quyền trong Cài đặt.</string>
+    <string name="error_device_calendar_permission_denied">Để cấp quyền ghi, hãy tắt rồi bật lại quyền Lịch trong Cài đặt</string>
     <string name="error_device_calendar_not_found">Không tìm thấy lịch. Có thể đã bị xóa.</string>
     <string name="error_device_event_not_found">Không tìm thấy sự kiện. Có thể đã bị xóa.</string>
     <string name="error_device_calendar_read_only">Lịch này chỉ cho phép đọc.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Đã chọn</string>
     <string name="cd_back">Quay lại</string>
+    <string name="cd_opens_in_browser">Mở trong trình duyệt</string>
     <string name="cd_search">Tìm kiếm</string>
     <string name="cd_create_event">Tạo sự kiện</string>
     <string name="cd_delete">Xóa</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Lặp lại</string>
     <string name="cd_enabled">Đã bật</string>
     <string name="cd_sync_error">Lỗi đồng bộ</string>
-    <string name="cd_select_option">Chọn tùy chọn</string>
     <string name="cd_select_label">Chọn %1$s</string>
     <string name="cd_wheel_picker">Bộ chọn cuộn với %1$d tùy chọn</string>
     <string name="cd_time_entry_keyboard">Nhập thời gian chính xác</string>
     <string name="time_entry_dialog_title">Nhập thời gian</string>
     <string name="time_entry_tap_to_edit">Nhấn để chỉnh sửa</string>
     <string name="cd_version_info">KashCal phiên bản %1$s. Nhấn giữ để mở tùy chọn gỡ lỗi.</string>
+    <string name="cd_about_setting">Giới thiệu về %1$s</string>
     <string name="cd_color_slider">Thanh trượt màu, hiện tại %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d độ</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Màu:</string>
     <string name="label_repeat">Lặp lại</string>
     <string name="label_sync_interval">Chu kỳ đồng bộ:</string>
-    <string name="label_scheduled_events">Sự kiện có giờ cụ thể</string>
-    <string name="label_all_day_events">Sự kiện cả ngày</string>
     <string name="label_server_url">URL máy chủ</string>
     <string name="label_username">Tên đăng nhập</string>
     <string name="label_password">Mật khẩu</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Lịch hiển thị</string>
     <string name="settings_default_calendar">Lịch mặc định</string>
     <string name="settings_default_event_length">Thời lượng sự kiện mặc định</string>
-    <string name="settings_default_alerts">Nhắc nhở mặc định</string>
+    <string name="settings_default_event_length_hint">Thời lượng mặc định cho sự kiện mới</string>
+    <string name="settings_timed_event_alert">Thông báo sự kiện có giờ</string>
+    <string name="settings_all_day_event_alert">Thông báo sự kiện cả ngày</string>
+    <string name="settings_custom_alert_value">Tùy chỉnh (%1$s)</string>
     <string name="settings_notifications">Thông báo</string>
-    <string name="settings_new_events">Sự kiện mới</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Mặc định hệ thống</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Lịch thiết bị</string>
     <string name="settings_device_calendars_hint">Lịch từ các ứng dụng khác</string>
-    <string name="settings_quick_event_add">Thêm nhanh sự kiện</string>
+    <string name="settings_quick_event_add">Thêm sự kiện thông minh</string>
+    <string name="settings_quick_event_add_info">Tạo sự kiện bằng cách gõ tự nhiên. \"Ăn trưa với Sam thứ Sáu 13:00\" sẽ tự điền tiêu đề, ngày và giờ cho bạn.</string>
     <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
+    <string name="settings_suggest_titles_info">Khi bạn đặt tên cho sự kiện mới, ứng dụng gợi ý những tiêu đề bạn đã dùng trước đây, để các sự kiện lặp lại chỉ cần một chạm. Được xếp hạng theo mức độ thường xuyên và gần đây bạn đã dùng.</string>
     <string name="settings_week_numbers">Số tuần</string>
     <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
     <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
+    <string name="settings_widget_event_limit_hint">Số sự kiện tối đa hiển thị mỗi ngày trong widget</string>
     <string name="settings_sync_lookback">Khoảng đồng bộ ngược</string>
-    <string name="settings_auto_detect_emojis">Tự động phát hiện biểu tượng</string>
-    <string name="settings_events_per_day">Sự kiện mỗi ngày</string>
+    <string name="settings_sync_lookback_hint">Đồng bộ sự kiện từ bao lâu trước</string>
     <string name="settings_not_set">Chưa đặt</string>
     <string name="settings_on">Bật</string>
     <string name="settings_off">Tắt</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Tin cậy kết nối không an toàn</string>
     <string name="action_add_another">Thêm tài khoản khác</string>
     <string name="account_connected_found_calendars">Tìm thấy %1$d lịch cho %2$s.</string>
-    <string name="account_connected_syncing_hint">Đang đồng bộ — sự kiện sẽ xuất hiện ngay.</string>
+    <string name="account_connected_syncing_hint">Đang đồng bộ. Sự kiện sẽ sớm xuất hiện.</string>
     <string name="settings_time_format_currently_24h">Hiện tại: 24 giờ (%1$s)</string>
     <string name="settings_time_format_currently_12h">Hiện tại: 12 giờ (%1$s)</string>
     <string name="settings_time_format_example">Ví dụ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Chỉ đọc (lịch chỉ đọc)</string>
     <string name="settings_developer_options">Tùy chọn nhà phát triển</string>
     <string name="settings_sync_frequency">Tần suất đồng bộ</string>
-    <string name="settings_preview">XEM TRƯỚC</string>
-    <string name="settings_n_events">%1$d sự kiện</string>
-    <string name="settings_n_events_default">%1$d sự kiện (mặc định)</string>
+    <string name="settings_sync_frequency_hint">Tần suất đồng bộ chạy nền</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Lịch</string>
     <string name="drawer_contacts">Danh bạ</string>
     <string name="drawer_device_calendars">Lịch thiết bị</string>
     <string name="drawer_account_offline">Ngoại tuyến</string>
+    <string name="calendar_local">Trên thiết bị</string>
     <string name="drawer_share_feedback">Trợ giúp &amp; tài liệu</string>
     <string name="event_title_fallback">Sự kiện</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">Sau %1$s</string>
     <string name="reminder_day_of_event_12h">9 AM ngày diễn ra</string>
     <string name="reminder_day_of_event_24h">09:00 ngày diễn ra</string>
+    <string name="reminder_day_of_event">Ngày diễn ra sự kiện</string>
     <string name="reminder_before_at_12h">Trước %1$s lúc 9 AM</string>
     <string name="reminder_before_at_24h">Trước %1$s lúc 09:00</string>
     <string name="reminder_short_off">Tắt</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$d giờ</string>
     <string name="reminder_short_days">%1$d ngày</string>
     <string name="reminder_short_weeks">%1$d tuần</string>
+    <string name="reminder_med_minutes">%1$d phút</string>
+    <string name="reminder_med_hours">%1$d giờ</string>
+    <string name="reminder_med_weeks">%1$d tuần</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d ngày</item>
+    </plurals>
+    <string name="reminder_med_day_of">Ngày diễn ra</string>
+    <string name="all_day_alert_9am_hint">Thông báo cả ngày kích hoạt lúc 9 giờ sáng (09:00).</string>
     <string name="reminder_summary_none">Không</string>
     <string name="duration_compact">%1$d giờ %2$d phút</string>
     <string name="duration_compact_short">%1$dg%2$dp</string>

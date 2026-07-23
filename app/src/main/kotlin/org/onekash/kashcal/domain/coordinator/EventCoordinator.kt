@@ -989,7 +989,6 @@ class EventCoordinator @Inject constructor(
 
         val isLocal = isLocalCalendar(calendar)
         var importCount = 0
-        val now = System.currentTimeMillis()
 
         // Apply the user's default reminder when the source ICS had no
         // VALARM (parser leaves reminders=null in that case). Mirrors the
@@ -998,44 +997,104 @@ class EventCoordinator @Inject constructor(
         val defaultTimedReminder = dataStore.defaultReminderMinutes.first()
         val defaultAllDayReminder = dataStore.defaultAllDayReminder.first()
 
-        events.forEach { event ->
-            try {
-                val effectiveReminders = event.reminders ?: defaultRemindersFor(
-                    isAllDay = event.isAllDay,
-                    timedDefault = defaultTimedReminder,
-                    allDayDefault = defaultAllDayReminder
-                )
-                // Create new event with fresh UID and appropriate sync status
-                val importEvent = event.copy(
-                    id = 0, // New event, auto-generate ID
-                    calendarId = calendarId,
-                    uid = "${UUID.randomUUID()}@kashcal.onekash.org",
-                    caldavUrl = null, // Not from server
-                    etag = null,
-                    syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
-                    dtstamp = now,
-                    createdAt = now,
-                    updatedAt = now,
-                    localModifiedAt = if (isLocal) null else now,
-                    lastSyncError = null,
-                    syncRetryCount = 0,
-                    reminders = effectiveReminders,
-                    // Clear exception linking - these are standalone imports
-                    originalEventId = null,
-                    originalInstanceTime = null,
-                    originalSyncId = null
-                )
+        // Group by the source UID so a recurring master and its RECURRENCE-ID
+        // overrides (which share one UID per RFC 5545) reunite into a single
+        // linked series instead of importing as unrelated standalone events.
+        // Exceptions carry a non-null originalInstanceTime (from RECURRENCE-ID);
+        // masters do not. A valid series is exactly one recurring master plus
+        // at least one exception — any other shape (two same-UID masters from a
+        // truncated Google export, an orphan override whose master fell outside
+        // the file) imports each event standalone, so nothing is dropped.
+        //
+        // Deliberately NOT symmetric with the subscription-feed path (issue
+        // #227), which synthesizes an inert placeholder master for orphan
+        // exceptions and disambiguates duplicate-UID masters. That machinery
+        // exists because a live feed must preserve the source UID to match rows
+        // across re-syncs, so colliding UIDs trip the master-uniqueness trigger
+        // and would be dropped. File import is a one-shot: it regenerates a
+        // fresh UID per group, so it can never collide, and a standalone import
+        // is the honest outcome. Do not "fix" this into parity — fabricating a
+        // CANCELLED phantom master in a writable calendar would then push that
+        // phantom to the CalDAV server, which is worse than a clean standalone.
+        events.groupBy { it.uid }.values.forEach { group ->
+            val masters = group.filter { it.originalInstanceTime == null }
+            val exceptions = group.filter { it.originalInstanceTime != null }
+            val isSeries = masters.size == 1 &&
+                masters.first().rrule != null &&
+                exceptions.isNotEmpty()
 
-                // Use eventWriter.createEvent which handles both regular and recurring events
-                val result = eventWriter.createEvent(importEvent, isLocal)
+            if (isSeries) {
+                val master = masters.first()
+                try {
+                    val masterReminders = master.reminders ?: defaultRemindersFor(
+                        isAllDay = master.isAllDay,
+                        timedDefault = defaultTimedReminder,
+                        allDayDefault = defaultAllDayReminder
+                    )
+                    val newUid = "${UUID.randomUUID()}@kashcal.onekash.org"
+                    val masterToImport = master.asImported(calendarId, newUid, masterReminders)
+                    val exceptionsToImport = exceptions.map { exception ->
+                        // An override with no VALARM should alarm consistently
+                        // with its sibling occurrences, so inherit the master's
+                        // effective (post-default) reminders rather than the raw
+                        // per-type default.
+                        val exceptionReminders = exception.reminders ?: masterReminders
+                        // Keep originalInstanceTime — createImportedSeries needs it
+                        // to link the override. Its own timestamps/syncStatus are
+                        // stamped by the writer, so they're not set here.
+                        exception.copy(
+                            id = 0,
+                            calendarId = calendarId,
+                            uid = newUid,
+                            caldavUrl = null,
+                            etag = null,
+                            lastSyncError = null,
+                            syncRetryCount = 0,
+                            reminders = exceptionReminders,
+                            originalSyncId = null
+                        )
+                    }
 
-                // Schedule reminders for imported event
-                scheduleRemindersForEvent(result)
+                    val series = eventWriter.createImportedSeries(
+                        masterToImport,
+                        exceptionsToImport,
+                        isLocal
+                    )
+                    scheduleRemindersForEvent(series.master)
+                    series.exceptions.forEach { scheduleRemindersForEvent(it) }
+                    importCount += 1 + series.exceptions.size
+                    Log.d(TAG, "Imported series: ${master.title} (${series.exceptions.size} exceptions)")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to import series: ${master.title}", e)
+                }
+            } else {
+                group.forEach { event ->
+                    try {
+                        val effectiveReminders = event.reminders ?: defaultRemindersFor(
+                            isAllDay = event.isAllDay,
+                            timedDefault = defaultTimedReminder,
+                            allDayDefault = defaultAllDayReminder
+                        )
+                        // Fresh UID, linkage cleared — a standalone import.
+                        // Timestamps + syncStatus are stamped by createEvent.
+                        val importEvent = event.asImported(
+                            calendarId,
+                            "${UUID.randomUUID()}@kashcal.onekash.org",
+                            effectiveReminders
+                        )
 
-                importCount++
-                Log.d(TAG, "Imported event: ${event.title}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to import event: ${event.title}", e)
+                        // Use eventWriter.createEvent which handles both regular and recurring events
+                        val result = eventWriter.createEvent(importEvent, isLocal)
+
+                        // Schedule reminders for imported event
+                        scheduleRemindersForEvent(result)
+
+                        importCount++
+                        Log.d(TAG, "Imported event: ${event.title}")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to import event: ${event.title}", e)
+                    }
+                }
             }
         }
 
@@ -1311,6 +1370,31 @@ class EventCoordinator @Inject constructor(
         if (minutes == KashCalDataStore.REMINDER_OFF) return null
         return listOf(ContactEventUtils.minutesToIsoDuration(minutes))
     }
+
+    /**
+     * Re-base a parsed ICS event onto the target calendar for import: fresh UID,
+     * server-side fields cleared, resolved reminders applied, and recurrence-link
+     * fields dropped so it enters as a standalone master. Timestamps and
+     * syncStatus are intentionally left for the writer (createEvent /
+     * createImportedSeries) to stamp inside its transaction.
+     */
+    private fun Event.asImported(
+        calendarId: Long,
+        newUid: String,
+        reminders: List<String>?
+    ): Event = copy(
+        id = 0,
+        calendarId = calendarId,
+        uid = newUid,
+        caldavUrl = null,
+        etag = null,
+        lastSyncError = null,
+        syncRetryCount = 0,
+        reminders = reminders,
+        originalEventId = null,
+        originalInstanceTime = null,
+        originalSyncId = null
+    )
 
     companion object {
         private const val TAG = "EventCoordinator"

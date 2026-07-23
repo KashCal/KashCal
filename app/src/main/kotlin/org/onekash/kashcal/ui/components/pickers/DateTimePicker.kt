@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components.pickers
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -760,6 +761,16 @@ fun InlineDatePickerContent(
                                                         DayCellStyle.SELECTED -> MaterialTheme.colorScheme.inverseSurface
                                                         DayCellStyle.TODAY -> MaterialTheme.colorScheme.primaryContainer
                                                         DayCellStyle.PLAIN -> Color.Transparent
+                                                    }
+                                                )
+                                                // The today fill can wash out against the surface for
+                                                // pale accent seeds; a hairline outline keeps the ring
+                                                // visible on any theme (selected uses a strong fill).
+                                                .then(
+                                                    if (cellStyle == DayCellStyle.TODAY) {
+                                                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                                    } else {
+                                                        Modifier
                                                     }
                                                 )
                                                 .clickable {

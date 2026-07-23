@@ -68,6 +68,7 @@
     <string name="action_view">കാണുക</string>
     <string name="action_enable">ഓൺ ആക്കുക</string>
     <string name="action_done">പൂർത്തിയായി</string>
+    <string name="action_back">തിരികെ</string>
     <string name="action_save">സേവ് ചെയ്യുക</string>
     <string name="action_add">ചേർക്കുക</string>
     <string name="action_edit">തിരുത്തുക</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">സമയ ഫോർമാറ്റ്</string>
     <string name="settings_start_week_on">ആഴ്ച ആരംഭിക്കുന്നത്</string>
     <string name="settings_event_emojis">ഇവന്റ് ഇമോജികൾ</string>
-    <string name="settings_emoji_subtitle">ഇവന്റ് ശീർഷകങ്ങൾ അനുസരിച്ച് ഇമോജികൾ കാണിക്കുക</string>
+    <string name="settings_event_emojis_info">ശീർഷകത്തിന്റെ അടിസ്ഥാനത്തിൽ ഇവന്റുകളിലേക്ക് ഒരു ഇമോജി ചേർക്കുന്നു, ഉദാഹരണത്തിന് \"ജന്മദിനം\" എന്നതിന് 🎂.</string>
     <string name="settings_force_sync">ഫോഴ്സ് ഫുൾ സിങ്ക്</string>
     <string name="settings_force_sync_subtitle">സർവറിൽ നിന്ന് എല്ലാ കലണ്ടർ ഡാറ്റയും വീണ്ടും ഡൗൺലോഡ് ചെയ്യുക</string>
     <string name="settings_sync_history">സിങ്ക് ചരിത്രം</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ഇവന്റുകൾ ICS ഫയലിലേക്ക് സേവ് ചെയ്യുക</string>
     <string name="settings_birthday_reminder">ജന്മദിന റിമൈൻഡർ</string>
     <string name="settings_use_device_timezone">ഉപകരണ ടൈംസോൺ ഉപയോഗിക്കുക</string>
-    <string name="settings_section_calendars">കലണ്ടറുകൾ</string>
+    <string name="settings_section_calendars">കലണ്ടറുകളും അക്കൗണ്ടുകളും</string>
     <string name="settings_section_appearance">രൂപഭാവം</string>
-    <string name="settings_section_creating_events">ഇവന്റുകൾ സൃഷ്ടിക്കൽ</string>
-    <string name="settings_section_sync">സിങ്ക്</string>
+    <string name="settings_section_creating_events">ഇവന്റ് മുൻഗണനകൾ</string>
+    <string name="settings_section_sync">അറിയിപ്പുകളും സിങ്കും</string>
     <string name="settings_section_data">ബാക്കപ്പും പുനഃസ്ഥാപനവും</string>
     <string name="settings_section_privacy">സ്വകാര്യത</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ആപ്പ് ലോക്ക്</string>
-    <string name="app_lock_subtitle_off">KashCal തുറക്കാൻ അൺലോക്ക് നിർബന്ധമാക്കുക</string>
-    <string name="app_lock_subtitle_on">വിരലടയാളം, മുഖം അല്ലെങ്കിൽ സ്ക്രീൻ ലോക്ക് ഉപയോഗിച്ച് അൺലോക്ക് ചെയ്യുക</string>
+    <string name="settings_app_lock_info">KashCal തുറക്കാൻ ഉപകരണ പ്രാമാണീകരണം ആവശ്യമാണ്.</string>
     <string name="app_lock_veil_locked">ലോക്ക് ചെയ്തു</string>
     <string name="app_lock_veil_unlock">അൺലോക്ക് ചെയ്യുക</string>
     <string name="app_lock_veil_footnote">വിരലടയാളം, മുഖം അല്ലെങ്കിൽ സ്ക്രീൻ ലോക്ക്</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ഈ ബാക്കപ്പ് ഫയലിൽ അസാധുവായ ഡാറ്റയുണ്ട്, പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല.</string>
     <string name="restore_error_apply_failure">ബാക്കപ്പ് പ്രയോഗിക്കുമ്പോൾ എന്തോ തെറ്റ് സംഭവിച്ചു. മാറ്റങ്ങളൊന്നും സേവ് ചെയ്തിട്ടില്ല.</string>
     <string name="backup_error_build_failed">ബാക്കപ്പ് പരാജയപ്പെട്ടു</string>
-    <string name="backup_error_write_failed">ബാക്കപ്പ് പരാജയപ്പെട്ടു — ഫയലിലേക്ക് എഴുതാനായില്ല</string>
+    <string name="backup_error_write_failed">ബാക്കപ്പ് പരാജയപ്പെട്ടു. ഫയലിലേക്ക് എഴുതാൻ കഴിഞ്ഞില്ല.</string>
     <string name="backup_error_read_failed">ഫയൽ വായിക്കാനായില്ല</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">നെറ്റ്‌വർക്ക് പിശക്, വീണ്ടും ശ്രമിക്കുക</string>
     <string name="error_import_file_not_found">ഫയൽ കണ്ടെത്തിയില്ല അല്ലെങ്കിൽ വായിക്കാൻ കഴിയില്ല.</string>
     <string name="error_import_invalid_format">അസാധുവായ കലണ്ടർ ഫയൽ ഫോർമാറ്റ്.</string>
+    <string name="error_import_no_events">ഫയലിൽ ഇവന്റുകളൊന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="error_import_failed">ഇമ്പോർട്ട് പരാജയപ്പെട്ടു</string>
     <string name="error_import_partial">%1$d ഇവന്റുകൾ ഇമ്പോർട്ട് ചെയ്തു, %2$d പരാജയപ്പെട്ടു.</string>
     <string name="error_export_failed">ഇവന്റുകൾ എക്സ്‌പോർട്ട് ചെയ്യൽ പരാജയപ്പെട്ടു.</string>
     <string name="error_export_no_events">എക്സ്‌പോർട്ട് ചെയ്യാൻ ഇവന്റുകൾ ഇല്ല.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">കലണ്ടർ പിശക്</string>
     <string name="error_device_calendar_write_failed">ഉപകരണ കലണ്ടറിൽ സേവ് ചെയ്യൽ പരാജയപ്പെട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="error_device_calendar_permission">കലണ്ടർ എഴുത്ത് അനുമതി ആവശ്യമാണ്. ദയവായി ക്രമീകരണങ്ങളിൽ അനുമതി നൽകുക.</string>
+    <string name="error_device_calendar_permission_denied">എഴുത്ത് ആക്‌സസ് നൽകാൻ ക്രമീകരണങ്ങളിൽ കലണ്ടർ അനുമതി ഓഫ് ചെയ്ത് വീണ്ടും ഓൺ ചെയ്യുക</string>
     <string name="error_device_calendar_not_found">കലണ്ടർ കണ്ടെത്തിയില്ല. ഇത് നീക്കം ചെയ്തിരിക്കാം.</string>
     <string name="error_device_event_not_found">ഇവന്റ് കണ്ടെത്തിയില്ല. ഇത് ഇല്ലാതാക്കിയിരിക്കാം.</string>
     <string name="error_device_calendar_read_only">ഈ കലണ്ടർ വായന-മാത്രമാണ്.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">തിരഞ്ഞെടുത്തു</string>
     <string name="cd_back">പിന്നിലേക്ക്</string>
+    <string name="cd_opens_in_browser">ബ്രൗസറിൽ തുറക്കുന്നു</string>
     <string name="cd_search">തിരയുക</string>
     <string name="cd_create_event">ഇവന്റ് സൃഷ്ടിക്കുക</string>
     <string name="cd_delete">ഇല്ലാതാക്കുക</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">ആവർത്തിക്കുന്ന</string>
     <string name="cd_enabled">ഓൺ ആക്കി</string>
     <string name="cd_sync_error">സിങ്ക് പിശക്</string>
-    <string name="cd_select_option">ഓപ്ഷൻ തിരഞ്ഞെടുക്കുക</string>
     <string name="cd_select_label">%1$s തിരഞ്ഞെടുക്കുക</string>
     <string name="cd_wheel_picker">%1$d ഓപ്ഷനുകളുള്ള വീൽ പിക്കർ</string>
     <string name="cd_time_entry_keyboard">കൃത്യമായ സമയം നൽകുക</string>
     <string name="time_entry_dialog_title">സമയം നൽകുക</string>
     <string name="time_entry_tap_to_edit">എഡിറ്റ് ചെയ്യാൻ ടാപ്പ് ചെയ്യുക</string>
     <string name="cd_version_info">KashCal പതിപ്പ് %1$s. ഡീബഗ് ഓപ്ഷനുകൾക്ക് ദീർഘനേരം അമർത്തുക.</string>
+    <string name="cd_about_setting">%1$s സംബന്ധിച്ച്</string>
     <string name="cd_color_slider">നിറ സ്ലൈഡർ, ഇപ്പോൾ %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d ഡിഗ്രി</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">നിറം:</string>
     <string name="label_repeat">ആവർത്തനം</string>
     <string name="label_sync_interval">സിങ്ക് ഇടവേള:</string>
-    <string name="label_scheduled_events">ഷെഡ്യൂൾ ചെയ്ത ഇവന്റുകൾ</string>
-    <string name="label_all_day_events">മുഴുവൻ ദിവസ ഇവന്റുകൾ</string>
     <string name="label_server_url">സർവർ URL</string>
     <string name="label_username">ഉപയോക്തൃനാമം</string>
     <string name="label_password">പാസ്‌വേഡ്</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">ദൃശ്യമായ കലണ്ടറുകൾ</string>
     <string name="settings_default_calendar">ഡിഫോൾട്ട് കലണ്ടർ</string>
     <string name="settings_default_event_length">ഡിഫോൾട്ട് ഇവന്റ് ദൈർഘ്യം</string>
-    <string name="settings_default_alerts">ഡിഫോൾട്ട് അലേർട്ടുകൾ</string>
+    <string name="settings_default_event_length_hint">പുതിയ ഇവന്റുകൾക്കുള്ള ഡിഫോൾട്ട് ദൈർഘ്യം</string>
+    <string name="settings_timed_event_alert">സമയം നിശ്ചയിച്ച ഇവന്റ് അലേർട്ട്</string>
+    <string name="settings_all_day_event_alert">മുഴുവൻ ദിവസത്തെ ഇവന്റ് അലേർട്ട്</string>
+    <string name="settings_custom_alert_value">ഇഷ്ടാനുസൃതം (%1$s)</string>
     <string name="settings_notifications">അറിയിപ്പുകൾ</string>
-    <string name="settings_new_events">പുതിയ ഇവന്റുകൾ</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">സിസ്റ്റം ഡിഫോൾട്ട്</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="settings_device_calendars_hint">മറ്റ് ആപ്പുകളിൽ നിന്നുള്ള കലണ്ടറുകൾ</string>
-    <string name="settings_quick_event_add">ദ്രുത ഇവന്റ് ചേർക്കൽ</string>
+    <string name="settings_quick_event_add">സ്മാർട്ട് ഇവന്റ് ചേർക്കൽ</string>
+    <string name="settings_quick_event_add_info">സ്വാഭാവികമായി ടൈപ്പ് ചെയ്ത് ഇവന്റുകൾ സൃഷ്ടിക്കുക. \"വെള്ളിയാഴ്ച ഉച്ചയ്ക്ക് 1 മണിക്ക് Sam-നൊപ്പം ഉച്ചഭക്ഷണം\" നിങ്ങൾക്കായി ശീർഷകം, തീയതി, സമയം എന്നിവ പൂരിപ്പിക്കുന്നു.</string>
     <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
+    <string name="settings_suggest_titles_info">നിങ്ങൾ ഒരു പുതിയ ഇവന്റിന് പേരിടുമ്പോൾ, മുമ്പ് ഉപയോഗിച്ച ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുന്നു, അതിനാൽ ആവർത്തിക്കുന്ന ഇവന്റുകൾ ഒരൊറ്റ ടാപ്പിൽ തയ്യാറാകും. നിങ്ങൾ അവ എത്ര തവണ, എത്ര അടുത്തിടെ ഉപയോഗിച്ചു എന്നതിന്റെ അടിസ്ഥാനത്തിൽ ക്രമപ്പെടുത്തുന്നു.</string>
     <string name="settings_week_numbers">ആഴ്ച നമ്പറുകൾ</string>
     <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="settings_widget_event_limit">വിജറ്റ് ഇവന്റ് പരിധി</string>
+    <string name="settings_widget_event_limit_hint">വിജറ്റുകളിൽ ഒരു ദിവസം കാണിക്കുന്ന പരമാവധി ഇവന്റുകൾ</string>
     <string name="settings_sync_lookback">സിങ്ക് ലുക്ക്ബാക്ക്</string>
-    <string name="settings_auto_detect_emojis">ഇമോജികൾ ഓട്ടോ-കണ്ടെത്തൽ</string>
-    <string name="settings_events_per_day">ദിവസം ഇവന്റുകൾ</string>
+    <string name="settings_sync_lookback_hint">എത്ര പിന്നിലേക്ക് ഇവന്റുകൾ സിങ്ക് ചെയ്യണം</string>
     <string name="settings_not_set">സെറ്റ് ചെയ്തിട്ടില്ല</string>
     <string name="settings_on">ഓൺ</string>
     <string name="settings_off">ഓഫ്</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">അസുരക്ഷിത കണക്ഷൻ വിശ്വസിക്കുക</string>
     <string name="action_add_another">ഒന്ന് കൂടി ചേർക്കുക</string>
     <string name="account_connected_found_calendars">%2$s ന് %1$d കലണ്ടർ(കൾ) കണ്ടെത്തി.</string>
-    <string name="account_connected_syncing_hint">സിങ്ക് പുരോഗമിക്കുന്നു — ഇവന്റുകൾ ഉടൻ ദൃശ്യമാകും.</string>
+    <string name="account_connected_syncing_hint">സിങ്ക് പുരോഗമിക്കുന്നു. ഇവന്റുകൾ ഉടൻ ദൃശ്യമാകും.</string>
     <string name="settings_time_format_currently_24h">ഇപ്പോൾ: 24-മണിക്കൂർ (%1$s)</string>
     <string name="settings_time_format_currently_12h">ഇപ്പോൾ: 12-മണിക്കൂർ (%1$s)</string>
     <string name="settings_time_format_example">ഉദാഹരണം: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">വായന മാത്രം (കലണ്ടർ വായന-മാത്രം)</string>
     <string name="settings_developer_options">ഡെവലപ്പർ ഓപ്ഷനുകൾ</string>
     <string name="settings_sync_frequency">സിങ്ക് ആവൃത്തി</string>
-    <string name="settings_preview">പ്രിവ്യൂ</string>
-    <string name="settings_n_events">%1$d ഇവന്റുകൾ</string>
-    <string name="settings_n_events_default">%1$d ഇവന്റുകൾ (ഡിഫോൾട്ട്)</string>
+    <string name="settings_sync_frequency_hint">പശ്ചാത്തലത്തിൽ എത്ര തവണ സിങ്ക് ചെയ്യണം</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">കലണ്ടറുകൾ</string>
     <string name="drawer_contacts">കോൺടാക്ടുകൾ</string>
     <string name="drawer_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="drawer_account_offline">ഓഫ്‌ലൈൻ</string>
+    <string name="calendar_local">ലോക്കൽ</string>
     <string name="drawer_share_feedback">സഹായവും രേഖകളും</string>
     <string name="event_title_fallback">ഇവന്റ്</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s ശേഷം</string>
     <string name="reminder_day_of_event_12h">ഇവന്റ് ദിവസം 9 AM</string>
     <string name="reminder_day_of_event_24h">ഇവന്റ് ദിവസം 09:00</string>
+    <string name="reminder_day_of_event">ഇവന്റ് ദിവസം</string>
     <string name="reminder_before_at_12h">%1$s മുമ്പ് 9 AM-ന്</string>
     <string name="reminder_before_at_24h">%1$s മുമ്പ് 09:00-ന്</string>
     <string name="reminder_short_off">ഓഫ്</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dമ.</string>
     <string name="reminder_short_days">%1$dദി.</string>
     <string name="reminder_short_weeks">%1$dആ.</string>
+    <string name="reminder_med_minutes">%1$d മി</string>
+    <string name="reminder_med_hours">%1$d മണി</string>
+    <string name="reminder_med_weeks">%1$d ആഴ്ച</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ദിവസം</item>
+        <item quantity="other">%1$d ദിവസം</item>
+    </plurals>
+    <string name="reminder_med_day_of">അന്ന്</string>
+    <string name="all_day_alert_9am_hint">മുഴുവൻ ദിവസ അലേർട്ടുകൾ 9 AM (09:00) ന് വരും.</string>
     <string name="reminder_summary_none">ഒന്നുമില്ല</string>
     <string name="duration_compact">%1$dമ. %2$dമി.</string>
     <string name="duration_compact_short">%1$dമ.%2$dമി.</string>

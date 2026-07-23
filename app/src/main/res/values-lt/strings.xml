@@ -68,6 +68,7 @@
     <string name="action_view">Peržiūrėti</string>
     <string name="action_enable">Įjungti</string>
     <string name="action_done">Atlikta</string>
+    <string name="action_back">Atgal</string>
     <string name="action_save">Išsaugoti</string>
     <string name="action_add">Pridėti</string>
     <string name="action_edit">Redaguoti</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Laiko formatas</string>
     <string name="settings_start_week_on">Savaitės pradžia</string>
     <string name="settings_event_emojis">Įvykių jaustukai</string>
-    <string name="settings_emoji_subtitle">Rodyti jaustukus pagal įvykio pavadinimą</string>
+    <string name="settings_event_emojis_info">Prideda prie įvykių jaustuką pagal pavadinimą, pavyzdžiui, 🎂 „Gimtadieniui“.</string>
     <string name="settings_force_sync">Pilnas sinchronizavimas</string>
     <string name="settings_force_sync_subtitle">Iš naujo atsisiųsti visus duomenis</string>
     <string name="settings_sync_history">Sinchronizavimo istorija</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Išsaugoti įvykius į ICS failą</string>
     <string name="settings_birthday_reminder">Gimtadienio priminimas</string>
     <string name="settings_use_device_timezone">Įrenginio laiko juosta</string>
-    <string name="settings_section_calendars">Kalendoriai</string>
+    <string name="settings_section_calendars">Kalendoriai ir paskyros</string>
     <string name="settings_section_appearance">Išvaizda</string>
-    <string name="settings_section_creating_events">Įvykių kūrimas</string>
-    <string name="settings_section_sync">Sinchronizavimas</string>
+    <string name="settings_section_creating_events">Įvykių nustatymai</string>
+    <string name="settings_section_sync">Pranešimai ir sinchronizavimas</string>
     <string name="settings_section_data">Atsarginė kopija ir atkūrimas</string>
     <string name="settings_section_privacy">Privatumas</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Programos užraktas</string>
-    <string name="app_lock_subtitle_off">Reikalauti atrakinti norint atidaryti KashCal</string>
-    <string name="app_lock_subtitle_on">Atrakinkite piršto antspaudu, veidu arba ekrano užraktu</string>
+    <string name="settings_app_lock_info">Reikalauti įrenginio tapatybės nustatymo, kad būtų atidaryta KashCal.</string>
     <string name="app_lock_veil_locked">Užrakinta</string>
     <string name="app_lock_veil_unlock">Atrakinti</string>
     <string name="app_lock_veil_footnote">Piršto antspaudas, veidas arba ekrano užraktas</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Atsarginės kopijos faile yra netinkamų duomenų, jo atkurti negalima.</string>
     <string name="restore_error_apply_failure">Taikant atsarginę kopiją įvyko klaida. Jokie pakeitimai neišsaugoti.</string>
     <string name="backup_error_build_failed">Nepavyko sukurti atsarginės kopijos</string>
-    <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos — nepavyko įrašyti į failą</string>
+    <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos. Nepavyko įrašyti į failą.</string>
     <string name="backup_error_read_failed">Nepavyko perskaityti failo</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Tinklo klaida, bandykite dar kartą</string>
     <string name="error_import_file_not_found">Failas nerastas arba negali būti perskaitytas.</string>
     <string name="error_import_invalid_format">Neteisingas kalendoriaus failo formatas.</string>
+    <string name="error_import_no_events">Faile nerasta įvykių</string>
+    <string name="error_import_failed">Nepavyko importuoti</string>
     <string name="error_import_partial">Importuota įvykių: %1$d, nepavyko: %2$d.</string>
     <string name="error_export_failed">Nepavyko eksportuoti įvykių.</string>
     <string name="error_export_no_events">Nėra įvykių eksportavimui.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Kalendoriaus klaida</string>
     <string name="error_device_calendar_write_failed">Nepavyko išsaugoti į įrenginio kalendorių. Bandykite dar kartą.</string>
     <string name="error_device_calendar_permission">Reikalingas rašymo į kalendorių leidimas. Suteikite prieigą nustatymuose.</string>
+    <string name="error_device_calendar_permission_denied">Nustatymuose išjunkite ir vėl įjunkite kalendoriaus leidimą, kad suteiktumėte rašymo prieigą</string>
     <string name="error_device_calendar_not_found">Kalendorius nerastas. Gali būti, kad jis buvo ištrintas.</string>
     <string name="error_device_event_not_found">Įvykis nerastas. Gali būti, kad jis buvo ištrintas.</string>
     <string name="error_device_calendar_read_only">Šis kalendorius yra tik skaitomas.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Pasirinkta</string>
     <string name="cd_back">Atgal</string>
+    <string name="cd_opens_in_browser">Atsidaro naršyklėje</string>
     <string name="cd_search">Paieška</string>
     <string name="cd_create_event">Sukurti įvykį</string>
     <string name="cd_delete">Ištrinti</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Pasikartojantis</string>
     <string name="cd_enabled">Įjungta</string>
     <string name="cd_sync_error">Sinchronizavimo klaida</string>
-    <string name="cd_select_option">Pasirinkti parinktį</string>
     <string name="cd_select_label">Pasirinkti %1$s</string>
     <string name="cd_wheel_picker">Pasirinkimo ratukas, parinkčių: %1$d</string>
     <string name="cd_time_entry_keyboard">Įvesti tikslų laiką</string>
     <string name="time_entry_dialog_title">Įvesti laiką</string>
     <string name="time_entry_tap_to_edit">Bakstelėkite, kad redaguotumėte</string>
     <string name="cd_version_info">KashCal versija %1$s. Ilgas paspaudimas derinimo parinkčių.</string>
+    <string name="cd_about_setting">Apie %1$s</string>
     <string name="cd_color_slider">Spalvos slankiklis, dabartinė %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d laipsniai</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Spalva:</string>
     <string name="label_repeat">Kartojimas</string>
     <string name="label_sync_interval">Sinchronizavimo intervalas:</string>
-    <string name="label_scheduled_events">Suplanuoti įvykiai</string>
-    <string name="label_all_day_events">Visos dienos įvykiai</string>
     <string name="label_server_url">Serverio URL</string>
     <string name="label_username">Naudotojo vardas</string>
     <string name="label_password">Slaptažodis</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Matomi kalendoriai</string>
     <string name="settings_default_calendar">Numatytasis kalendorius</string>
     <string name="settings_default_event_length">Numatytoji įvykio trukmė</string>
-    <string name="settings_default_alerts">Numatytieji priminimai</string>
+    <string name="settings_default_event_length_hint">Numatytoji naujų įvykių trukmė</string>
+    <string name="settings_timed_event_alert">Įvykio su laiku priminimas</string>
+    <string name="settings_all_day_event_alert">Visos dienos įvykio priminimas</string>
+    <string name="settings_custom_alert_value">Pasirinktinis (%1$s)</string>
     <string name="settings_notifications">Pranešimai</string>
-    <string name="settings_new_events">Nauji įvykiai</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Sistemos numatytasis</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Įrenginio kalendoriai</string>
     <string name="settings_device_calendars_hint">Kalendoriai iš kitų programų</string>
-    <string name="settings_quick_event_add">Greitas pridėjimas</string>
+    <string name="settings_quick_event_add">Išmanusis įvykių pridėjimas</string>
+    <string name="settings_quick_event_add_info">Kurkite įvykius rašydami įprastu tekstu. „Pietūs su Sam penktadienį 13:00“ užpildo pavadinimą, datą ir laiką už jus.</string>
     <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
+    <string name="settings_suggest_titles_info">Kai įvardijate naują įvykį, siūlyti anksčiau naudotus pavadinimus, kad pasikartojantys įvykiai būtų sukuriami vienu palietimu. Rikiuojama pagal tai, kaip dažnai ir kaip neseniai juos naudojote.</string>
     <string name="settings_week_numbers">Savaitės numeriai</string>
     <string name="settings_show_declined">Rodyti atmestus įvykius</string>
     <string name="settings_widget_event_limit">Valdiklio įvykių limitas</string>
+    <string name="settings_widget_event_limit_hint">Daugiausiai įvykių per dieną valdikliuose</string>
     <string name="settings_sync_lookback">Sinchronizavimo gylis</string>
-    <string name="settings_auto_detect_emojis">Automatinis jaustukų aptikimas</string>
-    <string name="settings_events_per_day">Įvykių per dieną</string>
+    <string name="settings_sync_lookback_hint">Kiek atgal sinchronizuoti įvykius</string>
     <string name="settings_not_set">Nenustatyta</string>
     <string name="settings_on">Įjungta</string>
     <string name="settings_off">Išjungta</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Pasitikėti nesaugiu ryšiu</string>
     <string name="action_add_another">Pridėti dar</string>
     <string name="account_connected_found_calendars">Rasta %1$d kalendorių %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinchronizuojama — įvykiai netrukus pasirodys.</string>
+    <string name="account_connected_syncing_hint">Vyksta sinchronizavimas. Įvykiai netrukus pasirodys.</string>
     <string name="settings_time_format_currently_24h">Dabar: 24 val. (%1$s)</string>
     <string name="settings_time_format_currently_12h">Dabar: 12 val. (%1$s)</string>
     <string name="settings_time_format_example">Pavyzdys: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Tik skaitymas (kalendorius tik skaitomas)</string>
     <string name="settings_developer_options">Kūrėjo parinktys</string>
     <string name="settings_sync_frequency">Sinchronizavimo dažnumas</string>
-    <string name="settings_preview">PERŽIŪRA</string>
-    <string name="settings_n_events">Įvykių: %1$d</string>
-    <string name="settings_n_events_default">Įvykių: %1$d (numatytasis)</string>
+    <string name="settings_sync_frequency_hint">Kaip dažnai sinchronizuoti fone</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendoriai</string>
     <string name="drawer_contacts">Kontaktai</string>
     <string name="drawer_device_calendars">Įrenginio kalendoriai</string>
     <string name="drawer_account_offline">Nėra ryšio</string>
+    <string name="calendar_local">Vietinis</string>
     <string name="drawer_share_feedback">Pagalba ir dokumentai</string>
     <string name="event_title_fallback">Įvykis</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9 AM įvykio dieną</string>
     <string name="reminder_day_of_event_24h">09:00 įvykio dieną</string>
+    <string name="reminder_day_of_event">Įvykio dieną</string>
     <string name="reminder_before_at_12h">%1$s prieš 9 AM</string>
     <string name="reminder_before_at_24h">%1$s prieš 09:00</string>
     <string name="reminder_short_off">Išj.</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dval</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dsav</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d val</string>
+    <string name="reminder_med_weeks">%1$d sav</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d d</item>
+        <item quantity="few">%1$d d</item>
+        <item quantity="many">%1$d d</item>
+        <item quantity="other">%1$d d</item>
+    </plurals>
+    <string name="reminder_med_day_of">Tą dieną</string>
+    <string name="all_day_alert_9am_hint">Visos dienos įspėjimai suveikia 9 val. (09:00).</string>
     <string name="reminder_summary_none">Nėra</string>
     <string name="duration_compact">%1$dval %2$dmin</string>
     <string name="duration_compact_short">%1$dval%2$dmin</string>

@@ -40,6 +40,7 @@ import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.client.model.SyncItem
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.client.model.SyncReport
+import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
@@ -4324,6 +4325,553 @@ class PullStrategyTest {
     }
 
     // ========== Sync Change Suppression for Recurring Series ==========
+
+    @Test
+    fun `exception removed server-side is deleted locally when master resource omits it`() = runTest {
+        // Reproduces the device-tested bug: an occurrence was edited into an
+        // exception, then deleted on another client (iPhone). iCloud adds an
+        // EXDATE to the master AND drops the override VEVENT from the resource.
+        // RFC 4791 §4.1: all same-UID components live in one resource, so when
+        // the master is present, the exceptions in that resource are the
+        // COMPLETE authoritative set. A local exception row whose instance is no
+        // longer present must be deleted — otherwise the stale occurrence
+        // lingers on the calendar (observed: "exception not deleted").
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}recur.ics"
+        val goneInstanceTime = parseDate("2024-01-09 10:00")
+
+        val masterEvent = createEvent(id = 800L, caldavUrl = eventUrl, title = "Daily")
+            .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "etag-1")
+        // Local exception row for the occurrence that was deleted on the phone.
+        val staleException = createEvent(id = 801L, caldavUrl = eventUrl, title = "Daily (edited)")
+            .copy(
+                uid = "recur-uid",
+                etag = "etag-1",
+                originalEventId = 800L,
+                originalInstanceTime = goneInstanceTime,
+                startTs = parseDate("2024-01-09 07:55"),
+                endTs = parseDate("2024-01-09 08:25")
+            )
+
+        // Server now returns ONLY the master, with the deleted slot EXDATE'd.
+        // No exception VEVENT in the resource.
+        val masterOnlyIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:recur-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            RRULE:FREQ=DAILY;COUNT=10
+            EXDATE:20240109T100000Z
+            SUMMARY:Daily
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        // href is the FULL resource URL so buildEventUrl round-trips to exactly
+        // eventUrl — the bundled exception shares the master's caldavUrl, so the
+        // generic URL-based stale-delete path (caldavUrl not in server set) does
+        // NOT fire. Only exception-aware pruning can delete the stale row, so
+        // this isolates the real gap.
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent(eventUrl, eventUrl, "etag-2", masterOnlyIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, staleException)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("recur-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("recur-uid") } returns listOf(masterEvent, staleException)
+        // The pull discovers local exceptions for the master to reconcile.
+        coEvery { eventsDao.getExceptionsForMaster(800L) } returns listOf(staleException)
+        coEvery { eventsDao.upsert(any()) } returns 800L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        // The stale exception row must be deleted — it no longer exists on the
+        // server (bundled with the master, which now omits it) and its slot is
+        // EXDATE'd. The generic URL path can't catch it (URL matches the master).
+        coVerify { eventsDao.deleteById(801L) }
+    }
+
+    @Test
+    fun `exception still present in master resource is NOT pruned`() = runTest {
+        // Over-deletion guard: the normal case where the master AND its
+        // exception are both in the resource. Pruning must NOT delete the
+        // exception that is still present.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}recur.ics"
+        val instanceTime = parseDate("2024-01-09 10:00")
+
+        val masterEvent = createEvent(id = 800L, caldavUrl = eventUrl, title = "Daily")
+            .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "etag-1")
+        val liveException = createEvent(id = 801L, caldavUrl = eventUrl, title = "Daily (edited)")
+            .copy(
+                uid = "recur-uid",
+                etag = "etag-1",
+                originalEventId = 800L,
+                originalInstanceTime = instanceTime,
+                startTs = parseDate("2024-01-09 07:55"),
+                endTs = parseDate("2024-01-09 08:25")
+            )
+
+        // Resource still contains BOTH master and the exception VEVENT.
+        val bundledIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:recur-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            RRULE:FREQ=DAILY;COUNT=10
+            SUMMARY:Daily
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:recur-uid
+            DTSTAMP:20240109T120000Z
+            RECURRENCE-ID:20240109T100000Z
+            DTSTART:20240109T075500
+            DTEND:20240109T082500
+            SUMMARY:Daily (edited)
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent(eventUrl, eventUrl, "etag-2", bundledIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, liveException)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("recur-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("recur-uid") } returns listOf(masterEvent, liveException)
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime("recur-uid", calendar.id, any()) } returns liveException
+        coEvery { eventsDao.getExceptionsForMaster(800L) } returns listOf(liveException)
+        coEvery { eventsDao.upsert(any()) } returnsMany listOf(800L, 801L)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        // The still-present exception must NOT be deleted.
+        coVerify(exactly = 0) { eventsDao.deleteById(801L) }
+    }
+
+    @Test
+    fun `exception is NOT pruned when master absent from batch`() = runTest {
+        // RFC 4791 §4.1 allows a resource carrying only overrides (no master).
+        // Such a batch is not authoritative for pruning — the master and other
+        // overrides may simply be outside this sync window. An exception-only
+        // resource must NOT trigger deletion of sibling exceptions.
+        //
+        // Both local rows share the master resource URL, which IS returned by
+        // the batch, so the generic URL-based stale-delete path spares them —
+        // isolating the exception-pruning guard as the only thing that could
+        // delete row 802.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val masterUrl = "${calendar.caldavUrl}master.ics"
+        val instanceTime = parseDate("2024-01-09 10:00")
+        val otherInstanceTime = parseDate("2024-01-10 10:00")
+
+        val masterEvent = createEvent(id = 800L, caldavUrl = masterUrl, title = "Daily")
+            .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "m-etag",
+                startTs = parseDate("2024-01-01 10:00"), endTs = parseDate("2024-01-01 11:00"), timezone = null)
+        // A local exception for a DIFFERENT instance than the one in this batch.
+        val otherException = createEvent(id = 802L, caldavUrl = masterUrl, title = "Other edited")
+            .copy(uid = "recur-uid", etag = "m-etag", originalEventId = 800L, originalInstanceTime = otherInstanceTime)
+
+        // The batch returns the master's resource, but only the ETag row for it
+        // in this window carries just an override (RECURRENCE-ID), no master
+        // VEVENT — mirroring a windowed fetch that surfaced only one instance.
+        val excOnlyIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:recur-uid
+            DTSTAMP:20240109T120000Z
+            RECURRENCE-ID:20240109T100000Z
+            DTSTART:20240109T075500
+            DTEND:20240109T082500
+            SUMMARY:This instance
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        // href == masterUrl so buildEventUrl round-trips and the URL path spares
+        // both local rows (their caldavUrl is in the server set).
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent(masterUrl, masterUrl, "etag-2", excOnlyIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, otherException)
+        coEvery { eventsDao.getByCaldavUrl(masterUrl) } returns masterEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("recur-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("recur-uid") } returns listOf(masterEvent, otherException)
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime("recur-uid", calendar.id, instanceTime) } returns null
+        coEvery { eventsDao.getExceptionsForMaster(800L) } returns listOf(otherException)
+        coEvery { eventsDao.upsert(any()) } returns 803L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        // The master VEVENT was NOT parsed in this batch → uid not in the
+        // authoritative-master set → exception pruning must NOT fire for 802.
+        coVerify(exactly = 0) { eventsDao.deleteById(802L) }
+    }
+
+    /**
+     * Shared fixture for the EXDATE-gated prune tests. The server resource
+     * contains only the master (the override VEVENT is gone). Callers control
+     * whether the master carries an EXDATE for the missing instance, the
+     * exception's sync status, and recentlyPushedEventIds.
+     */
+    private suspend fun runPruneScenario(
+        masterExdate: String?,
+        exceptionSyncStatus: SyncStatus = SyncStatus.SYNCED,
+        recentlyPushed: Set<Long> = emptySet(),
+    ): PullResult {
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}recur.ics"
+        val goneInstance = parseDate("2024-01-09 10:00")
+
+        val masterEvent = createEvent(id = 800L, caldavUrl = eventUrl, title = "Daily")
+            .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "etag-1", exdate = masterExdate)
+        val staleException = createEvent(id = 801L, caldavUrl = eventUrl, title = "Daily (edited)")
+            .copy(
+                uid = "recur-uid", etag = "etag-1", originalEventId = 800L,
+                originalInstanceTime = goneInstance,
+                startTs = parseDate("2024-01-09 07:55"), endTs = parseDate("2024-01-09 08:25"),
+                syncStatus = exceptionSyncStatus
+            )
+
+        val exdateLine = masterExdate?.let { "\n            EXDATE:20240109T100000Z" } ?: ""
+        val masterOnlyIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:recur-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            RRULE:FREQ=DAILY;COUNT=10$exdateLine
+            SUMMARY:Daily
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(CalDavEvent(eventUrl, eventUrl, "etag-2", masterOnlyIcal)))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, staleException)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("recur-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("recur-uid") } returns listOf(masterEvent, staleException)
+        coEvery { eventsDao.getExceptionsForMaster(800L) } returns listOf(staleException)
+        coEvery { eventsDao.getSyncStatus(801L) } returns exceptionSyncStatus
+        coEvery { eventsDao.upsert(any()) } returns 800L
+
+        return pullStrategy.pull(calendar, client = client, recentlyPushedEventIds = recentlyPushed)
+    }
+
+    @Test
+    fun `absent exception NOT pruned when master has no covering EXDATE`() = runTest {
+        // Split-resource server / parser-dropped override: the override is
+        // absent from the batch but the master has NO EXDATE for it, so it may
+        // still be live on the server. Must NOT prune (erring toward keeping).
+        val result = runPruneScenario(masterExdate = null)
+        assertTrue(result is PullResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(801L) }
+    }
+
+    @Test
+    fun `absent exception pruned only when EXDATE covers it - occurrence cancelled and change emitted`() = runTest {
+        val result = runPruneScenario(masterExdate = parseDate("2024-01-09 10:00").toString())
+        assertTrue(result is PullResult.Success)
+        // Row deleted, occurrence cancelled, and exactly one DELETED change surfaced.
+        coVerify { database.occurrencesDao().markCancelledByException(801L) }
+        coVerify { eventsDao.deleteById(801L) }
+        val deletes = (result as PullResult.Success).changes.filter { it.type == ChangeType.DELETED }
+        assertEquals("Exactly one DELETED change for the pruned occurrence", 1, deletes.size)
+    }
+
+    @Test
+    fun `EXDATE-covered exception NOT pruned when it has pending local changes`() = runTest {
+        // Data-loss guard: an unsynced local edit must survive to be pushed.
+        val result = runPruneScenario(
+            masterExdate = parseDate("2024-01-09 10:00").toString(),
+            exceptionSyncStatus = SyncStatus.PENDING_UPDATE,
+        )
+        assertTrue(result is PullResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(801L) }
+    }
+
+    @Test
+    fun `EXDATE-covered exception NOT pruned when master recently pushed`() = runTest {
+        // CDN protection: a just-pushed master's resource may echo back stale.
+        val result = runPruneScenario(
+            masterExdate = parseDate("2024-01-09 10:00").toString(),
+            recentlyPushed = setOf(800L),
+        )
+        assertTrue(result is PullResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(801L) }
+    }
+
+    @Test
+    fun `value-type-mismatched RECURRENCE-ID matches its stored exception instead of duplicating`() = runTest {
+        // A recurring master (timed) with an exception whose RECURRENCE-ID is a
+        // DATE-form value (value-type mismatch: RFC 5545 §3.8.4.4 says it MUST
+        // share DTSTART's value type, but peer clients emit the mismatch and
+        // servers preserve it verbatim). ICalEventMapper stores the exception's
+        // originalInstanceTime NORMALIZED to the master's local time-of-day, so
+        // the exception's pull-back lookup MUST normalize the same way. The DAO
+        // here returns the stored exception only for the normalized instance
+        // time (10:00Z) and null for the raw midnight-UTC value — mirroring a
+        // real DB. If the lookup keys off the raw value it misses, and the
+        // exception is wrongly re-added as a NEW event (the spurious "N events
+        // updated" alert plus a duplicate row).
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}recurring-with-exception.ics"
+
+        // Master DTSTART 10:00Z (timed). Normalizing a DATE-form RECURRENCE-ID of
+        // 2024-01-08 against it promotes to the master's time-of-day => 10:00Z.
+        val normalizedInstanceTime = parseDate("2024-01-08 10:00")
+        val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
+
+        val masterEvent = createEvent(id = 700L, caldavUrl = eventUrl, title = "Weekly Meeting")
+            .copy(uid = "master-uid", rrule = "FREQ=WEEKLY", etag = "resource-etag-2")
+        // The exception as stored locally: originalInstanceTime is the NORMALIZED
+        // value the mapper wrote. Content matches the echoed VEVENT below so that,
+        // once correctly matched, no spurious MODIFIED notification fires either.
+        val existingException = createEvent(id = 701L, caldavUrl = eventUrl, title = "Weekly Meeting")
+            .copy(
+                uid = "master-uid",
+                etag = "resource-etag-2",
+                originalEventId = 700L,
+                originalInstanceTime = normalizedInstanceTime,
+                startTs = parseDate("2024-01-08 11:00"),
+                endTs = parseDate("2024-01-08 12:00")
+            )
+
+        val echoedIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Weekly Meeting
+            RRULE:FREQ=WEEKLY
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240108T120000Z
+            RECURRENCE-ID;VALUE=DATE:20240108
+            DTSTART:20240108T110000Z
+            DTEND:20240108T120000Z
+            SUMMARY:Weekly Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("recurring-with-exception.ics", eventUrl, "resource-etag-3", echoedIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("master-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent)
+        // Real-DB behavior: only the NORMALIZED instance time finds the stored row.
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, normalizedInstanceTime)
+        } returns existingException
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, rawMidnightInstanceTime)
+        } returns null
+        coEvery { eventsDao.upsert(any()) } returnsMany listOf(700L, 701L)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        val success = result as PullResult.Success
+        // The core invariant: echoing an EXISTING edited occurrence must never
+        // surface it as a brand-new event...
+        assertTrue(
+            "Existing exception must not be re-added as NEW: " +
+                success.changes.map { "${it.type}: ${it.eventTitle}" },
+            success.changes.none { it.type == ChangeType.NEW }
+        )
+        // ...and the matched exception must upsert IN PLACE (existing id 701),
+        // never insert a second row for the same instance.
+        coVerify { eventsDao.upsert(match { it.id == 701L && it.originalEventId == 700L }) }
+    }
+
+    @Test
+    fun `value-type-mismatched RECURRENCE-ID matches on incremental pull with master only in DB`() = runTest {
+        // Same value-type mismatch, but the INCREMENTAL path: the pulled .ics
+        // contains ONLY the changed exception VEVENT — the unchanged master is
+        // not re-fetched, so it is absent from this batch and resolved from Room
+        // instead. The instance-time key must still normalize against the Room
+        // master's DTSTART (reconstructed), or the exception re-adds as NEW.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}exception-only.ics"
+
+        val normalizedInstanceTime = parseDate("2024-01-08 10:00")
+        val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
+
+        // Master lives only in Room (timed, 10:00Z), NOT in the fetched batch.
+        val masterEvent = createEvent(id = 700L, caldavUrl = "${calendar.caldavUrl}master.ics", title = "Weekly Meeting")
+            .copy(
+                uid = "master-uid",
+                rrule = "FREQ=WEEKLY",
+                etag = "master-etag",
+                startTs = parseDate("2024-01-01 10:00"),
+                endTs = parseDate("2024-01-01 11:00"),
+                timezone = null // UTC — matches DTSTART ...T100000Z
+            )
+        val existingException = createEvent(id = 701L, caldavUrl = eventUrl, title = "Weekly Meeting")
+            .copy(
+                uid = "master-uid",
+                etag = "exc-etag-1",
+                originalEventId = 700L,
+                originalInstanceTime = normalizedInstanceTime,
+                startTs = parseDate("2024-01-08 11:00"),
+                endTs = parseDate("2024-01-08 12:00")
+            )
+
+        // Only the exception VEVENT is returned (no master component).
+        val exceptionOnlyIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240108T120000Z
+            RECURRENCE-ID;VALUE=DATE:20240108
+            DTSTART:20240108T110000Z
+            DTEND:20240108T120000Z
+            SUMMARY:Weekly Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("exception-only.ics", eventUrl, "exc-etag-2", exceptionOnlyIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, existingException)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingException
+        // Master resolved from Room (the batch has no master component).
+        coEvery { eventsDao.getMasterByUidAndCalendar("master-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent, existingException)
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, normalizedInstanceTime)
+        } returns existingException
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, rawMidnightInstanceTime)
+        } returns null
+        coEvery { eventsDao.upsert(any()) } returns 701L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        val success = result as PullResult.Success
+        assertTrue(
+            "Incremental exception echo must match the Room master's normalized instance " +
+                "time, not re-add as NEW: " + success.changes.map { "${it.type}: ${it.eventTitle}" },
+            success.changes.none { it.type == ChangeType.NEW }
+        )
+    }
+
+    @Test
+    fun `incremental exception normalizes against an RDATE-only master`() = runTest {
+        // A master can recur via RDATE with no RRULE (RFC 5545 §3.8.5.2). On the
+        // incremental path the Room master is used to reconstruct the DTSTART for
+        // normalization; the recurring check must include rdate, not just rrule,
+        // or a value-type-mismatched exception is keyed off the RAW value and its
+        // stored (normalized) row is missed -> re-added as NEW.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}exception-only.ics"
+
+        val normalizedInstanceTime = parseDate("2024-01-08 10:00")
+        val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
+
+        // Master recurs via RDATE only (rrule = null) — timed, 10:00Z.
+        val masterEvent = createEvent(id = 700L, caldavUrl = "${calendar.caldavUrl}master.ics", title = "RDATE Meeting")
+            .copy(
+                uid = "master-uid",
+                rrule = null,
+                rdate = parseDate("2024-01-08 10:00").toString(),
+                etag = "master-etag",
+                startTs = parseDate("2024-01-01 10:00"),
+                endTs = parseDate("2024-01-01 11:00"),
+                timezone = null
+            )
+        val existingException = createEvent(id = 701L, caldavUrl = eventUrl, title = "RDATE Meeting")
+            .copy(
+                uid = "master-uid",
+                etag = "exc-etag-1",
+                originalEventId = 700L,
+                originalInstanceTime = normalizedInstanceTime,
+                startTs = parseDate("2024-01-08 11:00"),
+                endTs = parseDate("2024-01-08 12:00")
+            )
+
+        val exceptionOnlyIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240108T120000Z
+            RECURRENCE-ID;VALUE=DATE:20240108
+            DTSTART:20240108T110000Z
+            DTEND:20240108T120000Z
+            SUMMARY:RDATE Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("exception-only.ics", eventUrl, "exc-etag-2", exceptionOnlyIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, existingException)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingException
+        coEvery { eventsDao.getMasterByUidAndCalendar("master-uid", calendar.id) } returns masterEvent
+        coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent, existingException)
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, normalizedInstanceTime)
+        } returns existingException
+        coEvery {
+            eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, rawMidnightInstanceTime)
+        } returns null
+        coEvery { eventsDao.upsert(any()) } returns 701L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Pull should succeed", result is PullResult.Success)
+        val success = result as PullResult.Success
+        assertTrue(
+            "RDATE-only master must still normalize the exception key, not re-add as NEW: " +
+                success.changes.map { "${it.type}: ${it.eventTitle}" },
+            success.changes.none { it.type == ChangeType.NEW }
+        )
+    }
 
     @Test
     fun `recurring series etag-only change on master suppresses SyncChange`() = runTest {

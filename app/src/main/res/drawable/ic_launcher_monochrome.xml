@@ -5,7 +5,7 @@
     android:viewportWidth="88"
     android:viewportHeight="88">
 
-    <group android:translateX="44" android:translateY="46" android:rotation="-2">
+    <group android:translateX="44" android:translateY="44" android:rotation="-2">
         <path
             android:fillColor="#FFFFFF"
             android:fillType="evenOdd"

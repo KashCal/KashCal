@@ -68,6 +68,7 @@
     <string name="action_view">Προβολή</string>
     <string name="action_enable">Ενεργοποίηση</string>
     <string name="action_done">Τέλος</string>
+    <string name="action_back">Πίσω</string>
     <string name="action_save">Αποθήκευση</string>
     <string name="action_add">Προσθήκη</string>
     <string name="action_edit">Επεξεργασία</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Μορφή ώρας</string>
     <string name="settings_start_week_on">Η εβδομάδα αρχίζει</string>
     <string name="settings_event_emojis">Emoji συμβάντων</string>
-    <string name="settings_emoji_subtitle">Εμφάνιση emoji βάσει τίτλων συμβάντων</string>
+    <string name="settings_event_emojis_info">Προσθέτει ένα emoji στα συμβάντα με βάση τον τίτλο, όπως 🎂 για \"Γενέθλια\".</string>
     <string name="settings_force_sync">Αναγκαστικός πλήρης συγχρονισμός</string>
     <string name="settings_force_sync_subtitle">Εκ νέου λήψη όλων των δεδομένων ημερολογίου</string>
     <string name="settings_sync_history">Ιστορικό συγχρονισμού</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Αποθήκευση συμβάντων σε αρχείο ICS</string>
     <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
     <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
-    <string name="settings_section_calendars">Ημερολόγια</string>
+    <string name="settings_section_calendars">Ημερολόγια και λογαριασμοί</string>
     <string name="settings_section_appearance">Εμφάνιση</string>
-    <string name="settings_section_creating_events">Δημιουργία συμβάντων</string>
-    <string name="settings_section_sync">Συγχρονισμός</string>
+    <string name="settings_section_creating_events">Προτιμήσεις συμβάντων</string>
+    <string name="settings_section_sync">Ειδοποιήσεις και συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
     <string name="settings_section_privacy">Απόρρητο</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Κλείδωμα εφαρμογής</string>
-    <string name="app_lock_subtitle_off">Απαίτηση ξεκλειδώματος για άνοιγμα του KashCal</string>
-    <string name="app_lock_subtitle_on">Ξεκλείδωμα με δακτυλικό αποτύπωμα, πρόσωπο ή κλείδωμα οθόνης</string>
+    <string name="settings_app_lock_info">Απαιτείται έλεγχος ταυτότητας συσκευής για το άνοιγμα του KashCal.</string>
     <string name="app_lock_veil_locked">Κλειδωμένο</string>
     <string name="app_lock_veil_unlock">Ξεκλείδωμα</string>
     <string name="app_lock_veil_footnote">Δακτυλικό αποτύπωμα, πρόσωπο ή κλείδωμα οθόνης</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Αυτό το αρχείο αντιγράφου ασφαλείας περιέχει μη έγκυρα δεδομένα και δεν μπορεί να γίνει επαναφορά.</string>
     <string name="restore_error_apply_failure">Κάτι πήγε στραβά κατά την εφαρμογή του αντιγράφου ασφαλείας. Δεν αποθηκεύτηκαν αλλαγές.</string>
     <string name="backup_error_build_failed">Η δημιουργία αντιγράφου ασφαλείας απέτυχε</string>
-    <string name="backup_error_write_failed">Η δημιουργία αντιγράφου ασφαλείας απέτυχε — αδύνατη η εγγραφή στο αρχείο</string>
+    <string name="backup_error_write_failed">Το αντίγραφο ασφαλείας απέτυχε. Δεν ήταν δυνατή η εγγραφή στο αρχείο.</string>
     <string name="backup_error_read_failed">Αδύνατη η ανάγνωση του αρχείου</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Σφάλμα δικτύου, δοκιμάστε ξανά</string>
     <string name="error_import_file_not_found">Το αρχείο δεν βρέθηκε ή δεν μπορεί να διαβαστεί.</string>
     <string name="error_import_invalid_format">Μη έγκυρη μορφή αρχείου ημερολογίου.</string>
+    <string name="error_import_no_events">Δεν βρέθηκαν συμβάντα στο αρχείο</string>
+    <string name="error_import_failed">Η εισαγωγή απέτυχε</string>
     <string name="error_import_partial">Εισαγωγή %1$d συμβάντων, %2$d απέτυχαν.</string>
     <string name="error_export_failed">Αποτυχία εξαγωγής συμβάντων.</string>
     <string name="error_export_no_events">Δεν υπάρχουν συμβάντα για εξαγωγή.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Σφάλμα ημερολογίου</string>
     <string name="error_device_calendar_write_failed">Αποτυχία αποθήκευσης στο ημερολόγιο συσκευής. Δοκιμάστε ξανά.</string>
     <string name="error_device_calendar_permission">Απαιτείται άδεια εγγραφής ημερολογίου. Δώστε άδεια από τις Ρυθμίσεις.</string>
+    <string name="error_device_calendar_permission_denied">Απενεργοποιήστε και ενεργοποιήστε ξανά την άδεια Ημερολογίου στις Ρυθμίσεις για να παραχωρήσετε πρόσβαση εγγραφής</string>
     <string name="error_device_calendar_not_found">Το ημερολόγιο δεν βρέθηκε. Ίσως αφαιρέθηκε.</string>
     <string name="error_device_event_not_found">Το συμβάν δεν βρέθηκε. Ίσως διαγράφηκε.</string>
     <string name="error_device_calendar_read_only">Αυτό το ημερολόγιο είναι μόνο για ανάγνωση.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Επιλεγμένο</string>
     <string name="cd_back">Πίσω</string>
+    <string name="cd_opens_in_browser">Ανοίγει σε πρόγραμμα περιήγησης</string>
     <string name="cd_search">Αναζήτηση</string>
     <string name="cd_create_event">Δημιουργία συμβάντος</string>
     <string name="cd_delete">Διαγραφή</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Επαναλαμβανόμενο</string>
     <string name="cd_enabled">Ενεργοποιημένο</string>
     <string name="cd_sync_error">Σφάλμα συγχρονισμού</string>
-    <string name="cd_select_option">Επιλογή</string>
     <string name="cd_select_label">Επιλογή %1$s</string>
     <string name="cd_wheel_picker">Τροχός επιλογής με %1$d επιλογές</string>
     <string name="cd_time_entry_keyboard">Εισαγωγή ακριβούς ώρας</string>
     <string name="time_entry_dialog_title">Εισαγωγή ώρας</string>
     <string name="time_entry_tap_to_edit">Πατήστε για επεξεργασία</string>
     <string name="cd_version_info">KashCal έκδοση %1$s. Πατήστε παρατεταμένα για επιλογές εντοπισμού σφαλμάτων.</string>
+    <string name="cd_about_setting">Σχετικά με %1$s</string>
     <string name="cd_color_slider">Ρυθμιστικό χρώματος, τρέχον %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d μοίρες</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Χρώμα:</string>
     <string name="label_repeat">Επανάληψη</string>
     <string name="label_sync_interval">Διάστημα συγχρονισμού:</string>
-    <string name="label_scheduled_events">Προγραμματισμένα συμβάντα</string>
-    <string name="label_all_day_events">Ολοήμερα συμβάντα</string>
     <string name="label_server_url">URL διακομιστή</string>
     <string name="label_username">Όνομα χρήστη</string>
     <string name="label_password">Κωδικός</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Ορατά ημερολόγια</string>
     <string name="settings_default_calendar">Προεπιλεγμένο ημερολόγιο</string>
     <string name="settings_default_event_length">Προεπιλεγμένη διάρκεια συμβάντος</string>
-    <string name="settings_default_alerts">Προεπιλεγμένες ειδοποιήσεις</string>
+    <string name="settings_default_event_length_hint">Προεπιλεγμένη διάρκεια για νέα συμβάντα</string>
+    <string name="settings_timed_event_alert">Ειδοποίηση συμβάντος με ώρα</string>
+    <string name="settings_all_day_event_alert">Ειδοποίηση ολοήμερου συμβάντος</string>
+    <string name="settings_custom_alert_value">Προσαρμοσμένο (%1$s)</string>
     <string name="settings_notifications">Ειδοποιήσεις</string>
-    <string name="settings_new_events">Νέα συμβάντα</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Προεπιλογή συστήματος</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
     <string name="settings_device_calendars_hint">Ημερολόγια από άλλες εφαρμογές</string>
-    <string name="settings_quick_event_add">Γρήγορη προσθήκη συμβάντος</string>
+    <string name="settings_quick_event_add">Έξυπνη προσθήκη συμβάντων</string>
+    <string name="settings_quick_event_add_info">Δημιουργήστε συμβάντα πληκτρολογώντας φυσικά. Το \"Μεσημεριανό με τον Sam Παρασκευή 13:00\" συμπληρώνει για εσάς τον τίτλο, την ημερομηνία και την ώρα.</string>
     <string name="settings_suggest_titles">Πρόταση τίτλων συμβάντων</string>
+    <string name="settings_suggest_titles_info">Καθώς ονομάζετε ένα νέο συμβάν, προτείνει τίτλους που έχετε χρησιμοποιήσει στο παρελθόν, ώστε τα επαναλαμβανόμενα συμβάντα να γίνονται με ένα άγγιγμα. Κατατάσσονται ανάλογα με το πόσο συχνά και πόσο πρόσφατα τους έχετε χρησιμοποιήσει.</string>
     <string name="settings_week_numbers">Αριθμοί εβδομάδων</string>
     <string name="settings_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
     <string name="settings_widget_event_limit">Όριο συμβάντων widget</string>
+    <string name="settings_widget_event_limit_hint">Μέγιστος αριθμός συμβάντων που εμφανίζονται ανά ημέρα στα γραφικά στοιχεία</string>
     <string name="settings_sync_lookback">Αναδρομικός συγχρονισμός</string>
-    <string name="settings_auto_detect_emojis">Αυτόματη ανίχνευση emoji</string>
-    <string name="settings_events_per_day">Συμβάντα ανά ημέρα</string>
+    <string name="settings_sync_lookback_hint">Πόσο παλιά συμβάντα να συγχρονίζονται</string>
     <string name="settings_not_set">Δεν έχει οριστεί</string>
     <string name="settings_on">Ενεργό</string>
     <string name="settings_off">Ανενεργό</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Εμπιστοσύνη μη ασφαλούς σύνδεσης</string>
     <string name="action_add_another">Προσθήκη άλλου</string>
     <string name="account_connected_found_calendars">Βρέθηκαν %1$d ημερολόγια για %2$s.</string>
-    <string name="account_connected_syncing_hint">Ο συγχρονισμός βρίσκεται σε εξέλιξη — τα συμβάντα θα εμφανιστούν σύντομα.</string>
+    <string name="account_connected_syncing_hint">Ο συγχρονισμός βρίσκεται σε εξέλιξη. Τα συμβάντα θα εμφανιστούν σύντομα.</string>
     <string name="settings_time_format_currently_24h">Τρέχουσα: 24ωρο (%1$s)</string>
     <string name="settings_time_format_currently_12h">Τρέχουσα: 12ωρο (%1$s)</string>
     <string name="settings_time_format_example">Παράδειγμα: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Μόνο ανάγνωση (ημερολόγιο μόνο για ανάγνωση)</string>
     <string name="settings_developer_options">Επιλογές προγραμματιστή</string>
     <string name="settings_sync_frequency">Συχνότητα συγχρονισμού</string>
-    <string name="settings_preview">ΠΡΟΕΠΙΣΚΟΠΗΣΗ</string>
-    <string name="settings_n_events">%1$d συμβάντα</string>
-    <string name="settings_n_events_default">%1$d συμβάντα (προεπιλογή)</string>
+    <string name="settings_sync_frequency_hint">Πόσο συχνά να γίνεται συγχρονισμός στο παρασκήνιο</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Ημερολόγια</string>
     <string name="drawer_contacts">Επαφές</string>
     <string name="drawer_device_calendars">Ημερολόγια συσκευής</string>
     <string name="drawer_account_offline">Εκτός σύνδεσης</string>
+    <string name="calendar_local">Τοπικό</string>
     <string name="drawer_share_feedback">Βοήθεια και τεκμηρίωση</string>
     <string name="event_title_fallback">Συμβάν</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s μετά</string>
     <string name="reminder_day_of_event_12h">9 AM την ημέρα του συμβάντος</string>
     <string name="reminder_day_of_event_24h">09:00 την ημέρα του συμβάντος</string>
+    <string name="reminder_day_of_event">Την ημέρα του συμβάντος</string>
     <string name="reminder_before_at_12h">%1$s πριν στις 9 AM</string>
     <string name="reminder_before_at_24h">%1$s πριν στις 09:00</string>
     <string name="reminder_short_off">Ανενεργό</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dω</string>
     <string name="reminder_short_days">%1$dη</string>
     <string name="reminder_short_weeks">%1$dε</string>
+    <string name="reminder_med_minutes">%1$d λεπ</string>
+    <string name="reminder_med_hours">%1$d ώ</string>
+    <string name="reminder_med_weeks">%1$d εβδ</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ημ</item>
+        <item quantity="other">%1$d ημ</item>
+    </plurals>
+    <string name="reminder_med_day_of">Την ίδια ημέρα</string>
+    <string name="all_day_alert_9am_hint">Οι ειδοποιήσεις ολοήμερων ενεργοποιούνται στις 9 AM (09:00).</string>
     <string name="reminder_summary_none">Κανένα</string>
     <string name="duration_compact">%1$dω %2$dλ</string>
     <string name="duration_compact_short">%1$dω%2$dλ</string>

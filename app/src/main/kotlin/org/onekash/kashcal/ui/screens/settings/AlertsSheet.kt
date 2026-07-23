@@ -1,27 +1,18 @@
 package org.onekash.kashcal.ui.screens.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -29,235 +20,230 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.WheelDurationPicker
-import org.onekash.kashcal.ui.shared.ALL_DAY_PRESET_CHIPS
-import org.onekash.kashcal.ui.shared.PresetChip
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.ReminderOption
-import org.onekash.kashcal.ui.shared.TIMED_PRESET_CHIPS
+import org.onekash.kashcal.ui.shared.componentsToMinutes
 import org.onekash.kashcal.ui.shared.formatReminderDuration
+import org.onekash.kashcal.ui.shared.minutesToComponents
+import org.onekash.kashcal.ui.shared.roundToWheelStep
 
 /**
- * Bottom sheet for selecting default alerts/reminders.
+ * Sentinel seed for the custom wheel meaning "keep the current setting". The wheel
+ * only produces non-negative durations and hands a negative, untouched seed straight
+ * back (WheelDurationPicker keeps `selectedMinutes` when `!touched && < 0`), so a
+ * staged value still equal to this sentinel means the user opened Custom but never
+ * dialed — the current value is preserved rather than reset. Int.MIN_VALUE can never
+ * collide with a real reminder offset and is never decomposed (the wheel clamps a
+ * <= 0 seed to a neutral 0d 0h 0m display).
+ */
+internal const val WHEEL_KEEP_CURRENT = Int.MIN_VALUE
+
+/** Largest day count the duration wheel offers (its day wheel is 0..30). */
+private const val WHEEL_MAX_DAYS = 30
+
+/**
+ * Whether the duration wheel can seed [minutes] and hand back the SAME value when the
+ * user taps Done without dialing. True only for a positive duration that fits the day
+ * wheel (0..[WHEEL_MAX_DAYS]) and already lies on the wheel's 5-minute grid — mirroring
+ * the wheel's own decompose → snap-minutes → recompose path. An off-grid value (e.g. 23
+ * → snapped to 25) or an out-of-range day count would be silently altered on an
+ * un-scrolled Done, so those seed the keep-current sentinel instead.
+ */
+private fun isWheelRepresentable(minutes: Int): Boolean {
+    if (minutes <= 0) return false
+    val (days, hours, mins) = minutesToComponents(minutes)
+    if (days > WHEEL_MAX_DAYS) return false
+    return componentsToMinutes(days, hours, roundToWheelStep(mins)) == minutes
+}
+
+/**
+ * The value the custom wheel's Done commits, given the [staged] wheel value, the
+ * [currentValue] the sheet opened with, and whether this is the [isAllDay] picker.
  *
- * Uses expandable sections with inline wheel duration pickers for
- * timed and all-day event reminders. Each section shows preset chips
- * (including "None") and a 3-wheel days/hours/minutes picker.
+ * Extracted as a pure function so its branches are deterministically testable
+ * (the [WHEEL_KEEP_CURRENT] preserve path and the all-day neutral→None path are
+ * hard to reach reliably through the wheel's gesture layer):
+ * - [WHEEL_KEEP_CURRENT] staged → the user opened Custom without dialing; keep the
+ *   current setting (a preset, or a non-representable all-day offset).
+ * - all-day dialed to a neutral (<= 0) value → None ([REMINDER_OFF]); a midnight
+ *   all-day alarm is meaningless.
+ * - otherwise → the staged value (timed 0 = "at time of event" is kept here).
+ */
+internal fun committedAlertValue(staged: Int, currentValue: Int, isAllDay: Boolean): Int = when {
+    staged == WHEEL_KEEP_CURRENT -> currentValue
+    isAllDay && staged <= 0 -> REMINDER_OFF
+    else -> staged
+}
+
+/**
+ * Bottom sheet for picking a single default alert (timed OR all-day).
+ *
+ * A one-tap radio list of presets plus a final "Custom" row that swaps the
+ * sheet body to the 3-wheel days/hours/minutes [WheelDurationPicker], so
+ * arbitrary durations are never lost. The preset list is always the entry view
+ * — the wheel is only shown after the user taps Custom, and a Back control
+ * returns to the list, so a saved custom value never traps the user on the
+ * wheel. Maps to a single `onDefaultReminder*Change` callback.
+ *
+ * @param sheetState Material3 sheet state
+ * @param title Sheet header (e.g. "Timed event alert")
+ * @param options Preset reminder options (includes "None" as [REMINDER_OFF])
+ * @param currentValue Currently selected reminder minutes
+ * @param isAllDay Whether this is the all-day picker (affects the wheel + labels)
+ * @param use24Hour Whether to render times in 24-hour format
+ * @param onSelect Callback with the chosen reminder minutes
+ * @param onDismiss Callback when the sheet is dismissed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlertsSheet(
+fun AlertPickerSheet(
     sheetState: SheetState,
-    defaultReminderTimed: Int,
-    defaultReminderAllDay: Int,
+    title: String,
+    options: List<ReminderOption>,
+    currentValue: Int,
+    isAllDay: Boolean,
     use24Hour: Boolean,
-    onTimedReminderChange: (Int) -> Unit,
-    onAllDayReminderChange: (Int) -> Unit,
+    onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var expandedSection by remember { mutableIntStateOf(-1) }
+    // When true, the sheet body shows the custom wheel instead of the preset list.
+    // The wheel is only ever reached by tapping Custom; a saved custom value shows
+    // as a selected "Custom" row on the list, never auto-opening the wheel.
+    var showCustomWheel by remember { mutableStateOf(false) }
+    // The wheel emits onDurationSelected continuously as its centered item changes
+    // (including mid-fling), so that signal only STAGES the value here — it must not
+    // commit or dismiss, or the sheet would close on the first scroll tick and the
+    // user could never reach their target. The commit happens once, on the wheel's
+    // Done control, which fires onDurationSelected(final) then its onDismiss.
+    // Seeded with the "keep current" sentinel: the wheel only ever produces
+    // non-negative durations, so a negative staged value means the user tapped Done
+    // without dialing anything, and the current setting is preserved (see onDismiss).
+    var stagedCustomMinutes by remember { mutableStateOf(WHEEL_KEEP_CURRENT) }
+    val resources = LocalResources.current
 
-    val timedWheelMinutes = if (defaultReminderTimed == REMINDER_OFF) 15 else defaultReminderTimed
-    // 900 = "9 AM the day before" (the all-day default). The wheel shows only "before"
-    // durations; an after-midnight value like -540 (9 AM day of) decomposes to 0 there
-    // and is selected via its chip instead.
-    val allDayWheelMinutes = if (defaultReminderAllDay == REMINDER_OFF) 900 else defaultReminderAllDay
-
-    val noneLabel = stringResource(R.string.alert_none)
-    val timedChips = remember(noneLabel) { listOf(PresetChip(noneLabel, REMINDER_OFF)) + TIMED_PRESET_CHIPS }
-    val allDayChips = remember(noneLabel) { listOf(PresetChip(noneLabel, REMINDER_OFF)) + ALL_DAY_PRESET_CHIPS }
+    // A saved value that isn't one of the presets is a custom duration. All-day
+    // presets are "9 AM, N days before" offsets, so only positive non-preset values
+    // are treated as custom durations for the wheel; all-day offsets stay on presets.
+    val isCurrentCustom = currentValue != REMINDER_OFF && options.none { it.minutes == currentValue }
+    // Seed the wheel with the current value only when the wheel can represent it
+    // losslessly — a positive duration on the 5-minute grid. Anything else (a 9-AM
+    // all-day offset, or an off-grid custom like 23 min the wheel would snap to 25)
+    // seeds the sentinel so an un-scrolled Done preserves the exact current value
+    // rather than committing a rounded or mis-decomposed one. A <= 0 seed also renders
+    // as a neutral 0d 0h 0m and, if untouched, is handed straight back.
+    val wheelSeed = if (isCurrentCustom && isWheelRepresentable(currentValue)) {
+        currentValue
+    } else {
+        WHEEL_KEEP_CURRENT
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        // While the custom wheel is showing, disable the sheet's drag gestures so
+        // its swipe-to-dismiss doesn't steal the wheel's vertical scroll (which
+        // otherwise makes a touch dismiss the sheet or drop mid-scroll). The wheel
+        // has its own Back control, and tap-outside still dismisses.
+        sheetGesturesEnabled = !showCustomWheel
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                .selectableGroup()
         ) {
             Text(
-                stringResource(R.string.settings_default_alerts),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(
+                    start = 16.dp, end = 16.dp, top = 12.dp,
+                    bottom = if (isAllDay) 2.dp else 12.dp
+                )
             )
-
-            SettingsCard {
-                AlertSection(
-                    iconEmoji = "⏰",
-                    label = stringResource(R.string.label_scheduled_events),
-                    currentValue = defaultReminderTimed,
-                    isAllDay = false,
-                    use24Hour = use24Hour,
-                    chips = timedChips,
-                    wheelMinutes = timedWheelMinutes,
-                    isExpanded = expandedSection == 0,
-                    onToggle = { expandedSection = if (expandedSection == 0) -1 else 0 },
-                    onCollapse = { expandedSection = -1 },
-                    onChange = onTimedReminderChange
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                AlertSection(
-                    iconEmoji = "📅",
-                    label = stringResource(R.string.label_all_day_events),
-                    currentValue = defaultReminderAllDay,
-                    isAllDay = true,
-                    use24Hour = use24Hour,
-                    chips = allDayChips,
-                    wheelMinutes = allDayWheelMinutes,
-                    isExpanded = expandedSection == 1,
-                    onToggle = { expandedSection = if (expandedSection == 1) -1 else 1 },
-                    onCollapse = { expandedSection = -1 },
-                    onChange = onAllDayReminderChange
+            // All-day presets all fire at 9 AM; the labels stay terse and this hint
+            // conveys the time (both 12h and 24h) once for the whole list.
+            if (isAllDay) {
+                Text(
+                    stringResource(R.string.all_day_alert_9am_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
                 )
             }
-        }
-    }
-}
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
 
-/**
- * Expandable section with preset chips and a wheel duration picker.
- */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun AlertSection(
-    iconEmoji: String,
-    label: String,
-    currentValue: Int,
-    isAllDay: Boolean,
-    use24Hour: Boolean,
-    chips: List<PresetChip>,
-    wheelMinutes: Int,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    onCollapse: () -> Unit,
-    onChange: (Int) -> Unit
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-
-    AlertSectionRow(
-        iconEmoji = iconEmoji,
-        label = label,
-        currentValue = currentValue,
-        isAllDay = isAllDay,
-        use24Hour = use24Hour,
-        isExpanded = isExpanded,
-        onClick = onToggle
-    )
-
-    AnimatedVisibility(
-        visible = isExpanded,
-        enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
-        exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-        ) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                chips.forEach { chip ->
-                    val isSelected = currentValue == chip.minutes
-                    AssistChip(
-                        onClick = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onChange(chip.minutes)
-                            onCollapse()
-                        },
-                        label = { Text(chip.label) },
-                        colors = if (isSelected) {
-                            AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        } else {
-                            AssistChipDefaults.assistChipColors()
+            if (showCustomWheel) {
+                // Back to the preset list — the wheel's own "Done" commits a value,
+                // so this is the only non-committing way back.
+                TextButton(onClick = { showCustomWheel = false }) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.size(4.dp))
+                    Text(stringResource(R.string.action_back))
+                }
+                WheelDurationPicker(
+                    selectedMinutes = wheelSeed,
+                    isAllDay = isAllDay,
+                    use24Hour = use24Hour,
+                    presets = emptyList(),
+                    // Fires on every wheel change (incl. mid-fling): stage only, never
+                    // commit/dismiss. Done calls this with the final value, then onDismiss.
+                    onDurationSelected = { minutes -> stagedCustomMinutes = minutes },
+                    onDismiss = {
+                        // Done: commit the staged value (see committedAlertValue for the
+                        // keep-current and all-day-neutral→None rules) and close the sheet.
+                        onSelect(committedAlertValue(stagedCustomMinutes, currentValue, isAllDay))
+                        onDismiss()
+                    }
+                )
+            } else {
+                options.forEach { option ->
+                    ReminderOptionRow(
+                        label = option.label,
+                        isSelected = option.minutes == currentValue,
+                        onSelect = {
+                            onSelect(option.minutes)
+                            onDismiss()
                         }
                     )
                 }
+                // Custom row: opens the wheel. Reflects a saved custom duration so the
+                // user sees their current value and can tell it's selected.
+                val customLabel = if (isCurrentCustom) {
+                    resources.getString(
+                        R.string.settings_custom_alert_value,
+                        formatReminderDuration(currentValue, isAllDay, use24Hour, resources)
+                    )
+                } else {
+                    stringResource(R.string.label_custom)
+                }
+                ReminderOptionRow(
+                    label = customLabel,
+                    isSelected = isCurrentCustom,
+                    onSelect = { showCustomWheel = true }
+                )
             }
-
-            WheelDurationPicker(
-                selectedMinutes = wheelMinutes,
-                isAllDay = isAllDay,
-                use24Hour = use24Hour,
-                presets = emptyList(),
-                onDurationSelected = onChange,
-                onDismiss = onCollapse
-            )
         }
-    }
-}
-
-/**
- * Tappable section row showing icon, label, current value, and expand/collapse chevron.
- */
-@Composable
-private fun AlertSectionRow(
-    iconEmoji: String,
-    label: String,
-    currentValue: Int,
-    isAllDay: Boolean,
-    use24Hour: Boolean,
-    isExpanded: Boolean,
-    onClick: () -> Unit
-) {
-    val resources = LocalResources.current
-    val displayText = if (currentValue == REMINDER_OFF) {
-        stringResource(R.string.alert_none)
-    } else {
-        formatReminderDuration(currentValue, isAllDay, use24Hour, resources)
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(iconEmoji)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                displayText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Icon(
-            if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-            contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
-        )
     }
 }
 
@@ -275,7 +261,8 @@ fun SingleAlertPickerSheet(
     options: List<ReminderOption>,
     currentValue: Int,
     onSelect: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isAllDay: Boolean = false
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -285,12 +272,26 @@ fun SingleAlertPickerSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                .selectableGroup()
         ) {
             Text(
                 title,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                modifier = Modifier.padding(
+                    start = 16.dp, end = 16.dp, top = 12.dp,
+                    bottom = if (isAllDay) 2.dp else 12.dp
+                )
             )
+            // All-day presets fire at 9 AM; the hint conveys the time once so the
+            // terse option labels ("Day of event", "1 day before") stay clean.
+            if (isAllDay) {
+                Text(
+                    stringResource(R.string.all_day_alert_9am_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                )
+            }
 
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
@@ -298,7 +299,7 @@ fun SingleAlertPickerSheet(
 
             options.forEach { option ->
                 ReminderOptionRow(
-                    option = option,
+                    label = option.label,
                     isSelected = option.minutes == currentValue,
                     onSelect = {
                         onSelect(option.minutes)
@@ -311,18 +312,18 @@ fun SingleAlertPickerSheet(
 }
 
 /**
- * Single reminder option row (for SingleAlertPickerSheet).
+ * Single reminder option row (shared by the alert picker sheets).
  */
 @Composable
 private fun ReminderOptionRow(
-    option: ReminderOption,
+    label: String,
     isSelected: Boolean,
     onSelect: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() }
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onSelect)
             .background(
                 if (isSelected)
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -333,13 +334,14 @@ private fun ReminderOptionRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            option.label,
+            label,
             style = MaterialTheme.typography.bodyLarge
         )
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = stringResource(R.string.cd_selected),
+                // Decorative: the row's radio-button selected state already announces selection.
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )

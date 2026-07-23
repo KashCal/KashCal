@@ -346,6 +346,16 @@ private fun DayHeaderCell(
         modifier = modifier
             .clickable { onDateSelected(timeMsForCell(cell, year, month)) }
             .background(stripBackground)
+            // Today's tonal fill can wash out against the surface for pale accent
+            // seeds; a hairline outline keeps the strip visible on any theme
+            // (selected uses primary and needs no border).
+            .then(
+                if (isToday && !isSelected) {
+                    Modifier.border(1.dp, MaterialTheme.colorScheme.outline)
+                } else {
+                    Modifier
+                }
+            )
             .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) {

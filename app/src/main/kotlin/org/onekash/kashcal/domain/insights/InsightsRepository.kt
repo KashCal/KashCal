@@ -1,6 +1,8 @@
 package org.onekash.kashcal.domain.insights
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
@@ -10,6 +12,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.insights.generators.localDateToDayCode
 import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
@@ -21,6 +24,7 @@ import javax.inject.Singleton
 
 @Singleton
 class InsightsRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val occurrencesDao: OccurrencesDao,
     private val calendarsDao: CalendarsDao,
     private val calendarProviderRepository: CalendarProviderRepository,
@@ -215,7 +219,7 @@ class InsightsRepository @Inject constructor(
         if (calendarIds.isEmpty()) return emptyMap()
         val calendars = calendarsDao.getByIds(calendarIds)
         return calendars.associate { cal ->
-            cal.id to Pair(cal.displayName, cal.localColorOverride ?: cal.color)
+            cal.id to Pair(cal.localizedDisplayName(context.resources), cal.localColorOverride ?: cal.color)
         }
     }
 

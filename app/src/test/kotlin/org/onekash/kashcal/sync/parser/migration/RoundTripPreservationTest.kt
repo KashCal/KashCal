@@ -31,6 +31,67 @@ class RoundTripPreservationTest {
     private val generator = ICalGenerator()
 
     @Test
+    fun `recurring master with reminder does not trip hasContentChanged on round-trip`() {
+        // Reproduces the device-observed "2 alerts" bug: editing one occurrence
+        // bumps the whole resource etag, so PullStrategy re-processes the master
+        // and relies on hasContentChanged to suppress the master notification
+        // (only the sibling exception changed). If the map→serialize→map
+        // round-trip is not lossless for a NON-stripped field, hasContentChanged
+        // returns true and the master fires a spurious "updated" alert.
+        //
+        // Models a real iCloud recurring master (TZID, VALARM reminder, STATUS/
+        // TRANSP/CLASS) — the shape that produced the extra alert on device.
+        val icloudMasterIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Apple Inc.//iCloud//EN
+            BEGIN:VEVENT
+            UID:recur-reminder-uid
+            DTSTAMP:20260721T004957Z
+            DTSTART;TZID=America/Chicago:20260720T200000
+            DTEND;TZID=America/Chicago:20260720T203000
+            RRULE:FREQ=DAILY;COUNT=10
+            SUMMARY:Sup recur
+            STATUS:CONFIRMED
+            TRANSP:OPAQUE
+            CLASS:PUBLIC
+            SEQUENCE:0
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:Reminder
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // What KashCal STORES after the first pull.
+        val stored = ICalEventMapper.toEntity(
+            parser.parseAllEvents(icloudMasterIcal).getOrNull()!![0],
+            icloudMasterIcal, 1L, null, null
+        ).event
+
+        // What KashCal RE-DERIVES on a later pull: serialize (push path) then
+        // parse + map (pull path) — the same two serializers that run across a
+        // real edit-one-occurrence round-trip.
+        val regenerated = IcsPatcher.serialize(stored)
+        val reparsed = ICalEventMapper.toEntity(
+            parser.parseAllEvents(regenerated).getOrNull()!![0],
+            regenerated, 1L, null, null
+        ).event
+
+        // The master content is unchanged, so this must be false — otherwise the
+        // master emits a spurious SyncChange on every sibling-exception edit.
+        assertEquals(
+            "Round-trip must be lossless for hasContentChanged. reminders=${stored.reminders}->${reparsed.reminders} " +
+                "alarmCount=${stored.alarmCount}->${reparsed.alarmCount} duration=${stored.duration}->${reparsed.duration} " +
+                "endTs=${stored.endTs}->${reparsed.endTs} extraProps=${stored.extraProperties}->${reparsed.extraProperties}",
+            false,
+            org.onekash.kashcal.sync.strategy.PullStrategy.hasContentChanged(stored, reparsed)
+        )
+    }
+
+    @Test
     fun `simple event survives KashCal round-trip`() {
         val originalIcal = """
             BEGIN:VCALENDAR

@@ -68,6 +68,7 @@
     <string name="action_view">Zobraziť</string>
     <string name="action_enable">Povoliť</string>
     <string name="action_done">Hotovo</string>
+    <string name="action_back">Späť</string>
     <string name="action_save">Uložiť</string>
     <string name="action_add">Pridať</string>
     <string name="action_edit">Upraviť</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Formát času</string>
     <string name="settings_start_week_on">Týždeň začína</string>
     <string name="settings_event_emojis">Emoji udalostí</string>
-    <string name="settings_emoji_subtitle">Zobrazovať emoji podľa názvov udalostí</string>
+    <string name="settings_event_emojis_info">Pridá k udalostiam emoji podľa názvu, napríklad 🎂 pre \"Narodeniny\".</string>
     <string name="settings_force_sync">Vynútiť úplnú synchronizáciu</string>
     <string name="settings_force_sync_subtitle">Znova stiahnuť všetky dáta kalendára</string>
     <string name="settings_sync_history">História synchronizácie</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Uložiť udalosti do súboru ICS</string>
     <string name="settings_birthday_reminder">Pripomienka narodenín</string>
     <string name="settings_use_device_timezone">Použiť časové pásmo zariadenia</string>
-    <string name="settings_section_calendars">Kalendáre</string>
+    <string name="settings_section_calendars">Kalendáre a účty</string>
     <string name="settings_section_appearance">Vzhľad</string>
-    <string name="settings_section_creating_events">Vytváranie udalostí</string>
-    <string name="settings_section_sync">Synchronizácia</string>
+    <string name="settings_section_creating_events">Predvoľby udalostí</string>
+    <string name="settings_section_sync">Oznámenia a synchronizácia</string>
     <string name="settings_section_data">Záloha a obnova</string>
     <string name="settings_section_privacy">Súkromie</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zámka aplikácie</string>
-    <string name="app_lock_subtitle_off">Vyžadovať odomknutie na otvorenie KashCal</string>
-    <string name="app_lock_subtitle_on">Odomknite odtlačkom prsta, tvárou alebo zámkou obrazovky</string>
+    <string name="settings_app_lock_info">Vyžadovať overenie zariadenia na otvorenie KashCal.</string>
     <string name="app_lock_veil_locked">Uzamknuté</string>
     <string name="app_lock_veil_unlock">Odomknúť</string>
     <string name="app_lock_veil_footnote">Odtlačok prsta, tvár alebo zámka obrazovky</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Tento záložný súbor obsahuje neplatné dáta a nemožno ho obnoviť.</string>
     <string name="restore_error_apply_failure">Pri použití zálohy sa vyskytla chyba. Žiadne zmeny neboli uložené.</string>
     <string name="backup_error_build_failed">Záloha zlyhala</string>
-    <string name="backup_error_write_failed">Záloha zlyhala — nepodarilo sa zapísať do súboru</string>
+    <string name="backup_error_write_failed">Zálohovanie zlyhalo. Nepodarilo sa zapísať do súboru.</string>
     <string name="backup_error_read_failed">Súbor sa nepodarilo prečítať</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Chyba siete, skúste to znova</string>
     <string name="error_import_file_not_found">Súbor nenájdený alebo sa nedá prečítať.</string>
     <string name="error_import_invalid_format">Neplatný formát súboru kalendára.</string>
+    <string name="error_import_no_events">V súbore sa nenašli žiadne udalosti</string>
+    <string name="error_import_failed">Import zlyhal</string>
     <string name="error_import_partial">Importovaných %1$d udalostí, %2$d zlyhalo.</string>
     <string name="error_export_failed">Export udalostí zlyhal.</string>
     <string name="error_export_no_events">Žiadne udalosti na export.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Chyba kalendára</string>
     <string name="error_device_calendar_write_failed">Uloženie do kalendára zariadenia zlyhalo. Skúste to znova.</string>
     <string name="error_device_calendar_permission">Potrebné oprávnenie na zápis do kalendára. Udeľte oprávnenie v Nastaveniach.</string>
+    <string name="error_device_calendar_permission_denied">Vypnite a znova zapnite oprávnenie Kalendár v Nastaveniach, aby ste udelili prístup na zápis</string>
     <string name="error_device_calendar_not_found">Kalendár nenájdený. Mohol byť odstránený.</string>
     <string name="error_device_event_not_found">Udalosť nenájdená. Mohla byť zmazaná.</string>
     <string name="error_device_calendar_read_only">Tento kalendár je len na čítanie.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Vybraté</string>
     <string name="cd_back">Späť</string>
+    <string name="cd_opens_in_browser">Otvorí sa v prehliadači</string>
     <string name="cd_search">Hľadať</string>
     <string name="cd_create_event">Vytvoriť udalosť</string>
     <string name="cd_delete">Zmazať</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Opakujúce sa</string>
     <string name="cd_enabled">Povolené</string>
     <string name="cd_sync_error">Chyba synchronizácie</string>
-    <string name="cd_select_option">Vybrať možnosť</string>
     <string name="cd_select_label">Vybrať %1$s</string>
     <string name="cd_wheel_picker">Koliesko výberu s %1$d možnosťami</string>
     <string name="cd_time_entry_keyboard">Zadať presný čas</string>
     <string name="time_entry_dialog_title">Zadať čas</string>
     <string name="time_entry_tap_to_edit">Ťuknutím upravíte</string>
     <string name="cd_version_info">KashCal verzia %1$s. Dlhým stlačením otvoríte ladiace možnosti.</string>
+    <string name="cd_about_setting">O položke %1$s</string>
     <string name="cd_color_slider">Posuvník farby, aktuálne %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stupňov</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Farba:</string>
     <string name="label_repeat">Opakovanie</string>
     <string name="label_sync_interval">Interval synchronizácie:</string>
-    <string name="label_scheduled_events">Plánované udalosti</string>
-    <string name="label_all_day_events">Celodenné udalosti</string>
     <string name="label_server_url">URL servera</string>
     <string name="label_username">Používateľské meno</string>
     <string name="label_password">Heslo</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Viditeľné kalendáre</string>
     <string name="settings_default_calendar">Predvolený kalendár</string>
     <string name="settings_default_event_length">Predvolená dĺžka udalosti</string>
-    <string name="settings_default_alerts">Predvolené upozornenia</string>
+    <string name="settings_default_event_length_hint">Predvolená dĺžka nových udalostí</string>
+    <string name="settings_timed_event_alert">Upozornenie na časovanú udalosť</string>
+    <string name="settings_all_day_event_alert">Upozornenie na celodennú udalosť</string>
+    <string name="settings_custom_alert_value">Vlastné (%1$s)</string>
     <string name="settings_notifications">Oznámenia</string>
-    <string name="settings_new_events">Nové udalosti</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Predvolené systémové</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendáre zariadenia</string>
     <string name="settings_device_calendars_hint">Kalendáre z iných aplikácií</string>
-    <string name="settings_quick_event_add">Rýchle pridanie udalosti</string>
+    <string name="settings_quick_event_add">Inteligentné pridávanie udalostí</string>
+    <string name="settings_quick_event_add_info">Vytvárajte udalosti prirodzeným písaním. \"Obed so Sam v piatok 13:00\" za vás vyplní názov, dátum a čas.</string>
     <string name="settings_suggest_titles">Navrhovať názvy udalostí</string>
+    <string name="settings_suggest_titles_info">Keď pomenúvate novú udalosť, navrhne skôr použité názvy, takže opakujúce sa udalosti sú na jedno ťuknutie. Zoradené podľa toho, ako často a ako nedávno ste ich použili.</string>
     <string name="settings_week_numbers">Čísla týždňov</string>
     <string name="settings_show_declined">Zobraziť odmietnuté udalosti</string>
     <string name="settings_widget_event_limit">Limit udalostí widgetu</string>
+    <string name="settings_widget_event_limit_hint">Najviac udalostí zobrazených za deň vo widgetoch</string>
     <string name="settings_sync_lookback">Rozsah synchronizácie späť</string>
-    <string name="settings_auto_detect_emojis">Automatická detekcia emoji</string>
-    <string name="settings_events_per_day">Udalostí za deň</string>
+    <string name="settings_sync_lookback_hint">Ako ďaleko späť synchronizovať udalosti</string>
     <string name="settings_not_set">Nenastavené</string>
     <string name="settings_on">Zap.</string>
     <string name="settings_off">Vyp.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Dôverovať nezabezpečenému pripojeniu</string>
     <string name="action_add_another">Pridať ďalší</string>
     <string name="account_connected_found_calendars">Nájdených %1$d kalendárov pre %2$s.</string>
-    <string name="account_connected_syncing_hint">Prebieha synchronizácia — udalosti sa čoskoro zobrazia.</string>
+    <string name="account_connected_syncing_hint">Prebieha synchronizácia. Udalosti sa čoskoro zobrazia.</string>
     <string name="settings_time_format_currently_24h">Aktuálne: 24-hodinový (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktuálne: 12-hodinový (%1$s)</string>
     <string name="settings_time_format_example">Príklad: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Len na čítanie (kalendár je len na čítanie)</string>
     <string name="settings_developer_options">Vývojárske možnosti</string>
     <string name="settings_sync_frequency">Četnosť synchronizácie</string>
-    <string name="settings_preview">NÁHĽAD</string>
-    <string name="settings_n_events">%1$d udalostí</string>
-    <string name="settings_n_events_default">%1$d udalostí (predvolené)</string>
+    <string name="settings_sync_frequency_hint">Ako často synchronizovať na pozadí</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendáre</string>
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendáre zariadenia</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Miestny</string>
     <string name="drawer_share_feedback">Pomoc a dokumenty</string>
     <string name="event_title_fallback">Udalosť</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9:00 v deň udalosti</string>
     <string name="reminder_day_of_event_24h">09:00 v deň udalosti</string>
+    <string name="reminder_day_of_event">V deň udalosti</string>
     <string name="reminder_before_at_12h">%1$s vopred o 9:00</string>
     <string name="reminder_before_at_24h">%1$s vopred o 09:00</string>
     <string name="reminder_short_off">Vyp.</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d h</string>
+    <string name="reminder_med_weeks">%1$d týž.</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d d.</item>
+        <item quantity="few">%1$d d.</item>
+        <item quantity="many">%1$d d.</item>
+        <item quantity="other">%1$d d.</item>
+    </plurals>
+    <string name="reminder_med_day_of">V deň</string>
+    <string name="all_day_alert_9am_hint">Celodenné upozornenia sa spúšťajú o 9 ráno (09:00).</string>
     <string name="reminder_summary_none">Žiadne</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

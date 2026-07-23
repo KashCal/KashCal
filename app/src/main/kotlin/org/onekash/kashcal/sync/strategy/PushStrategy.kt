@@ -1060,6 +1060,17 @@ class PushStrategy @Inject constructor(
             // is delivered to on the servers that don't schedule a per-instance
             // attendee implicitly. Each exception is isolated: one failing
             // override must not starve the others.
+            // The Room exception's originalInstanceTime was stored NORMALIZED
+            // against the master's DTSTART value type (a DATE-form RECURRENCE-ID
+            // on a timed master is promoted to the master's time-of-day — see
+            // ICalEventMapper.normalizeRecurrenceId, RFC 5545 §3.8.4.4). The
+            // re-fetched VEVENT can echo the RECURRENCE-ID in its raw mismatched
+            // form, so normalize the parsed side the same way before matching —
+            // otherwise the raw != normalized comparison misses and this
+            // instance's per-occurrence receipts/outbox send are skipped. A
+            // matching value type makes normalizeRecurrenceId a pass-through, so
+            // this never changes the common case.
+            val masterDtStart = EventToICalEventMapper.dtStartOf(event)
             for (exception in exceptions) {
                 try {
                     // A null originalInstanceTime would match the master VEVENT
@@ -1067,7 +1078,10 @@ class PushStrategy @Inject constructor(
                     // only a real per-instance anchor can match an override.
                     val instanceTime = exception.originalInstanceTime ?: continue
                     val parsedException = parsedEvents.firstOrNull {
-                        it.recurrenceId != null && it.recurrenceId?.timestamp == instanceTime
+                        it.recurrenceId != null &&
+                            ICalEventMapper.normalizeRecurrenceId(
+                                it.recurrenceId, masterDtStart
+                            )?.timestamp == instanceTime
                     } ?: continue
 
                     val exceptionRows = ICalEventMapper.toAttendeeRows(parsedException, eventId = exception.id)

@@ -68,6 +68,7 @@
     <string name="action_view">Просмотр</string>
     <string name="action_enable">Включить</string>
     <string name="action_done">Готово</string>
+    <string name="action_back">Назад</string>
     <string name="action_save">Сохранить</string>
     <string name="action_add">Добавить</string>
     <string name="action_edit">Изменить</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Формат времени</string>
     <string name="settings_start_week_on">Начало недели</string>
     <string name="settings_event_emojis">Эмодзи событий</string>
-    <string name="settings_emoji_subtitle">Показывать эмодзи по названию события</string>
+    <string name="settings_event_emojis_info">Добавляет к событиям эмодзи по названию, например 🎂 для \"День рождения\".</string>
     <string name="settings_force_sync">Полная синхронизация</string>
     <string name="settings_force_sync_subtitle">Загрузить все данные заново</string>
     <string name="settings_sync_history">История синхронизации</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Сохранить события в файл ICS</string>
     <string name="settings_birthday_reminder">Напоминание о дне рождения</string>
     <string name="settings_use_device_timezone">Часовой пояс устройства</string>
-    <string name="settings_section_calendars">Календари</string>
+    <string name="settings_section_calendars">Календари и аккаунты</string>
     <string name="settings_section_appearance">Оформление</string>
-    <string name="settings_section_creating_events">Создание событий</string>
-    <string name="settings_section_sync">Синхронизация</string>
+    <string name="settings_section_creating_events">Настройки событий</string>
+    <string name="settings_section_sync">Уведомления и синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
     <string name="settings_section_privacy">Конфиденциальность</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Блокировка приложения</string>
-    <string name="app_lock_subtitle_off">Запрашивать разблокировку для открытия KashCal</string>
-    <string name="app_lock_subtitle_on">Разблокировка отпечатком, лицом или блокировкой экрана</string>
+    <string name="settings_app_lock_info">Требовать аутентификацию устройства для открытия KashCal.</string>
     <string name="app_lock_veil_locked">Заблокировано</string>
     <string name="app_lock_veil_unlock">Разблокировать</string>
     <string name="app_lock_veil_footnote">Отпечаток, лицо или блокировка экрана</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">В файле резервной копии неверные данные, его нельзя восстановить.</string>
     <string name="restore_error_apply_failure">При восстановлении произошёл сбой. Изменения не сохранены.</string>
     <string name="backup_error_build_failed">Не удалось создать резервную копию</string>
-    <string name="backup_error_write_failed">Не удалось создать резервную копию — не удалось записать в файл</string>
+    <string name="backup_error_write_failed">Не удалось создать резервную копию. Не удалось записать файл.</string>
     <string name="backup_error_read_failed">Не удалось прочитать файл</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Ошибка сети, попробуй ещё раз</string>
     <string name="error_import_file_not_found">Файл не найден или не может быть прочитан.</string>
     <string name="error_import_invalid_format">Неверный формат файла календаря.</string>
+    <string name="error_import_no_events">В файле нет событий</string>
+    <string name="error_import_failed">Не удалось импортировать</string>
     <string name="error_import_partial">Импортировано событий: %1$d, ошибок: %2$d.</string>
     <string name="error_export_failed">Не удалось экспортировать события.</string>
     <string name="error_export_no_events">Нет событий для экспорта.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Ошибка календаря</string>
     <string name="error_device_calendar_write_failed">Не удалось сохранить в календарь устройства. Попробуйте снова.</string>
     <string name="error_device_calendar_permission">Требуется разрешение на запись в календарь. Предоставьте доступ в настройках.</string>
+    <string name="error_device_calendar_permission_denied">Отключите и снова включите разрешение «Календарь» в настройках, чтобы предоставить доступ на запись</string>
     <string name="error_device_calendar_not_found">Календарь не найден. Возможно, он был удалён.</string>
     <string name="error_device_event_not_found">Событие не найдено. Возможно, оно было удалено.</string>
     <string name="error_device_calendar_read_only">Этот календарь доступен только для чтения.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Выбрано</string>
     <string name="cd_back">Назад</string>
+    <string name="cd_opens_in_browser">Открывается в браузере</string>
     <string name="cd_search">Поиск</string>
     <string name="cd_create_event">Создать событие</string>
     <string name="cd_delete">Удалить</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Повторяющееся</string>
     <string name="cd_enabled">Включено</string>
     <string name="cd_sync_error">Ошибка синхронизации</string>
-    <string name="cd_select_option">Выбрать вариант</string>
     <string name="cd_select_label">Выбрать %1$s</string>
     <string name="cd_wheel_picker">Колёсико выбора, вариантов: %1$d</string>
     <string name="cd_time_entry_keyboard">Ввести точное время</string>
     <string name="time_entry_dialog_title">Ввод времени</string>
     <string name="time_entry_tap_to_edit">Нажми, чтобы изменить</string>
     <string name="cd_version_info">KashCal версия %1$s. Долгое нажатие для отладки.</string>
+    <string name="cd_about_setting">О настройке %1$s</string>
     <string name="cd_color_slider">Ползунок цвета, сейчас %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d градусов</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Цвет:</string>
     <string name="label_repeat">Повторение</string>
     <string name="label_sync_interval">Интервал синхронизации:</string>
-    <string name="label_scheduled_events">Запланированные события</string>
-    <string name="label_all_day_events">События на весь день</string>
     <string name="label_server_url">URL сервера</string>
     <string name="label_username">Имя пользователя</string>
     <string name="label_password">Пароль</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Видимые календари</string>
     <string name="settings_default_calendar">Календарь по умолчанию</string>
     <string name="settings_default_event_length">Длительность события по умолчанию</string>
-    <string name="settings_default_alerts">Напоминания по умолчанию</string>
+    <string name="settings_default_event_length_hint">Длительность по умолчанию для новых событий</string>
+    <string name="settings_timed_event_alert">Оповещение о событии со временем</string>
+    <string name="settings_all_day_event_alert">Оповещение о событии на весь день</string>
+    <string name="settings_custom_alert_value">Другое (%1$s)</string>
     <string name="settings_notifications">Уведомления</string>
-    <string name="settings_new_events">Новые события</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Системный</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари устройства</string>
     <string name="settings_device_calendars_hint">Календари других приложений</string>
-    <string name="settings_quick_event_add">Быстрое добавление</string>
+    <string name="settings_quick_event_add">Умное добавление событий</string>
+    <string name="settings_quick_event_add_info">Создавайте события, вводя обычный текст. \"Обед с Sam в пятницу в 13:00\" заполнит название, дату и время.</string>
     <string name="settings_suggest_titles">Предлагать названия событий</string>
+    <string name="settings_suggest_titles_info">При вводе названия нового события предлагать ранее использованные названия, чтобы повторяющиеся события создавались одним касанием. Сортируются по частоте и давности использования.</string>
     <string name="settings_week_numbers">Номера недель</string>
     <string name="settings_show_declined">Показывать отклонённые события</string>
     <string name="settings_widget_event_limit">Лимит событий в виджете</string>
+    <string name="settings_widget_event_limit_hint">Максимум событий в день в виджетах</string>
     <string name="settings_sync_lookback">Глубина синхронизации</string>
-    <string name="settings_auto_detect_emojis">Автоопределение эмодзи</string>
-    <string name="settings_events_per_day">Событий в день</string>
+    <string name="settings_sync_lookback_hint">Насколько давние события синхронизировать</string>
     <string name="settings_not_set">Не задано</string>
     <string name="settings_on">Вкл.</string>
     <string name="settings_off">Выкл.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Разрешить небезопасное соединение</string>
     <string name="action_add_another">Добавить ещё</string>
     <string name="account_connected_found_calendars">Найдено календарей: %1$d для %2$s.</string>
-    <string name="account_connected_syncing_hint">Идёт синхронизация — события скоро появятся.</string>
+    <string name="account_connected_syncing_hint">Идёт синхронизация. События скоро появятся.</string>
     <string name="settings_time_format_currently_24h">Сейчас: 24-часовой (%1$s)</string>
     <string name="settings_time_format_currently_12h">Сейчас: 12-часовой (%1$s)</string>
     <string name="settings_time_format_example">Пример: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Только чтение (календарь доступен только для чтения)</string>
     <string name="settings_developer_options">Для разработчиков</string>
     <string name="settings_sync_frequency">Частота синхронизации</string>
-    <string name="settings_preview">ПРЕДПРОСМОТР</string>
-    <string name="settings_n_events">Событий: %1$d</string>
-    <string name="settings_n_events_default">Событий: %1$d (по умолчанию)</string>
+    <string name="settings_sync_frequency_hint">Как часто синхронизировать в фоне</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Календари</string>
     <string name="drawer_contacts">Контакты</string>
     <string name="drawer_device_calendars">Календари устройства</string>
     <string name="drawer_account_offline">Нет сети</string>
+    <string name="calendar_local">Локальный</string>
     <string name="drawer_share_feedback">Справка и документы</string>
     <string name="event_title_fallback">Событие</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">Через %1$s после</string>
     <string name="reminder_day_of_event_12h">9 AM в день события</string>
     <string name="reminder_day_of_event_24h">09:00 в день события</string>
+    <string name="reminder_day_of_event">В день события</string>
     <string name="reminder_before_at_12h">За %1$s до в 9 AM</string>
     <string name="reminder_before_at_24h">За %1$s до в 09:00</string>
     <string name="reminder_short_off">Выкл</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dч</string>
     <string name="reminder_short_days">%1$dд</string>
     <string name="reminder_short_weeks">%1$dнед</string>
+    <string name="reminder_med_minutes">%1$d мин</string>
+    <string name="reminder_med_hours">%1$d ч</string>
+    <string name="reminder_med_weeks">%1$d нед</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d дн</item>
+        <item quantity="few">%1$d дн</item>
+        <item quantity="many">%1$d дн</item>
+        <item quantity="other">%1$d дн</item>
+    </plurals>
+    <string name="reminder_med_day_of">В день</string>
+    <string name="all_day_alert_9am_hint">Оповещения о событиях на весь день приходят в 9:00 (09:00).</string>
     <string name="reminder_summary_none">Нет</string>
     <string name="duration_compact">%1$dч %2$dмин</string>
     <string name="duration_compact_short">%1$dч%2$dмин</string>

@@ -68,6 +68,7 @@
     <string name="action_view">Wyświetl</string>
     <string name="action_enable">Włącz</string>
     <string name="action_done">Gotowe</string>
+    <string name="action_back">Wstecz</string>
     <string name="action_save">Zapisz</string>
     <string name="action_add">Dodaj</string>
     <string name="action_edit">Edytuj</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Format czasu</string>
     <string name="settings_start_week_on">Tydzień zaczyna się od</string>
     <string name="settings_event_emojis">Emoji wydarzeń</string>
-    <string name="settings_emoji_subtitle">Wyświetlaj emoji na podstawie tytułów wydarzeń</string>
+    <string name="settings_event_emojis_info">Dodaje emoji do wydarzeń na podstawie tytułu, na przykład 🎂 dla \"Urodziny\".</string>
     <string name="settings_force_sync">Wymuś pełną synchronizację</string>
     <string name="settings_force_sync_subtitle">Pobierz ponownie wszystkie dane kalendarza</string>
     <string name="settings_sync_history">Historia synchronizacji</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Zapisz wydarzenia do pliku ICS</string>
     <string name="settings_birthday_reminder">Przypomnienie o urodzinach</string>
     <string name="settings_use_device_timezone">Użyj strefy czasowej urządzenia</string>
-    <string name="settings_section_calendars">Kalendarze</string>
+    <string name="settings_section_calendars">Kalendarze i konta</string>
     <string name="settings_section_appearance">Wygląd</string>
-    <string name="settings_section_creating_events">Tworzenie wydarzeń</string>
-    <string name="settings_section_sync">Synchronizacja</string>
+    <string name="settings_section_creating_events">Preferencje wydarzeń</string>
+    <string name="settings_section_sync">Powiadomienia i synchronizacja</string>
     <string name="settings_section_data">Kopia zapasowa i przywracanie</string>
     <string name="settings_section_privacy">Prywatność</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Blokada aplikacji</string>
-    <string name="app_lock_subtitle_off">Wymagaj odblokowania, aby otworzyć KashCal</string>
-    <string name="app_lock_subtitle_on">Odblokuj odciskiem palca, twarzą lub blokadą ekranu</string>
+    <string name="settings_app_lock_info">Wymagaj uwierzytelnienia urządzenia, aby otworzyć KashCal.</string>
     <string name="app_lock_veil_locked">Zablokowano</string>
     <string name="app_lock_veil_unlock">Odblokuj</string>
     <string name="app_lock_veil_footnote">Odcisk palca, twarz lub blokada ekranu</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Ten plik kopii zapasowej zawiera nieprawidłowe dane i nie może zostać przywrócony.</string>
     <string name="restore_error_apply_failure">Wystąpił błąd podczas stosowania kopii zapasowej. Żadne zmiany nie zostały zapisane.</string>
     <string name="backup_error_build_failed">Tworzenie kopii zapasowej nie powiodło się</string>
-    <string name="backup_error_write_failed">Tworzenie kopii zapasowej nie powiodło się — nie można zapisać do pliku</string>
+    <string name="backup_error_write_failed">Tworzenie kopii zapasowej nie powiodło się. Nie można zapisać do pliku.</string>
     <string name="backup_error_read_failed">Nie można odczytać pliku</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Błąd sieci, spróbuj ponownie</string>
     <string name="error_import_file_not_found">Nie znaleziono pliku lub nie można go odczytać.</string>
     <string name="error_import_invalid_format">Nieprawidłowy format pliku kalendarza.</string>
+    <string name="error_import_no_events">W pliku nie znaleziono wydarzeń</string>
+    <string name="error_import_failed">Import nie powiódł się</string>
     <string name="error_import_partial">Zaimportowano %1$d wydarzeń, %2$d nie powiodło się.</string>
     <string name="error_export_failed">Nie udało się wyeksportować wydarzeń.</string>
     <string name="error_export_no_events">Brak wydarzeń do eksportu.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Błąd kalendarza</string>
     <string name="error_device_calendar_write_failed">Nie udało się zapisać do kalendarza urządzenia. Spróbuj ponownie.</string>
     <string name="error_device_calendar_permission">Wymagane uprawnienie do zapisu w kalendarzu. Nadaj uprawnienie w Ustawieniach.</string>
+    <string name="error_device_calendar_permission_denied">Wyłącz i włącz ponownie uprawnienie do Kalendarza w Ustawieniach, aby przyznać dostęp do zapisu</string>
     <string name="error_device_calendar_not_found">Nie znaleziono kalendarza. Mógł zostać usunięty.</string>
     <string name="error_device_event_not_found">Nie znaleziono wydarzenia. Mogło zostać usunięte.</string>
     <string name="error_device_calendar_read_only">Ten kalendarz jest tylko do odczytu.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Wybrane</string>
     <string name="cd_back">Wstecz</string>
+    <string name="cd_opens_in_browser">Otwiera w przeglądarce</string>
     <string name="cd_search">Szukaj</string>
     <string name="cd_create_event">Utwórz wydarzenie</string>
     <string name="cd_delete">Usuń</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Powtarzające się</string>
     <string name="cd_enabled">Włączone</string>
     <string name="cd_sync_error">Błąd synchronizacji</string>
-    <string name="cd_select_option">Wybierz opcję</string>
     <string name="cd_select_label">Wybierz %1$s</string>
     <string name="cd_wheel_picker">Pokrętło wyboru z %1$d opcjami</string>
     <string name="cd_time_entry_keyboard">Wprowadź dokładny czas</string>
     <string name="time_entry_dialog_title">Wprowadź czas</string>
     <string name="time_entry_tap_to_edit">Dotknij, aby edytować</string>
     <string name="cd_version_info">KashCal wersja %1$s. Przytrzymaj, aby otworzyć opcje debugowania.</string>
+    <string name="cd_about_setting">Informacje o: %1$s</string>
     <string name="cd_color_slider">Suwak koloru, aktualnie %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d stopni</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Kolor:</string>
     <string name="label_repeat">Powtarzanie</string>
     <string name="label_sync_interval">Interwał synchronizacji:</string>
-    <string name="label_scheduled_events">Zaplanowane wydarzenia</string>
-    <string name="label_all_day_events">Całodzienne wydarzenia</string>
     <string name="label_server_url">URL serwera</string>
     <string name="label_username">Nazwa użytkownika</string>
     <string name="label_password">Hasło</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Widoczne kalendarze</string>
     <string name="settings_default_calendar">Domyślny kalendarz</string>
     <string name="settings_default_event_length">Domyślna długość wydarzenia</string>
-    <string name="settings_default_alerts">Domyślne alerty</string>
+    <string name="settings_default_event_length_hint">Domyślna długość nowych wydarzeń</string>
+    <string name="settings_timed_event_alert">Alarm wydarzenia z godziną</string>
+    <string name="settings_all_day_event_alert">Alarm wydarzenia całodniowego</string>
+    <string name="settings_custom_alert_value">Niestandardowe (%1$s)</string>
     <string name="settings_notifications">Powiadomienia</string>
-    <string name="settings_new_events">Nowe wydarzenia</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Domyślne systemowe</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendarze urządzenia</string>
     <string name="settings_device_calendars_hint">Kalendarze z innych aplikacji</string>
-    <string name="settings_quick_event_add">Szybkie dodawanie wydarzeń</string>
+    <string name="settings_quick_event_add">Inteligentne dodawanie wydarzeń</string>
+    <string name="settings_quick_event_add_info">Twórz wydarzenia, pisząc naturalnie. \"Lunch z Sam w piątek 13:00\" uzupełni tytuł, datę i godzinę za Ciebie.</string>
     <string name="settings_suggest_titles">Sugeruj tytuły wydarzeń</string>
+    <string name="settings_suggest_titles_info">Gdy nazywasz nowe wydarzenie, proponuje wcześniej używane tytuły, więc powtarzające się wydarzenia to jedno dotknięcie. Uszeregowane według tego, jak często i jak niedawno ich używałeś.</string>
     <string name="settings_week_numbers">Numery tygodni</string>
     <string name="settings_show_declined">Pokaż odrzucone wydarzenia</string>
     <string name="settings_widget_event_limit">Limit wydarzeń widgetu</string>
+    <string name="settings_widget_event_limit_hint">Maksymalna liczba wydarzeń na dzień w widżetach</string>
     <string name="settings_sync_lookback">Zakres synchronizacji wstecz</string>
-    <string name="settings_auto_detect_emojis">Automatyczne wykrywanie emoji</string>
-    <string name="settings_events_per_day">Wydarzeń dziennie</string>
+    <string name="settings_sync_lookback_hint">Jak daleko wstecz synchronizować wydarzenia</string>
     <string name="settings_not_set">Nie ustawiono</string>
     <string name="settings_on">Wł.</string>
     <string name="settings_off">Wył.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Zaufaj niezabezpieczonemu połączeniu</string>
     <string name="action_add_another">Dodaj kolejne</string>
     <string name="account_connected_found_calendars">Znaleziono %1$d kalendarzy dla %2$s.</string>
-    <string name="account_connected_syncing_hint">Trwa synchronizacja — wydarzenia pojawią się wkrótce.</string>
+    <string name="account_connected_syncing_hint">Synchronizacja w toku. Wydarzenia pojawią się wkrótce.</string>
     <string name="settings_time_format_currently_24h">Aktualnie: 24-godzinny (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktualnie: 12-godzinny (%1$s)</string>
     <string name="settings_time_format_example">Przykład: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Tylko do odczytu (kalendarz tylko do odczytu)</string>
     <string name="settings_developer_options">Opcje programisty</string>
     <string name="settings_sync_frequency">Częstotliwość synchronizacji</string>
-    <string name="settings_preview">PODGLĄD</string>
-    <string name="settings_n_events">%1$d wydarzeń</string>
-    <string name="settings_n_events_default">%1$d wydarzeń (domyślnie)</string>
+    <string name="settings_sync_frequency_hint">Jak często synchronizować w tle</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Kalendarze</string>
     <string name="drawer_contacts">Kontakty</string>
     <string name="drawer_device_calendars">Kalendarze urządzenia</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Lokalny</string>
     <string name="drawer_share_feedback">Pomoc i dokumenty</string>
     <string name="event_title_fallback">Wydarzenie</string>
 
@@ -992,6 +997,7 @@
     <string name="reminder_time_after">%1$s po</string>
     <string name="reminder_day_of_event_12h">9:00 w dniu wydarzenia</string>
     <string name="reminder_day_of_event_24h">09:00 w dniu wydarzenia</string>
+    <string name="reminder_day_of_event">W dniu wydarzenia</string>
     <string name="reminder_before_at_12h">%1$s przed o 9:00</string>
     <string name="reminder_before_at_24h">%1$s przed o 09:00</string>
     <string name="reminder_short_off">Wył.</string>
@@ -1002,6 +1008,17 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d godz.</string>
+    <string name="reminder_med_weeks">%1$d tyg.</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d dz.</item>
+        <item quantity="few">%1$d dz.</item>
+        <item quantity="many">%1$d dz.</item>
+        <item quantity="other">%1$d dz.</item>
+    </plurals>
+    <string name="reminder_med_day_of">W dniu</string>
+    <string name="all_day_alert_9am_hint">Alerty całodniowe uruchamiają się o 9 rano (09:00).</string>
     <string name="reminder_summary_none">Brak</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

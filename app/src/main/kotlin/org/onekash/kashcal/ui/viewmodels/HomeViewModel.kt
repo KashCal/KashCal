@@ -75,6 +75,7 @@ import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.hub.normalizeInitials
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.domain.whatsnew.ALL_RELEASE_NOTES
@@ -1179,12 +1180,7 @@ class HomeViewModel(
                         accounts,
                         localLabel = context.getString(R.string.drawer_account_offline),
                         icsLabel = context.getString(R.string.subscriptions_title),
-                        localizeCalendarName = { cal ->
-                            org.onekash.kashcal.data.contacts.ContactEventType
-                                .fromCaldavUrl(cal.caldavUrl)
-                                ?.calendarDisplayName(context.resources)
-                                ?: cal.displayName
-                        }
+                        localizeCalendarName = { it.localizedDisplayName(context.resources) }
                     )
                     val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
@@ -1248,12 +1244,7 @@ class HomeViewModel(
                         accounts,
                         localLabel = context.getString(R.string.drawer_account_offline),
                         icsLabel = context.getString(R.string.subscriptions_title),
-                        localizeCalendarName = { cal ->
-                            org.onekash.kashcal.data.contacts.ContactEventType
-                                .fromCaldavUrl(cal.caldavUrl)
-                                ?.calendarDisplayName(context.resources)
-                                ?: cal.displayName
-                        }
+                        localizeCalendarName = { it.localizedDisplayName(context.resources) }
                     )
                     val deviceEnabled = dataStore.getDeviceCalendarsEnabled()
                     val enabledIds = dataStore.getEnabledDeviceCalendarIds()
@@ -3081,7 +3072,10 @@ class HomeViewModel(
                     // Create new event
                     val now = System.currentTimeMillis()
                     val newEvent = org.onekash.kashcal.data.db.entity.Event(
-                        uid = java.util.UUID.randomUUID().toString(),
+                        // Blank uid: EventWriter mints the canonical
+                        // @kashcal.onekash.org UID so the form isn't a second
+                        // minting authority.
+                        uid = "",
                         calendarId = calendarId,
                         title = formState.title.ifBlank { "Untitled" },
                         startTs = startTs,

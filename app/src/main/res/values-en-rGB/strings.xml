@@ -68,6 +68,7 @@
     <string name="action_view">View</string>
     <string name="action_enable">Enable</string>
     <string name="action_done">Done</string>
+    <string name="action_back">Back</string>
     <string name="action_save">Save</string>
     <string name="action_add">Add</string>
     <string name="action_edit">Edit</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Time Format</string>
     <string name="settings_start_week_on">Start Week On</string>
     <string name="settings_event_emojis">Event Emojis</string>
-    <string name="settings_emoji_subtitle">Show emojis based on event titles</string>
+    <string name="settings_event_emojis_info">Adds an emoji to events based on the title, like 🎂 for \"Birthday\".</string>
     <string name="settings_force_sync">Force Full Sync</string>
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
     <string name="settings_sync_history">Sync History</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Save events to an ICS file</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
-    <string name="settings_section_calendars">Calendars</string>
+    <string name="settings_section_calendars">Calendars &amp; accounts</string>
     <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_section_creating_events">Creating events</string>
-    <string name="settings_section_sync">Sync</string>
+    <string name="settings_section_creating_events">Event preferences</string>
+    <string name="settings_section_sync">Notifications &amp; sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
     <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App lock</string>
-    <string name="app_lock_subtitle_off">Require unlock to open KashCal</string>
-    <string name="app_lock_subtitle_on">Unlock with fingerprint, face, or screen lock</string>
+    <string name="settings_app_lock_info">Require device authentication to open KashCal.</string>
     <string name="app_lock_veil_locked">Locked</string>
     <string name="app_lock_veil_unlock">Unlock</string>
     <string name="app_lock_veil_footnote">Fingerprint, face, or screen lock</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">This backup file contains invalid data and cannot be restored.</string>
     <string name="restore_error_apply_failure">Something went wrong while applying the backup. No changes were saved.</string>
     <string name="backup_error_build_failed">Backup failed</string>
-    <string name="backup_error_write_failed">Backup failed — could not write to file</string>
+    <string name="backup_error_write_failed">Backup failed. Could not write to file.</string>
     <string name="backup_error_read_failed">Could not read file</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Network error, please try again</string>
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
+    <string name="error_import_no_events">No events found in file</string>
+    <string name="error_import_failed">Import failed</string>
     <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
     <string name="error_export_failed">Failed to export events.</string>
     <string name="error_export_no_events">No events to export.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Calendar Error</string>
     <string name="error_device_calendar_write_failed">Failed to save to device calendar. Please try again.</string>
     <string name="error_device_calendar_permission">Calendar write permission required. Please grant permission in Settings.</string>
+    <string name="error_device_calendar_permission_denied">Toggle Calendar permission off/on in Settings to grant write access</string>
     <string name="error_device_calendar_not_found">Calendar not found. It may have been removed.</string>
     <string name="error_device_event_not_found">Event not found. It may have been deleted.</string>
     <string name="error_device_calendar_read_only">This calendar is read-only.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Selected</string>
     <string name="cd_back">Back</string>
+    <string name="cd_opens_in_browser">Opens in browser</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
     <string name="cd_delete">Delete</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Recurring</string>
     <string name="cd_enabled">Enabled</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_select_option">Select option</string>
     <string name="cd_select_label">Select %1$s</string>
     <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
     <string name="cd_time_entry_keyboard">Enter exact time</string>
     <string name="time_entry_dialog_title">Enter time</string>
     <string name="time_entry_tap_to_edit">Tap to edit</string>
     <string name="cd_version_info">KashCal version %1$s. Long press for debug options.</string>
+    <string name="cd_about_setting">About %1$s</string>
     <string name="cd_color_slider">Colour slider, currently %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d degrees</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Colour:</string>
     <string name="label_repeat">Repeat</string>
     <string name="label_sync_interval">Sync Interval:</string>
-    <string name="label_scheduled_events">Scheduled Events</string>
-    <string name="label_all_day_events">All-Day Events</string>
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Visible Calendars</string>
     <string name="settings_default_calendar">Default Calendar</string>
     <string name="settings_default_event_length">Default Event Length</string>
-    <string name="settings_default_alerts">Default Alerts</string>
+    <string name="settings_default_event_length_hint">Default length for new events</string>
+    <string name="settings_timed_event_alert">Timed event alert</string>
+    <string name="settings_all_day_event_alert">All-day event alert</string>
+    <string name="settings_custom_alert_value">Custom (%1$s)</string>
     <string name="settings_notifications">Notifications</string>
-    <string name="settings_new_events">New events</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">System default</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Device Calendars</string>
     <string name="settings_device_calendars_hint">Calendars from other apps</string>
-    <string name="settings_quick_event_add">Quick Event Add</string>
+    <string name="settings_quick_event_add">Smart event add</string>
+    <string name="settings_quick_event_add_info">Create events by typing naturally. \"Lunch with Sam Friday 1pm\" fills in the title, date, and time for you.</string>
     <string name="settings_suggest_titles">Suggest event titles</string>
+    <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
     <string name="settings_week_numbers">Week Numbers</string>
     <string name="settings_show_declined">Show declined events</string>
     <string name="settings_widget_event_limit">Widget Event Limit</string>
+    <string name="settings_widget_event_limit_hint">Most events shown per day in widgets</string>
     <string name="settings_sync_lookback">Sync Lookback</string>
-    <string name="settings_auto_detect_emojis">Auto-detect Emojis</string>
-    <string name="settings_events_per_day">Events per day</string>
+    <string name="settings_sync_lookback_hint">How far back to sync events</string>
     <string name="settings_not_set">Not set</string>
     <string name="settings_on">On</string>
     <string name="settings_off">Off</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Trust insecure connection</string>
     <string name="action_add_another">Add Another</string>
     <string name="account_connected_found_calendars">Found %1$d calendar(s) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Syncing in progress — events will appear shortly.</string>
+    <string name="account_connected_syncing_hint">Syncing in progress. Events will appear shortly.</string>
     <string name="settings_time_format_currently_24h">Currently: 24-hour (%1$s)</string>
     <string name="settings_time_format_currently_12h">Currently: 12-hour (%1$s)</string>
     <string name="settings_time_format_example">Example: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Read only (calendar is read-only)</string>
     <string name="settings_developer_options">Developer Options</string>
     <string name="settings_sync_frequency">Sync Frequency</string>
-    <string name="settings_preview">PREVIEW</string>
-    <string name="settings_n_events">%1$d events</string>
-    <string name="settings_n_events_default">%1$d events (default)</string>
+    <string name="settings_sync_frequency_hint">How often to sync in the background</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Calendars</string>
     <string name="drawer_contacts">Contacts</string>
     <string name="drawer_device_calendars">Device calendars</string>
     <string name="drawer_account_offline">Offline</string>
+    <string name="calendar_local">Local</string>
     <string name="drawer_share_feedback">Help &amp; docs</string>
     <string name="event_title_fallback">Event</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s after</string>
     <string name="reminder_day_of_event_12h">9 AM day of event</string>
     <string name="reminder_day_of_event_24h">09:00 day of event</string>
+    <string name="reminder_day_of_event">Day of event</string>
     <string name="reminder_before_at_12h">%1$s before at 9 AM</string>
     <string name="reminder_before_at_24h">%1$s before at 09:00</string>
     <string name="reminder_short_off">Off</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d hr</string>
+    <string name="reminder_med_weeks">%1$d wk</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="reminder_med_day_of">Day of</string>
+    <string name="all_day_alert_9am_hint">All-day alerts fire at 9 AM (09:00).</string>
     <string name="reminder_summary_none">None</string>
     <string name="duration_compact">%1$dh %2$dm</string>
     <string name="duration_compact_short">%1$dh%2$dm</string>

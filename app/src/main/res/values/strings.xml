@@ -95,6 +95,8 @@
     <string name="action_enable">Enable</string>
     <!-- Button: dismiss/finish current screen (not "completed") -->
     <string name="action_done">Done</string>
+    <!-- Button: go back to the previous view within a sheet -->
+    <string name="action_back">Back</string>
     <!-- Button: save event to calendar -->
     <string name="action_save">Save</string>
     <!-- Button: add a new item -->
@@ -222,10 +224,11 @@
     <string name="app_icon_label_calendar">Calendar</string>
     <string name="app_icon_support_cta">Support KashCal</string>
     <string name="app_icon_switch_note">Changing the icon may restart the app. Notifications always use the default icon and name.</string>
-    <string name="settings_time_format">Time Format</string>
-    <string name="settings_start_week_on">Start Week On</string>
-    <string name="settings_event_emojis">Event Emojis</string>
-    <string name="settings_emoji_subtitle">Show emojis based on event titles</string>
+    <string name="settings_time_format">Time format</string>
+    <string name="settings_start_week_on">Start week on</string>
+    <string name="settings_event_emojis">Event emojis</string>
+    <!-- Tooltip explaining the Event emojis toggle -->
+    <string name="settings_event_emojis_info">Adds an emoji to events based on the title, like 🎂 for \"Birthday\".</string>
     <!-- "Force Full Sync" = re-download everything from server -->
     <string name="settings_force_sync">Force Full Sync</string>
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
@@ -238,21 +241,19 @@
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
     <!-- Section headers in Settings screen -->
-    <string name="settings_section_calendars">Calendars</string>
+    <string name="settings_section_calendars">Calendars &amp; accounts</string>
     <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_section_creating_events">Creating events</string>
-    <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
-    <string name="settings_section_sync">Sync</string>
-    <string name="settings_section_data">Backup &amp; Restore</string>
+    <string name="settings_section_creating_events">Event preferences</string>
+    <!-- "sync" = synchronize calendar data. Use your platform's standard sync term. -->
+    <string name="settings_section_sync">Notifications &amp; sync</string>
+    <string name="settings_section_data">Backup &amp; restore</string>
     <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <!-- Settings toggle. Keep "KashCal" untranslated. -->
     <string name="app_lock_label">App lock</string>
-    <!-- Subtitle when the lock is off: states what the toggle does. -->
-    <string name="app_lock_subtitle_off">Require unlock to open KashCal</string>
-    <!-- Subtitle when the lock is on: names the unlock methods. -->
-    <string name="app_lock_subtitle_on">Unlock with fingerprint, face, or screen lock</string>
+    <!-- Tooltip explaining the App lock toggle -->
+    <string name="settings_app_lock_info">Require device authentication to open KashCal.</string>
     <!-- Branded lock screen (veil) shown over the app while locked. -->
     <string name="app_lock_veil_locked">Locked</string>
     <string name="app_lock_veil_unlock">Unlock</string>
@@ -294,7 +295,7 @@
     <string name="restore_error_apply_failure">Something went wrong while applying the backup. No changes were saved.</string>
     <!-- Backup/restore error snackbars shown from the Activity. -->
     <string name="backup_error_build_failed">Backup failed</string>
-    <string name="backup_error_write_failed">Backup failed — could not write to file</string>
+    <string name="backup_error_write_failed">Backup failed. Could not write to file.</string>
     <string name="backup_error_read_failed">Could not read file</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -444,6 +445,8 @@
     <!-- Import/Export Errors — "import" = load events from .ics file -->
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
+    <string name="error_import_no_events">No events found in file</string>
+    <string name="error_import_failed">Import failed</string>
     <!-- %1$d = successful imports, %2$d = failed imports -->
     <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
     <string name="error_export_failed">Failed to export events.</string>
@@ -469,6 +472,7 @@
     <string name="error_device_calendar_title">Calendar Error</string>
     <string name="error_device_calendar_write_failed">Failed to save to device calendar. Please try again.</string>
     <string name="error_device_calendar_permission">Calendar write permission required. Please grant permission in Settings.</string>
+    <string name="error_device_calendar_permission_denied">Toggle Calendar permission off/on in Settings to grant write access</string>
     <string name="error_device_calendar_not_found">Calendar not found. It may have been removed.</string>
     <string name="error_device_event_not_found">Event not found. It may have been deleted.</string>
     <string name="error_device_calendar_read_only">This calendar is read-only.</string>
@@ -486,6 +490,8 @@
     <!-- State: item is currently selected (past participle/adjective) -->
     <string name="cd_selected">Selected</string>
     <string name="cd_back">Back</string>
+    <!-- Announced after a link's label to signal it leaves the app for a web browser -->
+    <string name="cd_opens_in_browser">Opens in browser</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
     <string name="cd_delete">Delete</string>
@@ -503,7 +509,6 @@
     <!-- State: feature is turned on (past participle/adjective) -->
     <string name="cd_enabled">Enabled</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_select_option">Select option</string>
     <!-- %1$s = label name (e.g., "date", "time") -->
     <string name="cd_select_label">Select %1$s</string>
     <!-- %1$d = number of options -->
@@ -513,6 +518,8 @@
     <string name="time_entry_tap_to_edit">Tap to edit</string>
     <!-- %1$s = version name -->
     <string name="cd_version_info">KashCal version %1$s. Long press for debug options.</string>
+    <!-- Accessibility label for the info (ⓘ) button next to a setting. %1$s = setting name -->
+    <string name="cd_about_setting">About %1$s</string>
     <!-- %1$s = color name (e.g., "Red", "Blue") -->
     <string name="cd_color_slider">Color slider, currently %1$s</string>
     <!-- %1$s = color name, %2$d = hue degrees -->
@@ -526,9 +533,7 @@
     <string name="label_repeat">Repeat</string>
     <string name="label_sync_interval">Sync Interval:</string>
     <!-- Section header: events with specific times (as opposed to all-day) -->
-    <string name="label_scheduled_events">Scheduled Events</string>
     <!-- Section header: events spanning entire day -->
-    <string name="label_all_day_events">All-Day Events</string>
     <!-- CalDAV account form — keep "URL" and "CalDAV" untranslated -->
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
@@ -559,14 +564,19 @@
 
     <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">Visible Calendars</string>
-    <!-- "Default Calendar" = where new events are created by default -->
-    <string name="settings_default_calendar">Default Calendar</string>
-    <string name="settings_default_event_length">Default Event Length</string>
-    <!-- "Alerts" = reminder notifications -->
-    <string name="settings_default_alerts">Default Alerts</string>
+    <!-- "Default calendar" = where new events are created by default -->
+    <string name="settings_default_calendar">Default calendar</string>
+    <string name="settings_default_event_length">Default event length</string>
+    <!-- Subtitle hint at the top of the default event length sheet -->
+    <string name="settings_default_event_length_hint">Default length for new events</string>
+    <!-- "Alert" = reminder notification. Row for timed (non-all-day) events. -->
+    <string name="settings_timed_event_alert">Timed event alert</string>
+    <!-- Row for all-day event reminders -->
+    <string name="settings_all_day_event_alert">All-day event alert</string>
+    <!-- "Custom" alert row label when a custom duration is set. %1$s = the duration, e.g. "45 minutes before" -->
+    <string name="settings_custom_alert_value">Custom (%1$s)</string>
     <!-- Match Android system "Notifications" terminology -->
     <string name="settings_notifications">Notifications</string>
-    <string name="settings_new_events">New events</string>
 
     <!-- ==================== Settings Options ==================== -->
     <!-- Setting value: use the device's default setting -->
@@ -621,7 +631,7 @@
     <string name="accounts_empty_title">No accounts connected</string>
     <string name="accounts_empty_subtitle">Add an account to sync your calendars across devices</string>
     <!-- Keep "iCloud", "Nextcloud", "Fastmail", "CalDAV" untranslated -->
-    <string name="accounts_row_label">Calendar Accounts</string>
+    <string name="accounts_row_label">Calendar accounts</string>
     <!-- Subtitle shown on the Settings row when no accounts are connected; descriptive hint for what users can connect. Keep brand names untranslated. -->
     <string name="accounts_row_hint">e.g. iCloud, Nextcloud, Fastmail</string>
     <string name="accounts_add_icloud">Add iCloud</string>
@@ -666,12 +676,12 @@
     <string name="holiday_catalog_attribution_license" translatable="false">CC BY-SA 3.0</string>
     <!-- subscriptions_count_one/other removed — use R.plurals.subscriptions_count -->
     <!-- Summary row for Settings screen. Keep "ICS" untranslated (file format). -->
-    <string name="subscriptions_row_label">Calendar Feeds (ICS)</string>
+    <string name="subscriptions_row_label">Calendar feeds (ICS)</string>
     <!-- Subtitle shown on the Settings row when no subscriptions exist; descriptive hint for what users can subscribe to. -->
     <string name="subscriptions_row_hint">e.g. holidays, sports, school</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
-    <string name="birthdays_anniversaries_row_label">Birthdays &amp; Anniversaries</string>
+    <string name="birthdays_anniversaries_row_label">Birthdays &amp; anniversaries</string>
     <!-- Subtitle shown on the Settings row when no birthdays or anniversaries exist; provenance hint for where the data comes from. -->
     <string name="birthdays_anniversaries_row_hint">From your phone contacts</string>
     <string name="birthdays_section_title">Birthdays</string>
@@ -732,23 +742,30 @@
     <string name="kashcal_account_label">KashCal</string>
 
     <!-- ==================== Settings Screen ==================== -->
-    <!-- "Device Calendars" = calendars from other apps on this phone -->
-    <string name="settings_device_calendars">Device Calendars</string>
+    <!-- "Device calendars" = calendars from other apps on this phone -->
+    <string name="settings_device_calendars">Device calendars</string>
     <!-- Subtitle shown on the Settings row when device calendars are not enabled; provenance hint for where the data comes from. -->
     <string name="settings_device_calendars_hint">Calendars from other apps</string>
-    <string name="settings_quick_event_add">Quick Event Add</string>
+    <!-- Settings row: enables natural-language event entry ("Lunch with Sam Friday 1pm") -->
+    <string name="settings_quick_event_add">Smart event add</string>
+    <!-- Tooltip explaining the Smart event add toggle -->
+    <string name="settings_quick_event_add_info">Create events by typing naturally. \"Lunch with Sam Friday 1pm\" fills in the title, date, and time for you.</string>
     <!-- Settings row: enables autocomplete dropdown of prior event titles in the event form -->
     <string name="settings_suggest_titles">Suggest event titles</string>
-    <string name="settings_week_numbers">Week Numbers</string>
+    <!-- Tooltip explaining the Suggest event titles toggle -->
+    <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
+    <string name="settings_week_numbers">Show week numbers</string>
     <!-- Display preference: when off, calendar events the user has declined are hidden across all views.
          When on, declined events appear with a strikethrough title and dimmed appearance. -->
     <string name="settings_show_declined">Show declined events</string>
     <!-- "Widget" = Android home screen widget. Use platform's standard widget term. -->
-    <string name="settings_widget_event_limit">Widget Event Limit</string>
+    <string name="settings_widget_event_limit">Widget event limit</string>
+    <!-- Subtitle hint under the Widget event limit row -->
+    <string name="settings_widget_event_limit_hint">Most events shown per day in widgets</string>
     <!-- "Lookback" = how far back in time to sync -->
-    <string name="settings_sync_lookback">Sync Lookback</string>
-    <string name="settings_auto_detect_emojis">Auto-detect Emojis</string>
-    <string name="settings_events_per_day">Events per day</string>
+    <string name="settings_sync_lookback">Sync lookback</string>
+    <!-- Subtitle hint under the Sync lookback row -->
+    <string name="settings_sync_lookback_hint">How far back to sync events</string>
     <string name="settings_not_set">Not set</string>
     <!-- Toggle state: feature is turned on -->
     <string name="settings_on">On</string>
@@ -767,7 +784,7 @@
     <string name="action_add_another">Add Another</string>
     <!-- %1$d = calendar count, %2$s = masked email -->
     <string name="account_connected_found_calendars">Found %1$d calendar(s) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Syncing in progress — events will appear shortly.</string>
+    <string name="account_connected_syncing_hint">Syncing in progress. Events will appear shortly.</string>
     <!-- %1$s = time example -->
     <string name="settings_time_format_currently_24h">Currently: 24-hour (%1$s)</string>
     <!-- %1$s = time example -->
@@ -849,13 +866,11 @@
     <string name="device_calendars_read_only_calendar">Read only (calendar is read-only)</string>
 
     <string name="settings_developer_options">Developer Options</string>
-    <string name="settings_sync_frequency">Sync Frequency</string>
+    <string name="settings_sync_frequency">Sync frequency</string>
+    <string name="settings_sync_frequency_hint">How often to sync in the background</string>
     <!-- Section header: feature is in preview/beta (uppercase label) -->
-    <string name="settings_preview">PREVIEW</string>
     <!-- %1$d = event count, used when not default -->
-    <string name="settings_n_events">%1$d events</string>
     <!-- %1$d = event count, used when default -->
-    <string name="settings_n_events_default">%1$d events (default)</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <!-- Navigation drawer items -->
@@ -864,6 +879,8 @@
     <string name="drawer_device_calendars">Device calendars</string>
     <!-- Account header in drawer for events that aren't synced to any server -->
     <string name="drawer_account_offline">Offline</string>
+    <!-- Display name of the built-in on-device calendar, shown in the calendar picker and elsewhere -->
+    <string name="calendar_local">Local</string>
     <string name="drawer_share_feedback">Help &amp; docs</string>
 
     <!-- Fallback title shown when an event has no title (e.g., re-snoozed reminder where the title was lost). -->
@@ -1290,6 +1307,9 @@
     <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
     <string name="reminder_day_of_event_12h">9 AM day of event</string>
     <string name="reminder_day_of_event_24h">09:00 day of event</string>
+    <!-- Terse all-day day-of option label (Settings/Birthday/Anniversary sheets show
+         a "fire at 9 AM" hint, so the label omits the time) -->
+    <string name="reminder_day_of_event">Day of event</string>
     <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
     <!-- %1$s = duration (e.g., "1 day", "2 days") -->
     <string name="reminder_before_at_12h">%1$s before at 9 AM</string>
@@ -1303,6 +1323,21 @@
     <string name="reminder_short_hours">%1$dh</string>
     <string name="reminder_short_days">%1$dd</string>
     <string name="reminder_short_weeks">%1$dw</string>
+    <!-- Medium-length duration units for Settings row values (abbreviated words).
+         %1$d = the number. "min" = minutes, "hr" = hours, "wk" = weeks. -->
+    <string name="reminder_med_minutes">%1$d min</string>
+    <string name="reminder_med_hours">%1$d hr</string>
+    <string name="reminder_med_weeks">%1$d wk</string>
+    <!-- "day"/"days" needs a plural for the number -->
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <!-- All-day alert row value (Settings), day-of-event case; terse, no 9 AM -->
+    <string name="reminder_med_day_of">Day of</string>
+    <!-- Hint at the top of the all-day alert sheet: all its options fire at 9 AM.
+         Shows both 12h and 24h forms so it's unambiguous regardless of device format. -->
+    <string name="all_day_alert_9am_hint">All-day alerts fire at 9 AM (09:00).</string>
     <string name="reminder_summary_none">None</string>
     <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
     <string name="duration_compact">%1$dh %2$dm</string>

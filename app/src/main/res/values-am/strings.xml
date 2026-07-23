@@ -68,6 +68,7 @@
     <string name="action_view">ተመልከት</string>
     <string name="action_enable">አንቃ</string>
     <string name="action_done">ተከናውኗል</string>
+    <string name="action_back">ተመለስ</string>
     <string name="action_save">አስቀምጥ</string>
     <string name="action_add">አክል</string>
     <string name="action_edit">አርትዕ</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">የሰዓት ቅርጸት</string>
     <string name="settings_start_week_on">ሳምንት ይጀምር</string>
     <string name="settings_event_emojis">የክስተት ኢሞጂዎች</string>
-    <string name="settings_emoji_subtitle">በክስተት ርዕሶች ላይ ተመስርተው ኢሞጂዎችን አሳይ</string>
+    <string name="settings_event_emojis_info">በርዕሱ ላይ ተመስርቶ ለክስተቶች ኢሞጂ ያክላል፣ ለምሳሌ ለ\"የልደት ቀን\" 🎂።</string>
     <string name="settings_force_sync">ሙሉ ማመሳሰል አስገድድ</string>
     <string name="settings_force_sync_subtitle">ሁሉንም የቀን መቁጠሪያ ውሂብ እንደገና አውርድ</string>
     <string name="settings_sync_history">የማመሳሰል ታሪክ</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">ክስተቶችን ወደ ICS ፋይል አስቀምጥ</string>
     <string name="settings_birthday_reminder">የልደት ቀን ማስታወሻ</string>
     <string name="settings_use_device_timezone">የመሳሪያ ሰዓት ክልል ተጠቀም</string>
-    <string name="settings_section_calendars">የቀን መቁጠሪያዎች</string>
+    <string name="settings_section_calendars">የቀን መቁጠሪያዎች እና መለያዎች</string>
     <string name="settings_section_appearance">መልክ</string>
-    <string name="settings_section_creating_events">ክስተቶችን መፍጠር</string>
-    <string name="settings_section_sync">ማመሳሰል</string>
+    <string name="settings_section_creating_events">የክስተት ምርጫዎች</string>
+    <string name="settings_section_sync">ማሳወቂያዎች እና ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
     <string name="settings_section_privacy">ግላዊነት</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">የመተግበሪያ መቆለፊያ</string>
-    <string name="app_lock_subtitle_off">KashCalን ለመክፈት መክፈት ያስፈልጋል</string>
-    <string name="app_lock_subtitle_on">በጣት አሻራ፣ በፊት ወይም በማያ ገጽ መቆለፊያ ይክፈቱ</string>
+    <string name="settings_app_lock_info">KashCal ን ለመክፈት የመሣሪያ ማረጋገጫ ያስፈልጋል።</string>
     <string name="app_lock_veil_locked">ተቆልፏል</string>
     <string name="app_lock_veil_unlock">ክፈት</string>
     <string name="app_lock_veil_footnote">የጣት አሻራ፣ ፊት ወይም የማያ ገጽ መቆለፊያ</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ይህ የምትኬ ፋይል ልክ ያልሆነ ውሂብ ይዟል እና መመለስ አይቻልም።</string>
     <string name="restore_error_apply_failure">ምትኬውን በመተግበር ላይ ሳለ አንድ ችግር ተከስቷል። ምንም ለውጦች አልተቀመጡም።</string>
     <string name="backup_error_build_failed">ምትኬ አልተሳካም</string>
-    <string name="backup_error_write_failed">ምትኬ አልተሳካም — ወደ ፋይል መጻፍ አልተቻለም</string>
+    <string name="backup_error_write_failed">ምትኬ አልተሳካም። ወደ ፋይል መጻፍ አልተቻለም።</string>
     <string name="backup_error_read_failed">ፋይሉን ማንበብ አልተቻለም</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">የአውታረ መረብ ስህተት፣ እባክዎ እንደገና ይሞክሩ</string>
     <string name="error_import_file_not_found">ፋይል አልተገኘም ወይም ሊነበብ አይችልም።</string>
     <string name="error_import_invalid_format">ልክ ያልሆነ የቀን መቁጠሪያ ፋይል ቅርጸት።</string>
+    <string name="error_import_no_events">በፋይሉ ውስጥ ምንም ክስተቶች አልተገኙም</string>
+    <string name="error_import_failed">ማስመጣት አልተሳካም</string>
     <string name="error_import_partial">%1$d ክስተቶች ገብተዋል፣ %2$d አልተሳኩም።</string>
     <string name="error_export_failed">ክስተቶችን መላክ አልተሳካም።</string>
     <string name="error_export_no_events">የሚላኩ ክስተቶች የሉም።</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">የቀን መቁጠሪያ ስህተት</string>
     <string name="error_device_calendar_write_failed">ወደ የመሳሪያ ቀን መቁጠሪያ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።</string>
     <string name="error_device_calendar_permission">የቀን መቁጠሪያ የፅሁፍ ፈቃድ ያስፈልጋል። እባክዎ በቅንብሮች ውስጥ ፈቃድ ይስጡ።</string>
+    <string name="error_device_calendar_permission_denied">የመፃፍ መዳረሻ ለመስጠት በቅንብሮች ውስጥ የቀን መቁጠሪያ ፈቃድን ያጥፉ/ያብሩ</string>
     <string name="error_device_calendar_not_found">ቀን መቁጠሪያ አልተገኘም። ተወግዶ ሊሆን ይችላል።</string>
     <string name="error_device_event_not_found">ክስተት አልተገኘም። ተሰርዞ ሊሆን ይችላል።</string>
     <string name="error_device_calendar_read_only">ይህ ቀን መቁጠሪያ የንባብ ብቻ ነው።</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ተመርጧል</string>
     <string name="cd_back">ተመለስ</string>
+    <string name="cd_opens_in_browser">በአሳሽ ውስጥ ይከፍታል</string>
     <string name="cd_search">ፈልግ</string>
     <string name="cd_create_event">ክስተት ፍጠር</string>
     <string name="cd_delete">ሰርዝ</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">ተደጋጋሚ</string>
     <string name="cd_enabled">ነቅቷል</string>
     <string name="cd_sync_error">የማመሳሰል ስህተት</string>
-    <string name="cd_select_option">አማራጭ ምረጥ</string>
     <string name="cd_select_label">%1$s ምረጥ</string>
     <string name="cd_wheel_picker">%1$d አማራጮች ያሉት ጎማ መምረጫ</string>
     <string name="cd_time_entry_keyboard">ትክክለኛውን ሰዓት ያስገቡ</string>
     <string name="time_entry_dialog_title">ሰዓት ያስገቡ</string>
     <string name="time_entry_tap_to_edit">ለማስተካከል ይንኩ</string>
     <string name="cd_version_info">KashCal ስሪት %1$s። ለማረም አማራጮች ረዘም አድርገው ይጫኑ።</string>
+    <string name="cd_about_setting">ስለ %1$s</string>
     <string name="cd_color_slider">የቀለም ተንሸራታች፣ አሁን %1$s</string>
     <string name="cd_color_slider_state">%1$s፣ %2$d ዲግሪ</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">ቀለም:</string>
     <string name="label_repeat">ድገም</string>
     <string name="label_sync_interval">የማመሳሰል ክፍተት:</string>
-    <string name="label_scheduled_events">የታቀዱ ክስተቶች</string>
-    <string name="label_all_day_events">ሙሉ ቀን ክስተቶች</string>
     <string name="label_server_url">የአገልጋይ URL</string>
     <string name="label_username">የተጠቃሚ ስም</string>
     <string name="label_password">የይለፍ ቃል</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">የሚታዩ ቀን መቁጠሪያዎች</string>
     <string name="settings_default_calendar">ነባሪ ቀን መቁጠሪያ</string>
     <string name="settings_default_event_length">ነባሪ የክስተት ርዝመት</string>
-    <string name="settings_default_alerts">ነባሪ ማንቂያዎች</string>
+    <string name="settings_default_event_length_hint">ለአዲስ ክስተቶች ነባሪ ርዝመት</string>
+    <string name="settings_timed_event_alert">በሰዓት የተወሰነ ክስተት ማንቂያ</string>
+    <string name="settings_all_day_event_alert">ሙሉ ቀን ክስተት ማንቂያ</string>
+    <string name="settings_custom_alert_value">ብጁ (%1$s)</string>
     <string name="settings_notifications">ማሳወቂያዎች</string>
-    <string name="settings_new_events">አዲስ ክስተቶች</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">የስርዓት ነባሪ</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="settings_device_calendars_hint">ከሌሎች መተግበሪያዎች የቀን መቁጠሪያዎች</string>
-    <string name="settings_quick_event_add">ፈጣን ክስተት ማከል</string>
+    <string name="settings_quick_event_add">ብልጥ ክስተት ማከል</string>
+    <string name="settings_quick_event_add_info">በተፈጥሮ በመተየብ ክስተቶችን ይፍጠሩ። \"ከ Sam ጋር ምሳ አርብ 1pm\" ርዕሱን፣ ቀኑን እና ሰዓቱን ለእርስዎ ይሞላል።</string>
     <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
+    <string name="settings_suggest_titles_info">አዲስ ክስተት ሲሰይሙ፣ ከዚህ በፊት የተጠቀሙባቸውን ርዕሶች ይጠቁማል፣ ስለዚህ ተደጋጋሚ ክስተቶች በአንድ ንካ ይሆናሉ። ምን ያህል ጊዜ እና በቅርቡ በተጠቀሙበት መሠረት ደረጃ ተሰጥቷቸዋል።</string>
     <string name="settings_week_numbers">የሳምንት ቁጥሮች</string>
     <string name="settings_show_declined">ውድቅ የተደረጉ ክስተቶችን አሳይ</string>
     <string name="settings_widget_event_limit">የዊጀት ክስተት ገደብ</string>
+    <string name="settings_widget_event_limit_hint">በመግብሮች ውስጥ በቀን የሚታዩ አብዛኞቹ ክስተቶች</string>
     <string name="settings_sync_lookback">የማመሳሰል ወደ ኋላ መመልከት</string>
-    <string name="settings_auto_detect_emojis">ኢሞጂዎችን በራስ-ሰር ፈልግ</string>
-    <string name="settings_events_per_day">በቀን ክስተቶች</string>
+    <string name="settings_sync_lookback_hint">ክስተቶችን ወደ ኋላ ምን ያህል ርቀት ማመሳሰል</string>
     <string name="settings_not_set">አልተዋቀረም</string>
     <string name="settings_on">በርቷል</string>
     <string name="settings_off">ጠፍቷል</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">ደህንነቱ ያልተጠበቀ ግንኙነት ይመኑ</string>
     <string name="action_add_another">ሌላ አክል</string>
     <string name="account_connected_found_calendars">ለ%2$s %1$d ቀን መቁጠሪያ(ዎች) ተገኝተዋል።</string>
-    <string name="account_connected_syncing_hint">ማመሳሰል በሂደት ላይ ነው — ክስተቶች በቅርቡ ይታያሉ።</string>
+    <string name="account_connected_syncing_hint">ማመሳሰል በሂደት ላይ ነው። ክስተቶች በቅርቡ ይታያሉ።</string>
     <string name="settings_time_format_currently_24h">አሁን: 24-ሰዓት (%1$s)</string>
     <string name="settings_time_format_currently_12h">አሁን: 12-ሰዓት (%1$s)</string>
     <string name="settings_time_format_example">ምሳሌ: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">የንባብ ብቻ (ቀን መቁጠሪያ የንባብ ብቻ ነው)</string>
     <string name="settings_developer_options">የገንቢ አማራጮች</string>
     <string name="settings_sync_frequency">የማመሳሰል ድግግሞሽ</string>
-    <string name="settings_preview">ቅድመ እይታ</string>
-    <string name="settings_n_events">%1$d ክስተቶች</string>
-    <string name="settings_n_events_default">%1$d ክስተቶች (ነባሪ)</string>
+    <string name="settings_sync_frequency_hint">ከበስተጀርባ ምን ያህል ጊዜ እንደሚያመሳስል</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ቀን መቁጠሪያዎች</string>
     <string name="drawer_contacts">እውቂያዎች</string>
     <string name="drawer_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="drawer_account_offline">ከመስመር ውጭ</string>
+    <string name="calendar_local">አካባቢያዊ</string>
     <string name="drawer_share_feedback">እገዛ &amp; ሰነዶች</string>
     <string name="event_title_fallback">ክስተት</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s በኋላ</string>
     <string name="reminder_day_of_event_12h">9 AM የክስተቱ ቀን</string>
     <string name="reminder_day_of_event_24h">09:00 የክስተቱ ቀን</string>
+    <string name="reminder_day_of_event">Day of event</string>
     <string name="reminder_before_at_12h">%1$s በፊት 9 AM ላይ</string>
     <string name="reminder_before_at_24h">%1$s በፊት 09:00 ላይ</string>
     <string name="reminder_short_off">ጠፍቷል</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dሰ</string>
     <string name="reminder_short_days">%1$dቀ</string>
     <string name="reminder_short_weeks">%1$dሳ</string>
+    <string name="reminder_med_minutes">%1$d ደቂ</string>
+    <string name="reminder_med_hours">%1$d ሰዓ</string>
+    <string name="reminder_med_weeks">%1$d ሳም</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ቀን</item>
+        <item quantity="other">%1$d ቀናት</item>
+    </plurals>
+    <string name="reminder_med_day_of">Day of</string>
+    <string name="all_day_alert_9am_hint">All-day alerts fire at 9 AM (09:00).</string>
     <string name="reminder_summary_none">ምንም</string>
     <string name="duration_compact">%1$dሰ %2$dደ</string>
     <string name="duration_compact_short">%1$dሰ%2$dደ</string>

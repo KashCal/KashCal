@@ -429,4 +429,38 @@ class EventToICalEventMapperTest {
         assertNull(ical.organizer)
         assertTrue(ical.attendees.isEmpty())
     }
+
+    // ========== dtStartOf — shared Room-Event → DTSTART reconstruction ==========
+
+    @Test
+    fun `dtStartOf reconstructs a timed TZID DTSTART to known values`() {
+        // Pin against expected literals, NOT against toICalEvent (which is
+        // implemented via dtStartOf, so comparing the two would be tautological).
+        val event = baseEvent(
+            startTs = 1709740800000L,
+            timezone = "America/Chicago",
+            isAllDay = false,
+        )
+        val dt = EventToICalEventMapper.dtStartOf(event)
+        assertEquals(1709740800000L, dt.timestamp)
+        assertEquals(ZoneId.of("America/Chicago"), dt.timezone)
+        assertEquals(false, dt.isDate)
+    }
+
+    @Test
+    fun `dtStartOf reconstructs a UTC DTSTART to known values`() {
+        val event = baseEvent(startTs = 1709740800000L, timezone = null, isAllDay = false)
+        val dt = EventToICalEventMapper.dtStartOf(event)
+        assertEquals(1709740800000L, dt.timestamp)
+        assertNull("UTC/floating event has null zone", dt.timezone)
+        assertEquals(false, dt.isDate)
+    }
+
+    @Test
+    fun `dtStartOf reconstructs an all-day DTSTART to known values`() {
+        val event = baseEvent(startTs = 1709740800000L, timezone = null, isAllDay = true)
+        val dt = EventToICalEventMapper.dtStartOf(event)
+        assertEquals(1709740800000L, dt.timestamp)
+        assertEquals(true, dt.isDate)
+    }
 }

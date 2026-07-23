@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.components.attendees
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -286,6 +287,9 @@ private fun HostBadge() {
         modifier = Modifier
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.tertiaryContainer)
+            // The tonal fill can wash out against the surface for pale accent seeds;
+            // a hairline outline keeps the badge edge defined on any theme.
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {
         Text(

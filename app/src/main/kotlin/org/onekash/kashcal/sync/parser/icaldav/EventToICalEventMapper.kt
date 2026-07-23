@@ -34,6 +34,15 @@ object EventToICalEventMapper {
      *   Defaulted empty so existing callers continue to compile and emit no
      *   attendees. Organizer-side push paths pass the real list.
      */
+    /**
+     * Reconstruct the DTSTART [ICalDateTime] a Room [Event] serializes to.
+     * Single source of the Room-Event→dtStart convention so every path that
+     * needs it (wire serialization here, and RECURRENCE-ID value-type
+     * normalization in the pull path) agrees byte-for-byte.
+     */
+    fun dtStartOf(event: Event): ICalDateTime =
+        ICalDateTime.fromTimestamp(event.startTs, resolveZone(event.timezone), event.isAllDay)
+
     fun toICalEvent(event: Event, attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()): ICalEvent {
         val zone = resolveZone(event.timezone)
         val endZone = resolveZone(event.endTimezone) ?: zone
@@ -50,7 +59,7 @@ object EventToICalEventMapper {
             summary = event.title,
             description = event.description,
             location = event.location,
-            dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
+            dtStart = dtStartOf(event),
             dtEnd = ICalDateTime.fromTimestamp(endTs, endZone, event.isAllDay),
             duration = null,
             isAllDay = event.isAllDay,

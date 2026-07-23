@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.hub
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -40,7 +41,12 @@ fun AccountAvatar(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            // A hairline outline gives the circle a defined edge against the page.
+            // The tonal container fill barely separates from the surface for some
+            // accent seeds (and collapses entirely for the white/black extremes),
+            // so the border, not the fill, carries the shape.
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         if (monogram.isEmpty()) {

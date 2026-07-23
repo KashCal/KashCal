@@ -68,6 +68,7 @@
     <string name="action_view">ดู</string>
     <string name="action_enable">เปิดใช้</string>
     <string name="action_done">เสร็จ</string>
+    <string name="action_back">ย้อนกลับ</string>
     <string name="action_save">บันทึก</string>
     <string name="action_add">เพิ่ม</string>
     <string name="action_edit">แก้ไข</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">รูปแบบเวลา</string>
     <string name="settings_start_week_on">เริ่มสัปดาห์วัน</string>
     <string name="settings_event_emojis">อิโมจิกิจกรรม</string>
-    <string name="settings_emoji_subtitle">แสดงอิโมจิตามชื่อกิจกรรม</string>
+    <string name="settings_event_emojis_info">เพิ่มอีโมจิให้กิจกรรมตามชื่อเรื่อง เช่น 🎂 สำหรับ \"วันเกิด\"</string>
     <string name="settings_force_sync">ซิงค์ทั้งหมด</string>
     <string name="settings_force_sync_subtitle">ดาวน์โหลดข้อมูลปฏิทินทั้งหมดใหม่</string>
     <string name="settings_sync_history">ประวัติการซิงค์</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">บันทึกกิจกรรมเป็นไฟล์ ICS</string>
     <string name="settings_birthday_reminder">แจ้งเตือนวันเกิด</string>
     <string name="settings_use_device_timezone">ใช้เขตเวลาของอุปกรณ์</string>
-    <string name="settings_section_calendars">ปฏิทิน</string>
+    <string name="settings_section_calendars">ปฏิทินและบัญชี</string>
     <string name="settings_section_appearance">รูปลักษณ์</string>
-    <string name="settings_section_creating_events">การสร้างกิจกรรม</string>
-    <string name="settings_section_sync">ซิงค์</string>
+    <string name="settings_section_creating_events">การตั้งค่ากิจกรรม</string>
+    <string name="settings_section_sync">การแจ้งเตือนและการซิงค์</string>
     <string name="settings_section_data">สำรองและกู้คืน</string>
     <string name="settings_section_privacy">ความเป็นส่วนตัว</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ล็อกแอป</string>
-    <string name="app_lock_subtitle_off">ต้องปลดล็อกเพื่อเปิด KashCal</string>
-    <string name="app_lock_subtitle_on">ปลดล็อกด้วยลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ</string>
+    <string name="settings_app_lock_info">ต้องยืนยันตัวตนของอุปกรณ์เพื่อเปิด KashCal</string>
     <string name="app_lock_veil_locked">ล็อกอยู่</string>
     <string name="app_lock_veil_unlock">ปลดล็อก</string>
     <string name="app_lock_veil_footnote">ลายนิ้วมือ ใบหน้า หรือการล็อกหน้าจอ</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">ไฟล์สำรองนี้มีข้อมูลที่ไม่ถูกต้องและไม่สามารถกู้คืนได้</string>
     <string name="restore_error_apply_failure">เกิดข้อผิดพลาดขณะใช้ข้อมูลสำรอง ไม่มีการบันทึกการเปลี่ยนแปลงใดๆ</string>
     <string name="backup_error_build_failed">สำรองข้อมูลไม่สำเร็จ</string>
-    <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ — เขียนลงไฟล์ไม่ได้</string>
+    <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ ไม่สามารถเขียนลงไฟล์ได้</string>
     <string name="backup_error_read_failed">อ่านไฟล์ไม่ได้</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">เกิดข้อผิดพลาดของเครือข่าย โปรดลองอีกครั้ง</string>
     <string name="error_import_file_not_found">ไม่พบไฟล์หรืออ่านไม่ได้</string>
     <string name="error_import_invalid_format">รูปแบบไฟล์ปฏิทินไม่ถูกต้อง</string>
+    <string name="error_import_no_events">ไม่พบกิจกรรมในไฟล์</string>
+    <string name="error_import_failed">นำเข้าไม่สำเร็จ</string>
     <string name="error_import_partial">นำเข้า %1$d กิจกรรม, %2$d ไม่สำเร็จ</string>
     <string name="error_export_failed">ส่งออกกิจกรรมไม่สำเร็จ</string>
     <string name="error_export_no_events">ไม่มีกิจกรรมให้ส่งออก</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">ข้อผิดพลาดของปฏิทิน</string>
     <string name="error_device_calendar_write_failed">บันทึกลงปฏิทินอุปกรณ์ไม่สำเร็จ กรุณาลองอีกครั้ง</string>
     <string name="error_device_calendar_permission">ต้องการสิทธิ์เขียนปฏิทิน กรุณาอนุญาตในการตั้งค่า</string>
+    <string name="error_device_calendar_permission_denied">หากต้องการให้สิทธิ์เขียน ให้ปิดแล้วเปิดสิทธิ์ปฏิทินอีกครั้งในการตั้งค่า</string>
     <string name="error_device_calendar_not_found">ไม่พบปฏิทิน อาจถูกลบไปแล้ว</string>
     <string name="error_device_event_not_found">ไม่พบกิจกรรม อาจถูกลบไปแล้ว</string>
     <string name="error_device_calendar_read_only">ปฏิทินนี้เป็นแบบอ่านอย่างเดียว</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">เลือกแล้ว</string>
     <string name="cd_back">ย้อนกลับ</string>
+    <string name="cd_opens_in_browser">เปิดในเบราว์เซอร์</string>
     <string name="cd_search">ค้นหา</string>
     <string name="cd_create_event">สร้างกิจกรรม</string>
     <string name="cd_delete">ลบ</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">เกิดซ้ำ</string>
     <string name="cd_enabled">เปิดใช้แล้ว</string>
     <string name="cd_sync_error">ซิงค์ผิดพลาด</string>
-    <string name="cd_select_option">เลือกตัวเลือก</string>
     <string name="cd_select_label">เลือก%1$s</string>
     <string name="cd_wheel_picker">ตัวเลือกแบบวงล้อ %1$d ตัวเลือก</string>
     <string name="cd_time_entry_keyboard">ป้อนเวลาที่แน่นอน</string>
     <string name="time_entry_dialog_title">ป้อนเวลา</string>
     <string name="time_entry_tap_to_edit">แตะเพื่อแก้ไข</string>
     <string name="cd_version_info">KashCal เวอร์ชัน %1$s กดค้างเพื่อดูตัวเลือกดีบัก</string>
+    <string name="cd_about_setting">เกี่ยวกับ %1$s</string>
     <string name="cd_color_slider">แถบเลื่อนสี ปัจจุบัน %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d องศา</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">สี:</string>
     <string name="label_repeat">เกิดซ้ำ</string>
     <string name="label_sync_interval">ช่วงเวลาซิงค์:</string>
-    <string name="label_scheduled_events">กิจกรรมที่กำหนดเวลา</string>
-    <string name="label_all_day_events">กิจกรรมทั้งวัน</string>
     <string name="label_server_url">URL เซิร์ฟเวอร์</string>
     <string name="label_username">ชื่อผู้ใช้</string>
     <string name="label_password">รหัสผ่าน</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">ปฏิทินที่แสดง</string>
     <string name="settings_default_calendar">ปฏิทินเริ่มต้น</string>
     <string name="settings_default_event_length">ระยะเวลากิจกรรมเริ่มต้น</string>
-    <string name="settings_default_alerts">แจ้งเตือนเริ่มต้น</string>
+    <string name="settings_default_event_length_hint">ระยะเวลาเริ่มต้นสำหรับกิจกรรมใหม่</string>
+    <string name="settings_timed_event_alert">การแจ้งเตือนกิจกรรมแบบระบุเวลา</string>
+    <string name="settings_all_day_event_alert">การแจ้งเตือนกิจกรรมทั้งวัน</string>
+    <string name="settings_custom_alert_value">กำหนดเอง (%1$s)</string>
     <string name="settings_notifications">การแจ้งเตือน</string>
-    <string name="settings_new_events">กิจกรรมใหม่</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">ค่าเริ่มต้นของระบบ</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="settings_device_calendars_hint">ปฏิทินจากแอปอื่น</string>
-    <string name="settings_quick_event_add">เพิ่มกิจกรรมด่วน</string>
+    <string name="settings_quick_event_add">เพิ่มกิจกรรมอัจฉริยะ</string>
+    <string name="settings_quick_event_add_info">สร้างกิจกรรมด้วยการพิมพ์อย่างเป็นธรรมชาติ \"กินข้าวเที่ยงกับ Sam วันศุกร์ 13:00\" จะกรอกชื่อเรื่อง วันที่ และเวลาให้คุณ</string>
     <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
+    <string name="settings_suggest_titles_info">ขณะที่คุณตั้งชื่อกิจกรรมใหม่ ระบบจะแนะนำชื่อเรื่องที่คุณเคยใช้มาก่อน เพื่อให้กิจกรรมที่เกิดซ้ำทำได้ในแตะเดียว จัดอันดับตามความถี่และความใหม่ของการใช้งาน</string>
     <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
     <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
+    <string name="settings_widget_event_limit_hint">จำนวนกิจกรรมสูงสุดที่แสดงต่อวันในวิดเจ็ต</string>
     <string name="settings_sync_lookback">ซิงค์ย้อนหลัง</string>
-    <string name="settings_auto_detect_emojis">ตรวจจับอิโมจิอัตโนมัติ</string>
-    <string name="settings_events_per_day">กิจกรรมต่อวัน</string>
+    <string name="settings_sync_lookback_hint">ระยะเวลาย้อนหลังในการซิงค์กิจกรรม</string>
     <string name="settings_not_set">ไม่ได้ตั้งค่า</string>
     <string name="settings_on">เปิด</string>
     <string name="settings_off">ปิด</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">เชื่อถือการเชื่อมต่อที่ไม่ปลอดภัย</string>
     <string name="action_add_another">เพิ่มบัญชีอื่น</string>
     <string name="account_connected_found_calendars">พบ %1$d ปฏิทินสำหรับ %2$s</string>
-    <string name="account_connected_syncing_hint">กำลังซิงค์ — กิจกรรมจะปรากฏในอีกสักครู่</string>
+    <string name="account_connected_syncing_hint">กำลังซิงค์ กิจกรรมจะปรากฏในไม่ช้า</string>
     <string name="settings_time_format_currently_24h">ปัจจุบัน: 24 ชั่วโมง (%1$s)</string>
     <string name="settings_time_format_currently_12h">ปัจจุบัน: 12 ชั่วโมง (%1$s)</string>
     <string name="settings_time_format_example">ตัวอย่าง: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">อ่านอย่างเดียว (ปฏิทินอ่านอย่างเดียว)</string>
     <string name="settings_developer_options">ตัวเลือกนักพัฒนา</string>
     <string name="settings_sync_frequency">ความถี่การซิงค์</string>
-    <string name="settings_preview">ตัวอย่าง</string>
-    <string name="settings_n_events">%1$d กิจกรรม</string>
-    <string name="settings_n_events_default">%1$d กิจกรรม (ค่าเริ่มต้น)</string>
+    <string name="settings_sync_frequency_hint">ความถี่ในการซิงค์เบื้องหลัง</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">ปฏิทิน</string>
     <string name="drawer_contacts">ผู้ติดต่อ</string>
     <string name="drawer_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="drawer_account_offline">ออฟไลน์</string>
+    <string name="calendar_local">ในเครื่อง</string>
     <string name="drawer_share_feedback">ความช่วยเหลือและเอกสาร</string>
     <string name="event_title_fallback">กิจกรรม</string>
 
@@ -875,6 +880,7 @@
     <string name="reminder_time_after">%1$s หลัง</string>
     <string name="reminder_day_of_event_12h">9 AM วันที่มีกิจกรรม</string>
     <string name="reminder_day_of_event_24h">09:00 วันที่มีกิจกรรม</string>
+    <string name="reminder_day_of_event">วันที่มีกิจกรรม</string>
     <string name="reminder_before_at_12h">%1$s ก่อน เวลา 9 AM</string>
     <string name="reminder_before_at_24h">%1$s ก่อน เวลา 09:00</string>
     <string name="reminder_short_off">ปิด</string>
@@ -885,6 +891,14 @@
     <string name="reminder_short_hours">%1$d ชม.</string>
     <string name="reminder_short_days">%1$d วัน</string>
     <string name="reminder_short_weeks">%1$d สัปดาห์</string>
+    <string name="reminder_med_minutes">%1$d นาที</string>
+    <string name="reminder_med_hours">%1$d ชม.</string>
+    <string name="reminder_med_weeks">%1$d สัปดาห์</string>
+    <plurals name="reminder_med_days">
+        <item quantity="other">%1$d วัน</item>
+    </plurals>
+    <string name="reminder_med_day_of">วันที่มีกิจกรรม</string>
+    <string name="all_day_alert_9am_hint">การแจ้งเตือนแบบทั้งวันจะแจ้งเวลา 9 โมงเช้า (09:00)</string>
     <string name="reminder_summary_none">ไม่มี</string>
     <string name="duration_compact">%1$d ชม. %2$d นาที</string>
     <string name="duration_compact_short">%1$dชม.%2$dนาที</string>

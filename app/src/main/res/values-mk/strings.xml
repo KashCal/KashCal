@@ -68,6 +68,7 @@
     <string name="action_view">Прегледај</string>
     <string name="action_enable">Овозможи</string>
     <string name="action_done">Готово</string>
+    <string name="action_back">Назад</string>
     <string name="action_save">Зачувај</string>
     <string name="action_add">Додај</string>
     <string name="action_edit">Уреди</string>
@@ -148,7 +149,7 @@
     <string name="settings_time_format">Формат на време</string>
     <string name="settings_start_week_on">Неделата почнува во</string>
     <string name="settings_event_emojis">Емоџи за настани</string>
-    <string name="settings_emoji_subtitle">Прикажи емоџи според наслови на настани</string>
+    <string name="settings_event_emojis_info">Додава емоџи на настаните врз основа на насловот, како 🎂 за \"Роденден\".</string>
     <string name="settings_force_sync">Принудна целосна синхронизација</string>
     <string name="settings_force_sync_subtitle">Повторно преземање на сите податоци од календарот</string>
     <string name="settings_sync_history">Историја на синхронизација</string>
@@ -157,17 +158,16 @@
     <string name="settings_export_subtitle">Зачувај ги настаните во ICS датотека</string>
     <string name="settings_birthday_reminder">Потсетник за роденден</string>
     <string name="settings_use_device_timezone">Користи временска зона на уредот</string>
-    <string name="settings_section_calendars">Календари</string>
+    <string name="settings_section_calendars">Календари и сметки</string>
     <string name="settings_section_appearance">Изглед</string>
-    <string name="settings_section_creating_events">Создавање настани</string>
-    <string name="settings_section_sync">Синхронизација</string>
+    <string name="settings_section_creating_events">Поставки за настани</string>
+    <string name="settings_section_sync">Известувања и синхронизација</string>
     <string name="settings_section_data">Резервна копија и враќање</string>
     <string name="settings_section_privacy">Приватност</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Заклучување на апликацијата</string>
-    <string name="app_lock_subtitle_off">Барај отклучување за отворање на KashCal</string>
-    <string name="app_lock_subtitle_on">Отклучи со отпечаток, лице или заклучување на екранот</string>
+    <string name="settings_app_lock_info">Побарајте автентикација на уредот за да го отворите KashCal.</string>
     <string name="app_lock_veil_locked">Заклучено</string>
     <string name="app_lock_veil_unlock">Отклучи</string>
     <string name="app_lock_veil_footnote">Отпечаток, лице или заклучување на екранот</string>
@@ -195,7 +195,7 @@
     <string name="restore_error_invalid_value">Оваа резервна копија содржи невалидни податоци и не може да се врати.</string>
     <string name="restore_error_apply_failure">Нешто тргна наопаку при примената на резервната копија. Не се зачувани промени.</string>
     <string name="backup_error_build_failed">Резервната копија не успеа</string>
-    <string name="backup_error_write_failed">Резервната копија не успеа — не можеше да се запише во датотеката</string>
+    <string name="backup_error_write_failed">Резервната копија не успеа. Не може да се запише во датотеката.</string>
     <string name="backup_error_read_failed">Не можеше да се прочита датотеката</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -291,6 +291,8 @@
     <string name="password_change_error_network">Мрежна грешка, обидете се повторно</string>
     <string name="error_import_file_not_found">Датотеката не е пронајдена или не може да се прочита.</string>
     <string name="error_import_invalid_format">Невалиден формат на датотека со календар.</string>
+    <string name="error_import_no_events">Во датотеката не се пронајдени настани</string>
+    <string name="error_import_failed">Увезувањето не успеа</string>
     <string name="error_import_partial">Увезени %1$d настани, %2$d неуспешни.</string>
     <string name="error_export_failed">Неуспешно извезување на настани.</string>
     <string name="error_export_no_events">Нема настани за извезување.</string>
@@ -309,6 +311,7 @@
     <string name="error_device_calendar_title">Грешка во календарот</string>
     <string name="error_device_calendar_write_failed">Неуспешно зачувување во календарот на уредот. Обидете се повторно.</string>
     <string name="error_device_calendar_permission">Потребна е дозвола за запишување во календар. Дајте дозвола во Поставки.</string>
+    <string name="error_device_calendar_permission_denied">Исклучете ја и повторно вклучете ја дозволата за Календар во Поставки за да дадете пристап за запишување</string>
     <string name="error_device_calendar_not_found">Календарот не е пронајден. Можеби е отстранет.</string>
     <string name="error_device_event_not_found">Настанот не е пронајден. Можеби е избришан.</string>
     <string name="error_device_calendar_read_only">Овој календар е само за читање.</string>
@@ -319,6 +322,7 @@
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Избрано</string>
     <string name="cd_back">Назад</string>
+    <string name="cd_opens_in_browser">Се отвора во прелистувач</string>
     <string name="cd_search">Пребарај</string>
     <string name="cd_create_event">Создај настан</string>
     <string name="cd_delete">Избриши</string>
@@ -334,13 +338,13 @@
     <string name="cd_recurring">Повторувачки</string>
     <string name="cd_enabled">Овозможено</string>
     <string name="cd_sync_error">Грешка при синхронизација</string>
-    <string name="cd_select_option">Избери опција</string>
     <string name="cd_select_label">Избери %1$s</string>
     <string name="cd_wheel_picker">Тркалезен избирач со %1$d опции</string>
     <string name="cd_time_entry_keyboard">Внесете точно време</string>
     <string name="time_entry_dialog_title">Внесете време</string>
     <string name="time_entry_tap_to_edit">Допрете за уредување</string>
     <string name="cd_version_info">KashCal верзија %1$s. Долго притиснете за опции за дебагирање.</string>
+    <string name="cd_about_setting">За %1$s</string>
     <string name="cd_color_slider">Лизгач за боја, моментално %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d степени</string>
 
@@ -349,8 +353,6 @@
     <string name="label_color">Боја:</string>
     <string name="label_repeat">Повторување</string>
     <string name="label_sync_interval">Интервал на синхронизација:</string>
-    <string name="label_scheduled_events">Закажани настани</string>
-    <string name="label_all_day_events">Целодневни настани</string>
     <string name="label_server_url">URL на серверот</string>
     <string name="label_username">Корисничко име</string>
     <string name="label_password">Лозинка</string>
@@ -373,9 +375,11 @@
     <string name="settings_visible_calendars">Видливи календари</string>
     <string name="settings_default_calendar">Стандарден календар</string>
     <string name="settings_default_event_length">Стандардно траење на настан</string>
-    <string name="settings_default_alerts">Стандардни известувања</string>
+    <string name="settings_default_event_length_hint">Стандардно траење за нови настани</string>
+    <string name="settings_timed_event_alert">Предупредување за настан со време</string>
+    <string name="settings_all_day_event_alert">Предупредување за целодневен настан</string>
+    <string name="settings_custom_alert_value">Прилагодено (%1$s)</string>
     <string name="settings_notifications">Известувања</string>
-    <string name="settings_new_events">Нови настани</string>
 
     <!-- ==================== Settings Options ==================== -->
     <string name="option_system_default">Системска стандардна вредност</string>
@@ -509,14 +513,16 @@
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Календари на уредот</string>
     <string name="settings_device_calendars_hint">Календари од други апликации</string>
-    <string name="settings_quick_event_add">Брзо додавање настан</string>
+    <string name="settings_quick_event_add">Паметно додавање настани</string>
+    <string name="settings_quick_event_add_info">Создавајте настани со природно пишување. \"Ручек со Sam петок во 13:00\" ги пополнува наместо вас насловот, датумот и времето.</string>
     <string name="settings_suggest_titles">Предложувај наслови на настани</string>
+    <string name="settings_suggest_titles_info">Додека именувате нов настан, предлага наслови што сте ги користеле претходно, така што повторливите настани се со едно допирање. Рангирани според тоа колку често и колку неодамна сте ги користеле.</string>
     <string name="settings_week_numbers">Броеви на недели</string>
     <string name="settings_show_declined">Прикажи одбиени настани</string>
     <string name="settings_widget_event_limit">Ограничување на настани за виџет</string>
+    <string name="settings_widget_event_limit_hint">Најмногу настани прикажани дневно во виџетите</string>
     <string name="settings_sync_lookback">Период за синхронизација наназад</string>
-    <string name="settings_auto_detect_emojis">Автоматско откривање емоџи</string>
-    <string name="settings_events_per_day">Настани на ден</string>
+    <string name="settings_sync_lookback_hint">Колку наназад да се синхронизираат настаните</string>
     <string name="settings_not_set">Не е поставено</string>
     <string name="settings_on">Вкл.</string>
     <string name="settings_off">Искл.</string>
@@ -529,7 +535,7 @@
     <string name="caldav_trust_insecure_label">Доверувај се на небезбедна врска</string>
     <string name="action_add_another">Додај друга</string>
     <string name="account_connected_found_calendars">Пронајдени %1$d календар(и) за %2$s.</string>
-    <string name="account_connected_syncing_hint">Синхронизацијата е во тек — настаните ќе се појават наскоро.</string>
+    <string name="account_connected_syncing_hint">Синхронизацијата е во тек. Настаните наскоро ќе се појават.</string>
     <string name="settings_time_format_currently_24h">Моментално: 24-часовен (%1$s)</string>
     <string name="settings_time_format_currently_12h">Моментално: 12-часовен (%1$s)</string>
     <string name="settings_time_format_example">Пример: %1$s</string>
@@ -588,15 +594,14 @@
     <string name="device_calendars_read_only_calendar">Само за читање (календарот е само за читање)</string>
     <string name="settings_developer_options">Опции за програмери</string>
     <string name="settings_sync_frequency">Честота на синхронизација</string>
-    <string name="settings_preview">ПРЕГЛЕД</string>
-    <string name="settings_n_events">%1$d настани</string>
-    <string name="settings_n_events_default">%1$d настани (стандардно)</string>
+    <string name="settings_sync_frequency_hint">Колку често да се синхронизира во заднина</string>
 
     <!-- ==================== i18n: Drawer ==================== -->
     <string name="drawer_calendars">Календари</string>
     <string name="drawer_contacts">Контакти</string>
     <string name="drawer_device_calendars">Календари на уредот</string>
     <string name="drawer_account_offline">Офлајн</string>
+    <string name="calendar_local">Локален</string>
     <string name="drawer_share_feedback">Помош и документација</string>
     <string name="event_title_fallback">Настан</string>
 
@@ -914,6 +919,7 @@
     <string name="reminder_time_after">%1$s после</string>
     <string name="reminder_day_of_event_12h">9 AM на денот на настанот</string>
     <string name="reminder_day_of_event_24h">09:00 на денот на настанот</string>
+    <string name="reminder_day_of_event">На денот на настанот</string>
     <string name="reminder_before_at_12h">%1$s пред во 9 AM</string>
     <string name="reminder_before_at_24h">%1$s пред во 09:00</string>
     <string name="reminder_short_off">Искл.</string>
@@ -924,6 +930,15 @@
     <string name="reminder_short_hours">%1$dч</string>
     <string name="reminder_short_days">%1$dд</string>
     <string name="reminder_short_weeks">%1$dн</string>
+    <string name="reminder_med_minutes">%1$d мин</string>
+    <string name="reminder_med_hours">%1$d ч</string>
+    <string name="reminder_med_weeks">%1$d сед</string>
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d ден</item>
+        <item quantity="other">%1$d дена</item>
+    </plurals>
+    <string name="reminder_med_day_of">Истиот ден</string>
+    <string name="all_day_alert_9am_hint">Известувањата за цел ден се активираат во 9 AM (09:00).</string>
     <string name="reminder_summary_none">Нема</string>
     <string name="duration_compact">%1$dч %2$dм</string>
     <string name="duration_compact_short">%1$dч%2$dм</string>

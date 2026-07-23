@@ -55,6 +55,7 @@ import org.onekash.kashcal.sync.scheduler.IcsScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.permission.PermissionChecker
 import org.onekash.kashcal.ui.permission.reconcileOnResume
@@ -437,12 +438,7 @@ class AccountSettingsViewModel @Inject constructor(
                     accounts,
                     localLabel = context.getString(R.string.drawer_account_offline),
                     icsLabel = context.getString(R.string.subscriptions_title),
-                    localizeCalendarName = { cal ->
-                        org.onekash.kashcal.data.contacts.ContactEventType
-                            .fromCaldavUrl(cal.caldavUrl)
-                            ?.calendarDisplayName(context.resources)
-                            ?: cal.displayName
-                    }
+                    localizeCalendarName = { it.localizedDisplayName(context.resources) }
                 )
                 calendarList to groups
             }.collect { (calendarList, groups) ->
