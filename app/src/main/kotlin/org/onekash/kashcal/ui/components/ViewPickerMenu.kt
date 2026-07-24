@@ -38,12 +38,12 @@ internal data class ViewOption(
 )
 
 internal val viewOptions = listOf(
-    ViewOption(ViewMode.MONTH, Icons.Default.CalendarMonth),
     ViewOption(ViewMode.AGENDA, Icons.Default.ViewAgenda),
-    ViewOption(ViewMode.MONTH_FULL, Icons.Default.GridView),
     ViewOption(ViewMode.DAY, Icons.Default.CalendarToday),
     ViewOption(ViewMode.THREE_DAYS, Icons.Default.ViewWeek),
     ViewOption(ViewMode.WEEK, Icons.Default.DateRange),
+    ViewOption(ViewMode.MONTH, Icons.Default.CalendarMonth),
+    ViewOption(ViewMode.MONTH_FULL, Icons.Default.GridView),
     ViewOption(ViewMode.YEAR, Icons.Default.CalendarViewMonth)
 )
 
@@ -52,12 +52,12 @@ internal fun iconForMode(mode: ViewMode): ImageVector =
 
 @Composable
 internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
-    ViewMode.MONTH -> stringResource(R.string.view_month)
     ViewMode.AGENDA -> stringResource(R.string.view_agenda)
-    ViewMode.MONTH_FULL -> stringResource(R.string.view_month_full)
     ViewMode.DAY -> stringResource(R.string.view_day)
     ViewMode.THREE_DAYS -> stringResource(R.string.view_three_days)
     ViewMode.WEEK -> stringResource(R.string.view_week)
+    ViewMode.MONTH -> stringResource(R.string.view_month)
+    ViewMode.MONTH_FULL -> stringResource(R.string.view_month_full)
     ViewMode.YEAR -> stringResource(R.string.view_year)
     ViewMode.INSIGHTS -> stringResource(R.string.view_insights)
 }
