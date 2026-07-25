@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Initial loading layout for the agenda widget.
-    Shown briefly while Glance content loads.
+    Placeholder layout shared by every KashCal widget, used both as initialLayout
+    (shown briefly while the Glance content loads) and as previewLayout in the
+    widget picker.
+
+    Colors come from the Material You system palette via @color/widget_placeholder_*
+    so this tracks the launcher's light/dark face; it is plain RemoteViews and so
+    cannot read the Glance theme the widget content uses.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/widget_placeholder_background"
     android:padding="16dp">
 
     <LinearLayout
@@ -19,14 +24,15 @@
         <ProgressBar
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:indeterminate="true" />
+            android:indeterminate="true"
+            android:indeterminateTint="@color/widget_placeholder_accent" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/app_name"
-            android:textColor="#757575"
+            android:textColor="@color/widget_placeholder_text"
             android:textSize="12sp" />
 
     </LinearLayout>

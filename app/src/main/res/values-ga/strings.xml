@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Cuir imeacht leis</string>
     <string name="widget_no_events">Gan imeachtaí</string>
     <string name="widget_no_upcoming_events">Gan imeachtaí le teacht</string>
+    <string name="widget_preview_event_standup">Cruinniú foirne</string>
+    <string name="widget_preview_event_lunch">Sos lóin</string>
+    <string name="widget_preview_event_review">Athbhreithniú dearaidh</string>
+    <string name="widget_preview_event_gym">Giomnáisiam</string>
+    <string name="widget_preview_event_birthday">Lá breithe</string>
+    <string name="widget_preview_event_trip">Turas deireadh seachtaine</string>
+    <string name="widget_preview_event_dentist">Fiaclóir</string>
+    <string name="widget_preview_event_call">Glao tionscadail</string>
     <string name="cd_widget_calendar">Féilire</string>
     <string name="cd_widget_add_event">Cuir imeacht leis</string>
+    <string name="cd_widget_refresh">Athnuaigh</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gan imeachtaí</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, cealaithe</string>

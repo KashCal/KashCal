@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Pievienot notikumu</string>
     <string name="widget_no_events">Nav notikumu</string>
     <string name="widget_no_upcoming_events">Nav gaidāmo notikumu</string>
+    <string name="widget_preview_event_standup">Ikdienas sanāksme</string>
+    <string name="widget_preview_event_lunch">Pusdienu pārtraukums</string>
+    <string name="widget_preview_event_review">Dizaina apskats</string>
+    <string name="widget_preview_event_gym">Sporta zāle</string>
+    <string name="widget_preview_event_birthday">Dzimšanas diena</string>
+    <string name="widget_preview_event_trip">Nedēļas nogales brauciens</string>
+    <string name="widget_preview_event_dentist">Zobārsts</string>
+    <string name="widget_preview_event_call">Projekta zvans</string>
     <string name="cd_widget_calendar">Kalendārs</string>
     <string name="cd_widget_add_event">Pievienot notikumu</string>
+    <string name="cd_widget_refresh">Atsvaidzināt</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">nav notikumu</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, atcelts</string>

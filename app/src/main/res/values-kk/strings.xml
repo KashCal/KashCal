@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Оқиға қосу</string>
     <string name="widget_no_events">Оқиғалар жоқ</string>
     <string name="widget_no_upcoming_events">Алдағы оқиғалар жоқ</string>
+    <string name="widget_preview_event_standup">Команда кездесуі</string>
+    <string name="widget_preview_event_lunch">Түскі ас</string>
+    <string name="widget_preview_event_review">Дизайн талқылауы</string>
+    <string name="widget_preview_event_gym">Спортзал</string>
+    <string name="widget_preview_event_birthday">Туған күн</string>
+    <string name="widget_preview_event_trip">Демалыс сапары</string>
+    <string name="widget_preview_event_dentist">Тіс дәрігері</string>
+    <string name="widget_preview_event_call">Жоба қоңырауы</string>
     <string name="cd_widget_calendar">Күнтізбе</string>
     <string name="cd_widget_add_event">Оқиға қосу</string>
+    <string name="cd_widget_refresh">Жаңарту</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">оқиғалар жоқ</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, бас тартылды</string>

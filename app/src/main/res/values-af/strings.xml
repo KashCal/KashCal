@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Voeg gebeurtenis by</string>
     <string name="widget_no_events">Geen gebeurtenisse</string>
     <string name="widget_no_upcoming_events">Geen komende gebeurtenisse nie</string>
+    <string name="widget_preview_event_standup">Spanvergadering</string>
+    <string name="widget_preview_event_lunch">Middagete</string>
+    <string name="widget_preview_event_review">Ontwerpbespreking</string>
+    <string name="widget_preview_event_gym">Gimnasium</string>
+    <string name="widget_preview_event_birthday">Verjaarsdag</string>
+    <string name="widget_preview_event_trip">Naweekuitstappie</string>
+    <string name="widget_preview_event_dentist">Tandarts</string>
+    <string name="widget_preview_event_call">Projekoproep</string>
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Voeg gebeurtenis by</string>
+    <string name="cd_widget_refresh">Verfris</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">geen gebeurtenisse</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, gekanselleer</string>

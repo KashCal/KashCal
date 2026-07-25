@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Pridať udalosť</string>
     <string name="widget_no_events">Žiadne udalosti</string>
     <string name="widget_no_upcoming_events">Žiadne nadchádzajúce udalosti</string>
+    <string name="widget_preview_event_standup">Standup tímu</string>
+    <string name="widget_preview_event_lunch">Obedová pauza</string>
+    <string name="widget_preview_event_review">Revízia dizajnu</string>
+    <string name="widget_preview_event_gym">Posilňovňa</string>
+    <string name="widget_preview_event_birthday">Narodeniny</string>
+    <string name="widget_preview_event_trip">Víkendový výlet</string>
+    <string name="widget_preview_event_dentist">Zubár</string>
+    <string name="widget_preview_event_call">Hovor o projekte</string>
     <string name="cd_widget_calendar">Kalendár</string>
     <string name="cd_widget_add_event">Pridať udalosť</string>
+    <string name="cd_widget_refresh">Obnoviť</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">žiadne udalosti</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, zrušené</string>

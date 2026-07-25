@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ เพิ่มกิจกรรม</string>
     <string name="widget_no_events">ไม่มีกิจกรรม</string>
     <string name="widget_no_upcoming_events">ไม่มีกิจกรรมที่จะมาถึง</string>
+    <string name="widget_preview_event_standup">ประชุมทีมประจำวัน</string>
+    <string name="widget_preview_event_lunch">พักกลางวัน</string>
+    <string name="widget_preview_event_review">รีวิวงานออกแบบ</string>
+    <string name="widget_preview_event_gym">เข้าฟิตเนส</string>
+    <string name="widget_preview_event_birthday">วันเกิด</string>
+    <string name="widget_preview_event_trip">เที่ยวสุดสัปดาห์</string>
+    <string name="widget_preview_event_dentist">หาหมอฟัน</string>
+    <string name="widget_preview_event_call">คุยงานโปรเจกต์</string>
     <string name="cd_widget_calendar">ปฏิทิน</string>
     <string name="cd_widget_add_event">เพิ่มกิจกรรม</string>
+    <string name="cd_widget_refresh">รีเฟรช</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ไม่มีกิจกรรม</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ยกเลิกแล้ว</string>

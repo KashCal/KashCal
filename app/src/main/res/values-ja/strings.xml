@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ 予定を追加</string>
     <string name="widget_no_events">予定なし</string>
     <string name="widget_no_upcoming_events">今後の予定なし</string>
+    <string name="widget_preview_event_standup">朝会</string>
+    <string name="widget_preview_event_lunch">昼休み</string>
+    <string name="widget_preview_event_review">デザインレビュー</string>
+    <string name="widget_preview_event_gym">ジム</string>
+    <string name="widget_preview_event_birthday">誕生日</string>
+    <string name="widget_preview_event_trip">週末旅行</string>
+    <string name="widget_preview_event_dentist">歯医者</string>
+    <string name="widget_preview_event_call">プロジェクト会議</string>
     <string name="cd_widget_calendar">カレンダー</string>
     <string name="cd_widget_add_event">予定を追加</string>
+    <string name="cd_widget_refresh">更新</string>
     <string name="cd_widget_day_cell">%1$s、%2$s</string>
     <string name="cd_widget_no_events">予定なし</string>
     <string name="cd_widget_event_cancelled">%1$s、%2$s、中止</string>

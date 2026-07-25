@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Додати подію</string>
     <string name="widget_no_events">Немає подій</string>
     <string name="widget_no_upcoming_events">Немає майбутніх подій</string>
+    <string name="widget_preview_event_standup">Дейлі</string>
+    <string name="widget_preview_event_lunch">Обід</string>
+    <string name="widget_preview_event_review">Огляд дизайну</string>
+    <string name="widget_preview_event_gym">Спортзал</string>
+    <string name="widget_preview_event_birthday">День народження</string>
+    <string name="widget_preview_event_trip">Поїздка на вихідні</string>
+    <string name="widget_preview_event_dentist">Стоматолог</string>
+    <string name="widget_preview_event_call">Дзвінок по проєкту</string>
     <string name="cd_widget_calendar">Календар</string>
     <string name="cd_widget_add_event">Додати подію</string>
+    <string name="cd_widget_refresh">Оновити</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">немає подій</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, скасовано</string>

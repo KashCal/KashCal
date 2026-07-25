@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Lägg till händelse</string>
     <string name="widget_no_events">Inga händelser</string>
     <string name="widget_no_upcoming_events">Inga kommande händelser</string>
+    <string name="widget_preview_event_standup">Team-standup</string>
+    <string name="widget_preview_event_lunch">Lunch</string>
+    <string name="widget_preview_event_review">Design review</string>
+    <string name="widget_preview_event_gym">Gymmet</string>
+    <string name="widget_preview_event_birthday">Födelsedag</string>
+    <string name="widget_preview_event_trip">Helgresa</string>
+    <string name="widget_preview_event_dentist">Tandläkare</string>
+    <string name="widget_preview_event_call">Projektmöte</string>
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Lägg till händelse</string>
+    <string name="cd_widget_refresh">Uppdatera</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">inga händelser</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, inställd</string>

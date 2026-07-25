@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Legg til hendelse</string>
     <string name="widget_no_events">Ingen hendelser</string>
     <string name="widget_no_upcoming_events">Ingen kommende hendelser</string>
+    <string name="widget_preview_event_standup">Team-standup</string>
+    <string name="widget_preview_event_lunch">Lunsjpause</string>
+    <string name="widget_preview_event_review">Design review</string>
+    <string name="widget_preview_event_gym">Trening</string>
+    <string name="widget_preview_event_birthday">Bursdag</string>
+    <string name="widget_preview_event_trip">Helgetur</string>
+    <string name="widget_preview_event_dentist">Tannlege</string>
+    <string name="widget_preview_event_call">Prosjektmøte</string>
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Legg til hendelse</string>
+    <string name="cd_widget_refresh">Oppdater</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ingen hendelser</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, avlyst</string>

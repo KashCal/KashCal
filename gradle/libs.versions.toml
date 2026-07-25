@@ -47,7 +47,7 @@ workManager = "2.11.2"
 hiltWork = "1.3.0"
 
 # Glance (App Widgets)
-glance = "1.1.1"
+glance = "1.2.0-rc01"
 
 # MaterialKolor (seed -> M3 ColorScheme)
 materialkolor = "4.1.1"

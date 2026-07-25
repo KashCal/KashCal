@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ සිදුවීමක් එකතු කරන්න</string>
     <string name="widget_no_events">සිදුවීම් නැත</string>
     <string name="widget_no_upcoming_events">ඉදිරි සිදුවීම් නැත</string>
+    <string name="widget_preview_event_standup">කණ්ඩායම් රැස්වීම</string>
+    <string name="widget_preview_event_lunch">දිවා ආහාර විවේකය</string>
+    <string name="widget_preview_event_review">නිර්මාණ සමාලෝචනය</string>
+    <string name="widget_preview_event_gym">ව්‍යායාම</string>
+    <string name="widget_preview_event_birthday">උපන්දිනය</string>
+    <string name="widget_preview_event_trip">සති අන්ත සංචාරය</string>
+    <string name="widget_preview_event_dentist">දන්ත වෛද්‍යවරයා</string>
+    <string name="widget_preview_event_call">ව්‍යාපෘති ඇමතුම</string>
     <string name="cd_widget_calendar">දින දර්ශනය</string>
     <string name="cd_widget_add_event">සිදුවීම එකතු කරන්න</string>
+    <string name="cd_widget_refresh">නැවුම් කරන්න</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">සිදුවීම් නැත</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, අවලංගු කරන ලදී</string>

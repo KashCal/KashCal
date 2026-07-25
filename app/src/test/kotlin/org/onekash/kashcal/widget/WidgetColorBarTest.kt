@@ -47,13 +47,16 @@ class WidgetColorBarTest {
     }
 
     @Test
-    fun `event rows share one tight vertical padding across all list widgets`() {
+    fun `event rows share one vertical padding sized for a comfortable tap target`() {
         // The agenda, week, and upcoming event rows historically drifted to
         // different vertical paddings (6dp / 4dp / 6dp). One shared constant
-        // keeps them uniform and prevents future drift; assert it stays tight.
+        // keeps them uniform and prevents future drift. The padding must stay
+        // large enough that a single-line row clears roughly a 40dp tap target
+        // (~20dp text line box + top/bottom padding), so guard against a future
+        // edit tightening it back into the too-small target it had before.
         assertTrue(
-            "event row vertical padding ($EVENT_ROW_VERTICAL_PADDING_DP dp) should stay at or below 4dp",
-            EVENT_ROW_VERTICAL_PADDING_DP <= 4
+            "event row vertical padding ($EVENT_ROW_VERTICAL_PADDING_DP dp) must be at least 10dp for a comfortable tap target",
+            EVENT_ROW_VERTICAL_PADDING_DP >= 10
         )
     }
 

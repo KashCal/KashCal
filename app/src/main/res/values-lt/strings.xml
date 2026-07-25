@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Pridėti įvykį</string>
     <string name="widget_no_events">Įvykių nėra</string>
     <string name="widget_no_upcoming_events">Artėjančių įvykių nėra</string>
+    <string name="widget_preview_event_standup">Dienos susirinkimas</string>
+    <string name="widget_preview_event_lunch">Pietų pertrauka</string>
+    <string name="widget_preview_event_review">Dizaino apžvalga</string>
+    <string name="widget_preview_event_gym">Sporto salė</string>
+    <string name="widget_preview_event_birthday">Gimtadienis</string>
+    <string name="widget_preview_event_trip">Savaitgalio išvyka</string>
+    <string name="widget_preview_event_dentist">Pas dantistą</string>
+    <string name="widget_preview_event_call">Projekto skambutis</string>
     <string name="cd_widget_calendar">Kalendorius</string>
     <string name="cd_widget_add_event">Pridėti įvykį</string>
+    <string name="cd_widget_refresh">Atnaujinti</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">įvykių nėra</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, atšaukta</string>

@@ -5,6 +5,11 @@ import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -51,6 +56,7 @@ import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsScreen
 import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.RestoreConfirmationDialog
+import org.onekash.kashcal.ui.screens.settings.SettingsDestination
 import org.onekash.kashcal.ui.screens.settings.RestoreErrorDialog
 import org.onekash.kashcal.ui.screens.settings.RestoreSuccessDialog
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
@@ -385,255 +391,282 @@ fun SettingsRoute(
             showDeviceCalendarsScreen = false
         }
 
+        // State-based navigation between settings and detail screens, animated as a
+        // directional slide: drilling into a detail slides it in from the trailing
+        // edge, backing out to the root reverses it.
+        val settingsDestination = SettingsDestination.from(
+            accounts = showAccountsScreen,
+            birthdaysAnniversaries = showBirthdaysAnniversariesScreen,
+            subscriptions = showSubscriptionsScreen,
+            deviceCalendars = showDeviceCalendarsScreen,
+        )
+
         Box(modifier = Modifier.fillMaxSize()) {
-            // State-based navigation between settings and detail screens
-            when {
-                showAccountsScreen -> {
-                    AccountsScreen(
-                        iCloudAccount = iCloudAccount,
-                        showAddICloud = uiState.iCloudState is ICloudConnectionState.NotConnected,
-                        calDavAccounts = uiState.calDavAccounts,
-                        onNavigateBack = { showAccountsScreen = false },
-                        onAddICloud = viewModel::showICloudSignInSheet,
-                        onICloudSignOut = viewModel::onSignOut,
-                        onAddCalDav = viewModel::showCalDavSignInSheet,
-                        onCalDavSignOut = viewModel::onCalDavSignOut,
-                        accountDetail = uiState.accountDetail,
-                        accountDetailSyncStatus = uiState.accountDetailSyncStatus,
-                        accountDetailDiscoverStatus = uiState.accountDetailDiscoverStatus,
-                        onObserveAccountDetail = viewModel::observeAccountDetail,
-                        onClearAccountDetail = viewModel::clearAccountDetail,
-                        onSyncAccountNow = viewModel::syncAccountNow,
-                        onToggleAccountEnabled = viewModel::toggleAccountEnabled,
-                        onRenameAccount = viewModel::renameAccount,
-                        onChangeAccountPassword = viewModel::changeAccountPassword,
-                        onDiscoverCalendars = viewModel::discoverNewCalendars
-                    )
-                }
-                showBirthdaysAnniversariesScreen -> {
-                    BirthdaysAndAnniversariesScreen(
-                        birthdaysEnabled = contactBirthdaysEnabled,
-                        birthdaysColor = contactBirthdaysColor,
-                        birthdaysReminder = contactBirthdaysReminder,
-                        birthdayCount = birthdayCount,
-                        anniversariesEnabled = contactAnniversariesEnabled,
-                        anniversariesColor = contactAnniversariesColor,
-                        anniversariesReminder = contactAnniversariesReminder,
-                        anniversaryCount = anniversaryCount,
-                        hasPermission = hasContactsPermission,
-                        timeFormat = timeFormat,
-                        onToggleBirthdays = { enabled ->
-                            if (enabled && !hasContactsPermission) {
-                                pendingContactPermissionAction = "birthdays"
-                                contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
-                            } else {
-                                viewModel.onToggleContactBirthdays(enabled)
-                            }
-                        },
-                        onBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
-                        onBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange,
-                        onToggleAnniversaries = { enabled ->
-                            if (enabled && !hasContactsPermission) {
-                                pendingContactPermissionAction = "anniversaries"
-                                contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
-                            } else {
-                                viewModel.onToggleContactAnniversaries(enabled)
-                            }
-                        },
-                        onAnniversariesColorChange = viewModel::onContactAnniversariesColorChange,
-                        onAnniversariesReminderChange = viewModel::onContactAnniversariesReminderChange,
-                        onNavigateBack = { showBirthdaysAnniversariesScreen = false }
-                    )
-                }
-                showSubscriptionsScreen -> {
-                    SubscriptionsScreen(
-                        subscriptions = subscriptions,
-                        onNavigateBack = { showSubscriptionsScreen = false },
-                        onAddSubscription = onAddSubscriptionWithDuplicateGuard,
-                        onToggleSubscription = viewModel::onToggleSubscription,
-                        onDeleteSubscription = onDeleteSubscriptionWithUndo,
-                        onRefreshSubscription = viewModel::onRefreshSubscription,
-                        onUpdateSubscription = viewModel::onUpdateSubscription
-                    )
-                }
-                showDeviceCalendarsScreen -> {
-                    DeviceCalendarsScreen(
-                        isEnabled = deviceCalendarsEnabled,
-                        hasReadPermission = hasReadCalendarPermission,
-                        hasWritePermission = hasWriteCalendarPermission,
-                        deviceCalendars = deviceCalendars,
-                        enabledCalendarIds = enabledDeviceCalendarIds,
-                        deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
-                        onNavigateBack = { showDeviceCalendarsScreen = false },
-                        onToggle = { enabled ->
-                            if (enabled && !hasReadCalendarPermission) {
-                                calendarPermissionLauncher.launch(arrayOf(
-                                    android.Manifest.permission.READ_CALENDAR,
-                                    android.Manifest.permission.WRITE_CALENDAR
-                                ))
-                            } else {
-                                viewModel.onToggleDeviceCalendars(enabled)
-                            }
-                        },
-                        onToggleCalendar = viewModel::onToggleDeviceCalendar,
-                        onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
-                        onRequestWritePermission = {
-                            writeCalendarPermissionLauncher.launch(android.Manifest.permission.WRITE_CALENDAR)
-                        },
-                        onRefresh = viewModel::refreshDeviceCalendars
-                    )
-                }
-                else -> {
-                    AccountSettingsScreen(
-                        uiState = uiState,
-                        onShowICloudSignIn = viewModel::showICloudSignInSheet,
-                        onHideICloudSignIn = viewModel::hideICloudSignInSheet,
-                        onAppleIdChange = viewModel::onAppleIdChange,
-                        onPasswordChange = viewModel::onPasswordChange,
-                        onToggleHelp = viewModel::onToggleHelp,
-                        onSignIn = viewModel::onSignIn,
-                        onSignOut = viewModel::onSignOut,
-                        // CalDAV callbacks
-                        onShowCalDavSignIn = viewModel::showCalDavSignInSheet,
-                        onHideCalDavSignIn = viewModel::hideCalDavSignInSheet,
-                        onCalDavServerUrlChange = viewModel::onCalDavServerUrlChange,
-                        onCalDavDisplayNameChange = viewModel::onCalDavDisplayNameChange,
-                        onCalDavUsernameChange = viewModel::onCalDavUsernameChange,
-                        onCalDavPasswordChange = viewModel::onCalDavPasswordChange,
-                        onCalDavTrustInsecureChange = viewModel::onCalDavTrustInsecureChange,
-                        onCalDavDiscover = viewModel::onCalDavDiscover,
-                        onCalDavSignOut = viewModel::onCalDavSignOut,
-                        onNavigateBack = onFinish,
-                        // Calendar settings (visibility derived from Calendar.isVisible)
-                        calendars = calendars,
-                        calendarGroups = calendarGroups,
-                        onToggleCalendar = viewModel::onToggleCalendar,
-                        onShowAllCalendars = viewModel::onShowAllCalendars,
-                        onHideAllCalendars = viewModel::onHideAllCalendars,
-                        // Sync settings
-                        syncIntervalMs = syncIntervalMs,
-                        onSyncIntervalChange = viewModel::onSyncIntervalChange,
-                        onForceFullSync = viewModel::forceFullSync,
-                        syncLookbackDays = syncLookbackDays,
-                        onSyncLookbackChange = viewModel::onSyncLookbackChange,
-                        // Default calendar
-                        defaultCalendar = defaultCalendar,
-                        writableDeviceCalendarGroups = writableDeviceCalendarGroups,
-                        onDefaultCalendarSelect = viewModel::onDefaultCalendarSelect,
-                        // ICS Subscriptions
-                        subscriptions = subscriptions,
-                        subscriptionSyncing = subscriptionSyncing,
-                        onAddSubscription = onAddSubscriptionWithDuplicateGuard,
-                        onHideAddSubscriptionDialog = viewModel::hideAddSubscriptionDialog,
-                        onDeleteSubscription = onDeleteSubscriptionWithUndo,
-                        onToggleSubscription = viewModel::onToggleSubscription,
-                        onRefreshSubscription = viewModel::onRefreshSubscription,
-                        onUpdateSubscription = viewModel::onUpdateSubscription,
-                        onSyncAllSubscriptions = viewModel::onSyncAllSubscriptions,
-                        // System
-                        onShowSyncLogs = { showDebugLogSheet = true },
-                        notificationsEnabled = notificationsEnabled,
-                        onRequestNotificationPermission = onOpenNotificationSettings,
-                        // Default reminders and event duration
-                        defaultReminderTimed = defaultReminderTimed,
-                        defaultReminderAllDay = defaultReminderAllDay,
-                        defaultEventDuration = defaultEventDuration,
-                        onDefaultReminderTimedChange = viewModel::onDefaultReminderTimedChange,
-                        onDefaultReminderAllDayChange = viewModel::onDefaultReminderAllDayChange,
-                        onDefaultEventDurationChange = viewModel::onDefaultEventDurationChange,
-                        // ICS Import
-                        onImportCalendarFile = {
-                            importFileLauncher.launch(arrayOf(
-                                "text/calendar",
-                                "application/ics",
-                                "text/x-vcalendar"
-                            ))
-                        },
-                        onBackupSettings = {
-                            coroutineScope.launch {
-                                try {
-                                    viewModel.prepareExport()
-                                    backupExportLauncher.launch(
-                                        BackupFilename.generate(
-                                            Instant.now(),
-                                            ZoneId.systemDefault(),
-                                        )
-                                    )
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to build backup JSON", e)
-                                    viewModel.showSnackbar(backupBuildFailedMessage)
+            AnimatedContent(
+                targetState = settingsDestination,
+                transitionSpec = {
+                    // Start/End (not Left/Right) so the drill-in direction follows
+                    // layout direction and reads correctly in RTL locales. All panes
+                    // are fillMaxSize, so a null SizeTransform avoids the default
+                    // clip/size animation and gives a clean cross-slide.
+                    val towards = if (initialState.isForwardTo(targetState)) {
+                        AnimatedContentTransitionScope.SlideDirection.Start
+                    } else {
+                        AnimatedContentTransitionScope.SlideDirection.End
+                    }
+                    (slideIntoContainer(towards) + fadeIn()) togetherWith
+                        (slideOutOfContainer(towards) + fadeOut()) using null
+                },
+                label = "settingsDestination",
+            ) { destination ->
+                when (destination) {
+                    SettingsDestination.Accounts -> {
+                        AccountsScreen(
+                            iCloudAccount = iCloudAccount,
+                            showAddICloud = uiState.iCloudState is ICloudConnectionState.NotConnected,
+                            calDavAccounts = uiState.calDavAccounts,
+                            onNavigateBack = { showAccountsScreen = false },
+                            onAddICloud = viewModel::showICloudSignInSheet,
+                            onICloudSignOut = viewModel::onSignOut,
+                            onAddCalDav = viewModel::showCalDavSignInSheet,
+                            onCalDavSignOut = viewModel::onCalDavSignOut,
+                            accountDetail = uiState.accountDetail,
+                            accountDetailSyncStatus = uiState.accountDetailSyncStatus,
+                            accountDetailDiscoverStatus = uiState.accountDetailDiscoverStatus,
+                            onObserveAccountDetail = viewModel::observeAccountDetail,
+                            onClearAccountDetail = viewModel::clearAccountDetail,
+                            onSyncAccountNow = viewModel::syncAccountNow,
+                            onToggleAccountEnabled = viewModel::toggleAccountEnabled,
+                            onRenameAccount = viewModel::renameAccount,
+                            onChangeAccountPassword = viewModel::changeAccountPassword,
+                            onDiscoverCalendars = viewModel::discoverNewCalendars
+                        )
+                    }
+                    SettingsDestination.BirthdaysAnniversaries -> {
+                        BirthdaysAndAnniversariesScreen(
+                            birthdaysEnabled = contactBirthdaysEnabled,
+                            birthdaysColor = contactBirthdaysColor,
+                            birthdaysReminder = contactBirthdaysReminder,
+                            birthdayCount = birthdayCount,
+                            anniversariesEnabled = contactAnniversariesEnabled,
+                            anniversariesColor = contactAnniversariesColor,
+                            anniversariesReminder = contactAnniversariesReminder,
+                            anniversaryCount = anniversaryCount,
+                            hasPermission = hasContactsPermission,
+                            timeFormat = timeFormat,
+                            onToggleBirthdays = { enabled ->
+                                if (enabled && !hasContactsPermission) {
+                                    pendingContactPermissionAction = "birthdays"
+                                    contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
+                                } else {
+                                    viewModel.onToggleContactBirthdays(enabled)
                                 }
-                            }
-                        },
-                        onRestoreSettings = {
-                            backupImportLauncher.launch(arrayOf(BACKUP_MIME_TYPE))
-                        },
-                        // Privacy / app lock
-                        appLockEnabled = appLockEnabled,
-                        onToggleAppLock = onToggleAppLock,
-                        // ICS Export
-                        onExportCalendar = onExportCalendar,
-                        // Navigate to Subscriptions detail screen
-                        onNavigateToSubscriptions = { viewModel.onSearchClose(); showSubscriptionsScreen = true },
-                        // Navigate to Birthdays & Anniversaries detail screen
-                        onNavigateToBirthdaysAnniversaries = { viewModel.onSearchClose(); showBirthdaysAnniversariesScreen = true },
-                        // Contact event counts (for B&A row subtitle)
-                        birthdayCount = birthdayCount,
-                        anniversaryCount = anniversaryCount,
-                        // Device calendars
-                        deviceCalendarsEnabled = deviceCalendarsEnabled,
-                        hasReadCalendarPermission = hasReadCalendarPermission,
-                        hasWriteCalendarPermission = hasWriteCalendarPermission,
-                        deviceCalendars = deviceCalendars,
-                        enabledDeviceCalendarIds = enabledDeviceCalendarIds,
-                        onToggleDeviceCalendars = { enabled ->
-                            if (enabled && !hasReadCalendarPermission) {
-                                // Request both READ and WRITE permissions upfront
-                                calendarPermissionLauncher.launch(arrayOf(
-                                    android.Manifest.permission.READ_CALENDAR,
-                                    android.Manifest.permission.WRITE_CALENDAR
+                            },
+                            onBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
+                            onBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange,
+                            onToggleAnniversaries = { enabled ->
+                                if (enabled && !hasContactsPermission) {
+                                    pendingContactPermissionAction = "anniversaries"
+                                    contactsPermissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
+                                } else {
+                                    viewModel.onToggleContactAnniversaries(enabled)
+                                }
+                            },
+                            onAnniversariesColorChange = viewModel::onContactAnniversariesColorChange,
+                            onAnniversariesReminderChange = viewModel::onContactAnniversariesReminderChange,
+                            onNavigateBack = { showBirthdaysAnniversariesScreen = false }
+                        )
+                    }
+                    SettingsDestination.Subscriptions -> {
+                        SubscriptionsScreen(
+                            subscriptions = subscriptions,
+                            onNavigateBack = { showSubscriptionsScreen = false },
+                            onAddSubscription = onAddSubscriptionWithDuplicateGuard,
+                            onToggleSubscription = viewModel::onToggleSubscription,
+                            onDeleteSubscription = onDeleteSubscriptionWithUndo,
+                            onRefreshSubscription = viewModel::onRefreshSubscription,
+                            onUpdateSubscription = viewModel::onUpdateSubscription
+                        )
+                    }
+                    SettingsDestination.DeviceCalendars -> {
+                        DeviceCalendarsScreen(
+                            isEnabled = deviceCalendarsEnabled,
+                            hasReadPermission = hasReadCalendarPermission,
+                            hasWritePermission = hasWriteCalendarPermission,
+                            deviceCalendars = deviceCalendars,
+                            enabledCalendarIds = enabledDeviceCalendarIds,
+                            deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
+                            onNavigateBack = { showDeviceCalendarsScreen = false },
+                            onToggle = { enabled ->
+                                if (enabled && !hasReadCalendarPermission) {
+                                    calendarPermissionLauncher.launch(arrayOf(
+                                        android.Manifest.permission.READ_CALENDAR,
+                                        android.Manifest.permission.WRITE_CALENDAR
+                                    ))
+                                } else {
+                                    viewModel.onToggleDeviceCalendars(enabled)
+                                }
+                            },
+                            onToggleCalendar = viewModel::onToggleDeviceCalendar,
+                            onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
+                            onRequestWritePermission = {
+                                writeCalendarPermissionLauncher.launch(android.Manifest.permission.WRITE_CALENDAR)
+                            },
+                            onRefresh = viewModel::refreshDeviceCalendars
+                        )
+                    }
+                    SettingsDestination.Root -> {
+                        AccountSettingsScreen(
+                            uiState = uiState,
+                            onShowICloudSignIn = viewModel::showICloudSignInSheet,
+                            onHideICloudSignIn = viewModel::hideICloudSignInSheet,
+                            onAppleIdChange = viewModel::onAppleIdChange,
+                            onPasswordChange = viewModel::onPasswordChange,
+                            onToggleHelp = viewModel::onToggleHelp,
+                            onSignIn = viewModel::onSignIn,
+                            onSignOut = viewModel::onSignOut,
+                            // CalDAV callbacks
+                            onShowCalDavSignIn = viewModel::showCalDavSignInSheet,
+                            onHideCalDavSignIn = viewModel::hideCalDavSignInSheet,
+                            onCalDavServerUrlChange = viewModel::onCalDavServerUrlChange,
+                            onCalDavDisplayNameChange = viewModel::onCalDavDisplayNameChange,
+                            onCalDavUsernameChange = viewModel::onCalDavUsernameChange,
+                            onCalDavPasswordChange = viewModel::onCalDavPasswordChange,
+                            onCalDavTrustInsecureChange = viewModel::onCalDavTrustInsecureChange,
+                            onCalDavDiscover = viewModel::onCalDavDiscover,
+                            onCalDavSignOut = viewModel::onCalDavSignOut,
+                            onNavigateBack = onFinish,
+                            // Calendar settings (visibility derived from Calendar.isVisible)
+                            calendars = calendars,
+                            calendarGroups = calendarGroups,
+                            onToggleCalendar = viewModel::onToggleCalendar,
+                            onShowAllCalendars = viewModel::onShowAllCalendars,
+                            onHideAllCalendars = viewModel::onHideAllCalendars,
+                            // Sync settings
+                            syncIntervalMs = syncIntervalMs,
+                            onSyncIntervalChange = viewModel::onSyncIntervalChange,
+                            onForceFullSync = viewModel::forceFullSync,
+                            syncLookbackDays = syncLookbackDays,
+                            onSyncLookbackChange = viewModel::onSyncLookbackChange,
+                            // Default calendar
+                            defaultCalendar = defaultCalendar,
+                            writableDeviceCalendarGroups = writableDeviceCalendarGroups,
+                            onDefaultCalendarSelect = viewModel::onDefaultCalendarSelect,
+                            // ICS Subscriptions
+                            subscriptions = subscriptions,
+                            subscriptionSyncing = subscriptionSyncing,
+                            onAddSubscription = onAddSubscriptionWithDuplicateGuard,
+                            onHideAddSubscriptionDialog = viewModel::hideAddSubscriptionDialog,
+                            onDeleteSubscription = onDeleteSubscriptionWithUndo,
+                            onToggleSubscription = viewModel::onToggleSubscription,
+                            onRefreshSubscription = viewModel::onRefreshSubscription,
+                            onUpdateSubscription = viewModel::onUpdateSubscription,
+                            onSyncAllSubscriptions = viewModel::onSyncAllSubscriptions,
+                            // System
+                            onShowSyncLogs = { showDebugLogSheet = true },
+                            notificationsEnabled = notificationsEnabled,
+                            onRequestNotificationPermission = onOpenNotificationSettings,
+                            // Default reminders and event duration
+                            defaultReminderTimed = defaultReminderTimed,
+                            defaultReminderAllDay = defaultReminderAllDay,
+                            defaultEventDuration = defaultEventDuration,
+                            onDefaultReminderTimedChange = viewModel::onDefaultReminderTimedChange,
+                            onDefaultReminderAllDayChange = viewModel::onDefaultReminderAllDayChange,
+                            onDefaultEventDurationChange = viewModel::onDefaultEventDurationChange,
+                            // ICS Import
+                            onImportCalendarFile = {
+                                importFileLauncher.launch(arrayOf(
+                                    "text/calendar",
+                                    "application/ics",
+                                    "text/x-vcalendar"
                                 ))
-                            } else {
-                                viewModel.onToggleDeviceCalendars(enabled)
-                            }
-                        },
-                        onToggleDeviceCalendar = viewModel::onToggleDeviceCalendar,
-                        onRequestWriteCalendarPermission = {
-                            writeCalendarPermissionLauncher.launch(android.Manifest.permission.WRITE_CALENDAR)
-                        },
-                        showDeclinedEvents = showDeclinedEvents,
-                        onToggleShowDeclinedEvents = viewModel::onToggleShowDeclinedEvents,
-                        deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
-                        onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
-                        onRefreshDeviceCalendars = viewModel::refreshDeviceCalendars,
-                        // Display settings
-                        showEventEmojis = showEventEmojis,
-                        onShowEventEmojisChange = viewModel::setShowEventEmojis,
-                        quickAddEnabled = quickAddEnabled,
-                        onQuickAddEnabledChange = viewModel::setQuickAddEnabled,
-                        titleSuggestionsEnabled = titleSuggestionsEnabled,
-                        onTitleSuggestionsEnabledChange = viewModel::setTitleSuggestionsEnabled,
-                        timeFormat = timeFormat,
-                        onTimeFormatChange = viewModel::setTimeFormat,
-                        firstDayOfWeek = firstDayOfWeek,
-                        onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
-                        showWeekNumbers = showWeekNumbers,
-                        onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
-                        widgetMaxEventsPerDay = widgetMaxEventsPerDay,
-                        onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
-                        // Version footer
-                        versionName = BuildConfig.VERSION_NAME,
-                        // Navigate to Accounts detail screen
-                        onNavigateToAccounts = { viewModel.onSearchClose(); showAccountsScreen = true },
-                        // Navigate to Device Calendars detail screen
-                        onNavigateToDeviceCalendars = { viewModel.onSearchClose(); showDeviceCalendarsScreen = true },
-                        // Inline search
-                        isSearchActive = isSearchActive,
-                        searchQuery = searchQuery,
-                        onSearchOpen = viewModel::onSearchOpen,
-                        onSearchClose = viewModel::onSearchClose,
-                        onSearchQueryChange = viewModel::onSearchQueryChange,
-                    )
+                            },
+                            onBackupSettings = {
+                                coroutineScope.launch {
+                                    try {
+                                        viewModel.prepareExport()
+                                        backupExportLauncher.launch(
+                                            BackupFilename.generate(
+                                                Instant.now(),
+                                                ZoneId.systemDefault(),
+                                            )
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to build backup JSON", e)
+                                        viewModel.showSnackbar(backupBuildFailedMessage)
+                                    }
+                                }
+                            },
+                            onRestoreSettings = {
+                                backupImportLauncher.launch(arrayOf(BACKUP_MIME_TYPE))
+                            },
+                            // Privacy / app lock
+                            appLockEnabled = appLockEnabled,
+                            onToggleAppLock = onToggleAppLock,
+                            // ICS Export
+                            onExportCalendar = onExportCalendar,
+                            // Navigate to Subscriptions detail screen
+                            onNavigateToSubscriptions = { viewModel.onSearchClose(); showSubscriptionsScreen = true },
+                            // Navigate to Birthdays & Anniversaries detail screen
+                            onNavigateToBirthdaysAnniversaries = { viewModel.onSearchClose(); showBirthdaysAnniversariesScreen = true },
+                            // Contact event counts (for B&A row subtitle)
+                            birthdayCount = birthdayCount,
+                            anniversaryCount = anniversaryCount,
+                            // Device calendars
+                            deviceCalendarsEnabled = deviceCalendarsEnabled,
+                            hasReadCalendarPermission = hasReadCalendarPermission,
+                            hasWriteCalendarPermission = hasWriteCalendarPermission,
+                            deviceCalendars = deviceCalendars,
+                            enabledDeviceCalendarIds = enabledDeviceCalendarIds,
+                            onToggleDeviceCalendars = { enabled ->
+                                if (enabled && !hasReadCalendarPermission) {
+                                    // Request both READ and WRITE permissions upfront
+                                    calendarPermissionLauncher.launch(arrayOf(
+                                        android.Manifest.permission.READ_CALENDAR,
+                                        android.Manifest.permission.WRITE_CALENDAR
+                                    ))
+                                } else {
+                                    viewModel.onToggleDeviceCalendars(enabled)
+                                }
+                            },
+                            onToggleDeviceCalendar = viewModel::onToggleDeviceCalendar,
+                            onRequestWriteCalendarPermission = {
+                                writeCalendarPermissionLauncher.launch(android.Manifest.permission.WRITE_CALENDAR)
+                            },
+                            showDeclinedEvents = showDeclinedEvents,
+                            onToggleShowDeclinedEvents = viewModel::onToggleShowDeclinedEvents,
+                            deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
+                            onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
+                            onRefreshDeviceCalendars = viewModel::refreshDeviceCalendars,
+                            // Display settings
+                            showEventEmojis = showEventEmojis,
+                            onShowEventEmojisChange = viewModel::setShowEventEmojis,
+                            quickAddEnabled = quickAddEnabled,
+                            onQuickAddEnabledChange = viewModel::setQuickAddEnabled,
+                            titleSuggestionsEnabled = titleSuggestionsEnabled,
+                            onTitleSuggestionsEnabledChange = viewModel::setTitleSuggestionsEnabled,
+                            timeFormat = timeFormat,
+                            onTimeFormatChange = viewModel::setTimeFormat,
+                            firstDayOfWeek = firstDayOfWeek,
+                            onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
+                            showWeekNumbers = showWeekNumbers,
+                            onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
+                            widgetMaxEventsPerDay = widgetMaxEventsPerDay,
+                            onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
+                            // Version footer
+                            versionName = BuildConfig.VERSION_NAME,
+                            // Navigate to Accounts detail screen
+                            onNavigateToAccounts = { viewModel.onSearchClose(); showAccountsScreen = true },
+                            // Navigate to Device Calendars detail screen
+                            onNavigateToDeviceCalendars = { viewModel.onSearchClose(); showDeviceCalendarsScreen = true },
+                            // Inline search
+                            isSearchActive = isSearchActive,
+                            searchQuery = searchQuery,
+                            onSearchOpen = viewModel::onSearchOpen,
+                            onSearchClose = viewModel::onSearchClose,
+                            onSearchQueryChange = viewModel::onSearchQueryChange,
+                        )
+                    }
                 }
             }
 

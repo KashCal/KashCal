@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ಈವೆಂಟ್ ಸೇರಿಸಿ</string>
     <string name="widget_no_events">ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="widget_no_upcoming_events">ಮುಂಬರುವ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="widget_preview_event_standup">ಟೀಮ್ ಸ್ಟ್ಯಾಂಡಪ್</string>
+    <string name="widget_preview_event_lunch">ಊಟದ ವಿರಾಮ</string>
+    <string name="widget_preview_event_review">ಡಿಸೈನ್ ರಿವ್ಯೂ</string>
+    <string name="widget_preview_event_gym">ಜಿಮ್</string>
+    <string name="widget_preview_event_birthday">ಹುಟ್ಟುಹಬ್ಬ</string>
+    <string name="widget_preview_event_trip">ವಾರಾಂತ್ಯ ಪ್ರವಾಸ</string>
+    <string name="widget_preview_event_dentist">ದಂತವೈದ್ಯರು</string>
+    <string name="widget_preview_event_call">ಪ್ರಾಜೆಕ್ಟ್ ಕಾಲ್</string>
     <string name="cd_widget_calendar">ಕ್ಯಾಲೆಂಡರ್</string>
     <string name="cd_widget_add_event">ಈವೆಂಟ್ ಸೇರಿಸಿ</string>
+    <string name="cd_widget_refresh">ರಿಫ್ರೆಶ್ ಮಾಡಿ</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ಯಾವುದೇ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ</string>

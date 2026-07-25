@@ -25,5 +25,13 @@
     <exclude domain="sharedpref" path="caldav_credentials.xml" />
     <exclude domain="sharedpref" path="unified_credentials.xml" />
 
+    <!--
+        EXCLUDE: widget-picker preview registration state
+        Reason: tracks which widget previews this device has published to the
+        launcher. Restoring it would mark previews as already published on a
+        device that has never published any, leaving the picker on placeholders.
+    -->
+    <exclude domain="sharedpref" path="widget_previews.xml" />
+
     <!-- Note: cache/ is automatically excluded by Android backup system -->
 </full-backup-content>

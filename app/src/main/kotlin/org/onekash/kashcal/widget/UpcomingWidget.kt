@@ -6,7 +6,6 @@ import androidx.compose.runtime.produceState
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
-import androidx.glance.color.ColorProviders
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
@@ -40,6 +39,8 @@ class UpcomingWidget : GlanceAppWidget() {
 
     override val sizeMode = SizeMode.Exact
 
+    override val previewSizeMode = WidgetPreviewSizes.UPCOMING
+
     override val stateDefinition = PreferencesGlanceStateDefinition
 
     @EntryPoint
@@ -54,21 +55,38 @@ class UpcomingWidget : GlanceAppWidget() {
         )
         val repository = entryPoint.widgetDataRepository()
         val dataStore = KashCalDataStore(context)
+        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
+        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
+        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
+        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
+        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
+        val initialAccent = resolveWidgetAccentColors(context, dataStore)
 
         provideContent {
-            val stamp = currentState<Preferences>()[WIDGET_REFRESH_STAMP] ?: 0L
+            val prefs = currentState<Preferences>()
+            val stamp = prefs[WIDGET_REFRESH_STAMP] ?: 0L
+            val isRefreshing = isRefreshCueActive(prefs[WIDGET_REFRESHING_UNTIL], System.currentTimeMillis())
             val state by produceState<UpcomingState>(
                 initialValue = UpcomingState.Loading,
                 key1 = stamp
             ) {
                 value = fetchUpcomingState(repository, dataStore, context)
             }
-            val accentColors by produceState<ColorProviders?>(initialValue = null, key1 = stamp) {
-                value = resolveWidgetAccentColors(dataStore)
+            val accentColors by produceState(initialValue = initialAccent, key1 = stamp) {
+                value = resolveWidgetAccentColors(context, dataStore)
             }
             GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
-                UpcomingWidgetScaffold(state = state)
+                UpcomingWidgetScaffold(state = state, isRefreshing = isRefreshing)
             }
         }
+    }
+
+    /**
+     * Renders sample upcoming events into the widget picker. Goes straight to the
+     * content composable rather than through the scaffold, so the picker never shows a
+     * loading or error state.
+     */
+    override suspend fun providePreview(context: Context, widgetCategory: Int) {
+        provideContent { UpcomingPreviewContent(context) }
     }
 }

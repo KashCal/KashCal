@@ -44,10 +44,13 @@ internal const val BAR_TO_TIME_GAP_DP = 4
 
 /**
  * Vertical padding on a single event row, in dp — shared by the agenda, week,
- * and upcoming list widgets so their row density stays uniform. Kept tight so
- * more events fit in a fixed widget height.
+ * and upcoming list widgets so their row density stays uniform. Sized so a
+ * single-line row clears roughly 40dp (a ~20dp text line box plus 10dp top and
+ * bottom), giving a comfortable tap target. Applied as padding rather than a
+ * fixed row height so the row grows with the system font-scale instead of
+ * clipping the title.
  */
-internal const val EVENT_ROW_VERTICAL_PADDING_DP = 4
+internal const val EVENT_ROW_VERTICAL_PADDING_DP = 10
 
 /** Gap between the time column and the event title, in dp. */
 internal const val TIME_TO_TITLE_GAP_DP = 2

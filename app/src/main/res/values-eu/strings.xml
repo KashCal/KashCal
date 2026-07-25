@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Gertaera gehitu</string>
     <string name="widget_no_events">Gertaerarik ez</string>
     <string name="widget_no_upcoming_events">Datozen gertaerarik ez</string>
+    <string name="widget_preview_event_standup">Taldearen bilera</string>
+    <string name="widget_preview_event_lunch">Bazkari-atsedena</string>
+    <string name="widget_preview_event_review">Diseinu-berrikuspena</string>
+    <string name="widget_preview_event_gym">Gimnasioa</string>
+    <string name="widget_preview_event_birthday">Urtebetetzea</string>
+    <string name="widget_preview_event_trip">Asteburuko bidaia</string>
+    <string name="widget_preview_event_dentist">Dentista</string>
+    <string name="widget_preview_event_call">Proiektuaren deia</string>
     <string name="cd_widget_calendar">Egutegia</string>
     <string name="cd_widget_add_event">Gehitu gertaera</string>
+    <string name="cd_widget_refresh">Freskatu</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gertaerarik gabe</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, bertan behera utzita</string>

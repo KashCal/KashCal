@@ -96,6 +96,42 @@ class AccentSchemeTest {
         pair(name, dark, "outline/surface", s.outline, s.surface, AA_UI, failures)
     }
 
+    /**
+     * The widget faces build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (with the achromatic
+     * container snap OFF — see accentColorProviders) because the widget header rides the muted
+     * secondary-container role as a band over the neutral surface body. At the app's default level
+     * that pair only scrapes the bare AA floor (~4.5:1) and the band barely separates from the
+     * surface. This proves the elevated level clears roughly the AAA bar (~7:1) for both the header
+     * TEXT and the header BAND against the surface, for EVERY selectable seed — the achromatic
+     * extremes included, which is what lets widgets skip the snap (snapping the container would
+     * collapse the band against the surface for the white/black seeds).
+     */
+    @Test
+    fun `widget contrast level lifts the header text and band toward AAA for every seed`() {
+        // Empirically the level-0.8 floors (snap off) are ~7.3:1 header text (light) / ~9.4:1 (dark)
+        // and ~6.9:1 band (light) / ~8.4:1 (dark). Assert a small margin below those so a future
+        // regression that flattens the header or lowers the level trips, without being brittle.
+        val headerTextFloor = 7.0
+        val bandFloor = 6.5
+        val failures = mutableListOf<String>()
+        for ((name, seed) in seeds) {
+            for (dark in listOf(false, true)) {
+                val s = accentColorScheme(
+                    seed, dark,
+                    contrastLevel = WIDGET_ACCENT_CONTRAST_LEVEL,
+                    snapAchromaticContainers = false,
+                )
+                pair(name, dark, "header text (onSecCont/secCont)", s.onSecondaryContainer, s.secondaryContainer, headerTextFloor, failures)
+                pair(name, dark, "header band (secCont/surface)", s.secondaryContainer, s.surface, bandFloor, failures)
+            }
+        }
+        if (failures.isNotEmpty()) {
+            throw AssertionError(
+                "Widget header below elevated-contrast bar (${failures.size}):\n" + failures.joinToString("\n"),
+            )
+        }
+    }
+
     private fun pair(
         name: String,
         dark: Boolean,
@@ -133,11 +169,12 @@ class AccentSchemeTest {
 
     /**
      * The two achromatic extremes are special: HCT has no hue to preserve, so the tonal
-     * engine pairs the accent container with a mid-gray "on" tone that only scrapes AA
-     * (~4.6:1) and reads as muddy on the widget header. For pure white and pure black we
-     * snap the accent-container pair to the crisp inverse (black-on-white / white-on-black,
-     * a full 21:1) in BOTH faces, so the header the user picked looks like the color they
-     * picked. Every widget/app header surface uses primaryContainer/onPrimaryContainer.
+     * engine pairs each accent container with a mid-gray "on" tone that only scrapes AA
+     * (~4.6:1) and reads as muddy on the widget header and tonal chips. For pure white and
+     * pure black we snap BOTH accent-container pairs (primary and secondary) to the crisp
+     * inverse (black-on-white / white-on-black, a full 21:1) in BOTH faces, so the header the
+     * user picked looks like the color they picked. The widget header uses secondaryContainer/
+     * onSecondaryContainer; the app's tonal chips use primaryContainer/onPrimaryContainer.
      */
     @Test
     fun `pure white seed yields a pure white accent container with black text in both faces`() {
@@ -147,6 +184,8 @@ class AccentSchemeTest {
             // colors pins the ratio; no separate contrast assertion needed.
             assertEquals("white container (dark=$dark)", Color.White, s.primaryContainer)
             assertEquals("white on-container (dark=$dark)", Color.Black, s.onPrimaryContainer)
+            assertEquals("white secondary container (dark=$dark)", Color.White, s.secondaryContainer)
+            assertEquals("white on-secondary-container (dark=$dark)", Color.Black, s.onSecondaryContainer)
         }
     }
 
@@ -156,14 +195,16 @@ class AccentSchemeTest {
             val s = accentColorScheme(0xFF000000.toInt(), dark)
             assertEquals("black container (dark=$dark)", Color.Black, s.primaryContainer)
             assertEquals("black on-container (dark=$dark)", Color.White, s.onPrimaryContainer)
+            assertEquals("black secondary container (dark=$dark)", Color.Black, s.secondaryContainer)
+            assertEquals("black on-secondary-container (dark=$dark)", Color.White, s.onSecondaryContainer)
         }
     }
 
     /**
-     * The achromatic snap must touch ONLY the accent-container pair. If a future change
+     * The achromatic snap must touch ONLY the two accent-container pairs. If a future change
      * over-broadened the post-processing (e.g. rewrote the surface family or primary), a
      * pure-white seed would silently wash out unrelated roles. Assert every role other than
-     * primaryContainer/onPrimaryContainer is byte-for-byte the raw engine output. This also
+     * the primary/secondary container pairs is byte-for-byte the raw engine output. This also
      * pins that `primary` is untouched, so the primary/surface visibility guarantee holds.
      */
     @Test
@@ -177,8 +218,6 @@ class AccentSchemeTest {
             "inversePrimary" to { it.inversePrimary },
             "secondary" to { it.secondary },
             "onSecondary" to { it.onSecondary },
-            "secondaryContainer" to { it.secondaryContainer },
-            "onSecondaryContainer" to { it.onSecondaryContainer },
             "tertiary" to { it.tertiary },
             "onTertiary" to { it.onTertiary },
             "tertiaryContainer" to { it.tertiaryContainer },

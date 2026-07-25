@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ நிகழ்வு சேர்</string>
     <string name="widget_no_events">நிகழ்வுகள் இல்லை</string>
     <string name="widget_no_upcoming_events">வரவிருக்கும் நிகழ்வுகள் இல்லை</string>
+    <string name="widget_preview_event_standup">டீம் ஸ்டாண்டப்</string>
+    <string name="widget_preview_event_lunch">மதிய உணவு இடைவேளை</string>
+    <string name="widget_preview_event_review">டிசைன் ரிவ்யூ</string>
+    <string name="widget_preview_event_gym">ஜிம்</string>
+    <string name="widget_preview_event_birthday">பிறந்தநாள்</string>
+    <string name="widget_preview_event_trip">வார இறுதி பயணம்</string>
+    <string name="widget_preview_event_dentist">பல் மருத்துவர்</string>
+    <string name="widget_preview_event_call">ப்ராஜெக்ட் கால்</string>
     <string name="cd_widget_calendar">நாட்காட்டி</string>
     <string name="cd_widget_add_event">நிகழ்வைச் சேர்க்கவும்</string>
+    <string name="cd_widget_refresh">புதுப்பிக்கவும்</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">நிகழ்வுகள் இல்லை</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ரத்துசெய்யப்பட்டது</string>

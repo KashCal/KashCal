@@ -78,6 +78,17 @@ internal data class AgendaData(
 )
 
 /**
+ * The agenda header's date line, localized for the current locale. Shared with the
+ * widget-picker preview so a preview header can't drift from the real one.
+ */
+internal fun widgetHeaderDate(nowMs: Long = System.currentTimeMillis()): String =
+    DateTimeUtils.formatEventDate(
+        timestampMs = nowMs,
+        isAllDay = false,
+        pattern = DateTimeUtils.localizedPattern("EEEEMMMd")
+    )
+
+/**
  * Fetch the Agenda widget's data. Returns an empty-events shape with default prefs
  * on any failure so the existing "no events today" UI renders gracefully.
  */
@@ -93,12 +104,7 @@ internal suspend fun fetchAgendaData(
         val timeFormatPref = dataStore.getTimeFormat()
         val is24Hour = DateFormat.is24HourFormat(context)
         val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24Hour)
-        val currentDate = DateTimeUtils.formatEventDate(
-            timestampMs = System.currentTimeMillis(),
-            isAllDay = false,
-            pattern = DateTimeUtils.localizedPattern("EEEEMMMd")
-        )
-        AgendaData(events, showEventEmojis, maxEventsPerDay, timePattern, currentDate)
+        AgendaData(events, showEventEmojis, maxEventsPerDay, timePattern, widgetHeaderDate())
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {

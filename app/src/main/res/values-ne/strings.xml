@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ कार्यक्रम थप्नुहोस्</string>
     <string name="widget_no_events">कुनै कार्यक्रम छैन</string>
     <string name="widget_no_upcoming_events">कुनै आगामी कार्यक्रम छैन</string>
+    <string name="widget_preview_event_standup">टिम स्ट्यान्डअप</string>
+    <string name="widget_preview_event_lunch">खाजा समय</string>
+    <string name="widget_preview_event_review">डिजाइन समीक्षा</string>
+    <string name="widget_preview_event_gym">जिम</string>
+    <string name="widget_preview_event_birthday">जन्मदिन</string>
+    <string name="widget_preview_event_trip">सप्ताहन्त यात्रा</string>
+    <string name="widget_preview_event_dentist">दाँतको डाक्टर</string>
+    <string name="widget_preview_event_call">प्रोजेक्ट कल</string>
     <string name="cd_widget_calendar">क्यालेन्डर</string>
     <string name="cd_widget_add_event">कार्यक्रम थप्नुहोस्</string>
+    <string name="cd_widget_refresh">ताजा गर्नुहोस्</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">कुनै कार्यक्रम छैन</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, रद्द गरियो</string>

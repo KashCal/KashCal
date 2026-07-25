@@ -2,4 +2,15 @@
 <resources>
     <!-- Launcher icon background -->
     <color name="ic_launcher_background">#0E1116</color>
+
+    <!--
+        Colors for the widget placeholder layout. That layout is plain RemoteViews, so it
+        cannot read the Glance theme the widgets themselves use; these map onto the same
+        Material You palette instead. The values-night variants keep the placeholder
+        legible on a dark launcher. System palette colors are available from API 31,
+        which is the app's minSdk.
+    -->
+    <color name="widget_placeholder_background">@android:color/system_neutral1_50</color>
+    <color name="widget_placeholder_text">@android:color/system_neutral2_700</color>
+    <color name="widget_placeholder_accent">@android:color/system_accent1_600</color>
 </resources>

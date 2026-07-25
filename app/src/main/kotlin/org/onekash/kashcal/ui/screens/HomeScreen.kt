@@ -9,6 +9,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -105,6 +110,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -118,6 +124,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -475,6 +482,14 @@ fun HomeScreen(
     val drawerScope = rememberCoroutineScope()
     var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
     var showHub by rememberSaveable { mutableStateOf(false) }
+    // Tracks the hub overlay through its enter/exit slide, not just the target flag.
+    // Coverage-sensitive behaviour (drawer edge-swipe suppression below) must stay
+    // active while the Surface is still animating out, so it keys off this state —
+    // which only reports "gone" once the exit slide finishes — rather than showHub,
+    // which flips to false the instant back is pressed.
+    val hubTransition = remember { MutableTransitionState(false) }
+    hubTransition.targetState = showHub
+    val hubFullyHidden = hubTransition.isIdle && !hubTransition.currentState
 
     // Captures view mode + date right before "Jump to date" navigates so a
     // back press restores both. Cleared once consumed (or set to null when no
@@ -484,9 +499,10 @@ fun HomeScreen(
 
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
-        // Suppress the edge-swipe while the full-screen hub overlay is up, so a
-        // swipe can't slide the calendar drawer over it.
-        gesturesEnabled = !showHub,
+        // Suppress the edge-swipe while the full-screen hub overlay is up — and
+        // while it's still sliding out — so a swipe can't slide the calendar drawer
+        // over it. hubFullyHidden stays false until the exit animation completes.
+        gesturesEnabled = hubFullyHidden,
         drawerContent = {
             CalendarDrawer(
                 currentViewMode = uiState.viewMode,
@@ -1029,14 +1045,25 @@ fun HomeScreen(
         preJumpDate = 0L
     }
 
-    if (showHub) {
-        // Full-screen destination (like the Insights view) rendered as an opaque
-        // overlay above the Scaffold, so it covers the calendar's own top bar and
-        // FAB. A boolean flag is invisible to the top-bar `when` and the FAB's
-        // viewMode gate, so the overlay — not those branches — owns coverage.
-        // Surface (not a bare Box) is load-bearing here: its pointer-input barrier
-        // stops taps from reaching the FAB behind it, and gesturesEnabled=!showHub
-        // above suppresses the drawer edge-swipe. Keep both if this is refactored.
+    // Full-screen destination (like the Insights view) rendered as an opaque
+    // overlay above the Scaffold, so it covers the calendar's own top bar and
+    // FAB. A boolean flag is invisible to the top-bar `when` and the FAB's
+    // viewMode gate, so the overlay — not those branches — owns coverage.
+    // Surface (not a bare Box) is load-bearing here: its pointer-input barrier
+    // stops taps from reaching the FAB behind it, and gesturesEnabled=hubFullyHidden
+    // above suppresses the drawer edge-swipe. Keep both if this is refactored.
+    // AnimatedVisibility slides the hub in from the trailing edge (the avatar sits
+    // on the trailing corner, so a trailing-edge push reads as drilling in) and
+    // reverses on back; the Surface stays mounted through the exit slide so the FAB
+    // stays covered. visibleState (not visible) drives it so hubFullyHidden can
+    // observe the exit completing. The offset is negated in RTL so "trailing edge"
+    // stays the leading corner of the incoming screen regardless of layout direction.
+    val hubSlideSign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
+    AnimatedVisibility(
+        visibleState = hubTransition,
+        enter = slideInHorizontally { width -> hubSlideSign * width } + fadeIn(),
+        exit = slideOutHorizontally { width -> hubSlideSign * width } + fadeOut(),
+    ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             AccountHubScreen(
                 currentViewMode = uiState.viewMode,

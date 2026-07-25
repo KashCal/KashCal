@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Добавить событие</string>
     <string name="widget_no_events">Нет событий</string>
     <string name="widget_no_upcoming_events">Нет предстоящих событий</string>
+    <string name="widget_preview_event_standup">Дейли</string>
+    <string name="widget_preview_event_lunch">Обед</string>
+    <string name="widget_preview_event_review">Дизайн-ревью</string>
+    <string name="widget_preview_event_gym">Спортзал</string>
+    <string name="widget_preview_event_birthday">День рождения</string>
+    <string name="widget_preview_event_trip">Поездка на выходные</string>
+    <string name="widget_preview_event_dentist">Стоматолог</string>
+    <string name="widget_preview_event_call">Созвон по проекту</string>
     <string name="cd_widget_calendar">Календарь</string>
     <string name="cd_widget_add_event">Добавить событие</string>
+    <string name="cd_widget_refresh">Обновить</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">нет событий</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>

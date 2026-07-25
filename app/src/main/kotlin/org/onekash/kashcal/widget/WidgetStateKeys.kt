@@ -27,6 +27,25 @@ import java.util.concurrent.atomic.AtomicLong
 internal val WIDGET_REFRESH_STAMP = longPreferencesKey("widget_refresh_stamp")
 
 /**
+ * Epoch-millis deadline for the header refresh "syncing" cue. Written by [WidgetRefreshAction]
+ * when the user taps refresh; the header dims its refresh glyph while `now < deadline`. Stored as
+ * a self-expiring deadline (rather than a plain boolean) so the cue can never get stuck: even if
+ * the action's coroutine is killed before it can clear the flag, the next recomposition past the
+ * deadline reads the glyph as idle. See [isRefreshCueActive].
+ */
+internal val WIDGET_REFRESHING_UNTIL = longPreferencesKey("widget_refreshing_until")
+
+/**
+ * Whether the refresh "syncing" cue should currently render, given the stored deadline and the
+ * current time. Pure so the self-expiry contract can be unit-tested without a render harness.
+ */
+internal fun isRefreshCueActive(refreshingUntil: Long?, nowMs: Long): Boolean =
+    (refreshingUntil ?: 0L) > nowMs
+
+/** How long the tap-refresh cue stays visible before the glyph settles back to idle. */
+internal const val WIDGET_REFRESH_CUE_DURATION_MS = 800L
+
+/**
  * Monotonically-increasing counter used by [WidgetUpdateManager] when writing
  * [WIDGET_REFRESH_STAMP]. Seeded from `System.currentTimeMillis()` at class load so stamps
  * remain roughly clock-aligned (useful for debugging) but distinct across same-millisecond

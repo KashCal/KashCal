@@ -1,0 +1,4 @@
+• Widget picker now previews each widget as itself, not a blank placeholder
+• Month widget: day letters, optional week numbers, and a live first-day / week-number toggle
+• Bigger, cleaner widget header buttons and tidier tap targets
+• View menu ordered from a single day up to the full year

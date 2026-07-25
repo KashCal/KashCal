@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Magdagdag ng event</string>
     <string name="widget_no_events">Walang event</string>
     <string name="widget_no_upcoming_events">Walang paparating na event</string>
+    <string name="widget_preview_event_standup">Standup ng team</string>
+    <string name="widget_preview_event_lunch">Pananghalian</string>
+    <string name="widget_preview_event_review">Review ng disenyo</string>
+    <string name="widget_preview_event_gym">Gym</string>
+    <string name="widget_preview_event_birthday">Kaarawan</string>
+    <string name="widget_preview_event_trip">Biyahe sa weekend</string>
+    <string name="widget_preview_event_dentist">Dentista</string>
+    <string name="widget_preview_event_call">Call sa proyekto</string>
     <string name="cd_widget_calendar">Kalendaryo</string>
     <string name="cd_widget_add_event">Magdagdag ng event</string>
+    <string name="cd_widget_refresh">I-refresh</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">walang event</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, kinansela</string>

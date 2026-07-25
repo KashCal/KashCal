@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Agregar evento</string>
     <string name="widget_no_events">Sin eventos</string>
     <string name="widget_no_upcoming_events">Sin próximos eventos</string>
+    <string name="widget_preview_event_standup">Reunión diaria</string>
+    <string name="widget_preview_event_lunch">Hora del almuerzo</string>
+    <string name="widget_preview_event_review">Revisión de diseño</string>
+    <string name="widget_preview_event_gym">Gimnasio</string>
+    <string name="widget_preview_event_birthday">Cumpleaños</string>
+    <string name="widget_preview_event_trip">Viaje de fin de semana</string>
+    <string name="widget_preview_event_dentist">Dentista</string>
+    <string name="widget_preview_event_call">Llamada del proyecto</string>
     <string name="cd_widget_calendar">Calendario</string>
     <string name="cd_widget_add_event">Agregar evento</string>
+    <string name="cd_widget_refresh">Actualizar</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sin eventos</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, cancelado</string>

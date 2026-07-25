@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Engeza umcimbi</string>
     <string name="widget_no_events">Ayikho imicimbi</string>
     <string name="widget_no_upcoming_events">Ayikho imicimbi ezayo</string>
+    <string name="widget_preview_event_standup">Umhlangano weqembu</string>
+    <string name="widget_preview_event_lunch">Ikhefu lasemini</string>
+    <string name="widget_preview_event_review">Ukubuyekeza idizayini</string>
+    <string name="widget_preview_event_gym">Ijimu</string>
+    <string name="widget_preview_event_birthday">Usuku lokuzalwa</string>
+    <string name="widget_preview_event_trip">Uhambo lwempelasonto</string>
+    <string name="widget_preview_event_dentist">Udokotela wamazinyo</string>
+    <string name="widget_preview_event_call">Ucingo lwephrojekthi</string>
     <string name="cd_widget_calendar">Ikhalenda</string>
     <string name="cd_widget_add_event">Engeza umcimbi</string>
+    <string name="cd_widget_refresh">Vuselela</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ayikho imicimbi</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, kukhanseliwe</string>

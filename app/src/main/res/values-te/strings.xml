@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ఈవెంట్ జోడించు</string>
     <string name="widget_no_events">ఈవెంట్‌లు లేవు</string>
     <string name="widget_no_upcoming_events">రాబోయే ఈవెంట్‌లు లేవు</string>
+    <string name="widget_preview_event_standup">టీమ్ స్టాండప్</string>
+    <string name="widget_preview_event_lunch">భోజన విరామం</string>
+    <string name="widget_preview_event_review">డిజైన్ రివ్యూ</string>
+    <string name="widget_preview_event_gym">జిమ్</string>
+    <string name="widget_preview_event_birthday">పుట్టినరోజు</string>
+    <string name="widget_preview_event_trip">వీకెండ్ ట్రిప్</string>
+    <string name="widget_preview_event_dentist">డెంటిస్ట్</string>
+    <string name="widget_preview_event_call">ప్రాజెక్ట్ కాల్</string>
     <string name="cd_widget_calendar">క్యాలెండర్</string>
     <string name="cd_widget_add_event">ఈవెంట్ జోడించండి</string>
+    <string name="cd_widget_refresh">రిఫ్రెష్ చేయండి</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ఈవెంట్‌లు లేవు</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, రద్దు చేయబడింది</string>

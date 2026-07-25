@@ -26,13 +26,13 @@ object WidgetTypography {
     /** Primary content — event titles. */
     val contentTitle: TextUnit = 14.sp
 
-    /** Month-grid day-of-month numbers. Slightly larger than body content for at-a-glance legibility, sized to stay within the fixed day-cell height. */
+    /** Month-grid day-of-month numbers and the single-letter day-of-week header above them (one shared size so the header reads as part of the grid). Slightly larger than body content for at-a-glance legibility, sized to stay within the fixed day-cell height. */
     val monthDayNumber: TextUnit = 16.sp
 
     /** Supporting text — event times, day headers, counts, empty/overflow rows. */
     val secondary: TextUnit = 12.sp
 
-    /** Smallest label — month day-of-week headers, date-widget day name, "today" pill. */
+    /** Smallest label — week-widget day-of-week header, date-widget day name, "today" pill, month-widget week-number gutter. */
     val label: TextUnit = 11.sp
 
     /** Navigation chevrons (month widget prev/next). Sized as touch affordances, not body text. */

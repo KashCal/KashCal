@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Lisää tapahtuma</string>
     <string name="widget_no_events">Ei tapahtumia</string>
     <string name="widget_no_upcoming_events">Ei tulevia tapahtumia</string>
+    <string name="widget_preview_event_standup">Päiväpalaveri</string>
+    <string name="widget_preview_event_lunch">Lounastauko</string>
+    <string name="widget_preview_event_review">Suunnittelukatselmus</string>
+    <string name="widget_preview_event_gym">Kuntosali</string>
+    <string name="widget_preview_event_birthday">Syntymäpäivä</string>
+    <string name="widget_preview_event_trip">Viikonloppumatka</string>
+    <string name="widget_preview_event_dentist">Hammaslääkäri</string>
+    <string name="widget_preview_event_call">Projektipuhelu</string>
     <string name="cd_widget_calendar">Kalenteri</string>
     <string name="cd_widget_add_event">Lisää tapahtuma</string>
+    <string name="cd_widget_refresh">Päivitä</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ei tapahtumia</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, peruttu</string>

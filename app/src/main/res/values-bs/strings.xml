@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Dodaj događaj</string>
     <string name="widget_no_events">Nema događaja</string>
     <string name="widget_no_upcoming_events">Nema predstojećih događaja</string>
+    <string name="widget_preview_event_standup">Standup tima</string>
+    <string name="widget_preview_event_lunch">Pauza za ručak</string>
+    <string name="widget_preview_event_review">Pregled dizajna</string>
+    <string name="widget_preview_event_gym">Teretana</string>
+    <string name="widget_preview_event_birthday">Rođendan</string>
+    <string name="widget_preview_event_trip">Vikend putovanje</string>
+    <string name="widget_preview_event_dentist">Zubar</string>
+    <string name="widget_preview_event_call">Projektni poziv</string>
     <string name="cd_widget_calendar">Kalendar</string>
     <string name="cd_widget_add_event">Dodaj događaj</string>
+    <string name="cd_widget_refresh">Osvježi</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">nema događaja</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, otkazano</string>

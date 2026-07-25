@@ -1,3 +1,34 @@
+## [2026.07.25]
+
+Every KashCal widget has to sell itself from behind glass.
+
+Before you add one, you meet it in the system's widget picker, that showroom of previews. Until now, KashCal sent all five of its widgets to the audition in the same outfit: a blank panel, a spinner, and the app name. The agenda, the month, the week, the date, the upcoming list, five siblings in one gray coat, none willing to say which one they were. Picking a widget meant adding it, squinting, guessing wrong, removing it, and going again.
+
+They introduce themselves now. Each widget previews as what it is: the agenda shows a day with a couple of events on it, the month shows a grid, the week its strip, the date its day, the upcoming its list. The previews run the same code the live widget runs, so the model in the showroom is the one that gets delivered, and the sample text is translated like everything else.
+
+The month widget changed the most. It wears single-letter day names across the top, an optional week-number column down the side, and marks today with a solid filled circle instead of a faint tint. The circle grows with your font size, so it stays round from default text up to the largest. And it listens: change your first day of the week or turn week numbers on, and it updates without a restart. The headers match heights now, the plus sign reads clearly and is easy to hit, and the body lets your accent color tint through instead of sitting on flat gray.
+
+Two smaller things. The view menu runs shortest to longest now, a single day up through the whole year, thanks to a pull request from [@az0ran](https://github.com/az0ran). And Settings and the profile hub slide between each other instead of cutting.
+
+Five widgets that answer the door when you knock.
+
+### Everything in this release
+
+- Added per-widget previews in the system widget picker on Android 15 and up, so the agenda, month, week, date, and upcoming widgets each preview as themselves instead of an identical placeholder
+- Added localized sample content to those previews, drawn from the same composables the live widgets use so a preview matches the real widget
+- Added single-letter day-of-week names across the top of the month widget
+- Added an optional week-number column to the month widget
+- Changed the month widget to mark today with a solid filled accent circle around the date, and gave the agenda, week, and upcoming widgets a uniform day-header color
+- Fixed the month widget's today marker to grow with the system font scale so it stays round at large text sizes
+- Fixed the month widget to apply first-day-of-week and week-number changes immediately instead of only after a restart
+- Fixed multi-day events spilling outside the month widget's visible range by clamping them to the shown window (#306)
+- Added header refresh buttons to the agenda, week, and upcoming widgets
+- Improved widget headers with matching heights, a plain readable "+", and larger touch targets, with spacing so a month-navigation tap can't land on the add button
+- Improved the event-row tap target in the list widgets to 40dp
+- Changed the widget body to let the accent color tint through instead of showing flat gray
+- Changed the view menu to run shortest span first, from a single day up through the full year, via a pull request from [@az0ran](https://github.com/az0ran)
+- Added an animated transition when moving between Settings sub-screens and the profile hub
+
 ## [2026.07.22]
 
 Every family has the sibling who peaked early and the one who spent the summer reinventing themselves.

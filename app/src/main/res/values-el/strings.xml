@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Προσθήκη συμβάντος</string>
     <string name="widget_no_events">Δεν υπάρχουν συμβάντα</string>
     <string name="widget_no_upcoming_events">Δεν υπάρχουν προσεχή συμβάντα</string>
+    <string name="widget_preview_event_standup">Συνάντηση ομάδας</string>
+    <string name="widget_preview_event_lunch">Μεσημεριανό διάλειμμα</string>
+    <string name="widget_preview_event_review">Επισκόπηση σχεδίασης</string>
+    <string name="widget_preview_event_gym">Γυμναστήριο</string>
+    <string name="widget_preview_event_birthday">Γενέθλια</string>
+    <string name="widget_preview_event_trip">Εκδρομή Σαββατοκύριακου</string>
+    <string name="widget_preview_event_dentist">Οδοντίατρος</string>
+    <string name="widget_preview_event_call">Κλήση για το έργο</string>
     <string name="cd_widget_calendar">Ημερολόγιο</string>
     <string name="cd_widget_add_event">Προσθήκη συμβάντος</string>
+    <string name="cd_widget_refresh">Ανανέωση</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">χωρίς συμβάντα</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ακυρώθηκε</string>

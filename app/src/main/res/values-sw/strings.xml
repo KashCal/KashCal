@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Ongeza tukio</string>
     <string name="widget_no_events">Hakuna matukio</string>
     <string name="widget_no_upcoming_events">Hakuna matukio yajayo</string>
+    <string name="widget_preview_event_standup">Kikao cha timu</string>
+    <string name="widget_preview_event_lunch">Mapumziko ya chakula</string>
+    <string name="widget_preview_event_review">Ukaguzi wa muundo</string>
+    <string name="widget_preview_event_gym">Mazoezi</string>
+    <string name="widget_preview_event_birthday">Siku ya kuzaliwa</string>
+    <string name="widget_preview_event_trip">Safari ya wikendi</string>
+    <string name="widget_preview_event_dentist">Daktari wa meno</string>
+    <string name="widget_preview_event_call">Simu ya mradi</string>
     <string name="cd_widget_calendar">Kalenda</string>
     <string name="cd_widget_add_event">Ongeza tukio</string>
+    <string name="cd_widget_refresh">Onyesha upya</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">hakuna matukio</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, imeghairiwa</string>

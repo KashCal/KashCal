@@ -119,6 +119,77 @@ class DisplayEventRepositoryTest {
         assertEquals(20260215, expanded[0].first)
     }
 
+    // ========== Multi-Day Expansion clamped to the query window ==========
+    // A multi-day event must only occupy day buckets INSIDE the requested
+    // window. Expanding across the event's own full span leaks buckets before
+    // the window start (issue #306: the upcoming widget's first row became the
+    // event's start date instead of today for an event that began earlier).
+
+    @Test
+    fun `multi-day event starting before the window clamps to the window start`() {
+        // Event runs Feb 13-17; window is Feb 15-20 (e.g. today = Feb 15).
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260213, endDay = 20260217,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        // No bucket before the window start; first bucket is the window start.
+        assertEquals(listOf(20260215, 20260216, 20260217), days)
+    }
+
+    @Test
+    fun `multi-day event ending after the window clamps to the window end`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260218, endDay = 20260225,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        assertEquals(listOf(20260218, 20260219, 20260220), days)
+    }
+
+    @Test
+    fun `multi-day event spanning beyond both edges yields exactly the window days`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260210, endDay = 20260225,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260218
+        )
+        assertEquals(listOf(20260215, 20260216, 20260217, 20260218), days)
+    }
+
+    @Test
+    fun `multi-day event fully inside the window yields all its days`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260216, endDay = 20260218,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        assertEquals(listOf(20260216, 20260217, 20260218), days)
+    }
+
+    @Test
+    fun `single-day event inside the window yields that day`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260216, endDay = 20260216,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        assertEquals(listOf(20260216), days)
+    }
+
+    @Test
+    fun `event entirely before the window yields no days`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260210, endDay = 20260213,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        assertTrue(days.isEmpty())
+    }
+
+    @Test
+    fun `event entirely after the window yields no days`() {
+        val days = spannedDayCodesWithinWindow(
+            startDay = 20260221, endDay = 20260223,
+            windowStartDayCode = 20260215, windowEndDayCode = 20260220
+        )
+        assertTrue(days.isEmpty())
+    }
+
     // ========== generateDayCodesInRange ==========
 
     @Test

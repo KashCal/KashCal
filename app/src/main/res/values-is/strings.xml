@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Bæta við viðburði</string>
     <string name="widget_no_events">Engir viðburðir</string>
     <string name="widget_no_upcoming_events">Engir væntanlegir viðburðir</string>
+    <string name="widget_preview_event_standup">Stöðufundur</string>
+    <string name="widget_preview_event_lunch">Hádegishlé</string>
+    <string name="widget_preview_event_review">Hönnunarrýni</string>
+    <string name="widget_preview_event_gym">Ræktin</string>
+    <string name="widget_preview_event_birthday">Afmæli</string>
+    <string name="widget_preview_event_trip">Helgarferð</string>
+    <string name="widget_preview_event_dentist">Tannlæknir</string>
+    <string name="widget_preview_event_call">Verkefnafundur</string>
     <string name="cd_widget_calendar">Dagatal</string>
     <string name="cd_widget_add_event">Bæta við viðburði</string>
+    <string name="cd_widget_refresh">Endurhlaða</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">engir viðburðir</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, aflýst</string>

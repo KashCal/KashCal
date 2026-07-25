@@ -1992,7 +1992,7 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `setFirstDayOfWeek calls dataStore`() = runTest {
+    fun `setFirstDayOfWeek calls dataStore and refreshes widgets`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -2000,6 +2000,9 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setFirstDayOfWeek(java.util.Calendar.MONDAY) }
+        // The month/week widgets lay out from the first-day-of-week, so the change must reach
+        // them now rather than waiting for the next periodic update.
+        coVerify { widgetUpdateManager.updateAllWidgets(any()) }
     }
 
     @Test
@@ -2011,6 +2014,20 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setFirstDayOfWeek(java.util.Calendar.SUNDAY) }
+    }
+
+    @Test
+    fun `setShowWeekNumbers saves preference and refreshes widgets`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setShowWeekNumbers(true)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setShowWeekNumbers(true) }
+        // The month widget's week-number gutter is driven by this preference, so the toggle must
+        // refresh the widgets immediately, not on the next periodic tick.
+        coVerify { widgetUpdateManager.updateAllWidgets(any()) }
     }
 
     @Test

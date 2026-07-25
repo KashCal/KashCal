@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Adaugă eveniment</string>
     <string name="widget_no_events">Niciun eveniment</string>
     <string name="widget_no_upcoming_events">Niciun eveniment viitor</string>
+    <string name="widget_preview_event_standup">Standup de echipă</string>
+    <string name="widget_preview_event_lunch">Pauză de masă</string>
+    <string name="widget_preview_event_review">Review de design</string>
+    <string name="widget_preview_event_gym">Sală</string>
+    <string name="widget_preview_event_birthday">Zi de naștere</string>
+    <string name="widget_preview_event_trip">Excursie de weekend</string>
+    <string name="widget_preview_event_dentist">Dentist</string>
+    <string name="widget_preview_event_call">Discuție de proiect</string>
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Adaugă eveniment</string>
+    <string name="cd_widget_refresh">Reîmprospătează</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">fără evenimente</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, anulat</string>

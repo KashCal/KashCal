@@ -100,21 +100,6 @@ internal const val MAX_UPCOMING_ITEMS = 100
 internal const val UPCOMING_HORIZON_DAYS = 10
 
 /**
- * Vertical padding (top and bottom) for the upcoming widget's header strip.
- * Tighter than the agenda/week widgets because this header has no nav arrows;
- * a smaller header gives more rows to event content at the same widget size.
- */
-internal const val UPCOMING_HEADER_VERTICAL_PADDING_DP = 6
-
-/**
- * Size of the upcoming widget's "+" button. Below Material's 48dp guidance —
- * a deliberate density trade for this widget. The header's title row and
- * the "+" button are disjoint clickables, so a mistarget on the button
- * does not get absorbed by an adjacent action.
- */
-internal const val UPCOMING_HEADER_BUTTON_SIZE_DP = 32
-
-/**
  * Collapse an events-by-day map into a flat list for LazyColumn rendering.
  *
  * - Days whose events are all past are skipped entirely (no Header).
@@ -271,7 +256,8 @@ fun UpcomingWidgetContent(
     eventsByDay: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
     todayDayCode: Int,
     showEventEmojis: Boolean,
-    timePattern: String
+    timePattern: String,
+    isRefreshing: Boolean = false
 ) {
     val items = remember(eventsByDay) { buildFlatUpcomingItems(eventsByDay) }
 
@@ -281,7 +267,7 @@ fun UpcomingWidgetContent(
             .background(WidgetTheme.contentBackground)
             .cornerRadius(16.dp)
     ) {
-        UpcomingWidgetHeader()
+        UpcomingWidgetHeader(isRefreshing)
         if (items.isEmpty()) {
             UpcomingEmptyState()
         } else {
@@ -291,18 +277,16 @@ fun UpcomingWidgetContent(
 }
 
 @Composable
-private fun UpcomingWidgetHeader() {
+private fun UpcomingWidgetHeader(isRefreshing: Boolean) {
     val context = LocalContext.current
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(
-                start = WIDGET_HORIZONTAL_MARGIN_DP.dp,
-                top = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
-                bottom = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
-                end = 0.dp
-            ),
+            // No vertical padding: the 48dp add button defines the header height, so all
+            // widget headers stay a uniform 48dp. No end inset either — the add button's own
+            // glyph centering provides the right margin (same as the month widget header).
+            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -329,9 +313,13 @@ private fun UpcomingWidgetHeader() {
                     color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                // The refresh + add buttons reserve ~96dp on the right; on a narrow widget a long
+                // localized widget name must ellipsize on one line rather than wrap/grow the header.
+                maxLines = 1
             )
         }
+        WidgetRefreshButton(kind = WidgetKind.UPCOMING, isRefreshing = isRefreshing)
         WidgetAddButton()
     }
 }
@@ -468,7 +456,7 @@ private fun UpcomingDayHeader(
                 eventCount
             ),
             style = TextStyle(
-                color = if (isToday) WidgetTheme.onHeaderBackground else WidgetTheme.secondaryText,
+                color = WidgetTheme.onHeaderBackground,
                 fontSize = WidgetTypography.label
             )
         )
@@ -516,10 +504,11 @@ private fun UpcomingEventRow(
     ) {
         CalendarColorBar(event.calendarColor)
         Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
+        // Time shares the title's color (primaryText) so the row reads as one unit.
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayLabel),
             style = TextStyle(
-                color = if (event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
+                color = if (event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
                 fontSize = WidgetTypography.secondary,
                 textDecoration = if (event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
             ),
@@ -583,35 +572,37 @@ private fun UpcomingEmptyState() {
  * lifecycle.
  */
 @Composable
-internal fun UpcomingWidgetScaffold(state: UpcomingState) {
+internal fun UpcomingWidgetScaffold(state: UpcomingState, isRefreshing: Boolean = false) {
     when (state) {
-        UpcomingState.Loading -> UpcomingLoadingContent()
-        UpcomingState.Error -> UpcomingErrorContent()
+        UpcomingState.Loading -> UpcomingLoadingContent(isRefreshing)
+        UpcomingState.Error -> UpcomingErrorContent(isRefreshing)
         is UpcomingState.Loaded -> UpcomingWidgetContent(
             eventsByDay = state.eventsByDay,
             todayDayCode = state.todayDayCode,
             showEventEmojis = state.showEventEmojis,
-            timePattern = state.timePattern
+            timePattern = state.timePattern,
+            isRefreshing = isRefreshing
         )
     }
 }
 
 /** Themed loading state shown while the fetcher runs. */
 @Composable
-internal fun UpcomingLoadingContent() {
-    UpcomingStatePlaceholder(textRes = R.string.widget_loading_upcoming)
+internal fun UpcomingLoadingContent(isRefreshing: Boolean = false) {
+    UpcomingStatePlaceholder(textRes = R.string.widget_loading_upcoming, isRefreshing = isRefreshing)
 }
 
 /** Themed error state — tapping opens the app so the user can recover. */
 @Composable
-internal fun UpcomingErrorContent() {
+internal fun UpcomingErrorContent(isRefreshing: Boolean = false) {
     UpcomingStatePlaceholder(
         textRes = R.string.widget_error_load_events,
         onTapAction = actionStartActivity<MainActivity>(
             parameters = actionParametersOf(
                 ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
             )
-        )
+        ),
+        isRefreshing = isRefreshing
     )
 }
 
@@ -622,7 +613,8 @@ internal fun UpcomingErrorContent() {
 @Composable
 private fun UpcomingStatePlaceholder(
     textRes: Int,
-    onTapAction: Action? = null
+    onTapAction: Action? = null,
+    isRefreshing: Boolean = false
 ) {
     val context = LocalContext.current
     val baseModifier = GlanceModifier
@@ -631,7 +623,7 @@ private fun UpcomingStatePlaceholder(
         .cornerRadius(16.dp)
     val modifier = if (onTapAction != null) baseModifier.clickable(onTapAction) else baseModifier
     Column(modifier = modifier) {
-        UpcomingWidgetHeader()
+        UpcomingWidgetHeader(isRefreshing)
         Box(
             modifier = GlanceModifier.fillMaxSize().padding(16.dp),
             contentAlignment = Alignment.Center

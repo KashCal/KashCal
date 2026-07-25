@@ -788,6 +788,9 @@ class AccountSettingsViewModel @Inject constructor(
     fun setFirstDayOfWeek(day: Int) {
         viewModelScope.launch {
             dataStore.setFirstDayOfWeek(day)
+            // The month widget lays out its columns from this preference, so refresh the widgets
+            // now instead of waiting for the next periodic update.
+            widgetUpdateManager.updateAllWidgets("first_day_of_week_changed")
         }
     }
 
@@ -797,6 +800,9 @@ class AccountSettingsViewModel @Inject constructor(
     fun setShowWeekNumbers(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowWeekNumbers(show)
+            // The month widget's week-number gutter is driven by this preference, so refresh the
+            // widgets immediately rather than on the next periodic tick.
+            widgetUpdateManager.updateAllWidgets("week_numbers_changed")
         }
     }
 

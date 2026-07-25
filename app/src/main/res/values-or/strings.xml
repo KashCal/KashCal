@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ଇଭେଣ୍ଟ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="widget_no_events">ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="widget_no_upcoming_events">କୌଣସି ଆଗାମୀ ଇଭେଣ୍ଟ ନାହିଁ</string>
+    <string name="widget_preview_event_standup">ଟିମ୍ ଷ୍ଟାଣ୍ଡଅପ୍</string>
+    <string name="widget_preview_event_lunch">ଭୋଜନ ବିରତି</string>
+    <string name="widget_preview_event_review">ଡିଜାଇନ୍ ରିଭ୍ୟୁ</string>
+    <string name="widget_preview_event_gym">ଜିମ୍</string>
+    <string name="widget_preview_event_birthday">ଜନ୍ମଦିନ</string>
+    <string name="widget_preview_event_trip">ସପ୍ତାହାନ୍ତ ଭ୍ରମଣ</string>
+    <string name="widget_preview_event_dentist">ଦନ୍ତ ଚିକିତ୍ସକ</string>
+    <string name="widget_preview_event_call">ପ୍ରୋଜେକ୍ଟ କଲ</string>
     <string name="cd_widget_calendar">କ୍ୟାଲେଣ୍ଡର</string>
     <string name="cd_widget_add_event">ଇଭେଣ୍ଟ ଯୋଗ କରନ୍ତୁ</string>
+    <string name="cd_widget_refresh">ରିଫ୍ରେସ୍ କରନ୍ତୁ</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">କୌଣସି ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ବାତିଲ କରାଯାଇଛି</string>

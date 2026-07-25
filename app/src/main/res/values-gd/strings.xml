@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Cuir tachartas ris</string>
     <string name="widget_no_events">Gun tachartasan</string>
     <string name="widget_no_upcoming_events">Gun tachartasan ri thighinn</string>
+    <string name="widget_preview_event_standup">Coinneamh sgioba</string>
+    <string name="widget_preview_event_lunch">Àm lòin</string>
+    <string name="widget_preview_event_review">Lèirmheas dealbhaidh</string>
+    <string name="widget_preview_event_gym">Eacarsaich</string>
+    <string name="widget_preview_event_birthday">Co-là breith</string>
+    <string name="widget_preview_event_trip">Turas deireadh-sheachdain</string>
+    <string name="widget_preview_event_dentist">Fiaclair</string>
+    <string name="widget_preview_event_call">Gairm pròiseict</string>
     <string name="cd_widget_calendar">Mìosachan</string>
     <string name="cd_widget_add_event">Cuir tachartas ris</string>
+    <string name="cd_widget_refresh">Ath-luchdaich</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">gun tachartasan</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, air a chur dheth</string>

@@ -1,10 +1,13 @@
 package org.onekash.kashcal.widget
 
+import android.content.Context
 import androidx.glance.color.ColorProviders
+import androidx.glance.color.colorProviders
 import androidx.glance.material3.ColorProviders
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.theme.ColorSource
+import org.onekash.kashcal.ui.theme.WIDGET_ACCENT_CONTRAST_LEVEL
 import org.onekash.kashcal.ui.theme.accentColorScheme
 
 /**
@@ -13,24 +16,116 @@ import org.onekash.kashcal.ui.theme.accentColorScheme
  * Context/composition), then handed to Glance's Material 3 interop, which picks light vs dark
  * against the system day/night setting at render time.
  *
- * WCAG AA holds for any seed — the schemes are the same ones proven in the accent-scheme test.
+ * Widgets build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (higher than the app face): the
+ * header rides the muted secondary-container role, which at the app's default lands on the bare
+ * AA floor and barely separates from the widget body. The bump keeps the header reading as the
+ * picked accent while making it clearly legible and clearly a distinct band, for any seed.
+ *
+ * Widgets also opt out of the achromatic-container snap (`snapAchromaticContainers = false`). The
+ * header rides `secondaryContainer` as a band over the surface-toned body; snapping that role to
+ * pure white/black for the white/black seeds would collapse the band against the surface (a white
+ * band on the near-white light surface). At this contrast level the raw engine already gives the
+ * achromatic header 7:1+ text and a clearly separated band, so the snap is unnecessary here.
+ *
+ * Finally, the body is pinned to `surfaceVariant`. Glance's Material 3 interop derives its
+ * `widgetBackground` role from `secondaryContainer` (the accent header's role), which is not a
+ * guaranteed-contrast pair for the onSurface item text and collapses at the elevated header
+ * contrast — most visibly for the white/black accents, where the body would snap to the extreme
+ * while item text follows day/night. `surface` is a guaranteed onSurface pair but is so close to
+ * neutral that the body shows almost no accent (chroma ~0.01–0.04). `surfaceVariant` is the tonal
+ * step that both stays a guaranteed onSurface pair (item text 9–16:1 for every seed) AND carries a
+ * visible accent tint for chromatic seeds (~0.04–0.15 chroma, several times `surface`). Overriding
+ * `widgetBackground` to it gives a body the user can see is tinted without risking item legibility.
+ * This applies to every seed handed here — both the in-app accent (SEED) and the wallpaper-derived
+ * system accent used for the automatic source.
  */
-fun accentColorProviders(seed: Int): ColorProviders =
-    ColorProviders(
-        light = accentColorScheme(seed, dark = false),
-        dark = accentColorScheme(seed, dark = true),
+fun accentColorProviders(seed: Int): ColorProviders {
+    val light = accentColorScheme(
+        seed, dark = false,
+        contrastLevel = WIDGET_ACCENT_CONTRAST_LEVEL,
+        snapAchromaticContainers = false,
     )
+    val dark = accentColorScheme(
+        seed, dark = true,
+        contrastLevel = WIDGET_ACCENT_CONTRAST_LEVEL,
+        snapAchromaticContainers = false,
+    )
+    // Base carries every role wired from the two schemes via Glance's Material 3 interop; we then
+    // republish it through the core DSL overriding ONLY widgetBackground -> surfaceVariant. Reading roles
+    // back off `base` keeps all other roles in lockstep with the interop (no 26-way manual mirror).
+    val base = ColorProviders(light = light, dark = dark)
+    return colorProviders(
+        primary = base.primary,
+        onPrimary = base.onPrimary,
+        primaryContainer = base.primaryContainer,
+        onPrimaryContainer = base.onPrimaryContainer,
+        secondary = base.secondary,
+        onSecondary = base.onSecondary,
+        secondaryContainer = base.secondaryContainer,
+        onSecondaryContainer = base.onSecondaryContainer,
+        tertiary = base.tertiary,
+        onTertiary = base.onTertiary,
+        tertiaryContainer = base.tertiaryContainer,
+        onTertiaryContainer = base.onTertiaryContainer,
+        error = base.error,
+        errorContainer = base.errorContainer,
+        onError = base.onError,
+        onErrorContainer = base.onErrorContainer,
+        background = base.background,
+        onBackground = base.onBackground,
+        surface = base.surface,
+        onSurface = base.onSurface,
+        surfaceVariant = base.surfaceVariant,
+        onSurfaceVariant = base.onSurfaceVariant,
+        outline = base.outline,
+        inverseOnSurface = base.inverseOnSurface,
+        inverseSurface = base.inverseSurface,
+        inversePrimary = base.inversePrimary,
+        widgetBackground = base.surfaceVariant,
+    )
+}
 
 /**
- * Resolves the [ColorProviders] a widget should use, or null when the user is on the automatic
- * (Material You) source — callers pass null through to a bare `GlanceTheme { }` so the widget
- * keeps the platform dynamic colors. Mirrors the app's color-source resolution (including the
- * retired-teal migration) so app and widgets stay in sync.
+ * Resolves the [ColorProviders] a widget should use. Mirrors the app's color-source resolution
+ * (including the retired-teal migration) so app and widgets stay in sync.
+ *
+ * Both sources build tinted providers via [accentColorProviders] from a seed, so the widget body
+ * carries the same visible accent tint on either — the SEED source from the user's picked accent,
+ * the automatic (Material You) source from the wallpaper-derived system accent ([dynamicAccentSeed]).
+ * Handing the automatic source a bare `GlanceTheme { }` (the previous behavior) let the platform
+ * pick its muted surface/widgetBackground roles, so the body read flat while the header still showed
+ * accent. Seeding it from the same system accent the launcher uses gives the automatic body the
+ * same tint treatment — including the [accentColorProviders] `widgetBackground -> surfaceVariant` override
+ * that keeps item text at full contrast.
+ *
+ * Returns null only when the system accent can't be resolved (below API 31, or an OEM that doesn't
+ * populate the system_accent palette); callers pass null through to a bare `GlanceTheme { }` so the
+ * widget falls back to the platform dynamic colors rather than an untinted guess.
  */
-suspend fun resolveWidgetAccentColors(dataStore: KashCalDataStore): ColorProviders? {
+suspend fun resolveWidgetAccentColors(
+    context: Context,
+    dataStore: KashCalDataStore,
+): ColorProviders? {
     val source = ColorSource.fromPrefValue(
         explicit = dataStore.colorSource.first(),
         legacyTheme = dataStore.theme.first(),
     )
-    return if (source == ColorSource.SEED) accentColorProviders(dataStore.accentSeed.first()) else null
+    val seed = if (source == ColorSource.SEED) {
+        dataStore.accentSeed.first()
+    } else {
+        dynamicAccentSeed(context) ?: return null
+    }
+    return accentColorProviders(seed)
 }
+
+/**
+ * The wallpaper-derived system accent as a packed ARGB seed, or null when it can't be read.
+ *
+ * `system_accent1_500` is the mid-tone of the primary Material You palette the launcher and system
+ * UI theme from — the same source the app's dynamic face uses — so seeding the widget from it keeps
+ * widgets in step with the automatic accent. Available API 31+ (the app's minSdk); guarded and
+ * null-on-failure so a stripped OEM palette degrades to the platform colors instead of crashing.
+ */
+private fun dynamicAccentSeed(context: Context): Int? = runCatching {
+    context.getColor(android.R.color.system_accent1_500)
+}.getOrNull()

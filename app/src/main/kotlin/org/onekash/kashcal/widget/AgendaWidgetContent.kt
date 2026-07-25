@@ -53,7 +53,8 @@ fun AgendaWidgetContent(
     currentDate: String,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
-    maxEventsPerDay: Int = 5
+    maxEventsPerDay: Int = 5,
+    isRefreshing: Boolean = false
 ) {
     Column(
         modifier = GlanceModifier
@@ -62,7 +63,7 @@ fun AgendaWidgetContent(
             .cornerRadius(16.dp)
     ) {
         // Header with date
-        WidgetHeader(currentDate)
+        WidgetHeader(currentDate, isRefreshing)
 
         // Event list or empty state
         if (events.isEmpty()) {
@@ -79,12 +80,15 @@ fun AgendaWidgetContent(
  * Tapping opens the app at today's view.
  */
 @Composable
-private fun WidgetHeader(date: String) {
+private fun WidgetHeader(date: String, isRefreshing: Boolean) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
+            // No vertical padding: the 48dp add button defines the header height, so all
+            // widget headers stay a uniform 48dp. No end inset either — the add button's own
+            // glyph centering provides the right margin (same as the month widget header).
+            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Left region: taps go to today
@@ -112,10 +116,14 @@ private fun WidgetHeader(date: String) {
                     color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                // The refresh + add buttons reserve ~96dp on the right; on a narrow widget a long
+                // localized date must ellipsize on one line rather than wrap/grow the header.
+                maxLines = 1
             )
         }
-        // Right region: filled accent "+" button (FAB-like) with 40dp touch target
+        // Right region: refresh + add cluster, each a plain glyph with a 48dp touch target
+        WidgetRefreshButton(kind = WidgetKind.AGENDA, isRefreshing = isRefreshing)
         WidgetAddButton()
     }
 }
@@ -202,11 +210,12 @@ private fun EventRow(
 
         Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
 
-        // Time column — width tracks the resolved 12h/24h format
+        // Time column — width tracks the resolved 12h/24h format. Time shares the title's
+        // color (primaryText) so the row reads as one unit rather than a two-tone split.
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, context.getString(R.string.label_all_day)),
             style = TextStyle(
-                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
+                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
                 fontSize = WidgetTypography.secondary,
                 textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
             ),

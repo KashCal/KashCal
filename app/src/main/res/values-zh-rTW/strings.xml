@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ 新增事件</string>
     <string name="widget_no_events">沒有事件</string>
     <string name="widget_no_upcoming_events">沒有即將到來的事件</string>
+    <string name="widget_preview_event_standup">每日站立會議</string>
+    <string name="widget_preview_event_lunch">午餐時間</string>
+    <string name="widget_preview_event_review">設計審查</string>
+    <string name="widget_preview_event_gym">健身房</string>
+    <string name="widget_preview_event_birthday">生日</string>
+    <string name="widget_preview_event_trip">週末旅遊</string>
+    <string name="widget_preview_event_dentist">牙醫門診</string>
+    <string name="widget_preview_event_call">專案電話會議</string>
     <string name="cd_widget_calendar">行事曆</string>
     <string name="cd_widget_add_event">新增事件</string>
+    <string name="cd_widget_refresh">重新整理</string>
     <string name="cd_widget_day_cell">%1$s，%2$s</string>
     <string name="cd_widget_no_events">無事件</string>
     <string name="cd_widget_event_cancelled">%1$s，%2$s，已取消</string>

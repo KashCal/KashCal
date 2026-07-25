@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.model.MonthGrid
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.Calendar
@@ -89,22 +90,69 @@ class MonthWidgetContentTest {
 
     // ==================== getDayOfWeekHeaders ====================
 
+    // Headers use CLDR NARROW (single letter) so they render at the same size as the day
+    // numbers below. In the default (English) test locale that is S M T W T F S; the repeats
+    // (Sun/Sat both "S", Tue/Thu both "T") are disambiguated by column position, as in the
+    // Material/Google Calendar month grid.
     @Test
-    fun `getDayOfWeekHeaders Sunday start returns Sun first`() {
+    fun `getDayOfWeekHeaders Sunday start returns single-letter names Sunday first`() {
         val headers = getDayOfWeekHeaders(Calendar.SUNDAY)
         assertEquals(7, headers.size)
-        assertEquals("Sun", headers[0])
-        assertEquals("Mon", headers[1])
-        assertEquals("Sat", headers[6])
+        assertEquals("S", headers[0]) // Sunday
+        assertEquals("M", headers[1]) // Monday
+        assertEquals("S", headers[6]) // Saturday
     }
 
     @Test
-    fun `getDayOfWeekHeaders Monday start returns Mon first`() {
+    fun `getDayOfWeekHeaders Monday start returns single-letter names Monday first`() {
         val headers = getDayOfWeekHeaders(Calendar.MONDAY)
         assertEquals(7, headers.size)
-        assertEquals("Mon", headers[0])
-        assertEquals("Tue", headers[1])
-        assertEquals("Sun", headers[6])
+        assertEquals("M", headers[0]) // Monday
+        assertEquals("T", headers[1]) // Tuesday
+        assertEquals("S", headers[6]) // Sunday
+    }
+
+    // Full localized day names back the NARROW single-letter headers as accessibility labels,
+    // so TalkBack still announces "Sunday"/"Monday" rather than ambiguous bare letters.
+    @Test
+    fun `dayOfWeekAccessibilityLabels Sunday start returns full names Sunday first`() {
+        val labels = dayOfWeekAccessibilityLabels(Calendar.SUNDAY)
+        assertEquals(7, labels.size)
+        assertEquals("Sunday", labels[0])
+        assertEquals("Monday", labels[1])
+        assertEquals("Saturday", labels[6])
+    }
+
+    @Test
+    fun `dayOfWeekAccessibilityLabels Monday start returns full names Monday first`() {
+        val labels = dayOfWeekAccessibilityLabels(Calendar.MONDAY)
+        assertEquals(7, labels.size)
+        assertEquals("Monday", labels[0])
+        assertEquals("Tuesday", labels[1])
+        assertEquals("Sunday", labels[6])
+    }
+
+    // ==================== weekNumberGutterLabels ====================
+
+    @Test
+    fun `weekNumberGutterLabels is empty when the setting is off`() {
+        val grid = MonthGrid.compute(2026, 0, Calendar.MONDAY) // January 2026
+        assertEquals(emptyList<String>(), weekNumberGutterLabels(grid, showWeekNumbers = false))
+    }
+
+    @Test
+    fun `weekNumberGutterLabels has one label per visible week when on`() {
+        val grid = MonthGrid.compute(2026, 0, Calendar.MONDAY)
+        val labels = weekNumberGutterLabels(grid, showWeekNumbers = true)
+        // One gutter cell per rendered week — never the padded 6 rows if the month spans fewer.
+        assertEquals(visibleWeeks(grid).size, labels.size)
+    }
+
+    @Test
+    fun `weekNumberGutterLabels reads each visible week's first-cell week number`() {
+        val grid = MonthGrid.compute(2026, 0, Calendar.MONDAY)
+        val expected = visibleWeeks(grid).map { it.first().weekNumber.toString() }
+        assertEquals(expected, weekNumberGutterLabels(grid, showWeekNumbers = true))
     }
 
     // ==================== formatMonthHeader ====================

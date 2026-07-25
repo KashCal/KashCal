@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ክስተት አክል</string>
     <string name="widget_no_events">ምንም ክስተቶች የሉም</string>
     <string name="widget_no_upcoming_events">ምንም መጪ ክስተቶች የሉም</string>
+    <string name="widget_preview_event_standup">የቡድን ስብሰባ</string>
+    <string name="widget_preview_event_lunch">የምሳ እረፍት</string>
+    <string name="widget_preview_event_review">የዲዛይን ግምገማ</string>
+    <string name="widget_preview_event_gym">ጂም</string>
+    <string name="widget_preview_event_birthday">ልደት</string>
+    <string name="widget_preview_event_trip">የቅዳሜና እሁድ ጉዞ</string>
+    <string name="widget_preview_event_dentist">የጥርስ ሐኪም</string>
+    <string name="widget_preview_event_call">የፕሮጀክት ጥሪ</string>
     <string name="cd_widget_calendar">ቀን መቁጠሪያ</string>
     <string name="cd_widget_add_event">ክስተት ጨምር</string>
+    <string name="cd_widget_refresh">አድስ</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ምንም ክስተቶች የሉም</string>
     <string name="cd_widget_event_cancelled">%1$s፣ %2$s፣ ተሰርዟል</string>

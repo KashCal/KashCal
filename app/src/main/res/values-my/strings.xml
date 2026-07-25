@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ပွဲထည့်ရန်</string>
     <string name="widget_no_events">ပွဲများ မရှိပါ</string>
     <string name="widget_no_upcoming_events">လာမည့်ပွဲများ မရှိပါ</string>
+    <string name="widget_preview_event_standup">အဖွဲ့ အစည်းအဝေး</string>
+    <string name="widget_preview_event_lunch">နေ့လယ်စာ အားလပ်ချိန်</string>
+    <string name="widget_preview_event_review">ဒီဇိုင်း သုံးသပ်ခြင်း</string>
+    <string name="widget_preview_event_gym">လေ့ကျင့်ခန်း</string>
+    <string name="widget_preview_event_birthday">မွေးနေ့</string>
+    <string name="widget_preview_event_trip">စနေ/တနင်္ဂနွေ ခရီး</string>
+    <string name="widget_preview_event_dentist">သွားဆရာဝန်</string>
+    <string name="widget_preview_event_call">ပရောဂျက် ခေါ်ဆိုမှု</string>
     <string name="cd_widget_calendar">ပြက္ခဒိန်</string>
     <string name="cd_widget_add_event">ပွဲထည့်ရန်</string>
+    <string name="cd_widget_refresh">ပြန်လည်စတင်ရန်</string>
     <string name="cd_widget_day_cell">%1$s၊ %2$s</string>
     <string name="cd_widget_no_events">ပွဲမရှိပါ</string>
     <string name="cd_widget_event_cancelled">%1$s၊ %2$s၊ ပယ်ဖျက်လိုက်သည်</string>

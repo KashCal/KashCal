@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Afegir esdeveniment</string>
     <string name="widget_no_events">Cap esdeveniment</string>
     <string name="widget_no_upcoming_events">Cap esdeveniment proper</string>
+    <string name="widget_preview_event_standup">Reunió d\'equip</string>
+    <string name="widget_preview_event_lunch">Pausa per dinar</string>
+    <string name="widget_preview_event_review">Revisió de disseny</string>
+    <string name="widget_preview_event_gym">Gimnàs</string>
+    <string name="widget_preview_event_birthday">Aniversari</string>
+    <string name="widget_preview_event_trip">Escapada de cap de setmana</string>
+    <string name="widget_preview_event_dentist">Dentista</string>
+    <string name="widget_preview_event_call">Trucada del projecte</string>
     <string name="cd_widget_calendar">Calendari</string>
     <string name="cd_widget_add_event">Afegeix un esdeveniment</string>
+    <string name="cd_widget_refresh">Actualitza</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sense esdeveniments</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, cancel·lat</string>

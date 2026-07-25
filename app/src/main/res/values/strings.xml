@@ -24,9 +24,23 @@
     <string name="widget_add_event">+ Add event</string>
     <string name="widget_no_events">No events</string>
     <string name="widget_no_upcoming_events">No upcoming events</string>
+    <!--
+        Sample event titles shown only in the system widget picker preview, never in a
+        real widget. Deliberately generic so they read as placeholder examples in any
+        locale rather than looking like the user's own events.
+    -->
+    <string name="widget_preview_event_standup">Team standup</string>
+    <string name="widget_preview_event_lunch">Lunch break</string>
+    <string name="widget_preview_event_review">Design review</string>
+    <string name="widget_preview_event_gym">Gym</string>
+    <string name="widget_preview_event_birthday">Birthday</string>
+    <string name="widget_preview_event_trip">Weekend trip</string>
+    <string name="widget_preview_event_dentist">Dentist</string>
+    <string name="widget_preview_event_call">Project call</string>
     <!-- Widget content descriptions (accessibility) -->
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Add event</string>
+    <string name="cd_widget_refresh">Refresh</string>
     <!-- %1$s = "month day", %2$s = event count text (from plurals or cd_widget_no_events) -->
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">no events</string>

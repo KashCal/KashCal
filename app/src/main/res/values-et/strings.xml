@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Lisa sündmus</string>
     <string name="widget_no_events">Sündmusi pole</string>
     <string name="widget_no_upcoming_events">Eelseisvaid sündmusi pole</string>
+    <string name="widget_preview_event_standup">Päevakoosolek</string>
+    <string name="widget_preview_event_lunch">Lõunapaus</string>
+    <string name="widget_preview_event_review">Disaini ülevaatus</string>
+    <string name="widget_preview_event_gym">Jõusaal</string>
+    <string name="widget_preview_event_birthday">Sünnipäev</string>
+    <string name="widget_preview_event_trip">Nädalalõpureis</string>
+    <string name="widget_preview_event_dentist">Hambaarst</string>
+    <string name="widget_preview_event_call">Projektikõne</string>
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Lisa sündmus</string>
+    <string name="cd_widget_refresh">Värskenda</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sündmusi pole</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, tühistatud</string>

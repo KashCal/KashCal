@@ -82,7 +82,7 @@ class DisplayEventRepository @Inject constructor(
         ) { roomOccurrences, _, showDeclined, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
-            mergeAndGroupByDay(roomEvents, deviceEvents)
+            mergeAndGroupByDay(roomEvents, deviceEvents, startDayCode, endDayCode)
         }
     }
 
@@ -141,7 +141,7 @@ class DisplayEventRepository @Inject constructor(
         ) { roomOccurrences, _, showDeclined, _ ->
             val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
-            mergeAndGroupByDay(roomEvents, deviceEvents)
+            mergeAndGroupByDay(roomEvents, deviceEvents, startDayCode, endDayCode)
         }
     }
 
@@ -212,7 +212,7 @@ class DisplayEventRepository @Inject constructor(
         val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
         val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
 
-        return mergeAndGroupByDay(roomEvents, deviceEvents)
+        return mergeAndGroupByDay(roomEvents, deviceEvents, startDayCode, endDayCode)
     }
 
     /**
@@ -349,19 +349,28 @@ class DisplayEventRepository @Inject constructor(
 
     /**
      * Merge Room + device events, expand multi-day events, group by day code, sort.
+     *
+     * Multi-day events are expanded only across the days they occupy WITHIN the
+     * requested `[windowStartDayCode, windowEndDayCode]` window. Expanding across
+     * the event's own full span would leak buckets outside the window — e.g. an
+     * event that began before the window start would produce day buckets before
+     * it, which surfaced in the upcoming widget as a first row dated before today
+     * (issue #306).
      */
     private fun mergeAndGroupByDay(
         roomEvents: List<DisplayEvent>,
-        deviceEvents: List<DisplayEvent>
+        deviceEvents: List<DisplayEvent>,
+        windowStartDayCode: Int,
+        windowEndDayCode: Int
     ): ImmutableMap<Int, ImmutableList<DisplayEvent>> {
         return (roomEvents + deviceEvents)
             .flatMap { event ->
-                if (event.startDay == event.endDay) {
-                    listOf(event.startDay to event)
-                } else {
-                    generateDayCodesInRange(event.startDay, event.endDay)
-                        .map { dayCode -> dayCode to event }
-                }
+                spannedDayCodesWithinWindow(
+                    startDay = event.startDay,
+                    endDay = event.endDay,
+                    windowStartDayCode = windowStartDayCode,
+                    windowEndDayCode = windowEndDayCode
+                ).map { dayCode -> dayCode to event }
             }
             .groupBy({ it.first }, { it.second })
             .mapValues { (_, list) -> list.sortedBy { it.startTs }.toPersistentList() }
@@ -412,6 +421,29 @@ internal fun mergeTitleSuggestions(
                 .thenByDescending { it.lastUsed }
         )
         .take(limit)
+}
+
+/**
+ * Day-code buckets an event occupies WITHIN a query window.
+ *
+ * Intersects the event's own `[startDay, endDay]` span with the requested
+ * `[windowStartDayCode, windowEndDayCode]` window, then expands the intersection
+ * to inclusive day codes. Returns an empty list when the event lies entirely
+ * outside the window (its intersection is empty).
+ *
+ * This is the clamp that keeps a multi-day event from producing day buckets
+ * outside the range the caller asked for (issue #306).
+ */
+internal fun spannedDayCodesWithinWindow(
+    startDay: Int,
+    endDay: Int,
+    windowStartDayCode: Int,
+    windowEndDayCode: Int
+): List<Int> {
+    val clampedStart = maxOf(startDay, windowStartDayCode)
+    val clampedEnd = minOf(endDay, windowEndDayCode)
+    if (clampedStart > clampedEnd) return emptyList()
+    return generateDayCodesInRange(clampedStart, clampedEnd)
 }
 
 /**

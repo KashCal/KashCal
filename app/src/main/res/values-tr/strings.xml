@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Etkinlik ekle</string>
     <string name="widget_no_events">Etkinlik yok</string>
     <string name="widget_no_upcoming_events">Yaklaşan etkinlik yok</string>
+    <string name="widget_preview_event_standup">Günlük toplantı</string>
+    <string name="widget_preview_event_lunch">Öğle molası</string>
+    <string name="widget_preview_event_review">Tasarım incelemesi</string>
+    <string name="widget_preview_event_gym">Spor salonu</string>
+    <string name="widget_preview_event_birthday">Doğum günü</string>
+    <string name="widget_preview_event_trip">Hafta sonu gezisi</string>
+    <string name="widget_preview_event_dentist">Dişçi</string>
+    <string name="widget_preview_event_call">Proje görüşmesi</string>
     <string name="cd_widget_calendar">Takvim</string>
     <string name="cd_widget_add_event">Etkinlik ekle</string>
+    <string name="cd_widget_refresh">Yenile</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">etkinlik yok</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, iptal edildi</string>

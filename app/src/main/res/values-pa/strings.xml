@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ ਘਟਨਾ ਜੋੜੋ</string>
     <string name="widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="widget_no_upcoming_events">ਕੋਈ ਆਉਣ ਵਾਲੀ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="widget_preview_event_standup">ਟੀਮ ਸਟੈਂਡਅੱਪ</string>
+    <string name="widget_preview_event_lunch">ਦੁਪਹਿਰ ਦਾ ਖਾਣਾ</string>
+    <string name="widget_preview_event_review">ਡਿਜ਼ਾਈਨ ਸਮੀਖਿਆ</string>
+    <string name="widget_preview_event_gym">ਜਿੰਮ</string>
+    <string name="widget_preview_event_birthday">ਜਨਮਦਿਨ</string>
+    <string name="widget_preview_event_trip">ਹਫ਼ਤੇ ਦੇ ਅੰਤ ਦੀ ਯਾਤਰਾ</string>
+    <string name="widget_preview_event_dentist">ਦੰਦਾਂ ਦਾ ਡਾਕਟਰ</string>
+    <string name="widget_preview_event_call">ਪ੍ਰੋਜੈਕਟ ਕਾਲ</string>
     <string name="cd_widget_calendar">ਕੈਲੰਡਰ</string>
     <string name="cd_widget_add_event">ਘਟਨਾ ਜੋੜੋ</string>
+    <string name="cd_widget_refresh">ਤਾਜ਼ਾ ਕਰੋ</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, ਰੱਦ ਕੀਤਾ ਗਿਆ</string>

@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Tambah acara</string>
     <string name="widget_no_events">Tidak ada acara</string>
     <string name="widget_no_upcoming_events">Tidak ada acara mendatang</string>
+    <string name="widget_preview_event_standup">Standup tim</string>
+    <string name="widget_preview_event_lunch">Makan siang</string>
+    <string name="widget_preview_event_review">Review desain</string>
+    <string name="widget_preview_event_gym">Olahraga</string>
+    <string name="widget_preview_event_birthday">Ulang tahun</string>
+    <string name="widget_preview_event_trip">Liburan akhir pekan</string>
+    <string name="widget_preview_event_dentist">Dokter gigi</string>
+    <string name="widget_preview_event_call">Panggilan proyek</string>
     <string name="cd_widget_calendar">Kalender</string>
     <string name="cd_widget_add_event">Tambah acara</string>
+    <string name="cd_widget_refresh">Segarkan</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">tidak ada acara</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, dibatalkan</string>

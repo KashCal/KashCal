@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ 일정 추가</string>
     <string name="widget_no_events">일정 없음</string>
     <string name="widget_no_upcoming_events">예정된 일정 없음</string>
+    <string name="widget_preview_event_standup">데일리 스탠드업</string>
+    <string name="widget_preview_event_lunch">점심시간</string>
+    <string name="widget_preview_event_review">디자인 리뷰</string>
+    <string name="widget_preview_event_gym">운동</string>
+    <string name="widget_preview_event_birthday">생일</string>
+    <string name="widget_preview_event_trip">주말 여행</string>
+    <string name="widget_preview_event_dentist">치과 진료</string>
+    <string name="widget_preview_event_call">프로젝트 회의</string>
     <string name="cd_widget_calendar">캘린더</string>
     <string name="cd_widget_add_event">일정 추가</string>
+    <string name="cd_widget_refresh">새로고침</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">일정 없음</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, 취소됨</string>

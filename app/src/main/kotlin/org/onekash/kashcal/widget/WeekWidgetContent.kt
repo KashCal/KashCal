@@ -83,7 +83,8 @@ fun WeekWidgetContent(
     weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
     showEventEmojis: Boolean,
     timePattern: String = "h:mma",
-    maxEventsPerDay: Int = 5
+    maxEventsPerDay: Int = 5,
+    isRefreshing: Boolean = false
 ) {
     val flatItems = buildFlatWeekItems(weekEvents, maxEventsPerDay)
     val today = LocalDate.now()
@@ -95,7 +96,7 @@ fun WeekWidgetContent(
             .background(WidgetTheme.contentBackground)
             .cornerRadius(16.dp)
     ) {
-        WeekWidgetHeader(weekEvents.keys.toList())
+        WeekWidgetHeader(weekEvents.keys.toList(), isRefreshing)
 
         LazyColumn(
             modifier = GlanceModifier.fillMaxSize()
@@ -125,7 +126,7 @@ fun WeekWidgetContent(
  * Tapping opens the app at today's view.
  */
 @Composable
-private fun WeekWidgetHeader(dayCodes: List<Int>) {
+private fun WeekWidgetHeader(dayCodes: List<Int>, isRefreshing: Boolean) {
     val firstDay = dayCodes.firstOrNull() ?: return
     val lastDay = dayCodes.lastOrNull() ?: return
 
@@ -133,7 +134,10 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
+            // No vertical padding: the 48dp add button defines the header height, so all
+            // widget headers stay a uniform 48dp. No end inset either — the add button's own
+            // glyph centering provides the right margin (same as the month widget header).
+            .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -154,9 +158,13 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
                     color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                // The two 48dp right-edge buttons reserve ~96dp; on a narrow week widget a
+                // cross-month range must ellipsize on one line rather than wrap/grow the header.
+                maxLines = 1
             )
         }
+        WidgetRefreshButton(kind = WidgetKind.WEEK, isRefreshing = isRefreshing)
         WidgetAddButton()
     }
 }
@@ -204,7 +212,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
             Text(
                 text = LocalContext.current.resources.getQuantityString(R.plurals.widget_event_count_plural, eventCount, eventCount),
                 style = TextStyle(
-                    color = if (isToday) WidgetTheme.onHeaderBackground else WidgetTheme.secondaryText,
+                    color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.label
                 )
             )
@@ -284,10 +292,11 @@ private fun CompactEventRow(
         Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
 
         val allDayText = LocalContext.current.getString(R.string.label_all_day)
+        // Time shares the title's color (primaryText) so the row reads as one unit.
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayText),
             style = TextStyle(
-                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
+                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
                 fontSize = WidgetTypography.secondary,
                 textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
             ),

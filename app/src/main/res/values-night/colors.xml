@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Dark-launcher variants of the widget placeholder colors. Without these the
+        placeholder renders a light panel with dark text on a dark launcher.
+    -->
+    <color name="widget_placeholder_background">@android:color/system_neutral1_900</color>
+    <color name="widget_placeholder_text">@android:color/system_neutral2_200</color>
+    <color name="widget_placeholder_accent">@android:color/system_accent1_200</color>
+</resources>

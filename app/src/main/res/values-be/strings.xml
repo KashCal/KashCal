@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Дадаць падзею</string>
     <string name="widget_no_events">Няма падзей</string>
     <string name="widget_no_upcoming_events">Няма будучых падзей</string>
+    <string name="widget_preview_event_standup">Дэйлі</string>
+    <string name="widget_preview_event_lunch">Абед</string>
+    <string name="widget_preview_event_review">Агляд дызайну</string>
+    <string name="widget_preview_event_gym">Спартзала</string>
+    <string name="widget_preview_event_birthday">Дзень нараджэння</string>
+    <string name="widget_preview_event_trip">Паездка на выходныя</string>
+    <string name="widget_preview_event_dentist">Стаматолаг</string>
+    <string name="widget_preview_event_call">Званок па праекце</string>
     <string name="cd_widget_calendar">Каляндар</string>
     <string name="cd_widget_add_event">Дадаць падзею</string>
+    <string name="cd_widget_refresh">Абнавіць</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">няма падзей</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, скасавана</string>

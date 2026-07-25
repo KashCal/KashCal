@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Ychwanegu digwyddiad</string>
     <string name="widget_no_events">Dim digwyddiadau</string>
     <string name="widget_no_upcoming_events">Dim digwyddiadau i ddod</string>
+    <string name="widget_preview_event_standup">Cyfarfod tîm</string>
+    <string name="widget_preview_event_lunch">Egwyl cinio</string>
+    <string name="widget_preview_event_review">Adolygiad dylunio</string>
+    <string name="widget_preview_event_gym">Campfa</string>
+    <string name="widget_preview_event_birthday">Pen-blwydd</string>
+    <string name="widget_preview_event_trip">Taith penwythnos</string>
+    <string name="widget_preview_event_dentist">Deintydd</string>
+    <string name="widget_preview_event_call">Galwad prosiect</string>
     <string name="cd_widget_calendar">Calendr</string>
     <string name="cd_widget_add_event">Ychwanegu digwyddiad</string>
+    <string name="cd_widget_refresh">Adnewyddu</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">dim digwyddiadau</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, wedi\'i ganslo</string>

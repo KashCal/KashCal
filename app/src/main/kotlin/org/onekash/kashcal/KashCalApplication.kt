@@ -23,6 +23,7 @@ import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.widget.WidgetPreviewRegistrar
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.time.ZoneId
 import javax.inject.Inject
@@ -152,6 +153,17 @@ class KashCalApplication : Application(), Configuration.Provider {
             // Runs on IO thread to avoid blocking startup (AccountManager is IPC).
             applicationScope.launch {
                 SystemAccountRegistrar(this@KashCalApplication).ensureAccount()
+            }
+
+            // Publish widget-picker previews. Startup is the only reliable trigger:
+            // the platform call is rate limited per app, so it must not ride along
+            // with widget refreshes. The registrar keeps its own per-widget state and
+            // no-ops once everything is published for this build and month.
+            applicationScope.launch {
+                WidgetPreviewRegistrar.register(
+                    this@KashCalApplication,
+                    BuildConfig.VERSION_CODE
+                )
             }
         }
 

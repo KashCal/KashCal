@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Aldoni eventon</string>
     <string name="widget_no_events">Neniuj eventoj</string>
     <string name="widget_no_upcoming_events">Neniuj venontaj eventoj</string>
+    <string name="widget_preview_event_standup">Teama kunveno</string>
+    <string name="widget_preview_event_lunch">Tagmanĝa paŭzo</string>
+    <string name="widget_preview_event_review">Revizio de dezajno</string>
+    <string name="widget_preview_event_gym">Gimnastikejo</string>
+    <string name="widget_preview_event_birthday">Naskiĝtago</string>
+    <string name="widget_preview_event_trip">Semajnfina vojaĝo</string>
+    <string name="widget_preview_event_dentist">Dentisto</string>
+    <string name="widget_preview_event_call">Projekta voko</string>
     <string name="cd_widget_calendar">Kalendaro</string>
     <string name="cd_widget_add_event">Aldoni eventon</string>
+    <string name="cd_widget_refresh">Aktualigi</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">sen eventoj</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, nuligita</string>

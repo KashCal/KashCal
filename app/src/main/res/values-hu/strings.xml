@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Esemény hozzáadása</string>
     <string name="widget_no_events">Nincs esemény</string>
     <string name="widget_no_upcoming_events">Nincs közelgő esemény</string>
+    <string name="widget_preview_event_standup">Napi standup</string>
+    <string name="widget_preview_event_lunch">Ebédszünet</string>
+    <string name="widget_preview_event_review">Dizájn egyeztetés</string>
+    <string name="widget_preview_event_gym">Edzés</string>
+    <string name="widget_preview_event_birthday">Születésnap</string>
+    <string name="widget_preview_event_trip">Hétvégi kirándulás</string>
+    <string name="widget_preview_event_dentist">Fogorvos</string>
+    <string name="widget_preview_event_call">Projektmegbeszélés</string>
     <string name="cd_widget_calendar">Naptár</string>
     <string name="cd_widget_add_event">Esemény hozzáadása</string>
+    <string name="cd_widget_refresh">Frissítés</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">nincsenek események</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, lemondva</string>

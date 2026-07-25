@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Thêm sự kiện</string>
     <string name="widget_no_events">Không có sự kiện</string>
     <string name="widget_no_upcoming_events">Không có sự kiện sắp tới</string>
+    <string name="widget_preview_event_standup">Họp nhanh đầu ngày</string>
+    <string name="widget_preview_event_lunch">Nghỉ trưa</string>
+    <string name="widget_preview_event_review">Duyệt thiết kế</string>
+    <string name="widget_preview_event_gym">Tập gym</string>
+    <string name="widget_preview_event_birthday">Sinh nhật</string>
+    <string name="widget_preview_event_trip">Du lịch cuối tuần</string>
+    <string name="widget_preview_event_dentist">Khám nha khoa</string>
+    <string name="widget_preview_event_call">Gọi họp dự án</string>
     <string name="cd_widget_calendar">Lịch</string>
     <string name="cd_widget_add_event">Thêm sự kiện</string>
+    <string name="cd_widget_refresh">Làm mới</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">không có sự kiện</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, đã hủy</string>

@@ -20,8 +20,17 @@
     <string name="widget_add_event">+ Добави събитие</string>
     <string name="widget_no_events">Няма събития</string>
     <string name="widget_no_upcoming_events">Няма предстоящи събития</string>
+    <string name="widget_preview_event_standup">Екипна среща</string>
+    <string name="widget_preview_event_lunch">Обедна почивка</string>
+    <string name="widget_preview_event_review">Преглед на дизайна</string>
+    <string name="widget_preview_event_gym">Фитнес</string>
+    <string name="widget_preview_event_birthday">Рожден ден</string>
+    <string name="widget_preview_event_trip">Уикенд екскурзия</string>
+    <string name="widget_preview_event_dentist">Зъболекар</string>
+    <string name="widget_preview_event_call">Разговор по проекта</string>
     <string name="cd_widget_calendar">Календар</string>
     <string name="cd_widget_add_event">Добави събитие</string>
+    <string name="cd_widget_refresh">Обнови</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
     <string name="cd_widget_no_events">няма събития</string>
     <string name="cd_widget_event_cancelled">%1$s, %2$s, отменено</string>
