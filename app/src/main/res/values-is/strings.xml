@@ -698,6 +698,7 @@
         <item quantity="one">Bæta við</item>
         <item quantity="other">Flytja inn</item>
     </plurals>
+    <string name="importing_events">Flyt inn…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…og %1$d í viðbót</item>
         <item quantity="other">…og %1$d í viðbót</item>

@@ -699,6 +699,7 @@
         <item quantity="one">ചേർക്കുക</item>
         <item quantity="other">ഇമ്പോർട്ട്</item>
     </plurals>
+    <string name="importing_events">ഇംപോർട്ട് ചെയ്യുന്നു…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…കൂടി %1$d എണ്ണം</item>
         <item quantity="other">…കൂടി %1$d എണ്ണം</item>

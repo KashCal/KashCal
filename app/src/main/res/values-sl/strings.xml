@@ -729,6 +729,7 @@
         <item quantity="few">Uvozi</item>
         <item quantity="other">Uvozi</item>
     </plurals>
+    <string name="importing_events">Uvažanje…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…in %1$d več</item>
         <item quantity="two">…in %1$d več</item>

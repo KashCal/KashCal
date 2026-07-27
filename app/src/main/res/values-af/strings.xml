@@ -699,6 +699,7 @@
         <item quantity="one">Voeg By</item>
         <item quantity="other">Invoer</item>
     </plurals>
+    <string name="importing_events">Voer in…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…en %1$d meer</item>
         <item quantity="other">…en %1$d meer</item>

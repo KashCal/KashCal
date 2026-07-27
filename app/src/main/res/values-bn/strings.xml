@@ -699,6 +699,7 @@
         <item quantity="one">যোগ করুন</item>
         <item quantity="other">ইমপোর্ট</item>
     </plurals>
+    <string name="importing_events">ইম্পোর্ট হচ্ছে…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…এবং %1$d আরও</item>
         <item quantity="other">…এবং %1$d আরও</item>

@@ -699,6 +699,7 @@
         <item quantity="one">Ekle</item>
         <item quantity="other">İçe Aktar</item>
     </plurals>
+    <string name="importing_events">İçe aktarılıyor…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ve %1$d daha</item>
         <item quantity="other">…ve %1$d daha</item>

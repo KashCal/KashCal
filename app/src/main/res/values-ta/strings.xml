@@ -699,6 +699,7 @@
         <item quantity="one">சேர்</item>
         <item quantity="other">இறக்குமதி</item>
     </plurals>
+    <string name="importing_events">இறக்குமதி செய்யப்படுகிறது…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…மேலும் %1$d</item>
         <item quantity="other">…மேலும் %1$d</item>

@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">นำเข้า</item>
     </plurals>
+    <string name="importing_events">กำลังนำเข้า…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…อีก %1$d รายการ</item>
     </plurals>

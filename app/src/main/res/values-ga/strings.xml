@@ -744,6 +744,7 @@
         <item quantity="many">Iompórtáil</item>
         <item quantity="other">Iompórtáil</item>
     </plurals>
+    <string name="importing_events">Á iompórtáil…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…agus %1$d eile</item>
         <item quantity="two">…agus %1$d eile</item>

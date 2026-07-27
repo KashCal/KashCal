@@ -714,6 +714,7 @@
         <item quantity="few">Importă</item>
         <item quantity="other">Importă</item>
     </plurals>
+    <string name="importing_events">Se importă…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…și încă %1$d</item>
         <item quantity="few">…și încă %1$d</item>

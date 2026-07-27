@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">Import</item>
     </plurals>
+    <string name="importing_events">Mengimport…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…dan %1$d lagi</item>
     </plurals>

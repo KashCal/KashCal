@@ -699,6 +699,7 @@
         <item quantity="one">ಸೇರಿಸಿ</item>
         <item quantity="other">ಆಮದು</item>
     </plurals>
+    <string name="importing_events">ಆಮದು ಮಾಡಲಾಗುತ್ತಿದೆ…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ಮತ್ತು %1$d ಇನ್ನೊಂದು</item>
         <item quantity="other">…ಮತ್ತು %1$d ಇನ್ನಷ್ಟು</item>

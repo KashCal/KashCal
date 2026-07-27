@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">가져오기</item>
     </plurals>
+    <string name="importing_events">가져오는 중…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…%1$d개 더</item>
     </plurals>

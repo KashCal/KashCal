@@ -16,28 +16,27 @@ import org.onekash.kashcal.ui.theme.accentColorScheme
  * Context/composition), then handed to Glance's Material 3 interop, which picks light vs dark
  * against the system day/night setting at render time.
  *
- * Widgets build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (higher than the app face): the
- * header rides the muted secondary-container role, which at the app's default lands on the bare
- * AA floor and barely separates from the widget body. The bump keeps the header reading as the
- * picked accent while making it clearly legible and clearly a distinct band, for any seed.
+ * Widgets build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (a small positive axis): the header
+ * rides the muted `secondaryContainer` role. Its text (`onSecondaryContainer`) is a
+ * guaranteed-contrast M3 pair with it, so it clears AA for any seed by construction — including the
+ * wallpaper-derived automatic accent; the low axis lifts it to a comfortable ~5:1 across the tested
+ * palette while holding the header at nearly the body's tone, so the two read as one near-uniform
+ * tinted panel rather than a header band over a plainer body.
  *
  * Widgets also opt out of the achromatic-container snap (`snapAchromaticContainers = false`). The
- * header rides `secondaryContainer` as a band over the surface-toned body; snapping that role to
- * pure white/black for the white/black seeds would collapse the band against the surface (a white
- * band on the near-white light surface). At this contrast level the raw engine already gives the
- * achromatic header 7:1+ text and a clearly separated band, so the snap is unnecessary here.
+ * header rides `secondaryContainer`; snapping that role to pure white/black for the white/black
+ * seeds would blow the header out to the extreme instead of the muted accent tone. At this low
+ * contrast level the raw engine already gives the achromatic header 5:1+ text, so the snap is
+ * unnecessary here.
  *
- * Finally, the body is pinned to `surfaceVariant`. Glance's Material 3 interop derives its
- * `widgetBackground` role from `secondaryContainer` (the accent header's role), which is not a
- * guaranteed-contrast pair for the onSurface item text and collapses at the elevated header
- * contrast — most visibly for the white/black accents, where the body would snap to the extreme
- * while item text follows day/night. `surface` is a guaranteed onSurface pair but is so close to
- * neutral that the body shows almost no accent (chroma ~0.01–0.04). `surfaceVariant` is the tonal
- * step that both stays a guaranteed onSurface pair (item text 9–16:1 for every seed) AND carries a
- * visible accent tint for chromatic seeds (~0.04–0.15 chroma, several times `surface`). Overriding
- * `widgetBackground` to it gives a body the user can see is tinted without risking item legibility.
- * This applies to every seed handed here — both the in-app accent (SEED) and the wallpaper-derived
- * system accent used for the automatic source.
+ * Finally, the body (`widgetBackground`) is pinned to `surfaceVariant` — the most-tinted body role
+ * that keeps item text at full contrast for every seed. `secondaryContainer` carries more chroma,
+ * but its non-guaranteed pairing with `onSurface`/`onSurfaceVariant` drops below WCAG AA for
+ * saturated and wallpaper-derived seeds (measured item text as low as ~2.5:1), so it is not a safe
+ * body. `surfaceVariant` still shows a visible accent tint (chroma up to ~0.15 for chromatic seeds)
+ * while keeping item text at ~7:1+ (onSurface) and secondary text at ~5.5:1+ (onSurfaceVariant) for
+ * every seed handed here — both the in-app accent (SEED) and the wallpaper-derived system accent
+ * used for the automatic source.
  */
 fun accentColorProviders(seed: Int): ColorProviders {
     val light = accentColorScheme(

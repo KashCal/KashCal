@@ -699,6 +699,7 @@
         <item quantity="one">जोड़ें</item>
         <item quantity="other">आयात करें</item>
     </plurals>
+    <string name="importing_events">इंपोर्ट हो रहा है…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…और %1$d और</item>
         <item quantity="other">…और %1$d और</item>

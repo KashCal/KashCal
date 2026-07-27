@@ -699,6 +699,7 @@
         <item quantity="one">አክል</item>
         <item quantity="other">አስገባ</item>
     </plurals>
+    <string name="importing_events">በማስገባት ላይ…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…እና %1$d ተጨማሪ</item>
         <item quantity="other">…እና %1$d ተጨማሪ</item>

@@ -699,6 +699,7 @@
         <item quantity="one">Ongeza</item>
         <item quantity="other">Ingiza</item>
     </plurals>
+    <string name="importing_events">Inaleta…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…na %1$d zaidi</item>
         <item quantity="other">…na %1$d zaidi</item>

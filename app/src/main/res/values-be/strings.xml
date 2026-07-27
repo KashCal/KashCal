@@ -729,6 +729,7 @@
         <item quantity="many">Імпарт</item>
         <item quantity="other">Імпарт</item>
     </plurals>
+    <string name="importing_events">Імпартаванне…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…і яшчэ %1$d</item>
         <item quantity="few">…і яшчэ %1$d</item>

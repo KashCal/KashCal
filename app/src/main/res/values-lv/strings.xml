@@ -714,6 +714,7 @@
         <item quantity="one">Pievienot</item>
         <item quantity="other">Importēt</item>
     </plurals>
+    <string name="importing_events">Importē…</string>
     <plurals name="ics_remaining_events">
         <item quantity="zero">…un vēl %1$d</item>
         <item quantity="one">…un vēl %1$d</item>

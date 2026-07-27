@@ -699,6 +699,7 @@
         <item quantity="one">Gehitu</item>
         <item quantity="other">Inportatu</item>
     </plurals>
+    <string name="importing_events">Inportatzen…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…eta %1$d gehiago</item>
         <item quantity="other">…eta %1$d gehiago</item>

@@ -698,6 +698,7 @@
         <item quantity="one">Toevoegen</item>
         <item quantity="other">Importeren</item>
     </plurals>
+    <string name="importing_events">Importeren…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…en %1$d meer</item>
         <item quantity="other">…en %1$d meer</item>

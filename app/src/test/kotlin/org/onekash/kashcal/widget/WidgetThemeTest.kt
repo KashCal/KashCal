@@ -8,6 +8,7 @@ import androidx.glance.unit.ColorProvider
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onekash.kashcal.ui.shared.contrastRatio
+import org.onekash.kashcal.ui.shared.relativeLuminance
 import org.onekash.kashcal.ui.theme.WIDGET_ACCENT_CONTRAST_LEVEL
 import org.onekash.kashcal.ui.theme.accentColorScheme
 
@@ -137,13 +138,14 @@ class WidgetThemeTest {
         // Drives the REAL providers a SEED widget renders — accentColorProviders(seed) — not a
         // stand-in scheme, so it trips if the override is ever removed. contentBackground reads the
         // active providers' `widgetBackground` role, which accentColorProviders overrides to
-        // `surfaceVariant`; item title AND time read `onSurface`. Glance's Material 3 interop would
-        // otherwise derive widgetBackground from secondaryContainer (the accent header's role), which
-        // is not a guaranteed-contrast pair for onSurface and collapses at the elevated header
-        // contrast — for the white/black accents the body would snap to the extreme while onSurface
-        // follows day/night, so headers stayed crisp but items vanished. onSurface/surfaceVariant is
-        // a guaranteed pair (9–16:1 here). Assert on the real providers: reverting the override drops
-        // this below AA. (The companion chroma test guards the other axis — that the body is tinted.)
+        // `surfaceVariant` — the most-tinted body role that stays a guaranteed-contrast pair with
+        // both text roles. Item title AND time read `onSurface`; secondary copy reads
+        // `onSurfaceVariant`. Both clear AA on surfaceVariant for every seed (this is why the body
+        // is surfaceVariant and not the more-chromatic secondaryContainer, whose non-guaranteed
+        // pairing drops below AA for saturated seeds). Assert on the real providers so reverting the
+        // override to a less-safe role trips this. (The companion chroma test guards the other axis —
+        // that the body is still visibly tinted; the luminance test guards that the dark header
+        // stays dark.)
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(), 0xFF000000.toInt(),
             0xFFFFFFFF.toInt(), 0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
@@ -181,10 +183,12 @@ class WidgetThemeTest {
         // This guards the OTHER axis — the body actually carries chroma. contentBackground -> the
         // providers' widgetBackground role (overridden to surfaceVariant); compare its chroma against
         // the bare `surface` role, which is near-neutral by M3 design. For a chromatic seed the body
-        // must be meaningfully more colorful than surface, or the accent is invisible.
+        // must be meaningfully more colorful than surface, or the accent is invisible. surfaceVariant
+        // carries a real accent tint (chroma ~0.04–0.15 for these seeds) while staying a
+        // guaranteed-contrast pair with the text roles — the safe most-tinted body.
         //
         // Achromatic seeds (white/black/silver) are excluded on purpose: they have no hue to show, so
-        // their surfaceVariant is legitimately near-neutral and a chroma floor would be meaningless.
+        // their container is legitimately near-neutral and a chroma floor would be meaningless.
         val chromaticSeeds = listOf(
             0xFF0E6E62.toInt(), // brand teal
             0xFFFFD700.toInt(), // gold
@@ -196,9 +200,10 @@ class WidgetThemeTest {
             val p: ColorProviders = accentColorProviders(seed)
             val bodyChroma = chroma(p.widgetBackground.resolve(dark))   // WidgetTheme.contentBackground
             val surfaceChroma = chroma(p.surface.resolve(dark))
-            // Body must clear a small absolute chroma floor AND out-tint bare surface. The floor sits
-            // below every measured value (min ~0.043 for teal) but above near-neutral surface, so
-            // reverting the body to `surface` — the exact regression that shipped flat — trips this.
+            // Body must clear a chroma floor AND out-tint bare surface. The floor sits below every
+            // measured surfaceVariant value (min ~0.04 for teal) but above near-neutral surface, so
+            // reverting the body to the flat `surface`/`background` role (the regression the user hit)
+            // trips it via one branch or the other.
             if (bodyChroma < 0.04f || bodyChroma <= surfaceChroma) {
                 failures += "seed=%06X dark=%s bodyChroma=%.3f surfaceChroma=%.3f".format(
                     seed and 0xFFFFFF, dark, bodyChroma, surfaceChroma,
@@ -207,6 +212,38 @@ class WidgetThemeTest {
         }
         if (failures.isNotEmpty()) {
             throw AssertionError("Widget body not visibly accent-tinted:\n" + failures.joinToString("\n"))
+        }
+    }
+
+    @Test
+    fun `dark widget header stays a dark tinted tone, not a bright pastel`() {
+        // The reported regression: at a high contrast axis (this was briefly 0.8) the HCT engine
+        // INVERTS the dark-mode secondaryContainer to a bright pastel (L ~0.68) with dark text —
+        // "so much light in dark theme". The header (and footer) ride secondaryContainer, so that
+        // inversion floods the top of the dark widget with light. This is the axis-sensitive role —
+        // the surfaceVariant body barely moves with the axis, so pinning the body would NOT catch a
+        // re-inflation; the header is the true regression vector. Pin the dark header's luminance
+        // low: at the current widget contrast level it measures L ~0.08 for every seed. This ceiling
+        // sits far below the bright-pastel failure and above the true tone, so re-inflating
+        // WIDGET_ACCENT_CONTRAST_LEVEL toward 0.8 trips it. Light face is exempt — its header is
+        // legitimately a light tone.
+        val seeds = listOf(
+            0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(), 0xFF000000.toInt(),
+            0xFFFFFFFF.toInt(), 0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
+        )
+        val failures = mutableListOf<String>()
+        for (seed in seeds) {
+            // Built at the widget contrast level (widgetScheme), so this IS the header the widget
+            // renders and it moves with WIDGET_ACCENT_CONTRAST_LEVEL.
+            val header = widgetScheme(seed, dark = true).secondaryContainer
+            val l = relativeLuminance(header)
+            // Generous ceiling: measured floor of the failure was ~0.68; true dark tone is ~0.08.
+            if (l > 0.20) {
+                failures += "seed=%06X darkHeaderLuminance=%.2f".format(seed and 0xFFFFFF, l)
+            }
+        }
+        if (failures.isNotEmpty()) {
+            throw AssertionError("Dark widget header too bright (contrast axis re-inflated?):\n" + failures.joinToString("\n"))
         }
     }
 

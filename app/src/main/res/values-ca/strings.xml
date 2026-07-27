@@ -699,6 +699,7 @@
         <item quantity="one">Afegir</item>
         <item quantity="other">Importar</item>
     </plurals>
+    <string name="importing_events">S\'està important…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…i %1$d més</item>
         <item quantity="other">…i %1$d més</item>

@@ -98,21 +98,21 @@ class AccentSchemeTest {
 
     /**
      * The widget faces build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (with the achromatic
-     * container snap OFF — see accentColorProviders) because the widget header rides the muted
-     * secondary-container role as a band over the neutral surface body. At the app's default level
-     * that pair only scrapes the bare AA floor (~4.5:1) and the band barely separates from the
-     * surface. This proves the elevated level clears roughly the AAA bar (~7:1) for both the header
-     * TEXT and the header BAND against the surface, for EVERY selectable seed — the achromatic
-     * extremes included, which is what lets widgets skip the snap (snapping the container would
-     * collapse the band against the surface for the white/black seeds).
+     * container snap OFF — see accentColorProviders). The widget reads as a near-uniform tinted
+     * panel: the header and footer ride the muted `secondaryContainer`, while the body rides the
+     * tinted `surfaceVariant`. Three text pairs must clear AA on every selectable seed: the header
+     * text (onSecondaryContainer on secondaryContainer), and the body's item text (onSurface) and
+     * secondary text (onSurfaceVariant) on surfaceVariant. The header text is the one that gains as
+     * this small positive axis rises; the two body pairs are guaranteed-contrast M3 pairs and stay
+     * safe. This proves all three clear AA with margin for EVERY selectable seed — the achromatic
+     * extremes included, which is what lets widgets skip the snap.
      */
     @Test
-    fun `widget contrast level lifts the header text and band toward AAA for every seed`() {
-        // Empirically the level-0.8 floors (snap off) are ~7.3:1 header text (light) / ~9.4:1 (dark)
-        // and ~6.9:1 band (light) / ~8.4:1 (dark). Assert a small margin below those so a future
-        // regression that flattens the header or lowers the level trips, without being brittle.
-        val headerTextFloor = 7.0
-        val bandFloor = 6.5
+    fun `widget contrast level keeps every panel text pair above AA for every seed`() {
+        // Assert a margin above the bare AA floor so a regression that flattens any pair — or that
+        // re-inflates the axis toward 0.8 (the dark-header bright-pastel bug) — trips. Measured
+        // floors at this level: header text ~5.0:1, item text ~7:1, secondary text ~5.5:1.
+        val floor = 4.6
         val failures = mutableListOf<String>()
         for ((name, seed) in seeds) {
             for (dark in listOf(false, true)) {
@@ -121,13 +121,14 @@ class AccentSchemeTest {
                     contrastLevel = WIDGET_ACCENT_CONTRAST_LEVEL,
                     snapAchromaticContainers = false,
                 )
-                pair(name, dark, "header text (onSecCont/secCont)", s.onSecondaryContainer, s.secondaryContainer, headerTextFloor, failures)
-                pair(name, dark, "header band (secCont/surface)", s.secondaryContainer, s.surface, bandFloor, failures)
+                pair(name, dark, "header/footer text (onSecCont/secCont)", s.onSecondaryContainer, s.secondaryContainer, floor, failures)
+                pair(name, dark, "body item text (onSurface/surfaceVariant)", s.onSurface, s.surfaceVariant, floor, failures)
+                pair(name, dark, "body secondary text (onSurfaceVariant/surfaceVariant)", s.onSurfaceVariant, s.surfaceVariant, floor, failures)
             }
         }
         if (failures.isNotEmpty()) {
             throw AssertionError(
-                "Widget header below elevated-contrast bar (${failures.size}):\n" + failures.joinToString("\n"),
+                "Widget panel text below AA margin (${failures.size}):\n" + failures.joinToString("\n"),
             )
         }
     }

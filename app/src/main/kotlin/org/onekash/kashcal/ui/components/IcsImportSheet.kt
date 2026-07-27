@@ -29,9 +29,11 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
@@ -49,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +63,9 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.util.DateTimeUtils
+
+/** Test tag for the primary Import action button. */
+const val ICS_IMPORT_BUTTON_TAG = "ics_import_button"
 
 /**
  * Bottom sheet for importing ICS file events.
@@ -128,6 +134,11 @@ fun IcsImportSheet(
 
     var selectedCalendarId by remember { mutableLongStateOf(initialCalendarId) }
     var selectedIsDevice by remember { mutableStateOf(initialIsDevice) }
+
+    // A large import runs for several seconds while the sheet stays open; latch on the
+    // first tap so repeat taps can't enqueue duplicate imports. The sheet is recreated
+    // on next open, so this resets on its own.
+    var isImporting by remember { mutableStateOf(false) }
 
     val (selectedCalendarName, selectedCalendarColor) = if (selectedIsDevice) {
         val cal = writableDeviceCalendars.find { it.id == selectedCalendarId }
@@ -223,13 +234,29 @@ fun IcsImportSheet(
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        if (selectedCalendarId > 0) {
+                        // The !isImporting guard here is the actual dedup latch; the
+                        // button stays visually enabled during import so its spinner
+                        // renders in the full-contrast onPrimary color, not the faded
+                        // disabled-content color.
+                        if (selectedCalendarId > 0 && !isImporting) {
+                            isImporting = true
                             onImport(selectedCalendarId, events, selectedIsDevice)
                         }
                     },
-                    enabled = selectedCalendarId > 0 && hasAnyWritableCalendar
+                    enabled = selectedCalendarId > 0 && hasAnyWritableCalendar,
+                    modifier = Modifier.testTag(ICS_IMPORT_BUTTON_TAG)
                 ) {
-                    Text(pluralStringResource(R.plurals.import_events_button, events.size))
+                    if (isImporting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = LocalContentColor.current
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.importing_events))
+                    } else {
+                        Text(pluralStringResource(R.plurals.import_events_button, events.size))
+                    }
                 }
             }
         }

@@ -26,15 +26,16 @@ import com.materialkolor.dynamicColorScheme
  * @param seed packed ARGB accent color (e.g. `0xFF0E6E62.toInt()`).
  * @param dark whether to build the dark-face scheme.
  * @param contrastLevel HCT contrast axis (-1.0..1.0). Defaults to [ACCENT_CONTRAST_LEVEL] (the app
- *   face); widgets pass a higher value so their muted secondary-container header clears the bare AA
- *   floor and separates visibly from the widget body — see [WIDGET_ACCENT_CONTRAST_LEVEL].
+ *   face); widgets pass a small positive value so their muted secondary-container header text clears
+ *   AA with margin while the header stays at nearly the body's tone — see
+ *   [WIDGET_ACCENT_CONTRAST_LEVEL].
  * @param snapAchromaticContainers whether to force the achromatic-seed container snap (see
  *   [withCrispAchromaticContainer]). Defaults on for the app's tonal chips. Widgets pass `false`:
- *   the widget header rides `secondaryContainer` as a band over a neutral `surface` body, so snapping
- *   that role to pure white/black would collapse the band against the surface (a white band on the
- *   near-white light surface, invisible). At the widgets' elevated contrast level the raw engine
- *   already gives the achromatic header text 7:1+ and a clearly separated band, so the snap is both
- *   unnecessary there and actively harmful.
+ *   the widget header rides `secondaryContainer` over a tinted `surfaceVariant` body, so snapping
+ *   that role to pure white/black for the white/black seeds would blow the header out to the extreme
+ *   instead of the muted accent tone. At the widgets' low contrast level the raw engine already
+ *   gives the achromatic header text a comfortable AA margin (~5:1), so the snap is both unnecessary
+ *   there and actively harmful.
  */
 fun accentColorScheme(
     seed: Int,
@@ -68,9 +69,9 @@ fun accentColorScheme(
  * readable gray: forcing it to pure white would make the accent invisible against the light
  * surface (the primary/surface visibility guarantee, AccentSchemeTest).
  *
- * Widgets opt OUT of this snap (see [accentColorScheme]'s `snapAchromaticContainers`): they paint
- * this container as a header band over a neutral surface body, so snapping it to pure white/black
- * would collapse the band against the surface instead of sharpening a chip.
+ * Widgets opt OUT of this snap (see [accentColorScheme]'s `snapAchromaticContainers`): they ride
+ * this container as the header tone across a near-uniform tinted panel, so snapping it to pure
+ * white/black would blow the header out to the extreme instead of sharpening a chip.
  */
 private fun ColorScheme.withCrispAchromaticContainer(seed: Int): ColorScheme = when (seed) {
     PURE_WHITE_SEED -> copy(
@@ -100,14 +101,18 @@ private const val PURE_BLACK_SEED: Int = 0xFF000000.toInt()
 private const val ACCENT_CONTRAST_LEVEL: Double = 0.0
 
 /**
- * HCT contrast axis for the WIDGET faces. Widgets paint their header on the muted
- * secondary-container role, which at the app's default level lands right on the bare AA floor
- * (~4.5:1 header text) and — worse — barely separates the header band from the widget body
- * (as low as ~1.2:1 for low-chroma seeds like olive). Bumping the axis lifts every rendered
- * widget pair at once (header text, accent band vs body, today marker, row tint) for every
- * selectable seed, so the muted header still reads as the picked accent but is clearly legible
- * and clearly a distinct band. At this level every selectable seed clears roughly the AAA bar
- * (~7:1): measured floors are header text >= ~7.3:1 (light) / ~9.4:1 (dark) and band vs body
- * >= ~6.9:1 (light) / ~8.4:1 (dark). Widget-scoped on purpose — the app face is unaffected.
+ * HCT contrast axis for the WIDGET faces. Widgets read as a near-uniform tinted panel: the body
+ * rides the tinted `surfaceVariant` role while the header and footer rows ride the muted
+ * `secondaryContainer`, and at this low axis those two roles sit at nearly the same tone, so the
+ * accent shows across the whole surface and the header is set apart by its bold title far more than
+ * by any tonal step. The header text (onSecondaryContainer) is the AA-critical pair that gains as
+ * this axis rises; a small positive value gives it a comfortable margin (~5:1 for every selectable
+ * seed) without opening a visible band between header and body.
+ *
+ * It must stay LOW. A large axis (this was briefly 0.8) inverts the dark-mode container to a bright
+ * pastel with dark text — the "too much light in dark theme" regression — so
+ * [org.onekash.kashcal.widget.WidgetThemeTest] pins the dark-header luminance to keep it from
+ * creeping back up (measured L ~0.08 here, versus ~0.68 at 0.8). Widget-scoped on purpose — the app
+ * face is unaffected.
  */
-const val WIDGET_ACCENT_CONTRAST_LEVEL: Double = 0.8
+const val WIDGET_ACCENT_CONTRAST_LEVEL: Double = 0.10

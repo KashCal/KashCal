@@ -699,6 +699,7 @@
         <item quantity="one">Engeza</item>
         <item quantity="other">Ngenisa</item>
     </plurals>
+    <string name="importing_events">Iyangenisa…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…kanye nokunye okungu-%1$d</item>
         <item quantity="other">…kanye nokunye okungu-%1$d</item>

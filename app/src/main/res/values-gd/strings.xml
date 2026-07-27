@@ -729,6 +729,7 @@
         <item quantity="few">Ion-phortaich</item>
         <item quantity="other">Ion-phortaich</item>
     </plurals>
+    <string name="importing_events">Ag ion-phortadh…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…agus %1$d a bharrachd</item>
         <item quantity="two">…agus %1$d a bharrachd</item>

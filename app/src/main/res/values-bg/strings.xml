@@ -699,6 +699,7 @@
         <item quantity="one">Добави</item>
         <item quantity="other">Импортирай</item>
     </plurals>
+    <string name="importing_events">Импортиране…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…и още %1$d</item>
         <item quantity="other">…и още %1$d</item>

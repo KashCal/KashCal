@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">导入</item>
     </plurals>
+    <string name="importing_events">正在导入…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…还有 %1$d 个</item>
     </plurals>

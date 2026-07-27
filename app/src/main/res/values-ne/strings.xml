@@ -699,6 +699,7 @@
         <item quantity="one">थप्नुहोस्</item>
         <item quantity="other">आयात</item>
     </plurals>
+    <string name="importing_events">आयात हुँदैछ…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…र %1$d थप</item>
         <item quantity="other">…र %1$d थप</item>

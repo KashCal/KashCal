@@ -699,6 +699,7 @@
         <item quantity="one">Προσθήκη</item>
         <item quantity="other">Εισαγωγή</item>
     </plurals>
+    <string name="importing_events">Εισαγωγή…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…και %1$d ακόμα</item>
         <item quantity="other">…και %1$d ακόμα</item>

@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">Nhập</item>
     </plurals>
+    <string name="importing_events">Đang nhập…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…và %1$d nữa</item>
     </plurals>

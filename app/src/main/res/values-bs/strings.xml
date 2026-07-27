@@ -714,6 +714,7 @@
         <item quantity="few">Uvezi</item>
         <item quantity="other">Uvezi</item>
     </plurals>
+    <string name="importing_events">Uvoz…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…i %1$d više</item>
         <item quantity="few">…i %1$d više</item>

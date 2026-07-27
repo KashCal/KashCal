@@ -699,6 +699,7 @@
         <item quantity="one">Aldoni</item>
         <item quantity="other">Importi</item>
     </plurals>
+    <string name="importing_events">Importante…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…kaj %1$d plia</item>
         <item quantity="other">…kaj %1$d pliaj</item>

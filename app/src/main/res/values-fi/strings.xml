@@ -699,6 +699,7 @@
         <item quantity="one">Lisää</item>
         <item quantity="other">Tuo</item>
     </plurals>
+    <string name="importing_events">Tuodaan…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ja %1$d lisää</item>
         <item quantity="other">…ja %1$d lisää</item>

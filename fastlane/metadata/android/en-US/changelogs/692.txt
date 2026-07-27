@@ -1,0 +1,2 @@
+• Import: fixed duplicate events from tapping Import more than once during a slow .ics import (#309)
+• Widgets: calmed the widget header on dark themes so it no longer glows as a bright bar

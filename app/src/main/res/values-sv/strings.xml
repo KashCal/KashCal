@@ -698,6 +698,7 @@
         <item quantity="one">Lägg till</item>
         <item quantity="other">Importera</item>
     </plurals>
+    <string name="importing_events">Importerar…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…och %1$d till</item>
         <item quantity="other">…och %1$d till</item>

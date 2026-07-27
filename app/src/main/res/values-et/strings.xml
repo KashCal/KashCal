@@ -699,6 +699,7 @@
         <item quantity="one">Lisa</item>
         <item quantity="other">Impordi</item>
     </plurals>
+    <string name="importing_events">Importimine…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ja %1$d veel</item>
         <item quantity="other">…ja %1$d veel</item>

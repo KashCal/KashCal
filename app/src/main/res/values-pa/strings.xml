@@ -699,6 +699,7 @@
         <item quantity="one">ਜੋੜੋ</item>
         <item quantity="other">ਇੰਪੋਰਟ</item>
     </plurals>
+    <string name="importing_events">ਇੰਪੋਰਟ ਹੋ ਰਿਹਾ ਹੈ…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ਅਤੇ %1$d ਹੋਰ</item>
         <item quantity="other">…ਅਤੇ %1$d ਹੋਰ</item>

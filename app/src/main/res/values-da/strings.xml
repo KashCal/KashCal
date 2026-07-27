@@ -698,6 +698,7 @@
         <item quantity="one">Tilføj</item>
         <item quantity="other">Importer</item>
     </plurals>
+    <string name="importing_events">Importerer…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…og %1$d mere</item>
         <item quantity="other">…og %1$d mere</item>

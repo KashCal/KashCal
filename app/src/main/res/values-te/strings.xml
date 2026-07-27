@@ -699,6 +699,7 @@
         <item quantity="one">జోడించు</item>
         <item quantity="other">దిగుమతి</item>
     </plurals>
+    <string name="importing_events">దిగుమతి అవుతోంది…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…మరియు %1$d మరొకటి</item>
         <item quantity="other">…మరియు %1$d మరిన్ని</item>

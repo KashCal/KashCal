@@ -22,9 +22,10 @@ object WidgetTheme {
      * Header background — the muted accent container (Material You secondary container). This
      * carries the user's chosen accent — whether it comes from the wallpaper (dynamic Material You)
      * or the in-app accent-color picker — at a low-emphasis, low-chroma tone rather than the loud
-     * primary-container band. It reads as the same accent family as the app while separating from
-     * the [contentBackground] body as a gentle, low-chroma band (and the day-separator rows
-     * likewise) — the accent shows without becoming a saturated stripe.
+     * primary-container band. At the widget's low contrast level this role sits at nearly the same
+     * tone as the body ([contentBackground], `surfaceVariant`), so the widget reads as one
+     * near-uniform tinted panel; the header is set apart by its bold title far more than by any
+     * tonal step.
      */
     val headerBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.secondaryContainer
@@ -52,12 +53,12 @@ object WidgetTheme {
      *
      * Both accent sources are built by `accentColorProviders` (SEED from the picked accent, the
      * automatic source from the wallpaper-derived system accent), which overrides this role to
-     * `surfaceVariant`. Glance's Material 3 interop would otherwise derive `widgetBackground` from
-     * `secondaryContainer` — the accent header's own role — which is NOT a guaranteed-contrast pair
-     * for onSurface item text and collapses at the widget's elevated header contrast (and for the
-     * white/black accents). `surfaceVariant` keeps item text well clear of AA (9–16:1 for every
-     * seed) while carrying a visibly-tinted body — `surface` would pair with text just as safely but
-     * is so near-neutral the body reads flat. (On the rare device where no system accent is
+     * `surfaceVariant` — the most-tinted body role that keeps item text at full contrast for every
+     * seed. It carries a visible accent tint yet sits at nearly the header's tone at the widget's
+     * low contrast level, so the widget reads as one near-uniform tinted panel. `secondaryContainer`
+     * carries more chroma but its non-guaranteed pairing with the item/secondary text roles drops
+     * below AA for saturated seeds, so it is not a safe body. Item text on `surfaceVariant`
+     * (onSurface) clears AA with margin for every seed. (On the rare device where no system accent is
      * available, the widget falls back to the platform's own widgetBackground.)
      */
     val contentBackground: ColorProvider
@@ -80,15 +81,11 @@ object WidgetTheme {
         @Composable get() = GlanceTheme.colors.primary
 
     /**
-     * Subtle row tint for footer rows (Upcoming's show-more/less rows).
-     * Pairs with [rowTintText] to satisfy WCAG AA in both light and dark dynamic-color themes.
-     *
-     * Uses `secondaryContainer` — the header/accent-band role — rather than `surfaceVariant`:
-     * [contentBackground] (the body) is now `surfaceVariant`, so a surfaceVariant footer would
-     * dissolve into the body. secondaryContainer sits one clear tonal step up from the body
-     * (measured ~4.2–5.7:1 band-vs-body across every selectable seed) and its guaranteed on-pair
-     * [rowTintText] keeps footer text at 7–9:1, so the footer reads as a distinct band that still
-     * belongs to the same accent family.
+     * Background for footer rows (Upcoming's show-more/less rows). Rides `secondaryContainer`, the
+     * same role as the header, so the footer echoes the header tone at the top and bottom of the
+     * near-uniform tinted panel; it reads as a distinct row through its own text label ("Open
+     * calendar") and tap target rather than a separate background band. Pairs with [rowTintText]
+     * (onSecondaryContainer) to satisfy WCAG AA in both light and dark dynamic-color themes.
      */
     val rowTintBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.secondaryContainer

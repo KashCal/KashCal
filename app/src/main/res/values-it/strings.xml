@@ -713,6 +713,7 @@
         <item quantity="many">Importa</item>
         <item quantity="other">Importa</item>
     </plurals>
+    <string name="importing_events">Importazione…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…e %1$d altro</item>
         <item quantity="many">…e %1$d altri</item>

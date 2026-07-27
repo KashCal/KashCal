@@ -699,6 +699,7 @@
         <item quantity="one">ଯୋଡ଼ନ୍ତୁ</item>
         <item quantity="other">ଆମଦାନୀ</item>
     </plurals>
+    <string name="importing_events">ଆମଦାନୀ ହେଉଛି…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…ଏବଂ %1$d ଆଉ</item>
         <item quantity="other">…ଏବଂ %1$d ଆଉ</item>

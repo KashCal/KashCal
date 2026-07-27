@@ -699,6 +699,7 @@
         <item quantity="one">Idagdag</item>
         <item quantity="other">I-import</item>
     </plurals>
+    <string name="importing_events">Ini-import…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…at %1$d pa</item>
         <item quantity="other">…at %1$d pa</item>

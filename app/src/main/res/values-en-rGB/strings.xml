@@ -699,6 +699,7 @@
         <item quantity="one">Add</item>
         <item quantity="other">Import</item>
     </plurals>
+    <string name="importing_events">Importing…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…and %1$d more</item>
         <item quantity="other">…and %1$d more</item>

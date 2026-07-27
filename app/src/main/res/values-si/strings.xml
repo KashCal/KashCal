@@ -699,6 +699,7 @@
         <item quantity="one">එකතු කරන්න</item>
         <item quantity="other">ආයාතය</item>
     </plurals>
+    <string name="importing_events">ආයාත කරමින්…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…සහ %1$d තව</item>
         <item quantity="other">…සහ %1$d තව</item>

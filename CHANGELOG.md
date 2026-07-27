@@ -1,3 +1,17 @@
+## [2026.07.26]
+
+Two fixes this release, both for things that talked over you.
+
+Import a big .ics file and the old Import button gave no sign of life. So you tapped it again, the way anyone leans on an elevator button that won't admit it heard you. It heard you the first time. It heard you all three times, and it imported your two hundred events once per tap, until your calendar read like a stutter and every dentist appointment came in triplicate. Now only the first tap counts. The button turns into a spinner and says Importing while it works, and the rest of your taps hit a closed door. The Settings importer and the share-to-KashCal path both learned to say when they're busy.
+
+The other fix was in the dark. A widget header, on a dark theme, glowed like a bright pastel bar someone forgot to turn off, the one thing in the room still wide awake. It sleeps now. The header settled into a dark tinted tone that matches the body, so the widget is one calm panel again, and the text stays readable against any accent you pick.
+
+### Everything in this release
+
+- Fixed importing an `.ics` file creating duplicate events when the Import button was tapped more than once during a slow import; the button now latches on the first tap and shows an `Importing…` spinner (#309)
+- Changed the import flow so both the Settings importer and the share-to-KashCal path share the single-tap behavior
+- Fixed a widget header rendering as a bright pastel bar on dark themes, so it now uses a dark tinted tone that matches the widget body while keeping header text legible
+
 ## [2026.07.25]
 
 Every KashCal widget has to sell itself from behind glass.

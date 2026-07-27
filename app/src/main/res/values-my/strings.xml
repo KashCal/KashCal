@@ -684,6 +684,7 @@
     <plurals name="import_events_button">
         <item quantity="other">တင်သွင်း</item>
     </plurals>
+    <string name="importing_events">တင်သွင်းနေသည်…</string>
     <plurals name="ics_remaining_events">
         <item quantity="other">…နှင့် %1$d ခု ထပ်ရှိ</item>
     </plurals>

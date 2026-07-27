@@ -729,6 +729,7 @@
         <item quantity="many">Importovať</item>
         <item quantity="other">Importovať</item>
     </plurals>
+    <string name="importing_events">Importujem…</string>
     <plurals name="ics_remaining_events">
         <item quantity="one">…a %1$d ďalší</item>
         <item quantity="few">…a %1$d ďalšie</item>
