@@ -530,6 +530,8 @@
     <string name="settings_show_declined">अस्वीकार गरिएका कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="settings_widget_event_limit">विजेट कार्यक्रम सीमा</string>
     <string name="settings_widget_event_limit_hint">विजेटमा प्रति दिन देखाइने अधिकतम घटनाहरू</string>
+    <string name="settings_detailed_widget_rows">विस्तृत विजेट पङ्क्तिहरू</string>
+    <string name="settings_detailed_widget_rows_info">संक्षिप्त एकल पङ्क्ति, वा समाप्ति समयसहित विस्तृत दुई पङ्क्ति।</string>
     <string name="settings_sync_lookback">सिंक लुकब्याक</string>
     <string name="settings_sync_lookback_hint">घटनाहरू कति पछाडिसम्म सिंक गर्ने</string>
     <string name="settings_not_set">सेट गरिएको छैन</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଥିବା ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="settings_widget_event_limit">ୱିଜେଟ ଇଭେଣ୍ଟ ସୀମା</string>
     <string name="settings_widget_event_limit_hint">ୱିଜେଟରେ ଦିନକୁ ଦେଖାଯାଉଥିବା ସର୍ବାଧିକ ଇଭେଣ୍ଟ</string>
+    <string name="settings_detailed_widget_rows">ବିସ୍ତୃତ ୱିଜେଟ ଧାଡ଼ି</string>
+    <string name="settings_detailed_widget_rows_info">ସଂକ୍ଷିପ୍ତ ଏକ ଧାଡ଼ି, କିମ୍ବା ସମାପ୍ତି ସମୟ ସହିତ ବିସ୍ତୃତ ଦୁଇ ଧାଡ଼ି।</string>
     <string name="settings_sync_lookback">ସିଙ୍କ ଲୁକବ୍ୟାକ</string>
     <string name="settings_sync_lookback_hint">କେତେ ପଛକୁ ଇଭେଣ୍ଟ ସିଙ୍କ କରିବେ</string>
     <string name="settings_not_set">ସେଟ ହୋଇନାହିଁ</string>

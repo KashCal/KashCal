@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Show declined events</string>
     <string name="settings_widget_event_limit">Widget Event Limit</string>
     <string name="settings_widget_event_limit_hint">Most events shown per day in widgets</string>
+    <string name="settings_detailed_widget_rows">Detailed widget rows</string>
+    <string name="settings_detailed_widget_rows_info">Compact single line, or detailed two lines with end time.</string>
     <string name="settings_sync_lookback">Sync Lookback</string>
     <string name="settings_sync_lookback_hint">How far back to sync events</string>
     <string name="settings_not_set">Not set</string>

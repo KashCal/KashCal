@@ -20,14 +20,17 @@ import androidx.glance.layout.width
  * a left dot (week) and trailing-right dots (agenda, upcoming).
  *
  * @param color the resolved ARGB calendar/event color
+ * @param heightDp the pill height, in dp. Defaults to the compact single-line
+ *   height; a detailed two-line row passes the taller [COLOR_BAR_HEIGHT_DETAILED_DP]
+ *   so the pill spans both text lines.
  */
 @Composable
-internal fun CalendarColorBar(color: Int) {
+internal fun CalendarColorBar(color: Int, heightDp: Int = COLOR_BAR_HEIGHT_DP) {
     val barColor = Color(color)
     Box(
         modifier = GlanceModifier
             .width(COLOR_BAR_WIDTH_DP.dp)
-            .height(COLOR_BAR_HEIGHT_DP.dp)
+            .height(heightDp.dp)
             .cornerRadius((COLOR_BAR_WIDTH_DP / 2).dp)
             .background(ColorProvider(day = barColor, night = barColor))
     ) {}
@@ -36,21 +39,38 @@ internal fun CalendarColorBar(color: Int) {
 /** Width of the leading calendar-color pill, in dp. */
 internal const val COLOR_BAR_WIDTH_DP = 4
 
-/** Height of the leading calendar-color pill, in dp. */
+/** Height of the leading calendar-color pill on a compact single-line row, in dp. */
 internal const val COLOR_BAR_HEIGHT_DP = 10
+
+/**
+ * Height of the leading calendar-color pill on a detailed two-line row, in dp —
+ * taller so the pill spans both the title line and the time line.
+ */
+internal const val COLOR_BAR_HEIGHT_DETAILED_DP = 32
 
 /** Gap between the leading color pill and the time column, in dp. */
 internal const val BAR_TO_TIME_GAP_DP = 4
 
 /**
- * Vertical padding on a single event row, in dp — shared by the agenda, week,
- * and upcoming list widgets so their row density stays uniform. Sized so a
- * single-line row clears roughly 40dp (a ~20dp text line box plus 10dp top and
- * bottom), giving a comfortable tap target. Applied as padding rather than a
- * fixed row height so the row grows with the system font-scale instead of
- * clipping the title.
+ * Vertical padding on a detailed two-line event row, in dp — shared by the
+ * agenda, week, and upcoming list widgets so their row density stays uniform.
+ * Combined with a two-line stack (14sp title + 12sp time, ~32dp) this lands the
+ * row right at the 48dp Material minimum tap target. Extra padding beyond this
+ * only adds whitespace — it does not enlarge the text — so it is kept snug to the
+ * floor to fit more events before the list scrolls. Applied as padding rather
+ * than a fixed row height so the row still grows with the system font-scale
+ * instead of clipping the title.
  */
-internal const val EVENT_ROW_VERTICAL_PADDING_DP = 10
+internal const val EVENT_ROW_VERTICAL_PADDING_DP = 8
+
+/**
+ * Vertical padding on a compact single-line event row, in dp. Denser than the
+ * detailed padding so a single-line row clears roughly 28dp, fitting the most
+ * events. The detailed row style offers the larger ~48dp tap target for users
+ * who prefer it. Applied as padding, not a fixed height, so the row still grows
+ * with the system font-scale.
+ */
+internal const val EVENT_ROW_VERTICAL_PADDING_COMPACT_DP = 4
 
 /** Gap between the time column and the event title, in dp. */
 internal const val TIME_TO_TITLE_GAP_DP = 2

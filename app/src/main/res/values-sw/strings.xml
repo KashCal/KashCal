@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Onyesha matukio yaliyokataliwa</string>
     <string name="settings_widget_event_limit">Kikomo cha Matukio ya Wijeti</string>
     <string name="settings_widget_event_limit_hint">Idadi kubwa ya matukio yanayoonyeshwa kwa siku katika wijeti</string>
+    <string name="settings_detailed_widget_rows">Safu za kina za wijeti</string>
+    <string name="settings_detailed_widget_rows_info">Mstari mmoja mfupi, au mistari miwili ya kina yenye saa ya kumalizika.</string>
     <string name="settings_sync_lookback">Muda wa Kusawazisha Nyuma</string>
     <string name="settings_sync_lookback_hint">Kiasi cha nyuma cha kusawazisha matukio</string>
     <string name="settings_not_set">Haijawekwa</string>

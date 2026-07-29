@@ -529,6 +529,8 @@
     <string name="settings_show_declined">Geweigerde afspraken tonen</string>
     <string name="settings_widget_event_limit">Widget-afspraklimiet</string>
     <string name="settings_widget_event_limit_hint">Maximaal aantal afspraken per dag in widgets</string>
+    <string name="settings_detailed_widget_rows">Gedetailleerde widgetregels</string>
+    <string name="settings_detailed_widget_rows_info">Compact op één regel, of gedetailleerd op twee regels met eindtijd.</string>
     <string name="settings_sync_lookback">Sync-terugblik</string>
     <string name="settings_sync_lookback_hint">Hoe ver terug afspraken worden gesynchroniseerd</string>
     <string name="settings_not_set">Niet ingesteld</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Ipakita ang mga tinanggihang kaganapan</string>
     <string name="settings_widget_event_limit">Limitasyon ng Widget Event</string>
     <string name="settings_widget_event_limit_hint">Pinakamaraming kaganapan bawat araw sa mga widget</string>
+    <string name="settings_detailed_widget_rows">Detalyadong mga hilera ng widget</string>
+    <string name="settings_detailed_widget_rows_info">Maigsing isang linya, o detalyadong dalawang linya na may oras ng pagtatapos.</string>
     <string name="settings_sync_lookback">Saklaw ng Sync Lookback</string>
     <string name="settings_sync_lookback_hint">Gaano kalayo pabalik i-sync ang mga kaganapan</string>
     <string name="settings_not_set">Hindi pa naka-set</string>

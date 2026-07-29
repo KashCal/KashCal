@@ -123,6 +123,13 @@ object PreferencesKeys {
     val WIDGET_MAX_EVENTS_PER_DAY = intPreferencesKey("widget_max_events_per_day")
 
     /**
+     * Widget row density. false = compact single-line rows (color bar, start time, title);
+     * true = detailed two-line rows (title, then start-end time). Applies to the Agenda,
+     * Week, and Upcoming list widgets. Default: false (compact).
+     */
+    val WIDGET_DETAILED_ROWS = booleanPreferencesKey("widget_detailed_rows")
+
+    /**
      * Last vertical scroll position of the Day/3-Day/Week time grid, stored as
      * minutes from midnight (0..1439). Restored on cold launch so the timeline
      * opens where the user last left it instead of the default hour. Stored as

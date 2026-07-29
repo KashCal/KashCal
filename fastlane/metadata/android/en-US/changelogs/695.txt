@@ -1,0 +1,4 @@
+• Added a Detailed widget rows toggle in Settings that switches the agenda, week, and upcoming list widgets between a compact single-line row and a detailed two-line row showing each event's start and end time
+• Changed the detailed row's time to follow the in-app 12/24-hour setting rather than only the device clock, so it matches the rest of the app
+• Fixed the widgets not honoring genuine Material You colors in automatic mode; they now render on the device's real dynamic palette instead of a reseeded tinted scheme, matching the launcher and system UI
+• Fixed the Quick Add dialog letting the keyboard and system bars overlap its card in landscape or at large font scales; the card now clears the insets and scrolls so Save stays reachable

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Pokaži zavrnjene dogodke</string>
     <string name="settings_widget_event_limit">Omejitev dogodkov pripomočka</string>
     <string name="settings_widget_event_limit_hint">Največ dogodkov, prikazanih na dan v gradnikih</string>
+    <string name="settings_detailed_widget_rows">Podrobne vrstice gradnika</string>
+    <string name="settings_detailed_widget_rows_info">Strnjena ena vrstica ali podrobni dve vrstici s časom konca.</string>
     <string name="settings_sync_lookback">Razpon sinhronizacije nazaj</string>
     <string name="settings_sync_lookback_hint">Kako daleč nazaj sinhronizirati dogodke</string>
     <string name="settings_not_set">Ni nastavljeno</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">辞退した予定を表示</string>
     <string name="settings_widget_event_limit">ウィジェットの予定上限</string>
     <string name="settings_widget_event_limit_hint">ウィジェットに1日あたり表示する予定の最大数</string>
+    <string name="settings_detailed_widget_rows">ウィジェットの詳細行</string>
+    <string name="settings_detailed_widget_rows_info">コンパクトな1行表示、または終了時刻付きの詳細な2行表示。</string>
     <string name="settings_sync_lookback">同期の遡り期間</string>
     <string name="settings_sync_lookback_hint">予定を同期する遡り期間</string>
     <string name="settings_not_set">未設定</string>

@@ -776,6 +776,10 @@
     <string name="settings_widget_event_limit">Widget event limit</string>
     <!-- Subtitle hint under the Widget event limit row -->
     <string name="settings_widget_event_limit_hint">Most events shown per day in widgets</string>
+    <!-- "Widget" = Android home screen widget. Toggle: compact single-line rows vs detailed two-line rows. -->
+    <string name="settings_detailed_widget_rows">Detailed widget rows</string>
+    <!-- Info tooltip explaining the Detailed widget rows toggle -->
+    <string name="settings_detailed_widget_rows_info">Compact single line, or detailed two lines with end time.</string>
     <!-- "Lookback" = how far back in time to sync -->
     <string name="settings_sync_lookback">Sync lookback</string>
     <!-- Subtitle hint under the Sync lookback row -->

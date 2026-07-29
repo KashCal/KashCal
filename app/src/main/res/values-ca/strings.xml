@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Mostra els esdeveniments rebutjats</string>
     <string name="settings_widget_event_limit">Límit d\'esdeveniments del widget</string>
     <string name="settings_widget_event_limit_hint">Màxim d\'esdeveniments mostrats per dia als widgets</string>
+    <string name="settings_detailed_widget_rows">Files detallades del widget</string>
+    <string name="settings_detailed_widget_rows_info">Una sola línia compacta, o dues línies detallades amb l\'hora de finalització.</string>
     <string name="settings_sync_lookback">Sincronitzar retrospectivament</string>
     <string name="settings_sync_lookback_hint">Fins a quan enrere sincronitzar els esdeveniments</string>
     <string name="settings_not_set">No configurat</string>

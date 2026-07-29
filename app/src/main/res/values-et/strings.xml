@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
     <string name="settings_widget_event_limit">Vidina sündmuste limiit</string>
     <string name="settings_widget_event_limit_hint">Sündmuste maksimum päevas vidinates</string>
+    <string name="settings_detailed_widget_rows">Vidina üksikasjalikud read</string>
+    <string name="settings_detailed_widget_rows_info">Kompaktne üks rida või üksikasjalikud kaks rida lõpuajaga.</string>
     <string name="settings_sync_lookback">Sünkroonimise tagasivaade</string>
     <string name="settings_sync_lookback_hint">Kui kaugele tagasi sündmusi sünkroonida</string>
     <string name="settings_not_set">Pole seatud</string>

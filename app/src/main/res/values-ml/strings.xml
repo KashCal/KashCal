@@ -530,6 +530,8 @@
     <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="settings_widget_event_limit">വിജറ്റ് ഇവന്റ് പരിധി</string>
     <string name="settings_widget_event_limit_hint">വിജറ്റുകളിൽ ഒരു ദിവസം കാണിക്കുന്ന പരമാവധി ഇവന്റുകൾ</string>
+    <string name="settings_detailed_widget_rows">വിശദമായ വിജറ്റ് വരികൾ</string>
+    <string name="settings_detailed_widget_rows_info">ചുരുക്കമായ ഒറ്റ വരി, അല്ലെങ്കിൽ അവസാന സമയത്തോടെ വിശദമായ രണ്ട് വരികൾ.</string>
     <string name="settings_sync_lookback">സിങ്ക് ലുക്ക്ബാക്ക്</string>
     <string name="settings_sync_lookback_hint">എത്ര പിന്നിലേക്ക് ഇവന്റുകൾ സിങ്ക് ചെയ്യണം</string>
     <string name="settings_not_set">സെറ്റ് ചെയ്തിട്ടില്ല</string>

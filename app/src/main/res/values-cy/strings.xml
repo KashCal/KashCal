@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Dangos digwyddiadau a wrthodwyd</string>
     <string name="settings_widget_event_limit">Terfyn Digwyddiadau Widget</string>
     <string name="settings_widget_event_limit_hint">Y mwyaf o ddigwyddiadau a ddangosir bob dydd mewn widgets</string>
+    <string name="settings_detailed_widget_rows">Rhesi widget manwl</string>
+    <string name="settings_detailed_widget_rows_info">Un llinell gryno, neu dwy linell fanwl gydag amser gorffen.</string>
     <string name="settings_sync_lookback">Edrych yn Ôl Cysoni</string>
     <string name="settings_sync_lookback_hint">Pa mor bell yn ôl i gysoni digwyddiadau</string>
     <string name="settings_not_set">Heb ei osod</string>

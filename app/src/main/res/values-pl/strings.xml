@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Pokaż odrzucone wydarzenia</string>
     <string name="settings_widget_event_limit">Limit wydarzeń widgetu</string>
     <string name="settings_widget_event_limit_hint">Maksymalna liczba wydarzeń na dzień w widżetach</string>
+    <string name="settings_detailed_widget_rows">Szczegółowe wiersze widżetu</string>
+    <string name="settings_detailed_widget_rows_info">Kompaktowy pojedynczy wiersz lub szczegółowe dwa wiersze z czasem zakończenia.</string>
     <string name="settings_sync_lookback">Zakres synchronizacji wstecz</string>
     <string name="settings_sync_lookback_hint">Jak daleko wstecz synchronizować wydarzenia</string>
     <string name="settings_not_set">Nie ustawiono</string>

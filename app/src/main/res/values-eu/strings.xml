@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Erakutsi ezetsitako gertaerak</string>
     <string name="settings_widget_event_limit">Widget-eko gertaera-muga</string>
     <string name="settings_widget_event_limit_hint">Widgetetan eguneko gehienez erakusten diren gertaerak</string>
+    <string name="settings_detailed_widget_rows">Widget errenkada xehatuak</string>
+    <string name="settings_detailed_widget_rows_info">Lerro bakar trinkoa, edo bi lerro xehatu amaiera-orduarekin.</string>
     <string name="settings_sync_lookback">Sinkronizazio atzera-begirada</string>
     <string name="settings_sync_lookback_hint">Zenbateraino atzera sinkronizatu gertaerak</string>
     <string name="settings_not_set">Ezarri gabe</string>

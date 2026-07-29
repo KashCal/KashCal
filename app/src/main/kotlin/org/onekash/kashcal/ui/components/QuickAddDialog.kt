@@ -3,14 +3,17 @@ package org.onekash.kashcal.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -120,7 +123,9 @@ fun QuickAddDialog(
             decorFitsSystemWindows = false
         )
     ) {
-        Column(
+        // Scrim: covers the whole window (behind the bars) and owns tap-to-dismiss.
+        // Kept scroll-free so a tap that drifts a few pixels still dismisses.
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.5f))
@@ -128,21 +133,34 @@ fun QuickAddDialog(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { onDismiss() }
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.Top
         ) {
-            QuickAddDialogContent(
-                textFieldState = textFieldState,
-                focusRequester = focusRequester,
-                parseResult = parseResult,
-                isSaveEnabled = isSaveEnabled,
-                isSaving = isSaving,
-                placeholder = placeholder,
-                timeFormat = timeFormat,
-                onSave = onSave,
-                onExpand = onExpand
-            )
+            // Card region, top-anchored. safeDrawingPadding() keeps it clear of the
+            // status bar and the keyboard / nav bar in one shot (decorFitsSystemWindows
+            // = false, so the window won't resize for the IME on its own; safeDrawing
+            // is the union of those insets, so stacking imePadding + navigationBarsPadding
+            // would double-count the nav bar). The scroll is scoped here, not on the
+            // scrim, so if the card is taller than the safe region (landscape, large
+            // font, a tall parse preview) Save scrolls into reach instead of clipping.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .safeDrawingPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                QuickAddDialogContent(
+                    textFieldState = textFieldState,
+                    focusRequester = focusRequester,
+                    parseResult = parseResult,
+                    isSaveEnabled = isSaveEnabled,
+                    isSaving = isSaving,
+                    placeholder = placeholder,
+                    timeFormat = timeFormat,
+                    onSave = onSave,
+                    onExpand = onExpand
+                )
+            }
         }
     }
 }

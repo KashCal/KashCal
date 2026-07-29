@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
     <string name="settings_widget_event_limit">විජට් සිදුවීම් සීමාව</string>
     <string name="settings_widget_event_limit_hint">විජට්වල දිනකට පෙන්වන උපරිම සිදුවීම් ගණන</string>
+    <string name="settings_detailed_widget_rows">විස්තරාත්මක විජට් පේළි</string>
+    <string name="settings_detailed_widget_rows_info">සංයුක්ත තනි පේළියක්, හෝ අවසන් වේලාව සහිත විස්තරාත්මක පේළි දෙකක්.</string>
     <string name="settings_sync_lookback">සමමුහුර්ත ආපසු බැලීම</string>
     <string name="settings_sync_lookback_hint">සිදුවීම් කොපමණ පසුපසට සමමුහුර්ත කරනවාද</string>
     <string name="settings_not_set">සකසා නැත</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Tunjukkan acara ditolak</string>
     <string name="settings_widget_event_limit">Had Acara Widget</string>
     <string name="settings_widget_event_limit_hint">Bilangan acara maksimum dipaparkan sehari dalam widget</string>
+    <string name="settings_detailed_widget_rows">Baris widget terperinci</string>
+    <string name="settings_detailed_widget_rows_info">Satu baris ringkas, atau dua baris terperinci dengan masa tamat.</string>
     <string name="settings_sync_lookback">Lihat Balik Segerak</string>
     <string name="settings_sync_lookback_hint">Berapa lama ke belakang untuk menyegerakkan acara</string>
     <string name="settings_not_set">Belum ditetapkan</string>

@@ -122,6 +122,7 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.firstDayOfWeek } returns MutableStateFlow(java.util.Calendar.SUNDAY)
         every { vm.showWeekNumbers } returns MutableStateFlow(weekNumbers)
         every { vm.widgetMaxEventsPerDay } returns MutableStateFlow(widget)
+        every { vm.widgetDetailedRows } returns MutableStateFlow(false)
         every { vm.syncLookbackDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
         every { vm.isSearchActive } returns MutableStateFlow(false)
         every { vm.searchQuery } returns MutableStateFlow("")
@@ -208,10 +209,31 @@ class AccountSettingsScreenViewModelWiringTest {
         // No same-typed sibling setter fired.
         verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
         verify(exactly = 0) { vm.setShowEventEmojis(any()) }
+        verify(exactly = 0) { vm.setWidgetDetailedRows(any()) }
         verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
         verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
         verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
         verify(exactly = 0) { vm.setAppLockEnabled(any()) }
+    }
+
+    @Test
+    fun `detailed-widget-rows row drives exactly its VM setter and no sibling`() {
+        val vm = mockVm(widget = 8, weekNumbers = false)
+        setRoute(vm)
+
+        composeTestRule.onNodeWithText("Detailed widget rows").performClick()
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 1) { vm.setWidgetDetailedRows(true) }
+        // No same-typed (Boolean) sibling toggle fired.
+        verify(exactly = 0) { vm.setShowWeekNumbers(any()) }
+        verify(exactly = 0) { vm.setShowEventEmojis(any()) }
+        verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
+        verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
+        verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
+        verify(exactly = 0) { vm.setAppLockEnabled(any()) }
+        // No same-typed (Int) neighbour fired either.
+        verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
     }
 
     @Test

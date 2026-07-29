@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Montri malakceptitajn eventojn</string>
     <string name="settings_widget_event_limit">Fenestraĵa eventlimo</string>
     <string name="settings_widget_event_limit_hint">Plej multaj eventoj montrataj tage en fenestraĵoj</string>
+    <string name="settings_detailed_widget_rows">Detalaj vicoj de fenestraĵo</string>
+    <string name="settings_detailed_widget_rows_info">Kompakta unuopa linio, aŭ detalaj du linioj kun fintempo.</string>
     <string name="settings_sync_lookback">Sinkroniga retrorigardo</string>
     <string name="settings_sync_lookback_hint">Ĝis kiom retro sinkronigi eventojn</string>
     <string name="settings_not_set">Ne agordita</string>

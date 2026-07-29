@@ -530,6 +530,8 @@
     <string name="settings_show_declined">తిరస్కరించిన ఈవెంట్‌లను చూపించు</string>
     <string name="settings_widget_event_limit">విడ్జెట్ ఈవెంట్ పరిమితి</string>
     <string name="settings_widget_event_limit_hint">విడ్జెట్‌లలో రోజుకు చూపబడే గరిష్ఠ ఈవెంట్‌లు</string>
+    <string name="settings_detailed_widget_rows">వివరణాత్మక విడ్జెట్ వరుసలు</string>
+    <string name="settings_detailed_widget_rows_info">సంక్షిప్త ఒకే లైన్, లేదా ముగింపు సమయంతో వివరణాత్మక రెండు లైన్లు.</string>
     <string name="settings_sync_lookback">సింక్ లుక్‌బ్యాక్</string>
     <string name="settings_sync_lookback_hint">ఈవెంట్‌లను ఎంత వెనుకకు సింక్ చేయాలి</string>
     <string name="settings_not_set">సెట్ చేయబడలేదు</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">거절한 이벤트 표시</string>
     <string name="settings_widget_event_limit">위젯 일정 제한</string>
     <string name="settings_widget_event_limit_hint">위젯에서 하루에 표시할 최대 일정 수</string>
+    <string name="settings_detailed_widget_rows">위젯 상세 행</string>
+    <string name="settings_detailed_widget_rows_info">한 줄로 간단하게, 또는 종료 시간이 포함된 두 줄로 자세하게 표시해요.</string>
     <string name="settings_sync_lookback">동기화 조회 기간</string>
     <string name="settings_sync_lookback_hint">일정을 동기화할 기간</string>
     <string name="settings_not_set">설정 안 됨</string>

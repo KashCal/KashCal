@@ -60,7 +60,7 @@ class UpcomingWidget : GlanceAppWidget() {
         // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
         // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
         // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
-        val initialAccent = resolveWidgetAccentColors(context, dataStore)
+        val initialAccent = resolveWidgetAccentColors(dataStore)
 
         provideContent {
             val prefs = currentState<Preferences>()
@@ -73,7 +73,7 @@ class UpcomingWidget : GlanceAppWidget() {
                 value = fetchUpcomingState(repository, dataStore, context)
             }
             val accentColors by produceState(initialValue = initialAccent, key1 = stamp) {
-                value = resolveWidgetAccentColors(context, dataStore)
+                value = resolveWidgetAccentColors(dataStore)
             }
             GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
                 UpcomingWidgetScaffold(state = state, isRefreshing = isRefreshing)

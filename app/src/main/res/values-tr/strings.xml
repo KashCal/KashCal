@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="settings_widget_event_limit">Widget Etkinlik Sınırı</string>
     <string name="settings_widget_event_limit_hint">Widget\'larda günde gösterilen en fazla etkinlik</string>
+    <string name="settings_detailed_widget_rows">Ayrıntılı widget satırları</string>
+    <string name="settings_detailed_widget_rows_info">Kompakt tek satır ya da bitiş saatiyle ayrıntılı iki satır.</string>
     <string name="settings_sync_lookback">Eşitleme Geçmişi Süresi</string>
     <string name="settings_sync_lookback_hint">Etkinlikler ne kadar geriye eşitlenecek</string>
     <string name="settings_not_set">Ayarlanmadı</string>

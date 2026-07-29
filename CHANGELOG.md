@@ -1,3 +1,22 @@
+## [2026.07.29]
+
+Your widgets have been speaking in shorthand.
+
+A list widget only gets so many pixels, so every event on it had learned to say everything on one line: a color, a start time, a title, and then it ran out of room. Which is fine until the thing you actually wanted to know was when it ends. A block that starts at nine could wrap up at nine-thirty or swallow the whole afternoon, and the widget wasn't telling. You opened the app to find out.
+
+Now the row can stretch its legs. A new **Detailed widget rows** switch, sitting in Settings next to the widget event limit, gives each event two lines instead of one: the title on top with the whole width to itself, and underneath it the full span, nine-thirty to ten-thirty, so the shape of your day is legible from the home screen. All-day events say so. An event that started yesterday and is still going shows where it lands, with the date when the finish line is another day off. The time reads in whatever clock you set inside KashCal, twelve or twenty-four, not whatever the phone happens to prefer.
+
+Leave the switch off and nothing changes: rows stay compact and single-line, the way they were, so a packed calendar still fits. It applies to the agenda, the week, and the upcoming list alike, and the detailed row sits right at a comfortable tap size.
+
+Two lines, when one was never quite enough.
+
+### Everything in this release
+
+- Added a **Detailed widget rows** toggle in Settings that switches the agenda, week, and upcoming list widgets between a compact single-line row and a detailed two-line row showing each event's start and end time
+- Changed the detailed row's time to follow the in-app 12/24-hour setting rather than only the device clock, so it matches the rest of the app
+- Fixed the widgets not honoring genuine Material You colors in automatic mode; they now render on the device's real dynamic palette instead of a reseeded tinted scheme, matching the launcher and system UI
+- Fixed the Quick Add dialog letting the keyboard and system bars overlap its card in landscape or at large font scales; the card now clears the insets and scrolls so Save stays reachable
+
 ## [2026.07.26]
 
 Two fixes this release, both for things that talked over you.

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Показывать отклонённые события</string>
     <string name="settings_widget_event_limit">Лимит событий в виджете</string>
     <string name="settings_widget_event_limit_hint">Максимум событий в день в виджетах</string>
+    <string name="settings_detailed_widget_rows">Подробные строки виджета</string>
+    <string name="settings_detailed_widget_rows_info">Компактная одна строка или подробные две строки с временем окончания.</string>
     <string name="settings_sync_lookback">Глубина синхронизации</string>
     <string name="settings_sync_lookback_hint">Насколько давние события синхронизировать</string>
     <string name="settings_not_set">Не задано</string>

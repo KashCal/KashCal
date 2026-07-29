@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Zobrazit odmítnuté události</string>
     <string name="settings_widget_event_limit">Limit událostí widgetu</string>
     <string name="settings_widget_event_limit_hint">Nejvíce událostí zobrazených za den ve widgetech</string>
+    <string name="settings_detailed_widget_rows">Podrobné řádky widgetu</string>
+    <string name="settings_detailed_widget_rows_info">Kompaktní jeden řádek nebo podrobné dva řádky s časem konce.</string>
     <string name="settings_sync_lookback">Rozsah synchronizace zpět</string>
     <string name="settings_sync_lookback_hint">Jak daleko zpět synchronizovat události</string>
     <string name="settings_not_set">Nenastaveno</string>

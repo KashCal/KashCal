@@ -1,6 +1,5 @@
 package org.onekash.kashcal.widget
 
-import android.content.Context
 import androidx.glance.color.ColorProviders
 import androidx.glance.color.colorProviders
 import androidx.glance.material3.ColorProviders
@@ -32,11 +31,12 @@ import org.onekash.kashcal.ui.theme.accentColorScheme
  * Finally, the body (`widgetBackground`) is pinned to `surfaceVariant` — the most-tinted body role
  * that keeps item text at full contrast for every seed. `secondaryContainer` carries more chroma,
  * but its non-guaranteed pairing with `onSurface`/`onSurfaceVariant` drops below WCAG AA for
- * saturated and wallpaper-derived seeds (measured item text as low as ~2.5:1), so it is not a safe
- * body. `surfaceVariant` still shows a visible accent tint (chroma up to ~0.15 for chromatic seeds)
- * while keeping item text at ~7:1+ (onSurface) and secondary text at ~5.5:1+ (onSurfaceVariant) for
- * every seed handed here — both the in-app accent (SEED) and the wallpaper-derived system accent
- * used for the automatic source.
+ * saturated seeds (measured item text as low as ~2.5:1), so it is not a safe body. `surfaceVariant`
+ * still shows a visible accent tint (chroma up to ~0.15 for chromatic seeds) while keeping item text
+ * at ~7:1+ (onSurface) and secondary text at ~5.5:1+ (onSurfaceVariant).
+ *
+ * This is only reached for the in-app SEED accent. The automatic (Material You) source does NOT come
+ * through here — it renders on the device's genuine dynamic palette (see [resolveWidgetAccentColors]).
  */
 fun accentColorProviders(seed: Int): ColorProviders {
     val light = accentColorScheme(
@@ -85,46 +85,31 @@ fun accentColorProviders(seed: Int): ColorProviders {
 }
 
 /**
- * Resolves the [ColorProviders] a widget should use. Mirrors the app's color-source resolution
- * (including the retired-teal migration) so app and widgets stay in sync.
+ * Resolves the [ColorProviders] a widget should use, or null to use the platform's genuine
+ * Material You palette. Mirrors the app's color-source resolution (including the retired-teal
+ * migration) so app and widgets stay in sync.
  *
- * Both sources build tinted providers via [accentColorProviders] from a seed, so the widget body
- * carries the same visible accent tint on either — the SEED source from the user's picked accent,
- * the automatic (Material You) source from the wallpaper-derived system accent ([dynamicAccentSeed]).
- * Handing the automatic source a bare `GlanceTheme { }` (the previous behavior) let the platform
- * pick its muted surface/widgetBackground roles, so the body read flat while the header still showed
- * accent. Seeding it from the same system accent the launcher uses gives the automatic body the
- * same tint treatment — including the [accentColorProviders] `widgetBackground -> surfaceVariant` override
- * that keeps item text at full contrast.
+ * - **SEED source** (in-app accent picker): builds tinted providers via [accentColorProviders] from
+ *   the picked seed. There is no system palette to honor here, so the widget recolors to the user's
+ *   chosen accent — the same scheme the app face derives from that seed.
+ * - **Automatic / Material You source**: returns null so the widget renders on the device's genuine
+ *   Material You palette (`GlanceTheme.colors` at the call site). We do NOT reseed a scheme from a
+ *   single system-accent tone here: that overwrote the real dynamic palette (near-neutral system
+ *   surfaces, accent where the system places it) with an app-derived tint, so the widget stopped
+ *   matching the launcher and system UI. Automatic means "follow the system," so we defer to it.
  *
- * Returns null only when the system accent can't be resolved (below API 31, or an OEM that doesn't
- * populate the system_accent palette); callers pass null through to a bare `GlanceTheme { }` so the
- * widget falls back to the platform dynamic colors rather than an untinted guess.
+ * Callers pass null through to a bare `GlanceTheme { }` (`accentColors ?: GlanceTheme.colors`), which
+ * is exactly the platform dynamic palette.
  */
 suspend fun resolveWidgetAccentColors(
-    context: Context,
     dataStore: KashCalDataStore,
 ): ColorProviders? {
     val source = ColorSource.fromPrefValue(
         explicit = dataStore.colorSource.first(),
         legacyTheme = dataStore.theme.first(),
     )
-    val seed = if (source == ColorSource.SEED) {
-        dataStore.accentSeed.first()
-    } else {
-        dynamicAccentSeed(context) ?: return null
-    }
-    return accentColorProviders(seed)
+    // Only the in-app SEED accent gets an app-derived scheme; the automatic source defers to the
+    // device's genuine Material You palette via the null fallback at the call site.
+    if (source != ColorSource.SEED) return null
+    return accentColorProviders(dataStore.accentSeed.first())
 }
-
-/**
- * The wallpaper-derived system accent as a packed ARGB seed, or null when it can't be read.
- *
- * `system_accent1_500` is the mid-tone of the primary Material You palette the launcher and system
- * UI theme from — the same source the app's dynamic face uses — so seeding the widget from it keeps
- * widgets in step with the automatic accent. Available API 31+ (the app's minSdk); guarded and
- * null-on-failure so a stripped OEM palette degrades to the platform colors instead of crashing.
- */
-private fun dynamicAccentSeed(context: Context): Int? = runCatching {
-    context.getColor(android.R.color.system_accent1_500)
-}.getOrNull()

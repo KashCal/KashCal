@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
     <string name="settings_widget_event_limit">Όριο συμβάντων widget</string>
     <string name="settings_widget_event_limit_hint">Μέγιστος αριθμός συμβάντων που εμφανίζονται ανά ημέρα στα γραφικά στοιχεία</string>
+    <string name="settings_detailed_widget_rows">Λεπτομερείς γραμμές γραφικού στοιχείου</string>
+    <string name="settings_detailed_widget_rows_info">Συμπαγής μονή γραμμή ή λεπτομερείς δύο γραμμές με την ώρα λήξης.</string>
     <string name="settings_sync_lookback">Αναδρομικός συγχρονισμός</string>
     <string name="settings_sync_lookback_hint">Πόσο παλιά συμβάντα να συγχρονίζονται</string>
     <string name="settings_not_set">Δεν έχει οριστεί</string>

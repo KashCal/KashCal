@@ -529,6 +529,8 @@
     <string name="settings_show_declined">Vis avslåtte hendelser</string>
     <string name="settings_widget_event_limit">Widget-hendelsesgrense</string>
     <string name="settings_widget_event_limit_hint">Flest hendelser vist per dag i moduler</string>
+    <string name="settings_detailed_widget_rows">Detaljerte modulrader</string>
+    <string name="settings_detailed_widget_rows_info">Kompakt på én linje, eller detaljert på to linjer med sluttid.</string>
     <string name="settings_sync_lookback">Synkroniseringsperiode bakover</string>
     <string name="settings_sync_lookback_hint">Hvor langt tilbake hendelser synkroniseres</string>
     <string name="settings_not_set">Ikke satt</string>

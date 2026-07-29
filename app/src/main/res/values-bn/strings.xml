@@ -530,6 +530,8 @@
     <string name="settings_show_declined">প্রত্যাখ্যাত ইভেন্ট দেখান</string>
     <string name="settings_widget_event_limit">উইজেট ইভেন্ট সীমা</string>
     <string name="settings_widget_event_limit_hint">উইজেটে প্রতিদিন দেখানো সর্বাধিক ইভেন্ট</string>
+    <string name="settings_detailed_widget_rows">বিস্তারিত উইজেট সারি</string>
+    <string name="settings_detailed_widget_rows_info">সংক্ষিপ্ত একটি লাইন, বা শেষ সময় সহ বিস্তারিত দুটি লাইন।</string>
     <string name="settings_sync_lookback">সিংক লুকব্যাক</string>
     <string name="settings_sync_lookback_hint">কত আগের ইভেন্ট সিংক করা হবে</string>
     <string name="settings_not_set">সেট করা হয়নি</string>

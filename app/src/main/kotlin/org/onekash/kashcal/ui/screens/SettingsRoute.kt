@@ -137,6 +137,7 @@ fun SettingsRoute(
         val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
         val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
         val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
+        val widgetDetailedRows by viewModel.widgetDetailedRows.collectAsStateWithLifecycle()
         val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
         val isSearchActive by viewModel.isSearchActive.collectAsStateWithLifecycle()
         val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -653,6 +654,8 @@ fun SettingsRoute(
                             onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
                             widgetMaxEventsPerDay = widgetMaxEventsPerDay,
                             onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
+                            widgetDetailedRows = widgetDetailedRows,
+                            onWidgetDetailedRowsChange = viewModel::setWidgetDetailedRows,
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen

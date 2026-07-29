@@ -361,6 +361,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
 
+    private val _widgetDetailedRows = MutableStateFlow(false)
+    val widgetDetailedRows: StateFlow<Boolean> = _widgetDetailedRows.asStateFlow()
+
     // Backup & Restore dialog state
     private val _backupRestoreState = MutableStateFlow<BackupRestoreUiState>(BackupRestoreUiState.Idle)
     val backupRestoreState: StateFlow<BackupRestoreUiState> = _backupRestoreState.asStateFlow()
@@ -699,6 +702,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.widgetDetailedRows.collect { detailed ->
+                _widgetDetailedRows.value = detailed
+            }
+        }
+        viewModelScope.launch {
             dataStore.syncPastDays.collect { days ->
                 _syncLookbackDays.value = days
             }
@@ -814,6 +822,17 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.setWidgetMaxEventsPerDay(count)
             widgetUpdateManager.updateAllWidgets("widget_max_events_changed")
+        }
+    }
+
+    /**
+     * Update the detailed-widget-rows preference (compact single line vs detailed two lines).
+     * Also triggers widget refresh since it changes how event rows render.
+     */
+    fun setWidgetDetailedRows(detailed: Boolean) {
+        viewModelScope.launch {
+            dataStore.setWidgetDetailedRows(detailed)
+            widgetUpdateManager.updateAllWidgets("widget_detailed_rows_changed")
         }
     }
 

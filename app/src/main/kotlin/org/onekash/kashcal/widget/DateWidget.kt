@@ -48,14 +48,14 @@ class DateWidget : GlanceAppWidget() {
         // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
         // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
         // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
-        val initialAccent = resolveWidgetAccentColors(context, dataStore)
+        val initialAccent = resolveWidgetAccentColors(dataStore)
         provideContent {
             // Key the accent fetch on the refresh stamp so a color change forces produceState to
             // re-run on a warm session (updateAll alone recomposes but does not re-run a keyless
             // producer). WidgetUpdateManager bumps this stamp for DateWidget on color changes.
             val stamp = currentState<Preferences>()[WIDGET_REFRESH_STAMP] ?: 0L
             val accentColors by produceState(initialValue = initialAccent, key1 = stamp) {
-                value = resolveWidgetAccentColors(context, dataStore)
+                value = resolveWidgetAccentColors(dataStore)
             }
             GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
                 DateWidgetContent()

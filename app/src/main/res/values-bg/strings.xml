@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Показване на отказани събития</string>
     <string name="settings_widget_event_limit">Лимит на събития за уиджет</string>
     <string name="settings_widget_event_limit_hint">Максимален брой събития, показвани на ден в приспособленията</string>
+    <string name="settings_detailed_widget_rows">Подробни редове в приспособлението</string>
+    <string name="settings_detailed_widget_rows_info">Компактен единичен ред или подробни два реда с крайния час.</string>
     <string name="settings_sync_lookback">Период за синхронизиране назад</string>
     <string name="settings_sync_lookback_hint">Колко назад да се синхронизират събитията</string>
     <string name="settings_not_set">Не е зададено</string>

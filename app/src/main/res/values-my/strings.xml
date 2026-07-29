@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
     <string name="settings_widget_event_limit">ဝစ်ဂျက် ပွဲ ကန့်သတ်ချက်</string>
     <string name="settings_widget_event_limit_hint">ဝိဂျက်များတွင် တစ်ရက်လျှင် ပြသမည့် အများဆုံးဖြစ်ရပ်များ</string>
+    <string name="settings_detailed_widget_rows">အသေးစိတ် ဝိဂျက် အတန်းများ</string>
+    <string name="settings_detailed_widget_rows_info">တစ်ကြောင်းတည်း ကျစ်လစ်စွာ၊ သို့မဟုတ် ပြီးဆုံးချိန်ဖြင့် နှစ်ကြောင်း အသေးစိတ်။</string>
     <string name="settings_sync_lookback">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ</string>
     <string name="settings_sync_lookback_hint">ဖြစ်ရပ်များကို မည်မျှ နောက်ပြန်ချိန်ကိုက်မည်</string>
     <string name="settings_not_set">မသတ်မှတ်ရ</string>

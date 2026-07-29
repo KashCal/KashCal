@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
     <string name="settings_widget_event_limit">ਵਿਜੇਟ ਘਟਨਾ ਸੀਮਾ</string>
     <string name="settings_widget_event_limit_hint">ਵਿਜੇਟਾਂ ਵਿੱਚ ਪ੍ਰਤੀ ਦਿਨ ਵੱਧ ਤੋਂ ਵੱਧ ਦਿਖਾਏ ਜਾਣ ਵਾਲੇ ਸਮਾਗਮ</string>
+    <string name="settings_detailed_widget_rows">ਵਿਸਤ੍ਰਿਤ ਵਿਜੇਟ ਕਤਾਰਾਂ</string>
+    <string name="settings_detailed_widget_rows_info">ਸੰਖੇਪ ਇੱਕ ਲਾਈਨ, ਜਾਂ ਸਮਾਪਤੀ ਸਮੇਂ ਦੇ ਨਾਲ ਵਿਸਤ੍ਰਿਤ ਦੋ ਲਾਈਨਾਂ।</string>
     <string name="settings_sync_lookback">ਸਿੰਕ ਲੁੱਕਬੈਕ</string>
     <string name="settings_sync_lookback_hint">ਸਮਾਗਮਾਂ ਨੂੰ ਕਿੰਨਾ ਪਿੱਛੇ ਤੱਕ ਸਿੰਕ ਕਰਨਾ ਹੈ</string>
     <string name="settings_not_set">ਸੈੱਟ ਨਹੀਂ ਹੈ</string>

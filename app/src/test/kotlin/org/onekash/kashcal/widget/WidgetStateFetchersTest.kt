@@ -39,11 +39,18 @@ class WidgetStateFetchersTest {
         // Stub common DataStore reads
         every { dataStore.showEventEmojis } returns flowOf(true)
         every { dataStore.widgetMaxEventsPerDay } returns flowOf(5)
+        every { dataStore.widgetDetailedRows } returns flowOf(false)
         coEvery { dataStore.getTimeFormat() } returns "system"
 
-        // Stub the static DateFormat call — use is24Hour=false for determinism
+        // Stub the static DateFormat calls — use is24Hour=false for determinism.
+        // getBestDateTimePattern must also be stubbed: mockkStatic replaces the whole
+        // class, so leaving it unstubbed returns null and the agenda header date lookup
+        // (widgetHeaderDate -> localizedPattern) NPEs into fetchAgendaData's fallback.
         mockkStatic(android.text.format.DateFormat::class)
         every { android.text.format.DateFormat.is24HourFormat(any()) } returns false
+        every { android.text.format.DateFormat.getBestDateTimePattern(any(), any()) } answers {
+            secondArg()
+        }
     }
 
     @After
@@ -65,6 +72,17 @@ class WidgetStateFetchersTest {
         assertEquals(mapOf(today to emptyList<WidgetDataRepository.WidgetEvent>()), loaded.eventsByDay)
         assertEquals(true, loaded.showEventEmojis)
         assertNotNull(loaded.timePattern)
+        assertEquals(false, loaded.detailedRows)
+    }
+
+    @Test
+    fun `fetchUpcomingState threads the detailed-rows preference`() = runTest {
+        coEvery { repository.getEventsInRange(any(), any()) } returns emptyMap()
+        every { dataStore.widgetDetailedRows } returns flowOf(true)
+
+        val state = fetchUpcomingState(repository, dataStore, context, horizonDays = 10)
+
+        assertEquals(true, (state as UpcomingState.Loaded).detailedRows)
     }
 
     @Test
@@ -118,6 +136,17 @@ class WidgetStateFetchersTest {
         assertTrue(data.events.isEmpty())
         assertEquals(true, data.showEventEmojis)
         assertEquals(5, data.maxEventsPerDay)
+        assertEquals(false, data.detailedRows)
+    }
+
+    @Test
+    fun `fetchAgendaData threads the detailed-rows preference`() = runTest {
+        coEvery { repository.getTodayEvents() } returns emptyList()
+        every { dataStore.widgetDetailedRows } returns flowOf(true)
+
+        val data = fetchAgendaData(repository, dataStore, context)
+
+        assertEquals(true, data.detailedRows)
     }
 
     @Test
@@ -139,6 +168,17 @@ class WidgetStateFetchersTest {
         val data = fetchWeekData(repository, dataStore, context)
 
         assertTrue(data.weekEvents.isEmpty())
+        assertEquals(false, data.detailedRows)
+    }
+
+    @Test
+    fun `fetchWeekData threads the detailed-rows preference`() = runTest {
+        coEvery { repository.getWeekEvents() } returns emptyMap()
+        every { dataStore.widgetDetailedRows } returns flowOf(true)
+
+        val data = fetchWeekData(repository, dataStore, context)
+
+        assertEquals(true, data.detailedRows)
     }
 
     @Test

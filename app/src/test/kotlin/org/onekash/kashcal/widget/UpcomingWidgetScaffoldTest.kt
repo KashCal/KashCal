@@ -43,7 +43,8 @@ class UpcomingWidgetScaffoldTest {
             eventsByDay = emptyMap(),
             todayDayCode = 20260428,
             showEventEmojis = false,
-            timePattern = "h:mm a"
+            timePattern = "h:mm a",
+            detailedRows = false
         )
         provideComposable {
             UpcomingWidgetScaffold(state = loaded)

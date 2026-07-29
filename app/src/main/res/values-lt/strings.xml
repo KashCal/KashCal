@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Rodyti atmestus įvykius</string>
     <string name="settings_widget_event_limit">Valdiklio įvykių limitas</string>
     <string name="settings_widget_event_limit_hint">Daugiausiai įvykių per dieną valdikliuose</string>
+    <string name="settings_detailed_widget_rows">Išsamios valdiklio eilutės</string>
+    <string name="settings_detailed_widget_rows_info">Kompaktiška viena eilutė arba išsamios dvi eilutės su pabaigos laiku.</string>
     <string name="settings_sync_lookback">Sinchronizavimo gylis</string>
     <string name="settings_sync_lookback_hint">Kiek atgal sinchronizuoti įvykius</string>
     <string name="settings_not_set">Nenustatyta</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">மறுக்கப்பட்ட நிகழ்வுகளைக் காட்டு</string>
     <string name="settings_widget_event_limit">விட்ஜெட் நிகழ்வு வரம்பு</string>
     <string name="settings_widget_event_limit_hint">விட்ஜெட்டில் ஒரு நாளைக்கு காட்டப்படும் அதிகபட்ச நிகழ்வுகள்</string>
+    <string name="settings_detailed_widget_rows">விரிவான விட்ஜெட் வரிசைகள்</string>
+    <string name="settings_detailed_widget_rows_info">சுருக்கமான ஒற்றை வரி, அல்லது முடிவு நேரத்துடன் விரிவான இரண்டு வரிகள்.</string>
     <string name="settings_sync_lookback">ஒத்திசைவு திரும்பப்பார்வை</string>
     <string name="settings_sync_lookback_hint">எவ்வளவு பின்னோக்கி நிகழ்வுகளை ஒத்திசைக்க வேண்டும்</string>
     <string name="settings_not_set">அமைக்கப்படவில்லை</string>

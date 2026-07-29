@@ -177,6 +177,26 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        // Cyrus (the CalDAV engine Fastmail runs). Local container from the
+        // Cyrus project's own test-server image, so it tracks real Cyrus
+        // behavior rather than a hand-rolled approximation. Runs a full RFC 6638
+        // scheduling pipeline like Fastmail/iCloud. Accepts any password
+        // (fakesaslauthd) for the seeded users user1..user5. Well-known
+        // discovery redirects (301) from /dav/ to the calendar home; the
+        // principal resolves under /dav/principals/user/<user>/ and the
+        // calendar home is /dav/calendars/user/<user>/. Emits STRONG etags.
+        val CYRUS = CalDavServerConfig(
+            name = "Cyrus",
+            serverKey = "CYRUS_SERVER",
+            usernameKey = "CYRUS_USERNAME",
+            passwordKey = "CYRUS_PASSWORD",
+            defaultServerUrl = "http://localhost:8090",
+            davEndpointSuffix = "/dav/",
+            quirksFactory = { url -> DefaultQuirks(url) },
+            usesWellKnownDiscovery = true,
+            supportsCtag = true
+        )
+
         // Xandikos (lightweight Python CalDAV/CardDAV server). Runs locally with
         // no auth (any credentials accepted, like Radicale). Principal discovery
         // resolves from the root; the calendar home is /user/calendars/. Notable
@@ -195,7 +215,7 @@ data class CalDavServerConfig(
 
         fun allServers(): List<CalDavServerConfig> = listOf(
             ICLOUD, STALWART, BAIKAL, BAIKAL_DIGEST, RADICALE, NEXTCLOUD,
-            ZOHO, SOGO, MAILBOX, FASTMAIL, XANDIKOS
+            ZOHO, SOGO, MAILBOX, FASTMAIL, CYRUS, XANDIKOS
         )
     }
 }

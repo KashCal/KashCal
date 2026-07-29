@@ -42,6 +42,7 @@ object ExportablePreferences {
         PreferencesKeys.TIME_FORMAT.name to PrefKind.STRING,
         PreferencesKeys.DEFAULT_CALENDAR_VIEW.name to PrefKind.STRING,
         PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY.name to PrefKind.INT,
+        PreferencesKeys.WIDGET_DETAILED_ROWS.name to PrefKind.BOOL,
         PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED.name to PrefKind.BOOL,
         PreferencesKeys.BIRTHDAY_REMINDER.name to PrefKind.INT,
         PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED.name to PrefKind.BOOL,
@@ -87,6 +88,7 @@ object ExportablePreferences {
         PreferencesKeys.TIME_FORMAT,
         PreferencesKeys.DEFAULT_CALENDAR_VIEW,
         PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY,
+        PreferencesKeys.WIDGET_DETAILED_ROWS,
         // Contact birthdays & anniversaries
         PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED,
         PreferencesKeys.BIRTHDAY_REMINDER,
@@ -103,8 +105,8 @@ object ExportablePreferences {
         // Profile — user's avatar initials travel with a settings backup
         PreferencesKeys.USER_INITIALS,
     ).also {
-        require(it.size == 35) {
-            "KEYS size drifted; expected 35 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 36) {
+            "KEYS size drifted; expected 36 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

@@ -47,16 +47,54 @@ class WidgetColorBarTest {
     }
 
     @Test
-    fun `event rows share one vertical padding sized for a comfortable tap target`() {
+    fun `detailed row padding clears the Material tap target`() {
         // The agenda, week, and upcoming event rows historically drifted to
-        // different vertical paddings (6dp / 4dp / 6dp). One shared constant
-        // keeps them uniform and prevents future drift. The padding must stay
-        // large enough that a single-line row clears roughly a 40dp tap target
-        // (~20dp text line box + top/bottom padding), so guard against a future
-        // edit tightening it back into the too-small target it had before.
+        // different vertical paddings (6dp / 4dp / 6dp). One shared constant per
+        // row style keeps each uniform across the three widgets. The DETAILED row
+        // is the accessible option: its padding plus a two-line ~32dp text stack
+        // must land the row at the 48dp Material minimum. 8dp x 2 + ~32dp ~= 48dp,
+        // so guard against a future edit dropping below the floor. (Extra padding
+        // beyond this only adds whitespace — it does not enlarge the text — so the
+        // constant is kept snug to 8dp rather than larger.)
         assertTrue(
-            "event row vertical padding ($EVENT_ROW_VERTICAL_PADDING_DP dp) must be at least 10dp for a comfortable tap target",
-            EVENT_ROW_VERTICAL_PADDING_DP >= 10
+            "detailed row vertical padding ($EVENT_ROW_VERTICAL_PADDING_DP dp) must be at least 8dp so the two-line row clears the 48dp tap target",
+            EVENT_ROW_VERTICAL_PADDING_DP >= 8
+        )
+    }
+
+    @Test
+    fun `compact row padding stays denser than the detailed row`() {
+        // The default (compact) style intentionally reverts to a denser row so
+        // more events fit; it sits below the detailed style's comfortable target
+        // by design. Pin the relationship so a future edit can't accidentally
+        // make compact as tall as detailed (erasing the density difference) or
+        // negative.
+        assertTrue(
+            "compact padding ($EVENT_ROW_VERTICAL_PADDING_COMPACT_DP dp) must be positive",
+            EVENT_ROW_VERTICAL_PADDING_COMPACT_DP > 0
+        )
+        assertTrue(
+            "compact padding ($EVENT_ROW_VERTICAL_PADDING_COMPACT_DP dp) must be denser than detailed ($EVENT_ROW_VERTICAL_PADDING_DP dp)",
+            EVENT_ROW_VERTICAL_PADDING_COMPACT_DP < EVENT_ROW_VERTICAL_PADDING_DP
+        )
+    }
+
+    @Test
+    fun `row padding selector maps each style to its constant`() {
+        // The style flag routes to the right padding: detailed -> the comfortable
+        // constant, compact -> the dense one. A swap here would silently give the
+        // compact row detailed density (or vice versa) with no visual test.
+        assertEquals(EVENT_ROW_VERTICAL_PADDING_DP, eventRowVerticalPaddingDp(detailedRows = true))
+        assertEquals(EVENT_ROW_VERTICAL_PADDING_COMPACT_DP, eventRowVerticalPaddingDp(detailedRows = false))
+    }
+
+    @Test
+    fun `detailed color pill spans both text lines`() {
+        // The two-line detailed row uses a taller pill than the compact single
+        // line so the color indicator runs the full height of the stack.
+        assertTrue(
+            "detailed pill ($COLOR_BAR_HEIGHT_DETAILED_DP dp) must be taller than the compact pill ($COLOR_BAR_HEIGHT_DP dp)",
+            COLOR_BAR_HEIGHT_DETAILED_DP > COLOR_BAR_HEIGHT_DP
         )
     }
 

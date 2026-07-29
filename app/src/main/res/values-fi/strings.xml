@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="settings_widget_event_limit">Widgetin tapahtumaraja</string>
     <string name="settings_widget_event_limit_hint">Tapahtumien enimmäismäärä päivässä widgeteissä</string>
+    <string name="settings_detailed_widget_rows">Widgetin yksityiskohtaiset rivit</string>
+    <string name="settings_detailed_widget_rows_info">Tiivis yksi rivi tai yksityiskohtaiset kaksi riviä päättymisajan kanssa.</string>
     <string name="settings_sync_lookback">Synkronoinnin takaisinkatse</string>
     <string name="settings_sync_lookback_hint">Kuinka kauas taakse tapahtumia synkronoidaan</string>
     <string name="settings_not_set">Ei asetettu</string>

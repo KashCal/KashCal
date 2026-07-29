@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="settings_widget_event_limit">Виджет оқиға шектеуі</string>
     <string name="settings_widget_event_limit_hint">Виджеттерде күніне көрсетілетін оқиғалардың ең көбі</string>
+    <string name="settings_detailed_widget_rows">Егжей-тегжейлі виджет жолдары</string>
+    <string name="settings_detailed_widget_rows_info">Ықшам бір жол немесе аяқталу уақыты бар егжей-тегжейлі екі жол.</string>
     <string name="settings_sync_lookback">Синхрондау кері кезеңі</string>
     <string name="settings_sync_lookback_hint">Оқиғаларды қаншалықты кері синхрондау</string>
     <string name="settings_not_set">Орнатылмаған</string>

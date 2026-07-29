@@ -140,6 +140,11 @@ class ServerSideSchedulingProbeTest(
             // Fastmail (Cyrus): plain PUT stamps SCHEDULE-STATUS=1.1 on the
             // invitee — server-side scheduling, verified live 2026-06-10.
             "Fastmail" to Disposition.SERVER_SCHEDULES,
+            // Local Cyrus test container (the engine Fastmail runs): a plain PUT
+            // stamps SCHEDULE-STATUS=1.1 on the invitee, same server-side
+            // scheduling as hosted Fastmail — verified live against the
+            // kashcal-cyrus container.
+            "Cyrus" to Disposition.SERVER_SCHEDULES,
         )
     }
 

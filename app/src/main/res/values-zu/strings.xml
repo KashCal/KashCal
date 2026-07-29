@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Bonisa imicimbi enqatshelwe</string>
     <string name="settings_widget_event_limit">Umkhawulo Womcimbi We-Widget</string>
     <string name="settings_widget_event_limit_hint">Imicimbi eminingi eboniswa ngosuku kuma-widget</string>
+    <string name="settings_detailed_widget_rows">Imigqa ye-widget enemininingwane</string>
+    <string name="settings_detailed_widget_rows_info">Umugqa owodwa ominyene, noma imigqa emibili enemininingwane enesikhathi sokuphela.</string>
     <string name="settings_sync_lookback">Ukubheka Emuva Kokuvumelanisa</string>
     <string name="settings_sync_lookback_hint">Ukuthi kubuyele emuva kangakanani ukuvumelanisa imicimbi</string>
     <string name="settings_not_set">Akulungiselelwe</string>

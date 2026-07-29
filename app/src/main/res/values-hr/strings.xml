@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Prikaži odbijene događaje</string>
     <string name="settings_widget_event_limit">Ograničenje događaja widgeta</string>
     <string name="settings_widget_event_limit_hint">Najviše događaja prikazanih po danu u widgetima</string>
+    <string name="settings_detailed_widget_rows">Detaljni redci widgeta</string>
+    <string name="settings_detailed_widget_rows_info">Kompaktni jedan redak ili detaljna dva retka s vremenom završetka.</string>
     <string name="settings_sync_lookback">Raspon sinkronizacije unatrag</string>
     <string name="settings_sync_lookback_hint">Koliko unatrag sinkronizirati događaje</string>
     <string name="settings_not_set">Nije postavljeno</string>

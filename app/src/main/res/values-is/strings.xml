@@ -529,6 +529,8 @@
     <string name="settings_show_declined">Sýna höfnuð atvik</string>
     <string name="settings_widget_event_limit">Viðburðahámark græju</string>
     <string name="settings_widget_event_limit_hint">Flestir viðburðir sýndir á dag í græjum</string>
+    <string name="settings_detailed_widget_rows">Ítarlegar græjuraðir</string>
+    <string name="settings_detailed_widget_rows_info">Þjappað á einni línu, eða ítarlegt á tveimur línum með lokatíma.</string>
     <string name="settings_sync_lookback">Samstillingarsvið aftur í tíma</string>
     <string name="settings_sync_lookback_hint">Hversu langt aftur viðburðir eru samstilltir</string>
     <string name="settings_not_set">Ekki stillt</string>

@@ -29,7 +29,6 @@ import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
-import androidx.glance.text.TextDecoration
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
@@ -257,7 +256,8 @@ fun UpcomingWidgetContent(
     todayDayCode: Int,
     showEventEmojis: Boolean,
     timePattern: String,
-    isRefreshing: Boolean = false
+    isRefreshing: Boolean = false,
+    detailedRows: Boolean = false
 ) {
     val items = remember(eventsByDay) { buildFlatUpcomingItems(eventsByDay) }
 
@@ -271,7 +271,7 @@ fun UpcomingWidgetContent(
         if (items.isEmpty()) {
             UpcomingEmptyState()
         } else {
-            UpcomingItemsList(items, todayDayCode, showEventEmojis, timePattern)
+            UpcomingItemsList(items, todayDayCode, showEventEmojis, timePattern, detailedRows)
         }
     }
 }
@@ -329,13 +329,13 @@ private fun UpcomingItemsList(
     items: List<UpcomingWidgetItem>,
     todayDayCode: Int,
     showEventEmojis: Boolean,
-    timePattern: String
+    timePattern: String,
+    detailedRows: Boolean
 ) {
     val context = LocalContext.current
     val todayLabel = context.getString(R.string.label_today)
     val tomorrowLabel = context.getString(R.string.label_tomorrow)
     val withDateTemplate = context.getString(R.string.upcoming_widget_day_with_date)
-    val allDayLabel = context.getString(R.string.label_all_day)
     val tomorrowDayCode = remember(todayDayCode) { tomorrowDayCodeOf(todayDayCode) }
 
     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
@@ -358,7 +358,7 @@ private fun UpcomingItemsList(
                         dayCode = item.dayCode,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
-                        allDayLabel = allDayLabel
+                        detailedRows = detailedRows
                     )
                 }
                 is UpcomingWidgetItem.Footer -> item(itemId = item.itemId) {
@@ -469,17 +469,15 @@ private fun UpcomingEventRow(
     dayCode: Int,
     showEventEmojis: Boolean,
     timePattern: String,
-    allDayLabel: String
+    detailedRows: Boolean
 ) {
-    val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
-
+    val rowContext = LocalContext.current
     // A cancelled event only reads as a strikethrough visually; name that state
     // for TalkBack by labelling the whole row (time, title, cancelled).
     val cancelledLabel = if (event.isCancelled) {
-        LocalContext.current.getString(
-            R.string.cd_widget_event_cancelled,
-            formatWidgetEventTime(event, dayCode, timePattern, allDayLabel),
-            displayTitle,
+        cancelledRowLabel(
+            rowContext, event, dayCode, timePattern,
+            EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
         )
     } else {
         null
@@ -488,7 +486,10 @@ private fun UpcomingEventRow(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
+            .padding(
+                horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp,
+                vertical = eventRowVerticalPaddingDp(detailedRows).dp
+            )
             .let { m -> if (cancelledLabel != null) m.semantics { contentDescription = cancelledLabel } else m }
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -502,31 +503,7 @@ private fun UpcomingEventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CalendarColorBar(event.calendarColor)
-        Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
-        // Time shares the title's color (primaryText) so the row reads as one unit.
-        Text(
-            text = formatWidgetEventTime(event, dayCode, timePattern, allDayLabel),
-            style = TextStyle(
-                color = if (event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = WidgetTypography.secondary,
-                textDecoration = if (event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            maxLines = 1,
-            modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
-        )
-        Spacer(modifier = GlanceModifier.width(TIME_TO_TITLE_GAP_DP.dp))
-        Text(
-            text = displayTitle,
-            style = TextStyle(
-                color = if (event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = WidgetTypography.contentTitle,
-                fontWeight = FontWeight.Medium,
-                textDecoration = if (event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            maxLines = 1,
-            modifier = GlanceModifier.defaultWeight()
-        )
+        EventRowInner(event, dayCode, showEventEmojis, timePattern, detailedRows)
     }
 }
 
@@ -581,7 +558,8 @@ internal fun UpcomingWidgetScaffold(state: UpcomingState, isRefreshing: Boolean 
             todayDayCode = state.todayDayCode,
             showEventEmojis = state.showEventEmojis,
             timePattern = state.timePattern,
-            isRefreshing = isRefreshing
+            isRefreshing = isRefreshing,
+            detailedRows = state.detailedRows
         )
     }
 }

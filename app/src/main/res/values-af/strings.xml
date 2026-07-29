@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Wys afgewysde gebeurtenisse</string>
     <string name="settings_widget_event_limit">Widget-gebeurtenislimiet</string>
     <string name="settings_widget_event_limit_hint">Meeste gebeurtenisse per dag in legstukke gewys</string>
+    <string name="settings_detailed_widget_rows">Gedetailleerde legstuk-rye</string>
+    <string name="settings_detailed_widget_rows_info">Kompakte enkele reël, of gedetailleerde twee reëls met eindtyd.</string>
     <string name="settings_sync_lookback">Sinkroniseringsrugsig</string>
     <string name="settings_sync_lookback_hint">Hoe ver terug om gebeurtenisse te sinkroniseer</string>
     <string name="settings_not_set">Nie gestel nie</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Seall tachartasan a dhiùltadh</string>
     <string name="settings_widget_event_limit">Crìoch Thachartasan Widget</string>
     <string name="settings_widget_event_limit_hint">An àireamh as motha de thachartasan gach latha ann an widgets</string>
+    <string name="settings_detailed_widget_rows">Sreathan widget mionaideach</string>
+    <string name="settings_detailed_widget_rows_info">Aon loidhne dhlùth, no dà loidhne mhionaideach le àm crìochnachaidh.</string>
     <string name="settings_sync_lookback">Coimhead Air Ais Sioncronachaidh</string>
     <string name="settings_sync_lookback_hint">Dè cho fada air ais a shioncronaichear tachartasan</string>
     <string name="settings_not_set">Gun suidheachadh</string>

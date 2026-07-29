@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ውድቅ የተደረጉ ክስተቶችን አሳይ</string>
     <string name="settings_widget_event_limit">የዊጀት ክስተት ገደብ</string>
     <string name="settings_widget_event_limit_hint">በመግብሮች ውስጥ በቀን የሚታዩ አብዛኞቹ ክስተቶች</string>
+    <string name="settings_detailed_widget_rows">ዝርዝር የመግብር ረድፎች</string>
+    <string name="settings_detailed_widget_rows_info">ጥምር ነጠላ መስመር፣ ወይም ከመጨረሻ ሰዓት ጋር ዝርዝር ሁለት መስመሮች።</string>
     <string name="settings_sync_lookback">የማመሳሰል ወደ ኋላ መመልከት</string>
     <string name="settings_sync_lookback_hint">ክስተቶችን ወደ ኋላ ምን ያህል ርቀት ማመሳሰል</string>
     <string name="settings_not_set">አልተዋቀረም</string>

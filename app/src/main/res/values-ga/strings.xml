@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Taispeáin imeachtaí diúltaithe</string>
     <string name="settings_widget_event_limit">Teorainn Imeachtaí Giuirléide</string>
     <string name="settings_widget_event_limit_hint">Uaslíon imeachtaí a thaispeántar in aghaidh an lae i ngiuirléidí</string>
+    <string name="settings_detailed_widget_rows">Sraitheanna giuirléide mionsonraithe</string>
+    <string name="settings_detailed_widget_rows_info">Líne shingil dhlúth, nó dhá líne mhionsonraithe le ham deiridh.</string>
     <string name="settings_sync_lookback">Féachaint Siar Sioncronúithe</string>
     <string name="settings_sync_lookback_hint">Cé chomh fada siar is a shioncronaítear imeachtaí</string>
     <string name="settings_not_set">Gan socrú</string>

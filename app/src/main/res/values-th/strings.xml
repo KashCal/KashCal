@@ -530,6 +530,8 @@
     <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
     <string name="settings_widget_event_limit_hint">จำนวนกิจกรรมสูงสุดที่แสดงต่อวันในวิดเจ็ต</string>
+    <string name="settings_detailed_widget_rows">แถวรายละเอียดของวิดเจ็ต</string>
+    <string name="settings_detailed_widget_rows_info">แสดงแบบบรรทัดเดียวกระชับ หรือแบบสองบรรทัดพร้อมเวลาสิ้นสุด</string>
     <string name="settings_sync_lookback">ซิงค์ย้อนหลัง</string>
     <string name="settings_sync_lookback_hint">ระยะเวลาย้อนหลังในการซิงค์กิจกรรม</string>
     <string name="settings_not_set">ไม่ได้ตั้งค่า</string>

@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Mostrar eventos rechazados</string>
     <string name="settings_widget_event_limit">Límite de eventos del widget</string>
     <string name="settings_widget_event_limit_hint">Máximo de eventos que se muestran por día en los widgets</string>
+    <string name="settings_detailed_widget_rows">Filas detalladas del widget</string>
+    <string name="settings_detailed_widget_rows_info">Una sola línea compacta, o dos líneas detalladas con la hora de término.</string>
     <string name="settings_sync_lookback">Periodo de sincronización hacia atrás</string>
     <string name="settings_sync_lookback_hint">Hasta cuándo sincronizar eventos pasados</string>
     <string name="settings_not_set">No configurado</string>

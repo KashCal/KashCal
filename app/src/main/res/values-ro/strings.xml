@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Afișează evenimentele refuzate</string>
     <string name="settings_widget_event_limit">Limită evenimente widget</string>
     <string name="settings_widget_event_limit_hint">Numărul maxim de evenimente afișate pe zi în widgeturi</string>
+    <string name="settings_detailed_widget_rows">Rânduri detaliate în widget</string>
+    <string name="settings_detailed_widget_rows_info">O linie compactă sau două linii detaliate cu ora de sfârșit.</string>
     <string name="settings_sync_lookback">Perioada de retrospectivă sincronizare</string>
     <string name="settings_sync_lookback_hint">Cât de mult în urmă se sincronizează evenimentele</string>
     <string name="settings_not_set">Nesetat</string>

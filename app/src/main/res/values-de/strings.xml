@@ -529,6 +529,8 @@
     <string name="settings_show_declined">Abgelehnte Termine anzeigen</string>
     <string name="settings_widget_event_limit">Widget-Terminlimit</string>
     <string name="settings_widget_event_limit_hint">Maximale Anzahl Termine pro Tag in Widgets</string>
+    <string name="settings_detailed_widget_rows">Detaillierte Widget-Zeilen</string>
+    <string name="settings_detailed_widget_rows_info">Kompakt in einer Zeile oder detailliert in zwei Zeilen mit Endzeit.</string>
     <string name="settings_sync_lookback">Sync-Rückblick</string>
     <string name="settings_sync_lookback_hint">Wie weit zurück Termine synchronisiert werden</string>
     <string name="settings_not_set">Nicht festgelegt</string>

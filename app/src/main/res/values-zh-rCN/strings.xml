@@ -530,6 +530,8 @@
     <string name="settings_show_declined">显示已拒绝的事件</string>
     <string name="settings_widget_event_limit">小部件事件上限</string>
     <string name="settings_widget_event_limit_hint">小部件中每天显示的最多事件数</string>
+    <string name="settings_detailed_widget_rows">小部件详细行</string>
+    <string name="settings_detailed_widget_rows_info">紧凑单行显示，或包含结束时间的详细两行显示。</string>
     <string name="settings_sync_lookback">同步回溯范围</string>
     <string name="settings_sync_lookback_hint">同步事件的回溯时长</string>
     <string name="settings_not_set">未设置</string>

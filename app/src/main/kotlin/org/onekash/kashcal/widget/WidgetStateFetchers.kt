@@ -30,7 +30,8 @@ internal sealed interface UpcomingState {
         val eventsByDay: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
         val todayDayCode: Int,
         val showEventEmojis: Boolean,
-        val timePattern: String
+        val timePattern: String,
+        val detailedRows: Boolean
     ) : UpcomingState
 }
 
@@ -54,11 +55,13 @@ internal suspend fun fetchUpcomingState(
         val timeFormatPref = dataStore.getTimeFormat()
         val is24Hour = DateFormat.is24HourFormat(context)
         val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24Hour)
+        val detailedRows = dataStore.widgetDetailedRows.first()
         UpcomingState.Loaded(
             eventsByDay = eventsByDay,
             todayDayCode = startDayCode,
             showEventEmojis = showEventEmojis,
-            timePattern = timePattern
+            timePattern = timePattern,
+            detailedRows = detailedRows
         )
     } catch (e: CancellationException) {
         throw e
@@ -74,7 +77,8 @@ internal data class AgendaData(
     val showEventEmojis: Boolean,
     val maxEventsPerDay: Int,
     val timePattern: String,
-    val currentDate: String
+    val currentDate: String,
+    val detailedRows: Boolean
 )
 
 /**
@@ -104,7 +108,8 @@ internal suspend fun fetchAgendaData(
         val timeFormatPref = dataStore.getTimeFormat()
         val is24Hour = DateFormat.is24HourFormat(context)
         val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24Hour)
-        AgendaData(events, showEventEmojis, maxEventsPerDay, timePattern, widgetHeaderDate())
+        val detailedRows = dataStore.widgetDetailedRows.first()
+        AgendaData(events, showEventEmojis, maxEventsPerDay, timePattern, widgetHeaderDate(), detailedRows)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -114,7 +119,8 @@ internal suspend fun fetchAgendaData(
             showEventEmojis = true,
             maxEventsPerDay = 5,
             timePattern = "h:mm a",
-            currentDate = ""
+            currentDate = "",
+            detailedRows = false
         )
     }
 }
@@ -124,7 +130,8 @@ internal data class WeekData(
     val weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
     val showEventEmojis: Boolean,
     val maxEventsPerDay: Int,
-    val timePattern: String
+    val timePattern: String,
+    val detailedRows: Boolean
 )
 
 /**
@@ -143,7 +150,8 @@ internal suspend fun fetchWeekData(
         val timeFormatPref = dataStore.getTimeFormat()
         val is24Hour = DateFormat.is24HourFormat(context)
         val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24Hour)
-        WeekData(weekEvents, showEventEmojis, maxEventsPerDay, timePattern)
+        val detailedRows = dataStore.widgetDetailedRows.first()
+        WeekData(weekEvents, showEventEmojis, maxEventsPerDay, timePattern, detailedRows)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -152,7 +160,8 @@ internal suspend fun fetchWeekData(
             weekEvents = emptyMap(),
             showEventEmojis = true,
             maxEventsPerDay = 5,
-            timePattern = "h:mm a"
+            timePattern = "h:mm a",
+            detailedRows = false
         )
     }
 }

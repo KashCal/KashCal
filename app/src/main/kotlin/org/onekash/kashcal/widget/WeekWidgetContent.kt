@@ -18,13 +18,11 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
-import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
-import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
@@ -84,7 +82,8 @@ fun WeekWidgetContent(
     showEventEmojis: Boolean,
     timePattern: String = "h:mma",
     maxEventsPerDay: Int = 5,
-    isRefreshing: Boolean = false
+    isRefreshing: Boolean = false,
+    detailedRows: Boolean = false
 ) {
     val flatItems = buildFlatWeekItems(weekEvents, maxEventsPerDay)
     val today = LocalDate.now()
@@ -107,7 +106,7 @@ fun WeekWidgetContent(
                         DayHeader(widgetItem.dayCode, widgetItem.eventCount, widgetItem.dayCode == todayCode)
                     }
                     is WeekWidgetItem.Event -> item(itemId = widgetItem.itemId) {
-                        CompactEventRow(widgetItem.event, widgetItem.dayCode, showEventEmojis, timePattern)
+                        CompactEventRow(widgetItem.event, widgetItem.dayCode, showEventEmojis, timePattern, detailedRows)
                     }
                     is WeekWidgetItem.Empty -> item(itemId = widgetItem.itemId) {
                         EmptyDayRow(widgetItem.dayCode)
@@ -253,18 +252,16 @@ private fun CompactEventRow(
     event: WidgetDataRepository.WidgetEvent,
     dayCode: Int,
     showEventEmojis: Boolean,
-    timePattern: String
+    timePattern: String,
+    detailedRows: Boolean
 ) {
-    val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
-
     val rowContext = LocalContext.current
     // A cancelled event only reads as a strikethrough visually; name that state
     // for TalkBack by labelling the whole row (time, title, cancelled).
     val cancelledLabel = if (event.isCancelled) {
-        rowContext.getString(
-            R.string.cd_widget_event_cancelled,
-            formatWidgetEventTime(event, dayCode, timePattern, rowContext.getString(R.string.label_all_day)),
-            displayTitle,
+        cancelledRowLabel(
+            rowContext, event, dayCode, timePattern,
+            EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
         )
     } else {
         null
@@ -273,7 +270,10 @@ private fun CompactEventRow(
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .padding(horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp, vertical = EVENT_ROW_VERTICAL_PADDING_DP.dp)
+            .padding(
+                horizontal = WIDGET_HORIZONTAL_MARGIN_DP.dp,
+                vertical = eventRowVerticalPaddingDp(detailedRows).dp
+            )
             .let { m -> if (cancelledLabel != null) m.semantics { contentDescription = cancelledLabel } else m }
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -287,36 +287,7 @@ private fun CompactEventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CalendarColorBar(event.calendarColor)
-
-        Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
-
-        val allDayText = LocalContext.current.getString(R.string.label_all_day)
-        // Time shares the title's color (primaryText) so the row reads as one unit.
-        Text(
-            text = formatWidgetEventTime(event, dayCode, timePattern, allDayText),
-            style = TextStyle(
-                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = WidgetTypography.secondary,
-                textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            maxLines = 1,
-            modifier = GlanceModifier.width(timeColumnWidthDp(timePattern).dp)
-        )
-
-        Spacer(modifier = GlanceModifier.width(TIME_TO_TITLE_GAP_DP.dp))
-
-        Text(
-            text = displayTitle,
-            style = TextStyle(
-                color = if (event.isPast || event.isCancelled) WidgetTheme.pastEventText else WidgetTheme.primaryText,
-                fontSize = WidgetTypography.contentTitle,
-                fontWeight = FontWeight.Medium,
-                textDecoration = if (event.isPast || event.isCancelled) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            maxLines = 1,
-            modifier = GlanceModifier.defaultWeight()
-        )
+        EventRowInner(event, dayCode, showEventEmojis, timePattern, detailedRows)
     }
 }
 

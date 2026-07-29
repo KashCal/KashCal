@@ -51,15 +51,16 @@ object WidgetTheme {
     /**
      * Content/widget background — Glance's widget background role.
      *
-     * Both accent sources are built by `accentColorProviders` (SEED from the picked accent, the
-     * automatic source from the wallpaper-derived system accent), which overrides this role to
-     * `surfaceVariant` — the most-tinted body role that keeps item text at full contrast for every
-     * seed. It carries a visible accent tint yet sits at nearly the header's tone at the widget's
-     * low contrast level, so the widget reads as one near-uniform tinted panel. `secondaryContainer`
-     * carries more chroma but its non-guaranteed pairing with the item/secondary text roles drops
-     * below AA for saturated seeds, so it is not a safe body. Item text on `surfaceVariant`
-     * (onSurface) clears AA with margin for every seed. (On the rare device where no system accent is
-     * available, the widget falls back to the platform's own widgetBackground.)
+     * For the in-app SEED accent, `accentColorProviders` overrides this role to `surfaceVariant` —
+     * the most-tinted body role that keeps item text at full contrast for every seed. It carries a
+     * visible accent tint yet sits at nearly the header's tone at the widget's low contrast level, so
+     * the widget reads as one near-uniform tinted panel. `secondaryContainer` carries more chroma but
+     * its non-guaranteed pairing with the item/secondary text roles drops below AA for saturated
+     * seeds, so it is not a safe body. Item text on `surfaceVariant` (onSurface) clears AA with margin
+     * for every seed.
+     *
+     * The automatic (Material You) source does not build these providers; it renders on the device's
+     * genuine dynamic palette, so this role is then the platform's own widgetBackground.
      */
     val contentBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.widgetBackground

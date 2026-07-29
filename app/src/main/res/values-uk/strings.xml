@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Показувати відхилені події</string>
     <string name="settings_widget_event_limit">Ліміт подій у віджеті</string>
     <string name="settings_widget_event_limit_hint">Максимум подій на день у віджетах</string>
+    <string name="settings_detailed_widget_rows">Докладні рядки віджета</string>
+    <string name="settings_detailed_widget_rows_info">Компактний один рядок або докладні два рядки з часом завершення.</string>
     <string name="settings_sync_lookback">Глибина синхронізації</string>
     <string name="settings_sync_lookback_hint">Наскільки давні події синхронізувати</string>
     <string name="settings_not_set">Не задано</string>

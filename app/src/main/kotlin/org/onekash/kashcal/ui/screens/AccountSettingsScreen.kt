@@ -253,6 +253,8 @@ fun AccountSettingsScreen(
     onShowWeekNumbersChange: (Boolean) -> Unit = {},
     widgetMaxEventsPerDay: Int = 5,
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
+    widgetDetailedRows: Boolean = false,
+    onWidgetDetailedRowsChange: (Boolean) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = "",
     // Settings search
@@ -499,6 +501,22 @@ fun AccountSettingsScreen(
                                 value = widgetLimitValue,
                                 onClick = { showWidgetEventLimitSheet = true },
                                 showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val detailedRowsInfo = SettingsRowInfo(
+                            title = stringResource(R.string.settings_detailed_widget_rows),
+                            text = stringResource(R.string.settings_detailed_widget_rows_info)
+                        )
+                        row(label = stringResource(R.string.settings_detailed_widget_rows), id = "widget-detailed-rows") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.Widgets,
+                                label = stringResource(R.string.settings_detailed_widget_rows),
+                                checked = widgetDetailedRows,
+                                onCheckedChange = onWidgetDetailedRowsChange,
+                                info = detailedRowsInfo,
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )

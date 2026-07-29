@@ -530,6 +530,8 @@
     <string name="settings_show_declined">ತಿರಸ್ಕರಿಸಿದ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
     <string name="settings_widget_event_limit">ವಿಜೆಟ್ ಈವೆಂಟ್ ಮಿತಿ</string>
     <string name="settings_widget_event_limit_hint">ವಿಜೆಟ್‌ಗಳಲ್ಲಿ ದಿನಕ್ಕೆ ತೋರಿಸುವ ಗರಿಷ್ಠ ಈವೆಂಟ್‌ಗಳು</string>
+    <string name="settings_detailed_widget_rows">ವಿವರವಾದ ವಿಜೆಟ್ ಸಾಲುಗಳು</string>
+    <string name="settings_detailed_widget_rows_info">ಸಂಕ್ಷಿಪ್ತ ಒಂದೇ ಸಾಲು, ಅಥವಾ ಅಂತ್ಯ ಸಮಯದೊಂದಿಗೆ ವಿವರವಾದ ಎರಡು ಸಾಲುಗಳು.</string>
     <string name="settings_sync_lookback">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್</string>
     <string name="settings_sync_lookback_hint">ಎಷ್ಟು ಹಿಂದಿನವರೆಗೆ ಈವೆಂಟ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಬೇಕು</string>
     <string name="settings_not_set">ಸೆಟ್ ಆಗಿಲ್ಲ</string>

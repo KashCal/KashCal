@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Прикажи одбиени настани</string>
     <string name="settings_widget_event_limit">Ограничување на настани за виџет</string>
     <string name="settings_widget_event_limit_hint">Најмногу настани прикажани дневно во виџетите</string>
+    <string name="settings_detailed_widget_rows">Детални редови во виџетот</string>
+    <string name="settings_detailed_widget_rows_info">Компактен единечен ред или детални два реда со времето на завршување.</string>
     <string name="settings_sync_lookback">Период за синхронизација наназад</string>
     <string name="settings_sync_lookback_hint">Колку наназад да се синхронизираат настаните</string>
     <string name="settings_not_set">Не е поставено</string>

@@ -409,6 +409,18 @@ class KashCalDataStore(
     }
 
     /**
+     * Whether widget event rows render in the detailed two-line style (title, then
+     * start-end time) instead of the compact single-line style. Applies to the Agenda,
+     * Week, and Upcoming list widgets. Default: false (compact).
+     */
+    val widgetDetailedRows: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.WIDGET_DETAILED_ROWS, false)
+
+    suspend fun setWidgetDetailedRows(detailed: Boolean) {
+        setPreference(PreferencesKeys.WIDGET_DETAILED_ROWS, detailed)
+    }
+
+    /**
      * Last time-grid scroll position as minutes from midnight (0..1439).
      * -1 means never saved: fresh installs fall back to the default scroll hour.
      */

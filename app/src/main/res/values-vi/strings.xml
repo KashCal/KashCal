@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
     <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
     <string name="settings_widget_event_limit_hint">Số sự kiện tối đa hiển thị mỗi ngày trong widget</string>
+    <string name="settings_detailed_widget_rows">Hàng chi tiết của widget</string>
+    <string name="settings_detailed_widget_rows_info">Một dòng gọn, hoặc hai dòng chi tiết kèm giờ kết thúc.</string>
     <string name="settings_sync_lookback">Khoảng đồng bộ ngược</string>
     <string name="settings_sync_lookback_hint">Đồng bộ sự kiện từ bao lâu trước</string>
     <string name="settings_not_set">Chưa đặt</string>

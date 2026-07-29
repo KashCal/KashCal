@@ -12,8 +12,8 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 35 keys`() {
-        assertEquals(35, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 36 keys`() {
+        assertEquals(36, ExportablePreferences.KEYS.size)
     }
 
     @Test

@@ -18,3 +18,32 @@ sdk.dir=/path/to/android/sdk
 #
 # ICLOUD_USERNAME=your_apple_id@icloud.com
 # ICLOUD_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+
+# Local CalDAV test servers (optional; only for -Pintegration multiserver tests).
+# See docs/CALDAV_TEST_SERVERS.md for the container provisioning recipe.
+# Standard local user is testuser1 / testpass1 unless noted.
+#
+# NEXTCLOUD_SERVER=http://localhost:8080
+# NEXTCLOUD_USERNAME=testuser1
+# NEXTCLOUD_PASSWORD=testpass1
+# RADICALE_SERVER=http://localhost:5232           # auth disabled — any creds
+# RADICALE_USERNAME=testuser1
+# RADICALE_PASSWORD=testpass1
+# BAIKAL_SERVER=http://localhost:8081
+# BAIKAL_USERNAME=testuser1
+# BAIKAL_PASSWORD=testpass1
+# BAIKAL_DIGEST_SERVER=http://localhost:8083      # Digest auth
+# BAIKAL_DIGEST_USERNAME=testuser1
+# BAIKAL_DIGEST_PASSWORD=testpass1
+# SOGO_SERVER=http://localhost:8084
+# SOGO_USERNAME=testuser1
+# SOGO_PASSWORD=testpass1
+# STALWART_SERVER=http://localhost:8082           # strong password required
+# STALWART_USERNAME=testuser1
+# STALWART_PASSWORD=caldav-Test-User1-Kx9
+# CYRUS_SERVER=http://localhost:8090              # Cyrus (Fastmail's engine); any password
+# CYRUS_USERNAME=user1
+# CYRUS_PASSWORD=x
+# XANDIKOS_SERVER=http://localhost:8999           # auth disabled — any creds
+# XANDIKOS_USERNAME=testuser1
+# XANDIKOS_PASSWORD=testpass1

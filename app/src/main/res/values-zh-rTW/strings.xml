@@ -530,6 +530,8 @@
     <string name="settings_show_declined">顯示已拒絕的活動</string>
     <string name="settings_widget_event_limit">小工具事件上限</string>
     <string name="settings_widget_event_limit_hint">小工具中每天顯示的最多事件數</string>
+    <string name="settings_detailed_widget_rows">小工具詳細列</string>
+    <string name="settings_detailed_widget_rows_info">精簡單行顯示，或包含結束時間的詳細兩行顯示。</string>
     <string name="settings_sync_lookback">同步回溯範圍</string>
     <string name="settings_sync_lookback_hint">同步事件的回溯時長</string>
     <string name="settings_not_set">未設定</string>

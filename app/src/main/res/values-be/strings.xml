@@ -530,6 +530,8 @@
     <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="settings_widget_event_limit">Ліміт падзей у віджэце</string>
     <string name="settings_widget_event_limit_hint">Максімум падзей у дзень у віджэтах</string>
+    <string name="settings_detailed_widget_rows">Падрабязныя радкі віджэта</string>
+    <string name="settings_detailed_widget_rows_info">Кампактны адзін радок або падрабязныя два радкі з часам заканчэння.</string>
     <string name="settings_sync_lookback">Глыбіня сінхранізацыі</string>
     <string name="settings_sync_lookback_hint">Наколькі даўнія падзеі сінхранізаваць</string>
     <string name="settings_not_set">Не зададзена</string>
