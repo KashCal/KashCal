@@ -10,6 +10,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
+import org.onekash.kashcal.widget.WidgetColorSource
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
@@ -19,6 +20,11 @@ import javax.inject.Inject
  * into the app theme, so a change recolors the running app; [setAccentSeed] and
  * [setColorSource] also refresh widgets. App icon is handled composable-locally
  * via AppIconUtility and is not part of this ViewModel.
+ *
+ * The widget-appearance half ([widgetThemeMode]/[widgetColorSource]/[widgetAccentSeed])
+ * is deliberately independent of the app face: the app never reads it, only the
+ * Glance widgets do (via [org.onekash.kashcal.widget.resolveWidgetAccentColors]),
+ * so every setter here pushes a widget refresh but recolors nothing in the app.
  */
 @HiltViewModel
 class AppearanceViewModel @Inject constructor(
@@ -52,6 +58,40 @@ class AppearanceViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.setColorSource(source.prefValue)
             widgetUpdateManager.updateAllWidgetsForColorChange("color_source_changed")
+        }
+    }
+
+    // ========== Widget appearance (independent of the app face) ==========
+
+    val widgetThemeMode: Flow<ThemeMode> = dataStore.widgetThemeMode.map { ThemeMode.fromPrefValue(it) }
+
+    val widgetColorSource: Flow<WidgetColorSource> =
+        dataStore.widgetColorSource.map { WidgetColorSource.fromPrefValue(it) }
+
+    val widgetAccentSeed: Flow<Int> = dataStore.widgetAccentSeed
+
+    /** Pin the widgets' light/dark face (or follow the system again) and refresh widgets. */
+    fun setWidgetThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            dataStore.setWidgetThemeMode(mode.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("widget_theme_changed")
+        }
+    }
+
+    /** Pick a widget-only accent seed, switch the widget source to it, and refresh widgets. */
+    fun setWidgetAccentSeed(seed: Int) {
+        viewModelScope.launch {
+            dataStore.setWidgetAccentSeed(seed)
+            dataStore.setWidgetColorSource(WidgetColorSource.SEED.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("widget_accent_changed")
+        }
+    }
+
+    /** Switch the widget color source (follow app / dynamic) and refresh widgets. */
+    fun setWidgetColorSource(source: WidgetColorSource) {
+        viewModelScope.launch {
+            dataStore.setWidgetColorSource(source.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("widget_color_source_changed")
         }
     }
 }

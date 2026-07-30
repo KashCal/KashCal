@@ -13,7 +13,7 @@ import androidx.glance.unit.ColorProvider
  * Properties that delegate to GlanceTheme.colors are @Composable getters — all call sites
  * are already in @Composable functions, so this is transparent.
  *
- * One property stays static:
+ * One stays static (no M3 token, but pin-aware):
  * - adjacentMonthText: needs to be nearly invisible (no outlineVariant in Glance)
  */
 object WidgetTheme {
@@ -103,11 +103,21 @@ object WidgetTheme {
     val onTodayMarker: ColorProvider
         @Composable get() = GlanceTheme.colors.onPrimary
 
-    /** Adjacent month text color (very faded, for InDate/OutDate cells) — static, no M3 token */
-    val adjacentMonthText = ColorProvider(
-        day = Color(0xFFD0D0D0),   // Very light gray
-        night = Color(0xFF505050)  // Very dark gray
-    )
+    /**
+     * Adjacent month text color (very faded, for InDate/OutDate cells) — static, no M3 token.
+     *
+     * [forcedDark] is the widget's light/dark pin (see [WidgetColorConfig]): when the face is
+     * pinned, day and night collapse onto the forced face's gray so the static pair can't flip
+     * against the pinned scheme; null follows the system day/night setting as before.
+     */
+    fun adjacentMonthText(forcedDark: Boolean? = null) = when (forcedDark) {
+        null -> ColorProvider(
+            day = Color(0xFFD0D0D0),   // Very light gray
+            night = Color(0xFF505050)  // Very dark gray
+        )
+        true -> ColorProvider(day = Color(0xFF505050), night = Color(0xFF505050))
+        false -> ColorProvider(day = Color(0xFFD0D0D0), night = Color(0xFFD0D0D0))
+    }
 }
 
 /**

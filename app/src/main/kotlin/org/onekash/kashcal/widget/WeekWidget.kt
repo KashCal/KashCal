@@ -62,7 +62,7 @@ class WeekWidget : GlanceAppWidget() {
         // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
         // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
         // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
-        val initialAccent = resolveWidgetAccentColors(dataStore)
+        val initialAccent = resolveWidgetAccentColors(context, dataStore).colors
 
         provideContent {
             val prefs = currentState<Preferences>()
@@ -83,7 +83,7 @@ class WeekWidget : GlanceAppWidget() {
                 value = fetchWeekData(repository, dataStore, context)
             }
             val accentColors by produceState(initialValue = initialAccent, key1 = stamp) {
-                value = resolveWidgetAccentColors(dataStore)
+                value = resolveWidgetAccentColors(context, dataStore).colors
             }
             GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
                 WeekWidgetContent(

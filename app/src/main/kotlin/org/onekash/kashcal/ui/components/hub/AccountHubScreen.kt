@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -77,6 +78,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.appicon.AppIconUtility
 import org.onekash.kashcal.ui.components.formatBadgeCount
 import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
+import org.onekash.kashcal.ui.components.pickers.WidgetAccentColorSheet
 import org.onekash.kashcal.ui.screens.settings.AppIconSheet
 import org.onekash.kashcal.ui.screens.settings.ThemeSheet
 import org.onekash.kashcal.ui.shared.EventColorPalette
@@ -84,6 +86,7 @@ import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AppearanceViewModel
 import org.onekash.kashcal.util.ExternalLinks
+import org.onekash.kashcal.widget.WidgetColorSource
 
 /**
  * Full-screen "account hub" that replaces the former overflow bottom sheet.
@@ -248,9 +251,10 @@ private fun HubSectionHeader(text: String) {
 
 /**
  * Personalization rows (theme, accent color, app icon) driven by
- * [AppearanceViewModel]. Each row opens the same reusable sheet the settings
- * screen used, so there's no duplicated picker logic; the sheets render on top
- * of the hub and dismiss back to it.
+ * [AppearanceViewModel], plus the widget-appearance rows (widget design, widget
+ * accent) which are independent of the app face. Each row opens the same
+ * reusable sheet the settings screen used, so there's no duplicated picker
+ * logic; the sheets render on top of the hub and dismiss back to it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -259,6 +263,9 @@ private fun MakeItYoursSection() {
     val themeMode by vm.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
     val colorSource by vm.colorSource.collectAsStateWithLifecycle(initialValue = ColorSource.DYNAMIC)
     val accentSeed by vm.accentSeed.collectAsStateWithLifecycle(initialValue = KashCalDataStore.ACCENT_SEED_DEFAULT)
+    val widgetThemeMode by vm.widgetThemeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val widgetColorSource by vm.widgetColorSource.collectAsStateWithLifecycle(initialValue = WidgetColorSource.FOLLOW_APP)
+    val widgetAccentSeed by vm.widgetAccentSeed.collectAsStateWithLifecycle(initialValue = KashCalDataStore.ACCENT_SEED_DEFAULT)
 
     val context = LocalContext.current
     val appIconUtility = remember(context) { AppIconUtility(context) }
@@ -267,6 +274,8 @@ private fun MakeItYoursSection() {
     var showThemeSheet by rememberSaveable { mutableStateOf(false) }
     var showAccentSheet by rememberSaveable { mutableStateOf(false) }
     var showAppIconSheet by rememberSaveable { mutableStateOf(false) }
+    var showWidgetThemeSheet by rememberSaveable { mutableStateOf(false) }
+    var showWidgetAccentSheet by rememberSaveable { mutableStateOf(false) }
 
     HubDrawerItem(
         label = stringResource(R.string.settings_theme),
@@ -306,6 +315,41 @@ private fun MakeItYoursSection() {
         badge = { Text(stringResource(currentAppIcon.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
     )
 
+    // Widgets get their own light/dark face and color source, independent of the app face above.
+    HubSectionHeader(stringResource(R.string.settings_widgets_section))
+    HubDrawerItem(
+        label = stringResource(R.string.settings_widget_theme),
+        icon = Icons.Default.Widgets,
+        onClick = { showWidgetThemeSheet = true },
+        badge = { Text(stringResource(widgetThemeMode.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+    )
+    val widgetAccentSubtitle = when {
+        widgetColorSource == WidgetColorSource.FOLLOW_APP -> stringResource(R.string.settings_widget_color_follow_app)
+        widgetColorSource == WidgetColorSource.DYNAMIC -> stringResource(R.string.settings_accent_color_dynamic)
+        // Brand teal isn't a CSS3 palette entry, so it would otherwise read as "Custom".
+        widgetAccentSeed == KashCalDataStore.ACCENT_SEED_DEFAULT -> stringResource(R.string.settings_accent_color_brand)
+        else -> stringResource(EventColorPalette.stringResIdForColor(widgetAccentSeed))
+    }
+    HubDrawerItem(
+        label = stringResource(R.string.settings_widget_accent_color),
+        icon = Icons.Default.Palette,
+        onClick = { showWidgetAccentSheet = true },
+        badge = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(widgetAccentSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (widgetColorSource == WidgetColorSource.SEED) {
+                    Spacer(Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(Color(widgetAccentSeed)),
+                    )
+                }
+            }
+        },
+    )
+
     if (showThemeSheet) {
         ThemeSheet(
             sheetState = rememberModalBottomSheetState(),
@@ -321,6 +365,25 @@ private fun MakeItYoursSection() {
             onColorSelected = { vm.setAccentSeed(it); showAccentSheet = false },
             onUseDynamic = { vm.setColorSource(ColorSource.DYNAMIC); showAccentSheet = false },
             onDismiss = { showAccentSheet = false },
+        )
+    }
+    if (showWidgetThemeSheet) {
+        ThemeSheet(
+            sheetState = rememberModalBottomSheetState(),
+            currentMode = widgetThemeMode,
+            onModeSelect = { vm.setWidgetThemeMode(it) },
+            onDismiss = { showWidgetThemeSheet = false },
+            titleRes = R.string.settings_widget_theme,
+        )
+    }
+    if (showWidgetAccentSheet) {
+        WidgetAccentColorSheet(
+            source = widgetColorSource,
+            selectedArgb = widgetAccentSeed,
+            onFollowApp = { vm.setWidgetColorSource(WidgetColorSource.FOLLOW_APP); showWidgetAccentSheet = false },
+            onUseDynamic = { vm.setWidgetColorSource(WidgetColorSource.DYNAMIC); showWidgetAccentSheet = false },
+            onColorSelected = { vm.setWidgetAccentSeed(it); showWidgetAccentSheet = false },
+            onDismiss = { showWidgetAccentSheet = false },
         )
     }
     if (showAppIconSheet) {
