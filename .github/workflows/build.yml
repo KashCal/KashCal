@@ -31,6 +31,13 @@ jobs:
     - name: Build debug APK
       run: ./gradlew assembleDebug --no-daemon
 
+    - name: Upload debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7
+
     - name: Run unit tests
       run: ./gradlew testDebugUnitTest --no-daemon
 
