@@ -34,6 +34,9 @@ object ExportablePreferences {
         PreferencesKeys.THEME.name to PrefKind.STRING,
         PreferencesKeys.COLOR_SOURCE.name to PrefKind.STRING,
         PreferencesKeys.ACCENT_SEED.name to PrefKind.INT,
+        PreferencesKeys.WIDGET_COLOR_SOURCE.name to PrefKind.STRING,
+        PreferencesKeys.WIDGET_ACCENT_SEED.name to PrefKind.INT,
+        PreferencesKeys.WIDGET_THEME_MODE.name to PrefKind.STRING,
         PreferencesKeys.NOTIFICATION_SOUND.name to PrefKind.BOOL,
         PreferencesKeys.NOTIFICATION_VIBRATE.name to PrefKind.BOOL,
         PreferencesKeys.QUICK_ADD_ENABLED.name to PrefKind.BOOL,
@@ -79,6 +82,10 @@ object ExportablePreferences {
         PreferencesKeys.THEME,
         PreferencesKeys.COLOR_SOURCE,
         PreferencesKeys.ACCENT_SEED,
+        // Widget appearance — deliberate, persistent choices like the app face above
+        PreferencesKeys.WIDGET_COLOR_SOURCE,
+        PreferencesKeys.WIDGET_ACCENT_SEED,
+        PreferencesKeys.WIDGET_THEME_MODE,
         PreferencesKeys.NOTIFICATION_SOUND,
         PreferencesKeys.NOTIFICATION_VIBRATE,
         PreferencesKeys.QUICK_ADD_ENABLED,
@@ -105,8 +112,8 @@ object ExportablePreferences {
         // Profile — user's avatar initials travel with a settings backup
         PreferencesKeys.USER_INITIALS,
     ).also {
-        require(it.size == 36) {
-            "KEYS size drifted; expected 36 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 39) {
+            "KEYS size drifted; expected 39 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 
