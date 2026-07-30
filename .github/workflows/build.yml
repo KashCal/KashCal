@@ -1,8 +1,12 @@
 name: Build
 
 on:
+  # Feature-branch pushes get compile + unit-test feedback without needing a PR.
+  push:
+    branches-ignore: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 permissions: read-all
 

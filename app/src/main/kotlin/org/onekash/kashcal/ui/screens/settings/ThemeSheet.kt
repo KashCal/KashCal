@@ -48,10 +48,11 @@ fun themeSheetOptions(): List<ThemeSheetOption> =
     ThemeMode.entries.map { ThemeSheetOption(it, it.labelRes, it.descriptionRes) }
 
 /**
- * Bottom sheet for selecting the app's light/dark face.
+ * Bottom sheet for selecting a light/dark face.
  *
  * System default follows the device light/dark setting; Light and Dark force that appearance.
- * The accent color is chosen separately (see the accent color picker).
+ * The accent color is chosen separately (see the accent color picker). Used for both the app's
+ * theme and the widgets' independent face — [titleRes] says which one the sheet is driving.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +61,7 @@ fun ThemeSheet(
     currentMode: ThemeMode,
     onModeSelect: (ThemeMode) -> Unit,
     onDismiss: () -> Unit,
+    @StringRes titleRes: Int = R.string.settings_theme,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -72,7 +74,7 @@ fun ThemeSheet(
                 .selectableGroup(),
         ) {
             Text(
-                text = stringResource(R.string.settings_theme),
+                text = stringResource(titleRes),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             )

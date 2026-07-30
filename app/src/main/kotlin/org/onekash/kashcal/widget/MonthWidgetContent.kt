@@ -136,6 +136,8 @@ internal fun formatMonthHeader(
  * @param targetMonth0 0-indexed month of the displayed month
  * @param firstDayOfWeek java.util.Calendar constant for first day of week
  * @param showWeekNumbers whether to render the leading week-of-year gutter column
+ * @param forcedDark the widget's light/dark pin (null = follow system) — used for the static
+ *   adjacent-month text color, which lives outside the Glance scheme and can't see a pinned face
  */
 @Composable
 fun MonthWidgetContent(
@@ -145,7 +147,8 @@ fun MonthWidgetContent(
     targetYear: Int,
     targetMonth0: Int,
     firstDayOfWeek: Int,
-    showWeekNumbers: Boolean = false
+    showWeekNumbers: Boolean = false,
+    forcedDark: Boolean? = null
 ) {
     val headerText = formatMonthHeader(targetYear, targetMonth0)
     val todayDayCode = run {
@@ -190,7 +193,8 @@ fun MonthWidgetContent(
                         dayCode = dayCode,
                         events = events,
                         isToday = isToday,
-                        isPast = isPast
+                        isPast = isPast,
+                        forcedDark = forcedDark
                     )
                 }
             }
@@ -362,7 +366,8 @@ private fun DayCell(
     dayCode: Int,
     events: List<WidgetDataRepository.WidgetEvent>,
     isToday: Boolean,
-    isPast: Boolean
+    isPast: Boolean,
+    forcedDark: Boolean? = null
 ) {
     val isAdjacentMonth = cell.position != MonthGrid.DayPosition.MonthDate
     val resources = LocalContext.current.resources
@@ -387,7 +392,7 @@ private fun DayCell(
             Text(
                 text = "${cell.dayOfMonth}",
                 style = TextStyle(
-                    color = WidgetTheme.adjacentMonthText,
+                    color = WidgetTheme.adjacentMonthText(forcedDark),
                     fontSize = WidgetTypography.monthDayNumber
                 )
             )
