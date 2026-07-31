@@ -3,6 +3,7 @@ package org.onekash.kashcal.domain.writer
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -114,6 +115,87 @@ class EventWriterTest {
     @After
     fun teardown() {
         database.close()
+    }
+
+    // ========== Category usage tracking ==========
+
+    @Test
+    fun `createEvent records category usage with the save timestamp`() = runTest {
+        val event = createBaseEvent().copy(categories = listOf("Work", "Gym"))
+
+        eventWriter.createEvent(event, isLocal = true)
+
+        val work = database.categoryDao().getByName("Work")
+        val gym = database.categoryDao().getByName("Gym")
+        assertNotNull("saving an event registers its tags", work)
+        assertNotNull(gym)
+        assertTrue("recency is stamped at save time", work!!.lastUsedAt > 0L)
+    }
+
+    @Test
+    fun `createEvent with no categories touches nothing`() = runTest {
+        eventWriter.createEvent(createBaseEvent(), isLocal = true)
+
+        assertEquals(0, database.categoryDao().observeAll().first().size)
+    }
+
+    @Test
+    fun `re-saving an event never clobbers a tag's custom color`() = runTest {
+        // The user has chosen a custom color for "Work".
+        database.categoryDao().setColor("Work", 0xFF4457C9.toInt(), now = 1L)
+        val created = eventWriter.createEvent(
+            createBaseEvent().copy(categories = listOf("Work")),
+            isLocal = true
+        )
+
+        eventWriter.updateEvent(created.copy(title = "Edited"), isLocal = true)
+
+        assertEquals(
+            "usage tracking must preserve the chosen color",
+            0xFF4457C9.toInt(),
+            database.categoryDao().getByName("Work")!!.color
+        )
+    }
+
+    @Test
+    fun `updateEvent advances category recency`() = runTest {
+        database.categoryDao().touch("Work", now = 1L)
+        val created = eventWriter.createEvent(
+            createBaseEvent().copy(categories = listOf("Work")),
+            isLocal = true
+        )
+        val afterCreate = database.categoryDao().getByName("Work")!!.lastUsedAt
+
+        eventWriter.updateEvent(created.copy(title = "Edited"), isLocal = true)
+
+        assertTrue(
+            "editing a tagged event bumps the tag's recency",
+            database.categoryDao().getByName("Work")!!.lastUsedAt >= afterCreate
+        )
+    }
+
+    @Test
+    fun `recordCategoryUsage registers a brand-new tag as a colorless registry row`() = runTest {
+        // The device save path reconciles tags through this entry point rather
+        // than a Room createEvent. A never-seen name must join the registry so
+        // it becomes selectable and colorable — with no color assigned yet.
+        eventWriter.recordCategoryUsage(listOf("Errand"))
+
+        val errand = database.categoryDao().getByName("Errand")
+        assertNotNull("a freshly-applied tag joins the shared registry", errand)
+        assertNull("a new tag has no color until the user picks one", errand!!.color)
+        assertTrue("recency is stamped so it surfaces in suggestions", errand.lastUsedAt > 0L)
+    }
+
+    @Test
+    fun `recordCategoryUsage bumps recency without clobbering an existing color`() = runTest {
+        database.categoryDao().setColor("Work", 0xFF4457C9.toInt(), now = 1L)
+
+        eventWriter.recordCategoryUsage(listOf("Work"))
+
+        val work = database.categoryDao().getByName("Work")!!
+        assertEquals("the user's chosen color survives usage tracking", 0xFF4457C9.toInt(), work.color)
+        assertTrue("reusing the tag bumps its recency", work.lastUsedAt > 1L)
     }
 
     // ========== Create Event ==========

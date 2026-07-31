@@ -1,0 +1,4 @@
+• Added a tag manager reached from your account, where each tag has a color you choose, a name you can change, and a delete
+• Changed a tag rename to propagate: it updates your KashCal and CalDAV events carrying the tag and syncs the new name to your other devices
+• Added tags to device-calendar events: add and remove them in the editor, with the same colors and suggestions as your other events
+• Added a configurable all-day row count in the day, 3-day, and week views, with a chevron to expand the all-day strip (#204)

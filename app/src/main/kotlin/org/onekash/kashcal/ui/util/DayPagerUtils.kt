@@ -97,7 +97,17 @@ object DayPagerUtils {
         val localDate = Instant.ofEpochMilli(ms)
             .atZone(ZoneId.systemDefault())
             .toLocalDate()
-        return localDate.year * 10000 + localDate.monthValue * 100 + localDate.dayOfMonth
+        return localDateToDayCode(localDate)
+    }
+
+    /**
+     * Convert a LocalDate to dayCode (YYYYMMDD format).
+     *
+     * @param date The date to pack
+     * @return DayCode in YYYYMMDD format (e.g., 20260115 for Jan 15, 2026)
+     */
+    fun localDateToDayCode(date: LocalDate): Int {
+        return date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
     }
 
     /**

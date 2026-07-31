@@ -33,6 +33,7 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.DayCellStyle
 import org.onekash.kashcal.ui.components.pickers.dayCellStyle
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
+import org.onekash.kashcal.ui.util.DayPagerUtils
 import java.time.LocalDate
 
 /**
@@ -99,7 +100,7 @@ internal fun AgendaWeekBar(
         ) { dates ->
             Row(modifier = Modifier.padding(top = 2.dp)) {
                 dates.forEach { date ->
-                    val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+                    val dayCode = DayPagerUtils.localDateToDayCode(date)
                     DateCell(
                         date = date,
                         isToday = dayCode == todayDayCode,

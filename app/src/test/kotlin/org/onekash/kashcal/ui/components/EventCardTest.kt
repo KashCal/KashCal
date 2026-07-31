@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -53,6 +54,39 @@ class EventCardTest {
             isVisible = true,
         )
         return DisplayEvent.Room(event = event, occurrence = occ, calendar = cal)
+    }
+
+    private fun deviceEvent(categories: List<String>): DisplayEvent.Device {
+        val instance = DeviceCalendarInstance(
+            instanceId = 1L,
+            eventId = 100L,
+            title = "Standup",
+            description = "",
+            location = "",
+            startTs = 1_000,
+            endTs = 4_600_000,
+            startDay = 20260101,
+            endDay = 20260101,
+            isAllDay = false,
+            hasRrule = false,
+            rrule = null,
+            reminders = emptyList(),
+            calendarId = 1L,
+            calendarDisplayName = "Device",
+            calendarColor = 0xFF4CAF50.toInt(),
+            eventColor = null,
+            status = 1,
+            availability = 0,
+            hasAlarm = false,
+            selfAttendeeStatus = 0,
+            isWritable = true,
+            originalId = null,
+            originalInstanceTime = null,
+            timezone = "UTC",
+            eventStartTs = 1_000,
+            categories = categories,
+        )
+        return DisplayEvent.Device(instance)
     }
 
     private fun countWithText(text: String): Int =
@@ -106,6 +140,41 @@ class EventCardTest {
             }
         }
         // First 3 shown, remaining 2 collapsed into a "+2 more" badge.
+        assertEquals(1, countWithText("A"))
+        assertEquals(1, countWithText("B"))
+        assertEquals(1, countWithText("C"))
+        assertEquals(0, countWithText("D"))
+        assertEquals(1, countWithText("2 more"))
+    }
+
+    @Test
+    fun device_event_shows_chips_via_same_component() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                EventCard(
+                    displayEvent = deviceEvent(listOf("Work", "Urgent")),
+                    isPast = false,
+                    selectedDate = 1_000,
+                    onClick = {},
+                )
+            }
+        }
+        assertEquals(1, countWithText("Work"))
+        assertEquals(1, countWithText("Urgent"))
+    }
+
+    @Test
+    fun device_event_with_many_tags_truncates_to_plus_n_more() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                EventCard(
+                    displayEvent = deviceEvent(listOf("A", "B", "C", "D", "E")),
+                    isPast = false,
+                    selectedDate = 1_000,
+                    onClick = {},
+                )
+            }
+        }
         assertEquals(1, countWithText("A"))
         assertEquals(1, countWithText("B"))
         assertEquals(1, countWithText("C"))

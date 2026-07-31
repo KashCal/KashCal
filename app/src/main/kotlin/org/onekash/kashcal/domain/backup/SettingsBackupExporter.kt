@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.backup
 
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.BuildConfig
+import org.onekash.kashcal.data.db.dao.CategoryDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import java.time.Instant
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 class SettingsBackupExporter(
     private val dataStore: KashCalDataStore,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
+    private val categoryDao: CategoryDao,
     private val appVersionProvider: () -> String = { BuildConfig.VERSION_NAME },
     private val nowProvider: () -> Instant = { Instant.now() },
 ) {
@@ -27,12 +29,14 @@ class SettingsBackupExporter(
     constructor(
         dataStore: KashCalDataStore,
         icsSubscriptionsDao: IcsSubscriptionsDao,
-    ) : this(dataStore, icsSubscriptionsDao, { BuildConfig.VERSION_NAME }, { Instant.now() })
+        categoryDao: CategoryDao,
+    ) : this(dataStore, icsSubscriptionsDao, categoryDao, { BuildConfig.VERSION_NAME }, { Instant.now() })
 
 
     suspend fun exportSettings(): String {
         val preferences = collectPreferences()
         val subscriptionDtos = icsSubscriptionsDao.getAllOnce().map { it.toBackupSubscription() }
+        val categoryDtos = categoryDao.getColoredOnce().map { it.toBackupCategory() }
 
         val envelope = BackupEnvelope(
             fileFormatVersion = BACKUP_FILE_FORMAT_VERSION,
@@ -40,6 +44,7 @@ class SettingsBackupExporter(
             exportedAt = BackupFilename.generateIsoUtc(nowProvider()),
             preferences = preferences,
             subscriptions = subscriptionDtos,
+            categories = categoryDtos,
         )
         return BackupJson.encodeToString(BackupEnvelope.serializer(), envelope)
     }
@@ -64,4 +69,9 @@ class SettingsBackupExporter(
             enabled = enabled,
             username = username,
         )
+
+    // getColoredOnce only returns rows with a non-null color, so the non-null
+    // BackupCategory.color assertion here always holds.
+    private fun org.onekash.kashcal.data.db.entity.Category.toBackupCategory(): BackupCategory =
+        BackupCategory(name = name, color = color!!, lastUsedAt = lastUsedAt)
 }

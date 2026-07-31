@@ -113,6 +113,31 @@ class DayPagerUtilsTest {
     }
 
     @Test
+    fun `localDateToDayCode packs YYYYMMDD correctly`() {
+        assertEquals(20260115, DayPagerUtils.localDateToDayCode(LocalDate.of(2026, 1, 15)))
+    }
+
+    @Test
+    fun `localDateToDayCode and dayCodeToLocalDate are inverse operations`() {
+        val dates = listOf(
+            LocalDate.of(2026, 1, 15),
+            LocalDate.of(2024, 2, 29), // leap day
+            LocalDate.of(2025, 12, 31), // year boundary
+            LocalDate.of(2026, 1, 1),
+        )
+        dates.forEach { date ->
+            assertEquals(date, DayPagerUtils.dayCodeToLocalDate(DayPagerUtils.localDateToDayCode(date)))
+        }
+    }
+
+    @Test
+    fun `localDateToDayCode matches msToDayCode for the same day`() {
+        val date = LocalDate.of(2026, 1, 15)
+        val ms = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        assertEquals(DayPagerUtils.msToDayCode(ms), DayPagerUtils.localDateToDayCode(date))
+    }
+
+    @Test
     fun `dayCodeToMs and msToDayCode are inverse operations`() {
         val dayCode = 20260115
         val ms = DayPagerUtils.dayCodeToMs(dayCode)

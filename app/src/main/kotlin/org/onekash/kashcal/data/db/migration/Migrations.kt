@@ -3,8 +3,27 @@ package org.onekash.kashcal.data.db.migration
 import android.util.Log
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.serialization.json.Json
+import org.onekash.kashcal.data.db.entity.Category
 
 private const val TAG = "Migrations"
+
+/**
+ * Lenient JSON reader for the migration-time backfill of the `categories`
+ * table. Mirrors `Converters.toStringList` exactly — a null/blank or malformed
+ * value yields an empty list rather than throwing — so a single bad
+ * `events.categories` blob can never fault the whole migration.
+ */
+private val migrationJson = Json { ignoreUnknownKeys = true }
+
+private fun parseCategoriesBlob(value: String?): List<String> {
+    if (value.isNullOrBlank()) return emptyList()
+    return try {
+        migrationJson.decodeFromString<List<String>>(value)
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
 
 /**
  * Database migrations for KashCalDatabase.
@@ -105,6 +124,26 @@ object Migrations {
             }
         }
         return null
+    }
+
+    /**
+     * Whether [table]'s primary-key column is declared `COLLATE NOCASE`, read
+     * from the stored `CREATE TABLE` SQL in `sqlite_master`. Used to prove a
+     * migration produced a case-insensitive PK — a case-sensitive one would
+     * silently let cased duplicates split into two rows, which a column-
+     * existence check can't detect.
+     */
+    private fun primaryKeyIsNoCase(db: SupportSQLiteDatabase, table: String): Boolean {
+        db.query(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
+            arrayOf(table)
+        ).use { cursor ->
+            if (!cursor.moveToFirst() || cursor.isNull(0)) return false
+            val sql = cursor.getString(0)
+            // Match the PK column's own definition carrying NOCASE, e.g.
+            // `name` TEXT NOT NULL COLLATE NOCASE
+            return Regex("""COLLATE\s+NOCASE""", RegexOption.IGNORE_CASE).containsMatchIn(sql)
+        }
     }
 
     /**
@@ -1284,6 +1323,122 @@ object Migrations {
     }
 
     /**
+     * v21 -> v22: add the `categories` tag-metadata table.
+     *
+     * Same robustness shape as MIGRATION_20_21: one transaction with
+     * post-validation that throws *before* setTransactionSuccessful(), so a
+     * partial schema rolls back rather than leaving Room to fail its hash check
+     * on next launch. The CREATE SQL mirrors Room's generated v22 schema
+     * (NOCASE primary key, nullable color, non-null last_used_at) so the
+     * migrated identityHash matches the export.
+     *
+     * Beyond the table it seeds three curated defaults and backfills a row for
+     * every tag already present on events:
+     * - Seed runs BEFORE backfill; both use INSERT OR IGNORE, so where a
+     *   backfilled name collides (case-insensitively) with a seeded default the
+     *   seeded row wins and keeps its curated color.
+     * - Backfill is done in Kotlin by iterating the events rows (not via a
+     *   JSON SQL function, which has no precedent here and varies by SQLite
+     *   build): each `categories` blob is parsed with the same lenient
+     *   empty-on-malformed semantics as the app's TypeConverter, deduped
+     *   case-insensitively (first-seen casing kept), tracking the most recent
+     *   use, then inserted with color = NULL (renders via the name-hash color).
+     */
+    val MIGRATION_21_22 = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `categories` (" +
+                        "`name` TEXT NOT NULL COLLATE NOCASE, " +
+                        "`color` INTEGER, " +
+                        "`last_used_at` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`name`))"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_categories_last_used_at` " +
+                        "ON `categories` (`last_used_at`)"
+                )
+
+                // Seed the curated defaults first (non-null colors). INSERT OR
+                // IGNORE so a user who already tagged events "Work" keeps their
+                // row and the seed stays deterministic on a re-run.
+                val seedNow = System.currentTimeMillis()
+                for ((name, color) in Category.DEFAULT_SEEDS) {
+                    db.execSQL(
+                        "INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, ?, ?)",
+                        arrayOf<Any?>(name, color, seedNow)
+                    )
+                }
+
+                // Backfill from existing event tags. Dedup case-insensitively,
+                // first-seen casing wins, and track the most recent use so the
+                // suggestion ranking is meaningful immediately after upgrade.
+                data class Backfilled(val display: String, var lastUsed: Long)
+                val byKey = LinkedHashMap<String, Backfilled>()
+                db.query(
+                    "SELECT categories, COALESCE(local_modified_at, start_ts) AS recency " +
+                        "FROM events WHERE categories IS NOT NULL AND categories != ''"
+                ).use { cursor ->
+                    val categoriesIndex = cursor.getColumnIndexOrThrow("categories")
+                    val recencyIndex = cursor.getColumnIndexOrThrow("recency")
+                    while (cursor.moveToNext()) {
+                        val blob = cursor.getString(categoriesIndex)
+                        val recency = if (cursor.isNull(recencyIndex)) 0L else cursor.getLong(recencyIndex)
+                        for (raw in parseCategoriesBlob(blob)) {
+                            val name = raw.trim()
+                            if (name.isEmpty()) continue
+                            val key = name.lowercase()
+                            val existing = byKey[key]
+                            if (existing == null) {
+                                byKey[key] = Backfilled(display = name, lastUsed = recency)
+                            } else if (recency > existing.lastUsed) {
+                                existing.lastUsed = recency
+                            }
+                        }
+                    }
+                }
+                for (entry in byKey.values) {
+                    db.execSQL(
+                        "INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, NULL, ?)",
+                        arrayOf<Any?>(entry.display, entry.lastUsed)
+                    )
+                }
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!tableExists(db, "categories")) {
+                        add("categories (table)")
+                    } else {
+                        for (col in listOf("name", "color", "last_used_at")) {
+                            if (!columnExists(db, "categories", col)) add("categories.$col")
+                        }
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_21_22 post-migration validation failed: missing $missing"
+                    )
+                }
+                // A silently case-sensitive PK would let `Work` and `work` split
+                // into two rows and defeat the case-insensitive dedup guarantee,
+                // which a plain column-existence check would not catch.
+                if (!primaryKeyIsNoCase(db, "categories")) {
+                    throw IllegalStateException(
+                        "MIGRATION_21_22 post-migration validation failed: " +
+                            "categories.name is not COLLATE NOCASE"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -1306,6 +1461,7 @@ object Migrations {
         MIGRATION_17_18,
         MIGRATION_18_19,
         MIGRATION_19_20,
-        MIGRATION_20_21
+        MIGRATION_20_21,
+        MIGRATION_21_22
     )
 }

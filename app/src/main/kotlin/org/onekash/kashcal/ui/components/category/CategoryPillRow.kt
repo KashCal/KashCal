@@ -39,13 +39,18 @@ fun CategoryPillRow(
     val visible = names.take(maxVisible)
     val overflow = names.size - visible.size
 
+    // Per-tag custom colors from the screen root; unprovided (previews/tests)
+    // it's empty and every pill falls back to its hash color.
+    val tagColors = LocalTagColors.current
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         visible.forEach { tag ->
-            val bg = Color(colorForTag(tag))
-            val fg = Color(onColorFor(colorForTag(tag)))
+            val tagColor = colorFor(tagColors, tag)
+            val bg = Color(tagColor)
+            val fg = Color(onColorFor(tagColor))
             val cd = stringResource(R.string.cd_tag, tag)
             Text(
                 text = tag,

@@ -86,6 +86,10 @@ fun TagChipRow(
     val cdTemplate = stringResource(R.string.cd_tag)
     val addLabel = stringResource(R.string.tags_new)
 
+    // Per-tag custom colors from the screen root; unprovided (previews/tests)
+    // it's empty and every chip falls back to its hash color.
+    val tagColors = LocalTagColors.current
+
     // Commit a typed name (from the field's Done action or the "Create" row):
     // validate, and on success add it and collapse back to the resting line.
     // Validate against both applied tags and suggestions so a typed name that
@@ -118,8 +122,9 @@ fun TagChipRow(
             // Skip blank names — a malformed pulled CATEGORIES value can carry
             // an empty element that would otherwise render as a blank chip.
             selected.filter { it.isNotBlank() }.forEach { tag ->
-                val bg = Color(colorForTag(tag))
-                val fg = Color(onColorFor(colorForTag(tag)))
+                val tagColor = colorFor(tagColors, tag)
+                val bg = Color(tagColor)
+                val fg = Color(onColorFor(tagColor))
                 FilterChip(
                     selected = true,
                     onClick = { if (!readOnly) onToggle(tag) },
@@ -209,7 +214,7 @@ fun TagChipRow(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(Color(colorForTag(tag))),
+                            .background(Color(colorFor(tagColors, tag))),
                     )
                     Text(tag, style = MaterialTheme.typography.bodyLarge)
                 }
@@ -243,7 +248,8 @@ fun TagChipRow(
     }
 }
 
-private fun CategoryNameError.toMessageRes(): Int = when (this) {
+/** Map a tag-name rejection to its user-facing message; shared across tag entry points. */
+internal fun CategoryNameError.toMessageRes(): Int = when (this) {
     CategoryNameError.EMPTY -> R.string.tags_empty_reject
     CategoryNameError.COMMA -> R.string.tags_comma_reject
     CategoryNameError.TOO_LONG -> R.string.tags_too_long

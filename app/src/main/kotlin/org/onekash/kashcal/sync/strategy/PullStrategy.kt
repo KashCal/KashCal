@@ -132,6 +132,30 @@ class PullStrategy @Inject constructor(
     // icaldav parser instance
     private val icalParser = ICalParser()
 
+    private val categoryDao by lazy { database.categoryDao() }
+
+    /**
+     * Seed the tag metadata table for each category carried by a pulled event
+     * so a tag first seen on the server appears in suggestions and the
+     * management screen. Color-preserving (never clobbers a user's chosen
+     * color), case-insensitive (the NOCASE primary key collapses cased
+     * duplicates). Runs inside the event's upsert transaction.
+     *
+     * Recency is dated to the event's own last-modified/start time, not wall-
+     * clock now: a bulk pull of old events must not rank their tags as
+     * just-used, and the raise-only update never rolls back a newer local use.
+     *
+     * Note: this can resurrect a tag the user deleted locally if the server
+     * still has events carrying it — accepted behavior, since a tag that labels
+     * live events shouldn't silently vanish.
+     */
+    private suspend fun seedCategories(event: Event) {
+        val recency = event.localModifiedAt ?: event.startTs
+        event.categories?.forEach { name ->
+            if (name.isNotBlank()) categoryDao.seedFromPull(name, recency)
+        }
+    }
+
     companion object {
         private const val TAG = "PullStrategy"
 
@@ -1142,6 +1166,8 @@ class PullStrategy @Inject constructor(
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
 
+                        seedCategories(saved)
+
                         // Pre-replace snapshot lets the post-transaction
                         // decline-cancel hook detect uninvites.
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
@@ -1439,6 +1465,8 @@ class PullStrategy @Inject constructor(
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+
+                        seedCategories(saved)
 
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 

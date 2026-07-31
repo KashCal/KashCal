@@ -22,6 +22,7 @@ class SettingsDestinationTest {
         assertTrue(SettingsDestination.Accounts.depth > 0)
         assertTrue(SettingsDestination.BirthdaysAnniversaries.depth > 0)
         assertTrue(SettingsDestination.Subscriptions.depth > 0)
+        assertTrue(SettingsDestination.Tags.depth > 0)
         assertTrue(SettingsDestination.DeviceCalendars.depth > 0)
     }
 
@@ -30,6 +31,7 @@ class SettingsDestinationTest {
         assertTrue(SettingsDestination.Root.isForwardTo(SettingsDestination.Accounts))
         assertTrue(SettingsDestination.Root.isForwardTo(SettingsDestination.BirthdaysAnniversaries))
         assertTrue(SettingsDestination.Root.isForwardTo(SettingsDestination.Subscriptions))
+        assertTrue(SettingsDestination.Root.isForwardTo(SettingsDestination.Tags))
         assertTrue(SettingsDestination.Root.isForwardTo(SettingsDestination.DeviceCalendars))
     }
 
@@ -38,6 +40,7 @@ class SettingsDestinationTest {
         assertFalse(SettingsDestination.Accounts.isForwardTo(SettingsDestination.Root))
         assertFalse(SettingsDestination.BirthdaysAnniversaries.isForwardTo(SettingsDestination.Root))
         assertFalse(SettingsDestination.Subscriptions.isForwardTo(SettingsDestination.Root))
+        assertFalse(SettingsDestination.Tags.isForwardTo(SettingsDestination.Root))
         assertFalse(SettingsDestination.DeviceCalendars.isForwardTo(SettingsDestination.Root))
     }
 
@@ -55,6 +58,7 @@ class SettingsDestinationTest {
                 accounts = false,
                 birthdaysAnniversaries = false,
                 subscriptions = false,
+                tags = false,
                 deviceCalendars = false,
             )
         )
@@ -64,6 +68,17 @@ class SettingsDestinationTest {
                 accounts = true,
                 birthdaysAnniversaries = false,
                 subscriptions = false,
+                tags = false,
+                deviceCalendars = false,
+            )
+        )
+        assertEquals(
+            SettingsDestination.Tags,
+            SettingsDestination.from(
+                accounts = false,
+                birthdaysAnniversaries = false,
+                subscriptions = false,
+                tags = true,
                 deviceCalendars = false,
             )
         )
@@ -73,6 +88,7 @@ class SettingsDestinationTest {
                 accounts = false,
                 birthdaysAnniversaries = false,
                 subscriptions = false,
+                tags = false,
                 deviceCalendars = true,
             )
         )

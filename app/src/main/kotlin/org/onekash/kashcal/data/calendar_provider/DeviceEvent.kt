@@ -50,5 +50,11 @@ data class DeviceEvent(
     /** Calendar color (from Calendars table). */
     val calendarColor: Int?,
     /** Event-specific color override (from Events table). */
-    val eventColor: Int?
+    val eventColor: Int?,
+    /**
+     * RFC 5545 CATEGORIES (tags) attached via the sync-adapter `categories`
+     * extended property. Empty when the event carries none. Fetched separately
+     * from the Events projection (which has no extended-property columns).
+     */
+    val categories: List<String> = emptyList()
 )

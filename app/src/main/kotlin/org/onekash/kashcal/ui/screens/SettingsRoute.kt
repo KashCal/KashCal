@@ -30,8 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.BuildConfig
@@ -60,10 +62,12 @@ import org.onekash.kashcal.ui.screens.settings.SettingsDestination
 import org.onekash.kashcal.ui.screens.settings.RestoreErrorDialog
 import org.onekash.kashcal.ui.screens.settings.RestoreSuccessDialog
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
+import org.onekash.kashcal.ui.screens.settings.TagsScreen
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
+import org.onekash.kashcal.ui.viewmodels.TagsViewModel
 import org.onekash.kashcal.util.isLanHost
 import java.time.Instant
 import java.time.ZoneId
@@ -96,6 +100,10 @@ fun SettingsRoute(
     initialColorSource: ColorSource,
     initialAccentSeed: Int,
     syncSessionStore: SyncSessionStore,
+    // When true the host launched us straight into tag management (from the account
+    // hub). We open on the Tags screen, and backing out of it finishes the activity
+    // to the hub rather than revealing the Settings root the user never chose.
+    openTagsInitially: Boolean = false,
     onFinish: () -> Unit = {},
     onOpenNotificationSettings: () -> Unit = {},
     onToggleAppLock: (Boolean) -> Unit = {},
@@ -259,6 +267,9 @@ fun SettingsRoute(
         var showAccountsScreen by rememberSaveable { mutableStateOf(false) }
         var showSubscriptionsScreen by rememberSaveable { mutableStateOf(false) }
         var showBirthdaysAnniversariesScreen by rememberSaveable { mutableStateOf(false) }
+        // Seeded from the launch intent so a hub-initiated open lands on Tags
+        // immediately; rememberSaveable then preserves the choice across rotation.
+        var showTagsScreen by rememberSaveable { mutableStateOf(openTagsInitially) }
         var showDeviceCalendarsScreen by rememberSaveable { mutableStateOf(false) }
 
         // ICS import state
@@ -380,12 +391,24 @@ fun SettingsRoute(
 
         val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
 
+        // Backing out of the Tags screen finishes the activity when it was the
+        // launch destination (hub-initiated), so we don't reveal the Settings root
+        // the user never navigated to. Otherwise it just closes the detail screen.
+        val closeTags = {
+            if (openTagsInitially) onFinish() else showTagsScreen = false
+        }
+
         BackHandler(
             enabled = showAccountsScreen ||
                 showBirthdaysAnniversariesScreen ||
                 showSubscriptionsScreen ||
+                showTagsScreen ||
                 showDeviceCalendarsScreen
         ) {
+            if (showTagsScreen) {
+                closeTags()
+                return@BackHandler
+            }
             showAccountsScreen = false
             showBirthdaysAnniversariesScreen = false
             showSubscriptionsScreen = false
@@ -399,6 +422,7 @@ fun SettingsRoute(
             accounts = showAccountsScreen,
             birthdaysAnniversaries = showBirthdaysAnniversariesScreen,
             subscriptions = showSubscriptionsScreen,
+            tags = showTagsScreen,
             deviceCalendars = showDeviceCalendarsScreen,
         )
 
@@ -487,6 +511,38 @@ fun SettingsRoute(
                             onDeleteSubscription = onDeleteSubscriptionWithUndo,
                             onRefreshSubscription = viewModel::onRefreshSubscription,
                             onUpdateSubscription = viewModel::onUpdateSubscription
+                        )
+                    }
+                    SettingsDestination.Tags -> {
+                        val tagsViewModel: TagsViewModel = hiltViewModel()
+                        val tags by tagsViewModel.tags.collectAsStateWithLifecycle()
+                        val tagDeleteUndoLabel = stringResource(R.string.tags_delete_undo)
+                        // Resources (not LocalContext) so the deleted-message format
+                        // reflects a locale change; the tag name is only known at tap.
+                        val resources = LocalResources.current
+                        TagsScreen(
+                            tags = tags,
+                            onNavigateBack = closeTags,
+                            onSetColor = { name, color -> tagsViewModel.onSetColor(name, color) },
+                            onRename = tagsViewModel::onRename,
+                            onDelete = { name ->
+                                // Optimistic delete with an undo window: the row
+                                // disappears immediately (live Room flow) and the
+                                // snackbar restores it verbatim if the user undoes.
+                                tagsViewModel.onDelete(name)
+                                val deletedMessage =
+                                    resources.getString(R.string.tags_deleted, name)
+                                coroutineScope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = deletedMessage,
+                                        actionLabel = tagDeleteUndoLabel,
+                                        duration = SnackbarDuration.Short,
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        tagsViewModel.onUndoDelete()
+                                    }
+                                }
+                            },
                         )
                     }
                     SettingsDestination.DeviceCalendars -> {

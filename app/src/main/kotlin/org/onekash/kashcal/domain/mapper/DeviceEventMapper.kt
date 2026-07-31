@@ -77,6 +77,7 @@ fun DeviceEvent.toFormState(
         isAllDay = isAllDay,
         location = location.orEmpty(),
         description = description.orEmpty(),
+        categories = categories,
         rrule = rrule,
         timezone = timezone,
         transp = availabilityIntToTransp(availability),

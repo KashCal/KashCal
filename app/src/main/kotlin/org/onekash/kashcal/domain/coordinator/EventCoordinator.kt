@@ -567,6 +567,40 @@ class EventCoordinator @Inject constructor(
         triggerWidgetUpdate()
     }
 
+    // ========== Tag Rename ==========
+
+    /**
+     * Rename a tag everywhere it appears and propagate the change to the server.
+     *
+     * The category-string rewrite plus per-event mark-and-queue is one atomic
+     * unit inside [EventWriter.renameCategory]; here we only fire a single
+     * expedited sync once that transaction has committed, and only when at least
+     * one syncable event was actually queued (a rename touching purely local or
+     * read-only events, or nothing at all, needs no server round-trip). One
+     * drain covers the whole batch — a rename touching hundreds of events must
+     * not request hundreds of syncs.
+     */
+    suspend fun renameTag(from: String, to: String) {
+        val queued = eventWriter.renameCategory(from, to)
+        if (queued > 0) {
+            // A queued event is by definition non-local (local/read-only events
+            // are skipped in renameCategory), so this always requests the sync.
+            triggerImmediatePushIfNeeded(isLocal = false)
+        }
+    }
+
+    /**
+     * Reconcile a set of tag names into the shared registry so newly-created
+     * tags gain a suggestion-ranking entry and become colorable. Needed for tags
+     * applied to events that persist outside the app's own store (which carries
+     * no tag registry) — the registry write can't ride along with the event
+     * save the way it does for the app's own events. Delegates to the writer,
+     * which owns the tag store.
+     */
+    suspend fun recordTagUsage(tags: List<String>) {
+        eventWriter.recordCategoryUsage(tags)
+    }
+
     // ========== Read Operations (Delegated to EventReader) ==========
 
     /**

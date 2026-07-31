@@ -271,6 +271,7 @@ class BackupRestoreViewModelStateTest {
         val result = ImportResult(
             subscriptionsCreated = 0,
             subscriptionsUpdated = 0,
+            categoriesRestored = 0,
             preferencesApplied = 3,
             deviceCalendarsNoteNeeded = false,
         )
@@ -297,6 +298,7 @@ class BackupRestoreViewModelStateTest {
         val result = ImportResult(
             subscriptionsCreated = 2,
             subscriptionsUpdated = 0,
+            categoriesRestored = 0,
             preferencesApplied = 4,
             deviceCalendarsNoteNeeded = true,
         )

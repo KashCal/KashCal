@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.SerializationException
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.dao.CategoryDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -37,6 +38,7 @@ class SettingsBackupImporter @Inject constructor(
     private val accountRepository: AccountRepository,
     private val calendarRepository: CalendarRepository,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
+    private val categoryDao: CategoryDao,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -47,9 +49,10 @@ class SettingsBackupImporter @Inject constructor(
     suspend fun applyBackup(envelope: BackupEnvelope): ImportResult {
         val counts = Counts()
 
-        if (envelope.subscriptions.isNotEmpty()) {
+        if (envelope.subscriptions.isNotEmpty() || envelope.categories.isNotEmpty()) {
             database.runInTransaction {
                 applySubscriptions(envelope.subscriptions, counts)
+                applyCategories(envelope.categories, counts)
             }
         }
 
@@ -61,9 +64,17 @@ class SettingsBackupImporter @Inject constructor(
         return ImportResult(
             subscriptionsCreated = counts.subscriptionsCreated,
             subscriptionsUpdated = counts.subscriptionsUpdated,
+            categoriesRestored = counts.categoriesRestored,
             preferencesApplied = preferencesApplied,
             deviceCalendarsNoteNeeded = deviceCalendarsNoteNeeded,
         )
+    }
+
+    private suspend fun applyCategories(categories: List<BackupCategory>, counts: Counts) {
+        for (backup in categories) {
+            categoryDao.restoreFromBackup(backup.name, backup.color, backup.lastUsedAt)
+            counts.categoriesRestored++
+        }
     }
 
     private suspend fun applySubscriptions(
@@ -174,6 +185,7 @@ class SettingsBackupImporter @Inject constructor(
     private class Counts {
         var subscriptionsCreated: Int = 0
         var subscriptionsUpdated: Int = 0
+        var categoriesRestored: Int = 0
     }
 
     companion object {

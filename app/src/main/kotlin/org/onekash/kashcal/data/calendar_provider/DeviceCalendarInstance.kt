@@ -62,6 +62,13 @@ data class DeviceCalendarInstance(
      * ([android.provider.CalendarContract.Instances.DTSTART]).
      */
     val eventStartTs: Long,
+    /**
+     * RFC 5545 CATEGORIES (tags) attached to this event via the sync-adapter
+     * `categories` extended property. Empty when the event carries none or the
+     * batch fetch was denied. Populated after the Instances query, like
+     * [reminders].
+     */
+    val categories: List<String> = emptyList(),
 ) {
     /**
      * True if this instance is part of a recurring event series (regular or exception occurrence).

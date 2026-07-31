@@ -158,6 +158,7 @@ import org.onekash.kashcal.ui.components.AgendaWeekBar
 import org.onekash.kashcal.ui.components.AgendaWeekBarLogic
 import org.onekash.kashcal.ui.components.buildAgendaListModel
 import org.onekash.kashcal.ui.components.resolveScrollTargetIndex
+import org.onekash.kashcal.ui.components.TopBarTitleAction
 import org.onekash.kashcal.ui.components.TopBarTitleFormatter
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
@@ -169,6 +170,7 @@ import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.screens.insights.InsightsScreen
 import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
@@ -236,6 +238,8 @@ fun HomeScreen(
     onSearchDateSelected: (Long) -> Unit = {},
     // Settings callback
     onSettingsClick: () -> Unit = {},
+    // Tag management (launched on top of the hub, like Settings)
+    onTagsClick: () -> Unit = {},
     onShareAvailabilityClick: () -> Unit = {},
     // Invitation inbox surface (count + open + dismiss + RSVP)
     pendingInvitesCount: Int = 0,
@@ -257,6 +261,8 @@ fun HomeScreen(
     onMonthHeaderClick: () -> Unit = {},
     // Agenda week-bar collapse/expand toggle (persisted)
     onAgendaWeekBarToggle: () -> Unit = {},
+    // Day view week-strip collapse/expand toggle (persisted)
+    onDayWeekBarToggle: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
     // Week view callbacks (infinite day pager)
@@ -267,6 +273,8 @@ fun HomeScreen(
     onWeekScrollPositionChange: (Int) -> Unit = {},
     onWeekScrollMinutesChange: (Int) -> Unit = {},
     onWeekHourHeightChange: (Float) -> Unit = {},
+    // All-day strip collapse/expand toggle for the time-grid views (persisted)
+    onAllDayRowsToggle: () -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
     onConfirmReschedule: (EditScope) -> Unit = {},
@@ -554,10 +562,11 @@ fun HomeScreen(
                 onOverflowClick = { showHub = true },
                 pendingInvitesCount = pendingInvitesCount,
                 onTitleClick = {
-                    when {
-                        uiState.viewMode == ViewMode.AGENDA -> onAgendaWeekBarToggle()
-                        uiState.viewMode.isTimeGrid -> onWeekDatePickerRequest()
-                        else -> onMonthHeaderClick()
+                    when (TopBarTitleAction.forViewMode(uiState.viewMode)) {
+                        TopBarTitleAction.TOGGLE_AGENDA_WEEK_BAR -> onAgendaWeekBarToggle()
+                        TopBarTitleAction.TOGGLE_DAY_WEEK_BAR -> onDayWeekBarToggle()
+                        TopBarTitleAction.OPEN_DATE_PICKER -> onWeekDatePickerRequest()
+                        TopBarTitleAction.MONTH_HEADER -> onMonthHeaderClick()
                     }
                 },
                 onViewSelect = onViewSelect
@@ -735,6 +744,41 @@ fun HomeScreen(
                                         }
                                     }
                                     ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
+                                        // Day view gets a pinned week strip above the grid,
+                                        // toggled by the title chevron (state persisted). Tapping a
+                                        // date drives the day pager to it. The strip reads the same
+                                        // weekViewPagerPosition the title does, so the two stay in
+                                        // lockstep. Only render once the position is a settled
+                                        // day-scale page: the default (0) and a stale week-scale
+                                        // page from a WEEK->DAY switch would otherwise flash an
+                                        // absurd date (see isSettledDayPage).
+                                        if (uiState.viewMode == ViewMode.DAY &&
+                                            uiState.dayWeekBarExpanded &&
+                                            WeekViewUtils.isSettledDayPage(uiState.weekViewPagerPosition)
+                                        ) {
+                                            // Memoize keyed on the two inputs so the strip's date
+                                            // arithmetic and 7-day list aren't rebuilt on unrelated
+                                            // recompositions (event loads, scroll). Plain remember —
+                                            // no layout dependency, unlike the agenda strip's anchor.
+                                            val shownDate = remember(uiState.weekViewPagerPosition) {
+                                                WeekViewUtils.pageToDate(uiState.weekViewPagerPosition)
+                                            }
+                                            val shownDayCode = remember(shownDate) {
+                                                DayPagerUtils.localDateToDayCode(shownDate)
+                                            }
+                                            val dayWeekDates = remember(shownDate, uiState.firstDayOfWeek) {
+                                                AgendaWeekBarLogic.weekDates(shownDate, uiState.firstDayOfWeek)
+                                            }
+                                            AgendaWeekBar(
+                                                weekDates = dayWeekDates,
+                                                selectedDayCode = shownDayCode,
+                                                todayDayCode = todayDayCode,
+                                                onDayClick = { tappedDayCode ->
+                                                    onWeekDateSelected(DayPagerUtils.dayCodeToMs(tappedDayCode))
+                                                },
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
                                         WeekViewContent(
                                             timedEvents = weekEvents.timedEvents,
                                             allDayEvents = weekEvents.allDayEvents,
@@ -748,6 +792,8 @@ fun HomeScreen(
                                             timePattern = timePattern,
                                             visibleDays = uiState.viewMode.visibleDays ?: 3,
                                             firstDayOfWeek = uiState.firstDayOfWeek,
+                                            allDayRowsExpanded = uiState.allDayRowsExpanded,
+                                            onAllDayRowsToggle = onAllDayRowsToggle,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { displayEvent ->
                                                 when (displayEvent) {
@@ -1066,20 +1112,18 @@ fun HomeScreen(
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             AccountHubScreen(
-                currentViewMode = uiState.viewMode,
                 pendingInvitesCount = pendingInvitesCount,
                 userInitials = uiState.userInitials,
                 onInitialsChange = onInitialsChange,
                 // Destinations that open a sheet/Activity ON TOP of the hub keep it
                 // mounted — the destination covers it, so there's no bare-calendar
                 // flash, and dismissing the destination returns to the hub. Only
-                // the destinations that change the calendar itself close the hub:
-                // Insights (a full-screen view swap) and Jump-to-date (closed when
-                // a date is actually picked, below).
+                // Jump-to-date changes the calendar itself (closed when a date is
+                // actually picked, below).
                 onInvitesClick = onOpenInvitationInbox,
                 onJumpToDateClick = { showJumpToDatePicker = true },
                 onShareAvailabilityClick = onShareAvailabilityClick,
-                onInsightsClick = { showHub = false; onViewSelect(ViewMode.INSIGHTS) },
+                onTagsClick = onTagsClick,
                 onSettingsClick = onSettingsClick,
                 onAboutClick = onInfoClick,
                 onBack = { showHub = false },
@@ -1327,21 +1371,29 @@ private fun HomeTopAppBar(
                 yearLabel = yearLabel,
                 today = today,
             )
-            val isAgendaView = uiState.viewMode == ViewMode.AGENDA
+            // AGENDA and DAY both show a collapsible week bar, toggled by the title
+            // chevron. The rest of the views (including the other time-grid views,
+            // which open a date picker instead) use a plain clickable title.
+            val showWeekBarChevron = uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.DAY
+            val weekBarExpanded = if (uiState.viewMode == ViewMode.DAY) {
+                uiState.dayWeekBarExpanded
+            } else {
+                uiState.agendaWeekBarExpanded
+            }
             val titleFontSize = if (uiState.viewMode == ViewMode.WEEK) 18.sp else 20.sp
             CenterAlignedTopAppBar(
                 title = {
-                    if (isAgendaView) {
+                    if (showWeekBarChevron) {
                         // Chevron points up when the week bar is expanded (tap to
                         // collapse), down when collapsed (tap to expand).
-                        val agendaChevronRotation by animateFloatAsState(
-                            targetValue = if (uiState.agendaWeekBarExpanded) 180f else 0f,
+                        val weekBarChevronRotation by animateFloatAsState(
+                            targetValue = if (weekBarExpanded) 180f else 0f,
                             animationSpec = tween(300),
-                            label = "agendaChevronRotation"
+                            label = "weekBarChevronRotation"
                         )
                         // onClickLabel describes the toggle action to TalkBack while
                         // the title text ("July 2026") stays the node's spoken content.
-                        val toggleLabel = if (uiState.agendaWeekBarExpanded) {
+                        val toggleLabel = if (weekBarExpanded) {
                             stringResource(R.string.cd_collapse_week_bar)
                         } else {
                             stringResource(R.string.cd_expand_week_bar)
@@ -1360,7 +1412,7 @@ private fun HomeTopAppBar(
                                 modifier = Modifier
                                     .padding(start = 2.dp)
                                     .size(24.dp)
-                                    .graphicsLayer { rotationZ = agendaChevronRotation }
+                                    .graphicsLayer { rotationZ = weekBarChevronRotation }
                             )
                         }
                     } else {

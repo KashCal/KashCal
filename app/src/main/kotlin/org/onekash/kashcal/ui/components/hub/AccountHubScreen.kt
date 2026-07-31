@@ -26,7 +26,7 @@ import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Palette
@@ -83,7 +83,6 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AppearanceViewModel
-import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.util.ExternalLinks
 
 /**
@@ -98,14 +97,13 @@ import org.onekash.kashcal.util.ExternalLinks
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountHubScreen(
-    currentViewMode: ViewMode,
     pendingInvitesCount: Int,
     userInitials: String,
     onInitialsChange: (String) -> Unit,
     onInvitesClick: () -> Unit,
     onJumpToDateClick: () -> Unit,
     onShareAvailabilityClick: () -> Unit,
-    onInsightsClick: () -> Unit,
+    onTagsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
@@ -197,11 +195,13 @@ fun AccountHubScreen(
                 icon = Icons.Default.Share,
                 onClick = onShareAvailabilityClick,
             )
+            // Tag management. Opens on top of the hub (like Settings) rather than
+            // swapping the calendar view, so it carries no `selected` state and the
+            // hub stays mounted beneath it.
             HubDrawerItem(
-                label = stringResource(R.string.view_insights),
-                icon = Icons.Default.Insights,
-                onClick = onInsightsClick,
-                selected = currentViewMode == ViewMode.INSIGHTS,
+                label = stringResource(R.string.tags_row_label),
+                icon = Icons.Default.LocalOffer,
+                onClick = onTagsClick,
             )
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))

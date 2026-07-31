@@ -179,6 +179,36 @@
     <string name="tags_move_above_notes">Move above notes</string>
     <!-- Menu action: move the tag row below the notes and attendees -->
     <string name="tags_move_below_notes">Move below notes</string>
+    <!-- Account-hub row that opens the tag-management screen -->
+    <string name="tags_row_label">Manage tags</string>
+    <!-- Short intro shown at the top of the tag-management screen, above the tag list. -->
+    <string name="tags_manage_note">Color, rename, or remove your tags.</string>
+    <!-- Accessibility label for the info button that reveals the tag sync details -->
+    <string name="tags_info_content_desc">About tags and sync</string>
+    <!-- Expandable detail shown when the info button on the tag-management screen is tapped. Explains that removing a tag here is a local change (events keep their labels), that tags travel with CalDAV sync and reinstalls, but that some device calendars may not preserve them. -->
+    <string name="tags_device_interop_note">Removing a tag here only clears it from this list; your events keep their labels. Tags sync to your other devices on CalDAV accounts, though some device calendars may not keep them.</string>
+    <!-- Title of the tag-management screen -->
+    <string name="tags_screen_title">Tags</string>
+    <!-- Empty state on the tag-management screen when the user has no tags yet -->
+    <string name="tags_screen_empty">Tags you add to events show up here. You can give each one a color, rename it, or remove it.</string>
+    <!-- Accessibility label for a tag\'s color swatch; %1$s is the tag name -->
+    <string name="tags_swatch_content_desc">Color for %1$s</string>
+    <!-- Overflow action: change a tag\'s color -->
+    <string name="tags_action_color">Change color</string>
+    <!-- Overflow action: rename a tag -->
+    <string name="tags_action_rename">Rename</string>
+    <!-- Overflow action: delete a tag -->
+    <string name="tags_action_delete">Delete</string>
+    <!-- Accessibility label for a tag row\'s overflow menu button; %1$s is the tag name -->
+    <string name="tags_actions_content_desc">Actions for %1$s</string>
+    <!-- Title of the rename-tag sheet -->
+    <string name="tags_rename_title">Rename tag</string>
+    <!-- Placeholder in the rename-tag text field -->
+    <string name="tags_rename_hint">Tag name</string>
+    <!-- Snackbar after deleting a tag; %1$s is the tag name -->
+    <string name="tags_deleted">Deleted \"%1$s\"</string>
+    <!-- Snackbar action to undo a tag delete -->
+    <string name="tags_delete_undo">Undo</string>
     <!-- Form field: event start time -->
     <string name="label_starts">Starts</string>
     <!-- Keep "Apple ID" untranslated -->
@@ -1207,6 +1237,10 @@
     <string name="cd_collapse_week_bar">Hide week bar</string>
     <!-- Accessibility label for the Agenda top-bar title button when the week bar is hidden (tap expands it) -->
     <string name="cd_expand_week_bar">Show week bar</string>
+    <!-- Accessibility label for the all-day strip chevron in day/3-day/week views when collapsed (tap expands to more rows) -->
+    <string name="cd_expand_all_day_rows">Show more all-day events</string>
+    <!-- Accessibility label for the all-day strip chevron in day/3-day/week views when expanded (tap collapses to one row) -->
+    <string name="cd_collapse_all_day_rows">Show fewer all-day events</string>
     <!-- Screen-reader fallback name for the event detail sheet when the event has no title -->
     <string name="cd_event_untitled">Untitled event</string>
     <string name="cd_open_drawer">Open drawer</string>

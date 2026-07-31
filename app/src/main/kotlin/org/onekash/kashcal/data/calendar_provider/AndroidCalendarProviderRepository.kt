@@ -193,8 +193,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 .orEmpty()
 
-            // Batch fetch reminders to avoid N+1 queries
-            populateReminders(instances)
+            // Batch fetch reminders + tags to avoid N+1 queries
+            populateRemindersAndCategories(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
             emptyList()
@@ -305,8 +305,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 .orEmpty()
 
-            // Batch fetch reminders to avoid N+1 queries
-            populateReminders(instances)
+            // Batch fetch reminders + tags to avoid N+1 queries
+            populateRemindersAndCategories(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
             emptyList()
@@ -393,20 +393,26 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Populate instances with reminder data via batch query.
-     * Returns new list with reminders field populated.
+     * Populate instances with reminder and tag data. Reminders live in
+     * CalendarContract.Reminders and tags in the categories extended property,
+     * so this is two batch queries — but the event-id set is built once and the
+     * instance list is copied once (both fields at a time), keeping the
+     * range-display path to a single pass. Returns a new list.
      */
-    private suspend fun populateReminders(
+    private suspend fun populateRemindersAndCategories(
         instances: List<DeviceCalendarInstance>
     ): List<DeviceCalendarInstance> {
         if (instances.isEmpty()) return instances
 
         val eventIds = instances.map { it.eventId }.toSet()
         val remindersMap = getRemindersForEvents(eventIds)
+        val categoriesMap = getCategoriesForEvents(eventIds)
 
         return instances.map { instance ->
-            val reminders = remindersMap[instance.eventId].orEmpty()
-            instance.copy(reminders = reminders)
+            instance.copy(
+                reminders = remindersMap[instance.eventId].orEmpty(),
+                categories = categoriesMap[instance.eventId].orEmpty(),
+            )
         }
     }
 
@@ -492,6 +498,51 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
+    /**
+     * Write the tag extended property for an event, replacing any existing row.
+     *
+     * Tags live in the generic per-event extended-property store, which on a
+     * synced calendar only accepts writes in sync-adapter mode — so the delete
+     * and insert both go through a URI carrying the owning calendar's account.
+     * When the account can't be resolved (row raced away, permission revoked)
+     * the write is skipped rather than allowed to crash the surrounding save;
+     * the event still persists, just without the tag change. A provider
+     * exception on the delete/insert is likewise swallowed: the tag row is
+     * secondary to the event body, which by this point is already committed, so
+     * failing the whole save would report a spurious failure and (on create)
+     * invite a duplicating retry.
+     *
+     * A non-null empty encoded value clears the row without re-inserting, so a
+     * user who removes every tag genuinely empties the stored value.
+     */
+    private fun writeCategories(eventId: Long, calendarId: Long, categories: List<String>) {
+        val account = readCalendarAccount(calendarId)
+        if (account == null) {
+            Log.w(TAG, "writeCategories($eventId): no account for calendar $calendarId, skipping")
+            return
+        }
+        val uri = syncAdapterExtendedPropertiesUri(account.name, account.type)
+        try {
+            contentResolver.delete(
+                uri,
+                "${CalendarContract.ExtendedProperties.EVENT_ID} = ? AND " +
+                    "${CalendarContract.ExtendedProperties.NAME} = ?",
+                arrayOf(eventId.toString(), EXTNAME_CATEGORIES)
+            )
+            val encoded = encodeCategories(categories)
+            if (encoded != null) {
+                val values = android.content.ContentValues().apply {
+                    put(CalendarContract.ExtendedProperties.EVENT_ID, eventId)
+                    put(CalendarContract.ExtendedProperties.NAME, EXTNAME_CATEGORIES)
+                    put(CalendarContract.ExtendedProperties.VALUE, encoded)
+                }
+                contentResolver.insert(uri, values)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "writeCategories($eventId): tag write failed, event saved without tag change", e)
+        }
+    }
+
     // ==================== Write Operations (Phase 3) ====================
 
     override suspend fun createEvent(
@@ -508,7 +559,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
         reminders: List<Int>,
         availability: Int,
         eventColor: Int?,
-        attendees: List<DeviceAttendee>?
+        attendees: List<DeviceAttendee>?,
+        categories: List<String>?
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
             val guests = attendees.orEmpty()
@@ -576,6 +628,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val eventUri = results[0].uri
             val eventId = ContentUris.parseId(eventUri!!)
 
+            // Tags live in a separate extended-property table, written in
+            // sync-adapter mode; a non-empty value is stored, an empty one is not.
+            if (categories != null) {
+                writeCategories(eventId, calendarId, categories)
+            }
+
             Log.d(TAG, "Created device event: id=$eventId, title=${title.take(20)}...")
             Result.success(eventId)
         } catch (e: SecurityException) {
@@ -601,7 +659,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
         reminders: List<Int>,
         availability: Int,
         eventColor: Int?,
-        attendees: List<DeviceAttendee>?
+        attendees: List<DeviceAttendee>?,
+        categories: List<String>?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val isException = rrule == null && isExceptionEvent(eventId)
@@ -645,6 +704,19 @@ class AndroidCalendarProviderRepository @Inject constructor(
             // genuinely new guests, delete only genuinely removed ones.
             if (attendees != null) {
                 applyAttendeeDiff(eventId, attendees)
+            }
+
+            // Replace the tag row only when the caller is managing tags. Null
+            // leaves the existing row untouched, so a drag-reschedule or a
+            // single-occurrence exception edit never wipes tags the user didn't
+            // touch. A non-null empty list genuinely clears the row.
+            if (categories != null) {
+                val calId = calendarIdForEvent(eventId)
+                if (calId != null) {
+                    writeCategories(eventId, calId, categories)
+                } else {
+                    Log.w(TAG, "updateEvent($eventId): no calendar id, skipping tag write")
+                }
             }
 
             Log.d(TAG, "Updated device event: id=$eventId")
@@ -1155,7 +1227,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
     override suspend fun getDeviceEvent(eventId: Long): DeviceEvent? = withContext(Dispatchers.IO) {
         try {
-            contentResolver.query(
+            val event = contentResolver.query(
                 ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
                 eventsProjection,
                 null, null, null
@@ -1163,7 +1235,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 if (cursor.moveToFirst()) {
                     mapToDeviceEvent(cursor)
                 } else null
-            }
+            } ?: return@withContext null
+
+            // The Events projection has no tag column — tags live in a separate
+            // extended-property table, so fetch them in a follow-up query.
+            val categories = getCategoriesForEvents(setOf(event.id))[event.id].orEmpty()
+            event.copy(categories = categories)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied reading event", e)
             null
@@ -1237,7 +1314,16 @@ class AndroidCalendarProviderRepository @Inject constructor(
             return@withContext null
         }
 
-        master to exceptions
+        // Exceptions are mapped straight from the Events cursor, which has no tag
+        // column; batch-fetch their tags so each carries its own categories.
+        val exceptionsWithCategories = if (exceptions.isEmpty()) {
+            exceptions
+        } else {
+            val categoriesMap = getCategoriesForEvents(exceptions.map { it.id }.toSet())
+            exceptions.map { it.copy(categories = categoriesMap[it.id].orEmpty()) }
+        }
+
+        master to exceptionsWithCategories
     }
 
     override suspend fun getAttendees(eventId: Long): List<DeviceAttendee> = withContext(Dispatchers.IO) {
@@ -1487,6 +1573,51 @@ class AndroidCalendarProviderRepository @Inject constructor(
             emptyMap()
         } catch (e: Exception) {
             Log.w(TAG, "Error batch reading reminders", e)
+            emptyMap()
+        }
+    }
+
+    override suspend fun getCategoriesForEvents(
+        eventIds: Set<Long>
+    ): Map<Long, List<String>> = withContext(Dispatchers.IO) {
+        if (eventIds.isEmpty()) return@withContext emptyMap()
+
+        try {
+            val results = mutableMapOf<Long, List<String>>()
+
+            // Chunk to avoid SQLite variable limit (default 999). The extra fixed
+            // NAME arg counts against the limit, so keep chunk size well below it.
+            for (chunk in eventIds.toList().chunked(500)) {
+                val placeholders = chunk.joinToString(",") { "?" }
+                val selection =
+                    "${CalendarContract.ExtendedProperties.NAME} = ? AND " +
+                        "${CalendarContract.ExtendedProperties.EVENT_ID} IN ($placeholders)"
+                val args = (listOf(EXTNAME_CATEGORIES) + chunk.map { it.toString() }).toTypedArray()
+
+                contentResolver.query(
+                    CalendarContract.ExtendedProperties.CONTENT_URI,
+                    arrayOf(
+                        CalendarContract.ExtendedProperties.EVENT_ID,
+                        CalendarContract.ExtendedProperties.VALUE
+                    ),
+                    selection,
+                    args,
+                    null
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val eventId = cursor.getLong(0)
+                        val decoded = decodeCategories(cursor.getString(1))
+                        if (decoded.isNotEmpty()) results[eventId] = decoded
+                    }
+                }
+            }
+
+            results
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission revoked during categories batch query", e)
+            emptyMap()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error batch reading categories", e)
             emptyMap()
         }
     }
@@ -1799,6 +1930,21 @@ internal fun inclusiveEndForDeviceEvent(
     if (!isAllDay) return dtend
     return if (dtend > dtstart) dtend - 1 else dtend
 }
+
+/**
+ * Build the ExtendedProperties write URI that identifies the caller as a sync
+ * adapter for the given account. Writing an ExtendedProperty on a synced
+ * calendar silently no-ops unless CALLER_IS_SYNCADAPTER=true is set together
+ * with the owning calendar's ACCOUNT_NAME/ACCOUNT_TYPE, so this is required on
+ * every categories read-write. The account must match the calendar that owns
+ * the event.
+ */
+internal fun syncAdapterExtendedPropertiesUri(accountName: String, accountType: String) =
+    CalendarContract.ExtendedProperties.CONTENT_URI.buildUpon()
+        .appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true")
+        .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, accountName)
+        .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, accountType)
+        .build()
 
 /**
  * Selection clause for the upcoming-device-reminder query.

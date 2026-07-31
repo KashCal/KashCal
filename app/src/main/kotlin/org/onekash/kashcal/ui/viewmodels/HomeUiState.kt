@@ -92,6 +92,8 @@ data class HomeUiState(
     val defaultCalendar: DefaultCalendar? = null,
     /** Usage-ranked tag suggestions for the event form's tag chip row */
     val categorySuggestions: ImmutableList<String> = persistentListOf(),
+    /** Per-tag custom colors (name to color, null = fall back to hash color) */
+    val tagColors: ImmutableMap<String, Int?> = persistentMapOf(),
     /** Device calendars feature enabled */
     val deviceCalendarsEnabled: Boolean = false,
     /** Enabled device calendars (for drawer visibility toggles) */
@@ -263,6 +265,13 @@ data class HomeUiState(
     val tagsAboveNotes: Boolean = false,
     /** Whether the Agenda view's top week bar is expanded (shown). Default: expanded */
     val agendaWeekBarExpanded: Boolean = true,
+    /** Whether the Day view's top week-strip date picker is expanded (shown). Default: expanded */
+    val dayWeekBarExpanded: Boolean = true,
+    /**
+     * Whether the all-day strip in the Day/3-Day/Week time-grid views is expanded
+     * (up to 3 rows per day) vs collapsed (1 row). Default: collapsed.
+     */
+    val allDayRowsExpanded: Boolean = false,
     /** User's up-to-2-letter avatar initials; empty renders the generic glyph */
     val userInitials: String = ""
 ) {

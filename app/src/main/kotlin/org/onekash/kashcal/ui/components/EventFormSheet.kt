@@ -267,6 +267,12 @@ data class EventFormState(
     val transp: String = "OPAQUE",
     val eventColor: Int? = null,
     val categories: List<String> = emptyList(),
+    // Whether the user actually changed the tag set. Mirrors [attendeesEdited]:
+    // stays false when the form is merely seeded from a loaded event, so an
+    // unedited open-and-save leaves the stored tag row untouched (passes null)
+    // rather than rewriting — which would clobber tags a sync adapter added
+    // between load and save, or wipe real tags if the load read came back empty.
+    val categoriesEdited: Boolean = false,
 
     // UI state
     val calendarGroups: List<CalendarGroup> = emptyList(),
@@ -1562,13 +1568,8 @@ fun EventFormContent(
                             titleSearchJob?.cancel()
                             // If the user is mid-#tag, show tag autocomplete and
                             // suppress the title-suggestion query for this keystroke.
-                            // Device-calendar events can't carry tags, so leave
-                            // "#text" as plain title text there (no extraction) —
-                            // otherwise committing it would strip the text and
-                            // then silently drop the tag on the device save path.
-                            tagPrefix = if (state.isDeviceCalendar) null
-                                else org.onekash.kashcal.domain.category.TagTokenizer
-                                    .trailingHashPrefix(newValue)
+                            tagPrefix = org.onekash.kashcal.domain.category.TagTokenizer
+                                .trailingHashPrefix(newValue)
                             if (tagPrefix != null) {
                                 titleSuggestions = emptyList()
                             } else {
@@ -1628,7 +1629,7 @@ fun EventFormContent(
                                         } else {
                                             state.categories + outcome.value
                                         }
-                                    state = state.copy(title = stripped, categories = nextCategories)
+                                    state = state.copy(title = stripped, categories = nextCategories, categoriesEdited = true)
                                 }
                                 is org.onekash.kashcal.domain.category.CategoryName.Invalid -> Unit
                             }
@@ -1995,14 +1996,14 @@ fun EventFormContent(
                             onToggle = { tag ->
                                 val current = state.categories
                                 state = if (current.any { it.equals(tag, ignoreCase = true) }) {
-                                    state.copy(categories = current.filterNot { it.equals(tag, ignoreCase = true) })
+                                    state.copy(categories = current.filterNot { it.equals(tag, ignoreCase = true) }, categoriesEdited = true)
                                 } else {
-                                    state.copy(categories = current + tag)
+                                    state.copy(categories = current + tag, categoriesEdited = true)
                                 }
                             },
                             onAdd = { tag ->
                                 if (state.categories.none { it.equals(tag, ignoreCase = true) }) {
-                                    state = state.copy(categories = state.categories + tag)
+                                    state = state.copy(categories = state.categories + tag, categoriesEdited = true)
                                 }
                             },
                             modifier = Modifier.weight(1f),
@@ -2054,7 +2055,7 @@ fun EventFormContent(
                     }
                 }
 
-                if (!isReadOnly && !state.isDeviceCalendar && tagsAboveNotes) {
+                if (!isReadOnly && tagsAboveNotes) {
                     tagsRow()
                 }
 
@@ -2098,7 +2099,7 @@ fun EventFormContent(
                 // "personal" group (notes + tags) stays together above the
                 // "scheduling" group (attendees + free/busy). The user can flip
                 // it above notes via the row's ⋮ menu.
-                if (!isReadOnly && !state.isDeviceCalendar && !tagsAboveNotes) {
+                if (!isReadOnly && !tagsAboveNotes) {
                     tagsRow()
                 }
 

@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.identity.matchesAttendee
+import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.scheduling.SequenceBumper
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.util.RruleUtils
@@ -45,6 +46,34 @@ class EventWriter @Inject constructor(
     private val occurrencesDao by lazy { database.occurrencesDao() }
     private val attendeesDao by lazy { database.attendeesDao() }
     private val pendingCancelsDao by lazy { database.pendingCancelsDao() }
+    private val categoryDao by lazy { database.categoryDao() }
+    private val calendarsDao by lazy { database.calendarsDao() }
+
+    /**
+     * Record that each of an event's [categories] was used at [now] so the tag
+     * suggestion ranking (recency-ordered) and the management screen stay
+     * current. Called inside the save transaction. Uses a color-preserving
+     * upsert — a re-save of an event tagged with a recolored tag must never
+     * reset that tag's chosen color to null. Blank names and empty/null lists
+     * are no-ops.
+     */
+    private suspend fun recordCategoryUsage(categories: List<String>?, now: Long) {
+        categories?.forEach { name ->
+            if (name.isNotBlank()) categoryDao.touch(name, now)
+        }
+    }
+
+    /**
+     * Reconcile a set of tag names into the shared tag registry, stamping each
+     * as used now. For tags that write straight to the platform calendar store
+     * (which has no registry of its own), this is what makes a freshly-created
+     * tag gain a suggestion-ranking entry and become colorable. Reuses the same
+     * color-preserving upsert as the in-transaction path, so re-recording an
+     * existing recolored tag bumps its recency without clearing its color.
+     */
+    suspend fun recordCategoryUsage(categories: List<String>) {
+        recordCategoryUsage(categories, System.currentTimeMillis())
+    }
 
     /**
      * Result of [createImportedSeries]: the persisted master and its exception
@@ -89,6 +118,8 @@ class EventWriter @Inject constructor(
             // Insert event
             val eventId = eventsDao.insert(eventToInsert)
             val createdEvent = eventToInsert.copy(id = eventId)
+
+            recordCategoryUsage(createdEvent.categories, now)
 
             // Persist attendees when supplied. null = caller isn't touching the
             // attendee set (leave it alone); a list (incl. empty) replaces it.
@@ -253,6 +284,8 @@ class EventWriter @Inject constructor(
             // Update event
             eventsDao.update(eventToUpdate)
 
+            recordCategoryUsage(eventToUpdate.categories, now)
+
             // Persist attendees when supplied. null = caller isn't touching the
             // attendee set (leave it alone — e.g. a reschedule); a list (incl.
             // empty) replaces it.
@@ -304,6 +337,89 @@ class EventWriter @Inject constructor(
             eventToUpdate
         }
     }
+
+    /**
+     * Rename tag [from] to [to] everywhere and re-upload each affected syncable
+     * event with its new tag, so the rename reaches the CalDAV server and the
+     * user's other devices — exactly as a normal single-event edit already does.
+     *
+     * The tag string rewrite (in [org.onekash.kashcal.data.db.dao.CategoryDao])
+     * and the per-event mark-and-queue run in ONE transaction so a partial
+     * cascade can't leave an event rewritten-but-unqueued (a silent divergence).
+     *
+     * A tag is a cosmetic property, so SEQUENCE is never bumped (the wire
+     * serializer and the iTIP outbox gate both key on SEQUENCE, so an unchanged
+     * SEQUENCE fires no fresh attendee invite). Only events that can actually be
+     * pushed are queued: local-only, read-only-calendar, and never-synced
+     * (PENDING_CREATE) events are rewritten locally but not queued, and a
+     * soft-deleted (PENDING_DELETE) event is left alone so its queued delete
+     * isn't overwritten. An exception's update routes to its master (shared UID;
+     * the push bundles the exception into the master's PUT), deduped so a master
+     * and its exception queue the master once.
+     *
+     * @return the number of syncable events queued for UPDATE (0 if none — the
+     *   caller can skip requesting a sync).
+     */
+    suspend fun renameCategory(from: String, to: String): Int {
+        return database.withTransaction {
+            val changedIds = categoryDao.renameTag(from, to)
+            if (changedIds.isEmpty()) return@withTransaction 0
+
+            val now = System.currentTimeMillis()
+            // A heavily-used tag can carry thousands of events; chunk every
+            // IN (:ids) query to stay under SQLite's 999-variable limit.
+            val changedEvents = getEventsByIdsChunked(changedIds)
+            // Route each changed event to its sync target: an exception shares
+            // its master's UID and is bundled into the master's PUT, so the
+            // master carries the update. Dedup so a master + its exception (both
+            // carrying the tag) queue the master exactly once.
+            val targetIds = changedEvents.map { it.originalEventId ?: it.id }.distinct()
+
+            // Resolve targets and their calendars from the rows already in hand
+            // plus one batch query for the extras — a master that doesn't itself
+            // carry the tag isn't in changedEvents. Avoids per-target getById /
+            // getById calendar reads inside the open write transaction.
+            val eventsById = changedEvents.associateBy { it.id }.toMutableMap()
+            val missingIds = targetIds.filter { it !in eventsById }
+            if (missingIds.isNotEmpty()) {
+                getEventsByIdsChunked(missingIds).forEach { eventsById[it.id] = it }
+            }
+            val targets = targetIds.mapNotNull { eventsById[it] }
+            val calendarsById = targets.map { it.calendarId }.distinct()
+                .chunked(SQL_IN_CHUNK)
+                .flatMap { calendarsDao.getByIds(it) }
+                .associateBy { it.id }
+
+            var queued = 0
+            for (target in targets) {
+                // Never touch a soft-deleted event: re-stamping it PENDING_UPDATE
+                // would resurrect it in the UI while its queued DELETE still
+                // drains (server deletes it, device shows it active).
+                if (target.syncStatus == SyncStatus.PENDING_DELETE) continue
+                // A never-synced event already carries the new categories in its
+                // pending CREATE; don't downgrade it to PENDING_UPDATE.
+                if (target.syncStatus == SyncStatus.PENDING_CREATE) continue
+                // Skip anything that can't be pushed: no calendar (orphaned),
+                // the on-device local calendar, or a read-only subscription.
+                val calendar = calendarsById[target.calendarId] ?: continue
+                if (calendar.caldavUrl == LocalCalendarInitializer.LOCAL_CALENDAR_URL) continue
+                if (calendar.isReadOnly) continue
+
+                // Mark dirty (restamps local_modified_at AND updated_at so the
+                // NEWEST_WINS resolver doesn't let a tied-SEQUENCE server edit
+                // revert the rename) and queue the same UPDATE a cosmetic edit
+                // would. SEQUENCE is deliberately untouched.
+                eventsDao.updateSyncStatus(target.id, SyncStatus.PENDING_UPDATE, now)
+                queueOperation(target.id, PendingOperation.OPERATION_UPDATE)
+                queued++
+            }
+            queued
+        }
+    }
+
+    /** Batch-load events by id, chunked under SQLite's IN-clause variable limit. */
+    private suspend fun getEventsByIdsChunked(ids: List<Long>): List<Event> =
+        ids.chunked(SQL_IN_CHUNK).flatMap { eventsDao.getByIds(it) }
 
     /**
      * Write the user's RSVP for an event they're attending.
@@ -528,6 +644,8 @@ class EventWriter @Inject constructor(
                 val newId = eventsDao.insert(exceptionEvent)
                 Pair(newId, exceptionEvent.copy(id = newId))
             }
+
+            recordCategoryUsage(createdException.categories, now)
 
             // Link occurrence to exception AND update occurrence times
             // Using the Event overload updates start_ts, end_ts, start_day, end_day
@@ -778,6 +896,8 @@ class EventWriter @Inject constructor(
 
             val newEventId = eventsDao.insert(newEvent)
             val createdEvent = newEvent.copy(id = newEventId)
+
+            recordCategoryUsage(createdEvent.categories, now)
 
             // Carry attendees forward to the new series. Attendees live
             // in their own Room table; eventsDao.insert(Event) doesn't
@@ -1312,5 +1432,11 @@ class EventWriter @Inject constructor(
                 eventsDao.deleteById(exception.id)
             }
         }
+    }
+
+    private companion object {
+        // SQLite caps a statement at 999 bind variables; chunk IN (:ids) queries
+        // below that so a rename touching thousands of events can't overflow it.
+        const val SQL_IN_CHUNK = 500
     }
 }

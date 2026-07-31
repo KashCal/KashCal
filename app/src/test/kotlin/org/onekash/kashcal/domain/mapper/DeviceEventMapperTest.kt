@@ -26,6 +26,34 @@ import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 class DeviceEventMapperTest {
 
     @Test
+    fun `toFormState carries the event's tags into form state`() {
+        val event = createDeviceEvent(categories = listOf("Work", "Urgent"))
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals(listOf("Work", "Urgent"), formState.categories)
+    }
+
+    @Test
+    fun `toFormState leaves categories empty for an untagged event`() {
+        val event = createDeviceEvent(categories = emptyList())
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals(emptyList<String>(), formState.categories)
+    }
+
+    @Test
     fun `toFormState maps basic fields correctly`() {
         val event = createDeviceEvent(
             title = "Team Standup",
@@ -960,7 +988,8 @@ class DeviceEventMapperTest {
         originalInstanceTime: Long? = null,
         availability: Int = 0,
         status: Int = 1,
-        timezone: String = "America/New_York"
+        timezone: String = "America/New_York",
+        categories: List<String> = emptyList()
     ): DeviceEvent = DeviceEvent(
         id = id,
         calendarId = calendarId,
@@ -982,6 +1011,7 @@ class DeviceEventMapperTest {
         availability = availability,
         accessLevel = 700,
         calendarColor = calendarColor,
-        eventColor = eventColor
+        eventColor = eventColor,
+        categories = categories
     )
 }

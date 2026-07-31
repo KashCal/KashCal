@@ -340,6 +340,16 @@ class HomeViewModel(
         viewModelScope.launch { dataStore.setAgendaWeekBarExpanded(expanded) }
     }
 
+    /** Persist whether the Day view's top week-strip date picker is expanded. */
+    fun setDayWeekBarExpanded(expanded: Boolean) {
+        viewModelScope.launch { dataStore.setDayWeekBarExpanded(expanded) }
+    }
+
+    /** Persist whether the time-grid all-day strip is expanded (up to 3 rows). */
+    fun setAllDayRowsExpanded(expanded: Boolean) {
+        viewModelScope.launch { dataStore.setAllDayRowsExpanded(expanded) }
+    }
+
     /**
      * Persist the user's avatar initials, normalizing first so the stored value
      * is always at most two uppercase letters (or empty to clear).
@@ -1007,6 +1017,16 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
+            dataStore.dayWeekBarExpanded.collect { expanded ->
+                _uiState.update { it.copy(dayWeekBarExpanded = expanded) }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.allDayRowsExpanded.collect { expanded ->
+                _uiState.update { it.copy(allDayRowsExpanded = expanded) }
+            }
+        }
+        viewModelScope.launch {
             dataStore.tagsAboveNotes.collect { above ->
                 _uiState.update { it.copy(tagsAboveNotes = above) }
             }
@@ -1019,6 +1039,11 @@ class HomeViewModel(
         viewModelScope.launch {
             eventReader.getRecentCategories().collect { tags ->
                 _uiState.update { it.copy(categorySuggestions = tags.toPersistentList()) }
+            }
+        }
+        viewModelScope.launch {
+            eventReader.observeTagColors().collect { colors ->
+                _uiState.update { it.copy(tagColors = colors.toPersistentMap()) }
             }
         }
     }
@@ -4000,6 +4025,17 @@ class HomeViewModel(
             val deviceAttendeesArg =
                 if (formState.attendeesEdited) pickerAttendeesToDevice(formState.attendees) else null
 
+            // Tags the user edited, or null when the form isn't managing them
+            // (open-and-save without touching the tag row) so the stored row is
+            // left untouched — mirroring deviceAttendeesArg. Per-occurrence and
+            // this-and-future edits stay out of scope (those branches pass null).
+            val deviceCategoriesArg =
+                if (formState.categoriesEdited) formState.categories else null
+
+            // Captured on the branches that actually persist tags, so the shared
+            // success handler can reconcile those names into the tag registry.
+            var recordedTags: List<String>? = null
+
             // THIS_AND_FUTURE on a recurring device event splits the
             // series via the new repository method. The form was
             // opened on an occurrence, so editingOccurrenceTs carries
@@ -4124,6 +4160,14 @@ class HomeViewModel(
                             }
                             .takeIf { it.isNotEmpty() }
 
+                        // Carry the tags into the recreated event the same way as
+                        // guests: the edited set if the user touched the tag row,
+                        // else the source event's existing tags so the move
+                        // doesn't silently drop them (the source row is deleted
+                        // below). Recorded so the success handler reconciles them.
+                        val moveCategories = deviceCategoriesArg ?: existing.categories
+                        recordedTags = moveCategories
+
                         // The move carries whatever recurrence the form now has
                         // (adding recurrence while moving is supported).
                         val moveRrule = formState.rrule
@@ -4142,6 +4186,7 @@ class HomeViewModel(
                             availability = transpToAvailability(formState.transp),
                             eventColor = formState.eventColor,
                             attendees = moveAttendees,
+                            categories = moveCategories,
                         ).map { newId ->
                             // The target copy exists, so the move has succeeded.
                             // Deleting the source is best-effort cleanup: a failure
@@ -4153,6 +4198,7 @@ class HomeViewModel(
                             newId
                         }
                     } else {
+                        recordedTags = deviceCategoriesArg
                         calendarProviderRepository.updateEvent(
                             eventId = eventId,
                             title = formState.title,
@@ -4167,13 +4213,15 @@ class HomeViewModel(
                             reminders = reminders,
                             availability = transpToAvailability(formState.transp),
                             eventColor = formState.eventColor,
-                            attendees = deviceAttendeesArg
+                            attendees = deviceAttendeesArg,
+                            categories = deviceCategoriesArg
                         ).map { eventId }
                     }
                 }
 
                 // Creating new event
                 else -> {
+                    recordedTags = formState.categories
                     calendarProviderRepository.createEvent(
                         calendarId = calendarId,
                         title = formState.title,
@@ -4188,11 +4236,24 @@ class HomeViewModel(
                         reminders = reminders,
                         availability = transpToAvailability(formState.transp),
                         eventColor = formState.eventColor,
-                        attendees = deviceAttendeesArg
+                        attendees = deviceAttendeesArg,
+                        categories = formState.categories
                     )
                 }
             }.also { result ->
-                result.onSuccess { reloadCurrentView() }
+                result.onSuccess {
+                    // Reconcile freshly-applied tags into the shared registry so
+                    // new names gain a suggestion entry and become colorable. Only
+                    // the create + whole-event-update branches set recordedTags.
+                    // Record the same cleaned names the provider stores (backslash
+                    // stripped, blanks/dupes dropped) so a suggestion resolves to
+                    // the tag that actually persisted, not the raw form value.
+                    recordedTags?.let { tags ->
+                        val cleaned = org.onekash.kashcal.data.calendar_provider.cleanCategoryNames(tags)
+                        if (cleaned.isNotEmpty()) eventCoordinator.recordTagUsage(cleaned)
+                    }
+                    reloadCurrentView()
+                }
                 result.onFailure { e ->
                     Log.e(TAG, "Failed to save device event", e)
                     showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))

@@ -77,6 +77,7 @@ class BackupRoundTripIntegrationTest {
         sourceExporter = SettingsBackupExporter(
             dataStore = sourceDataStore,
             icsSubscriptionsDao = sourceDb.icsSubscriptionsDao(),
+            categoryDao = sourceDb.categoryDao(),
             appVersionProvider = { "test" },
             nowProvider = { java.time.Instant.EPOCH },
         )
@@ -91,6 +92,7 @@ class BackupRoundTripIntegrationTest {
             accountRepository = buildAccountRepo(targetDb),
             calendarRepository = CalendarRepositoryImpl(targetDb.calendarsDao()),
             icsSubscriptionsDao = targetDb.icsSubscriptionsDao(),
+            categoryDao = targetDb.categoryDao(),
             context = context,
         )
     }
@@ -199,6 +201,52 @@ class BackupRoundTripIntegrationTest {
         assertEquals(1, first.subscriptionsCreated)
         assertEquals("second apply creates nothing new", 0, second.subscriptionsCreated)
         assertEquals("second apply updates what first created", 1, second.subscriptionsUpdated)
+    }
+
+    @Test
+    fun `round trip preserves tag custom colors and drops null-color tags`() = runTest {
+        // A recolored tag (custom color) and a plain tag (null color, renders via hash).
+        sourceDb.categoryDao().insertIgnore(
+            org.onekash.kashcal.data.db.entity.Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 500L)
+        )
+        sourceDb.categoryDao().insertIgnore(
+            org.onekash.kashcal.data.db.entity.Category(name = "Gym", color = null, lastUsedAt = 900L)
+        )
+
+        val json = sourceExporter.exportSettings()
+        val envelope = (targetImporter.parseAndValidate(json) as BackupParseResult.Ok).envelope
+
+        // Only the recolored tag is worth carrying — a null-color tag reappears on its
+        // own via sync/usage and its swatch is derived, so exporting it is pointless.
+        assertEquals(1, envelope.categories.size)
+        assertEquals("Work", envelope.categories.single().name)
+
+        val result = targetImporter.applyBackup(envelope)
+
+        val restored = targetDb.categoryDao().getByName("Work")
+        assertEquals("custom color survives restore", 0xFF4457C9.toInt(), restored!!.color)
+        assertEquals(500L, restored.lastUsedAt)
+        assertNull("a null-color tag is not carried in the backup", targetDb.categoryDao().getByName("Gym"))
+        assertEquals(1, result.categoriesRestored)
+    }
+
+    @Test
+    fun `restoring a tag color does not clobber a newer local recency`() = runTest {
+        sourceDb.categoryDao().insertIgnore(
+            org.onekash.kashcal.data.db.entity.Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 100L)
+        )
+        // Target already has the tag, used more recently than the backup snapshot.
+        targetDb.categoryDao().insertIgnore(
+            org.onekash.kashcal.data.db.entity.Category(name = "Work", color = null, lastUsedAt = 999L)
+        )
+
+        val json = sourceExporter.exportSettings()
+        val envelope = (targetImporter.parseAndValidate(json) as BackupParseResult.Ok).envelope
+        targetImporter.applyBackup(envelope)
+
+        val restored = targetDb.categoryDao().getByName("Work")!!
+        assertEquals("backed-up custom color is applied", 0xFF4457C9.toInt(), restored.color)
+        assertEquals("newer local recency is kept", 999L, restored.lastUsedAt)
     }
 
     @Test

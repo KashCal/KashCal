@@ -1,9 +1,11 @@
 package org.onekash.kashcal.ui.components.weekview
 
 import android.util.Log
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -22,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -30,10 +33,14 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -126,6 +133,8 @@ fun WeekViewContent(
     timePattern: String = "h:mma",
     visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    allDayRowsExpanded: Boolean = false,
+    onAllDayRowsToggle: () -> Unit = {},
     onDatePickerRequest: () -> Unit,
     onEventClick: (DisplayEvent) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -237,6 +246,8 @@ fun WeekViewContent(
                 totalHours = totalHours,
                 visibleDays = visibleDays,
                 firstDayOfWeek = firstDayOfWeek,
+                allDayRowsExpanded = allDayRowsExpanded,
+                onAllDayRowsToggle = onAllDayRowsToggle,
                 hourHeight = hourHeight.dp,
                 onHourHeightChange = onHourHeightChange,
                 scrollState = scrollState,
@@ -280,6 +291,8 @@ private fun UnifiedTimeGrid(
     totalHours: Int = WeekViewUtils.TOTAL_HOURS,
     visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    allDayRowsExpanded: Boolean = false,
+    onAllDayRowsToggle: () -> Unit = {},
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     onHourHeightChange: (Float) -> Unit = {},
     scrollState: ScrollState = rememberScrollState(),
@@ -399,6 +412,8 @@ private fun UnifiedTimeGrid(
             visibleDates = visibleDates,
             allDayEventsByDate = allDayEventsByDate,
             timeColumnWidth = timeColumnWidth,
+            allDayRowsExpanded = allDayRowsExpanded,
+            onAllDayRowsToggle = onAllDayRowsToggle,
             showEventEmojis = showEventEmojis,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
@@ -847,13 +862,20 @@ private fun DayHeaderCell(
 
 /**
  * All-day events row with pager synchronization.
- * Shows 1 item + "+N more" for compact display.
+ *
+ * Collapsed (the default) shows one all-day event per day plus a "+N more" badge —
+ * the historical behavior. When [allDayRowsExpanded] is true each day fills up to
+ * [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED] rows adaptively. A chevron on the fixed
+ * "All day" label toggles the two states; it is hidden when no visible day has more
+ * than one all-day event (nothing to expand).
  */
 @Composable
 private fun AllDayEventsPagerRow(
     visibleDates: List<LocalDate>,
     allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     timeColumnWidth: Dp,
+    allDayRowsExpanded: Boolean,
+    onAllDayRowsToggle: () -> Unit,
     showEventEmojis: Boolean = true,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
@@ -866,32 +888,88 @@ private fun AllDayEventsPagerRow(
 
     if (!hasAnyEvents) return
 
+    // Chevron visibility: is there any day with more than one all-day event to
+    // expand? Delegated to the unit-tested WeekViewUtils helper (single source of
+    // truth) and memoized so the per-day count pass only re-runs when inputs change.
+    val canToggle by remember(visibleDates, allDayEventsByDate) {
+        derivedStateOf {
+            WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(
+                visibleDates.map { allDayEventsByDate[it]?.size ?: 0 }
+            )
+        }
+    }
+
+    // Chevron points up when expanded (tap to collapse), down when collapsed.
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (allDayRowsExpanded) 180f else 0f,
+        animationSpec = tween(300),
+        label = "allDayChevronRotation"
+    )
+    val toggleLabel = if (allDayRowsExpanded) {
+        stringResource(R.string.cd_collapse_all_day_rows)
+    } else {
+        stringResource(R.string.cd_expand_all_day_rows)
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            // Match the chevron's 300ms tween so the strip resize and the arrow
+            // rotation finish together on a toggle.
+            .animateContentSize(animationSpec = tween(300))
             .padding(vertical = 4.dp)
     ) {
-        // Label column
+        // Label column — the "All day" caption with, when there's something to
+        // expand, a chevron stacked beneath it. The column is only 48dp wide, so
+        // the chevron goes below the caption rather than beside it (which would
+        // overflow the width in English and longer locales).
         Box(
-            modifier = Modifier.width(timeColumnWidth),
+            modifier = Modifier
+                .width(timeColumnWidth)
+                // When there's something to expand, the whole "All day" label toggles
+                // the strip; guarantee a 48dp tap target (WCAG / Material minimum),
+                // since the caption + chevron alone are shorter than that.
+                .then(
+                    if (canToggle) {
+                        Modifier
+                            .heightIn(min = 48.dp)
+                            .clickable(onClickLabel = toggleLabel, onClick = onAllDayRowsToggle)
+                    } else {
+                        Modifier
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = stringResource(R.string.label_all_day),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.label_all_day),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (canToggle) {
+                    Icon(
+                        Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .graphicsLayer { rotationZ = chevronRotation }
+                    )
+                }
+            }
         }
 
-        // All-day events - render 3 columns from derived visibleDates
-        // (No HorizontalPager to avoid gesture conflicts with main time grid)
+        // All-day events - one column per visible day (up to 7 in WEEK mode),
+        // derived from visibleDates. No HorizontalPager here to avoid gesture
+        // conflicts with the main time grid.
         Row(modifier = Modifier.weight(1f)) {
             visibleDates.forEach { date ->
                 val dayEvents = allDayEventsByDate[date].orEmpty()
 
                 CompactEventCell(
                     events = dayEvents,
+                    expanded = allDayRowsExpanded,
                     showEventEmojis = showEventEmojis,
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
@@ -906,12 +984,16 @@ private fun AllDayEventsPagerRow(
 
 
 /**
- * Compact event cell showing 1 event + "+N more" badge.
- * Used for all-day event rows.
+ * Compact event cell for all-day rows: renders the visible event chips, then a
+ * "+N more" badge for any remainder (which opens the overflow sheet). Collapsed
+ * ([expanded] = false) shows one row — the historical behavior; expanded fills up
+ * to [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED]. Row counts come from the shared
+ * [WeekViewUtils] helpers so the unit-tested logic is the single source of truth.
  */
 @Composable
 private fun CompactEventCell(
     events: List<DisplayEvent>,
+    expanded: Boolean,
     showEventEmojis: Boolean = true,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
@@ -922,18 +1004,21 @@ private fun CompactEventCell(
         return
     }
 
+    val visibleRows = WeekViewUtils.allDayVisibleRows(events.size, expanded)
+    val overflowCount = WeekViewUtils.allDayOverflowCount(events.size, expanded)
+
     Column(modifier = modifier) {
-        val firstEvent = events.first()
+        events.take(visibleRows).forEach { event ->
+            CompactEventChip(
+                displayEvent = event,
+                onClick = { onEventClick(event) },
+                showEventEmojis = showEventEmojis
+            )
+        }
 
-        CompactEventChip(
-            displayEvent = firstEvent,
-            onClick = { onEventClick(firstEvent) },
-            showEventEmojis = showEventEmojis
-        )
-
-        if (events.size > 1) {
+        if (overflowCount > 0) {
             Text(
-                text = stringResource(R.string.status_more_events, events.size - 1),
+                text = stringResource(R.string.status_more_events, overflowCount),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,

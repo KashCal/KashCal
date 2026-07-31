@@ -13,8 +13,8 @@ biometric = "1.1.0"
 # Compose
 composeBom = "2026.06.00"
 
-# Room (2.8.x has kotlinx.serialization incompatibility with KSP - https://issuetracker.google.com/issues/478659001)
-room = "2.7.2"
+# Room
+room = "2.8.4"
 
 # Coroutines
 coroutines = "1.10.2"

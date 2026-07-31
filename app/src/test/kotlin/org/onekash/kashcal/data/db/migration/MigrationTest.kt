@@ -11,6 +11,8 @@ import io.mockk.unmockkStatic
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -1506,6 +1508,11 @@ class MigrationTest {
         Migrations.MIGRATION_19_20.migrate(db)
     }
 
+    private fun migrateUpToV21() {
+        migrateUpToV20()
+        Migrations.MIGRATION_20_21.migrate(db)
+    }
+
     @Test
     fun `migration 20 to 21 creates pending_cancels table`() {
         migrateUpToV20()
@@ -1664,6 +1671,186 @@ class MigrationTest {
         assertTrue(columnExists("attendees", "itip_request_status"))
     }
 
+    // ==================== Migration 21 to 22 (categories) ====================
+
+    /** Read a single category row's color (null if none or the row is absent). */
+    private fun categoryColor(name: String): Int? {
+        db.query("SELECT color FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
+            if (!cursor.moveToFirst() || cursor.isNull(0)) return null
+            return cursor.getInt(0)
+        }
+    }
+
+    private fun categoryCount(): Int {
+        db.query("SELECT COUNT(*) FROM categories").use { cursor ->
+            cursor.moveToFirst()
+            return cursor.getInt(0)
+        }
+    }
+
+    private fun categoryNames(): List<String> {
+        val names = mutableListOf<String>()
+        db.query("SELECT name FROM categories ORDER BY name").use { cursor ->
+            while (cursor.moveToNext()) names.add(cursor.getString(0))
+        }
+        return names
+    }
+
+    private fun categoryLastUsed(name: String): Long? {
+        db.query("SELECT last_used_at FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
+            if (!cursor.moveToFirst()) return null
+            return cursor.getLong(0)
+        }
+    }
+
+    @Test
+    fun `migration 21 to 22 creates categories table with expected columns`() {
+        migrateUpToV21()
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        assertTrue(tableExists("categories"))
+        assertTrue(columnExists("categories", "name"))
+        assertTrue(columnExists("categories", "color"))
+        assertTrue(columnExists("categories", "last_used_at"))
+    }
+
+    @Test
+    fun `migration 21 to 22 name primary key is COLLATE NOCASE`() {
+        migrateUpToV21()
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        // Insert "Chores", then "chores" — a NOCASE PK collapses them to one row.
+        db.execSQL("INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES ('Chores', 100, 1)")
+        db.execSQL("INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES ('chores', 200, 2)")
+
+        val choresRows = categoryNames().filter { it.equals("chores", ignoreCase = true) }
+        assertEquals("Chores and chores must collapse to one row", 1, choresRows.size)
+    }
+
+    @Test
+    fun `migration 21 to 22 seeds Work Personal Family with non-null colors`() {
+        migrateUpToV21()
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        assertTrue(categoryNames().containsAll(listOf("Work", "Personal", "Family")))
+        assertNotNull("seeded defaults carry curated colors", categoryColor("Work"))
+        assertNotNull(categoryColor("Personal"))
+        assertNotNull(categoryColor("Family"))
+    }
+
+    @Test
+    fun `migration 21 to 22 backfills existing event tags with null color`() {
+        migrateUpToV21()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
+                "VALUES (1, 'u1', 1, 'E', 500, 600, 'UTC', 0, 0, 0, '[\"Gym\"]')"
+        )
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        assertTrue(categoryNames().contains("Gym"))
+        assertNull("backfilled tags render via hash color, so color is NULL", categoryColor("Gym"))
+    }
+
+    @Test
+    fun `migration 21 to 22 backfill dedups case-insensitively keeping first-seen casing and max recency`() {
+        migrateUpToV21()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        // Two events tag the same logical name with different casing + recency.
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories, local_modified_at) " +
+                "VALUES (1, 'u1', 1, 'E1', 0, 0, 'UTC', 0, 0, 0, '[\"Travel\"]', 1000)"
+        )
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories, local_modified_at) " +
+                "VALUES (2, 'u2', 1, 'E2', 0, 0, 'UTC', 0, 0, 0, '[\"travel\"]', 5000)"
+        )
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        val travelRows = categoryNames().filter { it.equals("travel", ignoreCase = true) }
+        assertEquals("one row for the deduped name", 1, travelRows.size)
+        assertEquals("first-seen casing wins", "Travel", travelRows[0])
+        assertEquals("recency is the max across the name's events", 5000L, categoryLastUsed("Travel"))
+    }
+
+    @Test
+    fun `migration 21 to 22 seed wins over backfill on case-insensitive collision`() {
+        migrateUpToV21()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        // An event pre-tagged "work" (lowercase) must not overwrite the seeded
+        // "Work" row's curated color with null.
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
+                "VALUES (1, 'u1', 1, 'E', 0, 0, 'UTC', 0, 0, 0, '[\"work\"]')"
+        )
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        val workRows = categoryNames().filter { it.equals("work", ignoreCase = true) }
+        assertEquals(1, workRows.size)
+        assertNotNull("seeded Work color survives the collision", categoryColor(workRows[0]))
+    }
+
+    @Test
+    fun `migration 21 to 22 skips a malformed categories blob without faulting`() {
+        migrateUpToV21()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        // A bad JSON blob on one event must not abort the migration; a good one
+        // on another still backfills.
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
+                "VALUES (1, 'u1', 1, 'Bad', 0, 0, 'UTC', 0, 0, 0, '{not valid json')"
+        )
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
+                "VALUES (2, 'u2', 1, 'Good', 0, 0, 'UTC', 0, 0, 0, '[\"Hobby\"]')"
+        )
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        assertTrue("the well-formed tag still backfills", categoryNames().contains("Hobby"))
+    }
+
+    @Test
+    fun `migration 21 to 22 preserves existing event rows untouched`() {
+        migrateUpToV21()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at, categories) " +
+                "VALUES (7, 'keep', 1, 'Keep Me', 111, 222, 'UTC', 0, 0, 0, '[\"Work\",\"Gym\"]')"
+        )
+
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        db.query("SELECT title, start_ts, categories FROM events WHERE id = 7").use { cursor ->
+            assertTrue("the event row still exists", cursor.moveToFirst())
+            assertEquals("Keep Me", cursor.getString(0))
+            assertEquals(111L, cursor.getLong(1))
+            assertEquals("its category JSON is untouched", "[\"Work\",\"Gym\"]", cursor.getString(2))
+        }
+    }
+
+    @Test
+    fun `migration 21 to 22 is idempotent`() {
+        migrateUpToV21()
+
+        Migrations.MIGRATION_21_22.migrate(db)
+        val countAfterFirst = categoryCount()
+        Migrations.MIGRATION_21_22.migrate(db)
+
+        assertTrue(tableExists("categories"))
+        assertEquals("re-running adds no duplicate rows", countAfterFirst, categoryCount())
+    }
+
     // ==================== Full migration chain 1 to 20 ====================
 
     @Test
@@ -1684,7 +1871,7 @@ class MigrationTest {
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(19, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(20, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -1729,6 +1916,8 @@ class MigrationTest {
         assertEquals(20, migrations[17].endVersion)
         assertEquals(20, migrations[18].startVersion)
         assertEquals(21, migrations[18].endVersion)
+        assertEquals(21, migrations[19].startVersion)
+        assertEquals(22, migrations[19].endVersion)
     }
 
     @Test

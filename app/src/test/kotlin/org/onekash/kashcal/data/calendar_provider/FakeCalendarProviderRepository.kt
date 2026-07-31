@@ -85,12 +85,14 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val availability: Int = 0,
         val eventColor: Int? = null,
         val attendees: List<DeviceAttendee>? = null,
+        val categories: List<String>? = null,
     )
 
-    /** Records an updateEvent call with the attendee set the caller passed. */
+    /** Records an updateEvent call with the attendee + tag sets the caller passed. */
     data class UpdatedEvent(
         val eventId: Long,
         val attendees: List<DeviceAttendee>? = null,
+        val categories: List<String>? = null,
     )
 
     data class DeviceTitleRow(
@@ -262,7 +264,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         reminders: List<Int>,
         availability: Int,
         eventColor: Int?,
-        attendees: List<DeviceAttendee>?
+        attendees: List<DeviceAttendee>?,
+        categories: List<String>?
     ): Result<Long> {
         createCallCount++
         if (createCallCount == failCreateOnCall) {
@@ -291,6 +294,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
                 availability = availability,
                 eventColor = eventColor,
                 attendees = attendees,
+                categories = categories,
             )
         )
         return Result.success(eventId)
@@ -310,7 +314,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         reminders: List<Int>,
         availability: Int,
         eventColor: Int?,
-        attendees: List<DeviceAttendee>?
+        attendees: List<DeviceAttendee>?,
+        categories: List<String>?
     ): Result<Unit> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
@@ -318,7 +323,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         }
 
         updatedEventIds.add(eventId)
-        updatedEvents.add(UpdatedEvent(eventId = eventId, attendees = attendees))
+        updatedEvents.add(UpdatedEvent(eventId = eventId, attendees = attendees, categories = categories))
         return Result.success(Unit)
     }
 
@@ -512,6 +517,15 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             .filterValues { it.isNotEmpty() }
     }
 
+    /** Pre-configured tag categories per event id, for the batch read path. */
+    var eventCategories: MutableMap<Long, List<String>> = mutableMapOf()
+
+    override suspend fun getCategoriesForEvents(eventIds: Set<Long>): Map<Long, List<String>> {
+        if (shouldThrowSecurityException) return emptyMap()
+        return eventIds.associateWith { eventCategories[it] ?: emptyList() }
+            .filterValues { it.isNotEmpty() }
+    }
+
     // Exception event lookup data
     var exceptionEvents: MutableMap<Pair<Long, Long>, Long> = mutableMapOf()
 
@@ -568,6 +582,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         movedEvents.clear()
         deviceEvents.clear()
         eventReminders.clear()
+        eventCategories.clear()
         deviceAttendees.clear()
         activeEventIds.clear()
         exceptionEvents.clear()

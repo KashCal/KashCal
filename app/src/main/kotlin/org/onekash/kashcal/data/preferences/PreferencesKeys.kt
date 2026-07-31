@@ -113,6 +113,16 @@ object PreferencesKeys {
     /** Show the week bar at the top of the Agenda view. Default: true (expanded) */
     val AGENDA_WEEK_BAR_EXPANDED = booleanPreferencesKey("agenda_week_bar_expanded")
 
+    /** Show the week-strip date picker at the top of the Day view. Default: true (expanded) */
+    val DAY_WEEK_BAR_EXPANDED = booleanPreferencesKey("day_week_bar_expanded")
+
+    /**
+     * Whether the all-day strip in the Day/3-Day/Week time-grid views is expanded
+     * (up to 3 rows per day) vs collapsed (1 row, the historical behavior).
+     * Default: false (collapsed) so existing users see no change on upgrade.
+     */
+    val ALL_DAY_ROWS_EXPANDED = booleanPreferencesKey("all_day_rows_expanded")
+
     /** Time format preference: "system", "12h", or "24h" */
     val TIME_FORMAT = stringPreferencesKey("time_format")
 

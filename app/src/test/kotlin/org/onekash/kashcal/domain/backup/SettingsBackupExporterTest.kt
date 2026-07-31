@@ -15,7 +15,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.db.dao.CategoryDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
+import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.PreferencesKeys
@@ -26,6 +28,7 @@ class SettingsBackupExporterTest {
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var kashcalDataStore: KashCalDataStore
     private lateinit var icsSubscriptionsDao: IcsSubscriptionsDao
+    private lateinit var categoryDao: CategoryDao
 
     private val fixedInstant: Instant = Instant.parse("2026-04-23T14:30:05Z")
 
@@ -34,15 +37,22 @@ class SettingsBackupExporterTest {
         dataStore = mockk()
         kashcalDataStore = KashCalDataStore(mockk(relaxed = true), dataStore)
         icsSubscriptionsDao = mockk()
+        categoryDao = mockk()
+        coEvery { categoryDao.getColoredOnce() } returns emptyList()
     }
 
     private fun newExporter(): SettingsBackupExporter =
         SettingsBackupExporter(
             dataStore = kashcalDataStore,
             icsSubscriptionsDao = icsSubscriptionsDao,
+            categoryDao = categoryDao,
             appVersionProvider = { "23.6.4" },
             nowProvider = { fixedInstant },
         )
+
+    private fun stubColoredTags(vararg tags: Category) {
+        coEvery { categoryDao.getColoredOnce() } returns tags.toList()
+    }
 
     private fun stubPrefs(block: androidx.datastore.preferences.core.MutablePreferences.() -> Unit) {
         val prefs = mutablePreferencesOf().apply(block)
@@ -143,7 +153,28 @@ class SettingsBackupExporterTest {
 
         assertEquals(0, envelope.subscriptions.size)
         assertEquals(0, envelope.preferences.size)
+        assertEquals(0, envelope.categories.size)
         assertNotNull(envelope.appVersion)
         assertNotNull(envelope.exportedAt)
+    }
+
+    @Test
+    fun `exports only tags with a custom color`() = runBlocking {
+        stubPrefs { }
+        stubNoSubs()
+        // getColoredOnce is the source of truth — it already filters out null-color
+        // tags in SQL, so the exporter carries only the rows it returns.
+        stubColoredTags(
+            Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 5000L),
+            Category(name = "Personal", color = 0xFF2E7D32.toInt(), lastUsedAt = 3000L),
+        )
+
+        val json = newExporter().exportSettings()
+        val envelope = BackupJson.decodeFromString(BackupEnvelope.serializer(), json)
+
+        assertEquals(2, envelope.categories.size)
+        val work = envelope.categories.single { it.name == "Work" }
+        assertEquals(0xFF4457C9.toInt(), work.color)
+        assertEquals(5000L, work.lastUsedAt)
     }
 }

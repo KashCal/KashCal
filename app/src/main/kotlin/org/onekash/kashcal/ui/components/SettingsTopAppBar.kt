@@ -56,6 +56,10 @@ fun SettingsTopAppBar(
     onNavigateBack: () -> Unit,
     backContentDescription: String = stringResource(R.string.cd_back),
     actions: @Composable RowScope.() -> Unit = {},
+    // The logo doubles as a "jump home to today" shortcut, which fits screens
+    // reached from a calendar view. Detail screens opened from the account hub
+    // can hide it, where a today shortcut is off-context.
+    showLogo: Boolean = true,
     isSearchActive: Boolean = false,
     searchQuery: String = "",
     onSearchQueryChange: (String) -> Unit = {},
@@ -84,8 +88,10 @@ fun SettingsTopAppBar(
                             contentDescription = backContentDescription,
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TopBarLogoButton(onClick = onNavigateBack)
+                    if (showLogo) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TopBarLogoButton(onClick = onNavigateBack)
+                    }
                 }
             },
             actions = actions,

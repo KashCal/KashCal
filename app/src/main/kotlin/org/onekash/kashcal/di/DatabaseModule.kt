@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.CategoryDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
@@ -23,6 +24,7 @@ import org.onekash.kashcal.data.db.dao.PendingCancelsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
+import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.db.migration.Migrations
 import javax.inject.Singleton
 
@@ -53,6 +55,23 @@ object DatabaseModule {
             super.onCreate(db)
             Log.d(TAG, "Creating triggers for master event deduplication")
             createMasterEventUniqueTriggers(db)
+            seedDefaultCategories(db)
+        }
+    }
+
+    /**
+     * Seed the curated starter tags on a fresh install so a new user sees the
+     * same Work/Personal/Family set an upgrading user gets from the v21→v22
+     * migration. `INSERT OR IGNORE` keeps it idempotent and lets any name the
+     * user has already used keep its own row.
+     */
+    private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
+        val now = System.currentTimeMillis()
+        for ((name, color) in Category.DEFAULT_SEEDS) {
+            db.execSQL(
+                "INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, ?, ?)",
+                arrayOf<Any?>(name, color, now)
+            )
         }
     }
 
@@ -148,6 +167,15 @@ object DatabaseModule {
     @Singleton
     fun provideOccurrencesDao(database: KashCalDatabase): OccurrencesDao {
         return database.occurrencesDao()
+    }
+
+    /**
+     * Provide CategoryDao.
+     */
+    @Provides
+    @Singleton
+    fun provideCategoryDao(database: KashCalDatabase): CategoryDao {
+        return database.categoryDao()
     }
 
     /**

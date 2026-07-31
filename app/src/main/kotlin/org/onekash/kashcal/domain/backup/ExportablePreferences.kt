@@ -21,6 +21,8 @@ object ExportablePreferences {
         PreferencesKeys.FIRST_DAY_OF_WEEK.name to PrefKind.INT,
         PreferencesKeys.SHOW_WEEK_NUMBERS.name to PrefKind.BOOL,
         PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
+        PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name to PrefKind.BOOL,
+        PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.TAGS_ABOVE_NOTES.name to PrefKind.BOOL,
         PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
         PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
@@ -63,6 +65,12 @@ object ExportablePreferences {
         // Agenda week bar expanded/collapsed — a deliberate, persistent display
         // choice (like SHOW_WEEK_NUMBERS), so it travels in a settings backup.
         PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED,
+        // Day view week-strip date picker expanded/collapsed — same rationale as
+        // the agenda bar; a persistent display choice that travels in a backup.
+        PreferencesKeys.DAY_WEEK_BAR_EXPANDED,
+        // All-day strip expanded/collapsed in the time-grid views — same rationale
+        // as the agenda week bar: a persistent display choice, so it's exportable.
+        PreferencesKeys.ALL_DAY_ROWS_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
         PreferencesKeys.DEFAULT_EVENT_DURATION,
@@ -105,8 +113,10 @@ object ExportablePreferences {
         // Profile — user's avatar initials travel with a settings backup
         PreferencesKeys.USER_INITIALS,
     ).also {
-        require(it.size == 36) {
-            "KEYS size drifted; expected 36 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        // Bump this and the matching ExportablePreferencesTest assertion together
+        // whenever a key is added to or removed from KEYS above.
+        require(it.size == 38) {
+            "KEYS size drifted; expected 38 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

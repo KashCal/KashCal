@@ -822,7 +822,7 @@ class HomeScreenComposeTest {
         composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
         composeTestRule.onNodeWithText("Go to date").assertIsDisplayed()
         composeTestRule.onNodeWithText("Share availability").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Manage tags").assertIsDisplayed()
         composeTestRule.onNodeWithText("Accounts & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("About").assertIsDisplayed()
         // Privacy & Security appears at the bottom of the hub.
@@ -852,8 +852,8 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_hubInsightsClickInvokesViewSelect() {
-        var selectedView: ViewMode? = null
+    fun homeScreen_hubTagsClickInvokesCallback() {
+        var tagsClicked = false
 
         composeTestRule.setContent {
             HomeScreen(
@@ -864,13 +864,13 @@ class HomeScreenComposeTest {
                 onSetViewingMonth = { _, _ -> },
                 onClearNavigateToToday = {},
                 onClearNavigateToMonth = {},
-                onViewSelect = { mode -> selectedView = mode }
+                onTagsClick = { tagsClicked = true }
             )
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Insights").performClick()
-        assert(selectedView == ViewMode.INSIGHTS)
+        composeTestRule.onNodeWithText("Manage tags").performClick()
+        assert(tagsClicked)
     }
 
     @Test
@@ -930,24 +930,6 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithContentDescription("More menu").assertIsDisplayed()
-    }
-
-    @Test
-    fun homeScreen_hubInsightsRowRendersWhileInInsightsView() {
-        composeTestRule.setContent {
-            HomeScreen(
-                uiState = createDefaultUiState().copy(viewMode = ViewMode.INSIGHTS),
-                isOnline = true,
-                onDateSelected = {},
-                onGoToToday = {},
-                onSetViewingMonth = { _, _ -> },
-                onClearNavigateToToday = {},
-                onClearNavigateToMonth = {}
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("More menu").performClick()
-        composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.db.converter.Converters
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.CategoryDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
@@ -21,6 +22,7 @@ import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.db.entity.Category
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.EventFts
 import org.onekash.kashcal.data.db.entity.IcsSubscription
@@ -54,6 +56,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         Account::class,
         Attendee::class,
         Calendar::class,
+        Category::class,
         Event::class,
         EventFts::class,
         IcsSubscription::class,
@@ -63,7 +66,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 21,
+    version = 22,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -123,6 +126,11 @@ abstract class KashCalDatabase : RoomDatabase() {
     abstract fun scheduledRemindersDao(): ScheduledRemindersDao
 
     /**
+     * Access to Category operations (per-tag color + recency metadata).
+     */
+    abstract fun categoryDao(): CategoryDao
+
+    /**
      * Non-inline wrapper for Room's withTransaction.
      *
      * Room's withTransaction is inline, making it impossible to mock in unit tests.
@@ -153,6 +161,22 @@ abstract class KashCalDatabase : RoomDatabase() {
                 super.onCreate(db)
                 Log.d(TAG, "Creating triggers for master event deduplication")
                 createMasterEventUniqueTriggers(db)
+                seedDefaultCategories(db)
+            }
+        }
+
+        /**
+         * Seed the curated starter tags on a fresh install so a new user lands on
+         * the same Work/Personal/Family set the v21→v22 migration gives an
+         * upgrading user. Mirrors the production callback in the DI module.
+         */
+        private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
+            val now = System.currentTimeMillis()
+            for ((name, color) in Category.DEFAULT_SEEDS) {
+                db.execSQL(
+                    "INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES (?, ?, ?)",
+                    arrayOf<Any?>(name, color, now)
+                )
             }
         }
 

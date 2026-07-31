@@ -15,7 +15,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.ui.theme.KashCalTheme
-import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.Locale
@@ -54,7 +53,7 @@ class AccountHubScreenTest {
         var invites = 0
         var jumpToDate = 0
         var shareAvailability = 0
-        var insights = 0
+        var tags = 0
         var settings = 0
         var about = 0
         var back = 0
@@ -68,14 +67,13 @@ class AccountHubScreenTest {
         composeTestRule.setContent {
             KashCalTheme {
                 AccountHubScreen(
-                    currentViewMode = ViewMode.MONTH,
                     pendingInvitesCount = 0,
                     userInitials = userInitials,
                     onInitialsChange = { callbacks.initials = it },
                     onInvitesClick = { callbacks.invites++ },
                     onJumpToDateClick = { callbacks.jumpToDate++ },
                     onShareAvailabilityClick = { callbacks.shareAvailability++ },
-                    onInsightsClick = { callbacks.insights++ },
+                    onTagsClick = { callbacks.tags++ },
                     onSettingsClick = { callbacks.settings++ },
                     onAboutClick = { callbacks.about++ },
                     onBack = { callbacks.back++ },
@@ -100,8 +98,8 @@ class AccountHubScreenTest {
         composeTestRule.onNodeWithText("Share availability").performClick()
         assertEquals(1, cb.shareAvailability)
 
-        composeTestRule.onNodeWithText("Insights").performClick()
-        assertEquals(1, cb.insights)
+        composeTestRule.onNodeWithText("Manage tags").performClick()
+        assertEquals(1, cb.tags)
 
         composeTestRule.onNodeWithText("Accounts & Settings").performClick()
         assertEquals(1, cb.settings)

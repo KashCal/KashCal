@@ -396,6 +396,30 @@ class KashCalDataStore(
     }
 
     /**
+     * Whether the Day view's top week-strip date picker is expanded (shown) vs
+     * collapsed. Default: true (expanded). Persisted independently of the agenda
+     * bar so collapsing one leaves the other untouched.
+     */
+    val dayWeekBarExpanded: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.DAY_WEEK_BAR_EXPANDED, true)
+
+    suspend fun setDayWeekBarExpanded(expanded: Boolean) {
+        setPreference(PreferencesKeys.DAY_WEEK_BAR_EXPANDED, expanded)
+    }
+
+    /**
+     * Whether the all-day strip in the Day/3-Day/Week time-grid views is expanded
+     * (up to 3 rows) vs collapsed (1 row). Default: false (collapsed) so existing
+     * users see today's behavior after upgrading. Persisted so the choice sticks.
+     */
+    val allDayRowsExpanded: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.ALL_DAY_ROWS_EXPANDED, false)
+
+    suspend fun setAllDayRowsExpanded(expanded: Boolean) {
+        setPreference(PreferencesKeys.ALL_DAY_ROWS_EXPANDED, expanded)
+    }
+
+    /**
      * Maximum events per day in widgets (agenda + week).
      * Default: 5. Valid options: 3, 5, 8, 10, 15.
      */

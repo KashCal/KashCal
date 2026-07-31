@@ -172,10 +172,10 @@ class EventFormLayoutOrderTest {
     }
 
     @Test
-    fun `device-calendar create mode hides the tag row`() {
-        // Device-calendar events can't carry tags yet — the form must NOT show
-        // the tag row there, else the input is invited and silently discarded
-        // on save. Other core rows (Notes/Attendees) still render.
+    fun `device-calendar create mode shows the tag row`() {
+        // Writable device-calendar events carry tags just like local events —
+        // the form shows the tag row and honors inline "#tag" entry. (Tags are
+        // stored as an extended property that CalDAV back-ends round-trip.)
         val deviceCal = org.onekash.kashcal.data.calendar_provider.DeviceCalendar(
             id = 100L,
             displayName = "Phone",
@@ -212,24 +212,19 @@ class EventFormLayoutOrderTest {
             }
         }
         composeTestRule.waitForIdle()
-        // Notes still there; Tags row absent for a device calendar.
+        // Both the tag row and Notes render for a writable device calendar.
         composeTestRule.onNodeWithContentDescription("Notes", useUnmergedTree = true).assertIsDisplayed()
-        assertTrue(
-            "Tag row must not render for a device calendar",
-            composeTestRule.onAllNodesWithContentDescription("Tags", useUnmergedTree = true)
-                .fetchSemanticsNodes().isEmpty(),
-        )
+        composeTestRule.onNodeWithContentDescription("Tags", useUnmergedTree = true).assertIsDisplayed()
 
-        // Tag *entry* must also be off: typing "#dentist" in the title on a
-        // device calendar must NOT trigger the inline tag autocomplete — no
-        // "Create" row appears (else committing it would strip the text and
-        // drop the tag on save). The typed "#dentist" stays as literal title text.
+        // Tag *entry* is on too: typing "#dentist" in the title on a device
+        // calendar triggers the inline tag autocomplete — a "Create" row
+        // appears so the fragment can be committed to a chip.
         composeTestRule.onNodeWithText("Event title").performTextInput("Lunch #dentist")
         composeTestRule.waitForIdle()
         assertTrue(
-            "Inline #tag autocomplete must not offer a Create row on a device calendar",
+            "Inline #tag autocomplete must offer a Create row on a device calendar",
             composeTestRule.onAllNodesWithText("Create", substring = true)
-                .fetchSemanticsNodes().isEmpty(),
+                .fetchSemanticsNodes().isNotEmpty(),
         )
     }
 

@@ -13,7 +13,8 @@ class DisplayEventDeviceTest {
 
     private fun createInstance(
         rrule: String? = null,
-        reminders: List<Int> = emptyList()
+        reminders: List<Int> = emptyList(),
+        categories: List<String> = emptyList()
     ) = DeviceCalendarInstance(
         instanceId = 1L,
         eventId = 100L,
@@ -41,6 +42,7 @@ class DisplayEventDeviceTest {
         originalInstanceTime = null,
         timezone = "America/New_York",
         eventStartTs = 1000L,
+        categories = categories,
     )
 
     @Test
@@ -65,5 +67,31 @@ class DisplayEventDeviceTest {
     fun `Device with empty reminders returns empty list`() {
         val device = DisplayEvent.Device(createInstance(reminders = emptyList()))
         assertTrue(device.reminders.isEmpty())
+    }
+
+    @Test
+    fun `Device categories delegates to instance categories`() {
+        val device = DisplayEvent.Device(createInstance(categories = listOf("Work", "Personal")))
+        assertEquals(listOf("Work", "Personal"), device.categories)
+    }
+
+    @Test
+    fun `Device with no categories returns empty list`() {
+        val device = DisplayEvent.Device(createInstance())
+        assertTrue(device.categories.isEmpty())
+    }
+
+    @Test
+    fun `an in-memory tag filter includes device events by the same predicate as room events`() {
+        // A DisplayEvent tag filter operates over the shared `categories`
+        // surface with no source-specific branch. A mixed list must partition
+        // by tag membership identically for Room and Device.
+        val taggedDevice: DisplayEvent = DisplayEvent.Device(createInstance(categories = listOf("Work")))
+        val untaggedDevice: DisplayEvent = DisplayEvent.Device(createInstance(categories = emptyList()))
+
+        val filtered = listOf(taggedDevice, untaggedDevice)
+            .filter { "Work" in it.categories }
+
+        assertEquals(listOf(taggedDevice), filtered)
     }
 }

@@ -59,6 +59,7 @@ class SettingsActivity : FragmentActivity() {
     companion object {
         const val EXTRA_OPEN_ICLOUD_SIGNIN = "open_icloud_signin"
         const val EXTRA_SUBSCRIPTION_URL = "subscription_url"
+        const val EXTRA_OPEN_TAGS = "open_tags"
     }
 
     private val viewModel: AccountSettingsViewModel by viewModels()
@@ -103,6 +104,11 @@ class SettingsActivity : FragmentActivity() {
         )
         val initialAccentSeed = runBlocking { userPreferencesRepository.accentSeed.first() }
 
+        // Launched straight into tag management from the account hub (there is no
+        // Tags row in Settings itself), so open on that screen and let its back
+        // finish the activity back to the hub rather than drop onto the Settings root.
+        val openTags = intent.getBooleanExtra(EXTRA_OPEN_TAGS, false)
+
         setContent {
             SettingsRoute(
                 viewModel = viewModel,
@@ -110,6 +116,7 @@ class SettingsActivity : FragmentActivity() {
                 initialColorSource = initialColorSource,
                 initialAccentSeed = initialAccentSeed,
                 syncSessionStore = syncSessionStore,
+                openTagsInitially = openTags,
                 onFinish = { finish() },
                 onOpenNotificationSettings = {
                     // VMs should not start activities. Intent launch lives here.

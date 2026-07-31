@@ -156,6 +156,9 @@ interface CalendarProviderRepository {
      *   caller isn't managing attendees (no rows written — the device default).
      *   When non-empty, an owner/organizer row and `HAS_ATTENDEE_DATA=1` are
      *   written too.
+     * @param categories Tag names to store, or null when the caller isn't
+     *   managing tags (no tag row written). A non-null non-empty list is stored
+     *   as a single extended-property row; a non-null empty list writes no row.
      * @return Result containing created event ID or CalendarError.DeviceCalendar
      */
     suspend fun createEvent(
@@ -172,7 +175,8 @@ interface CalendarProviderRepository {
         reminders: List<Int>,
         availability: Int = 0,
         eventColor: Int? = null,
-        attendees: List<DeviceAttendee>? = null
+        attendees: List<DeviceAttendee>? = null,
+        categories: List<String>? = null
     ): Result<Long>
 
     /**
@@ -197,6 +201,11 @@ interface CalendarProviderRepository {
      *   `Attendees` rows: only added guests are inserted and only removed
      *   guests are deleted, so untouched guests keep their synced status. A
      *   non-null empty list removes all guests.
+     * @param categories Authoritative tag set, or null when the caller isn't
+     *   managing tags (the existing tag row is left entirely alone). A non-null
+     *   list replaces the stored tags: a non-empty list rewrites the row, and a
+     *   non-null empty list clears it. Passing null on reschedule/exception
+     *   edits preserves tags the user didn't touch.
      * @return Result.success or CalendarError.DeviceCalendar
      */
     suspend fun updateEvent(
@@ -213,7 +222,8 @@ interface CalendarProviderRepository {
         reminders: List<Int>,
         availability: Int = 0,
         eventColor: Int? = null,
-        attendees: List<DeviceAttendee>? = null
+        attendees: List<DeviceAttendee>? = null,
+        categories: List<String>? = null
     ): Result<Unit>
 
     /**
@@ -450,6 +460,21 @@ interface CalendarProviderRepository {
      * @return Map of eventId to list of reminder minutes before event
      */
     suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>>
+
+    /**
+     * Get the tag categories for a batch of events in a single query.
+     *
+     * Tags live in the generic per-event extended-property store, not on the
+     * event row, so a range load fetches them here in one batched query keyed on
+     * the visible event IDs (rather than one query per event). The read
+     * tolerates arbitrary foreign content — any casing, names this app never
+     * wrote — and returns an empty map if the read is denied. Events with no
+     * tags are simply absent from the map.
+     *
+     * @param eventIds Set of event IDs to fetch categories for
+     * @return Map of eventId to its list of tag names (only events that have any)
+     */
+    suspend fun getCategoriesForEvents(eventIds: Set<Long>): Map<Long, List<String>>
 
     /**
      * Find an existing exception event by master event ID and original instance time.

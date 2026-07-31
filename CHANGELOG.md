@@ -1,3 +1,25 @@
+## [2026.07.31]
+
+You could already tag an event. Now the tag is yours to keep.
+
+Until now a tag was a word you sprinkled on with a #hashtag and mostly forgot. You could see it, but you couldn't manage it: no way to recolor it, no way to fix a typo across every event at once, no way to retire one you'd stopped using. And it lived only in KashCal, so the same event pulled from the calendar already on your phone sat there bare.
+
+This release gives tags a home. There's a manager now, reached from your account, where each tag has a color you pick, a name you can change, and a delete when you're done with it. Rename one and it doesn't just fix the label on your screen; it rewrites the tag across your events and pushes the new name up to your CalDAV account, so your other devices catch up instead of drifting. Removing a tag from the manager only clears the label from the list, never the events themselves, and the screen says so if you ask.
+
+The reach grew too. Events from your device calendar can carry tags now, the same as any other: add and remove them in the editor, see them as chips on the card and in the quick view, with the same colors and suggestions as the rest.
+
+A label you can't recolor, rename, or take with you isn't really yours. This one is.
+
+### Everything in this release
+
+- Added a tag manager, reached from your account, where each tag has a color you choose, a name you can change, and a delete; renaming a tag onto a name that already exists merges the two
+- Changed a tag rename to propagate: renaming updates your KashCal and CalDAV events carrying the tag and re-uploads them to your CalDAV account, so the new name reaches your other devices instead of staying only on this one
+- Added tags to device-calendar events: add and remove them in the editor, see read-only chips in the quick-view sheet and on cards, with tag colors and suggestions shared with your other events and a round-trip through the standard categories field
+- Added a configurable all-day row count in the day, 3-day, and week views: a chevron expands the all-day strip to show every event instead of one-plus-a-count, and the choice persists across restarts and travels in a settings backup (#204)
+- Fixed the new-event button opening the full form instead of Quick Add in the day, 3-day, and week views when Smart event add is on (#320)
+- Fixed the monochrome themed launcher icon showing a blank shape; it now carries the calendar glyph, scaled to sit inside the adaptive-icon safe zone, so it matches the main icon on themed home screens (#317)
+- Removed the Insights row from the account hub, since it is already reachable from the navigation drawer
+
 ## [2026.07.29]
 
 Your widgets have been speaking in shorthand.

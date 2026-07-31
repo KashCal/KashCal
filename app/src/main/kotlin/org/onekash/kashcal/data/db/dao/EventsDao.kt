@@ -70,16 +70,6 @@ data class TitleSuggestion(
 )
 
 /**
- * A candidate row for tag suggestions: one event's raw categories JSON plus its
- * last-used timestamp. The categories column is a JSON array (not splittable in
- * SQL), so the reader decodes, dedups, ranks, and caps these rows in Kotlin.
- */
-data class CategoryCandidate(
-    @ColumnInfo(name = "categories") val categories: List<String>?,
-    @ColumnInfo(name = "last_used") val lastUsed: Long
-)
-
-/**
  * Data Access Object for Event operations.
  *
  * Provides comprehensive CRUD and sync operations for calendar events.
@@ -809,36 +799,6 @@ interface EventsDao {
         minFreq: Int,
         limit: Int
     ): List<TitleSuggestion>
-
-    /**
-     * Candidate rows for tag suggestions: non-deleted, non-synthetic master
-     * events that carry categories, with a last-used timestamp.
-     *
-     * Time-windowed for both cost and relevance: keep all recurring masters
-     * (their [start_ts] is the first occurrence and can be years old even
-     * though the series still runs) plus any event whose last-used time
-     * (`local_modified_at`, falling back to `start_ts`) is since [sinceMs] —
-     * so an old event retro-tagged today still surfaces. No upper bound —
-     * upcoming events' tags are relevant. The reader decodes the JSON, dedups
-     * case-insensitively, ranks by frequency then recency, and caps.
-     */
-    @Query("""
-        SELECT categories,
-               COALESCE(local_modified_at, start_ts) AS last_used
-        FROM events
-        WHERE categories IS NOT NULL
-          AND categories != ''
-          AND categories != '[]'
-          AND original_event_id IS NULL
-          AND sync_status != 'PENDING_DELETE'
-          AND (extra_properties IS NULL
-               OR extra_properties NOT LIKE '%X-KASHCAL-SYNTHETIC-MASTER%')
-          AND (
-            (rrule IS NOT NULL AND rrule != '')
-            OR COALESCE(local_modified_at, start_ts) >= :sinceMs
-          )
-    """)
-    fun observeCategoryCandidates(sinceMs: Long): Flow<List<CategoryCandidate>>
 
     /**
      * Search events by title, location, or description using FTS4 full-text search.

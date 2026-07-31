@@ -1,8 +1,6 @@
 package org.onekash.kashcal.ui.components.hub
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotSelected
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -12,7 +10,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.ui.viewmodels.ViewMode
 
 /**
  * Compose UI tests for [AccountHubScreen] — the full-screen destination that
@@ -25,7 +22,6 @@ class AccountHubScreenComposeTest {
     val composeTestRule = createComposeRule()
 
     private fun setHub(
-        currentViewMode: ViewMode = ViewMode.MONTH,
         pendingInvitesCount: Int = 0,
         userInitials: String = "",
         onInitialsChange: (String) -> Unit = {},
@@ -33,14 +29,13 @@ class AccountHubScreenComposeTest {
     ) {
         composeTestRule.setContent {
             AccountHubScreen(
-                currentViewMode = currentViewMode,
                 pendingInvitesCount = pendingInvitesCount,
                 userInitials = userInitials,
                 onInitialsChange = onInitialsChange,
                 onInvitesClick = {},
                 onJumpToDateClick = {},
                 onShareAvailabilityClick = {},
-                onInsightsClick = {},
+                onTagsClick = {},
                 onSettingsClick = {},
                 onAboutClick = {},
                 onBack = onBack,
@@ -54,22 +49,10 @@ class AccountHubScreenComposeTest {
         composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
         composeTestRule.onNodeWithText("Go to date").assertIsDisplayed()
         composeTestRule.onNodeWithText("Share availability").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Manage tags").assertIsDisplayed()
         composeTestRule.onNodeWithText("Accounts & Settings").assertIsDisplayed()
         composeTestRule.onNodeWithText("About").assertIsDisplayed()
         composeTestRule.onNodeWithText("Privacy & Security").assertIsDisplayed()
-    }
-
-    @Test
-    fun insightsRowSelectedOnlyInInsightsView() {
-        setHub(currentViewMode = ViewMode.INSIGHTS)
-        composeTestRule.onNodeWithText("Insights").assertIsSelected()
-    }
-
-    @Test
-    fun insightsRowNotSelectedInMonthView() {
-        setHub(currentViewMode = ViewMode.MONTH)
-        composeTestRule.onNodeWithText("Insights").assertIsNotSelected()
     }
 
     @Test

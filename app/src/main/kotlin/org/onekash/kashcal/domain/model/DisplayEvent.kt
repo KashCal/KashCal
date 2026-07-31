@@ -34,7 +34,7 @@ sealed interface DisplayEvent {
     val location: String?
     /**
      * RFC 5545 CATEGORIES (tags). Room events carry their own; device-calendar
-     * events have none yet (device-calendar tag support is not implemented).
+     * events carry theirs from the sync-adapter `categories` extended property.
      */
     val categories: List<String>
     val startTs: Long
@@ -103,7 +103,7 @@ sealed interface DisplayEvent {
         override val title get() = instance.title
         override val description get() = instance.description
         override val location get() = instance.location
-        override val categories get() = emptyList<String>()
+        override val categories get() = instance.categories
         override val startTs get() = instance.startTs
         override val endTs get() = instance.endTs
         override val startDay get() = instance.startDay

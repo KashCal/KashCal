@@ -7,6 +7,7 @@ package org.onekash.kashcal.domain.backup
 data class ImportResult(
     val subscriptionsCreated: Int,
     val subscriptionsUpdated: Int,
+    val categoriesRestored: Int,
     val preferencesApplied: Int,
     val deviceCalendarsNoteNeeded: Boolean,
 )

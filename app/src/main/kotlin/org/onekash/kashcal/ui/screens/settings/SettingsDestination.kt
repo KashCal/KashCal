@@ -11,6 +11,7 @@ enum class SettingsDestination(val depth: Int) {
     Accounts(depth = 1),
     BirthdaysAnniversaries(depth = 1),
     Subscriptions(depth = 1),
+    Tags(depth = 1),
     DeviceCalendars(depth = 1);
 
     /** True when navigating from this destination to [target] moves deeper (root -> detail). */
@@ -26,11 +27,13 @@ enum class SettingsDestination(val depth: Int) {
             accounts: Boolean,
             birthdaysAnniversaries: Boolean,
             subscriptions: Boolean,
+            tags: Boolean,
             deviceCalendars: Boolean,
         ): SettingsDestination = when {
             accounts -> Accounts
             birthdaysAnniversaries -> BirthdaysAnniversaries
             subscriptions -> Subscriptions
+            tags -> Tags
             deviceCalendars -> DeviceCalendars
             else -> Root
         }

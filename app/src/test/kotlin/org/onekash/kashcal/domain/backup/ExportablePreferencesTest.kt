@@ -12,8 +12,32 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 36 keys`() {
-        assertEquals(36, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 38 keys`() {
+        assertEquals(38, ExportablePreferences.KEYS.size)
+    }
+
+    @Test
+    fun `DAY_WEEK_BAR_EXPANDED is a persistent display choice included in backups`() {
+        assertTrue(
+            "DAY_WEEK_BAR_EXPANDED must be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name },
+        )
+        assertFalse(
+            "DAY_WEEK_BAR_EXPANDED must not be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.DAY_WEEK_BAR_EXPANDED.name),
+        )
+    }
+
+    @Test
+    fun `ALL_DAY_ROWS_EXPANDED is in the allow-list as a persistent display choice`() {
+        assertTrue(
+            "ALL_DAY_ROWS_EXPANDED must be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name },
+        )
+        assertFalse(
+            "ALL_DAY_ROWS_EXPANDED must not be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name),
+        )
     }
 
     @Test

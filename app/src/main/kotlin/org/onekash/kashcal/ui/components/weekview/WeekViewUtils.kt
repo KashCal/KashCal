@@ -51,6 +51,10 @@ object WeekViewUtils {
     const val MAX_HOUR_HEIGHT_DP = 150f
     const val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
+    // All-day strip: rows shown per day when collapsed (today's default) vs expanded.
+    const val MAX_ALLDAY_ROWS_COLLAPSED = 1
+    const val MAX_ALLDAY_ROWS_EXPANDED = 3
+
     // Infinite day pager constants (THREE_DAYS mode)
     // Using large page count for pseudo-infinite scrolling
     // HorizontalPager is lazy - large pageCount costs nothing
@@ -88,6 +92,21 @@ object WeekViewUtils {
         val dayOffset = ChronoUnit.DAYS.between(today, date)
         return (CENTER_DAY_PAGE.toLong() + dayOffset).toInt()
     }
+
+    /**
+     * Whether [pagerPosition] is a settled day-scale page (safe to feed to
+     * [pageToDate]).
+     *
+     * The DAY/3-DAY and WEEK pagers share one stored position but use different
+     * scales: day pages sit near [CENTER_DAY_PAGE] (~1.07e9) while week pages are
+     * in 0..[TOTAL_WEEK_PAGES]. The default (0) and a stale week page left over
+     * from a WEEK->DAY switch are therefore both far below any real day page, and
+     * interpreting them as day pages yields absurd dates millions of years off.
+     * Anything above [TOTAL_WEEK_PAGES] can only be a day-scale page: reaching it
+     * as a week page is impossible, and reaching it as a day page ~2.9M years
+     * before today isn't either.
+     */
+    fun isSettledDayPage(pagerPosition: Int): Boolean = pagerPosition > TOTAL_WEEK_PAGES
 
     /**
      * Get the date range for currently visible days.
@@ -912,4 +931,33 @@ object WeekViewUtils {
         val endTs = startTs + durationMinutes.toLong() * 60 * 1000
         return startTs to endTs
     }
+
+    // ==================== All-Day Strip Expand/Collapse ====================
+
+    /**
+     * How many all-day rows to render for a day with [count] events.
+     *
+     * Collapsed keeps today's behavior (at most one row); expanded fills up to
+     * [MAX_ALLDAY_ROWS_EXPANDED] adaptively, so a day with two events shows two,
+     * a day with one shows one, and a day with three or more shows three.
+     */
+    fun allDayVisibleRows(count: Int, expanded: Boolean): Int {
+        val cap = if (expanded) MAX_ALLDAY_ROWS_EXPANDED else MAX_ALLDAY_ROWS_COLLAPSED
+        return count.coerceAtMost(cap)
+    }
+
+    /**
+     * Events beyond the visible rows, surfaced as the "+N more" badge that opens
+     * the overflow sheet. Zero when everything fits.
+     */
+    fun allDayOverflowCount(count: Int, expanded: Boolean): Int =
+        (count - allDayVisibleRows(count, expanded)).coerceAtLeast(0)
+
+    /**
+     * Whether the expand/collapse chevron is meaningful for the current window:
+     * true only when at least one visible day has more all-day events than the
+     * collapsed cap can show. Otherwise there is nothing to expand.
+     */
+    fun anyAllDayColumnHasOverflowWhenCollapsed(perDayCounts: List<Int>): Boolean =
+        perDayCounts.any { it > MAX_ALLDAY_ROWS_COLLAPSED }
 }

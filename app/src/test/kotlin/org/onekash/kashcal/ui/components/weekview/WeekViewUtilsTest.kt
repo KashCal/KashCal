@@ -94,6 +94,39 @@ class WeekViewUtilsTest {
         }
     }
 
+    // ==================== isSettledDayPage (strip render gate) ====================
+    //
+    // The DAY strip must not render off a stale WEEK-scale page or the uninitialized
+    // default: both are far below any real day page and pageToDate() would map them to
+    // dates millions of years off. These pin the day-scale vs week-scale boundary.
+
+    @Test
+    fun `isSettledDayPage is true for a real day page`() {
+        assertTrue(WeekViewUtils.isSettledDayPage(WeekViewUtils.CENTER_DAY_PAGE))
+        assertTrue(WeekViewUtils.isSettledDayPage(WeekViewUtils.CENTER_DAY_PAGE + 365))
+        assertTrue(WeekViewUtils.isSettledDayPage(WeekViewUtils.CENTER_DAY_PAGE - 365))
+    }
+
+    @Test
+    fun `isSettledDayPage is false for the uninitialized default`() {
+        assertFalse(WeekViewUtils.isSettledDayPage(0))
+    }
+
+    @Test
+    fun `isSettledDayPage is false for a stale week-scale page`() {
+        // A WEEK->DAY switch can leave the shared position holding a week page
+        // (near CENTER_WEEK_PAGE) that must not be read as a day page.
+        assertFalse(WeekViewUtils.isSettledDayPage(WeekViewUtils.CENTER_WEEK_PAGE))
+        assertFalse(WeekViewUtils.isSettledDayPage(0))
+        assertFalse(WeekViewUtils.isSettledDayPage(WeekViewUtils.TOTAL_WEEK_PAGES))
+    }
+
+    @Test
+    fun `isSettledDayPage boundary is just above the week-page range`() {
+        assertFalse(WeekViewUtils.isSettledDayPage(WeekViewUtils.TOTAL_WEEK_PAGES))
+        assertTrue(WeekViewUtils.isSettledDayPage(WeekViewUtils.TOTAL_WEEK_PAGES + 1))
+    }
+
     @Test
     fun `getVisibleDateRange returns 3 consecutive days`() {
         val (start, end) = WeekViewUtils.getVisibleDateRange(WeekViewUtils.CENTER_DAY_PAGE)
@@ -1086,5 +1119,59 @@ class WeekViewUtilsTest {
             density = 1.0f
         )
         assertEquals(360, result)
+    }
+
+    // ==================== All-Day Row Expand/Collapse Tests ====================
+
+    @Test
+    fun `allDayVisibleRows collapsed shows at most one row`() {
+        assertEquals(0, WeekViewUtils.allDayVisibleRows(0, expanded = false))
+        assertEquals(1, WeekViewUtils.allDayVisibleRows(1, expanded = false))
+        assertEquals(1, WeekViewUtils.allDayVisibleRows(2, expanded = false))
+        assertEquals(1, WeekViewUtils.allDayVisibleRows(3, expanded = false))
+        assertEquals(1, WeekViewUtils.allDayVisibleRows(5, expanded = false))
+    }
+
+    @Test
+    fun `allDayVisibleRows expanded fills up to three adaptively`() {
+        assertEquals(0, WeekViewUtils.allDayVisibleRows(0, expanded = true))
+        assertEquals(1, WeekViewUtils.allDayVisibleRows(1, expanded = true))
+        assertEquals(2, WeekViewUtils.allDayVisibleRows(2, expanded = true))
+        assertEquals(3, WeekViewUtils.allDayVisibleRows(3, expanded = true))
+        assertEquals(3, WeekViewUtils.allDayVisibleRows(5, expanded = true))
+    }
+
+    @Test
+    fun `allDayVisibleRows expanded cap equals MAX_ALLDAY_ROWS_EXPANDED`() {
+        assertEquals(
+            WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED,
+            WeekViewUtils.allDayVisibleRows(99, expanded = true)
+        )
+    }
+
+    @Test
+    fun `allDayOverflowCount collapsed hides all but the first`() {
+        assertEquals(0, WeekViewUtils.allDayOverflowCount(0, expanded = false))
+        assertEquals(0, WeekViewUtils.allDayOverflowCount(1, expanded = false))
+        assertEquals(1, WeekViewUtils.allDayOverflowCount(2, expanded = false))
+        assertEquals(4, WeekViewUtils.allDayOverflowCount(5, expanded = false))
+    }
+
+    @Test
+    fun `allDayOverflowCount expanded only counts beyond three`() {
+        assertEquals(0, WeekViewUtils.allDayOverflowCount(2, expanded = true))
+        assertEquals(0, WeekViewUtils.allDayOverflowCount(3, expanded = true))
+        assertEquals(1, WeekViewUtils.allDayOverflowCount(4, expanded = true))
+        assertEquals(2, WeekViewUtils.allDayOverflowCount(5, expanded = true))
+    }
+
+    @Test
+    fun `anyAllDayColumnHasOverflowWhenCollapsed true only when a column exceeds one`() {
+        // Nothing to expand: empty, or every column at most one event.
+        assertFalse(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(emptyList()))
+        assertFalse(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(0, 1, 1)))
+        // At least one column with 2+ events -> the toggle is meaningful.
+        assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(1, 2, 0)))
+        assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(5)))
     }
 }

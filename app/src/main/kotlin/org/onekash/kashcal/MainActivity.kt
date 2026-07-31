@@ -22,6 +22,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,7 @@ import org.onekash.kashcal.domain.model.toEventForShareCard
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.ui.components.AppInfoSheet
+import org.onekash.kashcal.ui.components.category.LocalTagColors
 import org.onekash.kashcal.ui.components.DeviceEventQuickViewSheet
 import org.onekash.kashcal.ui.components.EventFormSheet
 import org.onekash.kashcal.ui.components.EventQuickViewSheet
@@ -381,7 +383,7 @@ class MainActivity : FragmentActivity() {
                                     }
                                 }
                                 is PendingAction.CreateEvent -> {
-                                    if (quickAddEnabled && !uiState.viewMode.isTimeGrid && action.startTs == null) {
+                                    if (quickAddEnabled && action.startTs == null) {
                                         showQuickAddDialog = true
                                     } else {
                                         val startTs = action.startTs ?: run {
@@ -511,6 +513,11 @@ class MainActivity : FragmentActivity() {
 
                 Log.d(TAG, "Composing with ${uiState.dayEventsCache.values.sumOf { it.size }} cached day events")
 
+                // Publish per-tag custom colors to every chip below (home views,
+                // form, quick view, week blocks) so recoloring a tag repaints its
+                // chips without threading color through the occurrence stream.
+                CompositionLocalProvider(LocalTagColors provides uiState.tagColors) {
+
                 HomeScreen(
                     uiState = uiState,
                     weekEvents = weekEvents,
@@ -539,8 +546,10 @@ class MainActivity : FragmentActivity() {
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
 
-                        // Quick Add: open dialog for non-time-grid views when enabled
-                        if (quickAddEnabled && !uiState.viewMode.isTimeGrid) {
+                        // Quick Add: open dialog in every view when enabled. Quick Add
+                        // seeds its reference day/time, so it works in the time-grid
+                        // views (Day/3-Day/Week) too — the reference is chosen below.
+                        if (quickAddEnabled) {
                             showQuickAddDialog = true
                         } else {
                             val eventTimestamp = if (uiState.viewMode.isTimeGrid) {
@@ -596,6 +605,12 @@ class MainActivity : FragmentActivity() {
                     onSettingsClick = {
                         launchInternalActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                     },
+                    onTagsClick = {
+                        launchInternalActivity(
+                            Intent(this@MainActivity, SettingsActivity::class.java)
+                                .putExtra(SettingsActivity.EXTRA_OPEN_TAGS, true)
+                        )
+                    },
                     // Drawer
                     drawerState = drawerState,
                     onDrawerToggleCalendar = { calendarId -> homeViewModel.toggleCalendarVisibility(calendarId) },
@@ -613,6 +628,9 @@ class MainActivity : FragmentActivity() {
                     onAgendaWeekBarToggle = {
                         homeViewModel.setAgendaWeekBarExpanded(!homeViewModel.uiState.value.agendaWeekBarExpanded)
                     },
+                    onDayWeekBarToggle = {
+                        homeViewModel.setDayWeekBarExpanded(!homeViewModel.uiState.value.dayWeekBarExpanded)
+                    },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
                     // Week view callbacks (infinite day pager)
@@ -623,6 +641,9 @@ class MainActivity : FragmentActivity() {
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
                     onWeekScrollMinutesChange = { minutes -> homeViewModel.setWeekViewScrollMinutes(minutes) },
                     onWeekHourHeightChange = { height -> homeViewModel.setWeekViewHourHeight(height) },
+                    onAllDayRowsToggle = {
+                        homeViewModel.setAllDayRowsExpanded(!homeViewModel.uiState.value.allDayRowsExpanded)
+                    },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
                     onReschedule = { displayEvent, targetDate, targetStartMinutes ->
                         homeViewModel.rescheduleEvent(displayEvent, targetDate, targetStartMinutes)
@@ -1322,9 +1343,16 @@ class MainActivity : FragmentActivity() {
                             quickAddShareSeed = null
                         } else {
                             // Undated input should default to the day the user is viewing,
-                            // not today, when the form opens.
-                            val anchorMs = uiState.selectedDate.takeIf { it != 0L }
-                                ?: System.currentTimeMillis()
+                            // not today, when the form opens. Time-grid views (Day/3-Day/
+                            // Week) don't track selectedDate as the grid pages, and their
+                            // full-form FAB seeds today, so match that here rather than
+                            // seed a stale selectedDate.
+                            val anchorMs = if (uiState.viewMode.isTimeGrid) {
+                                System.currentTimeMillis()
+                            } else {
+                                uiState.selectedDate.takeIf { it != 0L }
+                                    ?: System.currentTimeMillis()
+                            }
                             val anchorDate = DateTimeUtils.eventTsToLocalDate(anchorMs, isAllDay = false)
                             quickAddViewModel.setReferenceTime(anchorDate.atTime(LocalTime.now()))
                         }
@@ -1676,6 +1704,7 @@ class MainActivity : FragmentActivity() {
                 if (isLocked) {
                     AppLockVeil(onUnlock = { promptForUnlock() })
                 }
+                } // end LocalTagColors provider
             }
         }
     }
