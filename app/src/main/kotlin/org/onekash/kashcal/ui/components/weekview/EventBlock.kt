@@ -71,6 +71,9 @@ fun EventBlock(
     val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
     val showTags = height >= HEIGHT_THRESHOLD_LOCATION && displayEvent.categories.isNotEmpty()
     val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
+    val formattedTitle = remember(displayEvent.title, showEventEmojis) {
+        EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    }
 
     // Tap and long-press-drag live in separate pointerInput modifiers so a parent
     // scrollable (HorizontalPager / verticalScroll) can cancel the tap without racing
@@ -122,7 +125,7 @@ fun EventBlock(
         ) {
             // Title (always shown)
             Text(
-                text = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis),
+                text = formattedTitle,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
@@ -194,7 +197,9 @@ fun CompactEventBlock(
             calColor to contrastForegroundOn(calColor)
         }
     }
-    val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    val formattedTitle = remember(displayEvent.title, showEventEmojis) {
+        EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    }
     val timeLabel = eventTimeLabel(displayEvent, timePattern)
 
     val compactStateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)

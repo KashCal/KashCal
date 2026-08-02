@@ -111,7 +111,8 @@ fun QuickAddDialog(
     onDismiss: () -> Unit,
     onSave: () -> Unit,
     onExpand: () -> Unit,
-    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM
+    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
+    showEventEmojis: Boolean = true
 ) {
     val focusRequester = remember { FocusRequester() }
     val placeholder = remember { placeholderExamples.random() }
@@ -157,6 +158,7 @@ fun QuickAddDialog(
                     isSaving = isSaving,
                     placeholder = placeholder,
                     timeFormat = timeFormat,
+                    showEventEmojis = showEventEmojis,
                     onSave = onSave,
                     onExpand = onExpand
                 )
@@ -175,7 +177,8 @@ internal fun QuickAddDialogContent(
     placeholder: String,
     onSave: () -> Unit,
     onExpand: () -> Unit,
-    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM
+    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
+    showEventEmojis: Boolean = true
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -225,7 +228,11 @@ internal fun QuickAddDialogContent(
                 count = QuickAddInputLimits.graphemeCount(textFieldState.text.toString())
             )
 
-            QuickAddPreview(result = parseResult, timeFormat = timeFormat)
+            QuickAddPreview(
+                result = parseResult,
+                timeFormat = timeFormat,
+                showEventEmojis = showEventEmojis
+            )
 
             Row(
                 modifier = Modifier

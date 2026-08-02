@@ -1,3 +1,15 @@
+## [2026.08.02]
+
+### Everything in this release
+
+- Fixed deleting a server-hosted event (one carrying an organizer, as Fastmail and iCloud events do) failing and freezing the event's link when the server had quietly changed the event since your last sync; the delete now refetches the current version and retries once instead of getting stuck, addressing the delete half of #311
+- Changed the automatic title emoji to never decorate sensitive events: titles mentioning a funeral, memorial, hospice, surgery, biopsy, chemo, divorce, custody, a hearing, or a layoff are left plain
+- Fixed the automatic emoji matching whole words only, so a word like "test" or "bar" sitting inside an unrelated title no longer picks up a stray emoji; "bar exam" now reads as books rather than beer
+- Fixed a synced event that already carries its own emoji getting a second one stacked in front; a title that already contains an emoji is left as is, and ordinary non-Latin text is no longer mistaken for one
+- Fixed text-style symbols like `™`, `✓`, and `➡` being treated as emoji, so a title using them still gets a matching emoji
+- Fixed the all-day label in the day, 3-day, and week views overflowing its column; it now shrinks to fit
+- Fixed a drag or tap in the week view acting on the wrong event after you reschedule one, so the gesture stays bound to the event you touched
+
 ## [2026.07.31]
 
 You could already tag an event. Now the tag is yours to keep.

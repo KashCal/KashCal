@@ -33,6 +33,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,6 +77,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -945,7 +947,19 @@ private fun AllDayEventsPagerRow(
                 Text(
                     text = stringResource(R.string.label_all_day),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // The gutter is a fixed 48dp; longer translations ("Toute la
+                    // journée") would wrap to a second line and grow the strip out of
+                    // alignment with the day cells. Keep one line and shrink to fit,
+                    // down to a still-legible floor; only the longest few locales pass
+                    // that floor and ellipsize.
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 9.sp,
+                        maxFontSize = 11.sp,
+                        stepSize = 0.5.sp
+                    )
                 )
                 if (canToggle) {
                     Icon(
@@ -1043,7 +1057,9 @@ private fun CompactEventChip(
 ) {
     val color = displayEvent.eventColor ?: displayEvent.calendarColor
     val isFree = displayEvent.isFree
-    val displayText = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    val displayText = remember(displayEvent.title, showEventEmojis) {
+        EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    }
     val calColor = Color(color)
     val surfaceColor = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface

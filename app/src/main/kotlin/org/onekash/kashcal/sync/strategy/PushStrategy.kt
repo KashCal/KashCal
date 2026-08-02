@@ -749,8 +749,60 @@ class PushStrategy @Inject constructor(
                 SinglePushResult.Success()
             }
             result.isConflict() -> {
-                Log.w(TAG, "Event modified on server before delete")
-                SinglePushResult.Conflict()
+                // 412: the resource still exists but our If-Match etag no longer
+                // matches. For a scheduling object this is commonly an
+                // inconsequential server-side drift — the server auto-processed an
+                // attendee reply and rewrote the organizer's copy, changing the
+                // etag while the user's intent (remove this event) is unchanged
+                // (RFC 6638 §3.2.10). Mirror the UPDATE path: refetch the current
+                // etag and retry the delete once. The user asked to delete this
+                // resource; deleting its current version satisfies that intent.
+                Log.w(TAG, "412 on delete for ${event?.title ?: "unknown"}, fetching fresh etag for retry")
+                val freshEtagResult = clientToUse.fetchEtag(caldavUrl)
+                when {
+                    // Resource is gone (removed elsewhere between our delete and
+                    // the refetch) — the delete goal is already met.
+                    freshEtagResult.isNotFound() -> {
+                        Log.d(TAG, "Refetch shows event already gone, treating delete as done")
+                        event?.let { eventsDao.deleteById(it.id) }
+                        SinglePushResult.Success()
+                    }
+                    else -> {
+                        val freshEtag = freshEtagResult.getOrNull()
+                        if (freshEtag.isNullOrEmpty()) {
+                            // No usable validator to retry with — defer to the
+                            // normal conflict reschedule path.
+                            Log.w(TAG, "fetchEtag returned no etag for delete of ${event?.title}, deferring")
+                            SinglePushResult.Conflict()
+                        } else {
+                            val retryResult = clientToUse.deleteEvent(caldavUrl, freshEtag)
+                            when {
+                                retryResult.isSuccess() || retryResult.isNotFound() -> {
+                                    event?.let { eventsDao.deleteById(it.id) }
+                                    Log.d(TAG, "412 delete retry succeeded for ${event?.title}")
+                                    SinglePushResult.Success()
+                                }
+                                retryResult.isConflict() -> {
+                                    // Still conflicting (rapid re-drift) — defer to
+                                    // the reschedule path rather than looping.
+                                    Log.w(TAG, "412 delete retry re-conflicted for ${event?.title}")
+                                    SinglePushResult.Conflict()
+                                }
+                                else -> {
+                                    // A real failure on the retry (network, auth, 5xx,
+                                    // permanent 403). Surface it as an Error so the
+                                    // caller can honor isRetryable — a permanent error
+                                    // is marked failed immediately instead of being
+                                    // rescheduled as a benign conflict for 30 days.
+                                    val error = (retryResult as? CalDavResult.Error)
+                                        ?: return SinglePushResult.Error(-1, "Unexpected result type from delete retry", false)
+                                    Log.e(TAG, "412 delete retry failed for ${event?.title}: ${error.message}")
+                                    SinglePushResult.Error(error.code, error.message, error.isRetryable)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             result.isNotFound() -> {
                 // Already deleted on server - delete locally

@@ -1,0 +1,3 @@
+• Sync: fixed deleting Fastmail and iCloud events getting stuck and breaking the event's link to the server
+• Emoji: sensitive titles (funerals, surgery, layoffs) are never decorated, and matching is now whole-word only
+• Week view: fixed the all-day label overflowing, and drag or tap acting on the wrong event after a reschedule

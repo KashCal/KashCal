@@ -71,6 +71,17 @@ sealed interface DisplayEvent {
      */
     val isCancelled: Boolean
 
+    /**
+     * Stable identity for a single on-screen occurrence. For Room events the id
+     * is the series id shared by every occurrence, so the occurrence start is
+     * appended to keep distinct occurrences distinguishable — the pair is unique
+     * by the `(event_id, start_ts)` unique index on the occurrences table; for
+     * device events the instance id (a provider row id) already identifies one
+     * occurrence. Lets a list keep each occurrence's identity across a re-sort
+     * (e.g. a Compose `key()`) rather than matching by position.
+     */
+    val stableKey: String
+
     /** Room event with full Event + Occurrence data */
     @Immutable
     data class Room(
@@ -95,6 +106,7 @@ sealed interface DisplayEvent {
         override val isReadOnly get() = calendar?.isReadOnly ?: false
         override val isFree get() = event.transp == "TRANSPARENT"
         override val isCancelled get() = event.status == "CANCELLED"
+        override val stableKey get() = "room:${event.id}:${occurrence.startTs}"
     }
 
     /** Device calendar event from CalendarProvider */
@@ -117,6 +129,7 @@ sealed interface DisplayEvent {
         override val isFree get() = instance.availability == 1
         override val isDeclinedByMe get() = instance.selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED
         override val isCancelled get() = instance.status == Events.STATUS_CANCELED
+        override val stableKey get() = "device:${instance.instanceId}"
 
         /** RFC 5545 RRULE string, null for non-recurring events. */
         val rrule: String? get() = instance.rrule

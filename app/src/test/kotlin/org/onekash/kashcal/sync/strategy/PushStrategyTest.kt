@@ -471,6 +471,343 @@ class PushStrategyTest {
         assert((result as PushResult.Success).eventsDeleted == 1)
     }
 
+    // ========== DELETE 412 Conflict Retry ==========
+    //
+    // A scheduling object's ETag drifts asynchronously when the server
+    // auto-processes an attendee reply (RFC 6638 §3.2.10 keeps the schedule-tag
+    // stable but the ETag changes). A DELETE with the drifted ETag then 412s
+    // even though nothing the user cares about changed. The delete path must
+    // refetch the current ETag and retry once — the same self-heal the UPDATE
+    // path already has — instead of rescheduling forever with the stale ETag.
+
+    @Test
+    fun `pushAll retries delete with fresh etag on 412 conflict`() = runTest {
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        // First DELETE with the stale etag → 412.
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // Refetch → fresh etag.
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        // Retry DELETE with the fresh etag → success. Stubbed on the fresh value
+        // ONLY: an impl that reused the stale etag would hit no matching stub and
+        // the test would fail — this proves the retry uses the refetched etag.
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) } returns
+            CalDavResult.success(Unit)
+        coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assertEquals("delete should have succeeded on retry", 1, success.eventsDeleted)
+        assertEquals("no failures expected", 0, success.operationsFailed)
+
+        // Retry sequence: first delete (412) → refetch → second delete (success).
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) }
+        coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) }
+        coVerify { eventsDao.deleteById(eventWithUrl.id) }
+        coVerify { pendingOperationsDao.deleteById(operation.id) }
+    }
+
+    @Test
+    fun `pushAll delete retry is bounded to exactly one retry`() = runTest {
+        // Adversarial: guard against an unbounded retry loop. Every DELETE 412s
+        // and every refetch returns a (different) etag. The delete must be
+        // attempted exactly twice total (first + one retry), the refetch exactly
+        // once, then defer — never loop within a single push.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        // Any etag → 412 (server keeps re-drifting).
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals("re-drift should surface as one failed op", 1, (result as PushResult.Success).operationsFailed)
+
+        coVerify(exactly = 2) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
+        coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
+        // Not deleted locally — it still exists on the server.
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        // Deferred to the normal conflict reschedule path.
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+    }
+
+    @Test
+    fun `pushAll delete falls back to conflict when refetch fails on 412`() = runTest {
+        // Refetch network-fails → no fresh etag to retry with → defer to the
+        // existing reschedule path (do NOT delete locally, do NOT loop).
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.networkError("Connection failed")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        // The refetch WAS attempted (proves we entered the new retry path, not
+        // the old straight-to-conflict path) but failed, so only the first
+        // delete ran and no retry followed.
+        coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+    }
+
+    @Test
+    fun `pushAll delete treats refetch 404 as already deleted`() = runTest {
+        // Adversarial race: the resource is removed elsewhere between our 412'd
+        // DELETE and the refetch. A 404 on refetch means it is gone — the user's
+        // intent (remove it) is satisfied; delete locally rather than re-freeze.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // Refetch says the resource is gone.
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.notFoundError("Event not found")
+        coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals("gone-on-refetch counts as a completed delete", 1, (result as PushResult.Success).eventsDeleted)
+
+        // No second delete attempt — refetch already proved it is gone.
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
+        coVerify { eventsDao.deleteById(eventWithUrl.id) }
+        coVerify { pendingOperationsDao.deleteById(operation.id) }
+    }
+
+    @Test
+    fun `pushAll delete falls back to conflict when refetch returns no etag`() = runTest {
+        // Server answers PROPFIND 207 but omits <getetag> (some CDN/edge cases).
+        // Without an etag there is nothing to retry with — defer, don't delete,
+        // don't loop.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag succeeds but with a null payload (no getetag element parsed).
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success(null)
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        // The refetch was attempted (new path) but yielded no usable etag, so no
+        // retry delete followed and the op deferred.
+        coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+    }
+
+    @Test
+    fun `pushAll delete falls back to conflict when refetch returns empty etag`() = runTest {
+        // Empty-string etag edge case (some servers, e.g. Zoho, return "" rather
+        // than a real validator). An empty etag is not usable for a retry — the
+        // guard must treat it like a missing etag and defer, NOT retry the delete
+        // with an empty If-Match. Distinguishes isNullOrEmpty() from == null.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag succeeds but returns an empty string.
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        // Refetch attempted, but empty etag → no retry delete, defer.
+        coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+    }
+
+    @Test
+    fun `pushAll delete retry permanent error marks failed instead of conflict`() = runTest {
+        // The first delete 412s (drift), refetch succeeds, but the retry delete
+        // hits a PERMANENT error (e.g. 403 auth). That is not a benign conflict:
+        // it must surface as a non-retryable Error so the caller marks the
+        // operation failed immediately, not reschedule it as a conflict for the
+        // full 30-day lifetime.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        // Retry with the fresh etag hits a permanent (non-retryable) error.
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) } returns
+            CalDavResult.authError("Forbidden")
+        coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) }
+        // Permanent error → marked failed, NOT rescheduled as a conflict, NOT deleted locally.
+        coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
+        coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `pushAll delete retry transient error reschedules with error not generic conflict`() = runTest {
+        // The retry delete hits a TRANSIENT error (network). It should reschedule
+        // (retryable) but carry the real error message, and must NOT be marked
+        // failed. This distinguishes a real failure from a benign re-conflict.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) } returns
+            CalDavResult.networkError("Connection reset")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) }
+        // Transient error → rescheduled (retryable) with the real message, NOT the
+        // generic "Conflict" string, and NOT marked failed.
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Connection reset") }, any()) }
+        coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
     // ========== Mixed Operations ==========
 
     @Test

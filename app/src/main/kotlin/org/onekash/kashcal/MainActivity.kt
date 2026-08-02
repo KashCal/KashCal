@@ -1367,6 +1367,7 @@ class MainActivity : FragmentActivity() {
                         isSaveEnabled = isSaveEnabled,
                         isSaving = isSaving,
                         timeFormat = uiState.timeFormat,
+                        showEventEmojis = uiState.showEventEmojis,
                         onDismiss = { showQuickAddDialog = false },
                         onSave = {
                             coroutineScope.launch {

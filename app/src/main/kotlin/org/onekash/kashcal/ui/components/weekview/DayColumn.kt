@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -122,33 +123,41 @@ fun DayColumn(
         groupedEvents.forEach { group ->
             val (visibleEvents, overflowCount) = WeekViewUtils.groupForDisplay(group, maxVisibleOverlap)
 
-            visibleEvents.forEachIndexed { index, positioned ->
-                // Calculate position within the column
-                val eventWidth = columnWidth * positioned.widthFraction
-                val eventLeft = columnWidth * positioned.leftFraction
+            visibleEvents.forEach { positioned ->
+                // Keyed on the event's stable identity so that when the day
+                // re-sorts after a reschedule, Compose moves each EventBlock
+                // node (and its long-lived gesture pointerInput coroutine) with
+                // its event instead of reusing the node by position and rebinding
+                // it to a different event — which would fire the wrong event's
+                // tap/drag callbacks.
+                key(positioned.displayEvent.stableKey) {
+                    // Calculate position within the column
+                    val eventWidth = columnWidth * positioned.widthFraction
+                    val eventLeft = columnWidth * positioned.leftFraction
 
-                val isDraggable = onEventDragStart != null &&
-                    !positioned.displayEvent.isReadOnly &&
-                    !positioned.displayEvent.isAllDay
+                    val isDraggable = onEventDragStart != null &&
+                        !positioned.displayEvent.isReadOnly &&
+                        !positioned.displayEvent.isAllDay
 
-                EventBlock(
-                    displayEvent = positioned.displayEvent,
-                    height = positioned.height,
-                    showEventEmojis = showEventEmojis,
-                    timePattern = timePattern,
-                    onClick = { onEventClick(positioned.displayEvent) },
-                    isDraggable = isDraggable,
-                    onDragStart = if (isDraggable) { offset ->
-                        onEventDragStart?.invoke(positioned.displayEvent, offset)
-                    } else null,
-                    onDrag = onEventDrag,
-                    onDragEnd = onEventDragEnd,
-                    onDragCancel = onEventDragCancel,
-                    modifier = Modifier
-                        .offset(x = eventLeft, y = positioned.topOffset)
-                        .width(eventWidth - 2.dp)
-                        .padding(horizontal = 1.dp)
-                )
+                    EventBlock(
+                        displayEvent = positioned.displayEvent,
+                        height = positioned.height,
+                        showEventEmojis = showEventEmojis,
+                        timePattern = timePattern,
+                        onClick = { onEventClick(positioned.displayEvent) },
+                        isDraggable = isDraggable,
+                        onDragStart = if (isDraggable) { offset ->
+                            onEventDragStart?.invoke(positioned.displayEvent, offset)
+                        } else null,
+                        onDrag = onEventDrag,
+                        onDragEnd = onEventDragEnd,
+                        onDragCancel = onEventDragCancel,
+                        modifier = Modifier
+                            .offset(x = eventLeft, y = positioned.topOffset)
+                            .width(eventWidth - 2.dp)
+                            .padding(horizontal = 1.dp)
+                    )
+                }
             }
 
             // Show overflow badge if more than 2 events overlap

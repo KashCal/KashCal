@@ -35,6 +35,7 @@ private val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM
 fun QuickAddPreview(
     result: QuickAddResult,
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
+    showEventEmojis: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -62,7 +63,7 @@ fun QuickAddPreview(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                if (result.emoji != null) {
+                if (showEventEmojis && result.emoji != null) {
                     Text(
                         text = result.emoji,
                         style = MaterialTheme.typography.titleMedium
