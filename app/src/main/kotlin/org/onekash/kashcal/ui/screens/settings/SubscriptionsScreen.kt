@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
+import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
@@ -62,7 +63,13 @@ fun SubscriptionsScreen(
     onToggleSubscription: (Long, Boolean) -> Unit,
     onDeleteSubscription: (Long) -> Unit,
     onRefreshSubscription: (Long) -> Unit,
-    onUpdateSubscription: (Long, String, Int, Int) -> Unit
+    onUpdateSubscription: (Long, String, Int, Int) -> Unit,
+    // Android 17+ local-network permission plumbing for the add-subscription
+    // dialog. Defaulted so previews and pre-37 hosts render nothing.
+    localNetworkPermissionState: LocalNetworkPermissionState =
+        LocalNetworkPermissionState.NotRequired,
+    onRequestLocalNetwork: () -> Unit = {},
+    onSubscriptionDialogOpened: () -> Unit = {},
 ) {
     // State for dialogs (rememberSaveable survives config changes)
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
@@ -204,7 +211,10 @@ fun SubscriptionsScreen(
             onAdd = { url, name, color ->
                 onAddSubscription(url, name, color)
                 showAddDialog = false
-            }
+            },
+            localNetworkPermissionState = localNetworkPermissionState,
+            onRequestLocalNetwork = onRequestLocalNetwork,
+            onDialogOpened = onSubscriptionDialogOpened,
         )
     }
 

@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automaticky</string>
     <string name="settings_accent_color_dynamic_desc">Riaď sa farbami Material You tvojho zariadenia</string>
     <string name="settings_widgets_section">Widgety</string>
-    <string name="settings_widget_theme">Vzhľad widgetu</string>
-    <string name="settings_widget_accent_color">Farba zvýraznenia widgetu</string>
-    <string name="settings_widget_color_follow_app">Rovnaké ako aplikácia</string>
+    <string name="settings_widget_theme">Motív</string>
+    <string name="settings_widget_accent_color">Akcent</string>
+    <string name="settings_widget_color_follow_app">Podľa aplikácie</string>
     <string name="settings_widget_color_follow_app_desc">Použiť farbu zvýraznenia a zdroj aplikácie</string>
+    <string name="settings_widget_theme_follow_app">Podľa aplikácie</string>
+    <string name="settings_widget_theme_follow_app_desc">Prispôsobiť svetlému alebo tmavému vzhľadu aplikácie</string>
     <string name="settings_app_icon">Ikona aplikácie</string>
     <string name="app_icon_default">Predvolené</string>
     <string name="app_icon_supporter">Podporovateľ</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Kontakty</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Kalendáre zariadenia</string>

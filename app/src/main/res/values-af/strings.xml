@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Outomaties</string>
     <string name="settings_accent_color_dynamic_desc">Volg jou toestel se Material You-kleure</string>
     <string name="settings_widgets_section">Legstukke</string>
-    <string name="settings_widget_theme">Legstukontwerp</string>
-    <string name="settings_widget_accent_color">Legstuk-aksentkleur</string>
-    <string name="settings_widget_color_follow_app">Dieselfde as program</string>
+    <string name="settings_widget_theme">Tema</string>
+    <string name="settings_widget_accent_color">Aksent</string>
+    <string name="settings_widget_color_follow_app">Volg die app</string>
     <string name="settings_widget_color_follow_app_desc">Gebruik die program se aksentkleur en bron</string>
+    <string name="settings_widget_theme_follow_app">Volg die app</string>
+    <string name="settings_widget_theme_follow_app_desc">Pas by die program se lig- of donker voorkoms</string>
     <string name="settings_app_icon">Programikoon</string>
     <string name="app_icon_default">Verstek</string>
     <string name="app_icon_supporter">Ondersteuner</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Kontakte</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Toestelkalenders</string>

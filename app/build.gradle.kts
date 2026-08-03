@@ -120,13 +120,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlin {
         compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
             // Opt into Kotlin 2.4's default annotation target for constructor
             // params: annotations now apply to both the param and the backing
             // property/field, not just the param. Matches the intent for
@@ -260,6 +260,10 @@ dependencies {
 
     // iCal Parsing (RFC 5545) — in-tree subproject that wraps ical4j 4.2.2
     implementation(project(":icaldav-core"))
+
+    // vCard Parsing (RFC 2426 / RFC 6350) — in-tree pure-JVM subproject that
+    // quarantines the vCard library behind a compile boundary
+    implementation(project(":vcard-core"))
 
     // HTTP Client
     implementation(libs.okhttp)

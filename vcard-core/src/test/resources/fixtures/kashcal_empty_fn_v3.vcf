@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-fixture-0005
+N:Probe;KashCal;Quincy;Dr.;Jr.
+EMAIL;TYPE=INTERNET:emptyfn@example.test
+END:VCARD

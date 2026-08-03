@@ -396,13 +396,16 @@ class ICalGenerator(
             crlfLine("TRIGGER;VALUE=DATE-TIME:${dt.toICalString()}")
         }
 
-        // Description (required for DISPLAY)
-        if (alarm.action == AlarmAction.DISPLAY) {
+        // RFC 5545 §3.6.6: DESCRIPTION is required for both DISPLAY (text to
+        // show) and EMAIL (message body); AUDIO has none.
+        if (alarm.action == AlarmAction.DISPLAY || alarm.action == AlarmAction.EMAIL) {
             crlfLine("DESCRIPTION:${alarm.description ?: "Reminder"}")
         }
 
-        // Summary (for EMAIL action)
-        alarm.summary?.let {
+        // RFC 5545 §3.6.6: SUMMARY (message subject) is required for EMAIL.
+        // Emit whenever provided, and default it for EMAIL so the required
+        // property is never absent.
+        (alarm.summary ?: if (alarm.action == AlarmAction.EMAIL) "Reminder" else null)?.let {
             crlfLine("SUMMARY:$it")
         }
 

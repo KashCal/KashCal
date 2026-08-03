@@ -124,8 +124,20 @@ sealed class FetchCalendarState {
     /** Successfully fetched calendar info */
     data class Success(val name: String, val eventCount: Int) : FetchCalendarState()
 
-    /** Fetch failed with error. Message is a [UiMessage] so the UI localizes it. */
-    data class Error(val message: UiMessage) : FetchCalendarState()
+    /**
+     * Fetch failed with error. Message is a [UiMessage] so the UI localizes it.
+     *
+     * @property connectionFailed true only when the request failed at the
+     *   socket/connection layer (never reached the server). Distinguishes a
+     *   blocked local-network socket from a server that responded with an HTTP
+     *   error, empty body, or non-calendar content — mirrors the CalDAV path's
+     *   DiscoveryResult.Error (connection) vs AuthError (server responded) split
+     *   so the Android 17 local-network hint only fires on a genuine block.
+     */
+    data class Error(
+        val message: UiMessage,
+        val connectionFailed: Boolean = false,
+    ) : FetchCalendarState()
 }
 
 /**
@@ -211,8 +223,14 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
         FetchCalendarState.Success(name, eventCount)
     } catch (e: Exception) {
         // A network/parse exception: surface its own text (already a system
-        // message), via Literal since it is not an app resource.
-        FetchCalendarState.Error(UiMessage.Literal(e.message ?: e.javaClass.simpleName))
+        // message), via Literal since it is not an app resource. This is the
+        // socket/connection layer (connect timeout, refused, unknown host) — the
+        // request never got a server response, so a blocked local-network socket
+        // lands here and this is the only failure that arms the LAN hint.
+        FetchCalendarState.Error(
+            UiMessage.Literal(e.message ?: e.javaClass.simpleName),
+            connectionFailed = true,
+        )
     }
 }
 

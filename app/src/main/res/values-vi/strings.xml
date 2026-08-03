@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Tự động</string>
     <string name="settings_accent_color_dynamic_desc">Theo màu Material You của thiết bị</string>
     <string name="settings_widgets_section">Widget</string>
-    <string name="settings_widget_theme">Thiết kế widget</string>
-    <string name="settings_widget_accent_color">Màu nhấn widget</string>
-    <string name="settings_widget_color_follow_app">Giống ứng dụng</string>
+    <string name="settings_widget_theme">Giao diện</string>
+    <string name="settings_widget_accent_color">Màu nhấn</string>
+    <string name="settings_widget_color_follow_app">Theo ứng dụng</string>
     <string name="settings_widget_color_follow_app_desc">Dùng màu nhấn và nguồn của ứng dụng</string>
+    <string name="settings_widget_theme_follow_app">Theo ứng dụng</string>
+    <string name="settings_widget_theme_follow_app_desc">Khớp với giao diện sáng hoặc tối của ứng dụng</string>
     <string name="settings_app_icon">Biểu tượng ứng dụng</string>
     <string name="app_icon_default">Mặc định</string>
     <string name="app_icon_supporter">Người ủng hộ</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Danh bạ</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Lịch thiết bị</string>

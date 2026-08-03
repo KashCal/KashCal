@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Samodejno</string>
     <string name="settings_accent_color_dynamic_desc">Sledi barvam Material You tvoje naprave</string>
     <string name="settings_widgets_section">Pripomočki</string>
-    <string name="settings_widget_theme">Videz pripomočka</string>
-    <string name="settings_widget_accent_color">Barva poudarka pripomočka</string>
-    <string name="settings_widget_color_follow_app">Enako kot aplikacija</string>
+    <string name="settings_widget_theme">Tema</string>
+    <string name="settings_widget_accent_color">Poudarek</string>
+    <string name="settings_widget_color_follow_app">Sledi aplikaciji</string>
     <string name="settings_widget_color_follow_app_desc">Uporabi barvo poudarka in vir aplikacije</string>
+    <string name="settings_widget_theme_follow_app">Sledi aplikaciji</string>
+    <string name="settings_widget_theme_follow_app_desc">Uskladi s svetlim ali temnim videzom aplikacije</string>
     <string name="settings_app_icon">Ikona aplikacije</string>
     <string name="app_icon_default">Privzeto</string>
     <string name="app_icon_supporter">Podpornik</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Stiki</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Koledarji naprave</string>

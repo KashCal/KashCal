@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">အလိုအလျောက်</string>
     <string name="settings_accent_color_dynamic_desc">သင့်စက်ပစ္စည်း၏ Material You အရောင်များကို လိုက်နာပါ</string>
     <string name="settings_widgets_section">ဝိဂျက်များ</string>
-    <string name="settings_widget_theme">ဝိဂျက် ဒီဇိုင်း</string>
-    <string name="settings_widget_accent_color">ဝိဂျက် အသားပေးအရောင်</string>
-    <string name="settings_widget_color_follow_app">အက်ပ်နှင့် တူညီသည်</string>
+    <string name="settings_widget_theme">အသွင်အပြင်</string>
+    <string name="settings_widget_accent_color">အသားပေးအရောင်</string>
+    <string name="settings_widget_color_follow_app">အက်ပ်ကို လိုက်နာပါ</string>
     <string name="settings_widget_color_follow_app_desc">အက်ပ်၏ အသားပေးအရောင်နှင့် အရင်းအမြစ်ကို အသုံးပြုပါ</string>
+    <string name="settings_widget_theme_follow_app">အက်ပ်ကို လိုက်နာပါ</string>
+    <string name="settings_widget_theme_follow_app_desc">အက်ပ်၏ အလင်း သို့မဟုတ် အမှောင် အသွင်အပြင်နှင့် ကိုက်ညီအောင်ပြုပါ</string>
     <string name="settings_app_icon">အက်ပ် အိုင်ကွန်</string>
     <string name="app_icon_default">မူရင်း</string>
     <string name="app_icon_supporter">ပံ့ပိုးသူ</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal အဆက်အသွယ်များ</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>

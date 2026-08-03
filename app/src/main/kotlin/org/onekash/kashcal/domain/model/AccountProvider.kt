@@ -9,6 +9,7 @@ package org.onekash.kashcal.domain.model
  * @property displayName Human-readable name for UI
  * @property requiresNetwork Whether sync requires network connectivity
  * @property supportsCalDAV Whether provider uses CalDAV protocol
+ * @property supportsCardDAV Whether provider can sync contacts via CardDAV
  * @property supportsIncrementalSync Whether provider supports sync-token/ctag
  * @property supportsReminders Whether provider supports VALARM reminders
  * @property supportsPush Whether provider supports push notifications
@@ -18,6 +19,7 @@ enum class AccountProvider(
     val displayName: String,
     val requiresNetwork: Boolean,
     val supportsCalDAV: Boolean,
+    val supportsCardDAV: Boolean,
     val supportsIncrementalSync: Boolean,
     val supportsReminders: Boolean,
     val supportsPush: Boolean,
@@ -27,6 +29,7 @@ enum class AccountProvider(
         displayName = "Local",
         requiresNetwork = false,
         supportsCalDAV = false,
+        supportsCardDAV = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -36,6 +39,7 @@ enum class AccountProvider(
         displayName = "iCloud",
         requiresNetwork = true,
         supportsCalDAV = true,
+        supportsCardDAV = true,
         supportsIncrementalSync = true,
         supportsReminders = true,
         supportsPush = false,
@@ -45,6 +49,7 @@ enum class AccountProvider(
         displayName = "ICS Subscription",
         requiresNetwork = true,
         supportsCalDAV = false,
+        supportsCardDAV = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -54,6 +59,7 @@ enum class AccountProvider(
         displayName = "Contact Birthdays",
         requiresNetwork = false,
         supportsCalDAV = false,
+        supportsCardDAV = false,
         supportsIncrementalSync = false,
         supportsReminders = true,
         supportsPush = false,
@@ -63,6 +69,7 @@ enum class AccountProvider(
         displayName = "CalDAV",
         requiresNetwork = true,
         supportsCalDAV = true,
+        supportsCardDAV = true,
         supportsIncrementalSync = true,
         supportsReminders = true,
         supportsPush = false,

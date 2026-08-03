@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automaattinen</string>
     <string name="settings_accent_color_dynamic_desc">Seuraa laitteesi Material You -värejä</string>
     <string name="settings_widgets_section">Widgetit</string>
-    <string name="settings_widget_theme">Widgetin ulkoasu</string>
-    <string name="settings_widget_accent_color">Widgetin korostusväri</string>
-    <string name="settings_widget_color_follow_app">Sama kuin sovelluksessa</string>
+    <string name="settings_widget_theme">Teema</string>
+    <string name="settings_widget_accent_color">Korostus</string>
+    <string name="settings_widget_color_follow_app">Sovelluksen mukaan</string>
     <string name="settings_widget_color_follow_app_desc">Käytä sovelluksen korostusväriä ja sen lähdettä</string>
+    <string name="settings_widget_theme_follow_app">Sovelluksen mukaan</string>
+    <string name="settings_widget_theme_follow_app_desc">Seuraa sovelluksen vaaleaa tai tummaa ulkoasua</string>
     <string name="settings_app_icon">Sovelluksen kuvake</string>
     <string name="app_icon_default">Oletus</string>
     <string name="app_icon_supporter">Tukija</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Yhteystiedot</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Laitteen kalenterit</string>

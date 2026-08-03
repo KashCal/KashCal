@@ -104,6 +104,76 @@ class ICalGeneratorTest {
         assertTrue(icalString.contains("TRIGGER:-PT15M"))
     }
 
+    // RFC 5545 §3.6.6: an EMAIL alarm MUST include DESCRIPTION (message body)
+    // and SUMMARY (message subject); a DISPLAY alarm MUST include DESCRIPTION;
+    // an AUDIO alarm requires neither.
+    @Test
+    fun `generate EMAIL alarm includes both DESCRIPTION and SUMMARY`() {
+        val alarm = ICalAlarm(
+            action = AlarmAction.EMAIL,
+            trigger = java.time.Duration.ofMinutes(-30),
+            triggerAbsolute = null,
+            triggerRelatedToEnd = false,
+            description = "Body text",
+            summary = "Subject text",
+            repeatCount = 0,
+            repeatDuration = null
+        )
+        val event = createTestEvent(alarms = listOf(alarm))
+
+        val valarm = generator.generate(event, method = null)
+            .substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+
+        assertTrue(valarm.contains("ACTION:EMAIL"), "expected ACTION:EMAIL in: $valarm")
+        assertTrue(valarm.contains("DESCRIPTION:Body text"), "expected DESCRIPTION in: $valarm")
+        assertTrue(valarm.contains("SUMMARY:Subject text"), "expected SUMMARY in: $valarm")
+    }
+
+    @Test
+    fun `generate EMAIL alarm defaults the required DESCRIPTION and SUMMARY when absent`() {
+        val alarm = ICalAlarm(
+            action = AlarmAction.EMAIL,
+            trigger = java.time.Duration.ofMinutes(-30),
+            triggerAbsolute = null,
+            triggerRelatedToEnd = false,
+            description = null,
+            summary = null,
+            repeatCount = 0,
+            repeatDuration = null
+        )
+        val event = createTestEvent(alarms = listOf(alarm))
+
+        val valarm = generator.generate(event, method = null)
+            .substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+
+        // Both are REQUIRED for EMAIL, so the generator must emit them even
+        // when the model left them null.
+        assertTrue(valarm.contains("DESCRIPTION:"), "expected a DESCRIPTION in: $valarm")
+        assertTrue(valarm.contains("SUMMARY:"), "expected a SUMMARY in: $valarm")
+    }
+
+    @Test
+    fun `generate AUDIO alarm emits neither DESCRIPTION nor SUMMARY`() {
+        val alarm = ICalAlarm(
+            action = AlarmAction.AUDIO,
+            trigger = java.time.Duration.ofMinutes(-10),
+            triggerAbsolute = null,
+            triggerRelatedToEnd = false,
+            description = null,
+            summary = null,
+            repeatCount = 0,
+            repeatDuration = null
+        )
+        val event = createTestEvent(alarms = listOf(alarm))
+
+        val valarm = generator.generate(event, method = null)
+            .substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+
+        assertTrue(valarm.contains("ACTION:AUDIO"), "expected ACTION:AUDIO in: $valarm")
+        assertFalse(valarm.contains("DESCRIPTION:"), "AUDIO must not emit DESCRIPTION: $valarm")
+        assertFalse(valarm.contains("SUMMARY:"), "AUDIO must not emit SUMMARY: $valarm")
+    }
+
     @Test
     fun `generate event with RECURRENCE-ID includes property`() {
         val recurrenceId = ICalDateTime.parse("20231208T140000Z")

@@ -144,7 +144,7 @@ class RRuleExpanderTest {
             recurrenceId = ICalDateTime.parse("20231203T150000Z")
         )
 
-        val overrides = RRuleExpander.buildOverrideMap(listOf(overrideEvent))
+        val overrides = listOf(overrideEvent)
 
         val occurrences = expander.expand(
             masterEvent,
@@ -224,28 +224,6 @@ class RRuleExpanderTest {
         assertEquals(1, startZdt.dayOfMonth)
         assertEquals(1, endZdt.monthValue)  // January 1 (exclusive end)
         assertEquals(2024, endZdt.year)
-    }
-
-    @Test
-    fun `buildOverrideMap creates correct mapping`() {
-        val override1 = createTestEvent(
-            uid = "event-1",
-            recurrenceId = ICalDateTime.parse("20231201T100000Z")
-        )
-        val override2 = createTestEvent(
-            uid = "event-2",
-            recurrenceId = ICalDateTime.parse("20231215T100000Z")
-        )
-        val nonOverride = createTestEvent(
-            uid = "event-3",
-            recurrenceId = null
-        )
-
-        val map = RRuleExpander.buildOverrideMap(listOf(override1, override2, nonOverride))
-
-        assertEquals(2, map.size)
-        assertTrue(map.containsKey("20231201"))
-        assertTrue(map.containsKey("20231215"))
     }
 
     @Test

@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "KashCal"
 include(":app")
 include(":icaldav-core")
+include(":vcard-core")

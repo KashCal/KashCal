@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Αυτόματο</string>
     <string name="settings_accent_color_dynamic_desc">Ακολουθήστε τα χρώματα Material You της συσκευής σας</string>
     <string name="settings_widgets_section">Γραφικά στοιχεία</string>
-    <string name="settings_widget_theme">Σχεδίαση γραφικού στοιχείου</string>
-    <string name="settings_widget_accent_color">Χρώμα τονισμού γραφικού στοιχείου</string>
-    <string name="settings_widget_color_follow_app">Ίδιο με την εφαρμογή</string>
+    <string name="settings_widget_theme">Θέμα</string>
+    <string name="settings_widget_accent_color">Τονισμός</string>
+    <string name="settings_widget_color_follow_app">Όπως η εφαρμογή</string>
     <string name="settings_widget_color_follow_app_desc">Χρήση του χρώματος τονισμού και της πηγής της εφαρμογής</string>
+    <string name="settings_widget_theme_follow_app">Όπως η εφαρμογή</string>
+    <string name="settings_widget_theme_follow_app_desc">Ταιριάζει με τη φωτεινή ή σκοτεινή εμφάνιση της εφαρμογής</string>
     <string name="settings_app_icon">Εικονίδιο εφαρμογής</string>
     <string name="app_icon_default">Προεπιλογή</string>
     <string name="app_icon_supporter">Υποστηρικτής</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Επαφές</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>

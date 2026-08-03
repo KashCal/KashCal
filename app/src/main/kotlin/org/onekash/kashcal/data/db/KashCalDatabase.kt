@@ -9,6 +9,7 @@ import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.onekash.kashcal.data.db.converter.Converters
 import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.AddressBookDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.CategoryDao
@@ -20,6 +21,7 @@ import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.AddressBook
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Category
@@ -54,6 +56,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
 @Database(
     entities = [
         Account::class,
+        AddressBook::class,
         Attendee::class,
         Calendar::class,
         Category::class,
@@ -66,7 +69,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 22,
+    version = 23,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -79,6 +82,11 @@ abstract class KashCalDatabase : RoomDatabase() {
      * Access to Account operations.
      */
     abstract fun accountsDao(): AccountsDao
+
+    /**
+     * Access to CardDAV address-book collection operations.
+     */
+    abstract fun addressBookDao(): AddressBookDao
 
     /**
      * Access to Calendar operations.

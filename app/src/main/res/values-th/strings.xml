@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">อัตโนมัติ</string>
     <string name="settings_accent_color_dynamic_desc">ทำตามสี Material You ของอุปกรณ์คุณ</string>
     <string name="settings_widgets_section">วิดเจ็ต</string>
-    <string name="settings_widget_theme">ดีไซน์วิดเจ็ต</string>
-    <string name="settings_widget_accent_color">สีเน้นของวิดเจ็ต</string>
-    <string name="settings_widget_color_follow_app">เหมือนกับแอป</string>
+    <string name="settings_widget_theme">ธีม</string>
+    <string name="settings_widget_accent_color">สีเน้น</string>
+    <string name="settings_widget_color_follow_app">ตามแอป</string>
     <string name="settings_widget_color_follow_app_desc">ใช้สีเน้นและแหล่งที่มาของแอป</string>
+    <string name="settings_widget_theme_follow_app">ตามแอป</string>
+    <string name="settings_widget_theme_follow_app_desc">ให้ตรงกับลักษณะสว่างหรือมืดของแอป</string>
     <string name="settings_app_icon">ไอคอนแอป</string>
     <string name="app_icon_default">ค่าเริ่มต้น</string>
     <string name="app_icon_supporter">ผู้สนับสนุน</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal รายชื่อ</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>

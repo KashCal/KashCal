@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">സ്വയമേവ</string>
     <string name="settings_accent_color_dynamic_desc">നിങ്ങളുടെ ഉപകരണത്തിന്റെ Material You നിറങ്ങൾ പിന്തുടരുക</string>
     <string name="settings_widgets_section">വിജറ്റുകൾ</string>
-    <string name="settings_widget_theme">വിജറ്റ് ഡിസൈൻ</string>
-    <string name="settings_widget_accent_color">വിജറ്റ് ആക്സന്റ് നിറം</string>
-    <string name="settings_widget_color_follow_app">ആപ്പിന് സമാനം</string>
+    <string name="settings_widget_theme">തീം</string>
+    <string name="settings_widget_accent_color">ആക്സന്റ്</string>
+    <string name="settings_widget_color_follow_app">ആപ്പിനെ പിന്തുടരുക</string>
     <string name="settings_widget_color_follow_app_desc">ആപ്പിന്റെ ആക്സന്റ് നിറവും ഉറവിടവും ഉപയോഗിക്കുക</string>
+    <string name="settings_widget_theme_follow_app">ആപ്പിനെ പിന്തുടരുക</string>
+    <string name="settings_widget_theme_follow_app_desc">ആപ്പിന്റെ ലൈറ്റ് അല്ലെങ്കിൽ ഡാർക്ക് രൂപവുമായി പൊരുത്തപ്പെടുത്തുക</string>
     <string name="settings_app_icon">ആപ്പ് ഐക്കൺ</string>
     <string name="app_icon_default">ഡിഫോൾട്ട്</string>
     <string name="app_icon_supporter">പിന്തുണക്കാരൻ</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal കോൺടാക്റ്റുകൾ</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>

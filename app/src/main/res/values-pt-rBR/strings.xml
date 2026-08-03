@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automático</string>
     <string name="settings_accent_color_dynamic_desc">Seguir as cores Material You do seu dispositivo</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Aparência do widget</string>
-    <string name="settings_widget_accent_color">Cor de destaque do widget</string>
-    <string name="settings_widget_color_follow_app">Mesma do app</string>
+    <string name="settings_widget_theme">Tema</string>
+    <string name="settings_widget_accent_color">Destaque</string>
+    <string name="settings_widget_color_follow_app">Seguir o app</string>
     <string name="settings_widget_color_follow_app_desc">Usa a cor de destaque e a origem do app</string>
+    <string name="settings_widget_theme_follow_app">Seguir o app</string>
+    <string name="settings_widget_theme_follow_app_desc">Usa a aparência clara ou escura do app</string>
     <string name="settings_app_icon">Ícone do app</string>
     <string name="app_icon_default">Padrão</string>
     <string name="app_icon_supporter">Apoiador</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Contatos</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Calendários do dispositivo</string>

@@ -10,7 +10,6 @@ import androidx.glance.material3.ColorProviders
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.theme.ColorSource
-import org.onekash.kashcal.ui.theme.ThemeFace
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.theme.WIDGET_ACCENT_CONTRAST_LEVEL
 import org.onekash.kashcal.ui.theme.accentColorScheme
@@ -118,7 +117,7 @@ data class WidgetColorConfig(
 
 /**
  * Resolves the colors a widget should use, honoring the widget-specific appearance settings
- * ([WidgetColorSource] + widget theme mode) which are independent of the app face.
+ * ([WidgetColorSource] + [WidgetThemeSource]) which are independent of, but able to track, the app face.
  *
  * Color source:
  * - **FOLLOW_APP** (default): mirror the app's color-source resolution (including the
@@ -129,11 +128,12 @@ data class WidgetColorConfig(
  * - **DYNAMIC**: renders on the device's genuine Material You palette.
  *
  * Light/dark face (applies to EVERY source):
- * - **System**: SEED providers carry both faces and Glance picks at render time; DYNAMIC resolves
- *   to null so the platform's genuine palette shows through. We do NOT reseed a scheme from a
- *   single system-accent tone here: that overwrote the real dynamic palette (near-neutral system
- *   surfaces, accent where the system places it) with an app-derived tint, so the widget stopped
- *   matching the launcher and system UI.
+ * - **Follow app**: adopt the app's own face. When the app follows the device, the widget resolves
+ *   to null so it follows the device too — SEED providers carry both faces and Glance picks at
+ *   render time; DYNAMIC's genuine palette shows through. We do NOT reseed a scheme from a single
+ *   system-accent tone here: that overwrote the real dynamic palette (near-neutral system surfaces,
+ *   accent where the system places it) with an app-derived tint, so the widget stopped matching the
+ *   launcher and system UI.
  * - **Light/Dark**: the face is pinned by publishing the forced scheme as both the day and night
  *   palette. For DYNAMIC that means re-publishing the platform's own dynamic scheme for the forced
  *   face (via [dynamicScheme]) instead of deferring to the system's day/night pick.
@@ -149,10 +149,16 @@ suspend fun resolveWidgetAccentColors(
         if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     },
 ): WidgetColorConfig {
-    val forcedDark: Boolean? = when (ThemeMode.fromPrefValue(dataStore.widgetThemeMode.first()).face) {
-        ThemeFace.FOLLOW_SYSTEM -> null
-        ThemeFace.FORCE_LIGHT -> false
-        ThemeFace.FORCE_DARK -> true
+    // The app's theme feeds both the follow-app face below and the follow-app color source's
+    // retired-teal migration, so read it once here.
+    val appTheme = dataStore.theme.first()
+    val forcedDark: Boolean? = when (WidgetThemeSource.fromPrefValue(dataStore.widgetThemeSource.first())) {
+        WidgetThemeSource.LIGHT -> false
+        WidgetThemeSource.DARK -> true
+        // Follow app: adopt the app's own face. When the app itself follows the device, that face
+        // is null and the widget resolves to null too — so this transitively covers device-following
+        // without a separate "system" option.
+        WidgetThemeSource.FOLLOW_APP -> ThemeMode.fromPrefValue(appTheme).forcedDark
     }
     return when (WidgetColorSource.fromPrefValue(dataStore.widgetColorSource.first())) {
         WidgetColorSource.SEED ->
@@ -162,7 +168,7 @@ suspend fun resolveWidgetAccentColors(
             // Mirror the app's color-source resolution (including the retired-teal migration).
             val appSource = ColorSource.fromPrefValue(
                 explicit = dataStore.colorSource.first(),
-                legacyTheme = dataStore.theme.first(),
+                legacyTheme = appTheme,
             )
             when (appSource) {
                 ColorSource.SEED ->

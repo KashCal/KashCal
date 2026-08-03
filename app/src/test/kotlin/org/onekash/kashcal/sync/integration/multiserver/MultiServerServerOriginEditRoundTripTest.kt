@@ -154,7 +154,8 @@ class MultiServerServerOriginEditRoundTripTest(
                 pendingOperationsDao = database.pendingOperationsDao(),
                 credentialManager = mockk(relaxed = true),
                 reminderScheduler = mockk(relaxed = true),
-                workManager = mockk(relaxed = true)
+                workManager = mockk(relaxed = true),
+                contactSystemAccountRegistrar = mockk(relaxed = true)
             ),
             attendeesDao = database.attendeesDao(),
             pendingCancelsDao = database.pendingCancelsDao()

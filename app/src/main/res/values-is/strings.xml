@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Sjálfvirkt</string>
     <string name="settings_accent_color_dynamic_desc">Fylgdu Material You-litum tækisins þíns</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Widget-þema</string>
-    <string name="settings_widget_accent_color">Widget-áherslulitur</string>
-    <string name="settings_widget_color_follow_app">Eins og forritið</string>
+    <string name="settings_widget_theme">Þema</string>
+    <string name="settings_widget_accent_color">Áhersla</string>
+    <string name="settings_widget_color_follow_app">Fylgja forritinu</string>
     <string name="settings_widget_color_follow_app_desc">Nota áherslulit og litagjafa forritsins</string>
+    <string name="settings_widget_theme_follow_app">Fylgja forritinu</string>
+    <string name="settings_widget_theme_follow_app_desc">Fylgja ljósu eða dökku útliti forritsins</string>
     <string name="settings_app_icon">Forritstákn</string>
     <string name="app_icon_default">Sjálfgefið</string>
     <string name="app_icon_supporter">Stuðningsaðili</string>
@@ -537,6 +539,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Tengiliðir</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Dagatöl tækis</string>

@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
+import org.onekash.kashcal.widget.WidgetThemeSource
 import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
@@ -43,6 +44,7 @@ class AppearanceViewModelTest {
         // Flow getters the VM exposes.
         every { dataStore.theme } returns flowOf(ThemeMode.DARK.prefValue)
         every { dataStore.accentSeed } returns flowOf(KashCalDataStore.ACCENT_SEED_DEFAULT)
+        every { dataStore.widgetThemeSource } returns flowOf(null)
         every { userPreferences.resolvedColorSource } returns flowOf(ColorSource.SEED)
     }
 
@@ -99,5 +101,31 @@ class AppearanceViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         coVerify { dataStore.setColorSource(ColorSource.DYNAMIC.prefValue) }
         coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
+    }
+
+    @Test
+    fun `setWidgetThemeSource persists the source pref value and refreshes widgets`() = runTest {
+        vm().setWidgetThemeSource(WidgetThemeSource.DARK)
+        testDispatcher.scheduler.advanceUntilIdle()
+        coVerify { dataStore.setWidgetThemeSource(WidgetThemeSource.DARK.prefValue) }
+        coVerify { widgetUpdateManager.updateAllWidgetsForColorChange(any()) }
+    }
+
+    @Test
+    fun `widgetThemeSource maps the stored pref value`() = runTest {
+        every { dataStore.widgetThemeSource } returns flowOf(WidgetThemeSource.LIGHT.prefValue)
+        vm().widgetThemeSource.test {
+            assertEquals(WidgetThemeSource.LIGHT, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `widgetThemeSource defaults to follow-app when unset`() = runTest {
+        every { dataStore.widgetThemeSource } returns flowOf(null)
+        vm().widgetThemeSource.test {
+            assertEquals(WidgetThemeSource.FOLLOW_APP, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

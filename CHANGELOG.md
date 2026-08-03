@@ -1,3 +1,22 @@
+## [2026.08.03]
+
+Your widgets used to borrow the app's whole look whether you liked it or not. Now they have a say of their own.
+
+Open your account settings and scroll to Make it yours: alongside the app's own theme and accent, there are now two rows for your widgets. Leave them on Follow app and nothing changes; each widget keeps wearing whatever the app wears, down to the light or dark face and the accent you picked. But pin the widget theme to Light or Dark and it holds that face on your home screen no matter what the app or the phone is doing, and give it an accent of its own and it carries that color while the app keeps its. A calendar on your wall can finally read differently from the one in your hand.
+
+This one came from the community: the independent widget appearance landed as a contribution from langfeld (#315). The rest of the release is quieter work on the parts you don't see until they bite: a whole calendar all but vanishing after a sync that reported no error, oddly-numbered repeat rules that used to fail outright, and local-network calendar feeds asking permission the way Android 17 now expects.
+
+### Everything in this release
+
+- Added independent light/dark theming for home-screen widgets, in account settings under Make it yours, with a Theme row offering Follow app, Light, or Dark; Follow app tracks the app's own face, and a fixed choice holds regardless of the app or device setting, contributed by langfeld in #315
+- Added an independent accent color for widgets, so a widget can carry its own color while the app keeps its; the accent's follow-the-app option now reads "Follow app"
+- Changed the widget personalization rows to read simply "Theme" and "Accent"
+- Fixed a SOGo account syncing without any error but showing almost none of your events, often just a single recurring one; the calendar query sent a far-future cutoff that servers with 32-bit time limits silently choke on, which dropped everything else, so the query is now open-ended and your events come back, #326
+- Fixed monthly and yearly repeat rules with a two-digit or signed week number failing to expand instead of showing their events
+- Fixed a single edited occurrence of a repeating event occasionally attaching to the wrong day when its date carried a time zone offset
+- Added the local-network permission Android 17 requires for calendar feeds on your home network, requested through an inline banner on the subscription screen rather than a blocking dialog
+- Localized all of the above into every supported language
+
 ## [2026.08.02]
 
 ### Everything in this release

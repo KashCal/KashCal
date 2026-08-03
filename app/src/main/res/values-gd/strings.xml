@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Fèin-obrachail</string>
     <string name="settings_accent_color_dynamic_desc">Lean dathan Material You an inneil agad</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Dealbhadh a\' widget</string>
-    <string name="settings_widget_accent_color">Dath sònrachaidh a\' widget</string>
-    <string name="settings_widget_color_follow_app">Co-ionann ris an aplacaid</string>
+    <string name="settings_widget_theme">Ùrlar</string>
+    <string name="settings_widget_accent_color">Sònrachadh</string>
+    <string name="settings_widget_color_follow_app">Lean an aplacaid</string>
     <string name="settings_widget_color_follow_app_desc">Cleachd dath sònrachaidh is tùs na h-aplacaid</string>
+    <string name="settings_widget_theme_follow_app">Lean an aplacaid</string>
+    <string name="settings_widget_theme_follow_app_desc">Freagair ri coltas soilleir no dorcha na h-aplacaid</string>
     <string name="settings_app_icon">Ìomhaigheag na h-aplacaid</string>
     <string name="app_icon_default">Bunaiteach</string>
     <string name="app_icon_supporter">Neach-taic</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Luchd-aithne</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Mìosachain an Uidheim</string>

@@ -605,7 +605,11 @@
     },
     {
       "name": "RFC 5545 §3.8.5.3 example 24: every 20th Monday of the year forever (bounded to 1999)",
-      "timestamps": [],
+      "timestamps": [
+        864046800000,
+        895496400000,
+        926946000000
+      ],
       "error": null
     },
     {

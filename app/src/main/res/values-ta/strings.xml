@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">தானியங்கு</string>
     <string name="settings_accent_color_dynamic_desc">உங்கள் சாதனத்தின் Material You நிறங்களைப் பின்பற்றுங்கள்</string>
     <string name="settings_widgets_section">விட்ஜெட்கள்</string>
-    <string name="settings_widget_theme">விட்ஜெட் வடிவமைப்பு</string>
-    <string name="settings_widget_accent_color">விட்ஜெட் ஆக்சென்ட் நிறம்</string>
-    <string name="settings_widget_color_follow_app">ஆப்ப் போலவே</string>
+    <string name="settings_widget_theme">தீம்</string>
+    <string name="settings_widget_accent_color">ஆக்சென்ட்</string>
+    <string name="settings_widget_color_follow_app">ஆப்பைப் பின்பற்றவும்</string>
     <string name="settings_widget_color_follow_app_desc">ஆப்பின் ஆக்சென்ட் நிறத்தையும் மூலத்தையும் பயன்படுத்து</string>
+    <string name="settings_widget_theme_follow_app">ஆப்பைப் பின்பற்றவும்</string>
+    <string name="settings_widget_theme_follow_app_desc">ஆப்பின் லைட் அல்லது டார்க் தோற்றத்துடன் பொருந்தவும்</string>
     <string name="settings_app_icon">ஆப்ப் ஐகான்</string>
     <string name="app_icon_default">இயல்புநிலை</string>
     <string name="app_icon_supporter">ஆதரவாளர்</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal தொடர்புகள்</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">சாதன நாட்காட்டிகள்</string>

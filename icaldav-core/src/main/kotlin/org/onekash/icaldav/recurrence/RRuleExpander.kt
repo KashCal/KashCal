@@ -40,14 +40,15 @@ class RRuleExpander {
      * @param masterEvent The event with RRULE and/or RDATE
      * @param rangeStart Start of expansion range (inclusive)
      * @param rangeEnd End of expansion range (exclusive)
-     * @param overrides Map of RECURRENCE-ID daycodes to modified ICalEvent
+     * @param overrides Modified instances (each carrying a RECURRENCE-ID) that
+     *   replace the occurrence they anchor to
      * @return List of occurrence events with adjusted timestamps
      */
     fun expand(
         masterEvent: ICalEvent,
         rangeStart: Instant,
         rangeEnd: Instant,
-        overrides: Map<String, ICalEvent> = emptyMap()
+        overrides: List<ICalEvent> = emptyList()
     ): List<ICalEvent> {
         val rrule = masterEvent.rrule
 
@@ -73,11 +74,38 @@ class RRuleExpander {
         // Build set of excluded day codes from EXDATE
         val excludedDayCodes = masterEvent.exdates.map { it.toDayCode() }.toSet()
 
-        // Track day codes of RECURRENCE-ID overrides
-        val overrideDayCodes = overrides.keys
+        // Index overrides by the INSTANT of their RECURRENCE-ID, normalized to
+        // the master's value type/zone. RECURRENCE-ID identifies the original
+        // occurrence's instant (RFC 5545 §3.8.4.4), not a calendar day — matching
+        // by instant is timezone-independent, unlike a day-code path which would
+        // resolve Z-form/floating values in the JVM default zone (and collapse
+        // two sub-day overrides on the same date into one).
+        val overrideInstants: List<Long> = overrides.map { ovr ->
+            ovr.recurrenceId?.let { recId ->
+                normalizeToMasterValueType(recId, masterEvent.dtStart).timestamp
+            } ?: Long.MIN_VALUE  // no RECURRENCE-ID → never matches an occurrence
+        }
+        // Parallel to overrideInstants; flips once an override is consumed so a
+        // single override replaces at most one occurrence.
+        val overrideUsed = BooleanArray(overrides.size)
 
         // Track generated day codes to avoid duplicates between RRULE and RDATE
         val generatedDayCodes = mutableSetOf<String>()
+
+        // Find an as-yet-unused override whose normalized RECURRENCE-ID instant
+        // matches [occurrenceInstantMs] within tolerance, and mark it consumed.
+        fun matchOverride(occurrenceInstantMs: Long): ICalEvent? {
+            if (overrides.isEmpty()) return null
+            for (i in overrides.indices) {
+                if (!overrideUsed[i] &&
+                    kotlin.math.abs(overrideInstants[i] - occurrenceInstantMs) <= OVERRIDE_MATCH_TOLERANCE_MS
+                ) {
+                    overrideUsed[i] = true
+                    return overrides[i]
+                }
+            }
+            return null
+        }
 
         // ========== RRULE Expansion ==========
         if (rrule != null) {
@@ -127,9 +155,10 @@ class RRuleExpander {
                 // Track this day code as generated
                 generatedDayCodes.add(occurrenceDayCode)
 
-                // If there's an override for this date, use it instead
-                if (occurrenceDayCode in overrideDayCodes) {
-                    overrides[occurrenceDayCode]?.let { occurrences.add(it) }
+                // If there's an override for this occurrence's instant, use it instead
+                val override = matchOverride(occurrenceZdt.toInstant().toEpochMilli())
+                if (override != null) {
+                    occurrences.add(override)
                     continue
                 }
 
@@ -175,9 +204,10 @@ class RRuleExpander {
             // Track this day code
             generatedDayCodes.add(rdateDayCode)
 
-            // If there's an override for this date, use it instead
-            if (rdateDayCode in overrideDayCodes) {
-                overrides[rdateDayCode]?.let { occurrences.add(it) }
+            // If there's an override for this occurrence's instant, use it instead
+            val override = matchOverride(rdate.timestamp)
+            if (override != null) {
+                occurrences.add(override)
                 continue
             }
 
@@ -212,7 +242,7 @@ class RRuleExpander {
     fun expand(
         masterEvent: ICalEvent,
         range: TimeRange,
-        overrides: Map<String, ICalEvent> = emptyMap()
+        overrides: List<ICalEvent> = emptyList()
     ): List<ICalEvent> = expand(masterEvent, range.start, range.end, overrides)
 
     /**
@@ -293,15 +323,55 @@ class RRuleExpander {
 
     companion object {
         /**
-         * Create a map of day codes to override events from a list of modified instances.
+         * Tolerance for matching an occurrence's instant against a RECURRENCE-ID's
+         * instant. RECURRENCE-ID identifies the original occurrence's instant
+         * (RFC 5545 §3.8.4.4); a small window absorbs sub-second rounding and the
+         * odd off-by-a-minute a peer client emits, without ever spanning two
+         * occurrences of a real-world recurrence.
          */
-        fun buildOverrideMap(overrideEvents: List<ICalEvent>): Map<String, ICalEvent> {
-            return overrideEvents
-                .filter { it.recurrenceId != null }
-                .associateBy { event ->
-                    // Use the RECURRENCE-ID date as the key (the original occurrence date)
-                    event.recurrenceId!!.toDayCode()
-                }
+        private const val OVERRIDE_MATCH_TOLERANCE_MS = 60_000L
+
+        /**
+         * Reconcile a RECURRENCE-ID (or other recurrence date) against the value
+         * type of the master's DTSTART, returning [value] unchanged when the
+         * types already match.
+         *
+         * Peer clients sometimes emit a RECURRENCE-ID whose value type differs
+         * from the master's DTSTART (a bare DATE against a timed master, or a
+         * DATE-TIME against an all-day master), and most CalDAV servers preserve
+         * it verbatim. Left unreconciled, the two describe different instants and
+         * the override silently fails to match its occurrence.
+         *
+         * - Master timed, [value] date-form → promote the DATE to the master's
+         *   time-of-day in the master's zone: exactly the instant the master's
+         *   RRULE expansion produces for that calendar day.
+         * - Master all-day, [value] date-time form → demote to a DATE, taking the
+         *   calendar date in [value]'s own zone (UTC when floating/Z-form, which
+         *   is how all-day DATE values are stored — so matching is independent of
+         *   the machine's default timezone).
+         */
+        fun normalizeToMasterValueType(value: ICalDateTime, masterDtStart: ICalDateTime): ICalDateTime {
+            if (value.isDate == masterDtStart.isDate) return value
+
+            return if (masterDtStart.isDate) {
+                // Master all-day, value date-time → demote to DATE.
+                val zone = value.timezone ?: ZoneOffset.UTC
+                val date = ZonedDateTime.ofInstant(Instant.ofEpochMilli(value.timestamp), zone).toLocalDate()
+                ICalDateTime.fromLocalDate(date)
+            } else {
+                // Master timed, value date-form → promote to the master's
+                // time-of-day in the master's zone.
+                val masterZone = masterDtStart.timezone ?: ZoneOffset.UTC
+                val masterLocalTime = ZonedDateTime
+                    .ofInstant(Instant.ofEpochMilli(masterDtStart.timestamp), masterZone)
+                    .toLocalTime()
+                // DATE values are stored as UTC midnight, so read the calendar date in UTC.
+                val valueDate = ZonedDateTime
+                    .ofInstant(Instant.ofEpochMilli(value.timestamp), ZoneOffset.UTC)
+                    .toLocalDate()
+                val zoned = ZonedDateTime.of(valueDate, masterLocalTime, masterZone)
+                ICalDateTime.fromZonedDateTime(zoned, isDate = false)
+            }
         }
     }
 }

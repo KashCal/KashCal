@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automātiski</string>
     <string name="settings_accent_color_dynamic_desc">Seko savas ierīces Material You krāsām</string>
     <string name="settings_widgets_section">Logrīki</string>
-    <string name="settings_widget_theme">Logrīka dizains</string>
-    <string name="settings_widget_accent_color">Logrīka akcenta krāsa</string>
-    <string name="settings_widget_color_follow_app">Tāpat kā lietotnē</string>
+    <string name="settings_widget_theme">Motīvs</string>
+    <string name="settings_widget_accent_color">Akcents</string>
+    <string name="settings_widget_color_follow_app">Kā lietotnē</string>
     <string name="settings_widget_color_follow_app_desc">Izmantot lietotnes akcenta krāsu un tās avotu</string>
+    <string name="settings_widget_theme_follow_app">Kā lietotnē</string>
+    <string name="settings_widget_theme_follow_app_desc">Sekot lietotnes gaišajam vai tumšajam izskatam</string>
     <string name="settings_app_icon">Lietotnes ikona</string>
     <string name="app_icon_default">Noklusējums</string>
     <string name="app_icon_supporter">Atbalstītājs</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Kontakti</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Ierīces kalendāri</string>

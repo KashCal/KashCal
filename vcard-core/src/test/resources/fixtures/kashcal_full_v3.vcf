@@ -1,0 +1,28 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-fixture-0001
+N:Probe;KashCal;Quincy;Dr.;Jr.
+FN:Dr. KashCal Quincy Probe Jr.
+NICKNAME:Cal
+ORG:KashCal Test Org;Sync Division
+TITLE:Fixture Contact
+EMAIL;TYPE=INTERNET,HOME,PREF:home@example.test
+EMAIL;TYPE=INTERNET,WORK:work@example.test
+TEL;TYPE=CELL,VOICE:+15550000001
+TEL;TYPE=HOME:+15550000002
+item1.EMAIL;TYPE=INTERNET:custom@example.test
+item1.X-ABLabel:_$!<KashCalCustom>!$_
+ADR;TYPE=HOME:;;1 Test St;Testville;CA;90000;USA
+BDAY:1990-01-15
+item2.X-ABDATE;TYPE=pref:2015-06-20
+item2.X-ABLabel:_$!<Anniversary>!$_
+item3.X-ABRELATEDNAMES:KashCal Spouse Probe
+item3.X-ABLabel:_$!<Spouse>!$_
+X-SOCIALPROFILE;TYPE=twitter:https://example.test/@kashcal
+IMPP;X-SERVICE-TYPE=XMPP:xmpp:cal@example.test
+PHOTO;VALUE=URI:https://example.test/photos/kashcal.jpg
+CATEGORIES:Family,Test
+NOTE:Synthetic exhaustive fixture for CardDAV mapper testing.
+URL:https://example.test/kashcal
+X-CUSTOM-PROP:retain-me
+END:VCARD

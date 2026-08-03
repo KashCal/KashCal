@@ -1,0 +1,152 @@
+package org.onekash.kashcal.sync.carddav
+
+import android.util.Log
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/**
+ * Behavior tests for the CardDAV quirks seam: sync-token invalidation, address
+ * book skip rules, URL building, provider identity, and that extraction
+ * delegates through to [CardDavXmlParser]. Both the generic default and the
+ * iCloud specialization are exercised.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [34])
+class CardDavQuirksTest {
+
+    private lateinit var default: DefaultCardDavQuirks
+    private lateinit var icloud: ICloudCardDavQuirks
+
+    @Before
+    fun setup() {
+        mockkStatic(Log::class)
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.d(any(), any<String>()) } returns 0
+        every { Log.i(any(), any<String>()) } returns 0
+        default = DefaultCardDavQuirks("https://dav.example.test")
+        icloud = ICloudCardDavQuirks()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
+
+    // ---- provider identity ----
+
+    @Test
+    fun `default identity is generic carddav`() {
+        assertEquals("carddav", default.providerId)
+        assertEquals("CardDAV", default.displayName)
+        assertEquals("https://dav.example.test", default.baseUrl)
+        assertFalse(default.requiresAppSpecificPassword)
+    }
+
+    @Test
+    fun `icloud identity requires app-specific password`() {
+        assertEquals("icloud", icloud.providerId)
+        assertEquals("iCloud", icloud.displayName)
+        assertTrue(icloud.requiresAppSpecificPassword)
+    }
+
+    // ---- isSyncTokenInvalid (410 / valid-sync-token body → true; bare 403 → false) ----
+
+    @Test
+    fun `410 marks the sync token invalid`() {
+        assertTrue(default.isSyncTokenInvalid(410, ""))
+        assertTrue(icloud.isSyncTokenInvalid(410, ""))
+    }
+
+    @Test
+    fun `valid-sync-token precondition body marks the sync token invalid`() {
+        val body = "<d:error xmlns:d=\"DAV:\"><d:valid-sync-token/></d:error>"
+        assertTrue(default.isSyncTokenInvalid(403, body))
+        assertTrue(icloud.isSyncTokenInvalid(403, body))
+    }
+
+    @Test
+    fun `bare 403 is not a sync token invalidation`() {
+        assertFalse(default.isSyncTokenInvalid(403, "Forbidden"))
+        assertFalse(icloud.isSyncTokenInvalid(403, "Forbidden"))
+    }
+
+    // ---- shouldSkipAddressBook ----
+
+    @Test
+    fun `skips notification and inbox collections`() {
+        assertTrue(default.shouldSkipAddressBook("/addressbooks/alice/notifications/", null))
+        assertTrue(default.shouldSkipAddressBook("/addressbooks/alice/inbox/", "Inbox"))
+    }
+
+    @Test
+    fun `keeps a normal address book`() {
+        assertFalse(default.shouldSkipAddressBook("/addressbooks/alice/default/", "Personal"))
+    }
+
+    // ---- URL building ----
+
+    @Test
+    fun `builds absolute address book url from relative href`() {
+        assertEquals(
+            "https://dav.example.test/addressbooks/alice/default/",
+            default.buildAddressBookUrl("/addressbooks/alice/default/", "https://dav.example.test")
+        )
+    }
+
+    @Test
+    fun `passes through an already-absolute href`() {
+        val abs = "https://p42-contacts.icloud.com/123/carddavhome/card/"
+        assertEquals(abs, default.buildAddressBookUrl(abs, "https://dav.example.test"))
+    }
+
+    // ---- extraction delegates through to the parser ----
+
+    @Test
+    fun `delegates address book extraction to the parser`() {
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+                <d:response>
+                    <d:href>/ab/default/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
+                            <card:supported-address-data>
+                                <card:address-data-type content-type="text/vcard" version="4.0"/>
+                            </card:supported-address-data>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val books = default.extractAddressBooks(xml)
+        assertEquals(1, books.size)
+        assertEquals("Personal", books.single().displayName)
+        assertEquals("4.0", books.single().vcardVersion)
+    }
+
+    @Test
+    fun `delegates principal extraction to the parser`() {
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:">
+                <d:response><d:propstat><d:prop>
+                    <d:current-user-principal><d:href>/p/alice/</d:href></d:current-user-principal>
+                </d:prop></d:propstat></d:response>
+            </d:multistatus>
+        """.trimIndent()
+        assertEquals("/p/alice/", default.extractPrincipalUrl(xml))
+    }
+}

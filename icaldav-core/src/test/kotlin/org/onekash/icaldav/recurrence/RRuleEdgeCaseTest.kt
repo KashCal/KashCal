@@ -636,7 +636,7 @@ class RRuleEdgeCaseTest {
                 summary = "Modified Event"
             )
 
-            val overrides = RRuleExpander.buildOverrideMap(listOf(overrideEvent))
+            val overrides = listOf(overrideEvent)
 
             val range = TimeRange(
                 startZdt.toInstant(),
@@ -654,38 +654,6 @@ class RRuleEdgeCaseTest {
             assertEquals(14, jan3Occ?.dtStart?.toZonedDateTime()?.hour)
         }
 
-        @Test
-        fun `buildOverrideMap creates correct day code mapping`() {
-            val recIdZdt = LocalDateTime.of(2024, 1, 15, 10, 0)
-                .atZone(ZoneId.systemDefault())
-
-            val overrideEvent = createEvent(
-                uid = "test",
-                dtStart = ICalDateTime.fromZonedDateTime(recIdZdt.plusHours(4), false)
-            ).copy(
-                recurrenceId = ICalDateTime.fromZonedDateTime(recIdZdt, false)
-            )
-
-            val overrideMap = RRuleExpander.buildOverrideMap(listOf(overrideEvent))
-
-            assertEquals(1, overrideMap.size)
-            assertTrue(overrideMap.containsKey("20240115"))
-        }
-
-        @Test
-        fun `events without recurrenceId are excluded from override map`() {
-            val regularEvent = createEvent(
-                uid = "regular",
-                dtStart = ICalDateTime.fromZonedDateTime(
-                    LocalDateTime.of(2024, 1, 1, 10, 0).atZone(ZoneId.systemDefault()),
-                    false
-                )
-            )
-
-            val overrideMap = RRuleExpander.buildOverrideMap(listOf(regularEvent))
-
-            assertTrue(overrideMap.isEmpty())
-        }
     }
 
     // ==================== TimeRange Helper Tests ====================

@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automatiskt</string>
     <string name="settings_accent_color_dynamic_desc">Följ enhetens Material You-färger</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Widgettema</string>
-    <string name="settings_widget_accent_color">Widget-accentfärg</string>
-    <string name="settings_widget_color_follow_app">Samma som appen</string>
+    <string name="settings_widget_theme">Tema</string>
+    <string name="settings_widget_accent_color">Accent</string>
+    <string name="settings_widget_color_follow_app">Följ appen</string>
     <string name="settings_widget_color_follow_app_desc">Använd appens accentfärg och färgkälla</string>
+    <string name="settings_widget_theme_follow_app">Följ appen</string>
+    <string name="settings_widget_theme_follow_app_desc">Följ appens ljusa eller mörka utseende</string>
     <string name="settings_app_icon">Appikon</string>
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Supporter</string>
@@ -537,6 +539,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Kontakter</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Enhetskalendrar</string>

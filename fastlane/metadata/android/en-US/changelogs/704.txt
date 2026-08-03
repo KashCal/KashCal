@@ -1,0 +1,4 @@
+• Widgets: independent light/dark theme and accent color, separate from the app (thanks langfeld, #315)
+• Sync: fixed a SOGo account showing almost no events after a clean-looking sync (#326)
+• Fixed some monthly/yearly repeat rules failing to show their events
+• Android 17: local-network permission for calendar feeds on your home network

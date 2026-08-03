@@ -208,13 +208,22 @@ data class WeekdayNum(
     }
 
     companion object {
-        private val WEEKDAY_PATTERN = Regex("""(-?\d)?([A-Z]{2})""")
+        // RFC 5545 §3.3.10: weekdaynum = [[plus / minus] ordwk] weekday, where
+        // ordwk = 1*2DIGIT (1..53). Accept an optional +/- sign and one or two
+        // ordinal digits (the earlier single-digit pattern rejected valid values
+        // like 53SU / -12MO / +1FR and threw on them).
+        private val WEEKDAY_PATTERN = Regex("""([+-]?\d{1,2})?([A-Z]{2})""")
 
         fun parse(value: String): WeekdayNum {
             val match = WEEKDAY_PATTERN.matchEntire(value.uppercase())
                 ?: throw IllegalArgumentException("Invalid weekday: $value")
 
             val ordinal = match.groupValues[1].takeIf { it.isNotEmpty() }?.toIntOrNull()
+            // RFC 5545 §3.3.10: ordwk is 1..53; the sign only sets direction, so
+            // a zero ordinal or |ordinal| > 53 is not a valid weekdaynum.
+            if (ordinal != null && (ordinal == 0 || ordinal < -53 || ordinal > 53)) {
+                throw IllegalArgumentException("Invalid weekday ordinal: $value")
+            }
             val day = when (match.groupValues[2]) {
                 "MO" -> DayOfWeek.MONDAY
                 "TU" -> DayOfWeek.TUESDAY

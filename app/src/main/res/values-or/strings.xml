@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">ସ୍ୱୟଂଚାଳିତ</string>
     <string name="settings_accent_color_dynamic_desc">ଆପଣଙ୍କ ଡିଭାଇସର Material You ରଙ୍ଗ ଅନୁସରଣ କରନ୍ତୁ</string>
     <string name="settings_widgets_section">ୱିଜେଟ</string>
-    <string name="settings_widget_theme">ୱିଜେଟ ଡିଜାଇନ</string>
-    <string name="settings_widget_accent_color">ୱିଜେଟ ଆକସେଣ୍ଟ ରଙ୍ଗ</string>
-    <string name="settings_widget_color_follow_app">ଆପ ପରି ସମାନ</string>
+    <string name="settings_widget_theme">ଥିମ୍</string>
+    <string name="settings_widget_accent_color">ଆକସେଣ୍ଟ</string>
+    <string name="settings_widget_color_follow_app">ଆପ ଅନୁସରଣ କରନ୍ତୁ</string>
     <string name="settings_widget_color_follow_app_desc">ଆପର ଆକସେଣ୍ଟ ରଙ୍ଗ ଏବଂ ଉତ୍ସ ବ୍ୟବହାର କରନ୍ତୁ</string>
+    <string name="settings_widget_theme_follow_app">ଆପ ଅନୁସରଣ କରନ୍ତୁ</string>
+    <string name="settings_widget_theme_follow_app_desc">ଆପର ଲାଇଟ୍ କିମ୍ବା ଡାର୍କ ରୂପ ସହ ମେଳ କରନ୍ତୁ</string>
     <string name="settings_app_icon">ଆପ ଆଇକନ</string>
     <string name="app_icon_default">ଡିଫଲ୍ଟ</string>
     <string name="app_icon_supporter">ସମର୍ଥକ</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal ଯୋଗାଯୋଗ</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>

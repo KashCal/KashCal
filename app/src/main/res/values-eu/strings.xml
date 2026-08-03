@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automatikoa</string>
     <string name="settings_accent_color_dynamic_desc">Jarraitu zure gailuaren Material You koloreei</string>
     <string name="settings_widgets_section">Widgetak</string>
-    <string name="settings_widget_theme">Widgetaren diseinua</string>
-    <string name="settings_widget_accent_color">Widgetaren azentu-kolorea</string>
-    <string name="settings_widget_color_follow_app">Aplikazioaren berdina</string>
+    <string name="settings_widget_theme">Gaia</string>
+    <string name="settings_widget_accent_color">Azentua</string>
+    <string name="settings_widget_color_follow_app">Aplikazioari jarraitu</string>
     <string name="settings_widget_color_follow_app_desc">Erabili aplikazioaren azentu-kolorea eta iturria</string>
+    <string name="settings_widget_theme_follow_app">Aplikazioari jarraitu</string>
+    <string name="settings_widget_theme_follow_app_desc">Bat egin aplikazioaren itxura argi edo ilunarekin</string>
     <string name="settings_app_icon">Aplikazioaren ikonoa</string>
     <string name="app_icon_default">Lehenetsia</string>
     <string name="app_icon_supporter">Laguntzaile</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Kontaktuak</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Gailuko egutegiak</string>

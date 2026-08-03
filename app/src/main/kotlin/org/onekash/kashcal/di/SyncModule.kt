@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.onekash.kashcal.data.ics.IcsFetcher
 import org.onekash.kashcal.data.ics.OkHttpIcsFetcher
+import org.onekash.kashcal.sync.carddav.CardDavClientFactory
+import org.onekash.kashcal.sync.carddav.OkHttpCardDavClientFactory
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
@@ -41,6 +43,17 @@ abstract class SyncModule {
     @Binds
     @Singleton
     abstract fun bindCalDavClientFactory(impl: OkHttpCalDavClientFactory): CalDavClientFactory
+
+    /**
+     * Bind CardDavClientFactory interface to its OkHttp implementation.
+     *
+     * The read-path CardDAV sibling of [bindCalDavClientFactory]: each
+     * createClient() call returns an isolated contact-sync client with immutable
+     * credentials, keeping concurrent multi-account sync race-free.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCardDavClientFactory(impl: OkHttpCardDavClientFactory): CardDavClientFactory
 
     /**
      * Bind CalDavQuirks interface to iCloud implementation.

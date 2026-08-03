@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">ස්වයංක්‍රීය</string>
     <string name="settings_accent_color_dynamic_desc">ඔබේ උපාංගයේ Material You වර්ණ අනුගමනය කරන්න</string>
     <string name="settings_widgets_section">විජට්</string>
-    <string name="settings_widget_theme">විජට් සැලසුම</string>
-    <string name="settings_widget_accent_color">විජට් අවධාරක වර්ණය</string>
-    <string name="settings_widget_color_follow_app">යෙදුම හා සමානයි</string>
+    <string name="settings_widget_theme">තේමාව</string>
+    <string name="settings_widget_accent_color">අවධාරකය</string>
+    <string name="settings_widget_color_follow_app">යෙදුම අනුගමනය කරන්න</string>
     <string name="settings_widget_color_follow_app_desc">යෙදුමේ අවධාරක වර්ණය හා මූලාශ්‍රය භාවිත කරන්න</string>
+    <string name="settings_widget_theme_follow_app">යෙදුම අනුගමනය කරන්න</string>
+    <string name="settings_widget_theme_follow_app_desc">යෙදුමේ ආලෝක හෝ අඳුරු පෙනුමට ගළපන්න</string>
     <string name="settings_app_icon">යෙදුම් නිරූපකය</string>
     <string name="app_icon_default">පෙරනිමිය</string>
     <string name="app_icon_supporter">අනුග්‍රාහක</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal සම්බන්ධතා</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>

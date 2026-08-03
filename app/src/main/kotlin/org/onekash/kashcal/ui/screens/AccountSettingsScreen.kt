@@ -62,6 +62,7 @@ import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
+import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
 import org.onekash.kashcal.ui.screens.settings.AlertPickerSheet
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
@@ -195,6 +196,11 @@ fun AccountSettingsScreen(
     onRefreshSubscription: (Long) -> Unit = {},
     onUpdateSubscription: (subscriptionId: Long, name: String, color: Int, syncIntervalHours: Int) -> Unit = { _, _, _, _ -> },
     onSyncAllSubscriptions: () -> Unit = {},
+    // Android 17+ local-network permission plumbing for the add-subscription dialog
+    localNetworkPermissionState: LocalNetworkPermissionState =
+        LocalNetworkPermissionState.NotRequired,
+    onRequestLocalNetwork: () -> Unit = {},
+    onSubscriptionDialogOpened: () -> Unit = {},
     // Sync Logs
     onShowSyncLogs: () -> Unit = {},
     // Notifications
@@ -372,7 +378,10 @@ fun AccountSettingsScreen(
                             onAddSubscription(url, name, color)
                             showAddSubscriptionDialog = false
                             onHideAddSubscriptionDialog()
-                        }
+                        },
+                        localNetworkPermissionState = localNetworkPermissionState,
+                        onRequestLocalNetwork = onRequestLocalNetwork,
+                        onDialogOpened = onSubscriptionDialogOpened,
                     )
                 }
 

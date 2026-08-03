@@ -95,7 +95,8 @@ class PostRefactorVerificationTest {
             pendingOperationsDao = pendingOperationsDao,
             credentialManager = credentialManager,
             reminderScheduler = reminderScheduler,
-            workManager = workManager
+            workManager = workManager,
+            contactSystemAccountRegistrar = mockk(relaxed = true)
         )
     }
 

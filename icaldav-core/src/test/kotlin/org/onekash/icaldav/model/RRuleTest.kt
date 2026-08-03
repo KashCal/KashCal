@@ -171,6 +171,69 @@ class RRuleTest {
             assertEquals(-1, rrule.byDay?.first()?.ordinal)
         }
 
+        // RFC 5545 §3.3.10: the ordwk of a BYDAY weekdaynum is 1*2DIGIT (1..53)
+        // with an optional +/- sign, so a two-digit ordinal and an explicit +
+        // are both valid and must parse.
+
+        @Test
+        fun `parse yearly rule with two-digit positive ordinal byday`() {
+            val rrule = RRule.parse("FREQ=YEARLY;BYDAY=53SU")
+
+            assertEquals(Frequency.YEARLY, rrule.freq)
+            assertEquals(DayOfWeek.SUNDAY, rrule.byDay?.first()?.dayOfWeek)
+            assertEquals(53, rrule.byDay?.first()?.ordinal)
+        }
+
+        @Test
+        fun `parse yearly rule with two-digit negative ordinal byday`() {
+            val rrule = RRule.parse("FREQ=YEARLY;BYDAY=-12MO")
+
+            assertEquals(Frequency.YEARLY, rrule.freq)
+            assertEquals(DayOfWeek.MONDAY, rrule.byDay?.first()?.dayOfWeek)
+            assertEquals(-12, rrule.byDay?.first()?.ordinal)
+        }
+
+        @Test
+        fun `parse monthly rule with explicit plus-signed ordinal byday`() {
+            val rrule = RRule.parse("FREQ=MONTHLY;BYDAY=+1FR")
+
+            assertEquals(Frequency.MONTHLY, rrule.freq)
+            assertEquals(DayOfWeek.FRIDAY, rrule.byDay?.first()?.dayOfWeek)
+            assertEquals(1, rrule.byDay?.first()?.ordinal)
+        }
+
+        // RFC 5545 §3.3.10: ordwk is bounded to 1..53, so a zero ordinal or a
+        // magnitude above 53 is not a valid weekdaynum and must be rejected
+        // rather than silently accepted (which would hand ical4j a nonsensical
+        // ordinal at expansion time).
+        @Test
+        fun `parse rejects zero ordinal byday`() {
+            assertThrows<IllegalArgumentException> {
+                RRule.parse("FREQ=MONTHLY;BYDAY=0MO")
+            }
+        }
+
+        @Test
+        fun `parse rejects two-digit zero ordinal byday`() {
+            assertThrows<IllegalArgumentException> {
+                RRule.parse("FREQ=MONTHLY;BYDAY=00SU")
+            }
+        }
+
+        @Test
+        fun `parse rejects positive ordinal above 53`() {
+            assertThrows<IllegalArgumentException> {
+                RRule.parse("FREQ=YEARLY;BYDAY=54MO")
+            }
+        }
+
+        @Test
+        fun `parse rejects negative ordinal below minus 53`() {
+            assertThrows<IllegalArgumentException> {
+                RRule.parse("FREQ=YEARLY;BYDAY=-54MO")
+            }
+        }
+
         @Test
         fun `parse monthly rule with bymonthday`() {
             val rrule = RRule.parse("FREQ=MONTHLY;BYMONTHDAY=15")

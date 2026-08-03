@@ -96,6 +96,42 @@ class OkHttpCalDavClient : CalDavClient {
         private const val MAX_IDLE_CONNECTIONS = 5
         private const val KEEP_ALIVE_DURATION_MINUTES = 5L
 
+        // Largest instant expressible as a signed 32-bit UNIX time_t (2038-01-19T03:14:07Z),
+        // in epoch millis. Some CalDAV servers (notably SOGo/GNUstep) still evaluate
+        // calendar-query time-range bounds through 32-bit time functions and silently omit
+        // events past this instant from an otherwise-successful 207 response — so a request
+        // for "everything up to the year 2100" quietly drops all far-future events. When our
+        // upper bound exceeds this, we send an open-ended time-range (start only, no end),
+        // which RFC 4791 §9.9 permits, cannot overflow, and never needs to grow over time.
+        private const val TIME_RANGE_UPPER_BOUND_MS = 2_147_483_647_000L
+
+        /**
+         * Escape a server-supplied value (sync-token, href) before interpolating
+         * it into request XML. The parser XML-decodes these on the way in, so a
+         * token/href containing `&`, `<`, or `>` would otherwise produce malformed
+         * request XML the server rejects with 400, breaking the round-trip.
+         */
+        private fun escapeXmlText(value: String): String =
+            value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+    }
+
+    /**
+     * Build the CALDAV:time-range element for a calendar-query filter.
+     *
+     * Emits an open-ended range (no `end` attribute) when the requested upper bound is
+     * beyond what 32-bit-time servers can evaluate, so far-future events aren't silently
+     * dropped. See [TIME_RANGE_UPPER_BOUND_MS].
+     */
+    private fun buildTimeRangeElement(startMillis: Long, endMillis: Long): String {
+        val start = quirks.formatDateForQuery(startMillis)
+        return if (endMillis > TIME_RANGE_UPPER_BOUND_MS) {
+            """<c:time-range start="$start"/>"""
+        } else {
+            val end = quirks.formatDateForQuery(endMillis)
+            """<c:time-range start="$start" end="$end"/>"""
+        }
     }
 
     private val username: String = ""
@@ -552,7 +588,7 @@ class OkHttpCalDavClient : CalDavClient {
         syncToken: String?
     ): CalDavResult<SyncReport> = withContext(Dispatchers.IO) {
         val tokenElement = if (syncToken != null) {
-            "<d:sync-token>$syncToken</d:sync-token>"
+            "<d:sync-token>${escapeXmlText(syncToken)}</d:sync-token>"
         } else {
             "<d:sync-token/>"
         }
@@ -637,8 +673,7 @@ class OkHttpCalDavClient : CalDavClient {
         startMillis: Long,
         endMillis: Long
     ): CalDavResult<List<CalDavEvent>> = withContext(Dispatchers.IO) {
-        val startDate = quirks.formatDateForQuery(startMillis)
-        val endDate = quirks.formatDateForQuery(endMillis)
+        val timeRange = buildTimeRangeElement(startMillis, endMillis)
 
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
@@ -650,7 +685,7 @@ class OkHttpCalDavClient : CalDavClient {
                 <c:filter>
                     <c:comp-filter name="VCALENDAR">
                         <c:comp-filter name="VEVENT">
-                            <c:time-range start="$startDate" end="$endDate"/>
+                            $timeRange
                         </c:comp-filter>
                     </c:comp-filter>
                 </c:filter>
@@ -722,8 +757,7 @@ class OkHttpCalDavClient : CalDavClient {
         startMillis: Long,
         endMillis: Long
     ): CalDavResult<List<Pair<String, String?>>> = withContext(Dispatchers.IO) {
-        val startDate = quirks.formatDateForQuery(startMillis)
-        val endDate = quirks.formatDateForQuery(endMillis)
+        val timeRange = buildTimeRangeElement(startMillis, endMillis)
 
         // Same calendar-query as fetchEventsInRange but WITHOUT <c:calendar-data/>
         // This returns only href+etag pairs, saving ~96% bandwidth (33KB vs 834KB for 231 events).
@@ -741,7 +775,7 @@ class OkHttpCalDavClient : CalDavClient {
                 <c:filter>
                     <c:comp-filter name="VCALENDAR">
                         <c:comp-filter name="VEVENT">
-                            <c:time-range start="$startDate" end="$endDate"/>
+                            $timeRange
                         </c:comp-filter>
                     </c:comp-filter>
                 </c:filter>
@@ -781,7 +815,7 @@ class OkHttpCalDavClient : CalDavClient {
             appendLine("""        <c:calendar-data/>""")
             appendLine("""    </d:prop>""")
             for (href in hrefs) {
-                appendLine("""    <d:href>$href</d:href>""")
+                appendLine("""    <d:href>${escapeXmlText(href)}</d:href>""")
             }
             append("""</c:calendar-multiget>""")
         }
@@ -931,7 +965,7 @@ class OkHttpCalDavClient : CalDavClient {
                 <d:prop>
                     <d:getetag/>
                 </d:prop>
-                <d:href>$href</d:href>
+                <d:href>${escapeXmlText(href)}</d:href>
             </c:calendar-multiget>
         """.trimIndent()
 

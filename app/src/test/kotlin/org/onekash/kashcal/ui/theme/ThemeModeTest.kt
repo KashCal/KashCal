@@ -54,6 +54,15 @@ class ThemeModeTest {
         assertTrue(ThemeMode.DARK.isDark(systemInDark = false))
     }
 
+    // ---- forcedDark pin ----
+
+    @Test
+    fun `forcedDark is null for SYSTEM and pins the forced faces`() {
+        assertEquals(null, ThemeMode.SYSTEM.forcedDark)
+        assertEquals(false, ThemeMode.LIGHT.forcedDark)
+        assertEquals(true, ThemeMode.DARK.forcedDark)
+    }
+
     @Test
     fun `every mode exposes a label and description resource`() {
         ThemeMode.entries.forEach { mode ->

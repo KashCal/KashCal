@@ -40,6 +40,9 @@
     <!-- Contact birthdays: Read contacts to generate birthday calendar -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <!-- CardDAV contact sync: write synced contacts into a dedicated Contacts source -->
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
     <!-- Device calendars: Read/write events from other calendar apps -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
@@ -468,6 +471,38 @@
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/kashcal_syncadapter" />
+        </service>
+
+        <!-- Account authenticator for the dedicated contacts source.
+             Registers org.onekash.kashcal.contacts account type so per-login,
+             email-named contacts accounts stay independent of the singleton
+             calendar account. exported="false" — only the system account
+             framework binds to this. -->
+        <service
+            android:name=".sync.adapter.KashCalContactsAuthenticatorService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/kashcal_contacts_authenticator" />
+        </service>
+
+        <!-- Sync adapter stub linking the contacts account type to
+             com.android.contacts. Required so Android ties the per-login
+             contacts account to the Contacts Provider (and does not purge its
+             RawContacts). Auto-sync disabled — real sync is via WorkManager. -->
+        <service
+            android:name=".sync.adapter.KashCalContactsSyncAdapterService"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/kashcal_contacts_syncadapter" />
         </service>
 
         <!--

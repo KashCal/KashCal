@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Automatisch</string>
     <string name="settings_accent_color_dynamic_desc">Volg de Material You-kleuren van je apparaat</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Widgetthema</string>
-    <string name="settings_widget_accent_color">Widget-accentkleur</string>
-    <string name="settings_widget_color_follow_app">Zelfde als app</string>
+    <string name="settings_widget_theme">Thema</string>
+    <string name="settings_widget_accent_color">Accent</string>
+    <string name="settings_widget_color_follow_app">App volgen</string>
     <string name="settings_widget_color_follow_app_desc">De accentkleur en kleurbron van de app gebruiken</string>
+    <string name="settings_widget_theme_follow_app">App volgen</string>
+    <string name="settings_widget_theme_follow_app_desc">De lichte of donkere weergave van de app overnemen</string>
     <string name="settings_app_icon">App-pictogram</string>
     <string name="app_icon_default">Standaard</string>
     <string name="app_icon_supporter">Donateur</string>
@@ -537,6 +539,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Contacten</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Apparaatagenda\'s</string>

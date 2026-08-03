@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-seed-0001
+FN:KashCal Seed Probe
+N:Probe;Seed;;;
+EMAIL;TYPE=INTERNET:seed@example.test
+TEL;TYPE=CELL:+1-555-0100
+END:VCARD

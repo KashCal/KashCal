@@ -122,6 +122,7 @@ class BackupRoundTripIntegrationTest {
             credentialManager = mockk<CredentialManager>(relaxed = true),
             reminderScheduler = mockk<ReminderScheduler>(relaxed = true),
             workManager = mockk<WorkManager>(relaxed = true),
+            contactSystemAccountRegistrar = mockk(relaxed = true),
         )
 
     @Test

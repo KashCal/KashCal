@@ -239,17 +239,13 @@ class RecurrenceResourceExhaustionTest {
             val masterEvent = createTestEvent(rrule = rrule)
 
             // Generate 5000 override events
-            val overrides = (1..5000).associate { day ->
-                val dayCode = defaultStart.plusDays(day.toLong()).let {
-                    "%04d%02d%02d".format(it.year, it.monthValue, it.dayOfMonth)
-                }
-                val overrideEvent = createTestEvent(
+            val overrides = (1..5000).map { day ->
+                createTestEvent(
                     uid = masterEvent.uid,
                     summary = "Override $day",
                     startDate = defaultStart.plusDays(day.toLong()).plusHours(2),
                     recurrenceId = ICalDateTime.fromZonedDateTime(defaultStart.plusDays(day.toLong()))
                 )
-                dayCode to overrideEvent
             }
 
             val range = TimeRange(

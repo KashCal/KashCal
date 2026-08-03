@@ -39,11 +39,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +55,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.LocalNetworkPermissionBanner
 import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
+import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.util.asString
 
@@ -70,13 +74,24 @@ import org.onekash.kashcal.ui.util.asString
  * @param initialUrl Optional pre-filled URL (e.g., from deep link)
  * @param onDismiss Callback when sheet is dismissed
  * @param onAdd Callback when subscription is added (url, name, color)
+ * @param localNetworkPermissionState Android 17+ local-network permission state,
+ *   resolved by the host (needs an Activity for the rationale read). Defaults to
+ *   [LocalNetworkPermissionState.NotRequired] so pre-37 OS and preview call sites
+ *   render nothing.
+ * @param onRequestLocalNetwork Launch the ACCESS_LOCAL_NETWORK request.
+ * @param onDialogOpened Called once on open so the host can seed a fresh
+ *   permission-state read (mirrors the CalDAV sheet's on-open resolve).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSubscriptionDialog(
     initialUrl: String? = null,
     onDismiss: () -> Unit,
-    onAdd: (url: String, name: String, color: Int) -> Unit
+    onAdd: (url: String, name: String, color: Int) -> Unit,
+    localNetworkPermissionState: LocalNetworkPermissionState =
+        LocalNetworkPermissionState.NotRequired,
+    onRequestLocalNetwork: () -> Unit = {},
+    onDialogOpened: () -> Unit = {},
 ) {
     val initialUrlValue = initialUrl.orEmpty()
     var url by remember { mutableStateOf(initialUrlValue) }
@@ -85,6 +100,21 @@ fun AddSubscriptionDialog(
     var fetchState by remember { mutableStateOf<FetchCalendarState>(FetchCalendarState.Idle) }
     var showColorPicker by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    // Local-network banner dismissal for this dialog session. The dialog is only
+    // composed while open, so this resets naturally on each open; rememberSaveable
+    // keeps a dismissal from popping back after a rotation mid-session.
+    var localNetworkBannerDismissed by rememberSaveable { mutableStateOf(false) }
+    // Seed a fresh permission-state read when the dialog opens (matches the
+    // CalDAV sheet), so a grant made in system Settings is reflected.
+    LaunchedEffect(Unit) { onDialogOpened() }
+
+    val lanUi = resolveSubscriptionLanUi(
+        url = url,
+        connectionFailed = (fetchState as? FetchCalendarState.Error)?.connectionFailed == true,
+        state = localNetworkPermissionState,
+        bannerDismissed = localNetworkBannerDismissed,
+    )
 
     // Dismiss protection state
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -124,6 +154,15 @@ fun AddSubscriptionDialog(
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+            // Local-network permission banner (Android 17+): inline, dismissible,
+            // never blocks the URL field below.
+            if (lanUi.showBanner) {
+                LocalNetworkPermissionBanner(
+                    onAllow = onRequestLocalNetwork,
+                    onDismiss = { localNetworkBannerDismissed = true },
+                )
+            }
 
             // URL Field
             OutlinedTextField(
@@ -165,7 +204,7 @@ fun AddSubscriptionDialog(
             }
 
             // Fetch Result Feedback
-            FetchResultFeedback(fetchState)
+            FetchResultFeedback(fetchState, appendLanHint = lanUi.appendLanHint)
 
             // Name Field (enabled only after successful fetch)
             OutlinedTextField(
@@ -411,9 +450,16 @@ fun EditSubscriptionDialog(
 
 /**
  * Display fetch result feedback (success/error).
+ *
+ * @param appendLanHint when the error looks like a blocked local-network socket
+ *   (Android 17+, permission required-but-ungranted), append the "allow local
+ *   network access" hint. Additive: the fetch's real message is preserved.
  */
 @Composable
-private fun FetchResultFeedback(fetchState: FetchCalendarState) {
+private fun FetchResultFeedback(
+    fetchState: FetchCalendarState,
+    appendLanHint: Boolean = false,
+) {
     when (fetchState) {
         is FetchCalendarState.Success -> {
             Row(
@@ -444,8 +490,13 @@ private fun FetchResultFeedback(fetchState: FetchCalendarState) {
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(16.dp)
                 )
+                val message = fetchState.message.asString()
                 Text(
-                    fetchState.message.asString(),
+                    if (appendLanHint) {
+                        stringResource(R.string.caldav_error_with_lan_hint, message)
+                    } else {
+                        message
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )

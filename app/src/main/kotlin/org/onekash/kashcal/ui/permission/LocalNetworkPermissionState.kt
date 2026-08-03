@@ -99,6 +99,19 @@ fun shouldShowLanHintOnFailure(
 ): Boolean = permissionRequired && !granted
 
 /**
+ * Whether a just-failed network request looks like a blocked local-network
+ * socket for this state: the permission is required (API 37+) but not granted.
+ * Encapsulates the sealed-state → ([shouldShowLanHintOnFailure] inputs) mapping
+ * so callers (CalDAV discovery + ICS subscription fetch) don't re-encode which
+ * states mean "required" / "granted".
+ */
+fun LocalNetworkPermissionState.failureIndicatesBlockedLan(): Boolean =
+    shouldShowLanHintOnFailure(
+        permissionRequired = this != LocalNetworkPermissionState.NotRequired,
+        granted = this == LocalNetworkPermissionState.Granted,
+    )
+
+/**
  * Reconcile the stored permission state with a fresh live read taken on resume
  * (e.g. after the user may have changed it in system Settings). Upgrade-only:
  *

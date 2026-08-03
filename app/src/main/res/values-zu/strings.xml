@@ -164,10 +164,12 @@
     <string name="settings_accent_color_dynamic">Okuzenzakalelayo</string>
     <string name="settings_accent_color_dynamic_desc">Landela imibala ye-Material You yedivayisi yakho</string>
     <string name="settings_widgets_section">Amawijethi</string>
-    <string name="settings_widget_theme">Idizayini yewijethi</string>
-    <string name="settings_widget_accent_color">Umbala ogqamile wewijethi</string>
-    <string name="settings_widget_color_follow_app">Kufana nohlelo lokusebenza</string>
+    <string name="settings_widget_theme">Itimu</string>
+    <string name="settings_widget_accent_color">Ukugqama</string>
+    <string name="settings_widget_color_follow_app">Landela uhlelo</string>
     <string name="settings_widget_color_follow_app_desc">Sebenzisa umbala ogqamile nomthombo wohlelo lokusebenza</string>
+    <string name="settings_widget_theme_follow_app">Landela uhlelo</string>
+    <string name="settings_widget_theme_follow_app_desc">Fanisa nokubukeka okukhanyayo noma okumnyama kohlelo lokusebenza</string>
     <string name="settings_app_icon">Isithonjana sohlelo lokusebenza</string>
     <string name="app_icon_default">Okuzenzakalelayo</string>
     <string name="app_icon_supporter">Umsekeli</string>
@@ -538,6 +540,7 @@
 
     <!-- ==================== System Account ==================== -->
     <string name="kashcal_account_label">KashCal</string>
+    <string name="kashcal_contacts_account_label">KashCal Oxhumana nabo</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">Amakhalenda Edivayisi</string>

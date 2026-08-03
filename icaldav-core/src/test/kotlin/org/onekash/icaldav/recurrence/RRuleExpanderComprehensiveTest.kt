@@ -333,9 +333,7 @@ class RRuleExpanderComprehensiveTest {
                 summary = "Daily Standup (Moved)"
             )
 
-            val overrides = mapOf(
-                "20231203" to overrideEvent
-            )
+            val overrides = listOf(overrideEvent)
 
             val (start, end) = rangeForMonth(2023, 12)
             val occurrences = expander.expand(masterEvent, start, end, overrides)

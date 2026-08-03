@@ -262,10 +262,12 @@
     <string name="settings_accent_color_dynamic">Automatic</string>
     <string name="settings_accent_color_dynamic_desc">Follow your device\'s Material You colors</string>
     <string name="settings_widgets_section">Widgets</string>
-    <string name="settings_widget_theme">Widget design</string>
-    <string name="settings_widget_accent_color">Widget accent color</string>
-    <string name="settings_widget_color_follow_app">Same as app</string>
+    <string name="settings_widget_theme">Theme</string>
+    <string name="settings_widget_accent_color">Accent</string>
+    <string name="settings_widget_color_follow_app">Follow app</string>
     <string name="settings_widget_color_follow_app_desc">Use the app\'s accent color and source</string>
+    <string name="settings_widget_theme_follow_app">Follow app</string>
+    <string name="settings_widget_theme_follow_app_desc">Match the app\'s light or dark appearance</string>
     <string name="settings_app_icon">App Icon</string>
     <string name="app_icon_default">Default</string>
     <string name="app_icon_supporter">Supporter</string>
@@ -789,6 +791,8 @@
     <!-- ==================== System Account ==================== -->
     <!-- Do NOT translate — brand name used as system account label -->
     <string name="kashcal_account_label">KashCal</string>
+    <!-- Do NOT translate — brand name used as system account label for the contacts source -->
+    <string name="kashcal_contacts_account_label">KashCal Contacts</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <!-- "Device calendars" = calendars from other apps on this phone -->

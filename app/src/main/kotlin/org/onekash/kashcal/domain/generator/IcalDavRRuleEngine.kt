@@ -77,7 +77,6 @@ object IcalDavRRuleEngine {
                 masterEvent = capped,
                 rangeStart = Instant.ofEpochMilli(rangeStartMs),
                 rangeEnd = Instant.ofEpochMilli(rangeEndMs),
-                overrides = emptyMap(),
             )
             // REGRESSION GUARD: RRuleExpander doesn't strictly bound by range;
             // match LibRecurEngine's range-bound iterator with an explicit

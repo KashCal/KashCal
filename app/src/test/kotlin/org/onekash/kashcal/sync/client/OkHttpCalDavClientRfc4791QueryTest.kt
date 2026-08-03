@@ -192,6 +192,80 @@ class OkHttpCalDavClientRfc4791QueryTest {
     }
 
     @Test
+    fun `fetchEventsInRange omits end when upper bound exceeds 32-bit time_t`() = runTest {
+        // Some servers (SOGo/GNUstep) evaluate time-range bounds through 32-bit time
+        // functions and silently drop events past 2038-01-19T03:14:07Z from an otherwise
+        // successful 207 response. When we ask for "everything up to year 2100" they return
+        // only recurring/near-term events, so a plain future event vanishes. We send an
+        // open-ended range (start only) — RFC 4791 §9.9 permits it and it can't overflow.
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(emptyMultistatus())
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        val start = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
+        val end = Instant.parse("2100-01-01T00:00:00Z").toEpochMilli()  // PullStrategy's FUTURE_END_MS
+        client.fetchEventsInRange(calendarUrl, start, end)
+
+        val request = mockWebServer.takeRequest()
+        val body = request.body.readUtf8()
+        assertTrue(
+            "Open-ended range must keep the start bound",
+            body.contains("start=\"20260101T000000Z\"")
+        )
+        assertFalse(
+            "Far-future upper bound must be omitted so 32-bit-time servers don't drop events",
+            body.contains("end=")
+        )
+    }
+
+    @Test
+    fun `fetchEventsInRange keeps end when upper bound is within 32-bit time_t`() = runTest {
+        // The open-ended behavior only kicks in past the 2038 boundary; a normal bounded
+        // window must still send both start and end so servers can index efficiently.
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(emptyMultistatus())
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        // 2037 end — below the 2038-01-19 boundary, so end is preserved.
+        val start = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
+        val end = Instant.parse("2037-01-01T00:00:00Z").toEpochMilli()
+        client.fetchEventsInRange(calendarUrl, start, end)
+
+        val request = mockWebServer.takeRequest()
+        val body = request.body.readUtf8()
+        assertTrue("Start bound present", body.contains("start=\"20260101T000000Z\""))
+        assertTrue("End bound within range must be preserved", body.contains("end=\"20370101T000000Z\""))
+    }
+
+    @Test
+    fun `fetchEtagsInRange omits end when upper bound exceeds 32-bit time_t`() = runTest {
+        // Same 32-bit-time guard as fetchEventsInRange — this is the etag path PullStrategy
+        // actually drives on every incremental sync, so it's the one that stranded the
+        // reporter's future events on SOGo.
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(etagOnlyResponse())
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        val start = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
+        val end = Instant.parse("2100-01-01T00:00:00Z").toEpochMilli()
+        client.fetchEtagsInRange(calendarUrl, start, end)
+
+        val request = mockWebServer.takeRequest()
+        val body = request.body.readUtf8()
+        assertTrue("Open-ended range keeps start", body.contains("start=\"20260101T000000Z\""))
+        assertFalse("Far-future end must be omitted", body.contains("end="))
+    }
+
+    @Test
     fun `fetchEventsInRange parses multistatus response with events`() = runTest {
         // RFC 4791 Section 7.8: Response is a DAV:multistatus with calendar-data
         mockWebServer.enqueue(
@@ -331,6 +405,27 @@ class OkHttpCalDavClientRfc4791QueryTest {
                 body.contains(href)
             )
         }
+    }
+
+    @Test
+    fun `fetchEventsByHref XML-escapes an href containing an ampersand`() = runTest {
+        // The parser XML-decodes hrefs on the way in, so an href carrying a literal
+        // & (or <, >) must be re-escaped before interpolation, or the multiget
+        // request XML is malformed and the server 400s.
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(multigetResponse())
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        client.fetchEventsByHref(calendarUrl, listOf("/calendars/testuser/personal/a&b.ics"))
+
+        val body = mockWebServer.takeRequest().body.readUtf8()
+        assertTrue(
+            "raw href ampersand must be escaped",
+            body.contains("<d:href>/calendars/testuser/personal/a&amp;b.ics</d:href>")
+        )
     }
 
     @Test

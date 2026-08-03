@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.widget.WidgetColorSource
+import org.onekash.kashcal.widget.WidgetThemeSource
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
@@ -21,10 +22,11 @@ import javax.inject.Inject
  * [setColorSource] also refresh widgets. App icon is handled composable-locally
  * via AppIconUtility and is not part of this ViewModel.
  *
- * The widget-appearance half ([widgetThemeMode]/[widgetColorSource]/[widgetAccentSeed])
- * is deliberately independent of the app face: the app never reads it, only the
- * Glance widgets do (via [org.onekash.kashcal.widget.resolveWidgetAccentColors]),
- * so every setter here pushes a widget refresh but recolors nothing in the app.
+ * The widget-appearance half ([widgetThemeSource]/[widgetColorSource]/[widgetAccentSeed])
+ * is independent of, but able to track, the app face: the app never reads it, only the
+ * Glance widgets do (via [org.onekash.kashcal.widget.resolveWidgetAccentColors], where a
+ * "Follow app" choice reads the app's own theme), so every setter here pushes a widget
+ * refresh but recolors nothing in the app.
  */
 @HiltViewModel
 class AppearanceViewModel @Inject constructor(
@@ -63,17 +65,18 @@ class AppearanceViewModel @Inject constructor(
 
     // ========== Widget appearance (independent of the app face) ==========
 
-    val widgetThemeMode: Flow<ThemeMode> = dataStore.widgetThemeMode.map { ThemeMode.fromPrefValue(it) }
+    val widgetThemeSource: Flow<WidgetThemeSource> =
+        dataStore.widgetThemeSource.map { WidgetThemeSource.fromPrefValue(it) }
 
     val widgetColorSource: Flow<WidgetColorSource> =
         dataStore.widgetColorSource.map { WidgetColorSource.fromPrefValue(it) }
 
     val widgetAccentSeed: Flow<Int> = dataStore.widgetAccentSeed
 
-    /** Pin the widgets' light/dark face (or follow the system again) and refresh widgets. */
-    fun setWidgetThemeMode(mode: ThemeMode) {
+    /** Pin the widgets' light/dark face (or follow the app again) and refresh widgets. */
+    fun setWidgetThemeSource(source: WidgetThemeSource) {
         viewModelScope.launch {
-            dataStore.setWidgetThemeMode(mode.prefValue)
+            dataStore.setWidgetThemeSource(source.prefValue)
             widgetUpdateManager.updateAllWidgetsForColorChange("widget_theme_changed")
         }
     }

@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-fixture-0003
+FN:KashCal Folding Probe
+N:Probe;KashCal;;;
+NOTE:This is a deliberately long note designed to exceed the RFC 5545 and RF
+ C 6350 seventy-five octet folding boundary so the parser must correctly unf
+ old a continuation line that begins with a single leading space character.
+ORG:KashCal\, Inc.;R\&D\; Sync
+ADR;TYPE=WORK:;;123 Semicolon\; Street\, Suite 4;Comma\, City;CA;90001;USA
+EMAIL;TYPE=INTERNET:folding@example.test
+END:VCARD

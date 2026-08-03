@@ -1513,6 +1513,101 @@ class MigrationTest {
         Migrations.MIGRATION_20_21.migrate(db)
     }
 
+    private fun migrateUpToV22() {
+        migrateUpToV21()
+        Migrations.MIGRATION_21_22.migrate(db)
+    }
+
+    @Test
+    fun `migration 22 to 23 creates address_books table with expected columns`() {
+        migrateUpToV22()
+
+        Migrations.MIGRATION_22_23.migrate(db)
+
+        assertTrue(tableExists("address_books"))
+        assertTrue(columnExists("address_books", "id"))
+        assertTrue(columnExists("address_books", "account_id"))
+        assertTrue(columnExists("address_books", "url"))
+        assertTrue(columnExists("address_books", "display_name"))
+        assertTrue(columnExists("address_books", "description"))
+        assertTrue(columnExists("address_books", "vcard_version"))
+        assertTrue(columnExists("address_books", "ctag"))
+        assertTrue(columnExists("address_books", "sync_token"))
+        assertTrue(columnExists("address_books", "is_read_only"))
+        assertTrue(columnExists("address_books", "is_sync_enabled"))
+    }
+
+    @Test
+    fun `migration 22 to 23 address_books row round-trips`() {
+        migrateUpToV22()
+        Migrations.MIGRATION_22_23.migrate(db)
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
+        db.execSQL(
+            "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
+                "VALUES (1, 'https://contacts.example.test/books/home/', 'Home', '3.0', 1, 1)"
+        )
+        db.query(
+            "SELECT url, display_name, vcard_version FROM address_books WHERE account_id = 1"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("https://contacts.example.test/books/home/", cursor.getString(0))
+            assertEquals("Home", cursor.getString(1))
+            assertEquals("3.0", cursor.getString(2))
+        }
+    }
+
+    @Test
+    fun `migration 22 to 23 enforces per-account url uniqueness`() {
+        migrateUpToV22()
+        Migrations.MIGRATION_22_23.migrate(db)
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'a@example.test', 0)")
+        db.execSQL(
+            "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
+                "VALUES (1, 'https://contacts.example.test/dup/', 'One', '3.0', 1, 1)"
+        )
+        var threw = false
+        try {
+            db.execSQL(
+                "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
+                    "VALUES (1, 'https://contacts.example.test/dup/', 'Two', '3.0', 1, 1)"
+            )
+        } catch (e: SQLiteConstraintException) {
+            threw = true
+        }
+        assertTrue("duplicate (account_id, url) must violate the unique index", threw)
+    }
+
+    @Test
+    fun `migration 22 to 23 cascades address_books on account delete`() {
+        migrateUpToV22()
+        Migrations.MIGRATION_22_23.migrate(db)
+        db.execSQL("PRAGMA foreign_keys = ON")
+
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (5, 'ICLOUD', 'a@example.test', 0)")
+        db.execSQL(
+            "INSERT INTO address_books (account_id, url, display_name, vcard_version, is_read_only, is_sync_enabled) " +
+                "VALUES (5, 'https://contacts.example.test/books/x/', 'X', '3.0', 1, 1)"
+        )
+        db.execSQL("DELETE FROM accounts WHERE id = 5")
+
+        db.query("SELECT COUNT(*) FROM address_books WHERE account_id = 5").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 22 to 23 is idempotent`() {
+        migrateUpToV22()
+
+        Migrations.MIGRATION_22_23.migrate(db)
+        Migrations.MIGRATION_22_23.migrate(db)
+
+        assertTrue(tableExists("address_books"))
+    }
+
     @Test
     fun `migration 20 to 21 creates pending_cancels table`() {
         migrateUpToV20()
@@ -1871,7 +1966,7 @@ class MigrationTest {
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(20, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(21, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -1918,6 +2013,8 @@ class MigrationTest {
         assertEquals(21, migrations[18].endVersion)
         assertEquals(21, migrations[19].startVersion)
         assertEquals(22, migrations[19].endVersion)
+        assertEquals(22, migrations[20].startVersion)
+        assertEquals(23, migrations[20].endVersion)
     }
 
     @Test

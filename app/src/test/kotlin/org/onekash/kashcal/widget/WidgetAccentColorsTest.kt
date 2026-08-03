@@ -46,14 +46,14 @@ class WidgetAccentColorsTest {
         accentSeed: Int = KashCalDataStore.ACCENT_SEED_DEFAULT,
         widgetColorSource: String? = null,
         widgetAccentSeed: Int = 0xFFFF0000.toInt(),
-        widgetThemeMode: String = KashCalDataStore.THEME_SYSTEM,
+        widgetThemeSource: String? = null,
     ): KashCalDataStore = mockk {
         every { this@mockk.colorSource } returns flowOf(colorSource)
         every { this@mockk.theme } returns flowOf(theme)
         every { this@mockk.accentSeed } returns flowOf(accentSeed)
         every { this@mockk.widgetColorSource } returns flowOf(widgetColorSource)
         every { this@mockk.widgetAccentSeed } returns flowOf(widgetAccentSeed)
-        every { this@mockk.widgetThemeMode } returns flowOf(widgetThemeMode)
+        every { this@mockk.widgetThemeSource } returns flowOf(widgetThemeSource)
     }
 
     /** Resolves a Glance [ColorProvider]'s concrete color for the light (false) or dark (true) face. */
@@ -152,7 +152,7 @@ class WidgetAccentColorsTest {
             context,
             dataStore(
                 colorSource = ColorSource.SEED.prefValue,
-                widgetThemeMode = KashCalDataStore.THEME_LIGHT,
+                widgetThemeSource = WidgetThemeSource.LIGHT.prefValue,
             ),
             fakeDynamicScheme,
         )
@@ -168,7 +168,7 @@ class WidgetAccentColorsTest {
             context,
             dataStore(
                 colorSource = ColorSource.SEED.prefValue,
-                widgetThemeMode = KashCalDataStore.THEME_DARK,
+                widgetThemeSource = WidgetThemeSource.DARK.prefValue,
             ),
             fakeDynamicScheme,
         )
@@ -186,7 +186,7 @@ class WidgetAccentColorsTest {
             context,
             dataStore(
                 colorSource = ColorSource.DYNAMIC.prefValue,
-                widgetThemeMode = KashCalDataStore.THEME_DARK,
+                widgetThemeSource = WidgetThemeSource.DARK.prefValue,
             ),
             fakeDynamicScheme,
         )
@@ -204,7 +204,7 @@ class WidgetAccentColorsTest {
             context,
             dataStore(
                 colorSource = ColorSource.DYNAMIC.prefValue,
-                widgetThemeMode = KashCalDataStore.THEME_LIGHT,
+                widgetThemeSource = WidgetThemeSource.LIGHT.prefValue,
             ),
             fakeDynamicScheme,
         )
@@ -221,11 +221,85 @@ class WidgetAccentColorsTest {
             dataStore(
                 colorSource = ColorSource.DYNAMIC.prefValue,
                 widgetColorSource = WidgetColorSource.FOLLOW_APP.prefValue,
-                widgetThemeMode = KashCalDataStore.THEME_DARK,
+                widgetThemeSource = WidgetThemeSource.DARK.prefValue,
             ),
             fakeDynamicScheme,
         )
         assertEquals(true, config.forcedDark)
         assertNotNull(config.colors)
+    }
+
+    // ========== Follow-app theme source (default: track the app's face) ==========
+
+    @Test
+    fun `follow-app theme adopts the app forced-dark face`() = runTest {
+        val config = resolveWidgetAccentColors(
+            context,
+            dataStore(
+                colorSource = ColorSource.SEED.prefValue,
+                theme = KashCalDataStore.THEME_DARK,
+                // widgetThemeSource unset -> FOLLOW_APP by default.
+            ),
+            fakeDynamicScheme,
+        )
+        assertEquals(true, config.forcedDark)
+    }
+
+    @Test
+    fun `follow-app theme adopts the app forced-light face`() = runTest {
+        val config = resolveWidgetAccentColors(
+            context,
+            dataStore(
+                colorSource = ColorSource.SEED.prefValue,
+                theme = KashCalDataStore.THEME_LIGHT,
+            ),
+            fakeDynamicScheme,
+        )
+        assertEquals(false, config.forcedDark)
+    }
+
+    @Test
+    fun `follow-app theme resolves to null when the app itself follows the device`() = runTest {
+        // App on System -> no pin -> widget follows the device too (transitive device-following).
+        val config = resolveWidgetAccentColors(
+            context,
+            dataStore(
+                colorSource = ColorSource.SEED.prefValue,
+                theme = KashCalDataStore.THEME_SYSTEM,
+            ),
+            fakeDynamicScheme,
+        )
+        assertNull(config.forcedDark)
+    }
+
+    @Test
+    fun `legacy widget theme value system falls back to follow-app`() = runTest {
+        // The earlier widget-theme setting persisted "system"; it's unknown to WidgetThemeSource and
+        // must resolve to FOLLOW_APP — here the app is forced dark, so the widget adopts dark.
+        val config = resolveWidgetAccentColors(
+            context,
+            dataStore(
+                colorSource = ColorSource.SEED.prefValue,
+                theme = KashCalDataStore.THEME_DARK,
+                widgetThemeSource = "system",
+            ),
+            fakeDynamicScheme,
+        )
+        assertEquals(true, config.forcedDark)
+    }
+
+    @Test
+    fun `explicit widget pin overrides the app face under follow-app color source`() = runTest {
+        // App forced light, but the widget theme is explicitly pinned dark -> widget stays dark.
+        val config = resolveWidgetAccentColors(
+            context,
+            dataStore(
+                colorSource = ColorSource.SEED.prefValue,
+                theme = KashCalDataStore.THEME_LIGHT,
+                widgetThemeSource = WidgetThemeSource.DARK.prefValue,
+            ),
+            fakeDynamicScheme,
+        )
+        assertEquals(true, config.forcedDark)
     }
 }

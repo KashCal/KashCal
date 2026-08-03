@@ -223,6 +223,17 @@ fun SettingsRoute(
                 )
             )
         }
+        // Shared local-network wiring reused by the CalDAV sign-in sheet and the
+        // ICS add-subscription dialog: one launcher, one on-open state seed.
+        val localNetworkPermissionState by viewModel.localNetworkPermissionState
+            .collectAsStateWithLifecycle()
+        val onRequestLocalNetwork = {
+            localNetworkRationaleBefore = shouldShowLanRationale()
+            localNetworkPermissionLauncher.launch(android.Manifest.permission.ACCESS_LOCAL_NETWORK)
+        }
+        val onSubscriptionDialogOpened = {
+            viewModel.updateLocalNetworkPermissionState(resolveLanPermissionState())
+        }
 
         // Calendar permission launcher (for Device Calendars - READ + WRITE)
         // Requests both permissions upfront so users can create/edit device calendar events
@@ -510,7 +521,10 @@ fun SettingsRoute(
                             onToggleSubscription = viewModel::onToggleSubscription,
                             onDeleteSubscription = onDeleteSubscriptionWithUndo,
                             onRefreshSubscription = viewModel::onRefreshSubscription,
-                            onUpdateSubscription = viewModel::onUpdateSubscription
+                            onUpdateSubscription = viewModel::onUpdateSubscription,
+                            localNetworkPermissionState = localNetworkPermissionState,
+                            onRequestLocalNetwork = onRequestLocalNetwork,
+                            onSubscriptionDialogOpened = onSubscriptionDialogOpened,
                         )
                     }
                     SettingsDestination.Tags -> {
@@ -619,6 +633,10 @@ fun SettingsRoute(
                             onRefreshSubscription = viewModel::onRefreshSubscription,
                             onUpdateSubscription = viewModel::onUpdateSubscription,
                             onSyncAllSubscriptions = viewModel::onSyncAllSubscriptions,
+                            // Android 17+ local-network permission for LAN subscription URLs
+                            localNetworkPermissionState = localNetworkPermissionState,
+                            onRequestLocalNetwork = onRequestLocalNetwork,
+                            onSubscriptionDialogOpened = onSubscriptionDialogOpened,
                             // System
                             onShowSyncLogs = { showDebugLogSheet = true },
                             notificationsEnabled = notificationsEnabled,

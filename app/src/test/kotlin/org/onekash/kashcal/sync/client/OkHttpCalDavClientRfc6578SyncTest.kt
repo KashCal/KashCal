@@ -226,6 +226,24 @@ class OkHttpCalDavClientRfc6578SyncTest {
         )
     }
 
+    @Test
+    fun `syncCollection XML-escapes a sync-token containing entities`() = runTest {
+        // The parser XML-decodes the server's sync-token on the way in, so a token
+        // carrying literal &, <, or > must be re-escaped before interpolation, or
+        // the request XML is malformed and the server 400s — freezing incremental
+        // sync on the same bad token forever.
+        mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
+
+        client.syncCollection(calendarUrl(), "sync?a=1&b=2<x>")
+
+        val body = mockWebServer.takeRequest().body.readUtf8()
+        assertTrue(
+            "raw token must be escaped in the request body",
+            body.contains("<d:sync-token>sync?a=1&amp;b=2&lt;x&gt;</d:sync-token>")
+        )
+        assertFalse("unescaped ampersand must not appear", body.contains("a=1&b=2"))
+    }
+
     // ========== RFC 6578 Section 3.4: Response Parsing - Changed Items ==========
 
     @Test

@@ -1439,6 +1439,64 @@ object Migrations {
     }
 
     /**
+     * v22 -> v23: add the `address_books` CardDAV collection table.
+     *
+     * Same robustness shape as MIGRATION_20_21/MIGRATION_21_22: one transaction
+     * with post-validation that throws *before* setTransactionSuccessful(), so a
+     * partial schema rolls back rather than leaving Room to fail its hash check
+     * on next launch. The CREATE SQL is copied verbatim from Room's generated
+     * v23 schema (`address_books` createSql + both index createSql entries) so
+     * the migrated identityHash matches the export. Purely additive — no data to
+     * backfill; the empty table is populated by the first contact-sync pull.
+     */
+    val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `address_books` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`account_id` INTEGER NOT NULL, `url` TEXT NOT NULL, " +
+                        "`display_name` TEXT NOT NULL, `description` TEXT, " +
+                        "`vcard_version` TEXT NOT NULL, `ctag` TEXT, `sync_token` TEXT, " +
+                        "`is_read_only` INTEGER NOT NULL, `is_sync_enabled` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`account_id`) REFERENCES `accounts`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_address_books_account_id` " +
+                        "ON `address_books` (`account_id`)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_address_books_account_id_url` " +
+                        "ON `address_books` (`account_id`, `url`)"
+                )
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!tableExists(db, "address_books")) {
+                        add("address_books (table)")
+                    } else {
+                        for (col in listOf("id", "account_id", "url", "vcard_version", "sync_token")) {
+                            if (!columnExists(db, "address_books", col)) add("address_books.$col")
+                        }
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_22_23 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -1462,6 +1520,7 @@ object Migrations {
         MIGRATION_18_19,
         MIGRATION_19_20,
         MIGRATION_20_21,
-        MIGRATION_21_22
+        MIGRATION_21_22,
+        MIGRATION_22_23
     )
 }

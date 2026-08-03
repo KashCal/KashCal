@@ -46,6 +46,14 @@ enum class ThemeMode(
         ThemeFace.FORCE_DARK -> true
     }
 
+    /** The pinned dark face, or null when this mode follows the device: null / false / true. */
+    val forcedDark: Boolean?
+        get() = when (face) {
+            ThemeFace.FOLLOW_SYSTEM -> null
+            ThemeFace.FORCE_LIGHT -> false
+            ThemeFace.FORCE_DARK -> true
+        }
+
     companion object {
         /** Maps a stored theme string to a mode, falling back to [SYSTEM] for unknown/null. */
         fun fromPrefValue(value: String?): ThemeMode =

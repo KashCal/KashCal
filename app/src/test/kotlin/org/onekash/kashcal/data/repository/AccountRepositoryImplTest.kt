@@ -9,6 +9,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.coVerifyOrder
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
@@ -31,6 +32,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.sync.adapter.ContactSystemAccountRegistrar
 
 /**
  * Unit tests for AccountRepositoryImpl.
@@ -51,6 +53,7 @@ class AccountRepositoryImplTest {
     private lateinit var credentialManager: CredentialManager
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var workManager: WorkManager
+    private lateinit var contactSystemAccountRegistrar: ContactSystemAccountRegistrar
 
     @Before
     fun setup() {
@@ -88,6 +91,8 @@ class AccountRepositoryImplTest {
         credentialManager = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         workManager = mockk(relaxed = true)
+        // Side-effect collaborator (Unit-returning, no data): relaxed is fine.
+        contactSystemAccountRegistrar = mockk(relaxed = true)
 
         accountRepository = AccountRepositoryImpl(
             accountsDao = accountsDao,
@@ -96,7 +101,8 @@ class AccountRepositoryImplTest {
             pendingOperationsDao = pendingOperationsDao,
             credentialManager = credentialManager,
             reminderScheduler = reminderScheduler,
-            workManager = workManager
+            workManager = workManager,
+            contactSystemAccountRegistrar = contactSystemAccountRegistrar
         )
     }
 
@@ -192,6 +198,116 @@ class AccountRepositoryImplTest {
         accountRepository.deleteAccount(accountId)
 
         // Verify cascade delete called
+        coVerify { accountsDao.deleteById(accountId) }
+    }
+
+    @Test
+    fun `deleteAccount removes the per-login contacts system account`() = runBlocking {
+        // Setup: a CardDAV login (contacts-capable) resolves to a login email.
+        val accountId = 1L
+        val account = mockk<Account>(relaxed = true) {
+            every { id } returns accountId
+            every { email } returns "alice@example.test"
+            every { provider } returns AccountProvider.ICLOUD
+        }
+        coEvery { accountsDao.getById(accountId) } returns account
+        coEvery { accountsDao.getAllOnce() } returns listOf(account)
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+
+        // Execute
+        accountRepository.deleteAccount(accountId)
+
+        // Verify the contacts system account was removed by login email, and
+        // that removal happens after the row is cascade-deleted (irreversible
+        // purge runs only once the reversible DB work has committed).
+        coVerifyOrder {
+            accountsDao.deleteById(accountId)
+            contactSystemAccountRegistrar.removeAccount("alice@example.test")
+        }
+    }
+
+    @Test
+    fun `deleteAccount keeps contacts account when another CardDAV login shares the email`() = runBlocking {
+        // Two CardDAV logins share one email (allowed — accounts are unique on
+        // provider+email+home_set_url). Deleting one must NOT purge the shared,
+        // email-named contacts account still backing the sibling login.
+        val accountId = 1L
+        val deleting = mockk<Account>(relaxed = true) {
+            every { id } returns accountId
+            every { email } returns "shared@example.test"
+            every { provider } returns AccountProvider.ICLOUD
+        }
+        val sibling = mockk<Account>(relaxed = true) {
+            every { id } returns 2L
+            every { email } returns "shared@example.test"
+            every { provider } returns AccountProvider.CALDAV
+        }
+        coEvery { accountsDao.getById(accountId) } returns deleting
+        coEvery { accountsDao.getAllOnce() } returns listOf(deleting, sibling)
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+
+        accountRepository.deleteAccount(accountId)
+
+        verify(exactly = 0) { contactSystemAccountRegistrar.removeAccount(any()) }
+        coVerify { accountsDao.deleteById(accountId) }
+    }
+
+    @Test
+    fun `deleteAccount removes contacts account when only a non-CardDAV sibling shares the email`() = runBlocking {
+        // A LOCAL/ICS sibling that happens to share the email never registered a
+        // contacts account, so it must NOT block the purge — otherwise the
+        // email-named contacts account leaks with nothing left to manage it.
+        val accountId = 1L
+        val deleting = mockk<Account>(relaxed = true) {
+            every { id } returns accountId
+            every { email } returns "shared@example.test"
+            every { provider } returns AccountProvider.ICLOUD
+        }
+        val localSibling = mockk<Account>(relaxed = true) {
+            every { id } returns 2L
+            every { email } returns "shared@example.test"
+            every { provider } returns AccountProvider.LOCAL
+        }
+        coEvery { accountsDao.getById(accountId) } returns deleting
+        coEvery { accountsDao.getAllOnce() } returns listOf(deleting, localSibling)
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+
+        accountRepository.deleteAccount(accountId)
+
+        verify { contactSystemAccountRegistrar.removeAccount("shared@example.test") }
+    }
+
+    @Test
+    fun `deleteAccount skips contacts removal for a non-CardDAV account`() = runBlocking {
+        // A LOCAL/ICS login never registers a contacts account, so deleting it
+        // must not attempt a removal (and must not run the sibling-scan query).
+        val accountId = 1L
+        val account = mockk<Account>(relaxed = true) {
+            every { id } returns accountId
+            every { email } returns "local@example.test"
+            every { provider } returns AccountProvider.LOCAL
+        }
+        coEvery { accountsDao.getById(accountId) } returns account
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+
+        accountRepository.deleteAccount(accountId)
+
+        verify(exactly = 0) { contactSystemAccountRegistrar.removeAccount(any()) }
+        // The full-table sibling scan must not run for a non-contacts account.
+        coVerify(exactly = 0) { accountsDao.getAllOnce() }
+    }
+
+    @Test
+    fun `deleteAccount skips contacts removal when account no longer resolvable`() = runBlocking {
+        // Setup: no row for this id (already gone) → nothing to resolve an email.
+        val accountId = 1L
+        coEvery { accountsDao.getById(accountId) } returns null
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+
+        // Execute — must not throw and must not call removeAccount with a null.
+        accountRepository.deleteAccount(accountId)
+
+        verify(exactly = 0) { contactSystemAccountRegistrar.removeAccount(any()) }
         coVerify { accountsDao.deleteById(accountId) }
     }
 

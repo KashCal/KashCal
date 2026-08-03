@@ -388,6 +388,76 @@ class SogoParseTest {
     }
 
     /**
+     * Non-recurring, multi-day timed event with two VALARMs, from a SOGo
+     * account where only a recurring event synced and this one went missing.
+     *
+     * Isolates parser vs. fetch: if this parses and maps cleanly, the event is being
+     * dropped by the fetch/time-range layer, not the parser.
+     */
+    @Test
+    fun `non-recurring multi-day timed event with two VALARMs parses and maps`() {
+        val ics = "BEGIN:VCALENDAR\r\n" +
+            "PRODID:-//Test Client//NONSGML Sync Agent//EN\r\n" +
+            "VERSION:2.0\r\n" +
+            "BEGIN:VTIMEZONE\r\n" +
+            "TZID:Europe/Berlin\r\n" +
+            "BEGIN:STANDARD\r\n" +
+            "TZNAME:CET\r\n" +
+            "TZOFFSETFROM:+0200\r\n" +
+            "TZOFFSETTO:+0100\r\n" +
+            "DTSTART:19961027T030000\r\n" +
+            "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\n" +
+            "END:STANDARD\r\n" +
+            "BEGIN:DAYLIGHT\r\n" +
+            "TZNAME:CEST\r\n" +
+            "TZOFFSETFROM:+0100\r\n" +
+            "TZOFFSETTO:+0200\r\n" +
+            "DTSTART:19810329T020000\r\n" +
+            "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\n" +
+            "END:DAYLIGHT\r\n" +
+            "END:VTIMEZONE\r\n" +
+            "BEGIN:VEVENT\r\n" +
+            "DTSTAMP:20260723T152834Z\r\n" +
+            "UID:1e269e9b-3529-4179-8d6e-0dbadf03f771\r\n" +
+            "SUMMARY:Urlaub\r\n" +
+            "DTSTART;TZID=Europe/Berlin:20260815T180000\r\n" +
+            "DTEND;TZID=Europe/Berlin:20260822T180000\r\n" +
+            "STATUS:CONFIRMED\r\n" +
+            "BEGIN:VALARM\r\n" +
+            "TRIGGER:-PT1H\r\n" +
+            "ACTION:DISPLAY\r\n" +
+            "DESCRIPTION:Redacted\r\n" +
+            "END:VALARM\r\n" +
+            "BEGIN:VALARM\r\n" +
+            "TRIGGER:-P1D\r\n" +
+            "ACTION:DISPLAY\r\n" +
+            "DESCRIPTION:Urlaub\r\n" +
+            "END:VALARM\r\n" +
+            "CLASS:PUBLIC\r\n" +
+            "END:VEVENT\r\n" +
+            "END:VCALENDAR"
+
+        val result = parser.parseAllEvents(ics)
+        assertTrue("Should parse successfully: $result", result is ParseResult.Success)
+        val events = (result as ParseResult.Success).value
+        assertEquals("Should have 1 event", 1, events.size)
+
+        val event = events[0]
+        assertEquals("Urlaub", event.summary)
+        assertFalse("Should NOT be all-day", event.isAllDay)
+        assertEquals("Should parse both VALARMs", 2, event.alarms.size)
+
+        // Verify it maps to Entity without error and keeps a valid timestamp range.
+        // PullStrategy skips events where endTs < startTs (hasValidTimestamps).
+        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag-urlaub").event
+        assertEquals("Urlaub", entity.title)
+        assertTrue(
+            "endTs (${entity.endTs}) must be >= startTs (${entity.startTs})",
+            entity.endTs >= entity.startTs,
+        )
+    }
+
+    /**
      * Tests long folded DESCRIPTION (from email import) and non-http URL scheme (mid:).
      * Also exercises the same complex historical VTIMEZONE (abbreviated for brevity).
      */

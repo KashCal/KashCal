@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.AddressBookDao
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.CategoryDao
@@ -140,6 +141,15 @@ object DatabaseModule {
     @Singleton
     fun provideAccountsDao(database: KashCalDatabase): AccountsDao {
         return database.accountsDao()
+    }
+
+    /**
+     * Provide AddressBookDao.
+     */
+    @Provides
+    @Singleton
+    fun provideAddressBookDao(database: KashCalDatabase): AddressBookDao {
+        return database.addressBookDao()
     }
 
     /**

@@ -191,6 +191,12 @@ class PullStrategy @Inject constructor(
 
         // Sync window: 1 year back, unlimited future (far-future date for CalDAV spec compliance)
         private const val PAST_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
+        // Upper bound for the LOCAL Room range queries (stale-event deletion, etag map).
+        // SQL needs a concrete numeric bound; 2100 is unreachable by real events, so it means
+        // "forever" for the DB. This is NOT the server fetch reach: the CalDAV client drops the
+        // upper bound on the wire past 2038 (32-bit time_t servers like SOGo silently truncate
+        // results otherwise), so future reach is already unbounded. Raising this number does not
+        // fetch more from the server — don't bump it to "reach further."
         private const val FUTURE_END_MS = 4102444800000L  // Jan 1, 2100 UTC
 
         // Occurrence expansion window (local generation) - shared across codebase

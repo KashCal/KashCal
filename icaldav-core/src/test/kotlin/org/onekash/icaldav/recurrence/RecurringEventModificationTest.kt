@@ -277,7 +277,7 @@ class RecurringEventModificationTest {
                 recurrenceId = ICalDateTime.fromZonedDateTime(dec3Original, false)
             )
 
-            val overrides = RRuleExpander.buildOverrideMap(listOf(modifiedInstance))
+            val overrides = listOf(modifiedInstance)
 
             val range = TimeRange(
                 ZonedDateTime.of(2024, 12, 1, 0, 0, 0, 0, zone).toInstant(),

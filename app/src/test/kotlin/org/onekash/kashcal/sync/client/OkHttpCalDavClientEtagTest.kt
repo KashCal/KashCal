@@ -513,6 +513,31 @@ class OkHttpCalDavClientEtagTest {
     }
 
     @Test
+    fun `fetchEtag multiget fallback XML-escapes an href containing an ampersand`() = runTest {
+        // fetchEtagViaMultiget derives the href via URI(eventUrl).path, which
+        // percent-DECODES the path — so a %26 in the URL becomes a literal & in
+        // the href. That must be re-escaped before interpolation, or the multiget
+        // request XML is malformed and the server 400s.
+        mockWebServer.enqueue(MockResponse().setResponseCode(501)) // PROPFIND fails → fallback
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createMultigetResponse("multiget-etag-abc"))
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/a%26b.ics").toString()
+
+        client.fetchEtag(eventUrl)
+
+        mockWebServer.takeRequest() // PROPFIND
+        val multigetBody = mockWebServer.takeRequest().body.readUtf8()
+        assertTrue(
+            "decoded href ampersand must be escaped in the multiget body",
+            multigetBody.contains("<d:href>/calendars/test/a&amp;b.ics</d:href>")
+        )
+    }
+
+    @Test
     fun `fetchEtag does not try multiget on 404`() = runTest {
         // Arrange: PROPFIND returns 404 — event doesn't exist, multiget won't help
         mockWebServer.enqueue(

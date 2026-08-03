@@ -104,6 +104,21 @@ class AccountProviderTest {
         assertFalse(AccountProvider.ICS.supportsCalDAV)
     }
 
+    // ========== supportsCardDAV Tests ==========
+
+    @Test
+    fun `supportsCardDAV is true for ICLOUD and CALDAV`() {
+        assertTrue(AccountProvider.ICLOUD.supportsCardDAV)
+        assertTrue(AccountProvider.CALDAV.supportsCardDAV)
+    }
+
+    @Test
+    fun `supportsCardDAV is false for LOCAL, ICS, and CONTACTS`() {
+        assertFalse(AccountProvider.LOCAL.supportsCardDAV)
+        assertFalse(AccountProvider.ICS.supportsCardDAV)
+        assertFalse(AccountProvider.CONTACTS.supportsCardDAV)
+    }
+
     // ========== requiresNetwork Tests ==========
 
     @Test

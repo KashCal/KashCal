@@ -109,6 +109,14 @@ class ICalParser(
         private val configLock = Any()
 
         /**
+         * Matches an uppercase newline escape `\N` whose leading backslash is
+         * unescaped: an even-length run of `\\` pairs (captured, re-emitted)
+         * followed by `\N`. `(?<!\\)` anchors the run to a clean boundary so a
+         * `\\N` (escaped backslash + literal N) is never matched.
+         */
+        private val UPPERCASE_NEWLINE_ESCAPE = Regex("""(?<!\\)((?:\\\\)*)\\N""")
+
+        /**
          * Create an ICalParser with [TimeZoneRegistryImpl] for full timezone support.
          *
          * This factory method is intended for JVM server environments where:
@@ -185,7 +193,7 @@ class ICalParser(
      */
     fun parseAllEvents(icalData: String): ParseResult<List<ICalEvent>> {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
@@ -208,7 +216,7 @@ class ICalParser(
      */
     fun parseAllTodos(icalData: String): ParseResult<List<ICalTodo>> {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
@@ -255,11 +263,11 @@ class ICalParser(
 
             // Parse text properties
             val summary = vtodo.getPropertyOrNull<Property>("SUMMARY")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val description = vtodo.getPropertyOrNull<Property>("DESCRIPTION")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val location = vtodo.getPropertyOrNull<Property>("LOCATION")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val url = vtodo.getPropertyOrNull<Property>("URL")?.value
             val geo = vtodo.getPropertyOrNull<Property>("GEO")?.value
             val classification = vtodo.getPropertyOrNull<Property>("CLASS")?.value
@@ -430,7 +438,7 @@ class ICalParser(
      */
     fun parseAllJournals(icalData: String): ParseResult<List<ICalJournal>> {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
@@ -473,9 +481,9 @@ class ICalParser(
 
             // Parse text properties
             val summary = vjournal.getPropertyOrNull<Property>("SUMMARY")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val description = vjournal.getPropertyOrNull<Property>("DESCRIPTION")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val url = vjournal.getPropertyOrNull<Property>("URL")?.value
             val classification = vjournal.getPropertyOrNull<Property>("CLASS")?.value
 
@@ -644,7 +652,7 @@ class ICalParser(
      */
     fun parse(icalData: String): ParseResult<ICalCalendar> {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
@@ -712,7 +720,7 @@ class ICalParser(
      */
     fun parseWithMethod(icalData: String): ParseResult<CalendarParseResult> {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
@@ -815,11 +823,11 @@ class ICalParser(
 
             // Get simple string properties
             val summary = vevent.getPropertyOrNull<Property>("SUMMARY")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val description = vevent.getPropertyOrNull<Property>("DESCRIPTION")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val location = vevent.getPropertyOrNull<Property>("LOCATION")
-                ?.value?.let { unescapeICalText(it) }
+                ?.value
             val statusValue = vevent.getPropertyOrNull<Property>("STATUS")
                 ?.value
             val sequenceValue = vevent.getPropertyOrNull<Property>("SEQUENCE")
@@ -1135,19 +1143,45 @@ class ICalParser(
     }
 
     /**
-     * Decode the residual TEXT escape that ical4j's PropertyCodec misses.
+     * Normalize the uppercase newline escape `\N` to lowercase `\n` in raw ICS
+     * text, before ical4j parses it.
      *
-     * RFC 5545 §3.3.11 defines `\N` (uppercase) as equivalent to `\n` for
-     * encoding a newline. ical4j 4.2.2's PropertyCodec regex only matches
-     * lowercase `\n`, so values arriving via `Property.value` for Encodable
-     * properties (Description/Summary/Location/...) have already had `\\`,
-     * `\;`, `\,`, and lowercase `\n` decoded — but not `\N`. We finish the job.
+     * RFC 5545 §3.3.11 defines `\N` (uppercase) as equivalent to `\n` — both
+     * encode a newline in a TEXT value. ical4j 4.2.2's PropertyCodec only
+     * decodes the lowercase form, so an uppercase `\N` would otherwise survive
+     * verbatim into the parsed value.
      *
-     * Doing more here would double-decode and lose backslashes (e.g. `\\\\`
-     * would become `\` instead of `\\`).
+     * This must run on the raw (pre-parse) text, not on `Property.value`: once
+     * ical4j has decoded, a source `\N` (newline) and a source `\\N` (an escaped
+     * backslash followed by a literal `N`, e.g. a Windows path `C:\Notes`) both
+     * collapse to the same two characters, and no post-decode rule can tell them
+     * apart. The negative lookbehind for an odd backslash run below preserves
+     * that distinction: `\N` is rewritten only when its backslash is itself
+     * unescaped; `\\N` is left untouched for ical4j to decode to `\` + `N`.
+     *
+     * `(?:\\\\)*` consumes complete escaped-backslash pairs so the trailing `\N`
+     * is matched against a clean boundary, and those pairs are re-emitted via the
+     * capture group. Run after unfolding so a `\N` split across a fold boundary
+     * is seen whole.
      */
-    private fun unescapeICalText(text: String): String {
-        return text.replace("\\N", "\n")
+    /**
+     * The raw-text preparation pipeline every parse entry point runs before
+     * handing the body to ical4j. Stage order is load-bearing: quirk fixes
+     * ([preprocessICalData]) match on folded property lines and so must run
+     * first; unfolding then joins continuation lines; the uppercase-`\N`
+     * normalization runs last so a `\N` split across a fold boundary is seen
+     * whole. Kept in one place so the sequence is asserted once, not at each
+     * call site.
+     */
+    private fun prepareForParsing(icalData: String): String =
+        normalizeUppercaseNewlineEscape(unfoldICalData(preprocessICalData(icalData)))
+
+    private fun normalizeUppercaseNewlineEscape(data: String): String {
+        // Cheap substring guard: `\N` is vanishingly rare in real payloads, so
+        // skip the lookbehind regex scan of the whole (potentially large) body
+        // whenever no backslash-N is present at all.
+        if (!data.contains("\\N")) return data
+        return UPPERCASE_NEWLINE_ESCAPE.replace(data) { match -> match.groupValues[1] + "\\n" }
     }
 
     /**
@@ -1559,7 +1593,7 @@ class ICalParser(
      */
     fun parseFreeBusy(icalData: String): ICalFreeBusy? {
         return try {
-            val unfolded = unfoldICalData(preprocessICalData(icalData))
+            val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 

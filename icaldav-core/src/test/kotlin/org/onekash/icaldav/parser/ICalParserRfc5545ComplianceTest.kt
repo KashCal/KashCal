@@ -369,6 +369,54 @@ class ICalParserRfc5545ComplianceTest {
         assertEquals("Path: C:\\Users\\Test", event.summary)
     }
 
+    @Test
+    fun `unescape uppercase backslash-N as newline`() {
+        // RFC 5545 §3.3.11 defines \N (uppercase) as equivalent to \n. ical4j's
+        // own decoder only handles lowercase \n, so the parser must recognize the
+        // uppercase form too.
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:escape-upper-n@test.com
+            DTSTART:20231215T140000Z
+            DTEND:20231215T150000Z
+            DESCRIPTION:Line 1\NLine 2\NLine 3
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val event = parser.parseAllEvents(ics).getOrThrow().first()
+
+        assertEquals("Line 1\nLine 2\nLine 3", event.description)
+    }
+
+    @Test
+    fun `escaped backslash before N is not turned into a newline`() {
+        // A RFC-escaped backslash (\\) immediately followed by a literal N —
+        // e.g. a Windows path C:\Notes — decodes to the two characters
+        // backslash + N and must NOT be mangled into a newline. This is the
+        // corruption a naive post-decode replace("\\N","\n") introduces.
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:escaped-backslash-n@test.com
+            DTSTART:20231215T140000Z
+            DTEND:20231215T150000Z
+            DESCRIPTION:Path C:\\Notes here
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val event = parser.parseAllEvents(ics).getOrThrow().first()
+
+        assertEquals("Path C:\\Notes here", event.description)
+        assertTrue(event.description?.contains('\n') != true, "must not contain a newline")
+    }
+
     // ==================== RRULE Tests ====================
 
     @Test

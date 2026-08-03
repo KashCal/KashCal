@@ -59,7 +59,7 @@ import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.permission.PermissionChecker
 import org.onekash.kashcal.ui.permission.reconcileOnResume
-import org.onekash.kashcal.ui.permission.shouldShowLanHintOnFailure
+import org.onekash.kashcal.ui.permission.failureIndicatesBlockedLan
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
@@ -2146,13 +2146,8 @@ class AccountSettingsViewModel @Inject constructor(
      * socket: the permission is required (API 37+) but not granted. Pure read
      * of the current permission state — no side effects.
      */
-    private fun isDiscoveryFailureBlockedLan(): Boolean {
-        val state = _localNetworkPermissionState.value
-        return shouldShowLanHintOnFailure(
-            permissionRequired = state != LocalNetworkPermissionState.NotRequired,
-            granted = state == LocalNetworkPermissionState.Granted,
-        )
-    }
+    private fun isDiscoveryFailureBlockedLan(): Boolean =
+        _localNetworkPermissionState.value.failureIndicatesBlockedLan()
 
 
     // ==================== Sync Logs ====================

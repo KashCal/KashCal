@@ -81,12 +81,14 @@ import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
 import org.onekash.kashcal.ui.components.pickers.WidgetAccentColorSheet
 import org.onekash.kashcal.ui.screens.settings.AppIconSheet
 import org.onekash.kashcal.ui.screens.settings.ThemeSheet
+import org.onekash.kashcal.ui.screens.settings.WidgetThemeSheet
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AppearanceViewModel
 import org.onekash.kashcal.util.ExternalLinks
 import org.onekash.kashcal.widget.WidgetColorSource
+import org.onekash.kashcal.widget.WidgetThemeSource
 
 /**
  * Full-screen "account hub" that replaces the former overflow bottom sheet.
@@ -263,7 +265,7 @@ private fun MakeItYoursSection() {
     val themeMode by vm.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
     val colorSource by vm.colorSource.collectAsStateWithLifecycle(initialValue = ColorSource.DYNAMIC)
     val accentSeed by vm.accentSeed.collectAsStateWithLifecycle(initialValue = KashCalDataStore.ACCENT_SEED_DEFAULT)
-    val widgetThemeMode by vm.widgetThemeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+    val widgetThemeSource by vm.widgetThemeSource.collectAsStateWithLifecycle(initialValue = WidgetThemeSource.FOLLOW_APP)
     val widgetColorSource by vm.widgetColorSource.collectAsStateWithLifecycle(initialValue = WidgetColorSource.FOLLOW_APP)
     val widgetAccentSeed by vm.widgetAccentSeed.collectAsStateWithLifecycle(initialValue = KashCalDataStore.ACCENT_SEED_DEFAULT)
 
@@ -321,7 +323,7 @@ private fun MakeItYoursSection() {
         label = stringResource(R.string.settings_widget_theme),
         icon = Icons.Default.Widgets,
         onClick = { showWidgetThemeSheet = true },
-        badge = { Text(stringResource(widgetThemeMode.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        badge = { Text(stringResource(widgetThemeSource.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
     )
     val widgetAccentSubtitle = when {
         widgetColorSource == WidgetColorSource.FOLLOW_APP -> stringResource(R.string.settings_widget_color_follow_app)
@@ -368,12 +370,11 @@ private fun MakeItYoursSection() {
         )
     }
     if (showWidgetThemeSheet) {
-        ThemeSheet(
+        WidgetThemeSheet(
             sheetState = rememberModalBottomSheetState(),
-            currentMode = widgetThemeMode,
-            onModeSelect = { vm.setWidgetThemeMode(it) },
+            currentSource = widgetThemeSource,
+            onSourceSelect = { vm.setWidgetThemeSource(it) },
             onDismiss = { showWidgetThemeSheet = false },
-            titleRes = R.string.settings_widget_theme,
         )
     }
     if (showWidgetAccentSheet) {
