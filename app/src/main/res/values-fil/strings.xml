@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Awtomatiko</string>
     <string name="settings_accent_color_dynamic_desc">Sundin ang mga kulay ng Material You ng iyong device</string>
+    <string name="settings_widgets_section">Mga Widget</string>
+    <string name="settings_widget_theme">Disenyo ng widget</string>
+    <string name="settings_widget_accent_color">Kulay ng accent ng widget</string>
+    <string name="settings_widget_color_follow_app">Katulad ng app</string>
+    <string name="settings_widget_color_follow_app_desc">Gamitin ang kulay ng accent at pinagmulan ng app</string>
     <string name="settings_app_icon">Icon ng App</string>
     <string name="app_icon_default">Default</string>
     <string name="app_icon_supporter">Tagasuporta</string>

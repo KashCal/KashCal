@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Blougroen</string>
     <string name="settings_accent_color_dynamic">Outomaties</string>
     <string name="settings_accent_color_dynamic_desc">Volg jou toestel se Material You-kleure</string>
+    <string name="settings_widgets_section">Legstukke</string>
+    <string name="settings_widget_theme">Legstukontwerp</string>
+    <string name="settings_widget_accent_color">Legstuk-aksentkleur</string>
+    <string name="settings_widget_color_follow_app">Dieselfde as program</string>
+    <string name="settings_widget_color_follow_app_desc">Gebruik die program se aksentkleur en bron</string>
     <string name="settings_app_icon">Programikoon</string>
     <string name="app_icon_default">Verstek</string>
     <string name="app_icon_supporter">Ondersteuner</string>

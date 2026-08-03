@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal టీల్</string>
     <string name="settings_accent_color_dynamic">స్వయంచాలక</string>
     <string name="settings_accent_color_dynamic_desc">మీ పరికరం యొక్క Material You రంగులను అనుసరించండి</string>
+    <string name="settings_widgets_section">విడ్జెట్‌లు</string>
+    <string name="settings_widget_theme">విడ్జెట్ డిజైన్</string>
+    <string name="settings_widget_accent_color">విడ్జెట్ యాక్సెంట్ రంగు</string>
+    <string name="settings_widget_color_follow_app">యాప్ లాగే</string>
+    <string name="settings_widget_color_follow_app_desc">యాప్ యాక్సెంట్ రంగు మరియు మూలాన్ని ఉపయోగించండి</string>
     <string name="settings_app_icon">యాప్ ఐకాన్</string>
     <string name="app_icon_default">డీఫాల్ట్</string>
     <string name="app_icon_supporter">మద్దతుదారు</string>

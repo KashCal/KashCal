@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turkesa</string>
     <string name="settings_accent_color_dynamic">Automatikoa</string>
     <string name="settings_accent_color_dynamic_desc">Jarraitu zure gailuaren Material You koloreei</string>
+    <string name="settings_widgets_section">Widgetak</string>
+    <string name="settings_widget_theme">Widgetaren diseinua</string>
+    <string name="settings_widget_accent_color">Widgetaren azentu-kolorea</string>
+    <string name="settings_widget_color_follow_app">Aplikazioaren berdina</string>
+    <string name="settings_widget_color_follow_app_desc">Erabili aplikazioaren azentu-kolorea eta iturria</string>
     <string name="settings_app_icon">Aplikazioaren ikonoa</string>
     <string name="app_icon_default">Lehenetsia</string>
     <string name="app_icon_supporter">Laguntzaile</string>

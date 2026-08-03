@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Glaswyrdd</string>
     <string name="settings_accent_color_dynamic">Awtomatig</string>
     <string name="settings_accent_color_dynamic_desc">Dilyn lliwiau Material You eich dyfais</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Dyluniad y widget</string>
+    <string name="settings_widget_accent_color">Lliw acen y widget</string>
+    <string name="settings_widget_color_follow_app">Yr un fath â\'r ap</string>
+    <string name="settings_widget_color_follow_app_desc">Defnyddio lliw acen a ffynhonnell yr ap</string>
     <string name="settings_app_icon">Eicon yr Ap</string>
     <string name="app_icon_default">Rhagosodedig</string>
     <string name="app_icon_supporter">Cefnogwr</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">Verde-azulado KashCal</string>
     <string name="settings_accent_color_dynamic">Automático</string>
     <string name="settings_accent_color_dynamic_desc">Seguir as cores Material You do seu dispositivo</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Aparência do widget</string>
+    <string name="settings_widget_accent_color">Cor de destaque do widget</string>
+    <string name="settings_widget_color_follow_app">Mesma do app</string>
+    <string name="settings_widget_color_follow_app_desc">Usa a cor de destaque e a origem do app</string>
     <string name="settings_app_icon">Ícone do app</string>
     <string name="app_icon_default">Padrão</string>
     <string name="app_icon_supporter">Apoiador</string>

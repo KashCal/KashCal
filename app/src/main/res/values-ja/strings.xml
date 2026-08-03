@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal ティール</string>
     <string name="settings_accent_color_dynamic">自動</string>
     <string name="settings_accent_color_dynamic_desc">デバイスの Material You カラーに従います</string>
+    <string name="settings_widgets_section">ウィジェット</string>
+    <string name="settings_widget_theme">ウィジェットのデザイン</string>
+    <string name="settings_widget_accent_color">ウィジェットのアクセントカラー</string>
+    <string name="settings_widget_color_follow_app">アプリと同じ</string>
+    <string name="settings_widget_color_follow_app_desc">アプリのアクセントカラーとソースを使用します</string>
     <string name="settings_app_icon">アプリアイコン</string>
     <string name="app_icon_default">デフォルト</string>
     <string name="app_icon_supporter">サポーター</string>

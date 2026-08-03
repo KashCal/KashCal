@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Biru Kehijauan</string>
     <string name="settings_accent_color_dynamic">Automatik</string>
     <string name="settings_accent_color_dynamic_desc">Ikut warna Material You peranti anda</string>
+    <string name="settings_widgets_section">Widget</string>
+    <string name="settings_widget_theme">Reka bentuk widget</string>
+    <string name="settings_widget_accent_color">Warna aksen widget</string>
+    <string name="settings_widget_color_follow_app">Sama seperti apl</string>
+    <string name="settings_widget_color_follow_app_desc">Guna warna aksen dan sumber apl</string>
     <string name="settings_app_icon">Ikon Apl</string>
     <string name="app_icon_default">Lalai</string>
     <string name="app_icon_supporter">Penyokong</string>

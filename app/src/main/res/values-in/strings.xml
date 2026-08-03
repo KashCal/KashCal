@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Otomatis</string>
     <string name="settings_accent_color_dynamic_desc">Ikuti warna Material You perangkat Anda</string>
+    <string name="settings_widgets_section">Widget</string>
+    <string name="settings_widget_theme">Desain widget</string>
+    <string name="settings_widget_accent_color">Warna aksen widget</string>
+    <string name="settings_widget_color_follow_app">Sama seperti aplikasi</string>
+    <string name="settings_widget_color_follow_app_desc">Gunakan warna aksen dan sumber aplikasi</string>
     <string name="settings_app_icon">Ikon Aplikasi</string>
     <string name="app_icon_default">Bawaan</string>
     <string name="app_icon_supporter">Pendukung</string>

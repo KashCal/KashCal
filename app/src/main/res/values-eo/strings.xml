@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turkisa</string>
     <string name="settings_accent_color_dynamic">Aŭtomata</string>
     <string name="settings_accent_color_dynamic_desc">Sekvu la Material You kolorojn de via aparato</string>
+    <string name="settings_widgets_section">Fenestraĵoj</string>
+    <string name="settings_widget_theme">Fenestraĵa dezajno</string>
+    <string name="settings_widget_accent_color">Fenestraĵa akcenta koloro</string>
+    <string name="settings_widget_color_follow_app">Sama kiel la aplikaĵo</string>
+    <string name="settings_widget_color_follow_app_desc">Uzu la akcentan koloron kaj fonton de la aplikaĵo</string>
     <string name="settings_app_icon">Aplikaĵa piktogramo</string>
     <string name="app_icon_default">Defaŭlta</string>
     <string name="app_icon_supporter">Subtenanto</string>

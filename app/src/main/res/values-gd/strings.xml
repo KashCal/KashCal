@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Gorm-uaine</string>
     <string name="settings_accent_color_dynamic">Fèin-obrachail</string>
     <string name="settings_accent_color_dynamic_desc">Lean dathan Material You an inneil agad</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Dealbhadh a\' widget</string>
+    <string name="settings_widget_accent_color">Dath sònrachaidh a\' widget</string>
+    <string name="settings_widget_color_follow_app">Co-ionann ris an aplacaid</string>
+    <string name="settings_widget_color_follow_app_desc">Cleachd dath sònrachaidh is tùs na h-aplacaid</string>
     <string name="settings_app_icon">Ìomhaigheag na h-aplacaid</string>
     <string name="app_icon_default">Bunaiteach</string>
     <string name="app_icon_supporter">Neach-taic</string>

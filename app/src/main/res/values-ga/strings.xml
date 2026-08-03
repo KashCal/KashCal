@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Uathoibríoch</string>
     <string name="settings_accent_color_dynamic_desc">Lean dathanna Material You do ghléis</string>
+    <string name="settings_widgets_section">Giuirléidí</string>
+    <string name="settings_widget_theme">Dearadh na giuirléide</string>
+    <string name="settings_widget_accent_color">Dath béime na giuirléide</string>
+    <string name="settings_widget_color_follow_app">Mar an gcéanna leis an aip</string>
+    <string name="settings_widget_color_follow_app_desc">Úsáid dath béime agus foinse na haipe</string>
     <string name="settings_app_icon">Deilbhín an Aip</string>
     <string name="app_icon_default">Réamhshocrú</string>
     <string name="app_icon_supporter">Tacadóir</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Türkiz</string>
     <string name="settings_accent_color_dynamic">Automatikus</string>
     <string name="settings_accent_color_dynamic_desc">Kövesd az eszközöd Material You színeit</string>
+    <string name="settings_widgets_section">Modulok</string>
+    <string name="settings_widget_theme">Modul kinézete</string>
+    <string name="settings_widget_accent_color">Modul kiemelőszíne</string>
+    <string name="settings_widget_color_follow_app">Mint az alkalmazásé</string>
+    <string name="settings_widget_color_follow_app_desc">Az alkalmazás kiemelőszínének és forrásának használata</string>
     <string name="settings_app_icon">Alkalmazásikon</string>
     <string name="app_icon_default">Alapértelmezett</string>
     <string name="app_icon_supporter">Támogató</string>

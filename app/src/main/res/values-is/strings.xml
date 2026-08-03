@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal blágrænt</string>
     <string name="settings_accent_color_dynamic">Sjálfvirkt</string>
     <string name="settings_accent_color_dynamic_desc">Fylgdu Material You-litum tækisins þíns</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Widget-þema</string>
+    <string name="settings_widget_accent_color">Widget-áherslulitur</string>
+    <string name="settings_widget_color_follow_app">Eins og forritið</string>
+    <string name="settings_widget_color_follow_app_desc">Nota áherslulit og litagjafa forritsins</string>
     <string name="settings_app_icon">Forritstákn</string>
     <string name="app_icon_default">Sjálfgefið</string>
     <string name="app_icon_supporter">Stuðningsaðili</string>

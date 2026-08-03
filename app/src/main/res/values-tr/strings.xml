@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turkuaz</string>
     <string name="settings_accent_color_dynamic">Otomatik</string>
     <string name="settings_accent_color_dynamic_desc">Cihazının Material You renklerini takip et</string>
+    <string name="settings_widgets_section">Widget\'lar</string>
+    <string name="settings_widget_theme">Widget tasarımı</string>
+    <string name="settings_widget_accent_color">Widget vurgu rengi</string>
+    <string name="settings_widget_color_follow_app">Uygulamayla aynı</string>
+    <string name="settings_widget_color_follow_app_desc">Uygulamanın vurgu rengini ve kaynağını kullan</string>
     <string name="settings_app_icon">Uygulama Simgesi</string>
     <string name="app_icon_default">Varsayılan</string>
     <string name="app_icon_supporter">Destekçi</string>

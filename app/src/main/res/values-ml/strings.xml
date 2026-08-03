@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal ടീൽ</string>
     <string name="settings_accent_color_dynamic">സ്വയമേവ</string>
     <string name="settings_accent_color_dynamic_desc">നിങ്ങളുടെ ഉപകരണത്തിന്റെ Material You നിറങ്ങൾ പിന്തുടരുക</string>
+    <string name="settings_widgets_section">വിജറ്റുകൾ</string>
+    <string name="settings_widget_theme">വിജറ്റ് ഡിസൈൻ</string>
+    <string name="settings_widget_accent_color">വിജറ്റ് ആക്സന്റ് നിറം</string>
+    <string name="settings_widget_color_follow_app">ആപ്പിന് സമാനം</string>
+    <string name="settings_widget_color_follow_app_desc">ആപ്പിന്റെ ആക്സന്റ് നിറവും ഉറവിടവും ഉപയോഗിക്കുക</string>
     <string name="settings_app_icon">ആപ്പ് ഐക്കൺ</string>
     <string name="app_icon_default">ഡിഫോൾട്ട്</string>
     <string name="app_icon_supporter">പിന്തുണക്കാരൻ</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Πετρόλ</string>
     <string name="settings_accent_color_dynamic">Αυτόματο</string>
     <string name="settings_accent_color_dynamic_desc">Ακολουθήστε τα χρώματα Material You της συσκευής σας</string>
+    <string name="settings_widgets_section">Γραφικά στοιχεία</string>
+    <string name="settings_widget_theme">Σχεδίαση γραφικού στοιχείου</string>
+    <string name="settings_widget_accent_color">Χρώμα τονισμού γραφικού στοιχείου</string>
+    <string name="settings_widget_color_follow_app">Ίδιο με την εφαρμογή</string>
+    <string name="settings_widget_color_follow_app_desc">Χρήση του χρώματος τονισμού και της πηγής της εφαρμογής</string>
     <string name="settings_app_icon">Εικονίδιο εφαρμογής</string>
     <string name="app_icon_default">Προεπιλογή</string>
     <string name="app_icon_supporter">Υποστηρικτής</string>

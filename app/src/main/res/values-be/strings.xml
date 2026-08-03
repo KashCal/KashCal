@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">Бірузовы KashCal</string>
     <string name="settings_accent_color_dynamic">Аўтаматычна</string>
     <string name="settings_accent_color_dynamic_desc">Выкарыстоўваць колеры Material You тваёй прылады</string>
+    <string name="settings_widgets_section">Віджэты</string>
+    <string name="settings_widget_theme">Дызайн віджэта</string>
+    <string name="settings_widget_accent_color">Акцэнтны колер віджэта</string>
+    <string name="settings_widget_color_follow_app">Як у праграме</string>
+    <string name="settings_widget_color_follow_app_desc">Выкарыстоўваць акцэнтны колер праграмы і яго крыніцу</string>
     <string name="settings_app_icon">Значок праграмы</string>
     <string name="app_icon_default">Па змаўчанні</string>
     <string name="app_icon_supporter">Прыхільнік</string>

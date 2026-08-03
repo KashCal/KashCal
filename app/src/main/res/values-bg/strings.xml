@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Синьо-зелено</string>
     <string name="settings_accent_color_dynamic">Автоматично</string>
     <string name="settings_accent_color_dynamic_desc">Следвайте цветовете Material You на вашето устройство</string>
+    <string name="settings_widgets_section">Уиджети</string>
+    <string name="settings_widget_theme">Дизайн на уиджета</string>
+    <string name="settings_widget_accent_color">Акцентен цвят на уиджета</string>
+    <string name="settings_widget_color_follow_app">Като приложението</string>
+    <string name="settings_widget_color_follow_app_desc">Използвайте акцентния цвят и източника на приложението</string>
     <string name="settings_app_icon">Икона на приложението</string>
     <string name="app_icon_default">По подразбиране</string>
     <string name="app_icon_supporter">Поддръжник</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turquoise</string>
     <string name="settings_accent_color_dynamic">Automatisch</string>
     <string name="settings_accent_color_dynamic_desc">Volg de Material You-kleuren van je apparaat</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Widgetthema</string>
+    <string name="settings_widget_accent_color">Widget-accentkleur</string>
+    <string name="settings_widget_color_follow_app">Zelfde als app</string>
+    <string name="settings_widget_color_follow_app_desc">De accentkleur en kleurbron van de app gebruiken</string>
     <string name="settings_app_icon">App-pictogram</string>
     <string name="app_icon_default">Standaard</string>
     <string name="app_icon_supporter">Donateur</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turcoaz</string>
     <string name="settings_accent_color_dynamic">Automat</string>
     <string name="settings_accent_color_dynamic_desc">Urmează culorile Material You ale dispozitivului tău</string>
+    <string name="settings_widgets_section">Widgeturi</string>
+    <string name="settings_widget_theme">Aspectul widgetului</string>
+    <string name="settings_widget_accent_color">Culoarea de accent a widgetului</string>
+    <string name="settings_widget_color_follow_app">La fel ca aplicația</string>
+    <string name="settings_widget_color_follow_app_desc">Folosește culoarea de accent și sursa aplicației</string>
     <string name="settings_app_icon">Pictograma aplicației</string>
     <string name="app_icon_default">Implicit</string>
     <string name="app_icon_supporter">Susținător</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal 청록색</string>
     <string name="settings_accent_color_dynamic">자동</string>
     <string name="settings_accent_color_dynamic_desc">기기의 Material You 색상을 따라요</string>
+    <string name="settings_widgets_section">위젯</string>
+    <string name="settings_widget_theme">위젯 디자인</string>
+    <string name="settings_widget_accent_color">위젯 강조 색상</string>
+    <string name="settings_widget_color_follow_app">앱과 동일</string>
+    <string name="settings_widget_color_follow_app_desc">앱의 강조 색상과 소스를 사용해요</string>
     <string name="settings_app_icon">앱 아이콘</string>
     <string name="app_icon_default">기본</string>
     <string name="app_icon_supporter">후원자</string>

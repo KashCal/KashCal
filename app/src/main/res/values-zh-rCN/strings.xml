@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal 青色</string>
     <string name="settings_accent_color_dynamic">自动</string>
     <string name="settings_accent_color_dynamic_desc">跟随设备的 Material You 配色</string>
+    <string name="settings_widgets_section">小部件</string>
+    <string name="settings_widget_theme">小部件设计</string>
+    <string name="settings_widget_accent_color">小部件强调色</string>
+    <string name="settings_widget_color_follow_app">与应用相同</string>
+    <string name="settings_widget_color_follow_app_desc">使用应用的强调色和来源</string>
     <string name="settings_app_icon">应用图标</string>
     <string name="app_icon_default">默认</string>
     <string name="app_icon_supporter">支持者</string>

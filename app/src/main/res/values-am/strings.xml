@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal አረንጓዴ-ሰማያዊ</string>
     <string name="settings_accent_color_dynamic">ራስ-ሰር</string>
     <string name="settings_accent_color_dynamic_desc">የመሣሪያዎን የ Material You ቀለሞች ይከተሉ</string>
+    <string name="settings_widgets_section">ዊጀቶች</string>
+    <string name="settings_widget_theme">የዊጀት ንድፍ</string>
+    <string name="settings_widget_accent_color">የዊጀት ማድመቂያ ቀለም</string>
+    <string name="settings_widget_color_follow_app">ልክ እንደ መተግበሪያው</string>
+    <string name="settings_widget_color_follow_app_desc">የመተግበሪያውን ማድመቂያ ቀለም እና ምንጭ ይጠቀሙ</string>
     <string name="settings_app_icon">የመተግበሪያ አዶ</string>
     <string name="app_icon_default">ነባሪ</string>
     <string name="app_icon_supporter">ደጋፊ</string>

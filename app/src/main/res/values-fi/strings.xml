@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal-sinivihreä</string>
     <string name="settings_accent_color_dynamic">Automaattinen</string>
     <string name="settings_accent_color_dynamic_desc">Seuraa laitteesi Material You -värejä</string>
+    <string name="settings_widgets_section">Widgetit</string>
+    <string name="settings_widget_theme">Widgetin ulkoasu</string>
+    <string name="settings_widget_accent_color">Widgetin korostusväri</string>
+    <string name="settings_widget_color_follow_app">Sama kuin sovelluksessa</string>
+    <string name="settings_widget_color_follow_app_desc">Käytä sovelluksen korostusväriä ja sen lähdettä</string>
     <string name="settings_app_icon">Sovelluksen kuvake</string>
     <string name="app_icon_default">Oletus</string>
     <string name="app_icon_supporter">Tukija</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turkis</string>
     <string name="settings_accent_color_dynamic">Automatisk</string>
     <string name="settings_accent_color_dynamic_desc">Følg din enheds Material You-farver</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Widgettema</string>
+    <string name="settings_widget_accent_color">Widget-accentfarve</string>
+    <string name="settings_widget_color_follow_app">Samme som appen</string>
+    <string name="settings_widget_color_follow_app_desc">Brug appens accentfarve og farvekilde</string>
     <string name="settings_app_icon">Appikon</string>
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Supporter</string>

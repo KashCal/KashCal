@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Turquesa</string>
     <string name="settings_accent_color_dynamic">Automàtic</string>
     <string name="settings_accent_color_dynamic_desc">Segueix els colors Material You del teu dispositiu</string>
+    <string name="settings_widgets_section">Widgets</string>
+    <string name="settings_widget_theme">Disseny del widget</string>
+    <string name="settings_widget_accent_color">Color d\'accent del widget</string>
+    <string name="settings_widget_color_follow_app">Igual que l\'aplicació</string>
+    <string name="settings_widget_color_follow_app_desc">Usa el color d\'accent i la font de l\'aplicació</string>
     <string name="settings_app_icon">Icona de l\'aplicació</string>
     <string name="app_icon_default">Predeterminat</string>
     <string name="app_icon_supporter">Col·laborador</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCali türkiissinine</string>
     <string name="settings_accent_color_dynamic">Automaatne</string>
     <string name="settings_accent_color_dynamic_desc">Järgi oma seadme Material You värve</string>
+    <string name="settings_widgets_section">Vidinad</string>
+    <string name="settings_widget_theme">Vidina kujundus</string>
+    <string name="settings_widget_accent_color">Vidina rõhuvärv</string>
+    <string name="settings_widget_color_follow_app">Sama mis rakenduses</string>
+    <string name="settings_widget_color_follow_app_desc">Kasuta rakenduse rõhuvärvi ja selle allikat</string>
     <string name="settings_app_icon">Rakenduse ikoon</string>
     <string name="app_icon_default">Vaikimisi</string>
     <string name="app_icon_supporter">Toetaja</string>

@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">Бірюзовий KashCal</string>
     <string name="settings_accent_color_dynamic">Автоматично</string>
     <string name="settings_accent_color_dynamic_desc">Використовувати кольори Material You твого пристрою</string>
+    <string name="settings_widgets_section">Віджети</string>
+    <string name="settings_widget_theme">Дизайн віджета</string>
+    <string name="settings_widget_accent_color">Акцентний колір віджета</string>
+    <string name="settings_widget_color_follow_app">Як у застосунку</string>
+    <string name="settings_widget_color_follow_app_desc">Використовувати акцентний колір застосунку та його джерело</string>
     <string name="settings_app_icon">Значок додатка</string>
     <string name="app_icon_default">За замовчуванням</string>
     <string name="app_icon_supporter">Прихильник</string>

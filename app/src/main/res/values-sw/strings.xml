@@ -163,6 +163,11 @@
     <string name="settings_accent_color_brand">KashCal Teal</string>
     <string name="settings_accent_color_dynamic">Kiotomatiki</string>
     <string name="settings_accent_color_dynamic_desc">Fuata rangi za Material You za kifaa chako</string>
+    <string name="settings_widgets_section">Wijeti</string>
+    <string name="settings_widget_theme">Muundo wa wijeti</string>
+    <string name="settings_widget_accent_color">Rangi ya lafudhi ya wijeti</string>
+    <string name="settings_widget_color_follow_app">Sawa na programu</string>
+    <string name="settings_widget_color_follow_app_desc">Tumia rangi ya lafudhi na chanzo cha programu</string>
     <string name="settings_app_icon">Aikoni ya Programu</string>
     <string name="app_icon_default">Chaguo-msingi</string>
     <string name="app_icon_supporter">Mfadhili</string>
