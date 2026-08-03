@@ -78,8 +78,9 @@ class MonthWidget : GlanceAppWidget() {
         // picked seed. Seeding produceState with null would render one frame on the platform dynamic
         // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
         // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
-        val initialAccent = resolveWidgetAccentColors(dataStore)
+        // colors ("randomly didn't take the tint"). null colors here still mean the genuine
+        // DYNAMIC source on the system face.
+        val initialColorConfig = resolveWidgetAccentColors(context, dataStore)
 
         provideContent {
             // Read month offset + refresh stamp reactively — currentState updates on
@@ -118,11 +119,11 @@ class MonthWidget : GlanceAppWidget() {
                 val (startDayCode, endDayCode) = monthGrid.toDayCodeRange()
                 value = fetchMonthEvents(repository, startDayCode, endDayCode)
             }
-            val accentColors by produceState(initialValue = initialAccent, key1 = refreshStamp) {
-                value = resolveWidgetAccentColors(dataStore)
+            val colorConfig by produceState(initialValue = initialColorConfig, key1 = refreshStamp) {
+                value = resolveWidgetAccentColors(context, dataStore)
             }
 
-            GlanceTheme(colors = accentColors ?: GlanceTheme.colors) {
+            GlanceTheme(colors = colorConfig.colors ?: GlanceTheme.colors) {
                 MonthWidgetContent(
                     monthGrid = monthGrid,
                     monthEvents = monthEvents,
@@ -130,7 +131,8 @@ class MonthWidget : GlanceAppWidget() {
                     targetYear = targetMonth.year,
                     targetMonth0 = targetMonth.monthValue - 1,
                     firstDayOfWeek = firstDayOfWeek,
-                    showWeekNumbers = showWeekNumbers
+                    showWeekNumbers = showWeekNumbers,
+                    forcedDark = colorConfig.forcedDark
                 )
             }
         }
