@@ -208,7 +208,15 @@ class ShareAvailabilityViewModelTest {
         vm.onDaysChange(5)
         advanceUntilIdle()
 
-        coVerify(atLeast = 2) { insightsRepository.getOccurrencesForRange(any(), any()) }
+        // A fresh snapshot means the repository was queried for the *new* 5-day
+        // window (today .. today+5), a range the initial 7-day load never used —
+        // so this call can only come from the post-change recompute. Matching the
+        // exact new range (with the full 3-arg signature the VM actually calls) is
+        // both deterministic and stronger than a bare call count.
+        val expectedEndForFiveDays = mon.plusDays(5).atStartOfDay(zone).toInstant().toEpochMilli()
+        coVerify {
+            insightsRepository.getOccurrencesForRange(mondayMidnightUtc, expectedEndForFiveDays, zone)
+        }
     }
 
     // ========== onWorkHoursChange ==========
