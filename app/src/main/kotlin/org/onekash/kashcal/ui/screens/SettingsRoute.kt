@@ -144,6 +144,7 @@ fun SettingsRoute(
         val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
         val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
         val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
+        val enabledCalendarViews by viewModel.enabledCalendarViews.collectAsStateWithLifecycle()
         val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
         val widgetDetailedRows by viewModel.widgetDetailedRows.collectAsStateWithLifecycle()
         val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
@@ -726,6 +727,8 @@ fun SettingsRoute(
                             onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
                             showWeekNumbers = showWeekNumbers,
                             onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
+                            enabledCalendarViews = enabledCalendarViews,
+                            onSetCalendarViewEnabled = viewModel::setCalendarViewEnabled,
                             widgetMaxEventsPerDay = widgetMaxEventsPerDay,
                             onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
                             widgetDetailedRows = widgetDetailedRows,

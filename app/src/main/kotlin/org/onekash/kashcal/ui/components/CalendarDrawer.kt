@@ -61,6 +61,7 @@ import org.onekash.kashcal.ui.viewmodels.ViewMode
 @Composable
 fun CalendarDrawer(
     currentViewMode: ViewMode,
+    enabledViewModes: Set<ViewMode>,
     calendarGroups: ImmutableList<CalendarGroup>,
     deviceCalendarsEnabled: Boolean,
     enabledDeviceCalendars: ImmutableList<DeviceCalendar>,
@@ -78,6 +79,12 @@ fun CalendarDrawer(
 
     val groupedByAccount = remember(enabledDeviceCalendars) {
         enabledDeviceCalendars.groupBy { it.accountName }
+    }
+
+    // The active view stays listed even if disabled; it has to render as
+    // selected somewhere.
+    val visibleViewOptions = remember(enabledViewModes, currentViewMode) {
+        viewOptions.filter { it.mode in enabledViewModes || it.mode == currentViewMode }
     }
 
     ModalDrawerSheet(modifier = modifier.widthIn(max = 300.dp)) {
@@ -134,7 +141,7 @@ fun CalendarDrawer(
 
             // ===== View Mode Items (compact) =====
             items(
-                items = viewOptions,
+                items = visibleViewOptions,
                 key = { "view_${it.mode.key}" }
             ) { option ->
                 val isSelected = currentViewMode == option.mode

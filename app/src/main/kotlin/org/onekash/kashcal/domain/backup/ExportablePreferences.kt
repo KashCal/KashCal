@@ -46,6 +46,7 @@ object ExportablePreferences {
         PreferencesKeys.SHOW_EVENT_EMOJIS.name to PrefKind.BOOL,
         PreferencesKeys.TIME_FORMAT.name to PrefKind.STRING,
         PreferencesKeys.DEFAULT_CALENDAR_VIEW.name to PrefKind.STRING,
+        PreferencesKeys.ENABLED_CALENDAR_VIEWS.name to PrefKind.STRING_SET,
         PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY.name to PrefKind.INT,
         PreferencesKeys.WIDGET_DETAILED_ROWS.name to PrefKind.BOOL,
         PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED.name to PrefKind.BOOL,
@@ -102,6 +103,7 @@ object ExportablePreferences {
         PreferencesKeys.SHOW_EVENT_EMOJIS,
         PreferencesKeys.TIME_FORMAT,
         PreferencesKeys.DEFAULT_CALENDAR_VIEW,
+        PreferencesKeys.ENABLED_CALENDAR_VIEWS,
         PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY,
         PreferencesKeys.WIDGET_DETAILED_ROWS,
         // Contact birthdays & anniversaries
@@ -122,8 +124,8 @@ object ExportablePreferences {
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
         // whenever a key is added to or removed from KEYS above.
-        require(it.size == 41) {
-            "KEYS size drifted; expected 41 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 42) {
+            "KEYS size drifted; expected 42 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

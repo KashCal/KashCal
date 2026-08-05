@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
@@ -57,6 +58,7 @@ import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
+import org.onekash.kashcal.ui.components.viewOptions
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
@@ -67,6 +69,7 @@ import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
 import org.onekash.kashcal.ui.screens.settings.AlertPickerSheet
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
+import org.onekash.kashcal.ui.screens.settings.CalendarViewsSheet
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
@@ -257,6 +260,8 @@ fun AccountSettingsScreen(
     onFirstDayOfWeekChange: (Int) -> Unit = {},
     showWeekNumbers: Boolean = false,
     onShowWeekNumbersChange: (Boolean) -> Unit = {},
+    enabledCalendarViews: Set<String> = emptySet(),
+    onSetCalendarViewEnabled: (String, Boolean) -> Unit = { _, _ -> },
     widgetMaxEventsPerDay: Int = 5,
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     widgetDetailedRows: Boolean = false,
@@ -322,6 +327,7 @@ fun AccountSettingsScreen(
                 var showAllDayAlertSheet by remember { mutableStateOf(false) }
                 var showTimeFormatSheet by remember { mutableStateOf(false) }
                 var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
+                var showCalendarViewsSheet by remember { mutableStateOf(false) }
                 var showEventDurationSheet by remember { mutableStateOf(false) }
                 var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
                 var showDebugMenu by remember { mutableStateOf(false) }
@@ -337,6 +343,7 @@ fun AccountSettingsScreen(
                 val allDayAlertSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                 val timeFormatSheetState = rememberModalBottomSheetState()
                 val firstDayOfWeekSheetState = rememberModalBottomSheetState()
+                val calendarViewsSheetState = rememberModalBottomSheetState()
                 val eventDurationSheetState = rememberModalBottomSheetState()
                 val widgetEventLimitSheetState = rememberModalBottomSheetState()
                 val syncLookbackSheetState = rememberModalBottomSheetState()
@@ -537,6 +544,22 @@ fun AccountSettingsScreen(
                                 label = stringResource(R.string.settings_week_numbers),
                                 checked = showWeekNumbers,
                                 onCheckedChange = onShowWeekNumbersChange,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val visibleViewsSubtitle = stringResource(
+                            R.string.settings_visible_views_count,
+                            enabledCalendarViews.size,
+                            viewOptions.size
+                        )
+                        row(label = stringResource(R.string.settings_visible_views), subtitle = visibleViewsSubtitle, id = "visible-views") {
+                            SettingsRow(
+                                icon = Icons.Default.GridView,
+                                label = stringResource(R.string.settings_visible_views),
+                                subtitle = visibleViewsSubtitle,
+                                onClick = { showCalendarViewsSheet = true },
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )
@@ -878,6 +901,16 @@ fun AccountSettingsScreen(
                         currentValue = firstDayOfWeek,
                         onSelect = onFirstDayOfWeekChange,
                         onDismiss = { showFirstDayOfWeekSheet = false }
+                    )
+                }
+
+                // Calendar Views Sheet
+                if (showCalendarViewsSheet) {
+                    CalendarViewsSheet(
+                        sheetState = calendarViewsSheetState,
+                        enabledViews = enabledCalendarViews,
+                        onToggle = onSetCalendarViewEnabled,
+                        onDismiss = { showCalendarViewsSheet = false }
                     )
                 }
 

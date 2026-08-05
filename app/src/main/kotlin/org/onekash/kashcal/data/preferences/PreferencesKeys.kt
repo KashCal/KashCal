@@ -138,6 +138,9 @@ object PreferencesKeys {
     /** Default calendar view: "month", "agenda", or "three_days" */
     val DEFAULT_CALENDAR_VIEW = stringPreferencesKey("default_calendar_view")
 
+    /** View keys shown in the picker; absent means all views. */
+    val ENABLED_CALENDAR_VIEWS = stringSetPreferencesKey("enabled_calendar_views")
+
     /** Maximum events shown per day in widgets (agenda + week) */
     val WIDGET_MAX_EVENTS_PER_DAY = intPreferencesKey("widget_max_events_per_day")
 

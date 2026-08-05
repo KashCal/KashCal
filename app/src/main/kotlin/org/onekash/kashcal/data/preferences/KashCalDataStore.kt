@@ -546,6 +546,29 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.DEFAULT_CALENDAR_VIEW, view)
     }
 
+    // ========== Enabled Calendar Views ==========
+
+    /**
+     * Defaults to all views when unset, so existing users keep every view.
+     */
+    val enabledCalendarViews: Flow<Set<String>>
+        get() = getPreference(PreferencesKeys.ENABLED_CALENDAR_VIEWS, VALID_VIEWS)
+            .map { stored ->
+                val valid = stored.filter { it in VALID_VIEWS }.toSet()
+                valid.ifEmpty { VALID_VIEWS }
+            }
+
+    /**
+     * An all-unknown set is ignored rather than expanded to "all views", which
+     * would silently re-enable everything when restoring a backup whose keys
+     * were renamed.
+     */
+    suspend fun setEnabledCalendarViews(views: Set<String>) {
+        val valid = views.filter { it in VALID_VIEWS }.toSet()
+        if (valid.isEmpty()) return
+        setPreference(PreferencesKeys.ENABLED_CALENDAR_VIEWS, valid)
+    }
+
     // ========== Migration Flags ==========
 
     val migrationV1Completed: Flow<Boolean>
@@ -1115,7 +1138,8 @@ class KashCalDataStore(
         const val VIEW_WEEK = "week"
         const val VIEW_YEAR = "year"
 
-        private val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_DAY, VIEW_THREE_DAYS, VIEW_WEEK, VIEW_MONTH_FULL, VIEW_YEAR)
+        /** Public so callers can seed [enabledCalendarViews] before it loads. */
+        val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_DAY, VIEW_THREE_DAYS, VIEW_WEEK, VIEW_MONTH_FULL, VIEW_YEAR)
 
         // Time format values
         const val TIME_FORMAT_SYSTEM = "system"

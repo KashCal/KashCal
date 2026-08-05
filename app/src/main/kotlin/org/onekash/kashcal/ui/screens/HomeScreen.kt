@@ -514,6 +514,7 @@ fun HomeScreen(
         drawerContent = {
             CalendarDrawer(
                 currentViewMode = uiState.viewMode,
+                enabledViewModes = uiState.enabledViewModes,
                 calendarGroups = uiState.calendarGroups,
                 deviceCalendarsEnabled = uiState.deviceCalendarsEnabled,
                 enabledDeviceCalendars = uiState.enabledDeviceCalendars,

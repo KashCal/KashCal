@@ -349,6 +349,11 @@ class AccountSettingsViewModel @Inject constructor(
     private val _showWeekNumbers = MutableStateFlow(false)
     val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
 
+    // Seeded to match the DataStore default; an empty seed would flash
+    // "0 of 7 shown" with every switch off until the first emission.
+    private val _enabledCalendarViews = MutableStateFlow(KashCalDataStore.VALID_VIEWS)
+    val enabledCalendarViews: StateFlow<Set<String>> = _enabledCalendarViews.asStateFlow()
+
     private val _quickAddEnabled = MutableStateFlow(false)
     val quickAddEnabled: StateFlow<Boolean> = _quickAddEnabled.asStateFlow()
 
@@ -697,6 +702,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.enabledCalendarViews.collect { views ->
+                _enabledCalendarViews.value = views
+            }
+        }
+        viewModelScope.launch {
             dataStore.widgetMaxEventsPerDay.collect { count ->
                 _widgetMaxEventsPerDay.value = count
             }
@@ -811,6 +821,16 @@ class AccountSettingsViewModel @Inject constructor(
             // The month widget's week-number gutter is driven by this preference, so refresh the
             // widgets immediately rather than on the next periodic tick.
             widgetUpdateManager.updateAllWidgets("week_numbers_changed")
+        }
+    }
+
+    /** Turning off the last view is ignored by the DataStore setter. */
+    fun setCalendarViewEnabled(viewKey: String, enabled: Boolean) {
+        val current = _enabledCalendarViews.value
+        viewModelScope.launch {
+            dataStore.setEnabledCalendarViews(
+                if (enabled) current + viewKey else current - viewKey
+            )
         }
     }
 

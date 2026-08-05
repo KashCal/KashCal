@@ -1027,6 +1027,12 @@ class HomeViewModel(
             }
         }
         viewModelScope.launch {
+            dataStore.enabledCalendarViews.collect { keys ->
+                val modes = keys.map { ViewMode.fromKey(it) }.toSet()
+                _uiState.update { it.copy(enabledViewModes = modes) }
+            }
+        }
+        viewModelScope.launch {
             dataStore.tagsAboveNotes.collect { above ->
                 _uiState.update { it.copy(tagsAboveNotes = above) }
             }

@@ -807,7 +807,12 @@
     <string name="settings_suggest_titles">Suggest event titles</string>
     <!-- Tooltip explaining the Suggest event titles toggle -->
     <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
-    <string name="settings_week_numbers">Show week numbers</string>
+    <string name="settings_week_numbers">Week Numbers</string>
+    <!-- Settings row + sheet: lets the user pick which calendar views appear in the view picker -->
+    <string name="settings_visible_views">Calendar Views</string>
+    <string name="settings_visible_views_description">Choose which views appear in the view picker.</string>
+    <!-- Subtitle showing how many of the total views are enabled, e.g. "5 of 7 shown" -->
+    <string name="settings_visible_views_count">%1$d of %2$d shown</string>
     <!-- Display preference: when off, calendar events the user has declined are hidden across all views.
          When on, declined events appear with a strikethrough title and dimmed appearance. -->
     <string name="settings_show_declined">Show declined events</string>

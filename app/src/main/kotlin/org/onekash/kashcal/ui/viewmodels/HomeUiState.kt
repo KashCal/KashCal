@@ -171,6 +171,8 @@ data class HomeUiState(
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
     /** Current calendar view mode (month grid, agenda list, or 3-day grid) */
     val viewMode: ViewMode = ViewMode.MONTH,
+    /** View modes the user has enabled in the picker/drawer. */
+    val enabledViewModes: Set<ViewMode> = ViewMode.selectable,
     /**
      * Last non-INSIGHTS view the user was on. Used as the back-target when
      * leaving the Insights screen so back returns to whichever view the user
@@ -490,6 +492,9 @@ enum class ViewMode(val key: String) {
 
     companion object {
         fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH
+
+        /** INSIGHTS excluded: it has its own entry point and is never persisted. */
+        val selectable: Set<ViewMode> = entries.toSet() - INSIGHTS
     }
 }
 
