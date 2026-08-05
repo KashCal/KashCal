@@ -789,26 +789,43 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatTimeRange with 24h pattern shows 24h format`() {
-        // 2:00 PM - 3:30 PM UTC
-        val startTs = 1767657600000L + (14 * 60 * 60 * 1000)  // Jan 6, 2026 14:00 UTC
-        val endTs = startTs + (90 * 60 * 1000)  // +90 minutes
+        // formatTimeRange renders in the JVM's default timezone (it's meant to show
+        // device-local wall-clock time), so the expected wall-clock values below only
+        // hold if that default is pinned to UTC for the duration of the test.
+        val savedTz = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
 
-        val result = WeekViewUtils.formatTimeRange(startTs, endTs, "HH:mm")
+            // 2:00 PM - 3:30 PM UTC
+            val startTs = 1767657600000L + (14 * 60 * 60 * 1000)  // Jan 6, 2026 14:00 UTC
+            val endTs = startTs + (90 * 60 * 1000)  // +90 minutes
 
-        assertTrue("Expected 24h format with 14:00, got: $result", result.contains("14:00"))
-        assertTrue("Expected 24h format with 15:30, got: $result", result.contains("15:30"))
+            val result = WeekViewUtils.formatTimeRange(startTs, endTs, "HH:mm")
+
+            assertTrue("Expected 24h format with 14:00, got: $result", result.contains("14:00"))
+            assertTrue("Expected 24h format with 15:30, got: $result", result.contains("15:30"))
+        } finally {
+            java.util.TimeZone.setDefault(savedTz)
+        }
     }
 
     @Test
     fun `formatTimeRange with 12h pattern shows 12h format`() {
-        // Same times as above, but with 12h pattern
-        val startTs = 1767657600000L + (14 * 60 * 60 * 1000)
-        val endTs = startTs + (90 * 60 * 1000)
+        val savedTz = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
 
-        val result = WeekViewUtils.formatTimeRange(startTs, endTs, "h:mma")
+            // Same times as above, but with 12h pattern
+            val startTs = 1767657600000L + (14 * 60 * 60 * 1000)
+            val endTs = startTs + (90 * 60 * 1000)
 
-        assertTrue("Expected 12h format with 2:00, got: $result", result.contains("2:00"))
-        assertTrue("Expected 12h format with pm, got: $result", result.lowercase().contains("pm"))
+            val result = WeekViewUtils.formatTimeRange(startTs, endTs, "h:mma")
+
+            assertTrue("Expected 12h format with 2:00, got: $result", result.contains("2:00"))
+            assertTrue("Expected 12h format with pm, got: $result", result.lowercase().contains("pm"))
+        } finally {
+            java.util.TimeZone.setDefault(savedTz)
+        }
     }
 
     // ==================== resolveInitialScrollPx Tests (issue #188) ====================

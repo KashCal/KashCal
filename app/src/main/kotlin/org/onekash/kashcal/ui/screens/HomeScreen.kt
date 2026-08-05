@@ -223,7 +223,8 @@ fun HomeScreen(
     onEventClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, occurrenceStartTs)
     onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},  // device calendar event clicked
     onCreateEvent: () -> Unit = {},
-    onCreateEventWithDateTime: (Long) -> Unit = {},  // timestamp for pre-filled event form
+    // (timestamp, allDay) for the pre-filled event form
+    onCreateEventWithDateTime: (Long, Boolean) -> Unit = { _, _ -> },
     // Sync callbacks
     onRefresh: () -> Unit = {},
     // Search callbacks
@@ -268,6 +269,7 @@ fun HomeScreen(
     // Week view callbacks (infinite day pager)
     onDayPagerPageChanged: (Int) -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
+    onWeekDayHeaderClick: (LocalDate) -> Unit = {},
     onWeekDatePickerDismiss: () -> Unit = {},
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
@@ -807,7 +809,7 @@ fun HomeScreen(
                                                     set(date.year, date.monthValue - 1, date.dayOfMonth, hour, minute, 0)
                                                     set(JavaCalendar.MILLISECOND, 0)
                                                 }
-                                                onCreateEventWithDateTime(calendar.timeInMillis)
+                                                onCreateEventWithDateTime(calendar.timeInMillis, false)
                                             },
                                             onScrollPositionChange = onWeekScrollPositionChange,
                                             onScrollMinutesChange = onWeekScrollMinutesChange,
@@ -815,6 +817,13 @@ fun HomeScreen(
                                             pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
                                             onNavigationConsumed = onClearPendingWeekPagerPosition,
                                             onReschedule = onReschedule,
+                                            onDayHeaderClick = onWeekDayHeaderClick,
+                                            onEmptyAllDayTap = { date ->
+                                                onCreateEventWithDateTime(
+                                                    WeekViewUtils.dateToEpochMs(date),
+                                                    true
+                                                )
+                                            },
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -1153,7 +1162,7 @@ fun HomeScreen(
             timePattern = timePattern,
             onEventClick = onEventClick,
             onDeviceEventClick = onDeviceEventClick,
-            onCreateEvent = onCreateEventWithDateTime,
+            onCreateEvent = { ts -> onCreateEventWithDateTime(ts, false) },
             onDismiss = onDismissDayDetail,
             attendeesByEventId = dayAttendees
         )

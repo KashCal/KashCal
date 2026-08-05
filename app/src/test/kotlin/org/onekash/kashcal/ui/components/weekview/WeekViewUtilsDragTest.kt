@@ -1,10 +1,17 @@
 package org.onekash.kashcal.ui.components.weekview
 
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -17,11 +24,10 @@ class WeekViewUtilsDragTest {
         val idle = WeekViewUtils.DragState.Idle
         assertFalse(idle.isDragging)
         assertNull(idle.draggedEvent)
-        assertNull(idle.targetDate)
         assertEquals(0, idle.originalStartMinutes)
-        assertEquals(0f, idle.currentOffsetX, 0.001f)
-        assertEquals(0f, idle.currentOffsetY, 0.001f)
-        assertEquals(0, idle.targetStartMinutes)
+        assertEquals(0f, idle.fingerViewportX, 0.001f)
+        assertEquals(0f, idle.fingerViewportY, 0.001f)
+        assertEquals(0f, idle.grabOffsetPx, 0.001f)
         assertEquals(0, idle.durationMinutes)
     }
 
@@ -343,6 +349,160 @@ class WeekViewUtilsDragTest {
     fun `clampDragStartMinutes non-negative start`() {
         val result = WeekViewUtils.clampDragStartMinutes(0, 60)
         assertEquals(0, result)
+    }
+
+    // ==================== edgePageDirection Tests ====================
+
+    @Test
+    fun `edgePageDirection middle of the grid does not page`() {
+        assertEquals(0, WeekViewUtils.edgePageDirection(x = 350f, widthPx = 700f, edgePx = 48f))
+    }
+
+    @Test
+    fun `edgePageDirection left band pages backwards`() {
+        assertEquals(-1, WeekViewUtils.edgePageDirection(x = 10f, widthPx = 700f, edgePx = 48f))
+    }
+
+    @Test
+    fun `edgePageDirection right band pages forwards`() {
+        assertEquals(1, WeekViewUtils.edgePageDirection(x = 690f, widthPx = 700f, edgePx = 48f))
+    }
+
+    @Test
+    fun `edgePageDirection just inside the bands does not page`() {
+        assertEquals(0, WeekViewUtils.edgePageDirection(x = 48f, widthPx = 700f, edgePx = 48f))
+        assertEquals(0, WeekViewUtils.edgePageDirection(x = 652f, widthPx = 700f, edgePx = 48f))
+    }
+
+    @Test
+    fun `edgePageDirection never pages when the bands would cover the whole grid`() {
+        // Otherwise every point is an edge and the pager would run away.
+        assertEquals(0, WeekViewUtils.edgePageDirection(x = 5f, widthPx = 80f, edgePx = 48f))
+        assertEquals(0, WeekViewUtils.edgePageDirection(x = 75f, widthPx = 80f, edgePx = 48f))
+    }
+
+    // ==================== hitTestEvent Tests ====================
+
+    private val hitTestDate: LocalDate = LocalDate.of(2026, 4, 14)
+
+    /** 100px column, 60px hour, density 1 — so 1px == 1dp and y == minutes. */
+    private fun hitTest(
+        x: Float,
+        yContent: Float,
+        events: List<DisplayEvent> = listOf(timedEvent(9, 10)),
+        dates: List<LocalDate> = listOf(hitTestDate)
+    ) = WeekViewUtils.hitTestEvent(
+        x = x,
+        yContent = yContent,
+        columnWidthPx = 100f,
+        visibleDates = dates,
+        eventsForDate = { date -> if (date == hitTestDate) events else emptyList() },
+        hourHeight = 60.dp,
+        density = 1f,
+        startHour = 0
+    )
+
+    private fun timedEvent(
+        startHour: Int,
+        endHour: Int,
+        id: Long = 1L,
+        readOnly: Boolean = false,
+        date: LocalDate = hitTestDate
+    ): DisplayEvent.Room {
+        val zone = ZoneId.systemDefault()
+        val startTs = date.atTime(startHour, 0).atZone(zone).toInstant().toEpochMilli()
+        val endTs = date.atTime(endHour, 0).atZone(zone).toInstant().toEpochMilli()
+        val event = Event(
+            id = id,
+            uid = "uid-$id",
+            calendarId = 1L,
+            title = "Event $id",
+            startTs = startTs,
+            endTs = endTs,
+            timezone = "UTC",
+            syncStatus = SyncStatus.SYNCED,
+            createdAt = 0L,
+            updatedAt = 0L,
+            dtstamp = 0L
+        )
+        val occurrence = Occurrence(
+            eventId = id,
+            calendarId = 1L,
+            startTs = startTs,
+            endTs = endTs,
+            startDay = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth,
+            endDay = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth,
+            isCancelled = false,
+            exceptionEventId = null
+        )
+        val calendar = if (readOnly) {
+            Calendar(
+                id = 1L,
+                accountId = 1L,
+                caldavUrl = "https://example.test/cal",
+                displayName = "Cal",
+                color = 0,
+                isReadOnly = true
+            )
+        } else {
+            null
+        }
+        return DisplayEvent.Room(event = event, occurrence = occurrence, calendar = calendar)
+    }
+
+    @Test
+    fun `hitTestEvent finds the block under the finger`() {
+        val hit = hitTest(x = 50f, yContent = 9 * 60f + 30f)
+        assertEquals(1L, (hit!!.displayEvent as DisplayEvent.Room).event.id)
+    }
+
+    @Test
+    fun `hitTestEvent returns null above and below the block`() {
+        assertNull(hitTest(x = 50f, yContent = 8 * 60f + 30f))
+        assertNull(hitTest(x = 50f, yContent = 10 * 60f + 30f))
+    }
+
+    @Test
+    fun `hitTestEvent returns null outside the columns`() {
+        assertNull(hitTest(x = -5f, yContent = 9 * 60f + 30f))
+        assertNull(hitTest(x = 150f, yContent = 9 * 60f + 30f))
+    }
+
+    @Test
+    fun `hitTestEvent skips read-only events`() {
+        val events = listOf(timedEvent(9, 10, readOnly = true))
+        assertNull(hitTest(x = 50f, yContent = 9 * 60f + 30f, events = events))
+    }
+
+    @Test
+    fun `hitTestEvent picks the side-by-side block the finger is over`() {
+        val events = listOf(timedEvent(9, 11, id = 1), timedEvent(9, 10, id = 2))
+        // Two overlapping events split the column: slot 0 is 0-50px, slot 1 is 50-100px.
+        val left = hitTest(x = 20f, yContent = 9 * 60f + 30f, events = events)
+        val right = hitTest(x = 80f, yContent = 9 * 60f + 30f, events = events)
+        assertEquals(1L, (left!!.displayEvent as DisplayEvent.Room).event.id)
+        assertEquals(2L, (right!!.displayEvent as DisplayEvent.Room).event.id)
+    }
+
+    @Test
+    fun `hitTestEvent ignores blocks hidden behind the overflow badge`() {
+        // Three overlapping events with the default cap of 2: the third isn't drawn.
+        val events = listOf(
+            timedEvent(9, 11, id = 1),
+            timedEvent(9, 11, id = 2),
+            timedEvent(9, 11, id = 3)
+        )
+        val hits = listOf(20f, 80f).mapNotNull { hitTest(x = it, yContent = 9 * 60f + 30f, events = events) }
+        assertEquals(listOf(1L, 2L), hits.map { (it.displayEvent as DisplayEvent.Room).event.id })
+    }
+
+    @Test
+    fun `hitTestEvent resolves the column to the matching date`() {
+        val dates = listOf(LocalDate.of(2026, 4, 13), hitTestDate, LocalDate.of(2026, 4, 15))
+        // Only the middle column has events, so columns 0 and 2 must miss.
+        assertNull(hitTest(x = 50f, yContent = 9 * 60f + 30f, dates = dates))
+        assertNotNull(hitTest(x = 150f, yContent = 9 * 60f + 30f, dates = dates))
+        assertNull(hitTest(x = 250f, yContent = 9 * 60f + 30f, dates = dates))
     }
 
     // ==================== calculateNewTimestamps Tests ====================

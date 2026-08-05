@@ -787,16 +787,17 @@ object WeekViewUtils {
      * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
      * @return Formatted time range string
      */
-    fun formatTimeRange(startTs: Long, endTs: Long, timePattern: String = "h:mma"): String {
-        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-        val startTime = Instant.ofEpochMilli(startTs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalTime()
-        val endTime = Instant.ofEpochMilli(endTs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalTime()
+    fun formatTimeRange(startTs: Long, endTs: Long, timePattern: String = "h:mma"): String =
+        "${formatTime(startTs, timePattern)} - ${formatTime(endTs, timePattern)}"
 
-        return "${startTime.format(formatter).lowercase()} - ${endTime.format(formatter).lowercase()}"
+    /** Single timestamp, styled as one half of [formatTimeRange]. */
+    fun formatTime(ts: Long, timePattern: String = "h:mma"): String {
+        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+        return Instant.ofEpochMilli(ts)
+            .atZone(ZoneId.systemDefault())
+            .toLocalTime()
+            .format(formatter)
+            .lowercase()
     }
 
     /**
@@ -859,16 +860,28 @@ object WeekViewUtils {
 
     // ==================== Drag-to-Reschedule ====================
 
+    /**
+     * In-flight drag. Holds only what the gesture reports: which event is held
+     * and where the finger is, in *viewport* coordinates of the day-columns area
+     * (x from the first column's left edge, y from the top of the grid viewport).
+     *
+     * The drop target is derived from these rather than stored, so it keeps
+     * following the finger when the grid auto-scrolls or the pager flips to
+     * another week — neither of which produces a pointer event.
+     */
     data class DragState(
         val isDragging: Boolean = false,
         val draggedEvent: DisplayEvent? = null,
         val originalDate: LocalDate = LocalDate.MIN,
         val originalStartMinutes: Int = 0,
-        val currentOffsetX: Float = 0f,
-        val currentOffsetY: Float = 0f,
-        val targetDate: LocalDate? = null,
-        val targetStartMinutes: Int = 0,
-        val eventHeight: Dp = 0.dp,
+        val fingerViewportX: Float = 0f,
+        val fingerViewportY: Float = 0f,
+        /**
+         * Distance from the block's top to where it was grabbed. Subtracted from
+         * the finger before resolving the time, so the block keeps its position
+         * under the finger instead of snapping its top there.
+         */
+        val grabOffsetPx: Float = 0f,
         val durationMinutes: Int = 0
     ) {
         companion object {
@@ -910,6 +923,69 @@ object WeekViewUtils {
             .coerceIn(0, END_HOUR * MINUTES_PER_HOUR - 1)
 
         return date to snappedMinutes
+    }
+
+    /**
+     * Resolves the draggable event block drawn under a point in the day-columns
+     * area, or null for empty space.
+     *
+     * Mirrors [DayColumn]'s layout — same [positionEventsForDay] call, same 1dp/
+     * -4dp block insets, same overflow cap — so the hit test agrees with what the
+     * user sees. Read-only and all-day events are excluded, matching the
+     * draggability gate in the column.
+     *
+     * @param x Finger x within the columns area, 0 = left edge of the first column
+     * @param yContent Finger y in grid-content space (viewport y + scroll offset)
+     */
+    fun hitTestEvent(
+        x: Float,
+        yContent: Float,
+        columnWidthPx: Float,
+        visibleDates: List<LocalDate>,
+        eventsForDate: (LocalDate) -> List<DisplayEvent>,
+        hourHeight: Dp,
+        density: Float,
+        startHour: Int = START_HOUR,
+        endHour: Int = END_HOUR,
+        maxVisibleOverlap: Int = MAX_VISIBLE_OVERLAP
+    ): PositionedEvent? {
+        if (columnWidthPx <= 0f || x < 0f) return null
+        val columnIndex = (x / columnWidthPx).toInt()
+        val date = visibleDates.getOrNull(columnIndex) ?: return null
+        val xInColumn = x - columnIndex * columnWidthPx
+
+        val positioned = positionEventsForDay(
+            events = eventsForDate(date),
+            date = date,
+            dayIndex = date.dayOfWeek.value % 7,
+            hourHeight = hourHeight,
+            startHour = startHour,
+            endHour = endHour,
+            maxVisibleOverlap = maxVisibleOverlap
+        )
+
+        // Later blocks draw over earlier ones, so scan back-to-front.
+        return positioned.asReversed().firstOrNull { p ->
+            if (p.overlapIndex >= maxVisibleOverlap) return@firstOrNull false
+            if (p.displayEvent.isReadOnly || p.displayEvent.isAllDay) return@firstOrNull false
+            val left = columnWidthPx * p.leftFraction + density
+            val right = left + columnWidthPx * p.widthFraction - 4f * density
+            val top = p.topOffset.value * density
+            val bottom = top + p.height.value * density
+            xInColumn in left..right && yContent in top..bottom
+        }
+    }
+
+    /**
+     * Direction to page while an event is held against the edge of the columns
+     * area: -1 backwards, +1 forwards, 0 anywhere in between.
+     */
+    fun edgePageDirection(x: Float, widthPx: Float, edgePx: Float): Int = when {
+        // Too narrow for two bands means every point is an edge — never auto-page.
+        widthPx <= 2f * edgePx -> 0
+        x < edgePx -> -1
+        x > widthPx - edgePx -> 1
+        else -> 0
     }
 
     fun clampDragStartMinutes(startMinutes: Int, durationMinutes: Int): Int {

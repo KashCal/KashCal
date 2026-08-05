@@ -98,6 +98,18 @@ import javax.inject.Inject
 
 private const val TAG = "MainActivity"
 
+/**
+ * Everything that seeds the event form apart from the edited event's id.
+ * Replaced wholesale so a create path can't leave a stale [allDay] or
+ * [duplicateFrom] behind to reshape the next new event.
+ */
+private data class EventFormSeed(
+    val startTs: Long? = null,
+    val allDay: Boolean = false,
+    val occurrenceTs: Long? = null,
+    val duplicateFrom: Event? = null
+)
+
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
 
@@ -245,9 +257,7 @@ class MainActivity : FragmentActivity() {
                 // Event form sheet state
                 var showEventFormSheet by remember { mutableStateOf(false) }
                 var editingEventId by remember { mutableStateOf<Long?>(null) }
-                var newEventStartTs by remember { mutableStateOf<Long?>(null) }
-                var eventOccurrenceTs by remember { mutableStateOf<Long?>(null) }
-                var duplicateFromEvent by remember { mutableStateOf<Event?>(null) }
+                var eventFormSeed by remember { mutableStateOf(EventFormSeed()) }
                 var calendarIntentData by remember { mutableStateOf<CalendarIntentData?>(null) }
                 var calendarIntentInvitees by remember { mutableStateOf<List<String>>(emptyList()) }
 
@@ -346,8 +356,7 @@ class MainActivity : FragmentActivity() {
                 // (used by PendingAction.CreateEventFromCalendarIntent and QuickAdd expand/redirect).
                 val launchEventFormWithIntent = { data: CalendarIntentData, invitees: List<String> ->
                     editingEventId = null
-                    newEventStartTs = data.startTimeMillis
-                    eventOccurrenceTs = null
+                    eventFormSeed = EventFormSeed(startTs = data.startTimeMillis)
                     calendarIntentData = data
                     calendarIntentInvitees = invitees
                     showEventFormSheet = true
@@ -396,8 +405,7 @@ class MainActivity : FragmentActivity() {
                                             }.timeInMillis
                                         }
                                         editingEventId = null
-                                        newEventStartTs = startTs
-                                        eventOccurrenceTs = null
+                                        eventFormSeed = EventFormSeed(startTs = startTs)
                                         showEventFormSheet = true
                                     }
                                 }
@@ -573,16 +581,14 @@ class MainActivity : FragmentActivity() {
                             }
 
                             editingEventId = null
-                            newEventStartTs = eventTimestamp
-                            eventOccurrenceTs = null
+                            eventFormSeed = EventFormSeed(startTs = eventTimestamp)
                             showEventFormSheet = true
                         }
                     },
-                    onCreateEventWithDateTime = { timestampMs ->
-                        Log.d(TAG, "Create event with date/time: $timestampMs")
+                    onCreateEventWithDateTime = { timestampMs, allDay ->
+                        Log.d(TAG, "Create event with date/time: $timestampMs (allDay=$allDay)")
                         editingEventId = null
-                        newEventStartTs = timestampMs
-                        eventOccurrenceTs = null
+                        eventFormSeed = EventFormSeed(startTs = timestampMs, allDay = allDay)
                         showEventFormSheet = true
                     },
                     // Sync callbacks
@@ -636,6 +642,7 @@ class MainActivity : FragmentActivity() {
                     // Week view callbacks (infinite day pager)
                     onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
+                    onWeekDayHeaderClick = { date -> homeViewModel.onWeekViewDayHeaderClick(date) },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
@@ -665,9 +672,7 @@ class MainActivity : FragmentActivity() {
                                     // state. The user's intent was committed.
                                     showEventFormSheet = false
                                     editingEventId = null
-                                    newEventStartTs = null
-                                    eventOccurrenceTs = null
-                                    duplicateFromEvent = null
+                                    eventFormSeed = EventFormSeed()
                                     editingDeviceEventId = null
                                     deviceEventOccurrenceTs = null
                                     deviceEventIsAllDay = false
@@ -755,7 +760,7 @@ class MainActivity : FragmentActivity() {
                             val isException = event.originalEventId != null
                             showQuickViewSheet = false
                             editingEventId = event.id
-                            eventOccurrenceTs = when {
+                            val occurrenceTs = when {
                                 // Non-recurring one-off: NO occurrence ts
                                 // (a non-null value misroutes saveEvent
                                 // through editSingleOccurrence which
@@ -771,7 +776,7 @@ class MainActivity : FragmentActivity() {
                                 // the scope-sheet's occurrenceTs.
                                 else -> quickViewOccurrenceTs ?: event.startTs
                             }
-                            newEventStartTs = null
+                            eventFormSeed = EventFormSeed(occurrenceTs = occurrenceTs)
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
                             showEventFormSheet = true
@@ -824,9 +829,7 @@ class MainActivity : FragmentActivity() {
                             // Close preview and open new event form with copied data
                             showQuickViewSheet = false
                             editingEventId = null
-                            newEventStartTs = event.startTs
-                            eventOccurrenceTs = null
-                            duplicateFromEvent = event
+                            eventFormSeed = EventFormSeed(startTs = event.startTs, duplicateFrom = event)
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
                             showEventFormSheet = true
@@ -1162,7 +1165,7 @@ class MainActivity : FragmentActivity() {
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
                             editingEventId = null // Clear Room edit state
-                            duplicateFromEvent = null
+                            eventFormSeed = EventFormSeed()
                             showEventFormSheet = true
                         },
                         onEditOccurrence = { /* unused after save-time scope */ },
@@ -1220,12 +1223,13 @@ class MainActivity : FragmentActivity() {
                         },
                         onDuplicate = {
                             val event = deviceQuickViewEvent!!
-                            duplicateFromEvent = event.toEventForDuplicate()
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
                             editingEventId = null
-                            newEventStartTs = event.startTs
-                            eventOccurrenceTs = null
+                            eventFormSeed = EventFormSeed(
+                                startTs = event.startTs,
+                                duplicateFrom = event.toEventForDuplicate()
+                            )
                             showEventFormSheet = true
                         },
                         onShare = {
@@ -1404,9 +1408,10 @@ class MainActivity : FragmentActivity() {
                 if (showEventFormSheet) {
                     EventFormSheet(
                         eventId = editingEventId,
-                        initialStartTs = newEventStartTs,
-                        occurrenceTs = eventOccurrenceTs,
-                        duplicateFrom = duplicateFromEvent,
+                        initialStartTs = eventFormSeed.startTs,
+                        initialAllDay = eventFormSeed.allDay,
+                        occurrenceTs = eventFormSeed.occurrenceTs,
+                        duplicateFrom = eventFormSeed.duplicateFrom,
                         calendarIntentData = calendarIntentData,
                         calendarIntentInvitees = calendarIntentInvitees,
                         calendars = uiState.calendars,
@@ -1415,9 +1420,7 @@ class MainActivity : FragmentActivity() {
                         onDismiss = {
                             showEventFormSheet = false
                             editingEventId = null
-                            newEventStartTs = null
-                            eventOccurrenceTs = null
-                            duplicateFromEvent = null
+                            eventFormSeed = EventFormSeed()
                             calendarIntentData = null
                             calendarIntentInvitees = emptyList()
                             // Clear device event state

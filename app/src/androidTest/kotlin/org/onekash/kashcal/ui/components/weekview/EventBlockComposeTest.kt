@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -44,8 +43,9 @@ import java.time.ZoneOffset
  * - Tap fires onClick immediately (no 300ms double-tap wait).
  * - Horizontal swipe consumed by a parent scrollable does NOT fire onClick
  *   (guards GitHub #199 — swipe-on-editable-event used to open event detail).
- * - Long-press on an editable, non-read-only EventBlock fires onDragStart and
- *   does NOT fire onClick.
+ *
+ * Drag-to-reschedule is detected by a grid-level overlay (see detectEventDrag
+ * in EventDragGesture.kt), not by EventBlock itself, so it isn't covered here.
  *
  * All-day rendering:
  * - All-day events render the localized "All day" label, not a formatted
@@ -143,15 +143,13 @@ class EventBlockComposeTest {
     @Test
     fun tap_on_editable_event_fires_onClick() {
         val clicked = mutableStateOf(false)
-        val dragStarted = mutableStateOf(false)
         composeTestRule.setContent {
             MaterialTheme {
                 EventBlock(
                     displayEvent = displayEvent(),
                     height = 80.dp,
+                    width = 120.dp,
                     onClick = { clicked.value = true },
-                    isDraggable = true,
-                    onDragStart = { dragStarted.value = true },
                     modifier = Modifier.size(120.dp, 80.dp).testTag(tag)
                 )
             }
@@ -161,31 +159,6 @@ class EventBlockComposeTest {
         composeTestRule.waitForIdle()
 
         assertTrue("tap should fire onClick on editable event", clicked.value)
-        assertFalse("tap should not start drag", dragStarted.value)
-    }
-
-    @Test
-    fun long_press_on_editable_event_fires_onDragStart_not_onClick() {
-        val clicked = mutableStateOf(false)
-        val dragStarted = mutableStateOf(false)
-        composeTestRule.setContent {
-            MaterialTheme {
-                EventBlock(
-                    displayEvent = displayEvent(),
-                    height = 80.dp,
-                    onClick = { clicked.value = true },
-                    isDraggable = true,
-                    onDragStart = { dragStarted.value = true },
-                    modifier = Modifier.size(120.dp, 80.dp).testTag(tag)
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithTag(tag).performTouchInput { longClick() }
-        composeTestRule.waitForIdle()
-
-        assertTrue("long-press should fire onDragStart", dragStarted.value)
-        assertFalse("long-press should not fire onClick", clicked.value)
     }
 
     @Test
@@ -193,7 +166,6 @@ class EventBlockComposeTest {
         // Wrap in a scrollable parent so the swipe is consumed upstream,
         // matching the real app where the EventBlock lives inside HorizontalPager.
         val clicked = mutableStateOf(false)
-        val dragStarted = mutableStateOf(false)
         composeTestRule.setContent {
             MaterialTheme {
                 Box(
@@ -207,9 +179,8 @@ class EventBlockComposeTest {
                     EventBlock(
                         displayEvent = displayEvent(),
                         height = 80.dp,
+                        width = 120.dp,
                         onClick = { clicked.value = true },
-                        isDraggable = true,
-                        onDragStart = { dragStarted.value = true },
                         modifier = Modifier.size(120.dp, 80.dp).testTag(tag)
                     )
                 }
@@ -220,7 +191,6 @@ class EventBlockComposeTest {
         composeTestRule.waitForIdle()
 
         assertFalse("swipe should not fire onClick (GitHub #199)", clicked.value)
-        assertFalse("swipe should not start drag", dragStarted.value)
     }
 
     @Test
@@ -231,9 +201,8 @@ class EventBlockComposeTest {
                 EventBlock(
                     displayEvent = displayEvent(),
                     height = 80.dp,
+                    width = 120.dp,
                     onClick = { clicked.value = true },
-                    isDraggable = false,
-                    onDragStart = null,
                     modifier = Modifier.size(120.dp, 80.dp).testTag(tag)
                 )
             }
@@ -310,9 +279,8 @@ class EventBlockComposeTest {
                 EventBlock(
                     displayEvent = allDayDisplayEvent(),
                     height = 80.dp,
+                    width = 120.dp,
                     onClick = {},
-                    isDraggable = false,
-                    onDragStart = null,
                     modifier = Modifier.size(120.dp, 80.dp).testTag(tag)
                 )
             }

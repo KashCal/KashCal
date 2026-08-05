@@ -419,6 +419,8 @@ private fun ResolvedCalendar.localizedName(
 fun EventFormSheet(
     eventId: Long? = null,
     initialStartTs: Long? = null,
+    /** Start the create form with the all-day toggle already on. */
+    initialAllDay: Boolean = false,
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
     calendarIntentData: CalendarIntentData? = null,
@@ -576,6 +578,7 @@ fun EventFormSheet(
             onSavingChange = { isSaving = it },
             eventId = eventId,
             initialStartTs = initialStartTs,
+            initialAllDay = initialAllDay,
             occurrenceTs = occurrenceTs,
             duplicateFrom = duplicateFrom,
             calendarIntentData = calendarIntentData,
@@ -643,6 +646,7 @@ fun EventFormContent(
     modifier: Modifier = Modifier,
     eventId: Long? = null,
     initialStartTs: Long? = null,
+    initialAllDay: Boolean = false,
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
     calendarIntentData: CalendarIntentData? = null,
@@ -1169,6 +1173,16 @@ fun EventFormContent(
                     startMinute = 0,
                     endHour = if (endHour > 23) 23 else endHour,
                     endMinute = if (endHour > 23) 59 else endMinutes
+                )
+            }
+
+            // The reminder default has to switch too: the timed default was
+            // applied above and means nothing for an all-day event.
+            if (initialAllDay) {
+                newState = newState.copy(
+                    isAllDay = true,
+                    reminders = if (defaultReminderAllDay == REMINDER_OFF) emptyList()
+                    else listOf(defaultReminderAllDay)
                 )
             }
 

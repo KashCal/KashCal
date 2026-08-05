@@ -16,7 +16,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -54,10 +53,6 @@ fun DayColumn(
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
-    onEventDragStart: ((DisplayEvent, Offset) -> Unit)? = null,
-    onEventDrag: ((Offset) -> Unit)? = null,
-    onEventDragEnd: (() -> Unit)? = null,
-    onEventDragCancel: (() -> Unit)? = null,
     isDropTarget: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -129,33 +124,24 @@ fun DayColumn(
                 // node (and its long-lived gesture pointerInput coroutine) with
                 // its event instead of reusing the node by position and rebinding
                 // it to a different event — which would fire the wrong event's
-                // tap/drag callbacks.
+                // tap callback.
                 key(positioned.displayEvent.stableKey) {
                     // Calculate position within the column
-                    val eventWidth = columnWidth * positioned.widthFraction
-                    val eventLeft = columnWidth * positioned.leftFraction
-
-                    val isDraggable = onEventDragStart != null &&
-                        !positioned.displayEvent.isReadOnly &&
-                        !positioned.displayEvent.isAllDay
+                    // Rendered size of the block, gutters already subtracted, so the
+                    // width passed to EventBlock is the one it actually gets.
+                    val eventWidth = columnWidth * positioned.widthFraction - 4.dp
+                    val eventLeft = columnWidth * positioned.leftFraction + 1.dp
 
                     EventBlock(
                         displayEvent = positioned.displayEvent,
                         height = positioned.height,
+                        width = eventWidth,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
                         onClick = { onEventClick(positioned.displayEvent) },
-                        isDraggable = isDraggable,
-                        onDragStart = if (isDraggable) { offset ->
-                            onEventDragStart?.invoke(positioned.displayEvent, offset)
-                        } else null,
-                        onDrag = onEventDrag,
-                        onDragEnd = onEventDragEnd,
-                        onDragCancel = onEventDragCancel,
                         modifier = Modifier
                             .offset(x = eventLeft, y = positioned.topOffset)
-                            .width(eventWidth - 2.dp)
-                            .padding(horizontal = 1.dp)
+                            .width(eventWidth)
                     )
                 }
             }

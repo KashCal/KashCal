@@ -3,7 +3,6 @@ package org.onekash.kashcal.ui.components.weekview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -41,14 +40,14 @@ import org.onekash.kashcal.ui.shared.contrastForegroundOn
 fun EventBlock(
     displayEvent: DisplayEvent,
     height: Dp,
+    /**
+     * Rendered width. Passed rather than measured: a BoxWithConstraints here
+     * would subcompose once per event on every pinch-zoom frame.
+     */
+    width: Dp,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     onClick: () -> Unit,
-    isDraggable: Boolean = false,
-    onDragStart: ((Offset) -> Unit)? = null,
-    onDrag: ((Offset) -> Unit)? = null,
-    onDragEnd: (() -> Unit)? = null,
-    onDragCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val color = displayEvent.eventColor ?: displayEvent.calendarColor
@@ -66,33 +65,10 @@ fun EventBlock(
         }
     }
 
-    // Determine what content fits based on height
-    val showTime = height >= HEIGHT_THRESHOLD_TIME
-    val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
-    val showTags = height >= HEIGHT_THRESHOLD_LOCATION && displayEvent.categories.isNotEmpty()
-    val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
-    val formattedTitle = remember(displayEvent.title, showEventEmojis) {
-        EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
-    }
-
-    // Tap and long-press-drag live in separate pointerInput modifiers so a parent
-    // scrollable (HorizontalPager / verticalScroll) can cancel the tap without racing
-    // the drag detector.
+    // Tap only. Drag-to-reschedule is detected by the grid-level overlay
+    // (see detectEventDrag) so it can outlive this block's pager page.
     val tapModifier = Modifier.pointerInput(Unit) {
         detectTapGestures(onTap = { onClick() })
-    }
-    val dragStart = onDragStart
-    val gestureModifier = if (isDraggable && dragStart != null) {
-        tapModifier.pointerInput(Unit) {
-            detectDragGesturesAfterLongPress(
-                onDragStart = dragStart,
-                onDrag = { _, dragAmount -> onDrag?.invoke(dragAmount) },
-                onDragEnd = { onDragEnd?.invoke() },
-                onDragCancel = { onDragCancel?.invoke() }
-            )
-        }
-    } else {
-        tapModifier
     }
 
     val stateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
@@ -116,50 +92,86 @@ fun EventBlock(
                 else Modifier
             )
             .background(backgroundColor)
-            .then(gestureModifier)
+            .then(tapModifier)
     ) {
+        // 7-day columns are only ~50dp wide, where even "10:00" clips. Narrow
+        // blocks get tighter padding and smaller fonts so more characters fit.
+        val narrow = width < NARROW_BLOCK_WIDTH
+        val typography = MaterialTheme.typography
+        val titleStyle = remember(typography, narrow) {
+            typography.bodySmall.let {
+                if (narrow) it.copy(fontSize = 11.sp, lineHeight = 13.sp) else it
+            }
+        }
+        val detailStyle = remember(typography, narrow) {
+            typography.labelSmall.let {
+                if (narrow) it.copy(fontSize = 9.sp, lineHeight = 11.sp) else it
+            }
+        }
+
+        val showTime = height >= HEIGHT_THRESHOLD_TIME
+        val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
+        val showTags = height >= HEIGHT_THRESHOLD_LOCATION && displayEvent.categories.isNotEmpty()
+        val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
+
+        // A 30-min event at full zoom-out floors to 20dp, where the usual 4dp of
+        // top and bottom padding leaves too little for one ~16dp title line.
+        val verticalPadding = if (height < COMPACT_BLOCK_HEIGHT) 1.dp else BLOCK_VERTICAL_PADDING
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 6.dp, vertical = 4.dp)
+                // Start runs 2dp wider than end: the text is left-aligned, so an
+                // even inset reads as left-heavy.
+                .padding(
+                    start = if (narrow) 5.dp else 8.dp,
+                    end = if (narrow) 3.dp else 6.dp,
+                    top = verticalPadding,
+                    bottom = verticalPadding
+                )
         ) {
-            // Title (always shown)
             Text(
-                text = formattedTitle,
-                style = MaterialTheme.typography.bodySmall,
+                text = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis),
+                style = titleStyle,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
                 textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
                 maxLines = titleMaxLines,
-                overflow = TextOverflow.Ellipsis
+                // Clipped, not ellipsized: "…" costs characters a tiny block
+                // can't spare.
+                overflow = TextOverflow.Clip
             )
 
-            // Time (if height >= 36dp). All-day events get their label
-            // even though they normally render in the all-day strip — this
-            // defends against any future path that places one in the grid.
+            // All-day events keep a label even though they normally render in
+            // the all-day strip, in case a future path puts one in the grid.
             if (showTime) {
+                // "10:00 - 22:30" doesn't fit a narrow column; show the start alone.
+                val timeLabel = if (narrow) {
+                    eventStartLabel(displayEvent, timePattern)
+                } else {
+                    eventTimeLabel(displayEvent, timePattern)
+                }
                 Text(
-                    text = eventTimeLabel(displayEvent, timePattern),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = timeLabel,
+                    style = detailStyle,
                     color = textColor.copy(alpha = 0.7f),
                     textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    softWrap = false,
+                    overflow = TextOverflow.Clip
                 )
             }
 
-            // Location (if height >= 56dp)
             if (showLocation) {
                 Text(
                     text = displayEvent.location!!,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = detailStyle,
                     color = textColor.copy(alpha = 0.6f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
             }
 
-            // Tags (same height gate as location; hidden when the block is short)
             if (showTags) {
                 org.onekash.kashcal.ui.components.category.CategoryPillRow(
                     categories = displayEvent.categories,
@@ -197,9 +209,7 @@ fun CompactEventBlock(
             calColor to contrastForegroundOn(calColor)
         }
     }
-    val formattedTitle = remember(displayEvent.title, showEventEmojis) {
-        EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
-    }
+    val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
     val timeLabel = eventTimeLabel(displayEvent, timePattern)
 
     val compactStateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
@@ -262,8 +272,31 @@ private fun eventTimeLabel(displayEvent: DisplayEvent, timePattern: String): Str
     if (displayEvent.isAllDay) {
         stringResource(R.string.label_all_day)
     } else {
-        WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)
+        // Remembered: formatting parses a DateTimeFormatter pattern, once per
+        // visible block per recomposition.
+        remember(displayEvent.startTs, displayEvent.endTs, timePattern) {
+            WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)
+        }
     }
+
+/** Narrow-column fallback for [eventTimeLabel]: start time only. */
+@Composable
+private fun eventStartLabel(displayEvent: DisplayEvent, timePattern: String): String =
+    if (displayEvent.isAllDay) {
+        stringResource(R.string.label_all_day)
+    } else {
+        remember(displayEvent.startTs, timePattern) {
+            WeekViewUtils.formatTime(displayEvent.startTs, timePattern)
+        }
+    }
+
+private val BLOCK_VERTICAL_PADDING = 4.dp
+
+// Roughly a 7-day column; below this, blocks switch to the compact treatment.
+private val NARROW_BLOCK_WIDTH = 72.dp
+
+// Blocks this short can't spare the usual vertical padding.
+private val COMPACT_BLOCK_HEIGHT = 28.dp
 
 // Height thresholds for content visibility
 private val HEIGHT_THRESHOLD_TIME = 36.dp
