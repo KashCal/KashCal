@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -35,6 +36,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -394,7 +396,7 @@ fun EventQuickViewSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (isReadOnlyCalendar) {
                     // Read-only calendar: show Duplicate and Share (matching Edit/Delete style)
@@ -421,7 +423,8 @@ fun EventQuickViewSheet(
                     if (!showDeleteConfirmation) {
                         FilledTonalButton(
                             onClick = onEdit,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            contentPadding = ACTION_BUTTON_PADDING
                         ) {
                             Text(
                                 stringResource(
@@ -448,6 +451,7 @@ fun EventQuickViewSheet(
                                 }
                             },
                             modifier = Modifier.weight(1f),
+                            contentPadding = ACTION_BUTTON_PADDING,
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -479,7 +483,9 @@ fun EventQuickViewSheet(
 
                     if (!showDeleteConfirmation) {
                         Box {
-                            FilledTonalButton(
+                            // 40dp icon button, not a 72dp FilledTonalButton:
+                            // the 32dp goes to the Edit/Delete labels.
+                            FilledTonalIconButton(
                                 onClick = { showMoreMenu = true }
                             ) {
                                 Icon(
@@ -699,3 +705,8 @@ private fun ExpandedContentSection(
     }
 }
 
+/**
+ * Tighter than the default 24dp sides. These buttons are weight-sized, so the
+ * padding is what limits label width, and longer locales wrap at the default.
+ */
+private val ACTION_BUTTON_PADDING = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
