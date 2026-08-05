@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -883,6 +884,15 @@ fun EventFormContent(
 
     // Auto-focus title field
     val titleFocusRequester = remember { FocusRequester() }
+
+    // Keyed on isLoading: the field only composes once loading clears, and
+    // requesting earlier throws on an unattached requester. The blank check
+    // leaves pre-filled duplicate/intent flows alone.
+    LaunchedEffect(state.isLoading) {
+        if (!state.isLoading && !state.isEditMode && state.title.isBlank()) {
+            titleFocusRequester.requestFocus()
+        }
+    }
 
     // Perform save with result handling
     val performSave: () -> Unit = {
@@ -2466,6 +2476,9 @@ fun EventFormContent(
                             )
                         }
                     } else {
+                        // heightIn, not height: these are weight-sized, so a long
+                        // label ("Verwijderen bevestigen") wraps to two lines and a
+                        // fixed 48dp would clip the second one.
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2477,7 +2490,7 @@ fun EventFormContent(
                                 enabled = !state.isSaving,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp)
+                                    .heightIn(min = 48.dp)
                             ) {
                                 Text(stringResource(R.string.action_cancel))
                             }
@@ -2486,7 +2499,7 @@ fun EventFormContent(
                                 enabled = !state.isSaving,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp),
+                                    .heightIn(min = 48.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error,
                                     contentColor = MaterialTheme.colorScheme.onError
