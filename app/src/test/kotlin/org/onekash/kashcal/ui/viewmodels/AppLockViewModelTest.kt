@@ -1,5 +1,7 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +48,24 @@ class AppLockViewModelTest {
         // Eager stateIn collection is queued on the test dispatcher; let it run.
         advanceUntilIdle()
         assertTrue(vm.appLockEnabled.value)
+    }
+
+    @Test
+    fun `setAppLockEnabled true persists the flag`() = runTest {
+        coEvery { dataStore.setAppLockEnabled(any()) } returns Unit
+        val vm = viewModel()
+        vm.setAppLockEnabled(true)
+        advanceUntilIdle()
+        coVerify { dataStore.setAppLockEnabled(true) }
+    }
+
+    @Test
+    fun `setAppLockEnabled false persists the flag`() = runTest {
+        coEvery { dataStore.setAppLockEnabled(any()) } returns Unit
+        val vm = viewModel()
+        vm.setAppLockEnabled(false)
+        advanceUntilIdle()
+        coVerify { dataStore.setAppLockEnabled(false) }
     }
 
     @Test

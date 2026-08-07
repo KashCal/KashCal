@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Accento</string>
+    <string name="hub_widget_theme">Tema del widget</string>
+    <string name="hub_widget_accent">Accento del widget</string>
     <string name="settings_widget_color_follow_app">Segui l\'app</string>
     <string name="settings_widget_color_follow_app_desc">Usa il colore d\'accento e l\'origine dell\'app</string>
     <string name="settings_widget_theme_follow_app">Segui l\'app</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Calendari e account</string>
     <string name="settings_section_appearance">Aspetto</string>
     <string name="settings_section_creating_events">Preferenze eventi</string>
-    <string name="settings_section_sync">Notifiche e sincronizzazione</string>
+    <string name="settings_section_sync">Sincronizzazione</string>
     <string name="settings_section_data">Backup e ripristino</string>
-    <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Blocco dell\'app</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Questo server sembra trovarsi sulla tua rete locale. Consenti l\'accesso alla rete locale in modo che KashCal possa connettersi.</string>
     <string name="local_network_banner_allow">Consenti accesso</string>
     <string name="local_network_banner_dismiss">Non ora</string>
+    <string name="hub_app_permissions">Autorizzazioni dell\'app</string>
+    <string name="status_allowed">Consentito</string>
+    <string name="permission_name_notifications">Notifiche</string>
+    <string name="permission_why_notifications">Così KashCal può ricordarti i tuoi eventi. Senza, i promemoria restano silenziosi.</string>
+    <string name="permission_name_contacts">Contatti</string>
+    <string name="permission_why_contacts">Suggerisce invitati quando aggiungi persone a un evento e mostra i compleanni dei contatti. I tuoi contatti restano sul tuo dispositivo.</string>
+    <string name="permission_name_calendars">Calendari</string>
+    <string name="permission_why_calendars">Mostra gli eventi degli altri calendari sul tuo dispositivo accanto ai tuoi.</string>
+    <string name="permission_name_local_network">Rete locale</string>
+    <string name="permission_why_local_network">Raggiunge un server di calendario sulla tua rete di casa o dell\'ufficio. Android 17 richiede questa autorizzazione separatamente dall\'accesso a internet.</string>
     <string name="password_change_error_account_not_found">Account non trovato</string>
     <string name="password_change_error_no_credentials">Nessuna credenziale esistente</string>
     <string name="password_change_error_unsupported_provider">Questo provider non supporta la modifica della password</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ACCOUNT</string>
     <string name="account_detail_enabled">Attivato</string>
     <string name="account_detail_enabled_subtitle">Sincronizza questo account automaticamente</string>
+    <string name="account_detail_sync_calendar">Calendario</string>
+    <string name="account_detail_sync_calendar_subtitle">Sincronizza i calendari di questo account</string>
+    <string name="account_detail_sync_contacts">Contatti</string>
+    <string name="account_detail_sync_contacts_subtitle">Sincronizza i contatti di questo account sul tuo telefono</string>
+    <string name="account_detail_contacts_permission_needed">L\'autorizzazione ai Contatti è disattivata. Concedi l\'accesso per continuare a sincronizzare i contatti.</string>
+    <string name="account_detail_contacts_grant">Concedi accesso</string>
+    <string name="contact_sync_enabled_for">Sincronizzazione dei contatti per %1$s</string>
+    <string name="contact_sync_disabled_for">Contatti del dispositivo per %1$s rimossi</string>
+    <string name="contact_sync_disabled_kept">Sincronizzazione contatti disattivata per %1$s. I contatti restano perché un altro accesso li sincronizza ancora.</string>
+    <string name="contact_sync_disabled_incomplete">Sincronizzazione contatti disattivata per %1$s, ma alcuni contatti del dispositivo potrebbero restare. Controlla l\'autorizzazione Contatti.</string>
     <string name="account_detail_sync_now">Sincronizza ora</string>
     <string name="account_detail_syncing">Sincronizzazione…</string>
     <string name="account_detail_discovering">Ricerca…</string>
@@ -1238,6 +1259,8 @@
     <string name="hub_initials_save">Salva</string>
     <string name="hub_initials_cancel">Annulla</string>
     <string name="hub_section_make_it_yours">Rendila tua</string>
+    <string name="hub_section_own_your_calendar">Il tuo calendario è tuo</string>
+    <string name="hub_privacy_data_ownership">Come i tuoi dati restano tuoi</string>
     <string name="hub_accounts_and_settings">Account e impostazioni</string>
 
     <!-- ==================== Share Availability ==================== -->

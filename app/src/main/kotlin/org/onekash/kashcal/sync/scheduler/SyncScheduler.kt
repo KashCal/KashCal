@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.session.SyncTrigger
+import org.onekash.kashcal.sync.contacts.ContactSyncWorker
 import org.onekash.kashcal.sync.util.SyncNetworkConstraints
 import org.onekash.kashcal.sync.worker.CalDavSyncWorker
 import java.util.concurrent.TimeUnit
@@ -105,7 +107,9 @@ class SyncScheduler @Inject constructor(
 
         // Work names
         const val PERIODIC_SYNC_WORK = "periodic_sync"
+        const val PERIODIC_CONTACT_SYNC_WORK = ContactSyncWorker.SYNC_WORK
         const val ONE_SHOT_SYNC_WORK = "one_shot_sync"
+        const val ONE_SHOT_CONTACT_SYNC_WORK = "one_shot_contact_sync"
         const val EXPEDITED_SYNC_WORK = "expedited_sync"
 
         // Intervals
@@ -173,7 +177,105 @@ class SyncScheduler @Inject constructor(
             ExistingPeriodicWorkPolicy.KEEP,
             periodicWork
         )
+
+        scheduleContactSync(actualInterval, ExistingPeriodicWorkPolicy.KEEP)
     }
+
+    /**
+     * Schedule (or update) the periodic contact-sync job at [actualInterval].
+     *
+     * Deliberately reuses the calendar sync interval and lifecycle rather than
+     * introducing a second scheduling mechanism — contact sync rides alongside
+     * calendar sync. Only CardDAV-capable, contact-sync-enabled accounts are
+     * actually synced; the worker itself no-ops when none qualify, so scheduling
+     * it unconditionally is cheap.
+     */
+    private fun scheduleContactSync(
+        actualInterval: Long,
+        policy: ExistingPeriodicWorkPolicy,
+    ) {
+        val contactWork = PeriodicWorkRequestBuilder<ContactSyncWorker>(
+            actualInterval, TimeUnit.MINUTES
+        )
+            .setConstraints(networkConstraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag(TAG_SYNC)
+            .addTag(TAG_PERIODIC)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            PERIODIC_CONTACT_SYNC_WORK,
+            policy,
+            contactWork
+        )
+    }
+
+    /**
+     * Ensure the periodic contact-sync job exists, scheduling it if absent.
+     *
+     * Unlike [schedulePeriodicSync], this touches only the contact job — it does
+     * not (re)schedule calendar sync. Enabling contact sync on a login whose
+     * periodic calendar sync was last scheduled before this feature shipped would
+     * otherwise leave the recurring contact job unscheduled, so an immediate pull
+     * would be a one-time import rather than ongoing sync. KEEP policy: a no-op
+     * when the job already exists.
+     */
+    fun ensureContactSyncScheduled(intervalMinutes: Long) {
+        val actualInterval = maxOf(intervalMinutes, MIN_SYNC_INTERVAL_MINUTES)
+        scheduleContactSync(actualInterval, ExistingPeriodicWorkPolicy.KEEP)
+    }
+
+    /**
+     * Request an immediate one-shot contact pull (user-initiated, e.g. enabling
+     * contact sync for an account). Runs as soon as the network constraint is
+     * met rather than waiting for the next periodic tick. REPLACE so repeated
+     * toggles collapse to a single pending run.
+     *
+     * @param accountId when non-null, scope the sweep to that one login's
+     *   contacts (a "Sync now" from a single account's sheet); null sweeps every
+     *   contact-sync login (enable path, periodic catch-up).
+     * @return UUID of the work request for status tracking
+     */
+    fun requestImmediateContactSync(accountId: Long? = null): java.util.UUID {
+        Log.i(TAG, "Requesting immediate contact sync (accountId=$accountId)")
+
+        val oneShotWork = OneTimeWorkRequestBuilder<ContactSyncWorker>()
+            .applyOneShotSyncDefaults()
+            .apply {
+                if (accountId != null) {
+                    setInputData(ContactSyncWorker.createScopedInput(accountId))
+                }
+            }
+            .build()
+
+        workManager.enqueueUniqueWork(
+            ONE_SHOT_CONTACT_SYNC_WORK,
+            ExistingWorkPolicy.REPLACE,
+            oneShotWork
+        )
+
+        return oneShotWork.id
+    }
+
+    /**
+     * Shared defaults for user-initiated one-shot sync work: the LAN-friendly
+     * network constraint, exponential backoff, and the sync + one-shot tags.
+     * Callers add worker-specific input data before building.
+     */
+    private fun OneTimeWorkRequest.Builder.applyOneShotSyncDefaults():
+        OneTimeWorkRequest.Builder =
+        setConstraints(networkConstraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                WorkRequest.MIN_BACKOFF_MILLIS,
+                TimeUnit.MILLISECONDS
+            )
+            .addTag(TAG_SYNC)
+            .addTag(TAG_ONE_SHOT)
 
     /**
      * Cancel periodic sync.
@@ -182,6 +284,7 @@ class SyncScheduler @Inject constructor(
     fun cancelPeriodicSync() {
         Log.i(TAG, "Cancelling periodic sync")
         workManager.cancelUniqueWork(PERIODIC_SYNC_WORK)
+        workManager.cancelUniqueWork(PERIODIC_CONTACT_SYNC_WORK)
     }
 
     /**
@@ -216,6 +319,8 @@ class SyncScheduler @Inject constructor(
             ExistingPeriodicWorkPolicy.UPDATE,
             periodicWork
         )
+
+        scheduleContactSync(actualInterval, ExistingPeriodicWorkPolicy.UPDATE)
     }
 
     /**
@@ -235,15 +340,8 @@ class SyncScheduler @Inject constructor(
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync, trigger = trigger)
 
         val oneShotWork = OneTimeWorkRequestBuilder<CalDavSyncWorker>()
-            .setConstraints(networkConstraints)
             .setInputData(inputData)
-            .setBackoffCriteria(
-                BackoffPolicy.EXPONENTIAL,
-                WorkRequest.MIN_BACKOFF_MILLIS,
-                TimeUnit.MILLISECONDS
-            )
-            .addTag(TAG_SYNC)
-            .addTag(TAG_ONE_SHOT)
+            .applyOneShotSyncDefaults()
             .build()
 
         workManager.enqueueUniqueWork(

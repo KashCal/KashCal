@@ -152,10 +152,10 @@ class IcsExporterEdgeCaseTest {
     // ========== Filename Edge Cases ==========
 
     @Test
-    fun `generateFileName with unicode characters`() {
+    fun `generateFileName preserves unicode letters and strips emoji`() {
         val fileName = invokeGenerateFileName("会議 Meeting 🎉")
         assertTrue("Should end with .ics", fileName.endsWith(".ics"))
-        assertFalse("Should not contain unicode chars", fileName.contains("会"))
+        assertTrue("Should keep unicode letters", fileName.contains("会議"))
         assertFalse("Should not contain emoji", fileName.contains("🎉"))
     }
 

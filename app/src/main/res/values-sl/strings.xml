@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Pripomočki</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Poudarek</string>
+    <string name="hub_widget_theme">Tema widgeta</string>
+    <string name="hub_widget_accent">Poudarek widgeta</string>
     <string name="settings_widget_color_follow_app">Sledi aplikaciji</string>
     <string name="settings_widget_color_follow_app_desc">Uporabi barvo poudarka in vir aplikacije</string>
     <string name="settings_widget_theme_follow_app">Sledi aplikaciji</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Koledarji in računi</string>
     <string name="settings_section_appearance">Videz</string>
     <string name="settings_section_creating_events">Nastavitve dogodkov</string>
-    <string name="settings_section_sync">Obvestila in sinhronizacija</string>
+    <string name="settings_section_sync">Sinhronizacija</string>
     <string name="settings_section_data">Varnostna kopija in obnovitev</string>
-    <string name="settings_section_privacy">Zasebnost</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zaklep aplikacije</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Videti je, da je ta strežnik v tvojem lokalnem omrežju. Dovoli dostop do lokalnega omrežja, da se KashCal lahko poveže z njim.</string>
     <string name="local_network_banner_allow">Dovoli dostop</string>
     <string name="local_network_banner_dismiss">Ne zdaj</string>
+    <string name="hub_app_permissions">Dovoljenja aplikacije</string>
+    <string name="status_allowed">Dovoljeno</string>
+    <string name="permission_name_notifications">Obvestila</string>
+    <string name="permission_why_notifications">Da te KashCal lahko opomni na tvoje dogodke. Brez tega opomniki ostanejo tihi.</string>
+    <string name="permission_name_contacts">Stiki</string>
+    <string name="permission_why_contacts">Predlaga goste, ko dodajaš ljudi k dogodku, in prikazuje rojstne dneve stikov. Tvoji stiki ostanejo v tvoji napravi.</string>
+    <string name="permission_name_calendars">Koledarji</string>
+    <string name="permission_why_calendars">Prikazuje dogodke iz drugih koledarjev v tvoji napravi poleg tvojih lastnih.</string>
+    <string name="permission_name_local_network">Lokalno omrežje</string>
+    <string name="permission_why_local_network">Dostopa do koledarskega strežnika v tvojem domačem ali pisarniškem omrežju. Android 17 to zahteva ločeno od dostopa do interneta.</string>
     <string name="password_change_error_account_not_found">Računa ni mogoče najti</string>
     <string name="password_change_error_no_credentials">Ni obstoječih poverilnic</string>
     <string name="password_change_error_unsupported_provider">Ta ponudnik ne podpira spreminjanja gesla</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">RAČUN</string>
     <string name="account_detail_enabled">Omogočeno</string>
     <string name="account_detail_enabled_subtitle">Samodejno sinhroniziraj ta račun</string>
+    <string name="account_detail_sync_calendar">Koledar</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinhroniziraj koledarje tega računa</string>
+    <string name="account_detail_sync_contacts">Stiki</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinhroniziraj stike tega računa v telefon</string>
+    <string name="account_detail_contacts_permission_needed">Dovoljenje za stike je izklopljeno. Dovoli dostop, da se stiki še naprej sinhronizirajo.</string>
+    <string name="account_detail_contacts_grant">Dovoli dostop</string>
+    <string name="contact_sync_enabled_for">Sinhroniziranje stikov za %1$s</string>
+    <string name="contact_sync_disabled_for">Stiki naprave za %1$s odstranjeni</string>
+    <string name="contact_sync_disabled_kept">Sinhronizacija stikov za %1$s je izklopljena. Stiki ostanejo, ker jih še sinhronizira druga prijava.</string>
+    <string name="contact_sync_disabled_incomplete">Sinhronizacija stikov za %1$s je izklopljena, a nekateri stiki naprave lahko ostanejo. Preveri dovoljenje za Stike.</string>
     <string name="account_detail_sync_now">Sinhroniziraj</string>
     <string name="account_detail_syncing">Sinhronizacija…</string>
     <string name="account_detail_discovering">Odkrivanje…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Shrani</string>
     <string name="hub_initials_cancel">Prekliči</string>
     <string name="hub_section_make_it_yours">Prilagodi si</string>
+    <string name="hub_section_own_your_calendar">Tvoj koledar, tvoja pravila</string>
+    <string name="hub_privacy_data_ownership">Kako tvoji podatki ostanejo tvoji</string>
     <string name="hub_accounts_and_settings">Računi in nastavitve</string>
 
     <!-- ==================== Share Availability ==================== -->

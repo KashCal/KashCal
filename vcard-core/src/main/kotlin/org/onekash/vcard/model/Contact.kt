@@ -22,6 +22,16 @@ data class Contact(
     /** `UID` property, or empty when the body carries none (RFC 6350 §6.7.6, `*1`). */
     val uid: String,
 
+    /**
+     * `KIND` value, lower-cased (RFC 6350 §6.1.4: "individual", "group", "org", …),
+     * or null when the body declares none. Carries the native 4.0 `KIND` property and
+     * the 3.0 Apple `X-ADDRESSBOOKSERVER-KIND` fallback alike, so a caller can drop a
+     * `"group"` distribution-list vCard (which would otherwise mirror as a phantom
+     * empty contact) without re-parsing the body. The parser records the value; the
+     * drop policy lives with the caller.
+     */
+    val kind: String? = null,
+
     /** Structured `N` name. Always present (empty components when the body omits it). */
     val structuredName: StructuredName,
 
@@ -40,7 +50,10 @@ data class Contact(
     val organization: List<String> = emptyList(),
     val title: String? = null,
 
-    val urls: List<String> = emptyList(),
+    /** `ROLE` job function/description (RFC 6350 §6.6.2); distinct from [title]. */
+    val role: String? = null,
+
+    val urls: List<WebAddress> = emptyList(),
     val notes: List<String> = emptyList(),
     val imHandles: List<ImHandle> = emptyList(),
     val relations: List<Relation> = emptyList(),
@@ -55,13 +68,25 @@ data class Contact(
     val rawVCard: String,
 )
 
-/** Structured `N` components (RFC 6350 §6.2.2). */
+/**
+ * Structured `N` components (RFC 6350 §6.2.2).
+ *
+ * Each `N` component is a comma-separated value list; the extra values (a second
+ * middle name, "Dr. Prof." prefixes) are space-joined into the single [middle] /
+ * [prefix] / [suffix] strings the Android provider stores, rather than dropped.
+ *
+ * The `X-PHONETIC-*` reading aids (Apple/Android convention) surface on the
+ * phonetic components so CJK name sorting and search work on device.
+ */
 data class StructuredName(
     val family: String? = null,
     val given: String? = null,
     val middle: String? = null,
     val prefix: String? = null,
     val suffix: String? = null,
+    val phoneticGiven: String? = null,
+    val phoneticMiddle: String? = null,
+    val phoneticFamily: String? = null,
 ) {
     /** Space-joined display form built from the populated components, in reading order. */
     fun toDisplayName(): String =
@@ -70,13 +95,15 @@ data class StructuredName(
             .joinToString(" ")
 }
 
-/** An `EMAIL` value with its types and a normalized preferred flag. */
+/** An `EMAIL` value with its types, a normalized preferred flag, and any custom label. */
 data class Email(
     val address: String,
     /** Lower-cased `TYPE` tokens (e.g. "home", "work"), excluding the preference marker. */
     val types: List<String> = emptyList(),
     /** True for 3.0 `TYPE=PREF` and 4.0 `PREF=1` alike. */
     val preferred: Boolean = false,
+    /** Custom label from a grouped `itemN.X-ABLabel` (e.g. "School"), else null. */
+    val label: String? = null,
 )
 
 /** A `TEL` value, with the `tel:` scheme stripped from 4.0 URI form. */
@@ -84,6 +111,14 @@ data class Phone(
     val number: String,
     val types: List<String> = emptyList(),
     val preferred: Boolean = false,
+    /** Custom label from a grouped `itemN.X-ABLabel`, else null. */
+    val label: String? = null,
+)
+
+/** A `URL` value with its optional custom label from a grouped `itemN.X-ABLabel`. */
+data class WebAddress(
+    val url: String,
+    val label: String? = null,
 )
 
 /** 7-component `ADR` (RFC 6350 §6.3.1), de-escaped. */
@@ -96,6 +131,8 @@ data class PostalAddress(
     val postalCode: String? = null,
     val country: String? = null,
     val types: List<String> = emptyList(),
+    /** Custom label from a grouped `itemN.X-ABLabel`, else null. */
+    val label: String? = null,
 )
 
 /** An instant-messaging / social handle, from `IMPP` or a routed `X-SOCIALPROFILE`. */

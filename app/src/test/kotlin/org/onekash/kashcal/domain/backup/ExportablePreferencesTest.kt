@@ -41,8 +41,8 @@ class ExportablePreferencesTest {
     }
 
     @Test
-    fun `exclude list contains exactly 24 key names`() {
-        assertEquals(24, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
+    fun `exclude list contains exactly 25 key names`() {
+        assertEquals(25, ExportablePreferences.EXCLUDED_KEY_NAMES.size)
     }
 
     @Test
@@ -167,6 +167,18 @@ class ExportablePreferencesTest {
         assertFalse(
             "CONTACT_SUGGESTIONS_DECLINED must not be in the allow-list",
             ExportablePreferences.KEYS.any { it.name == PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name },
+        )
+    }
+
+    @Test
+    fun `CONTACT_SYNC_PERMISSION_NEEDED is excluded because it is device-local runtime state`() {
+        assertTrue(
+            "CONTACT_SYNC_PERMISSION_NEEDED must be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED.name),
+        )
+        assertFalse(
+            "CONTACT_SYNC_PERMISSION_NEEDED must not be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED.name },
         )
     }
 

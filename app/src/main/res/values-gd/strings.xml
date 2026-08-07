@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Ùrlar</string>
     <string name="settings_widget_accent_color">Sònrachadh</string>
+    <string name="hub_widget_theme">Ùrlar widget</string>
+    <string name="hub_widget_accent">Sònrachadh widget</string>
     <string name="settings_widget_color_follow_app">Lean an aplacaid</string>
     <string name="settings_widget_color_follow_app_desc">Cleachd dath sònrachaidh is tùs na h-aplacaid</string>
     <string name="settings_widget_theme_follow_app">Lean an aplacaid</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Mìosachain is cunntasan</string>
     <string name="settings_section_appearance">Coltas</string>
     <string name="settings_section_creating_events">Roghainnean thachartasan</string>
-    <string name="settings_section_sync">Brathan is sioncronachadh</string>
+    <string name="settings_section_sync">Sioncronachadh</string>
     <string name="settings_section_data">Lethbhreac-glèidhidh is aiseag</string>
-    <string name="settings_section_privacy">Prìobhaideachd</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Glas na h-aplacaid</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Tha coltas gu bheil am frithealaiche seo air an lìonra ionadail agad. Ceadaich inntrigeadh don lìonra ionadail gus an urrainn do KashCal ceangal ris.</string>
     <string name="local_network_banner_allow">Ceadaich inntrigeadh</string>
     <string name="local_network_banner_dismiss">Chan ann an-dràsta</string>
+    <string name="hub_app_permissions">Ceadan na h-aplacaid</string>
+    <string name="status_allowed">Ceadaichte</string>
+    <string name="permission_name_notifications">Brathan</string>
+    <string name="permission_why_notifications">Gus an cuir KashCal na tachartasan agad nad chuimhne. Às aonais, fanaidh cuimhneachain sàmhach.</string>
+    <string name="permission_name_contacts">Luchd-aithne</string>
+    <string name="permission_why_contacts">Molaidh e aoighean fhad \'s a chuireas tu daoine ri tachartas, is seallaidh e co-làithean breith an luchd-aithne. Fanaidh an luchd-aithne agad air an uidheam agad.</string>
+    <string name="permission_name_calendars">Mìosachain</string>
+    <string name="permission_why_calendars">Seallaidh e tachartasan o na mìosachain eile air an uidheam agad ri taobh an fheadhainn agad fhèin.</string>
+    <string name="permission_name_local_network">Lìonra ionadail</string>
+    <string name="permission_why_local_network">Ruigidh e frithealaiche mìosachain air an lìonra dachaigh no oifis agad. Bidh Android 17 ga iarraidh seo air leth on inntrigeadh gu eadar-lìon.</string>
     <string name="password_change_error_account_not_found">Cha deach an cunntas a lorg</string>
     <string name="password_change_error_no_credentials">Chan eil teisteasan ann</string>
     <string name="password_change_error_unsupported_provider">Chan eil am solaraiche seo a\' cur taic ri atharrachadh facail-fhaire</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">CUNNTAS</string>
     <string name="account_detail_enabled">Air a chur an comas</string>
     <string name="account_detail_enabled_subtitle">Sioncronaich an cunntas seo gu fèin-obrachail</string>
+    <string name="account_detail_sync_calendar">Mìosachan</string>
+    <string name="account_detail_sync_calendar_subtitle">Sioncronaich mìosachain a\' chunntais seo</string>
+    <string name="account_detail_sync_contacts">Luchd-aithne</string>
+    <string name="account_detail_sync_contacts_subtitle">Sioncronaich luchd-aithne a\' chunntais seo dhan fhòn agad</string>
+    <string name="account_detail_contacts_permission_needed">Tha cead luchd-aithne dheth. Thoir cead-inntrigidh gus leantainn air adhart le sioncronachadh luchd-aithne.</string>
+    <string name="account_detail_contacts_grant">Thoir cead-inntrigidh</string>
+    <string name="contact_sync_enabled_for">A\' sioncronachadh luchd-aithne %1$s</string>
+    <string name="contact_sync_disabled_for">Chaidh luchd-aithne uidheam %1$s a thoirt air falbh</string>
+    <string name="contact_sync_disabled_kept">Tha sioncronachadh luchd-aithne dheth airson %1$s. Fanaidh an luchd-aithne oir tha clàradh a-steach eile gan sioncronachadh fhathast.</string>
+    <string name="contact_sync_disabled_incomplete">Tha sioncronachadh luchd-aithne dheth airson %1$s, ach dh\'fhaodadh cuid de luchd-aithne an uidheam fuireach. Thoir sùil air cead an Luchd-aithne.</string>
     <string name="account_detail_sync_now">Sioncronaich an-dràsta</string>
     <string name="account_detail_syncing">A\' sioncronachadh…</string>
     <string name="account_detail_discovering">A\' lorg…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Sàbhail</string>
     <string name="hub_initials_cancel">Sguir dheth</string>
     <string name="hub_section_make_it_yours">Dèan do chuid fhèin dheth</string>
+    <string name="hub_section_own_your_calendar">Is leatsa am mìosachan agad</string>
+    <string name="hub_privacy_data_ownership">Mar a dh\'fhanas an dàta agad agadsa</string>
     <string name="hub_accounts_and_settings">Cunntasan is roghainnean</string>
 
     <!-- ==================== Share Availability ==================== -->

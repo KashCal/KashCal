@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Γραφικά στοιχεία</string>
     <string name="settings_widget_theme">Θέμα</string>
     <string name="settings_widget_accent_color">Τονισμός</string>
+    <string name="hub_widget_theme">Θέμα γραφικού στοιχείου</string>
+    <string name="hub_widget_accent">Τονισμός γραφικού στοιχείου</string>
     <string name="settings_widget_color_follow_app">Όπως η εφαρμογή</string>
     <string name="settings_widget_color_follow_app_desc">Χρήση του χρώματος τονισμού και της πηγής της εφαρμογής</string>
     <string name="settings_widget_theme_follow_app">Όπως η εφαρμογή</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Ημερολόγια και λογαριασμοί</string>
     <string name="settings_section_appearance">Εμφάνιση</string>
     <string name="settings_section_creating_events">Προτιμήσεις συμβάντων</string>
-    <string name="settings_section_sync">Ειδοποιήσεις και συγχρονισμός</string>
+    <string name="settings_section_sync">Συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
-    <string name="settings_section_privacy">Απόρρητο</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Κλείδωμα εφαρμογής</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Αυτός ο διακομιστής φαίνεται να βρίσκεται στο τοπικό σας δίκτυο. Επιτρέψτε την πρόσβαση στο τοπικό δίκτυο ώστε το KashCal να μπορεί να συνδεθεί σε αυτόν.</string>
     <string name="local_network_banner_allow">Να επιτραπεί η πρόσβαση</string>
     <string name="local_network_banner_dismiss">Όχι τώρα</string>
+    <string name="hub_app_permissions">Άδειες εφαρμογής</string>
+    <string name="status_allowed">Επιτρέπεται</string>
+    <string name="permission_name_notifications">Ειδοποιήσεις</string>
+    <string name="permission_why_notifications">Ώστε το KashCal να σας υπενθυμίζει τα συμβάντα σας. Χωρίς αυτήν, οι υπενθυμίσεις παραμένουν σιωπηλές.</string>
+    <string name="permission_name_contacts">Επαφές</string>
+    <string name="permission_why_contacts">Προτείνει προσκεκλημένους καθώς προσθέτετε άτομα σε ένα συμβάν και εμφανίζει γενέθλια επαφών. Οι επαφές σας παραμένουν στη συσκευή σας.</string>
+    <string name="permission_name_calendars">Ημερολόγια</string>
+    <string name="permission_why_calendars">Εμφανίζει συμβάντα από τα άλλα ημερολόγια της συσκευής σας δίπλα στα δικά σας.</string>
+    <string name="permission_name_local_network">Τοπικό δίκτυο</string>
+    <string name="permission_why_local_network">Προσεγγίζει έναν διακομιστή ημερολογίου στο οικιακό ή εταιρικό σας δίκτυο. Το Android 17 το ζητά αυτό ξεχωριστά από την πρόσβαση στο διαδίκτυο.</string>
     <string name="password_change_error_account_not_found">Ο λογαριασμός δεν βρέθηκε</string>
     <string name="password_change_error_no_credentials">Δεν υπάρχουν διαπιστευτήρια</string>
     <string name="password_change_error_unsupported_provider">Αυτός ο πάροχος δεν υποστηρίζει αλλαγή κωδικού πρόσβασης</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ΛΟΓΑΡΙΑΣΜΟΣ</string>
     <string name="account_detail_enabled">Ενεργοποιημένο</string>
     <string name="account_detail_enabled_subtitle">Αυτόματος συγχρονισμός αυτού του λογαριασμού</string>
+    <string name="account_detail_sync_calendar">Ημερολόγιο</string>
+    <string name="account_detail_sync_calendar_subtitle">Συγχρονισμός των ημερολογίων αυτού του λογαριασμού</string>
+    <string name="account_detail_sync_contacts">Επαφές</string>
+    <string name="account_detail_sync_contacts_subtitle">Συγχρονισμός των επαφών αυτού του λογαριασμού στο τηλέφωνό σας</string>
+    <string name="account_detail_contacts_permission_needed">Η άδεια για τις Επαφές είναι απενεργοποιημένη. Παραχωρήστε πρόσβαση για να συνεχιστεί ο συγχρονισμός των επαφών.</string>
+    <string name="account_detail_contacts_grant">Παραχώρηση πρόσβασης</string>
+    <string name="contact_sync_enabled_for">Συγχρονισμός επαφών για %1$s</string>
+    <string name="contact_sync_disabled_for">Οι επαφές συσκευής για %1$s αφαιρέθηκαν</string>
+    <string name="contact_sync_disabled_kept">Ο συγχρονισμός επαφών για %1$s είναι απενεργοποιημένος. Οι επαφές παραμένουν επειδή μια άλλη σύνδεση με το ίδιο email τις συγχρονίζει ακόμη.</string>
+    <string name="contact_sync_disabled_incomplete">Ο συγχρονισμός επαφών για %1$s είναι απενεργοποιημένος, αλλά ορισμένες επαφές συσκευής ίσως παραμείνουν. Ελέγξτε την άδεια Επαφές.</string>
     <string name="account_detail_sync_now">Συγχρονισμός τώρα</string>
     <string name="account_detail_syncing">Συγχρονισμός…</string>
     <string name="account_detail_discovering">Ανακάλυψη…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Αποθήκευση</string>
     <string name="hub_initials_cancel">Άκυρο</string>
     <string name="hub_section_make_it_yours">Κάντε το δικό σας</string>
+    <string name="hub_section_own_your_calendar">Το ημερολόγιό σας είναι δικό σας</string>
+    <string name="hub_privacy_data_ownership">Πώς τα δεδομένα σας παραμένουν δικά σας</string>
     <string name="hub_accounts_and_settings">Λογαριασμοί και ρυθμίσεις</string>
 
     <!-- ==================== Share Availability ==================== -->

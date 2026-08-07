@@ -53,6 +53,13 @@ class ContactsAccountManifestTest {
                         candidates.joinToString { it.path }
                 )
         }
+
+        fun mapperFile(): String {
+            val relative = "src/main/kotlin/org/onekash/kashcal/data/contacts/VCardContactMapper.kt"
+            val candidates = listOf(File(relative), File("app/$relative"))
+            return candidates.firstOrNull { it.isFile }?.path
+                ?: error("Could not locate VCardContactMapper.kt from '${File(".").absolutePath}'")
+        }
     }
 
     @Test
@@ -111,5 +118,74 @@ class ContactsAccountManifestTest {
             "Sync-adapter XML must declare accountType=\"$CONTACTS_ACCOUNT_TYPE\"",
             xml.contains("android:accountType=\"$CONTACTS_ACCOUNT_TYPE\"")
         )
+    }
+
+    @Test
+    fun `contacts sync-adapter service declares the CONTACTS_STRUCTURE metadata`() {
+        val info = pm.getServiceInfo(
+            android.content.ComponentName(
+                pkg,
+                "org.onekash.kashcal.sync.adapter.KashCalContactsSyncAdapterService"
+            ),
+            PackageManager.GET_META_DATA
+        )
+        val metaData = info.metaData
+        assertTrue(
+            "Sync-adapter service must carry the android.provider.CONTACTS_STRUCTURE " +
+                "meta-data — without it the account type is not a recognized contacts " +
+                "source, so its contacts never appear in 'Contacts to display'. " +
+                "Present keys: ${metaData?.keySet()}",
+            metaData != null && metaData.containsKey("android.provider.CONTACTS_STRUCTURE")
+        )
+    }
+
+    @Test
+    fun `contacts structure xml declares every data kind the mapper actually writes`() {
+        val xml = File(resXmlRoot(), "contacts.xml").readText()
+        assertTrue("must open a ContactsAccountType/EditSchema", xml.contains("<EditSchema>"))
+
+        // Derive the required kinds from the mapper SOURCE rather than a hand-copied
+        // literal, so adding a new row type to VCardContactMapper without declaring it
+        // in contacts.xml fails this test (the drift the guard exists to catch). The
+        // mapper emits every Data row as `row(<CommonDataKinds type>.CONTENT_ITEM_TYPE)`;
+        // scan those type names and translate each to its EditSchema `kind=` token.
+        val mapperSrc = File(mapperFile()).readText()
+        val emittedTypes = Regex("""row\((\w+)\.CONTENT_ITEM_TYPE""")
+            .findAll(mapperSrc)
+            .map { it.groupValues[1] }
+            .toSet()
+        assertTrue(
+            "sanity: the mapper source scan found no CommonDataKinds rows — the regex or " +
+                "path is wrong, not the schema",
+            emittedTypes.isNotEmpty()
+        )
+
+        // CommonDataKinds inner-class name -> EditSchema kind token.
+        val kindFor = mapOf(
+            "StructuredName" to "name",
+            "Phone" to "phone",
+            "Email" to "email",
+            "Photo" to "photo",
+            "Organization" to "organization",
+            "Im" to "im",
+            "Nickname" to "nickname",
+            "Note" to "note",
+            "GroupMembership" to "group_membership",
+            "StructuredPostal" to "postal",
+            "Website" to "website",
+            "Event" to "event",
+            "Relation" to "relationship",
+        )
+
+        val unmapped = emittedTypes - kindFor.keys
+        assertTrue(
+            "the mapper emits row type(s) this test can't translate to an EditSchema " +
+                "kind: $unmapped — extend kindFor (and declare the kind in contacts.xml)",
+            unmapped.isEmpty()
+        )
+
+        val missing = emittedTypes.mapNotNull { kindFor[it] }
+            .filterNot { kind -> xml.contains("kind=\"$kind\"") }
+        assertTrue("contacts.xml is missing DataKind(s) the mapper writes: $missing", missing.isEmpty())
     }
 }

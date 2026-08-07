@@ -121,5 +121,16 @@ data class Account(
      * for client-side sending of scheduling messages.
      */
     @ColumnInfo(name = "schedule_outbox_url")
-    val scheduleOutboxUrl: String? = null
+    val scheduleOutboxUrl: String? = null,
+
+    /**
+     * Whether this login syncs its CardDAV contacts onto the device. Off by
+     * default: contact sync is opt-in per login (only CardDAV-capable providers
+     * can turn it on), and enrolling registers a dedicated contacts system
+     * account. Per-account state that FK-cascades away when the account is
+     * deleted — the single source of truth the sync worker and settings both
+     * read, rather than a separate DataStore key that could drift from the row.
+     */
+    @ColumnInfo(name = "contact_sync_enabled", defaultValue = "0")
+    val contactSyncEnabled: Boolean = false
 )

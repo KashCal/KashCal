@@ -23,4 +23,7 @@ class ICloudCardDavQuirks : DefaultCardDavQuirks(
     providerId = "icloud",
     displayName = "iCloud",
     requiresAppSpecificPassword = true,
+    // Fixed bootstrap host, unrelated to the Apple ID email domain — never
+    // discover it via SRV on that domain (see DefaultCardDavQuirks.discoverHostViaDns).
+    discoverHostViaDns = false,
 )

@@ -26,6 +26,7 @@ class CardDavQuirksTest {
 
     private lateinit var default: DefaultCardDavQuirks
     private lateinit var icloud: ICloudCardDavQuirks
+    private lateinit var zoho: ZohoCardDavQuirks
 
     @Before
     fun setup() {
@@ -35,6 +36,7 @@ class CardDavQuirksTest {
         every { Log.i(any(), any<String>()) } returns 0
         default = DefaultCardDavQuirks("https://dav.example.test")
         icloud = ICloudCardDavQuirks()
+        zoho = ZohoCardDavQuirks()
     }
 
     @After
@@ -57,6 +59,36 @@ class CardDavQuirksTest {
         assertEquals("icloud", icloud.providerId)
         assertEquals("iCloud", icloud.displayName)
         assertTrue(icloud.requiresAppSpecificPassword)
+    }
+
+    @Test
+    fun `zoho pins the contacts host and requires an app-specific password`() {
+        // Zoho serves contacts from contacts.zoho.com — a different host than its
+        // calendar.zoho.com CalDAV endpoint and unrelated to the login email domain
+        // (which can be a custom or Gmail-backed address). The host is therefore
+        // pinned as a bootstrap constant, mirroring the iCloud precedent.
+        assertEquals("zoho", zoho.providerId)
+        assertEquals("Zoho", zoho.displayName)
+        assertEquals("https://contacts.zoho.com", zoho.baseUrl)
+        assertTrue(zoho.requiresAppSpecificPassword)
+    }
+
+    // ---- discoverHostViaDns: only generic servers discover from the email domain ----
+
+    @Test
+    fun `generic quirks discover the host via dns`() {
+        // A generic CardDAV account's contacts host is unknown a priori, so RFC 6764
+        // SRV/TXT discovery from the account's email domain is the right entry point.
+        assertTrue(default.discoverHostViaDns)
+    }
+
+    @Test
+    fun `pinned-host quirks never discover via dns`() {
+        // iCloud and Zoho have a known contacts host unrelated to the login email
+        // domain; running SRV on that domain could only misdirect them (a
+        // same-registrable-domain _carddavs record would silently redirect sync).
+        assertFalse(icloud.discoverHostViaDns)
+        assertFalse(zoho.discoverHostViaDns)
     }
 
     // ---- isSyncTokenInvalid (410 / valid-sync-token body → true; bare 403 → false) ----

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Thema</string>
     <string name="settings_widget_accent_color">Accent</string>
+    <string name="hub_widget_theme">Widgetthema</string>
+    <string name="hub_widget_accent">Widgetaccent</string>
     <string name="settings_widget_color_follow_app">App volgen</string>
     <string name="settings_widget_color_follow_app_desc">De accentkleur en kleurbron van de app gebruiken</string>
     <string name="settings_widget_theme_follow_app">App volgen</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Agenda\'s &amp; accounts</string>
     <string name="settings_section_appearance">Weergave</string>
     <string name="settings_section_creating_events">Afspraakvoorkeuren</string>
-    <string name="settings_section_sync">Meldingen &amp; synchronisatie</string>
+    <string name="settings_section_sync">Synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
-    <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App-vergrendeling</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Deze server lijkt op je lokale netwerk te staan. Sta toegang tot het lokale netwerk toe zodat KashCal er verbinding mee kan maken.</string>
     <string name="local_network_banner_allow">Toegang toestaan</string>
     <string name="local_network_banner_dismiss">Niet nu</string>
+    <string name="hub_app_permissions">App-machtigingen</string>
+    <string name="status_allowed">Toegestaan</string>
+    <string name="permission_name_notifications">Meldingen</string>
+    <string name="permission_why_notifications">Zodat KashCal je aan je afspraken kan herinneren. Zonder deze blijven herinneringen stil.</string>
+    <string name="permission_name_contacts">Contacten</string>
+    <string name="permission_why_contacts">Stelt gasten voor terwijl je mensen aan een afspraak toevoegt, en toont verjaardagen van contacten. Je contacten blijven op je apparaat.</string>
+    <string name="permission_name_calendars">Agenda\'s</string>
+    <string name="permission_why_calendars">Toont afspraken uit de andere agenda\'s op je apparaat naast je eigen afspraken.</string>
+    <string name="permission_name_local_network">Lokaal netwerk</string>
+    <string name="permission_why_local_network">Bereikt een agendaserver in je thuis- of kantoornetwerk. Android 17 vraagt hier apart om, los van internettoegang.</string>
     <string name="password_change_error_account_not_found">Account niet gevonden</string>
     <string name="password_change_error_no_credentials">Geen bestaande inloggegevens</string>
     <string name="password_change_error_unsupported_provider">Deze provider ondersteunt het wijzigen van het wachtwoord niet</string>
@@ -516,6 +527,16 @@
     <string name="account_detail_section_account">ACCOUNT</string>
     <string name="account_detail_enabled">Ingeschakeld</string>
     <string name="account_detail_enabled_subtitle">Dit account automatisch synchroniseren</string>
+    <string name="account_detail_sync_calendar">Agenda</string>
+    <string name="account_detail_sync_calendar_subtitle">Agenda\'s van dit account synchroniseren</string>
+    <string name="account_detail_sync_contacts">Contacten</string>
+    <string name="account_detail_sync_contacts_subtitle">Contacten van dit account met je telefoon synchroniseren</string>
+    <string name="account_detail_contacts_permission_needed">Toestemming voor contacten staat uit. Geef toegang om contacten te blijven synchroniseren.</string>
+    <string name="account_detail_contacts_grant">Toegang geven</string>
+    <string name="contact_sync_enabled_for">Contacten synchroniseren voor %1$s</string>
+    <string name="contact_sync_disabled_for">Apparaatcontacten voor %1$s verwijderd</string>
+    <string name="contact_sync_disabled_kept">Contactsynchronisatie voor %1$s uit. Contacten blijven staan omdat een andere login ze nog synchroniseert.</string>
+    <string name="contact_sync_disabled_incomplete">Contactsynchronisatie voor %1$s uit, maar sommige apparaatcontacten blijven mogelijk staan. Controleer de Contacten-toestemming.</string>
     <string name="account_detail_sync_now">Nu synchroniseren</string>
     <string name="account_detail_syncing">Synchroniseren…</string>
     <string name="account_detail_discovering">Zoeken…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Opslaan</string>
     <string name="hub_initials_cancel">Annuleren</string>
     <string name="hub_section_make_it_yours">Maak het je eigen</string>
+    <string name="hub_section_own_your_calendar">Jouw agenda, jouw regels</string>
+    <string name="hub_privacy_data_ownership">Hoe je gegevens van jou blijven</string>
     <string name="hub_accounts_and_settings">Accounts en instellingen</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -70,16 +70,34 @@ class ContactSystemAccountRegistrar @Inject constructor(
      * Remove the contacts account named [email], if present. No-op when the
      * login has no account. Removing the account also purges any RawContacts
      * Android holds under it.
+     *
+     * @return true if the login has no matching account left afterwards (either it
+     *   was removed, or there was none to begin with); false if AccountManager
+     *   refused to remove an existing account or threw — the caller then knows the
+     *   account (and its synced RawContacts) survived.
      */
-    fun removeAccount(email: String) {
-        try {
-            val accountManager = AccountManager.get(context)
-            accountManager
+    fun removeAccount(email: String): Boolean =
+        removeAccount(email, AccountManager.get(context))
+
+    /** Testable seam: the [accountManager] is injected so the failure path is reachable. */
+    internal fun removeAccount(email: String, accountManager: AccountManager): Boolean {
+        return try {
+            val matching = accountManager
                 .getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE)
                 .filter { it.name == email }
-                .forEach { accountManager.removeAccountExplicitly(it) }
+            var allRemoved = true
+            for (account in matching) {
+                if (!accountManager.removeAccountExplicitly(account)) {
+                    allRemoved = false
+                    // A stuck removal leaves the account (and its RawContacts) behind;
+                    // surface it rather than pretending the login was cleaned up.
+                    Log.w(TAG, "AccountManager declined to remove a contacts account")
+                }
+            }
+            allRemoved
         } catch (e: Exception) {
             Log.w(TAG, "Failed to remove contacts account", e)
+            false
         }
     }
 }

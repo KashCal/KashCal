@@ -134,13 +134,15 @@ class CyrusScheduleDriftRecoveryTest {
             pendingOperationsDao = database.pendingOperationsDao(),
             accountRepository = AccountRepositoryImpl(
                 accountsDao = database.accountsDao(),
+                addressBookDao = database.addressBookDao(),
                 calendarsDao = database.calendarsDao(),
                 eventsDao = database.eventsDao(),
                 pendingOperationsDao = database.pendingOperationsDao(),
                 credentialManager = mockk(relaxed = true),
                 reminderScheduler = mockk(relaxed = true),
                 workManager = mockk(relaxed = true),
-                contactSystemAccountRegistrar = mockk(relaxed = true)
+                contactSystemAccountRegistrar = mockk(relaxed = true),
+                contactsProviderRepository = mockk(relaxed = true)
             ),
             attendeesDao = database.attendeesDao(),
             pendingCancelsDao = database.pendingCancelsDao()

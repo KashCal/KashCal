@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Giuirléidí</string>
     <string name="settings_widget_theme">Téama</string>
     <string name="settings_widget_accent_color">Béim</string>
+    <string name="hub_widget_theme">Téama giuirléide</string>
+    <string name="hub_widget_accent">Béim ghiuirléide</string>
     <string name="settings_widget_color_follow_app">Lean an aip</string>
     <string name="settings_widget_color_follow_app_desc">Úsáid dath béime agus foinse na haipe</string>
     <string name="settings_widget_theme_follow_app">Lean an aip</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Féilirí agus cuntais</string>
     <string name="settings_section_appearance">Cuma</string>
     <string name="settings_section_creating_events">Roghanna imeachtaí</string>
-    <string name="settings_section_sync">Fógraí agus sioncronú</string>
+    <string name="settings_section_sync">Sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
-    <string name="settings_section_privacy">Príobháideachas</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Glas aip</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Is cosúil go bhfuil an freastalaí seo ar do líonra áitiúil. Ceadaigh rochtain ar an líonra áitiúil ionas gur féidir le KashCal ceangal leis.</string>
     <string name="local_network_banner_allow">Ceadaigh rochtain</string>
     <string name="local_network_banner_dismiss">Ní anois</string>
+    <string name="hub_app_permissions">Ceadanna na haipe</string>
+    <string name="status_allowed">Ceadaithe</string>
+    <string name="permission_name_notifications">Fógraí</string>
+    <string name="permission_why_notifications">Ionas gur féidir le KashCal do chuid imeachtaí a mheabhrú duit. Gan é, fanann meabhrúcháin ina dtost.</string>
+    <string name="permission_name_contacts">Teagmhálaithe</string>
+    <string name="permission_why_contacts">Molann sé aíonna agus tú ag cur daoine le himeacht, agus taispeánann sé breithlaethanta teagmhálaithe. Fanann do theagmhálaithe ar do ghléas.</string>
+    <string name="permission_name_calendars">Féilirí</string>
+    <string name="permission_why_calendars">Taispeánann sé imeachtaí ó na féilirí eile ar do ghléas taobh le taobh le do chuid féin.</string>
+    <string name="permission_name_local_network">Líonra áitiúil</string>
+    <string name="permission_why_local_network">Sroicheann sé freastalaí féilire ar do líonra baile nó oifige. Iarrann Android 17 é seo ar leithligh ón rochtain idirlín.</string>
     <string name="password_change_error_account_not_found">Cuntas gan aimsiú</string>
     <string name="password_change_error_no_credentials">Níl aon dintiúir ann</string>
     <string name="password_change_error_unsupported_provider">Ní thacaíonn an soláthraí seo le hathrú pasfhocail</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">CUNTAS</string>
     <string name="account_detail_enabled">Cumasaithe</string>
     <string name="account_detail_enabled_subtitle">Sioncronaigh an cuntas seo go huathoibríoch</string>
+    <string name="account_detail_sync_calendar">Féilire</string>
+    <string name="account_detail_sync_calendar_subtitle">Sioncronaigh féilirí an chuntais seo</string>
+    <string name="account_detail_sync_contacts">Teagmhálacha</string>
+    <string name="account_detail_sync_contacts_subtitle">Sioncronaigh teagmhálacha an chuntais seo le do ghuthán</string>
+    <string name="account_detail_contacts_permission_needed">Tá cead teagmhálacha múchta. Tabhair rochtain chun leanúint le sioncronú teagmhálacha.</string>
+    <string name="account_detail_contacts_grant">Tabhair rochtain</string>
+    <string name="contact_sync_enabled_for">Teagmhálaithe %1$s á sioncronú</string>
+    <string name="contact_sync_disabled_for">Baineadh teagmhálaithe gléis %1$s</string>
+    <string name="contact_sync_disabled_kept">Tá sioncronú teagmhálacha múchta do %1$s. Fanann na teagmhálaithe mar go bhfuil logáil isteach eile á sioncronú fós.</string>
+    <string name="contact_sync_disabled_incomplete">Tá sioncronú teagmhálacha múchta do %1$s, ach seans go bhfanfaidh roinnt teagmhálaithe gléis. Seiceáil an cead Teagmhálaithe.</string>
     <string name="account_detail_sync_now">Sioncronaigh Anois</string>
     <string name="account_detail_syncing">Ag sioncronú…</string>
     <string name="account_detail_discovering">Ag aimsiú…</string>
@@ -1349,6 +1370,8 @@
     <string name="hub_initials_save">Sábháil</string>
     <string name="hub_initials_cancel">Cealaigh</string>
     <string name="hub_section_make_it_yours">Déan do chuid féin de</string>
+    <string name="hub_section_own_your_calendar">Is leatsa d\'fhéilire</string>
+    <string name="hub_privacy_data_ownership">Conas a fhanann do shonraí agatsa</string>
     <string name="hub_accounts_and_settings">Cuntais agus socruithe</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -69,3 +69,40 @@ fun Response.readBoundedBody(maxBytes: Long = MAX_HTTP_RESPONSE_SIZE_BYTES): Str
         source.buffer.readString(charset)
     }
 }
+
+/**
+ * Read this response's body into a [ByteArray], rejecting bodies larger than
+ * [maxBytes]. Always closes the body. A null body decodes to an empty array.
+ *
+ * Unlike [readBoundedBody], the bytes are returned verbatim with NO charset
+ * decode — decoding a binary payload (JPEG/PNG photo) through a String would
+ * replace any byte sequence that isn't valid in the declared charset with the
+ * Unicode replacement character and corrupt the image. Same two-stage size
+ * guard as [readBoundedBody]: the Content-Length header first (cheap, before
+ * buffering), then the buffered size for chunked/streaming responses.
+ *
+ * @throws ResponseTooLargeException if the body exceeds [maxBytes].
+ */
+fun Response.readBoundedBytes(maxBytes: Long = MAX_HTTP_RESPONSE_SIZE_BYTES): ByteArray {
+    val body = this.body ?: return ByteArray(0)
+    return body.use { b ->
+        val source = b.source()
+        val contentLength = b.contentLength()
+        // contentLength is -1 when unknown (chunked/streaming) — falls through
+        // to the buffered-size check below.
+        if (contentLength > maxBytes) {
+            Log.w(TAG, "Response rejected: Content-Length $contentLength exceeds limit")
+            throw ResponseTooLargeException(
+                "Response too large: Content-Length $contentLength exceeds ${maxBytes / 1024 / 1024}MB"
+            )
+        }
+        source.request(maxBytes + 1)
+        if (source.buffer.size > maxBytes) {
+            Log.w(TAG, "Response rejected: buffered ${source.buffer.size} bytes exceeds limit")
+            throw ResponseTooLargeException(
+                "Response too large: buffered ${source.buffer.size} bytes exceeds ${maxBytes / 1024 / 1024}MB"
+            )
+        }
+        source.buffer.readByteArray()
+    }
+}

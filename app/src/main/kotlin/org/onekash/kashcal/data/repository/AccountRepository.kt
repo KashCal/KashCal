@@ -6,6 +6,33 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
+ * The result of the device-contact purge a contact-sync disable (or account
+ * delete) attempts. Lets the UI message honestly instead of always claiming
+ * removal.
+ */
+enum class ContactPurgeOutcome {
+    /**
+     * The purge ran and the device is verifiably clear of this login's synced
+     * contacts (post-purge count read 0 after a delete that did not fail).
+     */
+    PURGED,
+
+    /**
+     * No purge was attempted: either this was an enable, a non-contacts account,
+     * or a still-syncing same-email CardDAV sibling legitimately keeps the shared
+     * contacts account (so its contacts must stay).
+     */
+    NOT_ATTEMPTED,
+
+    /**
+     * A purge was attempted but could not be confirmed clean — the scoped delete
+     * failed (e.g. revoked WRITE_CONTACTS), or rows still remained after the
+     * retry. The UI must NOT claim contacts were removed.
+     */
+    INCOMPLETE,
+}
+
+/**
  * Single source of truth for Account operations.
  *
  * Replaces direct DAO access for accounts. Handles:
@@ -154,6 +181,22 @@ interface AccountRepository {
      * Set account enabled state.
      */
     suspend fun setEnabled(accountId: Long, enabled: Boolean)
+
+    /**
+     * Turn CardDAV contact sync on or off for a login.
+     *
+     * Enabling registers the login's dedicated contacts system account (so
+     * Android surfaces the source and never purges its RawContacts) and persists
+     * the per-account flag; disabling removes that system account (which also
+     * purges the contacts Android holds under it) and clears the flag. Both are
+     * idempotent. A no-op when the account no longer exists.
+     *
+     * @return the outcome of the device-contact purge, so callers can message
+     *   honestly (a disable that a still-syncing sibling blocks did NOT remove
+     *   contacts; a purge that couldn't be verified must not claim it did). See
+     *   [ContactPurgeOutcome].
+     */
+    suspend fun setContactSyncEnabled(accountId: Long, enabled: Boolean): ContactPurgeOutcome
 
     // ========== Credentials (Delegated) ==========
 

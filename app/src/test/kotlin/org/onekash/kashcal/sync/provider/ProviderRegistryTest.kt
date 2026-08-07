@@ -9,6 +9,9 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.carddav.DefaultCardDavQuirks
+import org.onekash.kashcal.sync.carddav.ICloudCardDavQuirks
+import org.onekash.kashcal.sync.carddav.ZohoCardDavQuirks
 import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialProvider
 import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
@@ -131,6 +134,94 @@ class ProviderRegistryTest {
         assertNull(quirks)
     }
 
+    // ==================== getCardDavQuirksForAccount Tests ====================
+
+    @Test
+    fun `getCardDavQuirksForAccount returns ICloudCardDavQuirks for ICLOUD account`() {
+        val account = createAccount(provider = AccountProvider.ICLOUD)
+
+        val quirks = registry.getCardDavQuirksForAccount(account)
+
+        assertTrue(quirks is ICloudCardDavQuirks)
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount pins the contacts host for a Zoho CALDAV account`() {
+        // A Zoho account is a generic CALDAV account whose homeSetUrl points at the
+        // calendar host (calendar.zoho.com). Deriving the contacts host from that
+        // would target the wrong host; Zoho serves contacts from contacts.zoho.com.
+        // Detection keys off the SERVER host (homeSetUrl), never the login email —
+        // a Zoho login can be a custom or Gmail-backed address.
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            email = "someone@gmail.com",
+            homeSetUrl = "https://calendar.zoho.com/caldav/123/calendars/",
+        )
+
+        val quirks = registry.getCardDavQuirksForAccount(account)
+
+        assertTrue("Zoho home host must pin the contacts host", quirks is ZohoCardDavQuirks)
+        assertEquals("https://contacts.zoho.com", quirks?.baseUrl)
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount pins a Zoho host that carries an explicit port`() {
+        // The host match must ignore any :port; a port left on the host string would
+        // fail the .zoho.com suffix and misroute to generic discovery (which then
+        // seeds from the login email and falls back to the CALENDAR host).
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            homeSetUrl = "https://calendar.zoho.com:443/caldav/123/calendars/",
+        )
+
+        val quirks = registry.getCardDavQuirksForAccount(account)
+
+        assertTrue("A ported Zoho host must still pin the contacts host", quirks is ZohoCardDavQuirks)
+        assertEquals("https://contacts.zoho.com", quirks?.baseUrl)
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount does not pin regional Zoho hosts (untested gap falls through to generic)`() {
+        // Regional Zoho contacts hosts (contacts.zoho.eu / .in / .com.cn) are not
+        // verified, so a regional home host falls through to generic discovery
+        // rather than being misrouted to a pinned host we haven't confirmed exists.
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            homeSetUrl = "https://calendar.zoho.eu/caldav/123/calendars/",
+        )
+
+        val quirks = registry.getCardDavQuirksForAccount(account)
+
+        assertTrue("Regional Zoho must stay generic, not pinned", quirks is DefaultCardDavQuirks)
+        assertTrue(quirks !is ZohoCardDavQuirks)
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount returns generic quirks for a non-Zoho CALDAV account`() {
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            homeSetUrl = "https://nextcloud.example.com/remote.php/dav/",
+        )
+
+        val quirks = registry.getCardDavQuirksForAccount(account)
+
+        assertTrue(quirks is DefaultCardDavQuirks)
+        assertTrue(quirks !is ZohoCardDavQuirks)
+        assertEquals("https://nextcloud.example.com", quirks?.baseUrl)
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount returns null for a CALDAV account with no home host`() {
+        val account = createAccount(provider = AccountProvider.CALDAV, homeSetUrl = null)
+
+        assertNull(registry.getCardDavQuirksForAccount(account))
+    }
+
+    @Test
+    fun `getCardDavQuirksForAccount returns null for LOCAL account`() {
+        assertNull(registry.getCardDavQuirksForAccount(createAccount(provider = AccountProvider.LOCAL)))
+    }
+
     // ==================== getCredentialProvider Tests ====================
 
     @Test
@@ -174,12 +265,13 @@ class ProviderRegistryTest {
 
     private fun createAccount(
         provider: AccountProvider,
-        homeSetUrl: String? = null
+        homeSetUrl: String? = null,
+        email: String = "test@example.com"
     ): Account {
         return Account(
             id = 1L,
             provider = provider,
-            email = "test@example.com",
+            email = email,
             displayName = "Test Account",
             principalUrl = null,
             homeSetUrl = homeSetUrl,

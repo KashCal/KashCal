@@ -159,6 +159,84 @@ class ICalGeneratorEdgeCaseTest {
             // Should contain \\n (escaped backslash followed by n), not \n
             assertTrue(ical.contains("\\\\n"), "Backslash-n should become escaped backslash followed by n")
         }
+
+        @Test
+        fun `carriage returns do not leak into text values`() {
+            // Pasted Windows/web text carries CRLF. A bare CR is a control char
+            // excluded from RFC 5545 §3.1 VALUE-CHAR; it must not survive raw.
+            val event = createEvent(description = "Line 1\r\nLine 2\rLine 3")
+            val ical = generator.generate(event, method = null)
+
+            assertFalse(ical.substringAfter("DESCRIPTION:").substringBefore("\r\n").contains('\r'),
+                "No bare CR should remain inside the DESCRIPTION value")
+            // CRLF and lone CR both collapse to a single escaped \n line break.
+            assertTrue(ical.contains("Line 1\\nLine 2\\nLine 3"),
+                "CRLF and lone CR should normalize to a single escaped newline each")
+        }
+
+        @Test
+        fun `VALARM description escapes special characters`() {
+            val event = createEvent(
+                alarms = listOf(
+                    ICalAlarm(
+                        action = AlarmAction.DISPLAY,
+                        trigger = java.time.Duration.ofMinutes(-15),
+                        triggerAbsolute = null,
+                        description = "Call Bob, Alice; bring notes\\files",
+                        summary = null,
+                    )
+                )
+            )
+            val ical = generator.generate(event, method = null)
+
+            val alarmBlock = ical.substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+            assertTrue(alarmBlock.contains("\\,"), "VALARM DESCRIPTION comma should be escaped")
+            assertTrue(alarmBlock.contains("\\;"), "VALARM DESCRIPTION semicolon should be escaped")
+            assertTrue(alarmBlock.contains("\\\\"), "VALARM DESCRIPTION backslash should be escaped")
+        }
+
+        @Test
+        fun `VALARM summary escapes special characters`() {
+            val event = createEvent(
+                alarms = listOf(
+                    ICalAlarm(
+                        action = AlarmAction.EMAIL,
+                        trigger = java.time.Duration.ofMinutes(-15),
+                        triggerAbsolute = null,
+                        description = "Body",
+                        summary = "Re: Lunch, Team; sync",
+                    )
+                )
+            )
+            val ical = generator.generate(event, method = null)
+
+            val alarmBlock = ical.substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+            assertTrue(alarmBlock.contains("SUMMARY:Re: Lunch\\, Team\\; sync"),
+                "VALARM SUMMARY comma and semicolon should be escaped")
+        }
+
+        @Test
+        fun `VALARM related-to escapes special characters`() {
+            // RELATED-TO is TEXT-typed (§3.8.4.5); an opaque UID could carry a
+            // separator char that must be escaped so re-parse doesn't mis-split it.
+            val event = createEvent(
+                alarms = listOf(
+                    ICalAlarm(
+                        action = AlarmAction.DISPLAY,
+                        trigger = java.time.Duration.ofMinutes(-15),
+                        triggerAbsolute = null,
+                        description = "Snooze",
+                        summary = null,
+                        relatedTo = "uid;weird,value",
+                    )
+                )
+            )
+            val ical = generator.generate(event, method = null)
+
+            val alarmBlock = ical.substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
+            assertTrue(alarmBlock.contains("RELATED-TO:uid\\;weird\\,value"),
+                "VALARM RELATED-TO semicolon and comma should be escaped")
+        }
     }
 
     @Nested

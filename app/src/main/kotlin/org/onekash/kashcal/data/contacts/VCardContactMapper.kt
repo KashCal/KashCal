@@ -3,6 +3,7 @@ package org.onekash.kashcal.data.contacts
 import android.content.ContentValues
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Event
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Im
 import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.provider.ContactsContract.CommonDataKinds.Note
@@ -21,6 +22,20 @@ import org.onekash.vcard.model.Phone as VPhone
 import org.onekash.vcard.model.PostalAddress
 
 /**
+ * Byte cap for a contact photo written to the Contacts Photo column. Deliberately
+ * well under the ~1 MB Android Binder transaction limit.
+ *
+ * A photo is written as an inline blob inside an `applyBatch` transaction, which
+ * crosses Binder — a body approaching 1 MB would trip `TransactionTooLargeException`
+ * and fail the whole write batch (the provider downscales large photos, but only
+ * AFTER receiving the bytes over Binder, so its downscale can't rescue an oversized
+ * transaction). This one cap governs both photo paths: the deferred URL fetch caps
+ * its download here, and the mapper drops an inline blob that exceeds it. A real
+ * contact avatar is a small image, so this rejects only pathological bodies.
+ */
+const val MAX_PHOTO_SIZE_BYTES: Long = 950L * 1024
+
+/**
  * Maps the neutral [Contact] model onto Android Contacts Provider Data rows.
  *
  * This is the app-side, Android-coupled half of contact-sync parsing: the pure
@@ -31,8 +46,8 @@ import org.onekash.vcard.model.PostalAddress
  * ([org.onekash.kashcal.sync.parser.icaldav.MappedEntity]).
  *
  * Deliberately pure: it performs no ContentResolver write, no batch, and no network
- * I/O. The produced rows carry no `RAW_CONTACT_ID` — the write layer (a later sprint)
- * supplies that back-reference when it inserts the parent RawContact.
+ * I/O. The produced rows carry no `RAW_CONTACT_ID` — the write layer supplies that
+ * back-reference (via `withValueBackReference`) when it inserts the parent RawContact.
  *
  * The load-bearing contract is the birthday/anniversary alignment. KashCal already
  * ships readers that query `Event.CONTENT_ITEM_TYPE` rows by `Event.TYPE` =
@@ -95,18 +110,41 @@ object VCardContactMapper {
                 if (type == Relation.TYPE_CUSTOM) rel.type?.let { put(Relation.LABEL, it) }
             }
         }
-        contact.urls.forEach { url -> rows += row(Website.CONTENT_ITEM_TYPE) { put(Website.URL, url) } }
+        contact.urls.forEach { web ->
+            if (web.url.isBlank()) return@forEach
+            rows += row(Website.CONTENT_ITEM_TYPE) {
+                put(Website.URL, web.url)
+                if (web.label != null) {
+                    put(Website.TYPE, Website.TYPE_CUSTOM)
+                    put(Website.LABEL, web.label)
+                } else {
+                    put(Website.TYPE, Website.TYPE_OTHER)
+                }
+            }
+        }
         contact.notes.forEach { note -> rows += row(Note.CONTENT_ITEM_TYPE) { put(Note.NOTE, note) } }
+        // CATEGORIES -> one GroupMembership row per label, keyed by GROUP_SOURCE_ID
+        // (the category name). The write layer provisions a titled Group with that
+        // SOURCE_ID before the batch, so the membership resolves to a named group the
+        // user sees rather than the provider auto-creating an untitled one. A pure
+        // mapper can't know the group's row id, so it emits the stable string key.
+        contact.categories.forEach { category ->
+            if (category.isBlank()) return@forEach
+            rows += row(GroupMembership.CONTENT_ITEM_TYPE) { put(GroupMembership.GROUP_SOURCE_ID, category) }
+        }
 
         eventRow(contact.birthday, Event.TYPE_BIRTHDAY)?.let { rows += it }
         eventRow(contact.anniversary, Event.TYPE_ANNIVERSARY)?.let { rows += it }
 
-        val inlinePhoto = contact.photo?.data?.takeIf { it.isNotEmpty() }
+        // An inline blob over the Binder-driven cap can't be written (it would fail the
+        // whole applyBatch), so treat only within-cap inline bytes as emittable.
+        val inlinePhoto = contact.photo?.data
+            ?.takeIf { it.isNotEmpty() && it.size <= MAX_PHOTO_SIZE_BYTES }
         if (inlinePhoto != null) {
             rows += row(Photo.CONTENT_ITEM_TYPE) { put(Photo.PHOTO, inlinePhoto) }
         }
-        // No blob was emitted (no photo, or empty/absent inline bytes): if a URL is present,
-        // carry it for the deferred fetch step rather than dropping the photo entirely.
+        // No blob was emitted (no photo, empty/absent, or over-cap inline bytes): if a URL
+        // is present, carry it for the deferred fetch step rather than dropping the photo.
         val photoUrl = if (inlinePhoto == null) contact.photo?.url else null
 
         return MappedContact(contact = contact, dataRows = rows, photoUrl = photoUrl)
@@ -126,32 +164,52 @@ object VCardContactMapper {
             n.middle?.let { put(StructuredName.MIDDLE_NAME, it) }
             n.prefix?.let { put(StructuredName.PREFIX, it) }
             n.suffix?.let { put(StructuredName.SUFFIX, it) }
+            // Phonetic reading aids (X-PHONETIC-*): drive CJK name sort/search on device.
+            n.phoneticGiven?.let { put(StructuredName.PHONETIC_GIVEN_NAME, it) }
+            n.phoneticMiddle?.let { put(StructuredName.PHONETIC_MIDDLE_NAME, it) }
+            n.phoneticFamily?.let { put(StructuredName.PHONETIC_FAMILY_NAME, it) }
         }
 
     private fun emailRow(email: VEmail, primary: Boolean): ContentValues =
         row(Email.CONTENT_ITEM_TYPE) {
             put(Email.ADDRESS, email.address)
-            val type = when {
-                email.types.any { it == "home" } -> Email.TYPE_HOME
-                email.types.any { it == "work" } -> Email.TYPE_WORK
-                else -> Email.TYPE_OTHER
+            // A custom label wins over the fixed types: the provider shows LABEL verbatim
+            // under TYPE_CUSTOM, so a "School" email is not flattened to a generic type.
+            if (email.label != null) {
+                put(Email.TYPE, Email.TYPE_CUSTOM)
+                put(Email.LABEL, email.label)
+            } else {
+                put(
+                    Email.TYPE,
+                    when {
+                        email.types.any { it == "home" } -> Email.TYPE_HOME
+                        email.types.any { it == "work" } -> Email.TYPE_WORK
+                        else -> Email.TYPE_OTHER
+                    },
+                )
             }
-            put(Email.TYPE, type)
             if (primary) put(Email.IS_PRIMARY, 1)
         }
 
     private fun phoneRow(phone: VPhone, primary: Boolean): ContentValues =
         row(Phone.CONTENT_ITEM_TYPE) {
             put(Phone.NUMBER, phone.number)
-            val tokens = phone.types
-            val type = when {
-                tokens.any { "cell" in it || "mobile" in it } -> Phone.TYPE_MOBILE
-                tokens.any { "work" in it } -> Phone.TYPE_WORK
-                tokens.any { "home" in it } -> Phone.TYPE_HOME
-                tokens.any { "fax" in it } -> Phone.TYPE_FAX_WORK
-                else -> Phone.TYPE_OTHER
+            if (phone.label != null) {
+                put(Phone.TYPE, Phone.TYPE_CUSTOM)
+                put(Phone.LABEL, phone.label)
+            } else {
+                val tokens = phone.types
+                put(
+                    Phone.TYPE,
+                    when {
+                        tokens.any { "cell" in it || "mobile" in it } -> Phone.TYPE_MOBILE
+                        tokens.any { "work" in it } -> Phone.TYPE_WORK
+                        tokens.any { "home" in it } -> Phone.TYPE_HOME
+                        tokens.any { "fax" in it } -> Phone.TYPE_FAX_WORK
+                        else -> Phone.TYPE_OTHER
+                    },
+                )
             }
-            put(Phone.TYPE, type)
             if (primary) put(Phone.IS_PRIMARY, 1)
         }
 
@@ -164,29 +222,39 @@ object VCardContactMapper {
             adr.region?.let { put(StructuredPostal.REGION, it) }
             adr.postalCode?.let { put(StructuredPostal.POSTCODE, it) }
             adr.country?.let { put(StructuredPostal.COUNTRY, it) }
-            val type = when {
-                adr.types.any { it == "home" } -> StructuredPostal.TYPE_HOME
-                adr.types.any { it == "work" } -> StructuredPostal.TYPE_WORK
-                else -> StructuredPostal.TYPE_OTHER
+            if (adr.label != null) {
+                put(StructuredPostal.TYPE, StructuredPostal.TYPE_CUSTOM)
+                put(StructuredPostal.LABEL, adr.label)
+            } else {
+                put(
+                    StructuredPostal.TYPE,
+                    when {
+                        adr.types.any { it == "home" } -> StructuredPostal.TYPE_HOME
+                        adr.types.any { it == "work" } -> StructuredPostal.TYPE_WORK
+                        else -> StructuredPostal.TYPE_OTHER
+                    },
+                )
             }
-            put(StructuredPostal.TYPE, type)
         }
 
     /**
-     * `ORG` components split company / department; `TITLE` rides the same row (the
-     * provider stores TITLE on the Organization mimetype). Emits nothing when the
-     * contact carries neither an organization nor a title.
+     * `ORG` components split company / department; `TITLE` and `ROLE` ride the same row
+     * (the provider stores both on the Organization mimetype — TITLE is the job title,
+     * JOB_DESCRIPTION the ROLE/function). Emits nothing when the contact carries none of
+     * organization, title, or role.
      */
     private fun organizationRow(contact: Contact): ContentValues? {
         val company = contact.organization.getOrNull(0)?.takeIf { it.isNotBlank() }
         val department = contact.organization.drop(1).joinToString("; ").takeIf { it.isNotBlank() }
         val title = contact.title?.takeIf { it.isNotBlank() }
-        if (company == null && department == null && title == null) return null
+        val role = contact.role?.takeIf { it.isNotBlank() }
+        if (company == null && department == null && title == null && role == null) return null
         return row(Organization.CONTENT_ITEM_TYPE) {
             put(Organization.TYPE, Organization.TYPE_WORK)
             company?.let { put(Organization.COMPANY, it) }
             department?.let { put(Organization.DEPARTMENT, it) }
             title?.let { put(Organization.TITLE, it) }
+            role?.let { put(Organization.JOB_DESCRIPTION, it) }
         }
     }
 

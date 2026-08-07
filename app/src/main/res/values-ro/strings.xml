@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgeturi</string>
     <string name="settings_widget_theme">Temă</string>
     <string name="settings_widget_accent_color">Accent</string>
+    <string name="hub_widget_theme">Temă widget</string>
+    <string name="hub_widget_accent">Accent widget</string>
     <string name="settings_widget_color_follow_app">Urmează aplicația</string>
     <string name="settings_widget_color_follow_app_desc">Folosește culoarea de accent și sursa aplicației</string>
     <string name="settings_widget_theme_follow_app">Urmează aplicația</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Calendare și conturi</string>
     <string name="settings_section_appearance">Aspect</string>
     <string name="settings_section_creating_events">Preferințe eveniment</string>
-    <string name="settings_section_sync">Notificări și sincronizare</string>
+    <string name="settings_section_sync">Sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
-    <string name="settings_section_privacy">Confidențialitate</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Blocare aplicație</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Se pare că acest server este în rețeaua ta locală. Permite accesul la rețeaua locală pentru ca KashCal să se poată conecta la el.</string>
     <string name="local_network_banner_allow">Permite accesul</string>
     <string name="local_network_banner_dismiss">Nu acum</string>
+    <string name="hub_app_permissions">Permisiuni aplicație</string>
+    <string name="status_allowed">Permis</string>
+    <string name="permission_name_notifications">Notificări</string>
+    <string name="permission_why_notifications">Ca KashCal să îți poată aminti de evenimentele tale. Fără aceasta, mementourile rămân silențioase.</string>
+    <string name="permission_name_contacts">Contacte</string>
+    <string name="permission_why_contacts">Sugerează invitați când adaugi persoane la un eveniment și afișează zilele de naștere ale contactelor. Contactele tale rămân pe dispozitivul tău.</string>
+    <string name="permission_name_calendars">Calendare</string>
+    <string name="permission_why_calendars">Afișează evenimentele din celelalte calendare de pe dispozitivul tău alături de ale tale.</string>
+    <string name="permission_name_local_network">Rețea locală</string>
+    <string name="permission_why_local_network">Accesează un server de calendar din rețeaua ta de acasă sau de la birou. Android 17 solicită aceasta separat de accesul la internet.</string>
     <string name="password_change_error_account_not_found">Cont negăsit</string>
     <string name="password_change_error_no_credentials">Nu există credențiale</string>
     <string name="password_change_error_unsupported_provider">Acest furnizor nu acceptă schimbarea parolei</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">CONT</string>
     <string name="account_detail_enabled">Activat</string>
     <string name="account_detail_enabled_subtitle">Sincronizează automat acest cont</string>
+    <string name="account_detail_sync_calendar">Calendar</string>
+    <string name="account_detail_sync_calendar_subtitle">Sincronizează calendarele acestui cont</string>
+    <string name="account_detail_sync_contacts">Contacte</string>
+    <string name="account_detail_sync_contacts_subtitle">Sincronizează contactele acestui cont pe telefonul tău</string>
+    <string name="account_detail_contacts_permission_needed">Permisiunea pentru Contacte este dezactivată. Acordă accesul pentru a menține sincronizarea contactelor.</string>
+    <string name="account_detail_contacts_grant">Acordă acces</string>
+    <string name="contact_sync_enabled_for">Se sincronizează contactele pentru %1$s</string>
+    <string name="contact_sync_disabled_for">Contactele de pe dispozitiv pentru %1$s au fost eliminate</string>
+    <string name="contact_sync_disabled_kept">Sincronizarea contactelor este dezactivată pentru %1$s. Contactele rămân deoarece un alt cont le sincronizează în continuare.</string>
+    <string name="contact_sync_disabled_incomplete">Sincronizarea contactelor este dezactivată pentru %1$s, dar unele contacte de pe dispozitiv pot rămâne. Verifică permisiunea Contacte.</string>
     <string name="account_detail_sync_now">Sincronizează acum</string>
     <string name="account_detail_syncing">Se sincronizează…</string>
     <string name="account_detail_discovering">Se descoperă…</string>
@@ -1248,6 +1269,8 @@
     <string name="hub_initials_save">Salvează</string>
     <string name="hub_initials_cancel">Anulează</string>
     <string name="hub_section_make_it_yours">Personalizează</string>
+    <string name="hub_section_own_your_calendar">Calendarul tău îți aparține</string>
+    <string name="hub_privacy_data_ownership">Cum rămân datele tale ale tale</string>
     <string name="hub_accounts_and_settings">Conturi și setări</string>
 
     <!-- ==================== Share Availability ==================== -->

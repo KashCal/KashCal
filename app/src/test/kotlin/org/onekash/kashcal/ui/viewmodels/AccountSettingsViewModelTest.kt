@@ -54,6 +54,7 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -259,6 +260,9 @@ class AccountSettingsViewModelTest {
             every { getString(org.onekash.kashcal.R.string.password_change_error_unsupported_provider) } returns "Provider does not support password change"
             every { getString(org.onekash.kashcal.R.string.password_change_error_invalid) } returns "Invalid password"
             every { getString(org.onekash.kashcal.R.string.password_change_error_network) } returns "Network error, try again"
+            every { getString(org.onekash.kashcal.R.string.contact_sync_enabled_for, "u***@example.com") } returns "Syncing contacts for u***@example.com"
+            every { getString(org.onekash.kashcal.R.string.contact_sync_disabled_for, "u***@example.com") } returns "Device contacts for u***@example.com removed"
+            every { getString(org.onekash.kashcal.R.string.contact_sync_disabled_kept, "u***@example.com") } returns "Contact sync off for u***@example.com. Contacts stay because another login still syncs them."
         }
         return AccountSettingsViewModel(
             accountRepository = accountRepository,
@@ -1871,34 +1875,6 @@ class AccountSettingsViewModelTest {
         assertEquals(3, viewModel.calendars.value.size)
     }
 
-    // ==================== Notification Permission Tests ====================
-
-    @Test
-    fun `notifications enabled by default on older Android`() = runTest {
-        // FakePermissionChecker defaults all permissions to true
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.notificationsEnabled.test {
-            assertEquals(true, expectMostRecentItem())
-        }
-    }
-
-    @Test
-    fun `refreshNotificationPermission updates state`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Change permission state (would need to mock Build.VERSION.SDK_INT for real test)
-        viewModel.refreshNotificationPermission()
-        advanceUntilIdle()
-
-        // Should still be true in test environment
-        viewModel.notificationsEnabled.test {
-            assertEquals(true, expectMostRecentItem())
-        }
-    }
-
     // ==================== Preferences Tests ====================
 
     @Test
@@ -1921,37 +1897,6 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setShowEventEmojis(false) }
-    }
-
-    @Test
-    fun `appLockEnabled surfaces the datastore value`() = runTest {
-        every { dataStore.appLockEnabled } returns kotlinx.coroutines.flow.flowOf(true)
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertTrue(viewModel.appLockEnabled.value)
-    }
-
-    @Test
-    fun `setAppLockEnabled true persists the flag`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.setAppLockEnabled(true)
-        advanceUntilIdle()
-
-        coVerify { dataStore.setAppLockEnabled(true) }
-    }
-
-    @Test
-    fun `setAppLockEnabled false persists the flag (disabling never routes to enrollment)`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.setAppLockEnabled(false)
-        advanceUntilIdle()
-
-        coVerify { dataStore.setAppLockEnabled(false) }
     }
 
     @Test
@@ -2797,6 +2742,125 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `syncAccountNow also pulls contacts when contact sync is enabled for the account`() = runTest {
+        // "Sync now" in the account sheet must cover contacts too when the user
+        // has contact sync on — otherwise the manual sync silently skips them and
+        // they only refresh at the next periodic tick.
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = true)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        // Scoped to this account — a single-account "Sync now" must not re-sweep
+        // every other contact-sync login's address books.
+        verify { syncScheduler.requestImmediateContactSync(10L) }
+    }
+
+    @Test
+    fun `syncAccountNow does not pull contacts when contact sync is off for the account`() = runTest {
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = false)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+    }
+
+    @Test
+    fun `syncAccountNow does not pull contacts when contacts permission is missing`() = runTest {
+        // Even with the flag on, a revoked WRITE_CONTACTS grant means the pull would
+        // only skip-and-flag — don't kick it (mirrors the enable-path gate).
+        permissionChecker.readContacts = false
+        permissionChecker.writeContacts = false
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = true)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+    }
+
+    @Test
+    fun `syncAccountNow raises the re-grant banner when contact sync is on but permission is missing`() = runTest {
+        // "Sync now" is a manual entry point that can run for a login whose periodic
+        // contact job was never scheduled, so the background worker never fires to
+        // raise the banner. Raise it here, mirroring the enable path, so the user sees
+        // why contacts didn't refresh.
+        permissionChecker.readContacts = false
+        permissionChecker.writeContacts = false
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = true)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setContactSyncPermissionNeeded(true) }
+    }
+
+    @Test
+    fun `syncAccountNow clears the re-grant banner when contact sync is on and permission is granted`() = runTest {
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = true)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setContactSyncPermissionNeeded(false) }
+    }
+
+    @Test
+    fun `syncAccountNow does not touch the re-grant banner when contact sync is off`() = runTest {
+        // A login without contact sync shouldn't flip the contact-sync feature's
+        // re-grant flag — that flag belongs to the feature, not to calendar sync.
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount.copy(contactSyncEnabled = false)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { dataStore.setContactSyncPermissionNeeded(any()) }
+    }
+
+    @Test
     fun `toggleAccountEnabled calls setEnabled`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2805,6 +2869,231 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { accountRepository.setEnabled(10L, false) }
+    }
+
+    @Test
+    fun `onToggleContactSync enable routes to repository`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        coVerify { accountRepository.setContactSyncEnabled(10L, true) }
+    }
+
+    @Test
+    fun `onToggleContactSync disable routes to repository`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, false)
+        advanceUntilIdle()
+
+        coVerify { accountRepository.setContactSyncEnabled(10L, false) }
+    }
+
+    @Test
+    fun `onToggleContactSync enable kicks an immediate contact pull and schedules the periodic job`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        // Without the immediate kick, contacts wouldn't sync until the next
+        // periodic tick (>=15 min) — and only if periodic was ever scheduled.
+        verify { syncScheduler.requestImmediateContactSync() }
+        // Ensure the recurring job exists too, so it isn't a one-time import.
+        verify { syncScheduler.ensureContactSyncScheduled(any()) }
+    }
+
+    @Test
+    fun `onToggleContactSync enable shows an inline confirmation naming the masked account`() = runTest {
+        // The confirmation lives in a sheet-local uiState field, NOT the snackbar:
+        // the SnackbarHost sits in the base window and renders behind the open
+        // ModalBottomSheet, so a snackbar only appears after the sheet is dismissed.
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        assertEquals(
+            "Syncing contacts for u***@example.com",
+            viewModel.uiState.value.contactSyncConfirmation?.message
+        )
+        // Enabling is benign — the checkmark tone, not a warning.
+        assertEquals(
+            ContactSyncConfirmation.Tone.POSITIVE,
+            viewModel.uiState.value.contactSyncConfirmation?.tone
+        )
+        // Must not leak into the (behind-the-sheet) snackbar channel.
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `onToggleContactSync disable shows an inline removed confirmation and kicks nothing`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, false)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+        verify(exactly = 0) { syncScheduler.ensureContactSyncScheduled(any()) }
+        assertEquals(
+            "Device contacts for u***@example.com removed",
+            viewModel.uiState.value.contactSyncConfirmation?.message
+        )
+        // Removing device contacts is destructive — it must carry the warning tone so
+        // the sheet doesn't render it with the same celebratory checkmark as enabling.
+        assertEquals(
+            ContactSyncConfirmation.Tone.WARNING,
+            viewModel.uiState.value.contactSyncConfirmation?.tone
+        )
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `onToggleContactSync disable kept by a sibling stays a positive-tone confirmation`() = runTest {
+        // Contacts weren't removed — a same-email sibling still syncs them, so the
+        // purge was NOT_ATTEMPTED. Nothing destructive happened, so the confirmation
+        // must read as benign (positive tone), not a warning.
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { accountRepository.setContactSyncEnabled(10L, false) } returns
+            org.onekash.kashcal.data.repository.ContactPurgeOutcome.NOT_ATTEMPTED
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, false)
+        advanceUntilIdle()
+
+        assertEquals(
+            ContactSyncConfirmation.Tone.POSITIVE,
+            viewModel.uiState.value.contactSyncConfirmation?.tone
+        )
+    }
+
+    @Test
+    fun `clearContactSyncConfirmation resets the inline confirmation`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, false)
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.contactSyncConfirmation)
+
+        viewModel.clearContactSyncConfirmation()
+
+        assertNull(viewModel.uiState.value.contactSyncConfirmation)
+    }
+
+    @Test
+    fun `onToggleContactSync enable without contacts permission persists flag but does not kick sync`() = runTest {
+        // Defense-in-depth: the UI gates enabling behind a permission request,
+        // but if the VM enable path is reached without READ+WRITE the pull would
+        // only skip-and-flag downstream. Persist the flag (so the re-grant banner
+        // shows) but don't kick a pull or claim we're syncing.
+        permissionChecker.readContacts = false
+        permissionChecker.writeContacts = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        coVerify { accountRepository.setContactSyncEnabled(10L, true) }
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+        verify(exactly = 0) { syncScheduler.ensureContactSyncScheduled(any()) }
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        // No "Syncing contacts for…" claim when the pull can't actually run.
+        assertNull(viewModel.uiState.value.contactSyncConfirmation)
+    }
+
+    @Test
+    fun `onToggleContactSync enable with only write permission does not kick sync`() = runTest {
+        // A partial grant (write but not read) can't mirror server contacts, so
+        // it must not enable the pull — mirrors contactSyncPermissionGranted.
+        permissionChecker.readContacts = false
+        permissionChecker.writeContacts = true
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `hasContactsSyncPermission requires both read and write`() = runTest {
+        // The sync toggle needs READ + WRITE (it mirrors server contacts onto the
+        // device). It must NOT reuse the read-only hasContactsPermission signal
+        // (that one gates the birthday/anniversary reads, which need READ alone) —
+        // otherwise a read-granted/write-denied login flips the toggle on but never
+        // requests WRITE, never pulls, and shows nothing.
+        permissionChecker.readContacts = true
+        permissionChecker.writeContacts = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.hasContactsPermission.value)
+        assertFalse(viewModel.hasContactsSyncPermission.value)
+
+        permissionChecker.writeContacts = true
+        viewModel.refreshContactsPermission()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.hasContactsSyncPermission.value)
+    }
+
+    @Test
+    fun `onToggleContactSync enable without permission flags the re-grant banner`() = runTest {
+        // The re-grant banner reads contactSyncPermissionNeeded. If we relied only
+        // on the background worker to set it, a never-scheduled login (manual-only,
+        // or predating the feature) would show no feedback at all — the worker
+        // never runs. Flag it at enable time.
+        permissionChecker.readContacts = false
+        permissionChecker.writeContacts = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setContactSyncPermissionNeeded(true) }
+    }
+
+    @Test
+    fun `onToggleContactSync enable with permission clears the re-grant flag`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setContactSyncPermissionNeeded(false) }
+    }
+
+    @Test
+    fun `onToggleContactSync enable on manual-only interval imports once without scheduling periodic`() = runTest {
+        // Manual-only is the repository's Long.MAX_VALUE sentinel. As with calendar
+        // sync, we don't schedule a periodic contact job in that mode, but we still
+        // fire the one-time pull so enabling has an immediate effect.
+        syncIntervalFlow.value = Long.MAX_VALUE
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactSync(10L, true)
+        advanceUntilIdle()
+
+        verify { syncScheduler.requestImmediateContactSync() }
+        verify(exactly = 0) { syncScheduler.ensureContactSyncScheduled(any()) }
     }
 
     @Test

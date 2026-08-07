@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widget</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Aksen</string>
+    <string name="hub_widget_theme">Tema widget</string>
+    <string name="hub_widget_accent">Aksen widget</string>
     <string name="settings_widget_color_follow_app">Ikuti aplikasi</string>
     <string name="settings_widget_color_follow_app_desc">Gunakan warna aksen dan sumber aplikasi</string>
     <string name="settings_widget_theme_follow_app">Ikuti aplikasi</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalender &amp; akun</string>
     <string name="settings_section_appearance">Tampilan</string>
     <string name="settings_section_creating_events">Preferensi acara</string>
-    <string name="settings_section_sync">Notifikasi &amp; sinkronisasi</string>
+    <string name="settings_section_sync">Sinkronisasi</string>
     <string name="settings_section_data">Cadangkan &amp; Pulihkan</string>
-    <string name="settings_section_privacy">Privasi</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kunci aplikasi</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Server ini sepertinya ada di jaringan lokalmu. Izinkan akses jaringan lokal agar KashCal bisa terhubung ke server ini.</string>
     <string name="local_network_banner_allow">Izinkan akses</string>
     <string name="local_network_banner_dismiss">Nanti saja</string>
+    <string name="hub_app_permissions">Izin aplikasi</string>
+    <string name="status_allowed">Diizinkan</string>
+    <string name="permission_name_notifications">Notifikasi</string>
+    <string name="permission_why_notifications">Agar KashCal dapat mengingatkan Anda tentang acara. Tanpa itu, pengingat tetap senyap.</string>
+    <string name="permission_name_contacts">Kontak</string>
+    <string name="permission_why_contacts">Menyarankan tamu saat Anda menambahkan orang ke acara, dan menampilkan ulang tahun kontak. Kontak Anda tetap di perangkat Anda.</string>
+    <string name="permission_name_calendars">Kalender</string>
+    <string name="permission_why_calendars">Menampilkan acara dari kalender lain di perangkat Anda bersama acara Anda sendiri.</string>
+    <string name="permission_name_local_network">Jaringan lokal</string>
+    <string name="permission_why_local_network">Menjangkau server kalender di jaringan rumah atau kantor Anda. Android 17 meminta ini terpisah dari akses internet.</string>
     <string name="password_change_error_account_not_found">Akun tidak ditemukan</string>
     <string name="password_change_error_no_credentials">Tidak ada kredensial yang tersimpan</string>
     <string name="password_change_error_unsupported_provider">Penyedia ini tidak mendukung penggantian kata sandi</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">AKUN</string>
     <string name="account_detail_enabled">Diaktifkan</string>
     <string name="account_detail_enabled_subtitle">Sinkronkan akun ini secara otomatis</string>
+    <string name="account_detail_sync_calendar">Kalender</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinkronkan kalender akun ini</string>
+    <string name="account_detail_sync_contacts">Kontak</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinkronkan kontak akun ini ke ponsel Anda</string>
+    <string name="account_detail_contacts_permission_needed">Izin Kontak nonaktif. Berikan akses agar kontak tetap tersinkronisasi.</string>
+    <string name="account_detail_contacts_grant">Berikan akses</string>
+    <string name="contact_sync_enabled_for">Menyinkronkan kontak untuk %1$s</string>
+    <string name="contact_sync_disabled_for">Kontak perangkat untuk %1$s dihapus</string>
+    <string name="contact_sync_disabled_kept">Sinkronisasi kontak nonaktif untuk %1$s. Kontak tetap ada karena login lain masih menyinkronkannya.</string>
+    <string name="contact_sync_disabled_incomplete">Sinkronisasi kontak nonaktif untuk %1$s, tetapi beberapa kontak perangkat mungkin tetap ada. Periksa izin Kontak.</string>
     <string name="account_detail_sync_now">Sinkronkan Sekarang</string>
     <string name="account_detail_syncing">Menyinkronkan…</string>
     <string name="account_detail_discovering">Menemukan…</string>
@@ -1149,6 +1170,8 @@
     <string name="hub_initials_save">Simpan</string>
     <string name="hub_initials_cancel">Batal</string>
     <string name="hub_section_make_it_yours">Jadikan milikmu</string>
+    <string name="hub_section_own_your_calendar">Miliki kalender Anda</string>
+    <string name="hub_privacy_data_ownership">Bagaimana data Anda tetap milik Anda</string>
     <string name="hub_accounts_and_settings">Akun &amp; Setelan</string>
 
     <!-- ==================== Share Availability ==================== -->

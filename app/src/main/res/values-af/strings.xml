@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Legstukke</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Aksent</string>
+    <string name="hub_widget_theme">Legstuk-tema</string>
+    <string name="hub_widget_accent">Legstuk-aksent</string>
     <string name="settings_widget_color_follow_app">Volg die app</string>
     <string name="settings_widget_color_follow_app_desc">Gebruik die program se aksentkleur en bron</string>
     <string name="settings_widget_theme_follow_app">Volg die app</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalenders &amp; rekeninge</string>
     <string name="settings_section_appearance">Voorkoms</string>
     <string name="settings_section_creating_events">Gebeurtenisvoorkeure</string>
-    <string name="settings_section_sync">Kennisgewings &amp; sinkronisering</string>
+    <string name="settings_section_sync">Sinkronisering</string>
     <string name="settings_section_data">Rugsteun &amp; Herstel</string>
-    <string name="settings_section_privacy">Privaatheid</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Toeslot</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Hierdie bediener lyk of dit op jou plaaslike netwerk is. Laat plaaslike netwerktoegang toe sodat KashCal daaraan kan verbind.</string>
     <string name="local_network_banner_allow">Laat toegang toe</string>
     <string name="local_network_banner_dismiss">Nie nou nie</string>
+    <string name="hub_app_permissions">App-toestemmings</string>
+    <string name="status_allowed">Toegelaat</string>
+    <string name="permission_name_notifications">Kennisgewings</string>
+    <string name="permission_why_notifications">Sodat KashCal jou aan jou gebeurtenisse kan herinner. Daarsonder bly herinnerings stil.</string>
+    <string name="permission_name_contacts">Kontakte</string>
+    <string name="permission_why_contacts">Stel gaste voor terwyl jy mense by \'n gebeurtenis voeg, en wys kontakte se verjaarsdae. Jou kontakte bly op jou toestel.</string>
+    <string name="permission_name_calendars">Kalenders</string>
+    <string name="permission_why_calendars">Wys gebeurtenisse van die ander kalenders op jou toestel langs jou eie.</string>
+    <string name="permission_name_local_network">Plaaslike netwerk</string>
+    <string name="permission_why_local_network">Bereik \'n kalenderbediener op jou tuis- of kantoornetwerk. Android 17 vra hiervoor apart van internettoegang.</string>
     <string name="password_change_error_account_not_found">Rekening nie gevind nie</string>
     <string name="password_change_error_no_credentials">Geen bestaande geloofsbriewe nie</string>
     <string name="password_change_error_unsupported_provider">Hierdie verskaffer ondersteun nie wagwoordverandering nie</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">REKENING</string>
     <string name="account_detail_enabled">Geaktiveer</string>
     <string name="account_detail_enabled_subtitle">Sinkroniseer hierdie rekening outomaties</string>
+    <string name="account_detail_sync_calendar">Kalender</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinkroniseer hierdie rekening se kalenders</string>
+    <string name="account_detail_sync_contacts">Kontakte</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinkroniseer hierdie rekening se kontakte na jou foon</string>
+    <string name="account_detail_contacts_permission_needed">Kontaktoestemming is af. Verleen toegang om kontakte te bly sinkroniseer.</string>
+    <string name="account_detail_contacts_grant">Verleen toegang</string>
+    <string name="contact_sync_enabled_for">Sinchroniseer kontakte vir %1$s</string>
+    <string name="contact_sync_disabled_for">Toestelkontakte vir %1$s verwyder</string>
+    <string name="contact_sync_disabled_kept">Kontaktsinkronisering af vir %1$s. Kontakte bly omdat \'n ander aanmelding hulle steeds sinkroniseer.</string>
+    <string name="contact_sync_disabled_incomplete">Kontaktsinkronisering af vir %1$s, maar sommige toestelkontakte kan bly. Gaan die Kontakte-toestemming na.</string>
     <string name="account_detail_sync_now">Sinkroniseer Nou</string>
     <string name="account_detail_syncing">Besig om te sinkroniseer…</string>
     <string name="account_detail_discovering">Besig om te ontdek…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Stoor</string>
     <string name="hub_initials_cancel">Kanselleer</string>
     <string name="hub_section_make_it_yours">Maak dit joune</string>
+    <string name="hub_section_own_your_calendar">Besit jou kalender</string>
+    <string name="hub_privacy_data_ownership">Hoe jou data joune bly</string>
     <string name="hub_accounts_and_settings">Rekeninge en instellings</string>
 
     <!-- ==================== Share Availability ==================== -->

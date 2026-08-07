@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ਵਿਜੇਟ</string>
     <string name="settings_widget_theme">ਥੀਮ</string>
     <string name="settings_widget_accent_color">ਐਕਸੈਂਟ</string>
+    <string name="hub_widget_theme">ਵਿਜੇਟ ਥੀਮ</string>
+    <string name="hub_widget_accent">ਵਿਜੇਟ ਐਕਸੈਂਟ</string>
     <string name="settings_widget_color_follow_app">ਐਪ ਦੀ ਪਾਲਣਾ ਕਰੋ</string>
     <string name="settings_widget_color_follow_app_desc">ਐਪ ਦਾ ਐਕਸੈਂਟ ਰੰਗ ਅਤੇ ਸਰੋਤ ਵਰਤੋ</string>
     <string name="settings_widget_theme_follow_app">ਐਪ ਦੀ ਪਾਲਣਾ ਕਰੋ</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">ਕੈਲੰਡਰ &amp; ਖਾਤੇ</string>
     <string name="settings_section_appearance">ਦਿੱਖ</string>
     <string name="settings_section_creating_events">ਘਟਨਾ ਤਰਜੀਹਾਂ</string>
-    <string name="settings_section_sync">ਸੂਚਨਾਵਾਂ &amp; ਸਿੰਕ</string>
+    <string name="settings_section_sync">ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
-    <string name="settings_section_privacy">ਪਰਦੇਦਾਰੀ</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ਐਪ ਲਾਕ</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ਇਹ ਸਰਵਰ ਤੁਹਾਡੇ ਲੋਕਲ ਨੈੱਟਵਰਕ ਉੱਤੇ ਜਾਪਦਾ ਹੈ। KashCal ਇਸ ਨਾਲ ਕਨੈਕਟ ਕਰ ਸਕੇ, ਇਸ ਲਈ ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
     <string name="local_network_banner_allow">ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ</string>
     <string name="local_network_banner_dismiss">ਹੁਣੇ ਨਹੀਂ</string>
+    <string name="hub_app_permissions">ਐਪ ਇਜਾਜ਼ਤਾਂ</string>
+    <string name="status_allowed">ਇਜਾਜ਼ਤ ਹੈ</string>
+    <string name="permission_name_notifications">ਸੂਚਨਾਵਾਂ</string>
+    <string name="permission_why_notifications">ਤਾਂ ਜੋ KashCal ਤੁਹਾਨੂੰ ਤੁਹਾਡੀਆਂ ਘਟਨਾਵਾਂ ਬਾਰੇ ਯਾਦ ਕਰਾ ਸਕੇ। ਇਸ ਤੋਂ ਬਿਨਾਂ, ਯਾਦ-ਦਹਾਨੀਆਂ ਚੁੱਪ ਰਹਿੰਦੀਆਂ ਹਨ।</string>
+    <string name="permission_name_contacts">ਸੰਪਰਕ</string>
+    <string name="permission_why_contacts">ਜਦੋਂ ਤੁਸੀਂ ਕਿਸੇ ਘਟਨਾ ਵਿੱਚ ਲੋਕ ਜੋੜਦੇ ਹੋ ਤਾਂ ਮਹਿਮਾਨਾਂ ਦਾ ਸੁਝਾਅ ਦਿੰਦੀ ਹੈ, ਅਤੇ ਸੰਪਰਕ ਜਨਮਦਿਨ ਦਿਖਾਉਂਦੀ ਹੈ। ਤੁਹਾਡੇ ਸੰਪਰਕ ਤੁਹਾਡੇ ਡੀਵਾਈਸ \'ਤੇ ਹੀ ਰਹਿੰਦੇ ਹਨ।</string>
+    <string name="permission_name_calendars">ਕੈਲੰਡਰ</string>
+    <string name="permission_why_calendars">ਤੁਹਾਡੇ ਡੀਵਾਈਸ \'ਤੇ ਹੋਰ ਕੈਲੰਡਰਾਂ ਦੀਆਂ ਘਟਨਾਵਾਂ ਨੂੰ ਤੁਹਾਡੀਆਂ ਆਪਣੀਆਂ ਘਟਨਾਵਾਂ ਦੇ ਨਾਲ ਦਿਖਾਉਂਦੀ ਹੈ।</string>
+    <string name="permission_name_local_network">ਲੋਕਲ ਨੈੱਟਵਰਕ</string>
+    <string name="permission_why_local_network">ਤੁਹਾਡੇ ਘਰ ਜਾਂ ਦਫ਼ਤਰ ਦੇ ਨੈੱਟਵਰਕ \'ਤੇ ਕੈਲੰਡਰ ਸਰਵਰ ਤੱਕ ਪਹੁੰਚਦੀ ਹੈ। Android 17 ਇਸ ਨੂੰ ਇੰਟਰਨੈੱਟ ਪਹੁੰਚ ਤੋਂ ਵੱਖਰੇ ਤੌਰ \'ਤੇ ਮੰਗਦਾ ਹੈ।</string>
     <string name="password_change_error_account_not_found">ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ</string>
     <string name="password_change_error_no_credentials">ਕੋਈ ਮੌਜੂਦਾ ਪ੍ਰਮਾਣ-ਪੱਤਰ ਨਹੀਂ</string>
     <string name="password_change_error_unsupported_provider">ਇਹ ਪ੍ਰਦਾਤਾ ਪਾਸਵਰਡ ਬਦਲਣ ਦਾ ਸਮਰਥਨ ਨਹੀਂ ਕਰਦਾ</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ਖਾਤਾ</string>
     <string name="account_detail_enabled">ਸਮਰੱਥ</string>
     <string name="account_detail_enabled_subtitle">ਇਹ ਖਾਤਾ ਆਪਣੇ ਆਪ ਸਿੰਕ ਕਰੋ</string>
+    <string name="account_detail_sync_calendar">ਕੈਲੰਡਰ</string>
+    <string name="account_detail_sync_calendar_subtitle">ਇਸ ਖਾਤੇ ਦੇ ਕੈਲੰਡਰ ਸਿੰਕ ਕਰੋ</string>
+    <string name="account_detail_sync_contacts">ਸੰਪਰਕ</string>
+    <string name="account_detail_sync_contacts_subtitle">ਇਸ ਖਾਤੇ ਦੇ ਸੰਪਰਕ ਆਪਣੇ ਫ਼ੋਨ ਨਾਲ ਸਿੰਕ ਕਰੋ</string>
+    <string name="account_detail_contacts_permission_needed">ਸੰਪਰਕ ਇਜਾਜ਼ਤ ਬੰਦ ਹੈ। ਸੰਪਰਕ ਸਿੰਕ ਹੁੰਦੇ ਰੱਖਣ ਲਈ ਪਹੁੰਚ ਦਿਓ।</string>
+    <string name="account_detail_contacts_grant">ਪਹੁੰਚ ਦਿਓ</string>
+    <string name="contact_sync_enabled_for">%1$s ਲਈ ਸੰਪਰਕ ਸਿੰਕ ਹੋ ਰਹੇ ਹਨ</string>
+    <string name="contact_sync_disabled_for">%1$s ਲਈ ਡੀਵਾਈਸ ਸੰਪਰਕ ਹਟਾ ਦਿੱਤੇ ਗਏ</string>
+    <string name="contact_sync_disabled_kept">%1$s ਲਈ ਸੰਪਰਕ ਸਿੰਕ ਬੰਦ ਹੈ। ਸੰਪਰਕ ਰਹਿੰਦੇ ਹਨ ਕਿਉਂਕਿ ਕੋਈ ਹੋਰ ਲੌਗਇਨ ਅਜੇ ਵੀ ਇਹਨਾਂ ਨੂੰ ਸਿੰਕ ਕਰਦਾ ਹੈ।</string>
+    <string name="contact_sync_disabled_incomplete">%1$s ਲਈ ਸੰਪਰਕ ਸਿੰਕ ਬੰਦ ਹੈ, ਪਰ ਕੁਝ ਡੀਵਾਈਸ ਸੰਪਰਕ ਰਹਿ ਸਕਦੇ ਹਨ। ਸੰਪਰਕ ਇਜਾਜ਼ਤ ਦੀ ਜਾਂਚ ਕਰੋ।</string>
     <string name="account_detail_sync_now">ਹੁਣੇ ਸਿੰਕ</string>
     <string name="account_detail_syncing">ਸਿੰਕ ਹੋ ਰਿਹਾ ਹੈ…</string>
     <string name="account_detail_discovering">ਖੋਜ ਰਿਹਾ ਹੈ…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">ਸੇਵ ਕਰੋ</string>
     <string name="hub_initials_cancel">ਰੱਦ ਕਰੋ</string>
     <string name="hub_section_make_it_yours">ਆਪਣੇ ਮੁਤਾਬਕ ਬਣਾਓ</string>
+    <string name="hub_section_own_your_calendar">ਆਪਣੇ ਕੈਲੰਡਰ ਦੇ ਮਾਲਕ ਬਣੋ</string>
+    <string name="hub_privacy_data_ownership">ਤੁਹਾਡਾ ਡਾਟਾ ਕਿਵੇਂ ਤੁਹਾਡਾ ਹੀ ਰਹਿੰਦਾ ਹੈ</string>
     <string name="hub_accounts_and_settings">ਖਾਤੇ ਅਤੇ ਸੈਟਿੰਗਾਂ</string>
 
     <!-- ==================== Share Availability ==================== -->

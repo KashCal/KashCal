@@ -1966,7 +1966,7 @@ class MigrationTest {
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(21, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(22, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -2015,6 +2015,8 @@ class MigrationTest {
         assertEquals(22, migrations[19].endVersion)
         assertEquals(22, migrations[20].startVersion)
         assertEquals(23, migrations[20].endVersion)
+        assertEquals(23, migrations[21].startVersion)
+        assertEquals(24, migrations[21].endVersion)
     }
 
     @Test

@@ -110,14 +110,12 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.syncIntervalMs } returns MutableStateFlow(24 * 60 * 60 * 1000L)
         every { vm.subscriptions } returns MutableStateFlow(emptyList<IcsSubscriptionUiModel>())
         every { vm.subscriptionSyncing } returns MutableStateFlow(false)
-        every { vm.notificationsEnabled } returns MutableStateFlow(true)
         every { vm.defaultReminderTimed } returns MutableStateFlow(15)
         every { vm.defaultReminderAllDay } returns MutableStateFlow(900)
         every { vm.defaultEventDuration } returns MutableStateFlow(30)
         every { vm.showEventEmojis } returns MutableStateFlow(true)
         every { vm.quickAddEnabled } returns MutableStateFlow(false)
         every { vm.titleSuggestionsEnabled } returns MutableStateFlow(true)
-        every { vm.appLockEnabled } returns MutableStateFlow(false)
         every { vm.timeFormat } returns MutableStateFlow(KashCalDataStore.TIME_FORMAT_SYSTEM)
         every { vm.firstDayOfWeek } returns MutableStateFlow(java.util.Calendar.SUNDAY)
         every { vm.showWeekNumbers } returns MutableStateFlow(weekNumbers)
@@ -130,6 +128,8 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.contactBirthdaysColor } returns MutableStateFlow(0)
         every { vm.contactBirthdaysReminder } returns MutableStateFlow(0)
         every { vm.hasContactsPermission } returns MutableStateFlow(false)
+        every { vm.hasContactsSyncPermission } returns MutableStateFlow(false)
+        every { vm.contactSyncPermissionNeeded } returns MutableStateFlow(false)
         every { vm.birthdayCount } returns MutableStateFlow(0)
         every { vm.contactAnniversariesEnabled } returns MutableStateFlow(false)
         every { vm.contactAnniversariesColor } returns MutableStateFlow(0)
@@ -213,7 +213,6 @@ class AccountSettingsScreenViewModelWiringTest {
         verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
         verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
         verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
-        verify(exactly = 0) { vm.setAppLockEnabled(any()) }
     }
 
     @Test
@@ -231,7 +230,6 @@ class AccountSettingsScreenViewModelWiringTest {
         verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
         verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
         verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
-        verify(exactly = 0) { vm.setAppLockEnabled(any()) }
         // No same-typed (Int) neighbour fired either.
         verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
     }

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">위젯</string>
     <string name="settings_widget_theme">테마</string>
     <string name="settings_widget_accent_color">강조 색상</string>
+    <string name="hub_widget_theme">위젯 테마</string>
+    <string name="hub_widget_accent">위젯 강조 색상</string>
     <string name="settings_widget_color_follow_app">앱 설정 따르기</string>
     <string name="settings_widget_color_follow_app_desc">앱의 강조 색상과 소스를 사용해요</string>
     <string name="settings_widget_theme_follow_app">앱 설정 따르기</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">캘린더 및 계정</string>
     <string name="settings_section_appearance">표시</string>
     <string name="settings_section_creating_events">일정 환경설정</string>
-    <string name="settings_section_sync">알림 및 동기화</string>
+    <string name="settings_section_sync">동기화</string>
     <string name="settings_section_data">백업 &amp; 복원</string>
-    <string name="settings_section_privacy">개인정보 보호</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">앱 잠금</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">이 서버는 로컬 네트워크에 있는 것 같아요. KashCal이 연결할 수 있도록 로컬 네트워크 액세스를 허용해 주세요.</string>
     <string name="local_network_banner_allow">액세스 허용</string>
     <string name="local_network_banner_dismiss">나중에</string>
+    <string name="hub_app_permissions">앱 권한</string>
+    <string name="status_allowed">허용됨</string>
+    <string name="permission_name_notifications">알림</string>
+    <string name="permission_why_notifications">KashCal이 일정을 알려줄 수 있도록 해요. 허용하지 않으면 리마인더가 소리 없이 지나가요.</string>
+    <string name="permission_name_contacts">연락처</string>
+    <string name="permission_why_contacts">일정에 사람을 추가할 때 게스트를 추천하고 연락처 생일을 표시해요. 연락처는 기기에만 저장돼요.</string>
+    <string name="permission_name_calendars">캘린더</string>
+    <string name="permission_why_calendars">기기에 있는 다른 캘린더의 일정을 내 일정과 함께 보여줘요.</string>
+    <string name="permission_name_local_network">로컬 네트워크</string>
+    <string name="permission_why_local_network">집이나 사무실 네트워크의 캘린더 서버에 연결해요. Android 17은 이 권한을 인터넷 접근과 별도로 요청해요.</string>
     <string name="password_change_error_account_not_found">계정을 찾을 수 없어요</string>
     <string name="password_change_error_no_credentials">기존 인증 정보가 없어요</string>
     <string name="password_change_error_unsupported_provider">이 제공자는 비밀번호 변경을 지원하지 않아요</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">계정</string>
     <string name="account_detail_enabled">활성화</string>
     <string name="account_detail_enabled_subtitle">이 계정을 자동 동기화</string>
+    <string name="account_detail_sync_calendar">캘린더</string>
+    <string name="account_detail_sync_calendar_subtitle">이 계정의 캘린더를 동기화해요</string>
+    <string name="account_detail_sync_contacts">연락처</string>
+    <string name="account_detail_sync_contacts_subtitle">이 계정의 연락처를 휴대폰에 동기화해요</string>
+    <string name="account_detail_contacts_permission_needed">연락처 권한이 꺼져 있어요. 연락처 동기화를 계속하려면 접근을 허용해 주세요.</string>
+    <string name="account_detail_contacts_grant">접근 허용</string>
+    <string name="contact_sync_enabled_for">%1$s의 연락처를 동기화하는 중</string>
+    <string name="contact_sync_disabled_for">%1$s의 기기 연락처를 삭제했습니다</string>
+    <string name="contact_sync_disabled_kept">%1$s의 연락처 동기화를 껐어요. 같은 이메일을 사용하는 다른 로그인이 계속 동기화하므로 연락처는 유지돼요.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s의 연락처 동기화를 껐지만 일부 기기 연락처가 남아 있을 수 있어요. 연락처 권한을 확인해 주세요.</string>
     <string name="account_detail_sync_now">지금 동기화</string>
     <string name="account_detail_syncing">동기화 중…</string>
     <string name="account_detail_discovering">검색 중…</string>
@@ -1148,6 +1169,8 @@
     <string name="hub_initials_save">저장</string>
     <string name="hub_initials_cancel">취소</string>
     <string name="hub_section_make_it_yours">나만의 스타일로</string>
+    <string name="hub_section_own_your_calendar">내 캘린더</string>
+    <string name="hub_privacy_data_ownership">데이터가 내 것으로 유지되는 방식</string>
     <string name="hub_accounts_and_settings">계정 및 설정</string>
 
     <!-- ==================== Share Availability ==================== -->

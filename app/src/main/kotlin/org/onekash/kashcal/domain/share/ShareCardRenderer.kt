@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.util.sanitizeExportBaseName
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
@@ -144,12 +145,7 @@ class ShareCardRenderer @Inject constructor() {
     }
 
     private fun sanitize(name: String): String {
-        val cleaned = name
-            .replace(Regex("[^a-zA-Z0-9\\s-]"), "")
-            .replace(Regex("\\s+"), "-")
-            .trim('-')
-            .take(MAX_FILENAME_LENGTH)
-            .ifEmpty { "share-card" }
+        val cleaned = sanitizeExportBaseName(name, fallback = "share-card", maxLength = MAX_FILENAME_LENGTH)
         return "${cleaned}.png"
     }
 }

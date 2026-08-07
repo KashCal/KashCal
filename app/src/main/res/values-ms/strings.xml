@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widget</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Aksen</string>
+    <string name="hub_widget_theme">Tema widget</string>
+    <string name="hub_widget_accent">Aksen widget</string>
     <string name="settings_widget_color_follow_app">Ikut apl</string>
     <string name="settings_widget_color_follow_app_desc">Guna warna aksen dan sumber apl</string>
     <string name="settings_widget_theme_follow_app">Ikut apl</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendar dan akaun</string>
     <string name="settings_section_appearance">Penampilan</string>
     <string name="settings_section_creating_events">Keutamaan acara</string>
-    <string name="settings_section_sync">Pemberitahuan dan penyegerakan</string>
+    <string name="settings_section_sync">Penyegerakan</string>
     <string name="settings_section_data">Sandaran &amp; Pemulihan</string>
-    <string name="settings_section_privacy">Privasi</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kunci apl</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Pelayan ini nampaknya berada pada rangkaian setempat anda. Benarkan akses rangkaian setempat supaya KashCal boleh menyambung kepadanya.</string>
     <string name="local_network_banner_allow">Benarkan akses</string>
     <string name="local_network_banner_dismiss">Bukan sekarang</string>
+    <string name="hub_app_permissions">Kebenaran apl</string>
+    <string name="status_allowed">Dibenarkan</string>
+    <string name="permission_name_notifications">Pemberitahuan</string>
+    <string name="permission_why_notifications">Supaya KashCal boleh mengingatkan anda tentang acara anda. Tanpanya, peringatan akan senyap.</string>
+    <string name="permission_name_contacts">Kenalan</string>
+    <string name="permission_why_contacts">Mencadangkan tetamu semasa anda menambah orang ke acara, dan memaparkan hari lahir kenalan. Kenalan anda kekal pada peranti anda.</string>
+    <string name="permission_name_calendars">Kalendar</string>
+    <string name="permission_why_calendars">Memaparkan acara daripada kalendar lain pada peranti anda bersama acara anda sendiri.</string>
+    <string name="permission_name_local_network">Rangkaian setempat</string>
+    <string name="permission_why_local_network">Menghubungi pelayan kalendar pada rangkaian rumah atau pejabat anda. Android 17 meminta kebenaran ini secara berasingan daripada akses internet.</string>
     <string name="password_change_error_account_not_found">Akaun tidak dijumpai</string>
     <string name="password_change_error_no_credentials">Tiada kelayakan sedia ada</string>
     <string name="password_change_error_unsupported_provider">Penyedia ini tidak menyokong penukaran kata laluan</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">AKAUN</string>
     <string name="account_detail_enabled">Didayakan</string>
     <string name="account_detail_enabled_subtitle">Segerakkan akaun ini secara automatik</string>
+    <string name="account_detail_sync_calendar">Kalendar</string>
+    <string name="account_detail_sync_calendar_subtitle">Segerakkan kalendar akaun ini</string>
+    <string name="account_detail_sync_contacts">Kenalan</string>
+    <string name="account_detail_sync_contacts_subtitle">Segerakkan kenalan akaun ini ke telefon anda</string>
+    <string name="account_detail_contacts_permission_needed">Kebenaran Kenalan dimatikan. Berikan akses untuk terus menyegerakkan kenalan.</string>
+    <string name="account_detail_contacts_grant">Berikan akses</string>
+    <string name="contact_sync_enabled_for">Menyegerakkan kenalan untuk %1$s</string>
+    <string name="contact_sync_disabled_for">Kenalan peranti untuk %1$s dialih keluar</string>
+    <string name="contact_sync_disabled_kept">Penyegerakan kenalan dimatikan untuk %1$s. Kenalan kekal kerana log masuk lain masih menyegerakkannya.</string>
+    <string name="contact_sync_disabled_incomplete">Penyegerakan kenalan dimatikan untuk %1$s, tetapi sesetengah kenalan peranti mungkin masih kekal. Sila semak kebenaran Kenalan.</string>
     <string name="account_detail_sync_now">Segerak Sekarang</string>
     <string name="account_detail_syncing">Menyegerakkan…</string>
     <string name="account_detail_discovering">Mencari…</string>
@@ -1149,6 +1170,8 @@
     <string name="hub_initials_save">Simpan</string>
     <string name="hub_initials_cancel">Batal</string>
     <string name="hub_section_make_it_yours">Jadikan milik anda</string>
+    <string name="hub_section_own_your_calendar">Kalendar anda</string>
+    <string name="hub_privacy_data_ownership">Cara data anda kekal milik anda</string>
     <string name="hub_accounts_and_settings">Akaun &amp; Tetapan</string>
 
     <!-- ==================== Share Availability ==================== -->

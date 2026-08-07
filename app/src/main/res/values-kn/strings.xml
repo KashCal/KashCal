@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ವಿಜೆಟ್‌ಗಳು</string>
     <string name="settings_widget_theme">ಥೀಮ್</string>
     <string name="settings_widget_accent_color">ಆ್ಯಕ್ಸೆಂಟ್</string>
+    <string name="hub_widget_theme">ವಿಜೆಟ್ ಥೀಮ್</string>
+    <string name="hub_widget_accent">ವಿಜೆಟ್ ಆ್ಯಕ್ಸೆಂಟ್</string>
     <string name="settings_widget_color_follow_app">ಆ್ಯಪ್ ಅನುಸರಿಸಿ</string>
     <string name="settings_widget_color_follow_app_desc">ಆ್ಯಪ್‌ನ ಆ್ಯಕ್ಸೆಂಟ್ ಬಣ್ಣ ಮತ್ತು ಮೂಲವನ್ನು ಬಳಸಿ</string>
     <string name="settings_widget_theme_follow_app">ಆ್ಯಪ್ ಅನುಸರಿಸಿ</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು &amp; ಖಾತೆಗಳು</string>
     <string name="settings_section_appearance">ಗೋಚರಿಕೆ</string>
     <string name="settings_section_creating_events">ಈವೆಂಟ್ ಆದ್ಯತೆಗಳು</string>
-    <string name="settings_section_sync">ಅಧಿಸೂಚನೆಗಳು &amp; ಸಿಂಕ್</string>
+    <string name="settings_section_sync">ಸಿಂಕ್</string>
     <string name="settings_section_data">ಬ್ಯಾಕಪ್ ಮತ್ತು ಮರುಸ್ಥಾಪನೆ</string>
-    <string name="settings_section_privacy">ಗೌಪ್ಯತೆ</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ಆ್ಯಪ್ ಲಾಕ್</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ಈ ಸರ್ವರ್ ನಿಮ್ಮ ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ. KashCal ಇದಕ್ಕೆ ಸಂಪರ್ಕಿಸಲು ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್ ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ.</string>
     <string name="local_network_banner_allow">ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ</string>
     <string name="local_network_banner_dismiss">ಈಗ ಬೇಡ</string>
+    <string name="hub_app_permissions">ಆ್ಯಪ್ ಅನುಮತಿಗಳು</string>
+    <string name="status_allowed">ಅನುಮತಿಸಲಾಗಿದೆ</string>
+    <string name="permission_name_notifications">ಅಧಿಸೂಚನೆಗಳು</string>
+    <string name="permission_why_notifications">ನಿಮ್ಮ ಈವೆಂಟ್‌ಗಳ ಬಗ್ಗೆ KashCal ನಿಮಗೆ ನೆನಪಿಸಲು. ಇದಿಲ್ಲದೆ ರಿಮೈಂಡರ್‌ಗಳು ಮೌನವಾಗಿ ಉಳಿಯುತ್ತವೆ.</string>
+    <string name="permission_name_contacts">ಸಂಪರ್ಕಗಳು</string>
+    <string name="permission_why_contacts">ನೀವು ಈವೆಂಟ್‌ಗೆ ಜನರನ್ನು ಸೇರಿಸಿದಾಗ ಅತಿಥಿಗಳನ್ನು ಸೂಚಿಸುತ್ತದೆ, ಮತ್ತು ಸಂಪರ್ಕಗಳ ಹುಟ್ಟುಹಬ್ಬಗಳನ್ನು ತೋರಿಸುತ್ತದೆ. ನಿಮ್ಮ ಸಂಪರ್ಕಗಳು ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿಯೇ ಉಳಿಯುತ್ತವೆ.</string>
+    <string name="permission_name_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
+    <string name="permission_why_calendars">ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿರುವ ಇತರ ಕ್ಯಾಲೆಂಡರ್‌ಗಳ ಈವೆಂಟ್‌ಗಳನ್ನು ನಿಮ್ಮ ಸ್ವಂತ ಈವೆಂಟ್‌ಗಳ ಜೊತೆಗೆ ತೋರಿಸುತ್ತದೆ.</string>
+    <string name="permission_name_local_network">ಸ್ಥಳೀಯ ನೆಟ್‌ವರ್ಕ್</string>
+    <string name="permission_why_local_network">ನಿಮ್ಮ ಮನೆ ಅಥವಾ ಕಚೇರಿ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿರುವ ಕ್ಯಾಲೆಂಡರ್ ಸರ್ವರ್ ತಲುಪುತ್ತದೆ. Android 17 ಇದನ್ನು ಇಂಟರ್ನೆಟ್ ಪ್ರವೇಶದಿಂದ ಪ್ರತ್ಯೇಕವಾಗಿ ಕೇಳುತ್ತದೆ.</string>
     <string name="password_change_error_account_not_found">ಖಾತೆ ಕಂಡುಬಂದಿಲ್ಲ</string>
     <string name="password_change_error_no_credentials">ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ರುಜುವಾತುಗಳಿಲ್ಲ</string>
     <string name="password_change_error_unsupported_provider">ಈ ಪೂರೈಕೆದಾರ ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾವಣೆಯನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ಖಾತೆ</string>
     <string name="account_detail_enabled">ಆನ್</string>
     <string name="account_detail_enabled_subtitle">ಈ ಖಾತೆಯನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸಿಂಕ್ ಮಾಡಿ</string>
+    <string name="account_detail_sync_calendar">ಕ್ಯಾಲೆಂಡರ್</string>
+    <string name="account_detail_sync_calendar_subtitle">ಈ ಖಾತೆಯ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಿ</string>
+    <string name="account_detail_sync_contacts">ಸಂಪರ್ಕಗಳು</string>
+    <string name="account_detail_sync_contacts_subtitle">ಈ ಖಾತೆಯ ಸಂಪರ್ಕಗಳನ್ನು ನಿಮ್ಮ ಫೋನ್‌ಗೆ ಸಿಂಕ್ ಮಾಡಿ</string>
+    <string name="account_detail_contacts_permission_needed">ಸಂಪರ್ಕ ಅನುಮತಿ ಆಫ್ ಆಗಿದೆ. ಸಂಪರ್ಕ ಸಿಂಕ್ ಮುಂದುವರಿಸಲು ಪ್ರವೇಶ ನೀಡಿ.</string>
+    <string name="account_detail_contacts_grant">ಪ್ರವೇಶ ನೀಡಿ</string>
+    <string name="contact_sync_enabled_for">%1$s ಗಾಗಿ ಸಂಪರ್ಕಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+    <string name="contact_sync_disabled_for">%1$s ನ ಸಾಧನ ಸಂಪರ್ಕಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
+    <string name="contact_sync_disabled_kept">%1$s ಗಾಗಿ ಸಂಪರ್ಕ ಸಿಂಕ್ ಆಫ್ ಆಗಿದೆ. ಮತ್ತೊಂದು ಲಾಗಿನ್ ಇನ್ನೂ ಅವುಗಳನ್ನು ಸಿಂಕ್ ಮಾಡುವ ಕಾರಣ ಸಂಪರ್ಕಗಳು ಉಳಿಯುತ್ತವೆ.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s ಗಾಗಿ ಸಂಪರ್ಕ ಸಿಂಕ್ ಆಫ್ ಆಗಿದೆ, ಆದರೆ ಕೆಲವು ಸಾಧನ ಸಂಪರ್ಕಗಳು ಉಳಿಯಬಹುದು. ಸಂಪರ್ಕ ಅನುಮತಿಯನ್ನು ಪರಿಶೀಲಿಸಿ.</string>
     <string name="account_detail_sync_now">ಈಗ ಸಿಂಕ್ ಮಾಡಿ</string>
     <string name="account_detail_syncing">ಸಿಂಕ್ ಆಗುತ್ತಿದೆ…</string>
     <string name="account_detail_discovering">ಹುಡುಕುತ್ತಿದೆ…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">ಉಳಿಸಿ</string>
     <string name="hub_initials_cancel">ರದ್ದುಮಾಡಿ</string>
     <string name="hub_section_make_it_yours">ನಿಮ್ಮದಾಗಿಸಿ</string>
+    <string name="hub_section_own_your_calendar">ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ನಿಮ್ಮ ಹತೋಟಿಯಲ್ಲಿ</string>
+    <string name="hub_privacy_data_ownership">ನಿಮ್ಮ ಡೇಟಾ ನಿಮ್ಮದಾಗಿಯೇ ಉಳಿಯುತ್ತದೆ</string>
     <string name="hub_accounts_and_settings">ಖಾತೆಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
 
     <!-- ==================== Share Availability ==================== -->

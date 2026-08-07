@@ -101,6 +101,11 @@ fun AccountsScreen(
     onClearAccountDetail: () -> Unit = {},
     onSyncAccountNow: (Long) -> Unit = {},
     onToggleAccountEnabled: (Long, Boolean) -> Unit = { _, _ -> },
+    onToggleContactSync: (Long, Boolean) -> Unit = { _, _ -> },
+    contactSyncPermissionNeeded: Boolean = false,
+    contactSyncConfirmation: ContactSyncConfirmation? = null,
+    onDismissContactSyncConfirmation: () -> Unit = {},
+    onGrantContactsPermission: () -> Unit = {},
     onRenameAccount: (Long, String) -> Unit = { _, _ -> },
     onChangeAccountPassword: (Long, String, (Result<Unit>) -> Unit) -> Unit = { _, _, _ -> },
     onDiscoverCalendars: (Long) -> Unit = {}
@@ -232,6 +237,11 @@ fun AccountsScreen(
             onRename = { activeSubSheet = SubSheet.RENAME },
             onSyncNow = { onSyncAccountNow(accountDetail.accountId) },
             onToggleEnabled = { enabled -> onToggleAccountEnabled(accountDetail.accountId, enabled) },
+            onToggleContactSync = { enabled -> onToggleContactSync(accountDetail.accountId, enabled) },
+            contactSyncPermissionNeeded = contactSyncPermissionNeeded,
+            contactSyncConfirmation = contactSyncConfirmation,
+            onDismissContactSyncConfirmation = onDismissContactSyncConfirmation,
+            onGrantContactsPermission = onGrantContactsPermission,
             onDiscoverCalendars = { onDiscoverCalendars(accountDetail.accountId) },
             onChangePassword = {
                 passwordError = null

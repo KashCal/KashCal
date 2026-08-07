@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgetit</string>
     <string name="settings_widget_theme">Teema</string>
     <string name="settings_widget_accent_color">Korostus</string>
+    <string name="hub_widget_theme">Widgetin teema</string>
+    <string name="hub_widget_accent">Widgetin korostus</string>
     <string name="settings_widget_color_follow_app">Sovelluksen mukaan</string>
     <string name="settings_widget_color_follow_app_desc">Käytä sovelluksen korostusväriä ja sen lähdettä</string>
     <string name="settings_widget_theme_follow_app">Sovelluksen mukaan</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalenterit ja tilit</string>
     <string name="settings_section_appearance">Ulkoasu</string>
     <string name="settings_section_creating_events">Tapahtuma-asetukset</string>
-    <string name="settings_section_sync">Ilmoitukset ja synkronointi</string>
+    <string name="settings_section_sync">Synkronointi</string>
     <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
-    <string name="settings_section_privacy">Yksityisyys</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Sovelluslukko</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Tämä palvelin näyttää olevan lähiverkossasi. Salli lähiverkon käyttö, jotta KashCal voi muodostaa siihen yhteyden.</string>
     <string name="local_network_banner_allow">Salli käyttö</string>
     <string name="local_network_banner_dismiss">Ei nyt</string>
+    <string name="hub_app_permissions">Sovelluksen käyttöoikeudet</string>
+    <string name="status_allowed">Sallittu</string>
+    <string name="permission_name_notifications">Ilmoitukset</string>
+    <string name="permission_why_notifications">Jotta KashCal voi muistuttaa sinua tapahtumistasi. Ilman sitä muistutukset pysyvät äänettöminä.</string>
+    <string name="permission_name_contacts">Yhteystiedot</string>
+    <string name="permission_why_contacts">Ehdottaa vieraita, kun lisäät ihmisiä tapahtumaan, ja näyttää yhteystietojen syntymäpäivät. Yhteystietosi pysyvät laitteessasi.</string>
+    <string name="permission_name_calendars">Kalenterit</string>
+    <string name="permission_why_calendars">Näyttää tapahtumat laitteesi muista kalentereista omiesi rinnalla.</string>
+    <string name="permission_name_local_network">Lähiverkko</string>
+    <string name="permission_why_local_network">Tavoittaa kalenteripalvelimen koti- tai toimistoverkossasi. Android 17 pyytää tätä erikseen internetyhteydestä.</string>
     <string name="password_change_error_account_not_found">Tiliä ei löytynyt</string>
     <string name="password_change_error_no_credentials">Tallennettuja kirjautumistietoja ei ole</string>
     <string name="password_change_error_unsupported_provider">Tämä palveluntarjoaja ei tue salasanan vaihtoa</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">TILI</string>
     <string name="account_detail_enabled">Käytössä</string>
     <string name="account_detail_enabled_subtitle">Synkronoi tämä tili automaattisesti</string>
+    <string name="account_detail_sync_calendar">Kalenteri</string>
+    <string name="account_detail_sync_calendar_subtitle">Synkronoi tämän tilin kalenterit</string>
+    <string name="account_detail_sync_contacts">Yhteystiedot</string>
+    <string name="account_detail_sync_contacts_subtitle">Synkronoi tämän tilin yhteystiedot puhelimeesi</string>
+    <string name="account_detail_contacts_permission_needed">Yhteystietojen käyttöoikeus on pois päältä. Myönnä käyttöoikeus, jotta yhteystietojen synkronointi jatkuu.</string>
+    <string name="account_detail_contacts_grant">Myönnä käyttöoikeus</string>
+    <string name="contact_sync_enabled_for">Synkronoidaan tilin %1$s yhteystietoja</string>
+    <string name="contact_sync_disabled_for">Tilin %1$s laitteen yhteystiedot poistettu</string>
+    <string name="contact_sync_disabled_kept">Tilin %1$s yhteystietojen synkronointi on poistettu käytöstä. Yhteystiedot säilyvät, koska toinen kirjautuminen synkronoi niitä yhä.</string>
+    <string name="contact_sync_disabled_incomplete">Tilin %1$s yhteystietojen synkronointi on poistettu käytöstä, mutta osa laitteen yhteystiedoista voi jäädä jäljelle. Tarkista Yhteystietojen käyttöoikeus.</string>
     <string name="account_detail_sync_now">Synkronoi nyt</string>
     <string name="account_detail_syncing">Synkronoidaan…</string>
     <string name="account_detail_discovering">Etsitään…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Tallenna</string>
     <string name="hub_initials_cancel">Peruuta</string>
     <string name="hub_section_make_it_yours">Tee siitä omasi</string>
+    <string name="hub_section_own_your_calendar">Sinun kalenterisi</string>
+    <string name="hub_privacy_data_ownership">Miten tietosi pysyvät sinun</string>
     <string name="hub_accounts_and_settings">Tilit ja asetukset</string>
 
     <!-- ==================== Share Availability ==================== -->

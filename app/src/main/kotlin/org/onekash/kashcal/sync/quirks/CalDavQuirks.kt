@@ -141,11 +141,20 @@ interface CalDavQuirks {
 
     /**
      * Result of single-pass sync-collection response parsing.
+     *
+     * @property truncated True when the response reported RFC 6578 §3.6 truncation
+     *   *inside* the multistatus body — a `<response>` for the collection whose
+     *   `<status>` is `507 Insufficient Storage` — rather than as a top-level HTTP
+     *   507. The client must re-issue the report on [syncToken] to fetch the rest.
+     *   The 3-pass default cannot see this (it makes no status pass), so it leaves
+     *   this false; only the single-pass [CalDavXmlParser.extractSyncCollectionData]
+     *   sets it.
      */
     data class SyncCollectionData(
         val syncToken: String?,
         val changedItems: List<Pair<String, String?>>,
-        val deletedHrefs: List<String>
+        val deletedHrefs: List<String>,
+        val truncated: Boolean = false
     )
 
     /**

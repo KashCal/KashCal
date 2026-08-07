@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">విడ్జెట్‌లు</string>
     <string name="settings_widget_theme">థీమ్</string>
     <string name="settings_widget_accent_color">యాక్సెంట్</string>
+    <string name="hub_widget_theme">విడ్జెట్ థీమ్</string>
+    <string name="hub_widget_accent">విడ్జెట్ యాక్సెంట్</string>
     <string name="settings_widget_color_follow_app">యాప్‌ను అనుసరించండి</string>
     <string name="settings_widget_color_follow_app_desc">యాప్ యాక్సెంట్ రంగు మరియు మూలాన్ని ఉపయోగించండి</string>
     <string name="settings_widget_theme_follow_app">యాప్‌ను అనుసరించండి</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">క్యాలెండర్లు &amp; ఖాతాలు</string>
     <string name="settings_section_appearance">రూపం</string>
     <string name="settings_section_creating_events">ఈవెంట్ ప్రాధాన్యతలు</string>
-    <string name="settings_section_sync">నోటిఫికేషన్‌లు &amp; సింక్</string>
+    <string name="settings_section_sync">సింక్</string>
     <string name="settings_section_data">బ్యాకప్ &amp; రీస్టోర్</string>
-    <string name="settings_section_privacy">గోప్యత</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">యాప్ లాక్</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ఈ సర్వర్ మీ లోకల్ నెట్‌వర్క్‌లో ఉన్నట్లు కనిపిస్తోంది. KashCal దీనికి కనెక్ట్ కావడానికి లోకల్ నెట్‌వర్క్ యాక్సెస్‌ను అనుమతించండి.</string>
     <string name="local_network_banner_allow">యాక్సెస్‌ను అనుమతించు</string>
     <string name="local_network_banner_dismiss">ఇప్పుడు కాదు</string>
+    <string name="hub_app_permissions">యాప్ అనుమతులు</string>
+    <string name="status_allowed">అనుమతించబడింది</string>
+    <string name="permission_name_notifications">నోటిఫికేషన్‌లు</string>
+    <string name="permission_why_notifications">మీ ఈవెంట్‌ల గురించి KashCal మీకు గుర్తు చేయగలదు. ఇది లేకుండా రిమైండర్‌లు నిశ్శబ్దంగా ఉంటాయి.</string>
+    <string name="permission_name_contacts">కాంటాక్ట్‌లు</string>
+    <string name="permission_why_contacts">మీరు ఒక ఈవెంట్‌కు వ్యక్తులను జోడించినప్పుడు అతిథులను సూచిస్తుంది, మరియు పరిచయాల పుట్టినరోజులను చూపిస్తుంది. మీ కాంటాక్ట్‌లు మీ పరికరంలోనే ఉంటాయి.</string>
+    <string name="permission_name_calendars">క్యాలెండర్‌లు</string>
+    <string name="permission_why_calendars">మీ పరికరంలోని ఇతర క్యాలెండర్‌ల ఈవెంట్‌లను మీ సొంత ఈవెంట్‌లతో పాటు చూపిస్తుంది.</string>
+    <string name="permission_name_local_network">స్థానిక నెట్‌వర్క్</string>
+    <string name="permission_why_local_network">మీ ఇంటి లేదా కార్యాలయ నెట్‌వర్క్‌లోని క్యాలెండర్ సర్వర్‌ను చేరుకుంటుంది. Android 17 దీన్ని ఇంటర్నెట్ యాక్సెస్ నుండి విడిగా అడుగుతుంది.</string>
     <string name="password_change_error_account_not_found">ఖాతా కనుగొనబడలేదు</string>
     <string name="password_change_error_no_credentials">ప్రస్తుత ఆధారాలు లేవు</string>
     <string name="password_change_error_unsupported_provider">ఈ ప్రదాత పాస్‌వర్డ్ మార్పును మద్దతు ఇవ్వదు</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ఖాతా</string>
     <string name="account_detail_enabled">ఆన్</string>
     <string name="account_detail_enabled_subtitle">ఈ ఖాతాను స్వయంచాలకంగా సింక్ చేయి</string>
+    <string name="account_detail_sync_calendar">క్యాలెండర్</string>
+    <string name="account_detail_sync_calendar_subtitle">ఈ ఖాతా క్యాలెండర్‌లను సింక్ చేయి</string>
+    <string name="account_detail_sync_contacts">పరిచయాలు</string>
+    <string name="account_detail_sync_contacts_subtitle">ఈ ఖాతా పరిచయాలను మీ ఫోన్‌కు సింక్ చేయి</string>
+    <string name="account_detail_contacts_permission_needed">పరిచయాల అనుమతి ఆఫ్‌లో ఉంది. పరిచయాల సింక్ కొనసాగించడానికి యాక్సెస్ ఇవ్వండి.</string>
+    <string name="account_detail_contacts_grant">యాక్సెస్ ఇవ్వండి</string>
+    <string name="contact_sync_enabled_for">%1$s కోసం పరిచయాలు సింక్ అవుతున్నాయి</string>
+    <string name="contact_sync_disabled_for">%1$s డివైజ్ పరిచయాలు తీసివేయబడ్డాయి</string>
+    <string name="contact_sync_disabled_kept">%1$s కోసం పరిచయ సింక్ ఆఫ్‌లో ఉంది. మరో లాగిన్ ఇప్పటికీ వాటిని సింక్ చేస్తున్నందున పరిచయాలు అలాగే ఉంటాయి.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s కోసం పరిచయ సింక్ ఆఫ్‌లో ఉంది, కానీ కొన్ని డివైజ్ పరిచయాలు అలాగే ఉండవచ్చు. పరిచయాల అనుమతిని తనిఖీ చేయండి.</string>
     <string name="account_detail_sync_now">ఇప్పుడే సింక్ చేయి</string>
     <string name="account_detail_syncing">సింక్ అవుతోంది…</string>
     <string name="account_detail_discovering">కనుగొంటోంది…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">సేవ్ చేయండి</string>
     <string name="hub_initials_cancel">రద్దు చేయండి</string>
     <string name="hub_section_make_it_yours">మీ సొంతం చేసుకోండి</string>
+    <string name="hub_section_own_your_calendar">మీ క్యాలెండర్‌పై మీ నియంత్రణ</string>
+    <string name="hub_privacy_data_ownership">మీ డేటా మీదిగానే ఉంటుంది</string>
     <string name="hub_accounts_and_settings">ఖాతాలు మరియు సెట్టింగ్‌లు</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -1,10 +1,13 @@
 package org.onekash.kashcal.sync.adapter
 
+import android.accounts.Account
 import android.accounts.AccountManager
 import android.accounts.AuthenticatorDescription
 import android.content.ContentResolver
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -118,5 +121,42 @@ class ContactSystemAccountRegistrarTest {
         assertTrue(
             accountManager.getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE).isEmpty()
         )
+    }
+
+    @Test
+    fun `removeAccount reports success when the account was actually removed`() {
+        registrar.ensureAccount(email)
+
+        assertTrue("removal of a present account succeeds", registrar.removeAccount(email))
+    }
+
+    @Test
+    fun `removeAccount of an absent login reports success (nothing to remove)`() {
+        // No matching account: there is nothing left behind, so the outcome is success.
+        assertTrue(registrar.removeAccount(email))
+    }
+
+    @Test
+    fun `removeAccount reports failure when AccountManager cannot remove the account`() {
+        // A stuck removeAccountExplicitly (false return) must not be swallowed silently —
+        // the caller needs to know the contacts account (and its RawContacts) survived.
+        val am = mockk<AccountManager>()
+        val stuck = Account(email, KashCalContactsAuthenticator.ACCOUNT_TYPE)
+        every { am.getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE) } returns arrayOf(stuck)
+        every { am.removeAccountExplicitly(stuck) } returns false
+
+        assertFalse(
+            "a false removeAccountExplicitly surfaces as a failed removal",
+            registrar.removeAccount(email, am),
+        )
+    }
+
+    @Test
+    fun `removeAccount reports failure when AccountManager throws`() {
+        val am = mockk<AccountManager>()
+        every { am.getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE) } throws
+            SecurityException("cannot manage accounts")
+
+        assertFalse(registrar.removeAccount(email, am))
     }
 }

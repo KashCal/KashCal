@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">小工具</string>
     <string name="settings_widget_theme">主題</string>
     <string name="settings_widget_accent_color">強調色</string>
+    <string name="hub_widget_theme">小工具主題</string>
+    <string name="hub_widget_accent">小工具強調色</string>
     <string name="settings_widget_color_follow_app">跟隨應用程式</string>
     <string name="settings_widget_color_follow_app_desc">使用應用程式的強調色與來源</string>
     <string name="settings_widget_theme_follow_app">跟隨應用程式</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">日曆與帳戶</string>
     <string name="settings_section_appearance">外觀</string>
     <string name="settings_section_creating_events">事件偏好設定</string>
-    <string name="settings_section_sync">通知與同步</string>
+    <string name="settings_section_sync">同步</string>
     <string name="settings_section_data">備份與還原</string>
-    <string name="settings_section_privacy">隱私</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">應用程式鎖</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">此伺服器似乎位於您的本機網路中。請允許存取本機網路，讓 KashCal 可以連線至它。</string>
     <string name="local_network_banner_allow">允許存取</string>
     <string name="local_network_banner_dismiss">暫不</string>
+    <string name="hub_app_permissions">應用程式權限</string>
+    <string name="status_allowed">已允許</string>
+    <string name="permission_name_notifications">通知</string>
+    <string name="permission_why_notifications">讓 KashCal 提醒你即將到來的事件。若未授予，提醒將不會發出提示音。</string>
+    <string name="permission_name_contacts">聯絡人</string>
+    <string name="permission_why_contacts">在你為事件新增人員時建議賓客，並顯示聯絡人生日。你的聯絡人會保留在裝置上。</string>
+    <string name="permission_name_calendars">行事曆</string>
+    <string name="permission_why_calendars">在你自己的事件旁顯示裝置上其他行事曆中的事件。</string>
+    <string name="permission_name_local_network">本機網路</string>
+    <string name="permission_why_local_network">連線到你家中或辦公室網路上的行事曆伺服器。Android 17 會將此權限與網際網路存取分開詢問。</string>
     <string name="password_change_error_account_not_found">找不到帳戶</string>
     <string name="password_change_error_no_credentials">沒有現有憑證</string>
     <string name="password_change_error_unsupported_provider">此服務商不支援變更密碼</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">帳號</string>
     <string name="account_detail_enabled">已啟用</string>
     <string name="account_detail_enabled_subtitle">自動同步此帳號</string>
+    <string name="account_detail_sync_calendar">行事曆</string>
+    <string name="account_detail_sync_calendar_subtitle">同步此帳號的行事曆</string>
+    <string name="account_detail_sync_contacts">聯絡人</string>
+    <string name="account_detail_sync_contacts_subtitle">將此帳號的聯絡人同步至手機</string>
+    <string name="account_detail_contacts_permission_needed">聯絡人權限已關閉。請授予存取權限以繼續同步聯絡人。</string>
+    <string name="account_detail_contacts_grant">授予存取權限</string>
+    <string name="contact_sync_enabled_for">正在同步 %1$s 的聯絡人</string>
+    <string name="contact_sync_disabled_for">已移除 %1$s 的裝置聯絡人</string>
+    <string name="contact_sync_disabled_kept">已關閉 %1$s 的聯絡人同步。由於另一個登入帳號仍在同步，聯絡人會保留。</string>
+    <string name="contact_sync_disabled_incomplete">已關閉 %1$s 的聯絡人同步，但部分裝置聯絡人可能仍會保留。請檢查聯絡人權限。</string>
     <string name="account_detail_sync_now">立即同步</string>
     <string name="account_detail_syncing">同步中…</string>
     <string name="account_detail_discovering">探索中…</string>
@@ -1148,6 +1169,8 @@
     <string name="hub_initials_save">儲存</string>
     <string name="hub_initials_cancel">取消</string>
     <string name="hub_section_make_it_yours">個人化設定</string>
+    <string name="hub_section_own_your_calendar">掌控你的行事曆</string>
+    <string name="hub_privacy_data_ownership">你的資料如何始終屬於你</string>
     <string name="hub_accounts_and_settings">帳戶與設定</string>
 
     <!-- ==================== Share Availability ==================== -->

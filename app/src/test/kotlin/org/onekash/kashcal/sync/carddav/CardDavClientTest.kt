@@ -14,6 +14,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.contacts.MAX_PHOTO_SIZE_BYTES
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
@@ -267,6 +268,41 @@ class CardDavClientTest {
         assertEquals(listOf("/ab/alice/a.vcf", "/ab/alice/b.vcf"), hrefs.map { it.first })
     }
 
+    @Test
+    fun `listAllContactHrefs surfaces an in-body 507 as a retryable error, not a partial list`() = runTest {
+        // RFC 6578 §3.6: a server may truncate a large Depth:1 listing and mark it
+        // with a 507 <status> on the collection <response> INSIDE an otherwise-207
+        // multistatus. If the client returned Success with the partial member set,
+        // the caller's orphan sweep would delete every contact truncated off the
+        // page — the user's own synced contacts vanishing. The full-listing path
+        // must honor the truncation flag exactly as the delta path does.
+        server.enqueue(
+            MockResponse().setResponseCode(207).setBody(
+                """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:multistatus xmlns:d="DAV:">
+                    <d:response>
+                        <d:href>/ab/alice/a.vcf</d:href>
+                        <d:propstat><d:prop><d:getetag>"ea"</d:getetag></d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status></d:propstat>
+                    </d:response>
+                    <d:response>
+                        <d:href>/ab/alice/</d:href>
+                        <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
+                    </d:response>
+                </d:multistatus>
+                """.trimIndent()
+            )
+        )
+
+        val result = client.listAllContactHrefs(server.url("/ab/alice/").toString())
+
+        assertTrue("a truncated listing must not be a Success", result is CalDavResult.Error)
+        val error = result as CalDavResult.Error
+        assertEquals(507, error.code)
+        assertTrue("truncation is transient; the next run must retry", error.isRetryable)
+    }
+
     // ========== addressbook-multiget (§8.7 / §10.4) ==========
 
     @Test
@@ -283,7 +319,10 @@ class CardDavClientTest {
 
         val request = server.takeRequest()
         assertEquals("REPORT", request.method)
-        assertEquals("1", request.getHeader("Depth"))
+        // RFC 6352 §8.7: addressbook-multiget names its target resources by href in
+        // the body, so the request MUST carry Depth: 0. A strict server/proxy can
+        // reject the whole batch fetch if it sees Depth: 1.
+        assertEquals("0", request.getHeader("Depth"))
         val body = request.body.readUtf8()
         assertTrue(body.contains("addressbook-multiget"))
         assertTrue("multiget must request the negotiated version", body.contains("version=\"4.0\""))
@@ -369,6 +408,400 @@ class CardDavClientTest {
         val absolute = "https://p42-contacts.example.test/123/carddavhome/card/"
 
         assertEquals(absolute, quirks.buildAddressBookUrl(absolute, "https://p42-contacts.example.test"))
+    }
+
+    // ========== photo fetch (authenticated GET, same-domain only) ==========
+
+    @Test
+    fun `fetchPhoto returns bytes and content type on a 200 image`() = runTest {
+        // A body that is NOT valid UTF-8 (JPEG magic + a lone continuation byte):
+        // proves the fetch reads binary, not a charset-decoded String.
+        val raw = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0x80.toByte(), 0x00, 0x41)
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "image/jpeg")
+                .setBody(okio.Buffer().write(raw))
+        )
+
+        val photo = assertSuccess(client.fetchPhoto(server.url("/photo/1.jpg").toString()))
+
+        val request = server.takeRequest()
+        assertEquals("GET", request.method)
+        org.junit.Assert.assertArrayEquals(raw, photo.bytes)
+        assertTrue(photo.contentType.startsWith("image/jpeg"))
+    }
+
+    @Test
+    fun `fetchPhoto maps 401 to a retryable auth error`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue(result is CalDavResult.Error)
+        assertTrue("401 must surface as an auth error", (result as CalDavResult.Error).isAuthError())
+        // A genuine credential rotation fails the CardDAV re-read (same account creds)
+        // BEFORE the photo GET is ever reached, so a 401 seen here means the account
+        // creds are still valid for the collection but the photo gateway rejected this
+        // one hop — a transient condition. Retryable so the contact stays pending
+        // rather than clearing the flag and permanently losing the photo (the gateway
+        // URL is stable, so a cleared flag would never self-re-arm for URL photos).
+        assertTrue(
+            "a photo-gateway 401 must be retryable, not a permanent give-up",
+            result.isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto marks a 429 rate-limit as retryable`() = runTest {
+        // 429 Too Many Requests is transient by definition (RFC 6585): the server is
+        // throttling, not refusing forever. A first-sync burst of photo GETs against a
+        // gateway can hit it. The photo path issues a bare GET (no executeWithRetry /
+        // Retry-After backoff), so classification is the only thing that keeps the
+        // contact pending for a later, unthrottled sync.
+        server.enqueue(MockResponse().setResponseCode(429))
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a 429 must surface as an error", result is CalDavResult.Error)
+        assertTrue(
+            "a 429 rate-limit must be retryable, not permanently abandoned",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto marks a 408 request-timeout as retryable`() = runTest {
+        // 408 Request Timeout (RFC 7231) is transient — the server timed out waiting,
+        // an identical GET plausibly succeeds next sync. Retryable, like a 5xx/429.
+        server.enqueue(MockResponse().setResponseCode(408))
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a 408 must surface as an error", result is CalDavResult.Error)
+        assertTrue(
+            "a 408 request-timeout must be retryable, not permanently abandoned",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto rejects a non-image content type without returning bytes`() = runTest {
+        // A server that returns an HTML error page with 200 must not be treated as
+        // an image blob (would write garbage into the Photo row).
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "text/html; charset=utf-8")
+                .setBody("<html>not a photo</html>")
+        )
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a non-image 200 must be an error, not a blob", result is CalDavResult.Error)
+        // The server authoritatively serves non-image content for this URL; the
+        // identical GET yields the same wrong type, so retrying can never succeed.
+        // Non-retryable so the fetcher gives up rather than looping every sync.
+        assertFalse(
+            "a non-image content type is permanent, not retryable",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto marks a 5xx as retryable`() = runTest {
+        // A 5xx is a transient server-side condition (overloaded / down / gateway
+        // hiccup); the identical GET plausibly succeeds on a later sync. It must be
+        // retryable so the fetcher leaves the contact pending rather than clearing
+        // the flag and giving up forever.
+        server.enqueue(MockResponse().setResponseCode(503))
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a 5xx must surface as an error", result is CalDavResult.Error)
+        assertTrue(
+            "a 5xx photo fetch must be retryable, not permanently abandoned",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto marks an unexpected 4xx (not 401 or 404) as permanent`() = runTest {
+        // A 403/410/etc. is an authoritative client-side refusal for this URL:
+        // retrying the identical request yields the same status, so it is permanent
+        // (the fetcher clears the flag; a later vCard change re-arms it).
+        server.enqueue(MockResponse().setResponseCode(403))
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a 403 must surface as an error", result is CalDavResult.Error)
+        assertFalse(
+            "an unexpected 4xx is permanent, not retryable",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto rejects a body over the photo byte cap`() = runTest {
+        // Content-Length over the cap trips the cheap header guard before buffering.
+        val tooBig = "x".repeat((MAX_PHOTO_SIZE_BYTES + 1).toInt())
+        server.enqueue(
+            MockResponse().setResponseCode(200).setHeader("Content-Type", "image/jpeg").setBody(tooBig)
+        )
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("over-cap body must surface as an error", result is CalDavResult.Error)
+        // The body is simply too big — re-downloading it will hit the same cap
+        // forever and it could never be written to the Contacts blob. Non-retryable
+        // so the fetcher gives up and clears the pending flag.
+        assertFalse(
+            "an over-cap body must be non-retryable, not looped forever",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `the photo byte cap stays under the Binder transaction ceiling`() = runTest {
+        // The fetched blob is written inside an applyBatch transaction that crosses
+        // Binder, whose ceiling is ~1 MB (1024 * 1024). A body near or over that trips
+        // TransactionTooLargeException and fails the whole write batch — the provider
+        // downscales large photos, but only AFTER receiving the bytes over Binder, so
+        // it can't rescue an oversized transaction. This pins the cap under the ceiling
+        // so a future bump can't silently reintroduce the crash.
+        assertTrue(
+            "MAX_PHOTO_SIZE_BYTES ($MAX_PHOTO_SIZE_BYTES) must stay under the ~1MB Binder limit",
+            MAX_PHOTO_SIZE_BYTES < 1024L * 1024,
+        )
+    }
+
+    @Test
+    fun `fetchPhoto does not follow a redirect (host revalidation is bypassed otherwise)`() = runTest {
+        // A photo GET must NOT follow redirects: the shared client re-attaches
+        // preemptive Basic auth on every network request, and OkHttp strips the
+        // Authorization header only on a cross-host hop — so a same-host photo URL
+        // that 302-redirects to a foreign host would leak the account credentials
+        // there. The initial-host guard can't see the redirect target, so the GET
+        // itself must refuse to follow. Real gateways serve the image 200 directly.
+        server.enqueue(
+            MockResponse().setResponseCode(302).setHeader("Location", "/photo/elsewhere.jpg")
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(200).setHeader("Content-Type", "image/jpeg").setBody("REDIRECTED")
+        )
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("a redirected photo must surface as an error, not be followed", result is CalDavResult.Error)
+        assertEquals("the redirect target must never be requested", 1, server.requestCount)
+    }
+
+    @Test
+    fun `fetchPhoto rejects an empty body without clearing the pending flag`() = runTest {
+        // A 200 with an image content type but zero bytes must be an error, not a
+        // Success carrying ByteArray(0): a Success writes an empty Photo blob AND
+        // clears the pending flag, permanently pinning the contact to a blank photo.
+        server.enqueue(
+            MockResponse().setResponseCode(200).setHeader("Content-Type", "image/jpeg").setBody("")
+        )
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("an empty image body must surface as an error", result is CalDavResult.Error)
+        // A 0-byte 200 reads as a transient truncation/glitch, not an authoritative
+        // "no photo here" — so it is retryable and the contact stays pending. Pairs
+        // with this test's name: the flag must NOT be cleared on an empty body.
+        assertTrue(
+            "an empty image body must be retryable so the pending flag is not cleared",
+            (result as CalDavResult.Error).isRetryable
+        )
+    }
+
+    @Test
+    fun `fetchPhoto rejects an SVG image type (vector XML, not a raster blob)`() = runTest {
+        // image/svg+xml passes a naive "image/" prefix check but is an XML document,
+        // not the raster the Contacts Photo column expects. Refuse it.
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "image/svg+xml")
+                .setBody("<svg xmlns='http://www.w3.org/2000/svg'/>")
+        )
+
+        val result = client.fetchPhoto(server.url("/photo/1.jpg").toString())
+
+        assertTrue("an SVG response must surface as an error", result is CalDavResult.Error)
+    }
+
+    // ---------- credential-leak guard (pure function, real hostnames) ----------
+    //
+    // A photo URL is server-controlled and the shared client bakes in preemptive
+    // Basic + a DigestAuthenticator, so a GET to a foreign host would harvest the
+    // account credentials. The guard permits credentials only when the photo URL
+    // shares the CardDAV endpoint's registrable domain. MockWebServer is always
+    // loopback (a single host), so the cross-domain branch can only be exercised
+    // by testing the pure decision directly with real hostnames.
+    //
+    // The registrable-domain resolver is INJECTED here: on the okhttp-android
+    // artifact this app resolves, the production HttpUrl.topPrivateDomain() loads
+    // its public-suffix list from an Android asset via app-startup, which is not
+    // present in a JVM unit-test worker (the call throws there). The fake below
+    // reproduces the public-suffix + 1 classification for exactly the hosts under
+    // test, so these cases exercise the guard's composition logic (host-equality
+    // shortcut, null-refuse, same/different-domain comparison) faithfully. The
+    // production resolver ([DefaultRegistrableDomainResolver]) is covered
+    // separately by its fail-closed contract test below.
+    private val fakeRegistrableDomain: RegistrableDomainResolver = { url ->
+        when (url.host.lowercase()) {
+            "p52-contacts.icloud.com", "gateway.icloud.com" -> "icloud.com"
+            "evil-icloud.com" -> "evil-icloud.com"
+            "icloud.com.attacker.example" -> "attacker.example"
+            "dav.example.test" -> "example.test"
+            "malicious.example" -> "malicious.example"
+            else -> null
+        }
+    }
+
+    @Test
+    fun `same registrable domain is permitted (iCloud gateway vs partition host)`() {
+        // iCloud serves photos from gateway.icloud.com while the CardDAV endpoint
+        // lives on pNN-contacts.icloud.com — different hosts, same registrable domain.
+        assertTrue(
+            shouldAttachCredentials(
+                endpointUrl = "https://p52-contacts.icloud.com/123/carddavhome/card/",
+                photoUrl = "https://gateway.icloud.com/aaa/bbb/photo.jpg",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `identical host is permitted`() {
+        // Exact-host match short-circuits before the resolver — so it holds even
+        // if the public-suffix list were unavailable (resolver returns null).
+        assertTrue(
+            shouldAttachCredentials(
+                endpointUrl = "https://dav.example.test/ab/alice/",
+                photoUrl = "https://dav.example.test/ab/alice/photo.jpg",
+                registrableDomainOf = { null },
+            )
+        )
+    }
+
+    @Test
+    fun `a look-alike sibling domain is refused`() {
+        // endsWith("icloud.com") would wrongly allow evil-icloud.com; the
+        // registrable-domain check refuses it.
+        assertFalse(
+            shouldAttachCredentials(
+                endpointUrl = "https://p52-contacts.icloud.com/123/carddavhome/card/",
+                photoUrl = "https://evil-icloud.com/harvest",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `a subdomain-suffix trick is refused`() {
+        // icloud.com.attacker.example ends with neither the host nor the registrable
+        // domain of the endpoint; refuse.
+        assertFalse(
+            shouldAttachCredentials(
+                endpointUrl = "https://p52-contacts.icloud.com/123/carddavhome/card/",
+                photoUrl = "https://icloud.com.attacker.example/harvest",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `an unrelated foreign host is refused`() {
+        assertFalse(
+            shouldAttachCredentials(
+                endpointUrl = "https://dav.example.test/ab/alice/",
+                photoUrl = "https://malicious.example/harvest",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `a malformed photo url is refused`() {
+        assertFalse(
+            shouldAttachCredentials(
+                endpointUrl = "https://dav.example.test/ab/alice/",
+                photoUrl = "not a url",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `guard fails closed to exact-host-only when the public-suffix list is unavailable`() {
+        // Simulates the resolver never producing a registrable domain (e.g. the
+        // public-suffix asset failed to load): a cross-host fetch is refused rather
+        // than crashing, while an identical-host fetch still succeeds. This is the
+        // contract DefaultRegistrableDomainResolver honors by mapping its load
+        // failure to null.
+        val unavailable: RegistrableDomainResolver = { null }
+        assertFalse(
+            "cross-host must refuse when no registrable domain is resolvable",
+            shouldAttachCredentials(
+                endpointUrl = "https://p52-contacts.icloud.com/123/carddavhome/card/",
+                photoUrl = "https://gateway.icloud.com/aaa/bbb/photo.jpg",
+                registrableDomainOf = unavailable,
+            )
+        )
+        assertTrue(
+            "identical host must still be permitted with no registrable domain",
+            shouldAttachCredentials(
+                endpointUrl = "https://gateway.icloud.com/x/",
+                photoUrl = "https://gateway.icloud.com/y/",
+                registrableDomainOf = unavailable,
+            )
+        )
+    }
+
+    @Test
+    fun `default resolver fails closed instead of throwing when the suffix list is absent`() {
+        // In this JVM test worker the okhttp-android public-suffix asset is not
+        // loaded, so topPrivateDomain() throws. DefaultRegistrableDomainResolver
+        // must swallow that and return null (fail closed), never propagate — this
+        // is what keeps fetchPhoto from crashing the sync pass on a list failure.
+        val resolved = DefaultRegistrableDomainResolver(
+            okhttp3.HttpUrl.Builder().scheme("https").host("gateway.icloud.com").build()
+        )
+        org.junit.Assert.assertNull("must fail closed to null, not throw", resolved)
+    }
+
+    @Test
+    fun `an https endpoint refuses to send credentials over an http photo (same domain)`() {
+        // Same registrable domain AND same host, but the photo is cleartext http.
+        // Sending the secure endpoint's Basic/Digest credentials over http would
+        // expose them to a passive MITM; refuse the downgrade.
+        assertFalse(
+            "https -> http credential downgrade must be refused even same-host",
+            shouldAttachCredentials(
+                endpointUrl = "https://dav.example.test/ab/alice/",
+                photoUrl = "http://dav.example.test/ab/alice/photo.jpg",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
+    }
+
+    @Test
+    fun `an http endpoint may fetch an http photo (nothing is downgraded)`() {
+        // A genuinely-http endpoint (local test server) fetching an http photo is
+        // not a downgrade — the credentials were never on a secure channel — so the
+        // same-host rule still permits it.
+        assertTrue(
+            "http -> http on the same host is permitted (no downgrade)",
+            shouldAttachCredentials(
+                endpointUrl = "http://dav.example.test/ab/alice/",
+                photoUrl = "http://dav.example.test/ab/alice/photo.jpg",
+                registrableDomainOf = fakeRegistrableDomain,
+            )
+        )
     }
 
     // ========== fixtures ==========

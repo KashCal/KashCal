@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">விட்ஜெட்கள்</string>
     <string name="settings_widget_theme">தீம்</string>
     <string name="settings_widget_accent_color">ஆக்சென்ட்</string>
+    <string name="hub_widget_theme">விட்ஜெட் தீம்</string>
+    <string name="hub_widget_accent">விட்ஜெட் ஆக்சென்ட்</string>
     <string name="settings_widget_color_follow_app">ஆப்பைப் பின்பற்றவும்</string>
     <string name="settings_widget_color_follow_app_desc">ஆப்பின் ஆக்சென்ட் நிறத்தையும் மூலத்தையும் பயன்படுத்து</string>
     <string name="settings_widget_theme_follow_app">ஆப்பைப் பின்பற்றவும்</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">நாள்காட்டிகள் &amp; கணக்குகள்</string>
     <string name="settings_section_appearance">தோற்றம்</string>
     <string name="settings_section_creating_events">நிகழ்வு விருப்பங்கள்</string>
-    <string name="settings_section_sync">அறிவிப்புகள் &amp; ஒத்திசைவு</string>
+    <string name="settings_section_sync">ஒத்திசைவு</string>
     <string name="settings_section_data">காப்புப்பிரதி மற்றும் மீட்டெடுப்பு</string>
-    <string name="settings_section_privacy">தனியுரிமை</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ஆப் பூட்டு</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">இந்த சர்வர் உங்கள் லோக்கல் நெட்வொர்க்கில் இருப்பது போல் தெரிகிறது. KashCal இதனுடன் இணைய லோக்கல் நெட்வொர்க் அணுகலை அனுமதிக்கவும்.</string>
     <string name="local_network_banner_allow">அணுகலை அனுமதி</string>
     <string name="local_network_banner_dismiss">இப்போது வேண்டாம்</string>
+    <string name="hub_app_permissions">ஆப் அனுமதிகள்</string>
+    <string name="status_allowed">அனுமதிக்கப்பட்டது</string>
+    <string name="permission_name_notifications">அறிவிப்புகள்</string>
+    <string name="permission_why_notifications">உங்கள் நிகழ்வுகள் பற்றி KashCal உங்களுக்கு நினைவூட்ட முடியும். இது இல்லாமல் நினைவூட்டல்கள் அமைதியாக இருக்கும்.</string>
+    <string name="permission_name_contacts">தொடர்புகள்</string>
+    <string name="permission_why_contacts">ஒரு நிகழ்வில் நபர்களைச் சேர்க்கும்போது விருந்தினர்களைப் பரிந்துரைக்கிறது, மேலும் தொடர்புகளின் பிறந்தநாட்களைக் காட்டுகிறது. உங்கள் தொடர்புகள் உங்கள் சாதனத்திலேயே இருக்கும்.</string>
+    <string name="permission_name_calendars">நாட்காட்டிகள்</string>
+    <string name="permission_why_calendars">உங்கள் சாதனத்தில் உள்ள மற்ற நாட்காட்டிகளின் நிகழ்வுகளை உங்கள் சொந்த நிகழ்வுகளுடன் காட்டுகிறது.</string>
+    <string name="permission_name_local_network">அக நெட்வொர்க்</string>
+    <string name="permission_why_local_network">உங்கள் வீடு அல்லது அலுவலக நெட்வொர்க்கில் உள்ள நாட்காட்டி சேவையகத்தை அணுகுகிறது. Android 17 இதை இணைய அணுகலிலிருந்து தனியாகக் கேட்கிறது.</string>
     <string name="password_change_error_account_not_found">கணக்கு கிடைக்கவில்லை</string>
     <string name="password_change_error_no_credentials">தற்போதைய அங்கீகாரத் தகவல்கள் இல்லை</string>
     <string name="password_change_error_unsupported_provider">இந்த வழங்குநர் கடவுச்சொல்லை மாற்றுவதை ஆதரிக்கவில்லை</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">கணக்கு</string>
     <string name="account_detail_enabled">இயக்கப்பட்டது</string>
     <string name="account_detail_enabled_subtitle">இந்தக் கணக்கை தானியக்கமாக ஒத்திசை</string>
+    <string name="account_detail_sync_calendar">நாட்காட்டி</string>
+    <string name="account_detail_sync_calendar_subtitle">இந்தக் கணக்கின் நாட்காட்டிகளை ஒத்திசை</string>
+    <string name="account_detail_sync_contacts">தொடர்புகள்</string>
+    <string name="account_detail_sync_contacts_subtitle">இந்தக் கணக்கின் தொடர்புகளை உங்கள் ஃபோனுடன் ஒத்திசை</string>
+    <string name="account_detail_contacts_permission_needed">தொடர்புகள் அனுமதி முடக்கப்பட்டுள்ளது. தொடர்புகள் ஒத்திசைவைத் தொடர அணுகலை வழங்கவும்.</string>
+    <string name="account_detail_contacts_grant">அணுகலை வழங்கு</string>
+    <string name="contact_sync_enabled_for">%1$s-இன் தொடர்புகள் ஒத்திசைக்கப்படுகின்றன</string>
+    <string name="contact_sync_disabled_for">%1$s-இன் சாதனத் தொடர்புகள் அகற்றப்பட்டன</string>
+    <string name="contact_sync_disabled_kept">%1$s-க்கு தொடர்பு ஒத்திசைவு அணைக்கப்பட்டது. மற்றொரு உள்நுழைவு இன்னும் அவற்றை ஒத்திசைப்பதால் தொடர்புகள் இருக்கும்.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s-க்கு தொடர்பு ஒத்திசைவு அணைக்கப்பட்டது, ஆனால் சில சாதனத் தொடர்புகள் இருக்கலாம். தொடர்பு அனுமதியைச் சரிபார்க்கவும்.</string>
     <string name="account_detail_sync_now">இப்போது ஒத்திசை</string>
     <string name="account_detail_syncing">ஒத்திசைக்கிறது…</string>
     <string name="account_detail_discovering">கண்டறிகிறது…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">சேமி</string>
     <string name="hub_initials_cancel">ரத்துசெய்</string>
     <string name="hub_section_make_it_yours">உங்களுடையதாக்குங்கள்</string>
+    <string name="hub_section_own_your_calendar">உங்கள் நாட்காட்டி உங்கள் கட்டுப்பாட்டில்</string>
+    <string name="hub_privacy_data_ownership">உங்கள் தரவு உங்களுடையதாகவே இருக்கும்</string>
     <string name="hub_accounts_and_settings">கணக்குகள் மற்றும் அமைப்புகள்</string>
 
     <!-- ==================== Share Availability ==================== -->

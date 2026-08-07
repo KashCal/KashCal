@@ -2,15 +2,8 @@ package org.onekash.kashcal
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
-import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,10 +18,6 @@ import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
-import org.onekash.kashcal.ui.lock.AppLockDisableAction
-import org.onekash.kashcal.ui.lock.AppLockEnrollmentAction
-import org.onekash.kashcal.ui.lock.decideDisableAction
-import org.onekash.kashcal.ui.lock.decideEnrollmentAction
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionManager
 import org.onekash.kashcal.ui.screens.SettingsRoute
 import org.onekash.kashcal.ui.theme.ColorSource
@@ -63,12 +52,6 @@ class SettingsActivity : FragmentActivity() {
     }
 
     private val viewModel: AccountSettingsViewModel by viewModels()
-
-    // Guards against stacking two disable prompts: the toggle reflects the
-    // persisted pref, which only flips after a successful auth, so it still reads
-    // "on" between the first tap and the prompt resolving — a second tap would
-    // otherwise fire a second BiometricPrompt. Mirrors MainActivity's unlock guard.
-    private var isDisablePromptShowing = false
 
     private val localNetworkPermissionManager by lazy {
         LocalNetworkPermissionManager(applicationContext)
@@ -118,13 +101,6 @@ class SettingsActivity : FragmentActivity() {
                 syncSessionStore = syncSessionStore,
                 openTagsInitially = openTags,
                 onFinish = { finish() },
-                onOpenNotificationSettings = {
-                    // VMs should not start activities. Intent launch lives here.
-                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                    startActivity(intent)
-                },
-                onToggleAppLock = ::onToggleAppLock,
                 onExportCalendar = ::exportCalendar,
                 readIcsContent = { uri -> icsFileReader.readIcsContent(uri) },
                 importIcsToRoom = { events, calendarId ->
@@ -156,7 +132,6 @@ class SettingsActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume - refreshing permissions")
-        viewModel.refreshNotificationPermission()
         viewModel.refreshContactsPermission()
         viewModel.refreshCalendarPermission()
         // Reflect a local-network grant made in system Settings while the sheet
@@ -166,35 +141,6 @@ class SettingsActivity : FragmentActivity() {
         viewModel.reconcileLocalNetworkPermissionOnResume(
             localNetworkPermissionManager.resolveState(this)
         )
-    }
-
-    /**
-     * Enable / disable the app lock. Enabling adds protection so it commits behind an
-     * inline confirmation; disabling REMOVES protection so it must be authenticated.
-     * Capability / enrollment checks and the enrollment intent live here because they
-     * need the activity and VMs must not start activities.
-     */
-    private fun onToggleAppLock(enabled: Boolean) {
-        if (enabled) {
-            when (decideEnrollmentAction(canAuthenticateForAppLock())) {
-                AppLockEnrollmentAction.Enable -> {
-                    viewModel.setAppLockEnabled(true)
-                    // Enabling adds protection, so it isn't gated behind auth —
-                    // but confirm inline and set the expectation that the prompt
-                    // appears on the next fresh open, not on the return to here.
-                    viewModel.showSnackbar(getString(R.string.app_lock_enabled_message))
-                }
-                AppLockEnrollmentAction.RouteToEnroll ->
-                    launchBiometricEnrollment()
-                AppLockEnrollmentAction.Unsupported ->
-                    viewModel.showSnackbar(getString(R.string.app_lock_unsupported_message))
-            }
-        } else {
-            // Disabling REMOVES protection, so it must be authenticated: otherwise
-            // anyone holding the already-unlocked phone could open Settings and
-            // switch the lock off. Only commit false on success.
-            authenticateThenDisableAppLock()
-        }
     }
 
     /** Export a calendar to ICS and hand it to the system share sheet. */
@@ -248,81 +194,5 @@ class SettingsActivity : FragmentActivity() {
         contentResolver.openInputStream(uri)?.use {
             it.readBytes().toString(Charsets.UTF_8)
         } ?: error("Could not open input stream")
-    }
-
-    /** Can the device satisfy the app lock with a strong biometric OR the screen-lock credential? */
-    private fun canAuthenticateForAppLock(): Int =
-        BiometricManager.from(this)
-            .canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
-
-    /**
-     * Send the user to the system enrollment flow rather than enabling a lock
-     * nothing can satisfy. The pre-API-30 intent (plain security settings) is
-     * used as a fallback since ACTION_BIOMETRIC_ENROLL is API 30+.
-     */
-    private fun launchBiometricEnrollment() {
-        viewModel.showSnackbar(getString(R.string.app_lock_enroll_message))
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
-                putExtra(
-                    Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
-                    BIOMETRIC_STRONG or DEVICE_CREDENTIAL,
-                )
-            }
-        } else {
-            Intent(Settings.ACTION_SECURITY_SETTINGS)
-        }
-        try {
-            startActivity(intent)
-        } catch (e: android.content.ActivityNotFoundException) {
-            Log.e(TAG, "No enrollment activity available", e)
-            startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
-        }
-    }
-
-    /**
-     * Challenge the user before turning the lock OFF. The pref is only set to
-     * false on a successful authentication, so possession of an already-unlocked
-     * phone is not enough to disable the protection.
-     *
-     * Recovery: if all device credentials were removed after enabling the lock,
-     * the prompt would be unsatisfiable — so when nothing is enrolled we disable
-     * directly (the device is now unsecured; there is nothing left to gate on).
-     * This mirrors the lock-out recovery in MainActivity's unlock prompt.
-     */
-    private fun authenticateThenDisableAppLock() {
-        if (isDisablePromptShowing) return
-
-        val authenticators = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
-        if (decideDisableAction(canAuthenticateForAppLock()) == AppLockDisableAction.DisableDirectly) {
-            Log.w(TAG, "No credential enrolled when disabling app lock; disabling without a challenge")
-            viewModel.setAppLockEnabled(false)
-            return
-        }
-
-        isDisablePromptShowing = true
-        val prompt = BiometricPrompt(
-            this,
-            ContextCompat.getMainExecutor(this),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    isDisablePromptShowing = false
-                    viewModel.setAppLockEnabled(false)
-                }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    // Cancel / negative / any error: leave the lock ON. The toggle
-                    // reflects the persisted pref, so it stays in the on state.
-                    isDisablePromptShowing = false
-                }
-            },
-        )
-        // DEVICE_CREDENTIAL is allowed, so setNegativeButtonText must NOT be set
-        // (build() would throw). The title carries the instruction.
-        val info = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(getString(R.string.app_lock_disable_prompt_title))
-            .setAllowedAuthenticators(authenticators)
-            .build()
-        prompt.authenticate(info)
     }
 }

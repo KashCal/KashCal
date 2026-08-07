@@ -618,12 +618,14 @@ class OkHttpCalDavClient : CalDavClient {
             val responseBody = response.readBoundedBody()
             val responseCode = response.code
 
-            // RFC 6578 Section 3.6: 507 means server truncated results
-            // Response still contains partial results + new sync-token for continuation
-            val isTruncated = responseCode == 507
+            // RFC 6578 Section 3.6: a server truncates results either with a top-level
+            // HTTP 507 or, more commonly, an in-body 507 <status> on the collection's
+            // <response> inside a 207. Either way, partial results + a new sync-token
+            // for continuation are present.
+            val topLevel507 = responseCode == 507
 
             when {
-                responseCode == 207 || isTruncated -> {
+                responseCode == 207 || topLevel507 -> {
                     // Check if sync-token is invalid (only for 207, not 507)
                     if (responseCode == 207 && quirks.isSyncTokenInvalid(207, responseBody)) {
                         return@withContext CalDavResult.error(
@@ -640,8 +642,9 @@ class OkHttpCalDavClient : CalDavClient {
 
                     val deleted = syncData.deletedHrefs
 
+                    val isTruncated = topLevel507 || syncData.truncated
                     if (isTruncated) {
-                        Log.w(TAG, "sync-collection returned 507 (truncated). " +
+                        Log.w(TAG, "sync-collection truncated (RFC 6578 §3.6). " +
                             "Got ${changed.size} changed, ${deleted.size} deleted. " +
                             "Continue with token: ${newSyncToken?.take(20)}...")
                     }

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">വിജറ്റുകൾ</string>
     <string name="settings_widget_theme">തീം</string>
     <string name="settings_widget_accent_color">ആക്സന്റ്</string>
+    <string name="hub_widget_theme">വിജറ്റ് തീം</string>
+    <string name="hub_widget_accent">വിജറ്റ് ആക്സന്റ്</string>
     <string name="settings_widget_color_follow_app">ആപ്പിനെ പിന്തുടരുക</string>
     <string name="settings_widget_color_follow_app_desc">ആപ്പിന്റെ ആക്സന്റ് നിറവും ഉറവിടവും ഉപയോഗിക്കുക</string>
     <string name="settings_widget_theme_follow_app">ആപ്പിനെ പിന്തുടരുക</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">കലണ്ടറുകളും അക്കൗണ്ടുകളും</string>
     <string name="settings_section_appearance">രൂപഭാവം</string>
     <string name="settings_section_creating_events">ഇവന്റ് മുൻഗണനകൾ</string>
-    <string name="settings_section_sync">അറിയിപ്പുകളും സിങ്കും</string>
+    <string name="settings_section_sync">സിങ്ക്</string>
     <string name="settings_section_data">ബാക്കപ്പും പുനഃസ്ഥാപനവും</string>
-    <string name="settings_section_privacy">സ്വകാര്യത</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ആപ്പ് ലോക്ക്</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ഈ സെർവർ നിങ്ങളുടെ ലോക്കൽ നെറ്റ്‌വർക്കിൽ ഉള്ളതായി തോന്നുന്നു. KashCal-ന് ഇതിലേക്ക് കണക്റ്റ് ചെയ്യാൻ ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് അനുവദിക്കുക.</string>
     <string name="local_network_banner_allow">ആക്‌സസ് അനുവദിക്കുക</string>
     <string name="local_network_banner_dismiss">ഇപ്പോൾ വേണ്ട</string>
+    <string name="hub_app_permissions">ആപ്പ് അനുമതികൾ</string>
+    <string name="status_allowed">അനുവദിച്ചു</string>
+    <string name="permission_name_notifications">അറിയിപ്പുകൾ</string>
+    <string name="permission_why_notifications">നിങ്ങളുടെ ഇവന്റുകളെക്കുറിച്ച് KashCal-ന് നിങ്ങളെ ഓർമ്മിപ്പിക്കാൻ. ഇതില്ലാതെ റിമൈൻഡറുകൾ നിശ്ശബ്ദമായി തുടരും.</string>
+    <string name="permission_name_contacts">കോൺടാക്ട്സ്</string>
+    <string name="permission_why_contacts">ഒരു ഇവന്റിലേക്ക് ആളുകളെ ചേർക്കുമ്പോൾ അതിഥികളെ നിർദ്ദേശിക്കുന്നു, കൂടാതെ കോൺടാക്റ്റുകളുടെ ജന്മദിനങ്ങൾ കാണിക്കുന്നു. നിങ്ങളുടെ കോൺടാക്റ്റുകൾ നിങ്ങളുടെ ഉപകരണത്തിൽ തന്നെ തുടരും.</string>
+    <string name="permission_name_calendars">കലണ്ടറുകൾ</string>
+    <string name="permission_why_calendars">നിങ്ങളുടെ ഉപകരണത്തിലെ മറ്റ് കലണ്ടറുകളിലെ ഇവന്റുകൾ നിങ്ങളുടെ സ്വന്തം ഇവന്റുകൾക്കൊപ്പം കാണിക്കുന്നു.</string>
+    <string name="permission_name_local_network">ലോക്കൽ നെറ്റ്‌വർക്ക്</string>
+    <string name="permission_why_local_network">നിങ്ങളുടെ വീട്ടിലെയോ ഓഫീസിലെയോ നെറ്റ്‌വർക്കിലുള്ള ഒരു കലണ്ടർ സെർവറിലേക്ക് എത്തുന്നു. Android 17 ഇത് ഇന്റർനെറ്റ് ആക്‌സസ്സിൽ നിന്ന് വേറിട്ട് ചോദിക്കുന്നു.</string>
     <string name="password_change_error_account_not_found">അക്കൗണ്ട് കണ്ടെത്തിയില്ല</string>
     <string name="password_change_error_no_credentials">നിലവിലുള്ള ക്രെഡൻഷ്യലുകൾ ഇല്ല</string>
     <string name="password_change_error_unsupported_provider">ഈ ദാതാവ് പാസ്‌വേഡ് മാറ്റം പിന്തുണയ്ക്കുന്നില്ല</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">അക്കൗണ്ട്</string>
     <string name="account_detail_enabled">ഓൺ</string>
     <string name="account_detail_enabled_subtitle">ഈ അക്കൗണ്ട് സ്വയം സിങ്ക് ചെയ്യുക</string>
+    <string name="account_detail_sync_calendar">കലണ്ടർ</string>
+    <string name="account_detail_sync_calendar_subtitle">ഈ അക്കൗണ്ടിന്റെ കലണ്ടറുകൾ സിങ്ക് ചെയ്യുക</string>
+    <string name="account_detail_sync_contacts">കോൺടാക്റ്റുകൾ</string>
+    <string name="account_detail_sync_contacts_subtitle">ഈ അക്കൗണ്ടിന്റെ കോൺടാക്റ്റുകൾ നിങ്ങളുടെ ഫോണിലേക്ക് സിങ്ക് ചെയ്യുക</string>
+    <string name="account_detail_contacts_permission_needed">കോൺടാക്റ്റ് അനുമതി ഓഫാണ്. കോൺടാക്റ്റ് സിങ്ക് തുടരാൻ ആക്‌സസ് നൽകുക.</string>
+    <string name="account_detail_contacts_grant">ആക്‌സസ് നൽകുക</string>
+    <string name="contact_sync_enabled_for">%1$s-നായി കോൺടാക്റ്റുകൾ സിങ്ക് ചെയ്യുന്നു</string>
+    <string name="contact_sync_disabled_for">%1$s-ന്റെ ഉപകരണ കോൺടാക്റ്റുകൾ നീക്കം ചെയ്തു</string>
+    <string name="contact_sync_disabled_kept">%1$s-നായി കോൺടാക്റ്റ് സിങ്ക് ഓഫാണ്. മറ്റൊരു ലോഗിൻ ഇപ്പോഴും അവ സിങ്ക് ചെയ്യുന്നതിനാൽ കോൺടാക്റ്റുകൾ അവശേഷിക്കും.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s-നായി കോൺടാക്റ്റ് സിങ്ക് ഓഫാണ്, പക്ഷേ ചില ഉപകരണ കോൺടാക്റ്റുകൾ അവശേഷിച്ചേക്കാം. കോൺടാക്റ്റ് അനുമതി പരിശോധിക്കുക.</string>
     <string name="account_detail_sync_now">ഇപ്പോൾ സിങ്ക് ചെയ്യുക</string>
     <string name="account_detail_syncing">സിങ്ക് ചെയ്യുന്നു…</string>
     <string name="account_detail_discovering">കണ്ടെത്തുന്നു…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">സംരക്ഷിക്കുക</string>
     <string name="hub_initials_cancel">റദ്ദാക്കുക</string>
     <string name="hub_section_make_it_yours">നിങ്ങളുടേതാക്കുക</string>
+    <string name="hub_section_own_your_calendar">നിങ്ങളുടെ കലണ്ടർ നിങ്ങളുടെ നിയന്ത്രണത്തിൽ</string>
+    <string name="hub_privacy_data_ownership">നിങ്ങളുടെ ഡാറ്റ നിങ്ങളുടേതായി തുടരുന്നു</string>
     <string name="hub_accounts_and_settings">അക്കൗണ്ടുകളും ക്രമീകരണങ്ങളും</string>
 
     <!-- ==================== Share Availability ==================== -->

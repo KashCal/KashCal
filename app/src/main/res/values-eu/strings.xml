@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgetak</string>
     <string name="settings_widget_theme">Gaia</string>
     <string name="settings_widget_accent_color">Azentua</string>
+    <string name="hub_widget_theme">Widget-gaia</string>
+    <string name="hub_widget_accent">Widget-azentua</string>
     <string name="settings_widget_color_follow_app">Aplikazioari jarraitu</string>
     <string name="settings_widget_color_follow_app_desc">Erabili aplikazioaren azentu-kolorea eta iturria</string>
     <string name="settings_widget_theme_follow_app">Aplikazioari jarraitu</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Egutegiak eta kontuak</string>
     <string name="settings_section_appearance">Itxura</string>
     <string name="settings_section_creating_events">Gertaeren hobespenak</string>
-    <string name="settings_section_sync">Jakinarazpenak eta sinkronizazioa</string>
+    <string name="settings_section_sync">Sinkronizazioa</string>
     <string name="settings_section_data">Babeskopia eta leheneratzea</string>
-    <string name="settings_section_privacy">Pribatutasuna</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Aplikazioaren blokeoa</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Badirudi zerbitzari hau zure sare lokalean dagoela. Baimendu sare lokalerako sarbidea KashCal bertara konektatu ahal izan dadin.</string>
     <string name="local_network_banner_allow">Baimendu sarbidea</string>
     <string name="local_network_banner_dismiss">Orain ez</string>
+    <string name="hub_app_permissions">Aplikazioaren baimenak</string>
+    <string name="status_allowed">Baimenduta</string>
+    <string name="permission_name_notifications">Jakinarazpenak</string>
+    <string name="permission_why_notifications">KashCal-ek zure gertaerak gogoraraz diezazkizun. Hori gabe, gogorarazpenak isilik geratzen dira.</string>
+    <string name="permission_name_contacts">Kontaktuak</string>
+    <string name="permission_why_contacts">Gertaera bati jendea gehitzen diozun bitartean gonbidatuak iradokitzen ditu, eta kontaktuen urtebetetzeak erakusten ditu. Zure kontaktuak zure gailuan geratzen dira.</string>
+    <string name="permission_name_calendars">Egutegiak</string>
+    <string name="permission_why_calendars">Zure gailuko beste egutegietako gertaerak zureen ondoan erakusten ditu.</string>
+    <string name="permission_name_local_network">Sare lokala</string>
+    <string name="permission_why_local_network">Zure etxeko edo bulegoko sareko egutegi-zerbitzari batera iristen da. Android 17-k Interneteko sarbidetik bereizita eskatzen du hau.</string>
     <string name="password_change_error_account_not_found">Ez da kontua aurkitu</string>
     <string name="password_change_error_no_credentials">Ez dago kredentzialik</string>
     <string name="password_change_error_unsupported_provider">Hornitzaile honek ez du pasahitza aldatzea onartzen</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">KONTUA</string>
     <string name="account_detail_enabled">Gaituta</string>
     <string name="account_detail_enabled_subtitle">Kontu hau automatikoki sinkronizatu</string>
+    <string name="account_detail_sync_calendar">Egutegia</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinkronizatu kontu honen egutegiak</string>
+    <string name="account_detail_sync_contacts">Kontaktuak</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinkronizatu kontu honen kontaktuak zure telefonoan</string>
+    <string name="account_detail_contacts_permission_needed">Kontaktuen baimena desaktibatuta dago. Eman sarbidea kontaktuak sinkronizatzen jarraitzeko.</string>
+    <string name="account_detail_contacts_grant">Eman sarbidea</string>
+    <string name="contact_sync_enabled_for">%1$s kontuaren kontaktuak sinkronizatzen</string>
+    <string name="contact_sync_disabled_for">%1$s kontuaren gailuko kontaktuak kendu dira</string>
+    <string name="contact_sync_disabled_kept">%1$s kontuaren kontaktuen sinkronizazioa desaktibatuta. Kontaktuak mantentzen dira beste saio batek oraindik sinkronizatzen dituelako.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s kontuaren kontaktuen sinkronizazioa desaktibatuta, baina gailuko kontaktu batzuk gera daitezke. Egiaztatu kontaktuen baimena.</string>
     <string name="account_detail_sync_now">Orain sinkronizatu</string>
     <string name="account_detail_syncing">Sinkronizatzen…</string>
     <string name="account_detail_discovering">Aurkitzen…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Gorde</string>
     <string name="hub_initials_cancel">Utzi</string>
     <string name="hub_section_make_it_yours">Egin zeurea</string>
+    <string name="hub_section_own_your_calendar">Egin zeure egutegia</string>
+    <string name="hub_privacy_data_ownership">Nola jarraitzen duten zure datuak zureak izaten</string>
     <string name="hub_accounts_and_settings">Kontuak eta ezarpenak</string>
 
     <!-- ==================== Share Availability ==================== -->

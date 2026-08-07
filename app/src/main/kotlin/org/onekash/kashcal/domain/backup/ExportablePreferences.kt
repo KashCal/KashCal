@@ -139,6 +139,9 @@ object ExportablePreferences {
         PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
         PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
         PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,
+        // Device-local runtime state: set when a background contact sync hit a
+        // revoked WRITE_CONTACTS, drives a settings re-grant banner on this device
+        PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED.name,
         PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS.name,
         PreferencesKeys.LAST_APP_VERSION_CODE.name,
         // Migration flags

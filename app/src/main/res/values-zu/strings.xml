@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Amawijethi</string>
     <string name="settings_widget_theme">Itimu</string>
     <string name="settings_widget_accent_color">Ukugqama</string>
+    <string name="hub_widget_theme">Itimu yewijethi</string>
+    <string name="hub_widget_accent">Ukugqama kwewijethi</string>
     <string name="settings_widget_color_follow_app">Landela uhlelo</string>
     <string name="settings_widget_color_follow_app_desc">Sebenzisa umbala ogqamile nomthombo wohlelo lokusebenza</string>
     <string name="settings_widget_theme_follow_app">Landela uhlelo</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Amakhalenda &amp; ama-akhawunti</string>
     <string name="settings_section_appearance">Ukubonakala</string>
     <string name="settings_section_creating_events">Okuncamelayo komcimbi</string>
-    <string name="settings_section_sync">Izaziso &amp; ukuvumelanisa</string>
+    <string name="settings_section_sync">Ukuvumelanisa</string>
     <string name="settings_section_data">Isipele &amp; Ukubuyisela</string>
-    <string name="settings_section_privacy">Ubumfihlo</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Ukukhiya uhlelo lokusebenza</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Le seva ibukeka ingathi ikwinethiwekhi yakho yendawo. Vumela ukufinyelela kwinethiwekhi yendawo ukuze i-KashCal ikwazi ukuxhuma kuyo.</string>
     <string name="local_network_banner_allow">Vumela ukufinyelela</string>
     <string name="local_network_banner_dismiss">Hhayi manje</string>
+    <string name="hub_app_permissions">Izimvume zohlelo lokusebenza</string>
+    <string name="status_allowed">Kuvunyelwe</string>
+    <string name="permission_name_notifications">Izaziso</string>
+    <string name="permission_why_notifications">Ukuze i-KashCal ikukhumbuze ngemicimbi yakho. Ngaphandle kwayo, izikhumbuzi zihlala zithule.</string>
+    <string name="permission_name_contacts">Oxhumana nabo</string>
+    <string name="permission_why_contacts">Iphakamisa izivakashi njengoba wengeza abantu emcimbini, futhi ibonise izinsuku zokuzalwa zabo oxhumana nabo. Abantu oxhumana nabo bahlala kudivayisi yakho.</string>
+    <string name="permission_name_calendars">Amakhalenda</string>
+    <string name="permission_why_calendars">Ibonisa imicimbi evela kwamanye amakhalenda akudivayisi yakho eceleni kwawakho.</string>
+    <string name="permission_name_local_network">Inethiwekhi yasendaweni</string>
+    <string name="permission_why_local_network">Ifinyelela iseva yekhalenda kunethiwekhi yakho yasekhaya noma yasehhovisi. I-Android 17 icela lokhu ngokwehlukene nokufinyelela kwe-inthanethi.</string>
     <string name="password_change_error_account_not_found">I-akhawunti ayitholakali</string>
     <string name="password_change_error_no_credentials">Akukho ziqinisekiso ezikhona</string>
     <string name="password_change_error_unsupported_provider">Lo mhlinzeki akakusekeli ukushintsha iphasiwedi</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">I-AKHAWUNTI</string>
     <string name="account_detail_enabled">Kunikwe amandla</string>
     <string name="account_detail_enabled_subtitle">Vumelanisa le akhawunti ngokuzenzakalelayo</string>
+    <string name="account_detail_sync_calendar">Ikhalenda</string>
+    <string name="account_detail_sync_calendar_subtitle">Vumelanisa amakhalenda ale akhawunti</string>
+    <string name="account_detail_sync_contacts">Oxhumana nabo</string>
+    <string name="account_detail_sync_contacts_subtitle">Vumelanisa oxhumana nabo bale akhawunti kufoni yakho</string>
+    <string name="account_detail_contacts_permission_needed">Imvume yoxhumana nabo ivaliwe. Nikeza ukufinyelela ukuze uqhubeke uvumelanise oxhumana nabo.</string>
+    <string name="account_detail_contacts_grant">Nikeza ukufinyelela</string>
+    <string name="contact_sync_enabled_for">Kuvumelaniswa oxhumana nabo ku-%1$s</string>
+    <string name="contact_sync_disabled_for">Oxhumana nabo bedivayisi ku-%1$s bakhishiwe</string>
+    <string name="contact_sync_disabled_kept">Ukuvumelanisa oxhumana nabo kuvaliwe ku-%1$s. Oxhumana nabo bahlala ngoba enye ingeno isabavumelanisa.</string>
+    <string name="contact_sync_disabled_incomplete">Ukuvumelanisa oxhumana nabo kuvaliwe ku-%1$s, kodwa abanye oxhumana nabo bedivayisi bangase basale. Hlola imvume yoxhumana nabo.</string>
     <string name="account_detail_sync_now">Vumelanisa Manje</string>
     <string name="account_detail_syncing">Iyavumelanisa…</string>
     <string name="account_detail_discovering">Iyathola…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Londoloza</string>
     <string name="hub_initials_cancel">Khansela</string>
     <string name="hub_section_make_it_yours">Yenza ibe ngeyakho</string>
+    <string name="hub_section_own_your_calendar">Lawula ikhalenda lakho</string>
+    <string name="hub_privacy_data_ownership">Indlela idatha yakho ehlala iyeyakho ngayo</string>
     <string name="hub_accounts_and_settings">Ama-akhawunti nezilungiselelo</string>
 
     <!-- ==================== Share Availability ==================== -->

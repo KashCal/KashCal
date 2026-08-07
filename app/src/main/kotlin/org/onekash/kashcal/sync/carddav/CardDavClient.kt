@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.carddav
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
+import org.onekash.kashcal.sync.carddav.model.PhotoBytes
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
@@ -86,4 +87,23 @@ interface CardDavClient {
         hrefs: List<String>,
         vcardVersion: String
     ): CalDavResult<List<CardDavContactData>>
+
+    /**
+     * Fetch a contact's remote `PHOTO` binary via an authenticated GET, reusing
+     * the account credentials baked into this client.
+     *
+     * SECURITY: a `PHOTO` URL is server-controlled, and this client bakes in
+     * preemptive Basic auth plus a Digest authenticator, so a GET to a foreign
+     * host would leak the account credentials. The implementation therefore
+     * REFUSES (returns an error, issues no request) any [photoUrl] whose host is
+     * not the same registrable domain as the CardDAV endpoint — iCloud's
+     * `gateway.icloud.com` vs `pNN-contacts.icloud.com` share `icloud.com` and
+     * are permitted.
+     *
+     * Requires a 2xx response with an image `Content-Type`, and caps the
+     * download size. A 401 (credential rotation), non-image body, oversized body,
+     * network failure, or foreign-host refusal all surface as an error so the
+     * caller leaves the photo pending for a later retry.
+     */
+    suspend fun fetchPhoto(photoUrl: String): CalDavResult<PhotoBytes>
 }

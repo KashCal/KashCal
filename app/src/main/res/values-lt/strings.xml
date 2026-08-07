@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Valdikliai</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Akcentas</string>
+    <string name="hub_widget_theme">Valdiklio tema</string>
+    <string name="hub_widget_accent">Valdiklio akcentas</string>
     <string name="settings_widget_color_follow_app">Pagal programą</string>
     <string name="settings_widget_color_follow_app_desc">Naudoti programėlės akcento spalvą ir jos šaltinį</string>
     <string name="settings_widget_theme_follow_app">Pagal programą</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendoriai ir paskyros</string>
     <string name="settings_section_appearance">Išvaizda</string>
     <string name="settings_section_creating_events">Įvykių nustatymai</string>
-    <string name="settings_section_sync">Pranešimai ir sinchronizavimas</string>
+    <string name="settings_section_sync">Sinchronizavimas</string>
     <string name="settings_section_data">Atsarginė kopija ir atkūrimas</string>
-    <string name="settings_section_privacy">Privatumas</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Programos užraktas</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Panašu, kad šis serveris yra tavo vietiniame tinkle. Leisk prieigą prie vietinio tinklo, kad KashCal galėtų prie jo prisijungti.</string>
     <string name="local_network_banner_allow">Leisti prieigą</string>
     <string name="local_network_banner_dismiss">Ne dabar</string>
+    <string name="hub_app_permissions">Programos leidimai</string>
+    <string name="status_allowed">Leista</string>
+    <string name="permission_name_notifications">Pranešimai</string>
+    <string name="permission_why_notifications">Kad KashCal galėtų priminti tau apie įvykius. Be to priminimai liks tylūs.</string>
+    <string name="permission_name_contacts">Kontaktai</string>
+    <string name="permission_why_contacts">Siūlo svečius, kai prie įvykio pridedi žmonių, ir rodo kontaktų gimtadienius. Tavo kontaktai lieka tavo įrenginyje.</string>
+    <string name="permission_name_calendars">Kalendoriai</string>
+    <string name="permission_why_calendars">Rodo įvykius iš kitų tavo įrenginio kalendorių šalia tavo paties.</string>
+    <string name="permission_name_local_network">Vietinis tinklas</string>
+    <string name="permission_why_local_network">Pasiekia kalendoriaus serverį tavo namų ar biuro tinkle. Android 17 to prašo atskirai nuo interneto prieigos.</string>
     <string name="password_change_error_account_not_found">Paskyra nerasta</string>
     <string name="password_change_error_no_credentials">Nėra išsaugotų prisijungimo duomenų</string>
     <string name="password_change_error_unsupported_provider">Šis tiekėjas nepalaiko slaptažodžio keitimo</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">PASKYRA</string>
     <string name="account_detail_enabled">Įjungta</string>
     <string name="account_detail_enabled_subtitle">Automatinis sinchronizavimas</string>
+    <string name="account_detail_sync_calendar">Kalendorius</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinchronizuoti šios paskyros kalendorius</string>
+    <string name="account_detail_sync_contacts">Kontaktai</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinchronizuoti šios paskyros kontaktus su telefonu</string>
+    <string name="account_detail_contacts_permission_needed">Prieiga prie kontaktų išjungta. Suteik prieigą, kad kontaktai būtų toliau sinchronizuojami.</string>
+    <string name="account_detail_contacts_grant">Suteikti prieigą</string>
+    <string name="contact_sync_enabled_for">Sinchronizuojami %1$s kontaktai</string>
+    <string name="contact_sync_disabled_for">Įrenginio kontaktai, skirti %1$s, pašalinti</string>
+    <string name="contact_sync_disabled_kept">%1$s kontaktų sinchronizavimas išjungtas. Kontaktai lieka, nes juos vis dar sinchronizuoja kitas prisijungimas.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s kontaktų sinchronizavimas išjungtas, bet kai kurie įrenginio kontaktai gali likti. Patikrink Kontaktų leidimą.</string>
     <string name="account_detail_sync_now">Sinchronizuoti</string>
     <string name="account_detail_syncing">Sinchronizuojama…</string>
     <string name="account_detail_discovering">Ieškoma…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Išsaugoti</string>
     <string name="hub_initials_cancel">Atšaukti</string>
     <string name="hub_section_make_it_yours">Pritaikyk sau</string>
+    <string name="hub_section_own_your_calendar">Tavo kalendorius</string>
+    <string name="hub_privacy_data_ownership">Kaip tavo duomenys lieka tavo</string>
     <string name="hub_accounts_and_settings">Paskyros ir nustatymai</string>
 
     <!-- ==================== Share Availability ==================== -->

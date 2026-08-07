@@ -2,7 +2,10 @@ package org.onekash.kashcal
 
 import android.Manifest
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.os.SystemClock
 import android.view.WindowManager
 import androidx.core.app.ActivityCompat
@@ -68,9 +71,14 @@ import org.onekash.kashcal.ui.components.WhatsNewBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
+import org.onekash.kashcal.ui.permission.AppPermissionKind
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
+import org.onekash.kashcal.ui.lock.AppLockDisableAction
+import org.onekash.kashcal.ui.lock.AppLockEnrollmentAction
 import org.onekash.kashcal.ui.lock.AppLockVeil
+import org.onekash.kashcal.ui.lock.decideDisableAction
+import org.onekash.kashcal.ui.lock.decideEnrollmentAction
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.ColorSource
@@ -106,6 +114,8 @@ class MainActivity : FragmentActivity() {
     private var isFirstResume = true
     // Guards against stacking two biometric sheets (auto-fire + manual Unlock).
     private var isUnlockPromptShowing = false
+    // Guards against stacking two disable-challenge sheets from rapid toggle taps.
+    private var isDisablePromptShowing = false
     // Skip sync when returning from internal activities (currently only SettingsActivity)
     // Note: Share/Export choosers are NOT internal - user leaves app, sync on return is appropriate
     private var returningFromInternalActivity = false
@@ -169,6 +179,7 @@ class MainActivity : FragmentActivity() {
                 val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
                 val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
+                val appLockEnabled by appLockViewModel.appLockEnabled.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by homeViewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
                 val defaultEventDuration by homeViewModel.defaultEventDuration.collectAsStateWithLifecycle()
@@ -611,6 +622,12 @@ class MainActivity : FragmentActivity() {
                                 .putExtra(SettingsActivity.EXTRA_OPEN_TAGS, true)
                         )
                     },
+                    // App lock (moved out of Settings into the hub's Privacy section)
+                    appLockEnabled = appLockEnabled,
+                    onToggleAppLock = ::onToggleAppLock,
+                    // The app-permissions screen deep-links here; route through the
+                    // internal-activity launch so the lock veil doesn't re-lock on return.
+                    onOpenPermissionSettings = ::openPermissionSettings,
                     // Drawer
                     drawerState = drawerState,
                     onDrawerToggleCalendar = { calendarId -> homeViewModel.toggleCalendarVisibility(calendarId) },
@@ -1756,6 +1773,139 @@ class MainActivity : FragmentActivity() {
             .setAllowedAuthenticators(authenticators)
             .build()
         prompt.authenticate(info)
+    }
+
+    /**
+     * Enable / disable the app lock. Enabling adds protection so it commits behind an
+     * inline confirmation; disabling REMOVES protection so it must be authenticated.
+     * Capability / enrollment checks and the enrollment intent live here because they
+     * need the activity and VMs must not start activities.
+     */
+    private fun onToggleAppLock(enabled: Boolean) {
+        if (enabled) {
+            when (decideEnrollmentAction(canAuthenticateForAppLock())) {
+                AppLockEnrollmentAction.Enable -> {
+                    appLockViewModel.setAppLockEnabled(true)
+                    // Enabling adds protection, so it isn't gated behind auth —
+                    // but confirm inline and set the expectation that the prompt
+                    // appears on the next fresh open, not on the return to here.
+                    homeViewModel.showSnackbar(getString(R.string.app_lock_enabled_message))
+                }
+                AppLockEnrollmentAction.RouteToEnroll ->
+                    launchBiometricEnrollment()
+                AppLockEnrollmentAction.Unsupported ->
+                    homeViewModel.showSnackbar(getString(R.string.app_lock_unsupported_message))
+            }
+        } else {
+            // Disabling REMOVES protection, so it must be authenticated: otherwise
+            // anyone holding the already-unlocked phone could open the hub and
+            // switch the lock off. Only commit false on success.
+            authenticateThenDisableAppLock()
+        }
+    }
+
+    /** Can the device satisfy the app lock with a strong biometric OR the screen-lock credential? */
+    private fun canAuthenticateForAppLock(): Int =
+        BiometricManager.from(this)
+            .canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+
+    /**
+     * Send the user to the system enrollment flow rather than enabling a lock
+     * nothing can satisfy. The pre-API-30 intent (plain security settings) is
+     * used as a fallback since ACTION_BIOMETRIC_ENROLL is API 30+.
+     *
+     * Routed through [launchInternalActivity] so the enrollment round trip does
+     * not trip the re-lock on return.
+     */
+    private fun launchBiometricEnrollment() {
+        homeViewModel.showSnackbar(getString(R.string.app_lock_enroll_message))
+        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Intent(Settings.ACTION_BIOMETRIC_ENROLL).apply {
+                putExtra(
+                    Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                    BIOMETRIC_STRONG or DEVICE_CREDENTIAL,
+                )
+            }
+        } else {
+            Intent(Settings.ACTION_SECURITY_SETTINGS)
+        }
+        try {
+            launchInternalActivity(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            Log.e(TAG, "No enrollment activity available", e)
+            launchInternalActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+        }
+    }
+
+    /**
+     * Challenge the user before turning the lock OFF. The pref is only set to
+     * false on a successful authentication, so possession of an already-unlocked
+     * phone is not enough to disable the protection.
+     *
+     * Recovery: if all device credentials were removed after enabling the lock,
+     * the prompt would be unsatisfiable — so when nothing is enrolled we disable
+     * directly (the device is now unsecured; there is nothing left to gate on).
+     * This mirrors the lock-out recovery in [promptForUnlock]. The prompt runs
+     * in-process (no activity launch), so it doesn't trip the re-lock.
+     */
+    private fun authenticateThenDisableAppLock() {
+        if (isDisablePromptShowing) return
+
+        val authenticators = BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+        if (decideDisableAction(canAuthenticateForAppLock()) == AppLockDisableAction.DisableDirectly) {
+            Log.w(TAG, "No credential enrolled when disabling app lock; disabling without a challenge")
+            appLockViewModel.setAppLockEnabled(false)
+            return
+        }
+
+        isDisablePromptShowing = true
+        val prompt = BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    isDisablePromptShowing = false
+                    appLockViewModel.setAppLockEnabled(false)
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    // Cancel / negative / any error: leave the lock ON. The toggle
+                    // reflects the persisted pref, so it stays in the on state.
+                    isDisablePromptShowing = false
+                }
+            },
+        )
+        // DEVICE_CREDENTIAL is allowed, so setNegativeButtonText must NOT be set
+        // (build() would throw). The title carries the instruction.
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.app_lock_disable_prompt_title))
+            .setAllowedAuthenticators(authenticators)
+            .build()
+        prompt.authenticate(info)
+    }
+
+    /**
+     * Deep-link to the system settings page for a given permission kind.
+     * Notifications has its own dedicated settings screen, so route there
+     * directly; the other kinds have no per-permission page, so fall back to the
+     * app info page (where every runtime permission can be toggled). Routed
+     * through [launchInternalActivity] so the lock veil does not re-lock when the
+     * user returns from the settings round trip.
+     */
+    private fun openPermissionSettings(kind: AppPermissionKind) {
+        val intent = when (kind) {
+            AppPermissionKind.NOTIFICATIONS -> Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            else -> Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.fromParts("package", packageName, null),
+            )
+        }
+        try {
+            launchInternalActivity(intent)
+        } catch (e: android.content.ActivityNotFoundException) {
+            Log.e(TAG, "No settings activity available for $kind", e)
+        }
     }
 
     /**

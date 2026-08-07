@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.glance.color.ColorProviders
 import androidx.glance.color.colorProviders
 import androidx.glance.material3.ColorProviders
@@ -67,6 +68,12 @@ fun accentColorProviders(seed: Int, forceDark: Boolean? = null): ColorProviders 
     // republish it through the core DSL overriding ONLY widgetBackground -> surfaceVariant. Reading roles
     // back off `base` keeps all other roles in lockstep with the interop (no 26-way manual mirror).
     val base = ColorProviders(light = day, dark = night)
+    // A pure-black or pure-white seed has no hue for the HCT engine to preserve, so the raw scheme
+    // collapses onto a muddy neutral gray ("I picked black, the widget is gray"). For those two seeds
+    // only, snap to a crisp monochrome panel — every painted background role to the pure extreme,
+    // every text/on-role to the readable inverse, with the dimmed tiers stepped to gray so the
+    // hierarchy survives. Every other seed falls through untouched.
+    monochromeSnap(seed, base)?.let { return it }
     return colorProviders(
         primary = base.primary,
         onPrimary = base.onPrimary,
@@ -97,6 +104,81 @@ fun accentColorProviders(seed: Int, forceDark: Boolean? = null): ColorProviders 
         widgetBackground = base.surfaceVariant,
     )
 }
+
+/** Packed ARGB for the two achromatic-extreme seeds the picker offers. */
+private const val PURE_WHITE_SEED: Int = 0xFFFFFFFF.toInt()
+private const val PURE_BLACK_SEED: Int = 0xFF000000.toInt()
+
+/** A neutral gray at [t] of the way from [ink] toward [panel] (t in 0..1); stays perfectly gray. */
+private fun grayBetween(ink: Color, panel: Color, t: Float): Color =
+    Color(
+        red = ink.red + (panel.red - ink.red) * t,
+        green = ink.green + (panel.green - ink.green) * t,
+        blue = ink.blue + (panel.blue - ink.blue) * t,
+    )
+
+/**
+ * For a pure-black / pure-white accent seed, republishes [base] as a crisp monochrome panel;
+ * returns null for every other seed (fall through to the tinted path).
+ *
+ * `panel` is the pure extreme every painted background role snaps to (secondaryContainer header +
+ * footer, surfaceVariant/widgetBackground body). `ink` is the pure inverse the text roles take. The
+ * two dimmed tiers step from `ink` toward `panel` so the hierarchy the widget relies on survives a
+ * flat 21:1 wall: secondary copy (onSurfaceVariant — event times, subtitles) at 30% and the
+ * de-emphasis tier (outline — past events, the transient sync glyph) at 50%. Both stay neutral gray
+ * and the 30% step keeps secondary comfortably above WCAG AA against the panel.
+ *
+ * `primary` is deliberately the INK, not the panel: it is both the today-marker fill AND accent text
+ * drawn on the body (e.g. "+N more", the empty-state "add event"), so it must be the readable ink —
+ * a white today-circle with a black number on the black panel. `onPrimary` is therefore the panel.
+ * Applies identically to both faces because `base`'s day/night were already pinned upstream when a
+ * face is forced; when unpinned, both faces resolve to the same monochrome by construction.
+ */
+private fun monochromeSnap(seed: Int, base: ColorProviders): ColorProviders? {
+    val (panel, ink) = when (seed) {
+        PURE_BLACK_SEED -> Color.Black to Color.White
+        PURE_WHITE_SEED -> Color.White to Color.Black
+        else -> return null
+    }
+    val secondary = grayBetween(ink, panel, 0.30f) // event times, subtitles — dimmed but >= AA
+    val dim = grayBetween(ink, panel, 0.50f)        // past events, transient sync glyph
+    // Every role resolves to one flat color for BOTH faces — the snap pins the panel regardless of
+    // the system day/night pick, so a black seed is a black widget in light mode too.
+    return colorProviders(
+        primary = flat(ink),
+        onPrimary = flat(panel),
+        primaryContainer = flat(panel),
+        onPrimaryContainer = flat(ink),
+        secondary = flat(ink),
+        onSecondary = flat(panel),
+        secondaryContainer = flat(panel),
+        onSecondaryContainer = flat(ink),
+        tertiary = flat(ink),
+        onTertiary = flat(panel),
+        tertiaryContainer = flat(panel),
+        onTertiaryContainer = flat(ink),
+        // Error stays the real accent-scheme error red — a monochrome panel shouldn't mute a
+        // genuine error tone. (No widget currently paints it, but keep it correct.)
+        error = base.error,
+        errorContainer = base.errorContainer,
+        onError = base.onError,
+        onErrorContainer = base.onErrorContainer,
+        background = flat(panel),
+        onBackground = flat(ink),
+        surface = flat(panel),
+        onSurface = flat(ink),
+        surfaceVariant = flat(panel),
+        onSurfaceVariant = flat(secondary),
+        outline = flat(dim),
+        inverseOnSurface = flat(panel),
+        inverseSurface = flat(ink),
+        inversePrimary = flat(panel),
+        widgetBackground = flat(panel),
+    )
+}
+
+/** A Glance day/night provider that resolves to [color] for both faces (the monochrome snap is flat). */
+private fun flat(color: Color) = androidx.glance.color.ColorProvider(day = color, night = color)
 
 /**
  * The colors a widget should render with.

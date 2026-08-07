@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.lock.AppLockStateMachine
 import javax.inject.Inject
@@ -25,7 +26,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AppLockViewModel @Inject constructor(
-    dataStore: KashCalDataStore,
+    private val dataStore: KashCalDataStore,
 ) : ViewModel() {
 
     private val machine = AppLockStateMachine()
@@ -37,6 +38,20 @@ class AppLockViewModel @Inject constructor(
     /** Whether the app-lock feature is turned on (off by default). */
     val appLockEnabled: StateFlow<Boolean> = dataStore.appLockEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * Persist the app-lock flag. The capability / enrollment check (and any
+     * routing to the system enrollment flow, plus the authenticate-before-disable
+     * challenge) happens at the call site, which has the Android context — the
+     * ViewModel only stores the resolved value. Mirrors the former write path on
+     * the settings ViewModel; lives here because the account hub (its new home)
+     * is hosted where this ViewModel is injected, not the settings ViewModel.
+     */
+    fun setAppLockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setAppLockEnabled(enabled)
+        }
+    }
 
     /** See [AppLockStateMachine.onActivityCreated]. Sets the no-flash initial lock. */
     fun onActivityCreated(enabled: Boolean) {

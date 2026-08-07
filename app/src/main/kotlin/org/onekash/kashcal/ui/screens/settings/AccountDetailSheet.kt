@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sync
@@ -28,12 +29,17 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.AccountProvider
 
@@ -56,6 +62,11 @@ fun AccountDetailSheet(
     onRename: () -> Unit,
     onSyncNow: () -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
+    onToggleContactSync: (Boolean) -> Unit,
+    contactSyncPermissionNeeded: Boolean,
+    contactSyncConfirmation: ContactSyncConfirmation?,
+    onDismissContactSyncConfirmation: () -> Unit,
+    onGrantContactsPermission: () -> Unit,
     onDiscoverCalendars: () -> Unit,
     onChangePassword: () -> Unit,
     onSignOut: () -> Unit,
@@ -124,13 +135,63 @@ fun AccountDetailSheet(
                     syncStatus = syncStatus
                 )
 
-                // Enabled toggle
+                // Calendar sync toggle (preserves the prior "Enabled" behavior)
                 SettingsToggleRow(
-                    label = stringResource(R.string.account_detail_enabled),
-                    subtitle = stringResource(R.string.account_detail_enabled_subtitle),
+                    label = stringResource(R.string.account_detail_sync_calendar),
+                    subtitle = stringResource(R.string.account_detail_sync_calendar_subtitle),
                     checked = account.isEnabled,
                     onCheckedChange = { onToggleEnabled(it) }
                 )
+
+                // Contacts sync toggle — only for CardDAV-capable providers.
+                // Gated on the static supportsCardDAV flag, not a discovery result.
+                if (account.provider.supportsCardDAV) {
+                    SettingsToggleRow(
+                        label = stringResource(R.string.account_detail_sync_contacts),
+                        subtitle = stringResource(R.string.account_detail_sync_contacts_subtitle),
+                        checked = account.contactSyncEnabled,
+                        onCheckedChange = { onToggleContactSync(it) }
+                    )
+
+                    // Inline re-grant affordance (not a blocking dialog) shown when
+                    // contact sync is on but WRITE_CONTACTS was revoked.
+                    if (account.contactSyncEnabled && contactSyncPermissionNeeded) {
+                        InlineStatusRow(
+                            icon = Icons.Default.Warning,
+                            iconTint = MaterialTheme.colorScheme.error,
+                            text = stringResource(R.string.account_detail_contacts_permission_needed),
+                            textColor = MaterialTheme.colorScheme.error,
+                            trailing = {
+                                TextButton(onClick = onGrantContactsPermission) {
+                                    Text(stringResource(R.string.account_detail_contacts_grant))
+                                }
+                            }
+                        )
+                    }
+
+                    // Inline confirmation after toggling contact sync. Auto-dismisses
+                    // so it doesn't linger; lives in the sheet (not a snackbar) so it
+                    // is visible while the sheet is open.
+                    if (contactSyncConfirmation != null) {
+                        LaunchedEffect(contactSyncConfirmation) {
+                            delay(4000)
+                            onDismissContactSyncConfirmation()
+                        }
+                        // A destructive/unverified outcome (contacts removed, or may
+                        // remain) gets a warning glyph + tint; a benign one keeps the
+                        // reassuring checkmark. Tone is decided in the ViewModel from the
+                        // real purge outcome, never re-derived from the message text.
+                        val isWarning =
+                            contactSyncConfirmation.tone == ContactSyncConfirmation.Tone.WARNING
+                        InlineStatusRow(
+                            icon = if (isWarning) Icons.Default.Warning else Icons.Default.CheckCircle,
+                            iconTint = if (isWarning) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary,
+                            text = contactSyncConfirmation.message,
+                            textColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
                 // Sync Now — primary text + sync icon / spinner
                 val isSyncing = syncStatus is AccountDetailSyncStatus.Syncing
@@ -271,6 +332,45 @@ fun AccountDetailSheet(
 @Composable
 private fun formatCalendarCount(count: Int): String {
     return pluralStringResource(R.plurals.account_detail_calendar_count, count, count)
+}
+
+/**
+ * A compact inline status line: a small leading glyph, a message, and an optional
+ * trailing action. The shared shape behind the SYNC section's contact banners
+ * (permission-needed, toggle confirmation) so a new banner can't drift on padding,
+ * spacing, or icon size. Caller supplies the semantics — [icon], its [iconTint],
+ * the [text], and its [textColor] — so a warning and a confirmation read distinctly
+ * even though the layout is identical.
+ */
+@Composable
+private fun InlineStatusRow(
+    icon: ImageVector,
+    iconTint: Color,
+    text: String,
+    textColor: Color,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = textColor,
+            modifier = Modifier.weight(1f)
+        )
+        trailing?.invoke()
+    }
 }
 
 /**

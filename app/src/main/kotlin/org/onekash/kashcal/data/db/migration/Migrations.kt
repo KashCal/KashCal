@@ -1497,6 +1497,44 @@ object Migrations {
     }
 
     /**
+     * v23 -> v24: add the `accounts.contact_sync_enabled` column (per-login
+     * opt-in for CardDAV contact sync).
+     *
+     * Same robustness shape as the recent migrations: one transaction, an
+     * idempotent `addColumnIfNotExists` add, and post-validation that throws
+     * *before* setTransactionSuccessful() so a partial schema rolls back rather
+     * than leaving Room to fail its identityHash check on next launch. Purely
+     * additive with a `DEFAULT 0` — existing logins keep contact sync off until
+     * the user opts in, matching the entity default.
+     */
+    val MIGRATION_23_24 = object : Migration(23, 24) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                addColumnIfNotExists(
+                    db,
+                    "accounts",
+                    "contact_sync_enabled",
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+
+                // Post-migration validation — runs BEFORE setTransactionSuccessful()
+                // so a thrown exception rolls back rather than commits a broken schema.
+                if (!columnExists(db, "accounts", "contact_sync_enabled")) {
+                    throw IllegalStateException(
+                        "MIGRATION_23_24 post-migration validation failed: " +
+                            "missing accounts.contact_sync_enabled"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -1521,6 +1559,7 @@ object Migrations {
         MIGRATION_19_20,
         MIGRATION_20_21,
         MIGRATION_21_22,
-        MIGRATION_22_23
+        MIGRATION_22_23,
+        MIGRATION_23_24
     )
 }

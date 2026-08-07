@@ -29,6 +29,16 @@ interface CardDavQuirks {
     /** Whether this provider requires app-specific passwords. */
     val requiresAppSpecificPassword: Boolean
 
+    /**
+     * Whether the contacts host should be discovered from the account's email
+     * domain via RFC 6764 DNS SRV/TXT. True only for generic servers whose host is
+     * unknown a priori; false for providers with a pinned bootstrap host
+     * ([baseUrl]) unrelated to the login email domain (iCloud, Zoho). Running SRV
+     * on the email domain for a pinned-host provider could only misdirect it — a
+     * same-registrable-domain `_carddavs` record would silently redirect sync.
+     */
+    val discoverHostViaDns: Boolean
+
     /** `DAV:current-user-principal` href from a PROPFIND response (RFC 5397). */
     fun extractPrincipalUrl(responseBody: String): String?
 

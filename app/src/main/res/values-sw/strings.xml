@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Wijeti</string>
     <string name="settings_widget_theme">Mandhari</string>
     <string name="settings_widget_accent_color">Lafudhi</string>
+    <string name="hub_widget_theme">Mandhari ya wijeti</string>
+    <string name="hub_widget_accent">Lafudhi ya wijeti</string>
     <string name="settings_widget_color_follow_app">Fuata programu</string>
     <string name="settings_widget_color_follow_app_desc">Tumia rangi ya lafudhi na chanzo cha programu</string>
     <string name="settings_widget_theme_follow_app">Fuata programu</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalenda &amp; akaunti</string>
     <string name="settings_section_appearance">Mwonekano</string>
     <string name="settings_section_creating_events">Mapendeleo ya tukio</string>
-    <string name="settings_section_sync">Arifa &amp; kusawazisha</string>
+    <string name="settings_section_sync">Kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
-    <string name="settings_section_privacy">Faragha</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Kufuli ya programu</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Seva hii inaonekana iko kwenye mtandao wako wa ndani. Ruhusu ufikiaji wa mtandao wa ndani ili KashCal iweze kuiunganisha.</string>
     <string name="local_network_banner_allow">Ruhusu ufikiaji</string>
     <string name="local_network_banner_dismiss">Si sasa</string>
+    <string name="hub_app_permissions">Ruhusa za programu</string>
+    <string name="status_allowed">Imeruhusiwa</string>
+    <string name="permission_name_notifications">Arifa</string>
+    <string name="permission_why_notifications">Ili KashCal iweze kukukumbusha kuhusu matukio yako. Bila hiyo, vikumbusho hubaki kimya.</string>
+    <string name="permission_name_contacts">Anwani</string>
+    <string name="permission_why_contacts">Hupendekeza wageni unapoongeza watu kwenye tukio, na huonyesha siku za kuzaliwa za anwani. Anwani zako hubaki kwenye kifaa chako.</string>
+    <string name="permission_name_calendars">Kalenda</string>
+    <string name="permission_why_calendars">Huonyesha matukio kutoka kalenda nyingine kwenye kifaa chako pamoja na matukio yako mwenyewe.</string>
+    <string name="permission_name_local_network">Mtandao wa ndani</string>
+    <string name="permission_why_local_network">Hufikia seva ya kalenda kwenye mtandao wa nyumbani au ofisini kwako. Android 17 huomba hii kando na ufikiaji wa intaneti.</string>
     <string name="password_change_error_account_not_found">Akaunti haijapatikana</string>
     <string name="password_change_error_no_credentials">Hakuna kitambulisho kilichopo</string>
     <string name="password_change_error_unsupported_provider">Mtoa huduma huyu hasaidii kubadilisha nywila</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">AKAUNTI</string>
     <string name="account_detail_enabled">Imewashwa</string>
     <string name="account_detail_enabled_subtitle">Sawazisha akaunti hii kiotomatiki</string>
+    <string name="account_detail_sync_calendar">Kalenda</string>
+    <string name="account_detail_sync_calendar_subtitle">Sawazisha kalenda za akaunti hii</string>
+    <string name="account_detail_sync_contacts">Anwani</string>
+    <string name="account_detail_sync_contacts_subtitle">Sawazisha anwani za akaunti hii kwenye simu yako</string>
+    <string name="account_detail_contacts_permission_needed">Ruhusa ya Anwani imezimwa. Toa ufikiaji ili anwani ziendelee kusawazishwa.</string>
+    <string name="account_detail_contacts_grant">Toa ufikiaji</string>
+    <string name="contact_sync_enabled_for">Inasawazisha anwani za %1$s</string>
+    <string name="contact_sync_disabled_for">Anwani za kifaa za %1$s zimeondolewa</string>
+    <string name="contact_sync_disabled_kept">Usawazishaji wa anwani umezimwa kwa %1$s. Anwani zinabaki kwa sababu kuingia kwingine bado kunazisawazisha.</string>
+    <string name="contact_sync_disabled_incomplete">Usawazishaji wa anwani umezimwa kwa %1$s, lakini baadhi ya anwani za kifaa zinaweza kubaki. Angalia ruhusa ya Anwani.</string>
     <string name="account_detail_sync_now">Sawazisha Sasa</string>
     <string name="account_detail_syncing">Inasawazisha…</string>
     <string name="account_detail_discovering">Inagundua…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Hifadhi</string>
     <string name="hub_initials_cancel">Ghairi</string>
     <string name="hub_section_make_it_yours">Ifanye yako</string>
+    <string name="hub_section_own_your_calendar">Miliki kalenda yako</string>
+    <string name="hub_privacy_data_ownership">Jinsi data yako inavyobaki yako</string>
     <string name="hub_accounts_and_settings">Akaunti na mipangilio</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Aksent</string>
+    <string name="hub_widget_theme">Widget-tema</string>
+    <string name="hub_widget_accent">Widget-aksent</string>
     <string name="settings_widget_color_follow_app">Følg appen</string>
     <string name="settings_widget_color_follow_app_desc">Bruk appens aksentfarge og fargekilde</string>
     <string name="settings_widget_theme_follow_app">Følg appen</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendere &amp; kontoer</string>
     <string name="settings_section_appearance">Utseende</string>
     <string name="settings_section_creating_events">Hendelsesinnstillinger</string>
-    <string name="settings_section_sync">Varsler &amp; synkronisering</string>
+    <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Sikkerhetskopi &amp; gjenoppretting</string>
-    <string name="settings_section_privacy">Personvern</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Applås</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Denne serveren ser ut til å være på det lokale nettverket ditt. Tillat tilgang til lokalt nettverk så KashCal kan koble til den.</string>
     <string name="local_network_banner_allow">Tillat tilgang</string>
     <string name="local_network_banner_dismiss">Ikke nå</string>
+    <string name="hub_app_permissions">App-tillatelser</string>
+    <string name="status_allowed">Tillatt</string>
+    <string name="permission_name_notifications">Varsler</string>
+    <string name="permission_why_notifications">Så KashCal kan minne deg på hendelsene dine. Uten den forblir påminnelser tause.</string>
+    <string name="permission_name_contacts">Kontakter</string>
+    <string name="permission_why_contacts">Foreslår gjester mens du legger til personer i en hendelse, og viser kontakters bursdager. Kontaktene dine forblir på enheten din.</string>
+    <string name="permission_name_calendars">Kalendere</string>
+    <string name="permission_why_calendars">Viser hendelser fra de andre kalenderne på enheten din sammen med dine egne.</string>
+    <string name="permission_name_local_network">Lokalt nettverk</string>
+    <string name="permission_why_local_network">Når en kalenderserver på hjemme- eller kontornettverket ditt. Android 17 spør om dette separat fra internettilgang.</string>
     <string name="password_change_error_account_not_found">Kontoen ble ikke funnet</string>
     <string name="password_change_error_no_credentials">Ingen eksisterende påloggingsdetaljer</string>
     <string name="password_change_error_unsupported_provider">Denne leverandøren støtter ikke endring av passordet</string>
@@ -516,6 +527,16 @@
     <string name="account_detail_section_account">KONTO</string>
     <string name="account_detail_enabled">Aktivert</string>
     <string name="account_detail_enabled_subtitle">Synkroniser denne kontoen automatisk</string>
+    <string name="account_detail_sync_calendar">Kalender</string>
+    <string name="account_detail_sync_calendar_subtitle">Synkroniser denne kontoens kalendere</string>
+    <string name="account_detail_sync_contacts">Kontakter</string>
+    <string name="account_detail_sync_contacts_subtitle">Synkroniser denne kontoens kontakter til telefonen din</string>
+    <string name="account_detail_contacts_permission_needed">Tillatelse for kontakter er av. Gi tilgang for å fortsette å synkronisere kontakter.</string>
+    <string name="account_detail_contacts_grant">Gi tilgang</string>
+    <string name="contact_sync_enabled_for">Synkroniserer kontakter for %1$s</string>
+    <string name="contact_sync_disabled_for">Enhetskontakter for %1$s er fjernet</string>
+    <string name="contact_sync_disabled_kept">Kontaktsynkronisering av for %1$s. Kontakter blir værende fordi en annen innlogging fortsatt synkroniserer dem.</string>
+    <string name="contact_sync_disabled_incomplete">Kontaktsynkronisering av for %1$s, men noen enhetskontakter kan bli værende. Sjekk Kontakter-tillatelsen.</string>
     <string name="account_detail_sync_now">Synkroniser nå</string>
     <string name="account_detail_syncing">Synkroniserer…</string>
     <string name="account_detail_discovering">Oppdager…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Lagre</string>
     <string name="hub_initials_cancel">Avbryt</string>
     <string name="hub_section_make_it_yours">Gjør den til din</string>
+    <string name="hub_section_own_your_calendar">Kalenderen din er din</string>
+    <string name="hub_privacy_data_ownership">Slik forblir dataene dine dine</string>
     <string name="hub_accounts_and_settings">Kontoer og innstillinger</string>
 
     <!-- ==================== Share Availability ==================== -->

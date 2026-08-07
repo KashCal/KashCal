@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,9 +28,11 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Widgets
@@ -38,16 +41,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +75,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -80,6 +87,8 @@ import org.onekash.kashcal.ui.components.formatBadgeCount
 import org.onekash.kashcal.ui.components.pickers.AccentColorSheet
 import org.onekash.kashcal.ui.components.pickers.WidgetAccentColorSheet
 import org.onekash.kashcal.ui.screens.settings.AppIconSheet
+import org.onekash.kashcal.ui.screens.settings.SettingsInfoButton
+import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
 import org.onekash.kashcal.ui.screens.settings.ThemeSheet
 import org.onekash.kashcal.ui.screens.settings.WidgetThemeSheet
 import org.onekash.kashcal.ui.shared.EventColorPalette
@@ -113,15 +122,28 @@ fun AccountHubScreen(
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    // App lock lives here (not Settings) because its host activity owns the
+    // BiometricPrompt. Defaults keep the section inert until the host wires it.
+    appLockEnabled: Boolean = false,
+    onToggleAppLock: (Boolean) -> Unit = {},
+    // App permissions opens as a full-screen destination above the hub (like
+    // Manage tags), so it's a plain navigation row here; the host owns the
+    // destination and its permission launchers.
+    onAppPermissionsClick: () -> Unit = {},
     // Personalization rows are hoisted as a slot so they can be stubbed in tests:
     // the real section pulls an AppearanceViewModel via hiltViewModel(), which a
     // plain Compose test has no graph to satisfy.
     makeItYours: @Composable () -> Unit = { MakeItYoursSection() },
+    // Snackbar host for confirmations that fire while the hub is up (e.g. the
+    // app-lock toggle). The hub is an opaque overlay above the caller's Scaffold,
+    // so its snackbar host would be hidden; the caller passes one mounted here.
+    snackbarHost: @Composable () -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = snackbarHost,
         topBar = {
             TopAppBar(
                 title = {},
@@ -184,6 +206,7 @@ fun AccountHubScreen(
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
+            HubSectionHeader(stringResource(R.string.hub_section_own_your_calendar))
             HubDrawerItem(
                 label = stringResource(R.string.menu_invites),
                 icon = Icons.Default.MailOutline,
@@ -211,14 +234,26 @@ fun AccountHubScreen(
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
+            HubSectionHeader(stringResource(R.string.menu_privacy_security))
+            HubAppLockRow(
+                checked = appLockEnabled,
+                onCheckedChange = onToggleAppLock,
+            )
+            HubDrawerItem(
+                label = stringResource(R.string.hub_app_permissions),
+                icon = Icons.Default.Security,
+                onClick = onAppPermissionsClick,
+            )
+            // Link to the data-ownership policy, closing the privacy section.
+            PrivacyDataOwnershipRow()
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
+
             HubDrawerItem(
                 label = stringResource(R.string.menu_about),
                 icon = Icons.Default.Info,
                 onClick = onAboutClick,
             )
-            // Privacy & Security flows below About (not pinned) so it reads as
-            // part of the app/meta group rather than a stranded footer.
-            PrivacySecurityRow()
         }
     }
 }
@@ -239,6 +274,56 @@ private fun HubDrawerItem(
         onClick = onClick,
         modifier = Modifier.padding(horizontal = 12.dp),
     )
+}
+
+/**
+ * App-lock toggle rendered as a hub-native row so its icon lands at the same
+ * 28dp inset as every [HubDrawerItem] and it keeps the hub's row height (rather
+ * than the denser settings-row inset and padding). A trailing ⓘ explains the
+ * setting; the switch opts out of the 48dp minimum so the row doesn't stand
+ * taller than its neighbours, and the whole row toggles the lock.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HubAppLockRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val label = stringResource(R.string.app_lock_label)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Switch) { onCheckedChange(!checked) }
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 28.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Default.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        SettingsInfoButton(
+            SettingsRowInfo(
+                title = label,
+                text = stringResource(R.string.settings_app_lock_info),
+            ),
+        )
+        Spacer(Modifier.width(4.dp))
+        // Opt out of the 48dp minimum so the switch keeps the row at hub-row
+        // height instead of standing taller.
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
+        }
+    }
 }
 
 @Composable
@@ -317,10 +402,11 @@ private fun MakeItYoursSection() {
         badge = { Text(stringResource(currentAppIcon.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
     )
 
-    // Widgets get their own light/dark face and color source, independent of the app face above.
-    HubSectionHeader(stringResource(R.string.settings_widgets_section))
+    // Widgets get their own light/dark face and color source, independent of the
+    // app face above; the rows stay flat under "Make it yours" rather than under
+    // a nested sub-header.
     HubDrawerItem(
-        label = stringResource(R.string.settings_widget_theme),
+        label = stringResource(R.string.hub_widget_theme),
         icon = Icons.Default.Widgets,
         onClick = { showWidgetThemeSheet = true },
         badge = { Text(stringResource(widgetThemeSource.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
@@ -333,7 +419,7 @@ private fun MakeItYoursSection() {
         else -> stringResource(EventColorPalette.stringResIdForColor(widgetAccentSeed))
     }
     HubDrawerItem(
-        label = stringResource(R.string.settings_widget_accent_color),
+        label = stringResource(R.string.hub_widget_accent),
         icon = Icons.Default.Palette,
         onClick = { showWidgetAccentSheet = true },
         badge = {
@@ -509,11 +595,11 @@ private fun HubHero(
     }
 }
 
-/** External link to the privacy & security policy, with an open-in-new affordance. */
+/** External link to the data-ownership policy, with an open-in-new affordance. */
 @Composable
-private fun PrivacySecurityRow() {
+private fun PrivacyDataOwnershipRow() {
     val context = LocalContext.current
-    val label = stringResource(R.string.menu_privacy_security)
+    val label = stringResource(R.string.hub_privacy_data_ownership)
     val opensInBrowser = stringResource(R.string.cd_opens_in_browser)
     Row(
         modifier = Modifier
@@ -529,12 +615,13 @@ private fun PrivacySecurityRow() {
             imageVector = Icons.Default.Shield,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(24.dp),
         )
-        Spacer(Modifier.width(20.dp))
+        Spacer(Modifier.width(12.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Icon(

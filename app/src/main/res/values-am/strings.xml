@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ዊጀቶች</string>
     <string name="settings_widget_theme">ገጽታ</string>
     <string name="settings_widget_accent_color">ማድመቂያ</string>
+    <string name="hub_widget_theme">የዊጀት ገጽታ</string>
+    <string name="hub_widget_accent">የዊጀት ማድመቂያ</string>
     <string name="settings_widget_color_follow_app">መተግበሪያውን ተከተል</string>
     <string name="settings_widget_color_follow_app_desc">የመተግበሪያውን ማድመቂያ ቀለም እና ምንጭ ይጠቀሙ</string>
     <string name="settings_widget_theme_follow_app">መተግበሪያውን ተከተል</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">የቀን መቁጠሪያዎች እና መለያዎች</string>
     <string name="settings_section_appearance">መልክ</string>
     <string name="settings_section_creating_events">የክስተት ምርጫዎች</string>
-    <string name="settings_section_sync">ማሳወቂያዎች እና ማመሳሰል</string>
+    <string name="settings_section_sync">ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
-    <string name="settings_section_privacy">ግላዊነት</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">የመተግበሪያ መቆለፊያ</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ይህ አገልጋይ በአካባቢዎ አውታረ መረብ ላይ ያለ ይመስላል። KashCal ከእሱ ጋር መገናኘት እንዲችል የአካባቢ አውታረ መረብ መዳረሻን ይፍቀዱ።</string>
     <string name="local_network_banner_allow">መዳረሻ ፍቀድ</string>
     <string name="local_network_banner_dismiss">አሁን አይደለም</string>
+    <string name="hub_app_permissions">የመተግበሪያ ፈቃዶች</string>
+    <string name="status_allowed">ተፈቅዷል</string>
+    <string name="permission_name_notifications">ማሳወቂያዎች</string>
+    <string name="permission_why_notifications">KashCal ስለ ክስተቶችዎ እንዲያስታውስዎ ነው። ያለ እሱ አስታዋሾች ጸጥ ብለው ይቆያሉ።</string>
+    <string name="permission_name_contacts">እውቂያዎች</string>
+    <string name="permission_why_contacts">ወደ ክስተት ሰዎችን ሲጨምሩ እንግዶችን ይጠቁማል፣ እና የእውቂያ የልደት ቀኖችን ያሳያል። እውቂያዎችዎ በመሣሪያዎ ላይ ይቆያሉ።</string>
+    <string name="permission_name_calendars">የቀን መቁጠሪያዎች</string>
+    <string name="permission_why_calendars">በመሣሪያዎ ላይ ካሉት ሌሎች የቀን መቁጠሪያዎች ክስተቶችን ከእርስዎ ጎን ለጎን ያሳያል።</string>
+    <string name="permission_name_local_network">አካባቢያዊ አውታረ መረብ</string>
+    <string name="permission_why_local_network">በቤትዎ ወይም በቢሮዎ አውታረ መረብ ላይ ያለ የቀን መቁጠሪያ አገልጋይ ላይ ይደርሳል። Android 17 ይህንን ከበይነመረብ መዳረሻ ለይቶ ይጠይቃል።</string>
     <string name="password_change_error_account_not_found">መለያው አልተገኘም</string>
     <string name="password_change_error_no_credentials">ምንም ነባር ምስክርነቶች የሉም</string>
     <string name="password_change_error_unsupported_provider">ይህ አቅራቢ የይለፍ ቃል መቀየርን አይደግፍም</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">መለያ</string>
     <string name="account_detail_enabled">ነቅቷል</string>
     <string name="account_detail_enabled_subtitle">ይህን መለያ በራስ-ሰር አመሳስል</string>
+    <string name="account_detail_sync_calendar">የቀን መቁጠሪያ</string>
+    <string name="account_detail_sync_calendar_subtitle">የዚህን መለያ የቀን መቁጠሪያዎች አመሳስል</string>
+    <string name="account_detail_sync_contacts">እውቂያዎች</string>
+    <string name="account_detail_sync_contacts_subtitle">የዚህን መለያ እውቂያዎች ወደ ስልክዎ አመሳስል</string>
+    <string name="account_detail_contacts_permission_needed">የእውቂያ ፈቃድ ጠፍቷል። እውቂያዎች መመሳሰላቸውን እንዲቀጥሉ መዳረሻ ይፍቀዱ።</string>
+    <string name="account_detail_contacts_grant">መዳረሻ ይፍቀዱ</string>
+    <string name="contact_sync_enabled_for">የ%1$s ዕውቂያዎች እየተመሳሰሉ ነው</string>
+    <string name="contact_sync_disabled_for">የ%1$s የመሣሪያ ዕውቂያዎች ተወግደዋል</string>
+    <string name="contact_sync_disabled_kept">የ%1$s እውቂያ ማመሳሰል ጠፍቷል። ሌላ መግቢያ አሁንም ስለሚያመሳስላቸው እውቂያዎች ይቆያሉ።</string>
+    <string name="contact_sync_disabled_incomplete">የ%1$s እውቂያ ማመሳሰል ጠፍቷል፣ ግን አንዳንድ የመሣሪያ እውቂያዎች ሊቆዩ ይችላሉ። የእውቂያዎች ፈቃድን ያረጋግጡ።</string>
     <string name="account_detail_sync_now">አሁን አመሳስል</string>
     <string name="account_detail_syncing">በማመሳሰል ላይ…</string>
     <string name="account_detail_discovering">በማግኘት ላይ…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">አስቀምጥ</string>
     <string name="hub_initials_cancel">ሰርዝ</string>
     <string name="hub_section_make_it_yours">የእርስዎ ያድርጉት</string>
+    <string name="hub_section_own_your_calendar">የቀን መቁጠሪያዎን ይቆጣጠሩ</string>
+    <string name="hub_privacy_data_ownership">ውሂብዎ እንዴት የእርስዎ ሆኖ እንደሚቆይ</string>
     <string name="hub_accounts_and_settings">መለያዎች እና ቅንብሮች</string>
 
     <!-- ==================== Share Availability ==================== -->

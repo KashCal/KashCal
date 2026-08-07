@@ -1,8 +1,10 @@
 package org.onekash.kashcal.ui.components.hub
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -58,10 +60,13 @@ class AccountHubScreenTest {
         var about = 0
         var back = 0
         var initials: String? = null
+        var appLockToggled: Boolean? = null
+        var appPermissions = 0
     }
 
     private fun render(
         userInitials: String = "KC",
+        appLockEnabled: Boolean = false,
         callbacks: Callbacks = Callbacks(),
     ) {
         composeTestRule.setContent {
@@ -77,6 +82,9 @@ class AccountHubScreenTest {
                     onSettingsClick = { callbacks.settings++ },
                     onAboutClick = { callbacks.about++ },
                     onBack = { callbacks.back++ },
+                    appLockEnabled = appLockEnabled,
+                    onToggleAppLock = { callbacks.appLockToggled = it },
+                    onAppPermissionsClick = { callbacks.appPermissions++ },
                     // Stub the VM-backed personalization slot so no Hilt graph is needed.
                     makeItYours = { Text("make-it-yours-stub") },
                 )
@@ -142,5 +150,41 @@ class AccountHubScreenTest {
         render()
         composeTestRule.onNodeWithText("Make it yours").assertIsDisplayed()
         composeTestRule.onNodeWithText("make-it-yours-stub").assertIsDisplayed()
+    }
+
+    @Test
+    fun `all three section headers render`() {
+        render()
+        composeTestRule.onNodeWithText("Make it yours").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Own your calendar").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Privacy & Security").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the nested Widgets sub-header is gone`() {
+        render()
+        composeTestRule.onAllNodesWithText("Widgets").assertCountEquals(0)
+    }
+
+    @Test
+    fun `app-lock row reflects state and toggling invokes the callback`() {
+        val cb = Callbacks()
+        render(appLockEnabled = false, callbacks = cb)
+        composeTestRule.onNodeWithText("App lock").performClick()
+        assertEquals(true, cb.appLockToggled)
+    }
+
+    @Test
+    fun `app-permissions row renders and invokes its callback`() {
+        val cb = Callbacks()
+        render(callbacks = cb)
+        composeTestRule.onNodeWithText("App permissions").performClick()
+        assertEquals(1, cb.appPermissions)
+    }
+
+    @Test
+    fun `data-ownership link renders in Privacy and security`() {
+        render()
+        composeTestRule.onNodeWithText("How your data stays yours").assertIsDisplayed()
     }
 }

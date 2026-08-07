@@ -6,6 +6,7 @@ import okhttp3.Response
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -132,5 +133,57 @@ class HttpResponseBodyReaderTest {
                 .setBody(okio.Buffer().writeString(text, Charsets.UTF_8))
         )
         assertEquals(text, get().readBoundedBody(maxBytes = 1024))
+    }
+
+    // ========== readBoundedBytes (binary, no charset decode) ==========
+
+    @Test
+    fun `readBoundedBytes returns the raw bytes verbatim`() {
+        // A byte sequence that is NOT valid UTF-8: 0xFF 0xD8 (JPEG SOI) followed by
+        // a lone 0x80 continuation byte. Reading it through a String reader would
+        // replace the invalid bytes with U+FFFD and corrupt the image; the binary
+        // reader must return every byte untouched.
+        val raw = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0x80.toByte(), 0x00, 0x41)
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(okio.Buffer().write(raw))
+        )
+
+        val result = get().readBoundedBytes(maxBytes = 1024)
+
+        assertArrayEquals(raw, result)
+    }
+
+    @Test
+    fun `readBoundedBytes returns empty array for a null body`() {
+        // A 204 No Content has no body; must decode to an empty array, not throw.
+        server.enqueue(MockResponse().setResponseCode(204))
+        assertArrayEquals(ByteArray(0), get().readBoundedBytes(maxBytes = 1024))
+    }
+
+    @Test
+    fun `readBoundedBytes throws when Content-Length exceeds the limit`() {
+        val tooBig = "x".repeat(2048)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(tooBig))
+        assertThrows(ResponseTooLargeException::class.java) {
+            get().readBoundedBytes(maxBytes = 1024)
+        }
+    }
+
+    @Test
+    fun `readBoundedBytes throws when a chunked body exceeds the limit`() {
+        val tooBig = "y".repeat(4096)
+        server.enqueue(
+            MockResponse().setResponseCode(200).setChunkedBody(tooBig, 256)
+        )
+        assertThrows(ResponseTooLargeException::class.java) {
+            get().readBoundedBytes(maxBytes = 1024)
+        }
+    }
+
+    @Test
+    fun `readBoundedBytes accepts a body of exactly the limit`() {
+        val payload = ByteArray(1024) { 0x5A }
+        server.enqueue(MockResponse().setResponseCode(200).setBody(okio.Buffer().write(payload)))
+        assertArrayEquals(payload, get().readBoundedBytes(maxBytes = 1024))
     }
 }

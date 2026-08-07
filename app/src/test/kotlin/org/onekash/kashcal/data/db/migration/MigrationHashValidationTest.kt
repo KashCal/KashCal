@@ -183,18 +183,37 @@ class MigrationHashValidationTest {
     }
 
     /**
+     * Validates that running `MIGRATION_23_24` against a fresh v23 database
+     * matches Room's expected v24 identityHash exactly — i.e. the additive
+     * `accounts.contact_sync_enabled` column (`INTEGER NOT NULL DEFAULT 0`)
+     * matches `app/schemas/.../24.json` in name, affinity, nullability, and
+     * default.
+     */
+    @Test
+    fun `MIGRATION_23_24 produces a schema whose identityHash matches Room's v24 export`() {
+        helper.createDatabase(TEST_DB, 23).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            24,
+            true,
+            Migrations.MIGRATION_23_24
+        ).close()
+    }
+
+    /**
      * Same validation but starting from a `v1` database — verifies the
      * full migration chain produces a hash-equivalent schema all the way
-     * up to v23. Belt-and-braces against any earlier-migration drift that
+     * up to v24. Belt-and-braces against any earlier-migration drift that
      * only matters once subsequent versions stack on top.
      */
     @Test
-    fun `full migration chain v1 to v23 produces schema whose identityHash matches Room's export`() {
+    fun `full migration chain v1 to v24 produces schema whose identityHash matches Room's export`() {
         helper.createDatabase(TEST_DB, 1).close()
 
         helper.runMigrationsAndValidate(
             TEST_DB,
-            23,
+            24,
             true,
             Migrations.MIGRATION_1_2,
             Migrations.MIGRATION_2_3,
@@ -218,7 +237,8 @@ class MigrationHashValidationTest {
             Migrations.MIGRATION_19_20,
             Migrations.MIGRATION_20_21,
             Migrations.MIGRATION_21_22,
-            Migrations.MIGRATION_22_23
+            Migrations.MIGRATION_22_23,
+            Migrations.MIGRATION_23_24
         ).close()
     }
 

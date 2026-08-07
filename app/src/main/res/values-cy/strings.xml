@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Thema</string>
     <string name="settings_widget_accent_color">Acen</string>
+    <string name="hub_widget_theme">Thema\'r widget</string>
+    <string name="hub_widget_accent">Acen y widget</string>
     <string name="settings_widget_color_follow_app">Dilyn yr ap</string>
     <string name="settings_widget_color_follow_app_desc">Defnyddio lliw acen a ffynhonnell yr ap</string>
     <string name="settings_widget_theme_follow_app">Dilyn yr ap</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Calendrau a chyfrifon</string>
     <string name="settings_section_appearance">Golwg</string>
     <string name="settings_section_creating_events">Dewisiadau digwyddiadau</string>
-    <string name="settings_section_sync">Hysbysiadau a chysoni</string>
+    <string name="settings_section_sync">Cysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
-    <string name="settings_section_privacy">Preifatrwydd</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Clo\'r ap</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Mae\'n edrych fel bod y gweinydd hwn ar eich rhwydwaith lleol. Caniatewch fynediad i\'r rhwydwaith lleol fel y gall KashCal gysylltu ag ef.</string>
     <string name="local_network_banner_allow">Caniatáu mynediad</string>
     <string name="local_network_banner_dismiss">Ddim nawr</string>
+    <string name="hub_app_permissions">Caniatadau\'r ap</string>
+    <string name="status_allowed">Wedi caniatáu</string>
+    <string name="permission_name_notifications">Hysbysiadau</string>
+    <string name="permission_why_notifications">Fel y gall KashCal dy atgoffa am dy ddigwyddiadau. Hebddo, bydd nodynnau atgoffa\'n aros yn dawel.</string>
+    <string name="permission_name_contacts">Cysylltiadau</string>
+    <string name="permission_why_contacts">Yn awgrymu gwesteion wrth i ti ychwanegu pobl at ddigwyddiad, ac yn dangos pen-blwyddi cysylltiadau. Mae dy gysylltiadau\'n aros ar dy ddyfais.</string>
+    <string name="permission_name_calendars">Calendrau</string>
+    <string name="permission_why_calendars">Yn dangos digwyddiadau o\'r calendrau eraill ar dy ddyfais ochr yn ochr â\'th rai di.</string>
+    <string name="permission_name_local_network">Rhwydwaith lleol</string>
+    <string name="permission_why_local_network">Yn cyrraedd gweinydd calendr ar dy rwydwaith cartref neu swyddfa. Mae Android 17 yn gofyn am hyn ar wahân i fynediad i\'r rhyngrwyd.</string>
     <string name="password_change_error_account_not_found">Heb ganfod y cyfrif</string>
     <string name="password_change_error_no_credentials">Dim manylion adnabod presennol</string>
     <string name="password_change_error_unsupported_provider">Nid yw\'r darparwr hwn yn cefnogi newid y cyfrinair</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">CYFRIF</string>
     <string name="account_detail_enabled">Wedi\'i alluogi</string>
     <string name="account_detail_enabled_subtitle">Cysoni\'r cyfrif hwn yn awtomatig</string>
+    <string name="account_detail_sync_calendar">Calendr</string>
+    <string name="account_detail_sync_calendar_subtitle">Cysoni calendrau\'r cyfrif hwn</string>
+    <string name="account_detail_sync_contacts">Cysylltiadau</string>
+    <string name="account_detail_sync_contacts_subtitle">Cysoni cysylltiadau\'r cyfrif hwn i\'ch ffôn</string>
+    <string name="account_detail_contacts_permission_needed">Mae caniatâd cysylltiadau wedi\'i ddiffodd. Rhowch fynediad i barhau i gysoni cysylltiadau.</string>
+    <string name="account_detail_contacts_grant">Rhoi mynediad</string>
+    <string name="contact_sync_enabled_for">Cysoni cysylltiadau %1$s</string>
+    <string name="contact_sync_disabled_for">Tynnwyd cysylltiadau dyfais %1$s</string>
+    <string name="contact_sync_disabled_kept">Mae cysoni cysylltiadau wedi\'i ddiffodd ar gyfer %1$s. Mae\'r cysylltiadau\'n aros am fod mewngofnodiad arall yn dal i\'w cysoni.</string>
+    <string name="contact_sync_disabled_incomplete">Mae cysoni cysylltiadau wedi\'i ddiffodd ar gyfer %1$s, ond gall rhai cysylltiadau dyfais aros. Gwiriwch y caniatâd Cysylltiadau.</string>
     <string name="account_detail_sync_now">Cysoni Nawr</string>
     <string name="account_detail_syncing">Yn cysoni…</string>
     <string name="account_detail_discovering">Yn darganfod…</string>
@@ -1399,6 +1420,8 @@
     <string name="hub_initials_save">Cadw</string>
     <string name="hub_initials_cancel">Canslo</string>
     <string name="hub_section_make_it_yours">Gwna hi\'n un i ti</string>
+    <string name="hub_section_own_your_calendar">Dy galendr di</string>
+    <string name="hub_privacy_data_ownership">Sut mae dy ddata\'n aros yn eiddo i ti</string>
     <string name="hub_accounts_and_settings">Cyfrifon a gosodiadau</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Виджеты</string>
     <string name="settings_widget_theme">Тема</string>
     <string name="settings_widget_accent_color">Акцент</string>
+    <string name="hub_widget_theme">Тема виджета</string>
+    <string name="hub_widget_accent">Акцент виджета</string>
     <string name="settings_widget_color_follow_app">Как в приложении</string>
     <string name="settings_widget_color_follow_app_desc">Использовать акцентный цвет приложения и его источник</string>
     <string name="settings_widget_theme_follow_app">Как в приложении</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Календари и аккаунты</string>
     <string name="settings_section_appearance">Оформление</string>
     <string name="settings_section_creating_events">Настройки событий</string>
-    <string name="settings_section_sync">Уведомления и синхронизация</string>
+    <string name="settings_section_sync">Синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
-    <string name="settings_section_privacy">Конфиденциальность</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Блокировка приложения</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Похоже, этот сервер находится в твоей локальной сети. Разреши доступ к локальной сети, чтобы KashCal мог к нему подключиться.</string>
     <string name="local_network_banner_allow">Разрешить доступ</string>
     <string name="local_network_banner_dismiss">Не сейчас</string>
+    <string name="hub_app_permissions">Разрешения приложения</string>
+    <string name="status_allowed">Разрешено</string>
+    <string name="permission_name_notifications">Уведомления</string>
+    <string name="permission_why_notifications">Чтобы KashCal мог напоминать тебе о событиях. Без этого напоминания останутся беззвучными.</string>
+    <string name="permission_name_contacts">Контакты</string>
+    <string name="permission_why_contacts">Подсказывает гостей, когда ты добавляешь людей к событию, и показывает дни рождения контактов. Твои контакты остаются на устройстве.</string>
+    <string name="permission_name_calendars">Календари</string>
+    <string name="permission_why_calendars">Показывает события из других календарей на твоём устройстве рядом с твоими собственными.</string>
+    <string name="permission_name_local_network">Локальная сеть</string>
+    <string name="permission_why_local_network">Подключается к серверу календаря в твоей домашней или офисной сети. Android 17 запрашивает это отдельно от доступа к интернету.</string>
     <string name="password_change_error_account_not_found">Аккаунт не найден</string>
     <string name="password_change_error_no_credentials">Нет сохранённых учётных данных</string>
     <string name="password_change_error_unsupported_provider">Этот провайдер не поддерживает смену пароля</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">УЧЁТНАЯ ЗАПИСЬ</string>
     <string name="account_detail_enabled">Включено</string>
     <string name="account_detail_enabled_subtitle">Автоматическая синхронизация</string>
+    <string name="account_detail_sync_calendar">Календарь</string>
+    <string name="account_detail_sync_calendar_subtitle">Синхронизировать календари этого аккаунта</string>
+    <string name="account_detail_sync_contacts">Контакты</string>
+    <string name="account_detail_sync_contacts_subtitle">Синхронизировать контакты этого аккаунта с телефоном</string>
+    <string name="account_detail_contacts_permission_needed">Доступ к контактам отключён. Предоставьте доступ, чтобы контакты продолжали синхронизироваться.</string>
+    <string name="account_detail_contacts_grant">Предоставить доступ</string>
+    <string name="contact_sync_enabled_for">Синхронизация контактов для %1$s</string>
+    <string name="contact_sync_disabled_for">Контакты устройства для %1$s удалены</string>
+    <string name="contact_sync_disabled_kept">Синхронизация контактов для %1$s отключена. Контакты сохранены, так как их синхронизирует другой вход.</string>
+    <string name="contact_sync_disabled_incomplete">Синхронизация контактов для %1$s отключена, но некоторые контакты на устройстве могут остаться. Проверьте разрешение на доступ к Контактам.</string>
     <string name="account_detail_sync_now">Синхронизировать</string>
     <string name="account_detail_syncing">Синхронизация…</string>
     <string name="account_detail_discovering">Обнаружение…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Сохранить</string>
     <string name="hub_initials_cancel">Отмена</string>
     <string name="hub_section_make_it_yours">Настрой под себя</string>
+    <string name="hub_section_own_your_calendar">Твой календарь</string>
+    <string name="hub_privacy_data_ownership">Как твои данные остаются твоими</string>
     <string name="hub_accounts_and_settings">Аккаунты и настройки</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -14,6 +14,7 @@ interface PermissionChecker {
     fun hasNotificationPermission(): Boolean
     fun hasExactAlarmPermission(): Boolean
     fun hasReadContactsPermission(): Boolean
+    fun hasWriteContactsPermission(): Boolean
     fun hasCalendarReadPermission(): Boolean
     fun hasCalendarWritePermission(): Boolean
 }

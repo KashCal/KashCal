@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Виджеттер</string>
     <string name="settings_widget_theme">Тема</string>
     <string name="settings_widget_accent_color">Акцент</string>
+    <string name="hub_widget_theme">Виджет тақырыбы</string>
+    <string name="hub_widget_accent">Виджет акценті</string>
     <string name="settings_widget_color_follow_app">Қосымша бойынша</string>
     <string name="settings_widget_color_follow_app_desc">Қолданбаның акцент түсі мен көзін пайдаланыңыз</string>
     <string name="settings_widget_theme_follow_app">Қосымша бойынша</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Күнтізбелер &amp; тіркелгілер</string>
     <string name="settings_section_appearance">Безендіру</string>
     <string name="settings_section_creating_events">Оқиға параметрлері</string>
-    <string name="settings_section_sync">Хабарландырулар &amp; синхрондау</string>
+    <string name="settings_section_sync">Синхрондау</string>
     <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
-    <string name="settings_section_privacy">Құпиялылық</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Қолданба құлпы</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Бұл сервер жергілікті желіде тұрған сияқты. KashCal оған қосыла алуы үшін жергілікті желіге кіруге рұқсат етіңіз.</string>
     <string name="local_network_banner_allow">Кіруге рұқсат ету</string>
     <string name="local_network_banner_dismiss">Қазір емес</string>
+    <string name="hub_app_permissions">Қолданба рұқсаттары</string>
+    <string name="status_allowed">Рұқсат етілген</string>
+    <string name="permission_name_notifications">Хабарландырулар</string>
+    <string name="permission_why_notifications">KashCal саған оқиғаларың туралы еске сала алуы үшін. Онсыз еске салғыштар үнсіз қалады.</string>
+    <string name="permission_name_contacts">Контактілер</string>
+    <string name="permission_why_contacts">Оқиғаға адамдарды қосқанда қонақтарды ұсынады және контактілердің туған күндерін көрсетеді. Контактілерің құрылғыңда қалады.</string>
+    <string name="permission_name_calendars">Күнтізбелер</string>
+    <string name="permission_why_calendars">Құрылғыңдағы басқа күнтізбелердегі оқиғаларды өзіңдікімен қатар көрсетеді.</string>
+    <string name="permission_name_local_network">Жергілікті желі</string>
+    <string name="permission_why_local_network">Үй немесе кеңсе желісіндегі күнтізбе серверіне қол жеткізеді. Android 17 мұны интернетке кіруден бөлек сұрайды.</string>
     <string name="password_change_error_account_not_found">Аккаунт табылмады</string>
     <string name="password_change_error_no_credentials">Бар тіркелгі деректері жоқ</string>
     <string name="password_change_error_unsupported_provider">Бұл провайдер құпия сөзді өзгертуді қолдамайды</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ЕСЕПТІК ЖАЗБА</string>
     <string name="account_detail_enabled">Қосулы</string>
     <string name="account_detail_enabled_subtitle">Бұл есептік жазбаны автоматты синхрондау</string>
+    <string name="account_detail_sync_calendar">Күнтізбе</string>
+    <string name="account_detail_sync_calendar_subtitle">Осы есептік жазбаның күнтізбелерін синхрондау</string>
+    <string name="account_detail_sync_contacts">Контактілер</string>
+    <string name="account_detail_sync_contacts_subtitle">Осы есептік жазбаның контактілерін телефоныңызға синхрондау</string>
+    <string name="account_detail_contacts_permission_needed">Контактілерге рұқсат өшірулі. Контактілер синхрондалуын жалғастыру үшін рұқсат беріңіз.</string>
+    <string name="account_detail_contacts_grant">Рұқсат беру</string>
+    <string name="contact_sync_enabled_for">%1$s үшін контактілер синхрондалуда</string>
+    <string name="contact_sync_disabled_for">%1$s үшін құрылғы контактілері жойылды</string>
+    <string name="contact_sync_disabled_kept">%1$s үшін контактілер синхрондауы өшірулі. Басқа тіркелу оларды әлі синхрондайтындықтан контактілер қалады.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s үшін контактілер синхрондауы өшірулі, бірақ кейбір құрылғы контактілері қалуы мүмкін. Контактілер рұқсатын тексеріңіз.</string>
     <string name="account_detail_sync_now">Қазір синхрондау</string>
     <string name="account_detail_syncing">Синхрондау…</string>
     <string name="account_detail_discovering">Табу…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Сақтау</string>
     <string name="hub_initials_cancel">Бас тарту</string>
     <string name="hub_section_make_it_yours">Өзіңізге бейімдеңіз</string>
+    <string name="hub_section_own_your_calendar">Күнтізбеңізді басқарыңыз</string>
+    <string name="hub_privacy_data_ownership">Деректеріңіз қалай өзіңізде қалады</string>
     <string name="hub_accounts_and_settings">Тіркелгілер және параметрлер</string>
 
     <!-- ==================== Share Availability ==================== -->

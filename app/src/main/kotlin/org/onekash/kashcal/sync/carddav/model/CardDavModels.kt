@@ -80,3 +80,25 @@ data class ContactSyncItem(
     val href: String,
     val etag: String?,
 )
+
+/**
+ * A photo binary fetched from a contact's remote `PHOTO` URL.
+ *
+ * @property bytes the raw image bytes, read verbatim (never charset-decoded).
+ * @property contentType the response `Content-Type` (always an image type —
+ *   the client rejects a non-image response before constructing this).
+ */
+data class PhotoBytes(
+    val bytes: ByteArray,
+    val contentType: String,
+) {
+    // ByteArray uses identity equals/hashCode by default; override so two
+    // PhotoBytes with the same content compare equal (expected of a data holder).
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PhotoBytes) return false
+        return contentType == other.contentType && bytes.contentEquals(other.bytes)
+    }
+
+    override fun hashCode(): Int = 31 * bytes.contentHashCode() + contentType.hashCode()
+}

@@ -1,0 +1,23 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-fidelity-0004
+N:Probe;KashCal;Quincy,Aloysius;Dr.,Prof.;Jr.,III
+FN:Dr. Prof. KashCal Quincy Aloysius Probe Jr. III
+ORG:KashCal Test Org;Sync Division
+TITLE:Fixture Contact
+ROLE:Chief Sync Officer
+X-PHONETIC-FIRST-NAME:kyashikaru
+X-PHONETIC-MIDDLE-NAME:kuinshii
+X-PHONETIC-LAST-NAME:puroobu
+BDAY:1985-03-14
+item1.EMAIL;TYPE=INTERNET:school@example.test
+item1.X-ABLabel:_$!<School>!$_
+item2.TEL:+15550009999
+item2.X-ABLabel:_$!<Beeper>!$_
+item3.ADR:;;9 Custom Way;Labeltown;CA;90002;USA
+item3.X-ABLabel:_$!<Vacation Home>!$_
+item4.URL:https://example.test/blog
+item4.X-ABLabel:_$!<Blog>!$_
+item5.X-ABDATE;TYPE=pref:2010-09-22
+item5.X-ABLabel:_$!<Anniversary>!$_
+END:VCARD

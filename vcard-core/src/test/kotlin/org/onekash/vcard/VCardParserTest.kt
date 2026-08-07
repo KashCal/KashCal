@@ -46,7 +46,7 @@ class VCardParserTest {
         assertEquals("Cal", c.nickname)
         assertEquals(listOf("KashCal Test Org", "Sync Division"), c.organization)
         assertEquals("Fixture Contact", c.title)
-        assertContains(c.urls, "https://example.test/kashcal")
+        assertContains(c.urls.map { it.url }, "https://example.test/kashcal")
         assertContains(c.notes, "Synthetic exhaustive fixture for CardDAV mapper testing.")
         assertEquals(listOf("Family", "Test"), c.categories)
 
@@ -117,6 +117,51 @@ class VCardParserTest {
 
         // IMPP native handle.
         assertTrue(c.imHandles.any { it.handle.contains("cal@example.test") })
+    }
+
+    @Test
+    fun `native 4-0 KIND surfaces on the model`() {
+        // The committed 4.0 fixture carries KIND:individual.
+        val c = parseSingle("kashcal_full_v4.vcf")
+        assertEquals("individual", c.kind)
+    }
+
+    @Test
+    fun `4-0 KIND group surfaces so groups can be filtered`() {
+        val body = "BEGIN:VCARD\r\n" +
+            "VERSION:4.0\r\n" +
+            "UID:urn:uuid:team-4\r\n" +
+            "KIND:group\r\n" +
+            "FN:Marketing Team\r\n" +
+            "MEMBER:urn:uuid:member-a\r\n" +
+            "MEMBER:urn:uuid:member-b\r\n" +
+            "END:VCARD\r\n"
+        val c = parser.parse(body).single()
+        assertEquals("group", c.kind)
+    }
+
+    @Test
+    fun `3-0 Apple group vCard surfaces kind as group`() {
+        // vCard 3.0 has no native KIND; Apple servers mark a distribution list with
+        // the extended X-ADDRESSBOOKSERVER-KIND:group property. It must reach the
+        // same [Contact.kind] value so the same group filter catches both syntaxes.
+        val body = "BEGIN:VCARD\r\n" +
+            "VERSION:3.0\r\n" +
+            "UID:team-3\r\n" +
+            "FN:Marketing Team\r\n" +
+            "N:Marketing Team;;;;\r\n" +
+            "X-ADDRESSBOOKSERVER-KIND:group\r\n" +
+            "X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:member-a\r\n" +
+            "END:VCARD\r\n"
+        val c = parser.parse(body).single()
+        assertEquals("group", c.kind)
+    }
+
+    @Test
+    fun `a body with no KIND has a null kind`() {
+        // The committed 3.0 fixture carries neither native KIND nor the Apple form.
+        val c = parseSingle("kashcal_full_v3.vcf")
+        assertNull(c.kind)
     }
 
     @Test
@@ -222,6 +267,100 @@ class VCardParserTest {
 
         assertNull(c.anniversary?.date)
         assertEquals("--06-20", c.anniversary?.text)
+    }
+
+    @Test
+    fun `ROLE surfaces distinct from TITLE`() {
+        val c = parseSingle("kashcal_field_fidelity_v3.vcf")
+        assertEquals("Fixture Contact", c.title)
+        assertEquals("Chief Sync Officer", c.role)
+    }
+
+    @Test
+    fun `multi-valued N components are space-joined not truncated`() {
+        val c = parseSingle("kashcal_field_fidelity_v3.vcf")
+        // N:Probe;KashCal;Quincy Aloysius;Dr. Prof.;Jr. III — each extra value retained.
+        assertEquals("Quincy Aloysius", c.structuredName.middle)
+        assertEquals("Dr. Prof.", c.structuredName.prefix)
+        assertEquals("Jr. III", c.structuredName.suffix)
+    }
+
+    @Test
+    fun `X-PHONETIC name hints surface on the structured name`() {
+        val c = parseSingle("kashcal_field_fidelity_v3.vcf")
+        assertEquals("kyashikaru", c.structuredName.phoneticGiven)
+        assertEquals("kuinshii", c.structuredName.phoneticMiddle)
+        assertEquals("puroobu", c.structuredName.phoneticFamily)
+    }
+
+    @Test
+    fun `X-ABLabel custom labels attach to grouped email tel adr and url`() {
+        val c = parseSingle("kashcal_field_fidelity_v3.vcf")
+
+        val email = c.emails.single { it.address == "school@example.test" }
+        assertEquals("School", email.label)
+
+        val phone = c.phones.single { it.number == "+15550009999" }
+        assertEquals("Beeper", phone.label)
+
+        val adr = c.addresses.single { it.street == "9 Custom Way" }
+        assertEquals("Vacation Home", adr.label)
+
+        val url = c.urls.single { it.url == "https://example.test/blog" }
+        assertEquals("Blog", url.label)
+    }
+
+    @Test
+    fun `unlabeled url carries a null label`() {
+        val c = parseSingle("kashcal_full_v3.vcf")
+        val url = c.urls.single { it.url == "https://example.test/kashcal" }
+        assertNull(url.label)
+    }
+
+    @Test
+    fun `malformed tel URI degrades to the raw number instead of dropping the contact`() {
+        // Some servers emit a 4.0 TEL as a tel: URI whose global number does not
+        // start with "+" (a spec violation ez-vcard rejects). The phone must survive
+        // as its raw text and, crucially, the rest of the contact must parse — a bad
+        // number costs only that number, never the whole contact.
+        val body = """
+            BEGIN:VCARD
+            VERSION:4.0
+            UID:kashcal-badtel-0001
+            FN:KashCal BadTel Probe
+            TEL;VALUE=uri:tel:5550100
+            EMAIL:badtel@example.test
+            END:VCARD
+        """.trimIndent()
+
+        val c = parser.parse(body).single()
+
+        assertEquals("KashCal BadTel Probe", c.displayName)
+        assertEquals("badtel@example.test", c.emails.single().address)
+        // The phone survives, carrying the raw digits (tel: scheme stripped).
+        assertEquals("5550100", c.phones.single().number)
+    }
+
+    @Test
+    fun `contact with an unparseable tel URI still yields the other fields`() {
+        // A TEL declared as VALUE=uri but not a valid tel URI at all: ez-vcard cannot
+        // build a TelUri, so the number falls back to raw text. The contact's name
+        // and email must still come through rather than the body being discarded.
+        val body = """
+            BEGIN:VCARD
+            VERSION:4.0
+            UID:kashcal-badtel-0002
+            FN:KashCal BadUri Probe
+            TEL;VALUE=uri:not-a-tel-uri
+            EMAIL:baduri@example.test
+            END:VCARD
+        """.trimIndent()
+
+        val c = parser.parse(body).single()
+
+        assertEquals("KashCal BadUri Probe", c.displayName)
+        assertEquals("baduri@example.test", c.emails.single().address)
+        assertEquals("not-a-tel-uri", c.phones.single().number)
     }
 
     @Test

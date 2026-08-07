@@ -126,13 +126,7 @@ class IcsExporter @Inject constructor() {
      * Format: {sanitized-name}_{YYYYMMDD}.ics
      */
     private fun generateFileName(baseName: String): String {
-        val sanitized = baseName
-            .replace(Regex("[^a-zA-Z0-9\\s-]"), "")
-            .replace(Regex("\\s+"), "-")
-            .trim('-')
-            .take(MAX_FILENAME_LENGTH)
-            .ifEmpty { "event" }
-
+        val sanitized = sanitizeExportBaseName(baseName, fallback = "event", maxLength = MAX_FILENAME_LENGTH)
         val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
         return "${sanitized}_${dateStr}.ics"
     }

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ୱିଜେଟ</string>
     <string name="settings_widget_theme">ଥିମ୍</string>
     <string name="settings_widget_accent_color">ଆକସେଣ୍ଟ</string>
+    <string name="hub_widget_theme">ୱିଜେଟ ଥିମ୍</string>
+    <string name="hub_widget_accent">ୱିଜେଟ ଆକସେଣ୍ଟ</string>
     <string name="settings_widget_color_follow_app">ଆପ ଅନୁସରଣ କରନ୍ତୁ</string>
     <string name="settings_widget_color_follow_app_desc">ଆପର ଆକସେଣ୍ଟ ରଙ୍ଗ ଏବଂ ଉତ୍ସ ବ୍ୟବହାର କରନ୍ତୁ</string>
     <string name="settings_widget_theme_follow_app">ଆପ ଅନୁସରଣ କରନ୍ତୁ</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">କ୍ୟାଲେଣ୍ଡର ଓ ଆକାଉଣ୍ଟ</string>
     <string name="settings_section_appearance">ଚେହେରା</string>
     <string name="settings_section_creating_events">ଇଭେଣ୍ଟ ପସନ୍ଦ</string>
-    <string name="settings_section_sync">ବିଜ୍ଞପ୍ତି ଓ ସିଙ୍କ</string>
+    <string name="settings_section_sync">ସିଙ୍କ</string>
     <string name="settings_section_data">ବ୍ୟାକଅପ ଏବଂ ପୁନରୁଦ୍ଧାର</string>
-    <string name="settings_section_privacy">ଗୋପନୀୟତା</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ଆପ ଲକ</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ଏହି ସର୍ଭର ଆପଣଙ୍କ ଲୋକାଲ ନେଟୱାର୍କରେ ଥିବା ପରି ଦେଖାଯାଉଛି। KashCal ଏହା ସହ ସଂଯୋଗ କରିପାରିବା ପାଇଁ ଲୋକାଲ ନେଟୱାର୍କ ଆକ୍ସେସ୍ ଅନୁମତି ଦିଅନ୍ତୁ।</string>
     <string name="local_network_banner_allow">ଆକ୍ସେସ୍ ଅନୁମତି ଦିଅନ୍ତୁ</string>
     <string name="local_network_banner_dismiss">ବର୍ତ୍ତମାନ ନୁହେଁ</string>
+    <string name="hub_app_permissions">ଆପ ଅନୁମତିଗୁଡ଼ିକ</string>
+    <string name="status_allowed">ଅନୁମତି ଦିଆଯାଇଛି</string>
+    <string name="permission_name_notifications">ବିଜ୍ଞପ୍ତିଗୁଡ଼ିକ</string>
+    <string name="permission_why_notifications">ଯାହା ଦ୍ୱାରା KashCal ଆପଣଙ୍କୁ ଆପଣଙ୍କ ଇଭେଣ୍ଟ ବିଷୟରେ ମନେ ପକାଇ ପାରିବ। ଏହା ବିନା ରିମାଇଣ୍ଡରଗୁଡ଼ିକ ନୀରବ ରହେ।</string>
+    <string name="permission_name_contacts">ସମ୍ପର୍କ</string>
+    <string name="permission_why_contacts">ଆପଣ କୌଣସି ଇଭେଣ୍ଟରେ ଲୋକଙ୍କୁ ଯୋଡ଼ିବା ସମୟରେ ଅତିଥିଙ୍କୁ ପ୍ରସ୍ତାବ ଦିଏ, ଏବଂ ସମ୍ପର୍କର ଜନ୍ମଦିନ ଦେଖାଏ। ଆପଣଙ୍କ ସମ୍ପର୍କ ଆପଣଙ୍କ ଡିଭାଇସରେ ହିଁ ରହେ।</string>
+    <string name="permission_name_calendars">କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ</string>
+    <string name="permission_why_calendars">ଆପଣଙ୍କ ଡିଭାଇସର ଅନ୍ୟ କ୍ୟାଲେଣ୍ଡରର ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ଆପଣଙ୍କ ନିଜ ଇଭେଣ୍ଟ ସହିତ ଦେଖାଏ।</string>
+    <string name="permission_name_local_network">ସ୍ଥାନୀୟ ନେଟୱର୍କ</string>
+    <string name="permission_why_local_network">ଆପଣଙ୍କ ଘର କିମ୍ବା ଅଫିସ ନେଟୱର୍କରେ ଥିବା କ୍ୟାଲେଣ୍ଡର ସର୍ଭରରେ ପହଞ୍ଚେ। Android 17 ଏହାକୁ ଇଣ୍ଟରନେଟ ଆକ୍ସେସଠାରୁ ଅଲଗା ଭାବେ ମାଗେ।</string>
     <string name="password_change_error_account_not_found">ଆକାଉଣ୍ଟ ମିଳିଲା ନାହିଁ</string>
     <string name="password_change_error_no_credentials">କୌଣସି ବର୍ତ୍ତମାନର କ୍ରେଡେନସିଆଲ ନାହିଁ</string>
     <string name="password_change_error_unsupported_provider">ଏହି ପ୍ରଦାନକାରୀ ପାସୱାର୍ଡ ବଦଳାଇବାକୁ ସମର୍ଥନ କରନ୍ତି ନାହିଁ</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ଆକାଉଣ୍ଟ</string>
     <string name="account_detail_enabled">ଚାଲୁ</string>
     <string name="account_detail_enabled_subtitle">ଏହି ଆକାଉଣ୍ଟକୁ ସ୍ୱୟଂଚାଳିତ ସିଙ୍କ କରନ୍ତୁ</string>
+    <string name="account_detail_sync_calendar">କ୍ୟାଲେଣ୍ଡର</string>
+    <string name="account_detail_sync_calendar_subtitle">ଏହି ଆକାଉଣ୍ଟର କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ ସିଙ୍କ କରନ୍ତୁ</string>
+    <string name="account_detail_sync_contacts">ଯୋଗାଯୋଗ</string>
+    <string name="account_detail_sync_contacts_subtitle">ଏହି ଆକାଉଣ୍ଟର ଯୋଗାଯୋଗ ଆପଣଙ୍କ ଫୋନରେ ସିଙ୍କ କରନ୍ତୁ</string>
+    <string name="account_detail_contacts_permission_needed">ଯୋଗାଯୋଗ ଅନୁମତି ବନ୍ଦ ଅଛି। ଯୋଗାଯୋଗ ସିଙ୍କ ଜାରି ରଖିବାକୁ ଆକ୍ସେସ ଦିଅନ୍ତୁ।</string>
+    <string name="account_detail_contacts_grant">ଆକ୍ସେସ ଦିଅନ୍ତୁ</string>
+    <string name="contact_sync_enabled_for">%1$s ପାଇଁ ଯୋଗାଯୋଗ ସିଙ୍କ ହେଉଛି</string>
+    <string name="contact_sync_disabled_for">%1$s ର ଡିଭାଇସ ଯୋଗାଯୋଗ ହଟାଯାଇଛି</string>
+    <string name="contact_sync_disabled_kept">%1$s ପାଇଁ ଯୋଗାଯୋଗ ସିଙ୍କ ବନ୍ଦ। ଅନ୍ୟ ଏକ ଲଗଇନ ଏବେ ବି ସେଗୁଡ଼ିକୁ ସିଙ୍କ କରୁଥିବାରୁ ଯୋଗାଯୋଗ ରହିଥାଏ।</string>
+    <string name="contact_sync_disabled_incomplete">%1$s ପାଇଁ ଯୋଗାଯୋଗ ସିଙ୍କ ବନ୍ଦ, କିନ୍ତୁ କିଛି ଡିଭାଇସ ଯୋଗାଯୋଗ ରହିପାରେ। ଯୋଗାଯୋଗ ଅନୁମତି ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="account_detail_sync_now">ଏବେ ସିଙ୍କ କରନ୍ତୁ</string>
     <string name="account_detail_syncing">ସିଙ୍କ ହେଉଛି…</string>
     <string name="account_detail_discovering">ଖୋଜୁଛି…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">ସେଭ୍ କରନ୍ତୁ</string>
     <string name="hub_initials_cancel">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="hub_section_make_it_yours">ଏହାକୁ ନିଜର କରନ୍ତୁ</string>
+    <string name="hub_section_own_your_calendar">ଆପଣଙ୍କ କ୍ୟାଲେଣ୍ଡର ଆପଣଙ୍କ ନିୟନ୍ତ୍ରଣରେ</string>
+    <string name="hub_privacy_data_ownership">ଆପଣଙ୍କ ଡାଟା ଆପଣଙ୍କର ହିଁ ରହେ</string>
     <string name="hub_accounts_and_settings">ଆକାଉଣ୍ଟ ଏବଂ ସେଟିଂସ</string>
 
     <!-- ==================== Share Availability ==================== -->

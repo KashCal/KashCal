@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">विजेटहरू</string>
     <string name="settings_widget_theme">थिम</string>
     <string name="settings_widget_accent_color">एक्सेन्ट</string>
+    <string name="hub_widget_theme">विजेट थिम</string>
+    <string name="hub_widget_accent">विजेट एक्सेन्ट</string>
     <string name="settings_widget_color_follow_app">एप अनुसरण गर्नुहोस्</string>
     <string name="settings_widget_color_follow_app_desc">एपको एक्सेन्ट रङ र स्रोत प्रयोग गर्नुहोस्</string>
     <string name="settings_widget_theme_follow_app">एप अनुसरण गर्नुहोस्</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">पात्राहरू &amp; खाताहरू</string>
     <string name="settings_section_appearance">रूप</string>
     <string name="settings_section_creating_events">कार्यक्रम प्राथमिकताहरू</string>
-    <string name="settings_section_sync">सूचनाहरू &amp; सिंक</string>
+    <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">ब्याकअप &amp; रिस्टोर</string>
-    <string name="settings_section_privacy">गोपनीयता</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">एप लक</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">यो सर्भर तपाईंको स्थानीय नेटवर्कमा भएको जस्तो देखिन्छ। KashCal ले यसमा जडान गर्न सकोस् भन्नाका लागि स्थानीय नेटवर्क पहुँचलाई अनुमति दिनुहोस्।</string>
     <string name="local_network_banner_allow">पहुँच अनुमति दिनुहोस्</string>
     <string name="local_network_banner_dismiss">अहिले होइन</string>
+    <string name="hub_app_permissions">एप अनुमतिहरू</string>
+    <string name="status_allowed">अनुमति दिइयो</string>
+    <string name="permission_name_notifications">सूचनाहरू</string>
+    <string name="permission_why_notifications">ताकि KashCal ले तपाईंलाई तपाईंका कार्यक्रमहरूबारे सम्झाउन सकोस्। यसबिना, रिमाइन्डरहरू मौन रहन्छन्।</string>
+    <string name="permission_name_contacts">सम्पर्कहरू</string>
+    <string name="permission_why_contacts">तपाईंले कुनै कार्यक्रममा मानिसहरू थप्दा पाहुनाहरू सुझाव दिन्छ, र सम्पर्क जन्मदिनहरू देखाउँछ। तपाईंका सम्पर्कहरू तपाईंको यन्त्रमै रहन्छन्।</string>
+    <string name="permission_name_calendars">पात्राहरू</string>
+    <string name="permission_why_calendars">तपाईंको यन्त्रमा रहेका अन्य पात्राहरूका कार्यक्रमहरू तपाईंका आफ्नै कार्यक्रमसँगै देखाउँछ।</string>
+    <string name="permission_name_local_network">स्थानीय नेटवर्क</string>
+    <string name="permission_why_local_network">तपाईंको घर वा कार्यालयको नेटवर्कमा रहेको पात्रो सर्भरमा पुग्छ। Android 17 ले यसलाई इन्टरनेट पहुँचबाट छुट्टै माग्छ।</string>
     <string name="password_change_error_account_not_found">खाता फेला परेन</string>
     <string name="password_change_error_no_credentials">कुनै विद्यमान प्रमाणपत्र छैन</string>
     <string name="password_change_error_unsupported_provider">यो प्रदायकले पासवर्ड परिवर्तनलाई समर्थन गर्दैन</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">खाता</string>
     <string name="account_detail_enabled">सक्षम</string>
     <string name="account_detail_enabled_subtitle">यो खाता स्वचालित रूपमा सिंक गर्नुहोस्</string>
+    <string name="account_detail_sync_calendar">पात्रो</string>
+    <string name="account_detail_sync_calendar_subtitle">यो खाताका पात्रोहरू सिंक गर्नुहोस्</string>
+    <string name="account_detail_sync_contacts">सम्पर्कहरू</string>
+    <string name="account_detail_sync_contacts_subtitle">यो खाताका सम्पर्कहरू तपाईंको फोनमा सिंक गर्नुहोस्</string>
+    <string name="account_detail_contacts_permission_needed">सम्पर्क अनुमति बन्द छ। सम्पर्कहरू सिंक भइरहन पहुँच दिनुहोस्।</string>
+    <string name="account_detail_contacts_grant">पहुँच दिनुहोस्</string>
+    <string name="contact_sync_enabled_for">%1$s का लागि सम्पर्कहरू सिंक गर्दै</string>
+    <string name="contact_sync_disabled_for">%1$s का उपकरण सम्पर्कहरू हटाइयो</string>
+    <string name="contact_sync_disabled_kept">%1$s का लागि सम्पर्क सिंक बन्द छ। अर्को लगइनले अझै सिंक गरिरहेकाले सम्पर्कहरू रहन्छन्।</string>
+    <string name="contact_sync_disabled_incomplete">%1$s का लागि सम्पर्क सिंक बन्द छ, तर केही उपकरण सम्पर्कहरू रहन सक्छन्। सम्पर्क अनुमति जाँच गर्नुहोस्।</string>
     <string name="account_detail_sync_now">अहिले सिंक</string>
     <string name="account_detail_syncing">सिंक गर्दै…</string>
     <string name="account_detail_discovering">खोज्दै…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">सुरक्षित गर्नुहोस्</string>
     <string name="hub_initials_cancel">रद्द गर्नुहोस्</string>
     <string name="hub_section_make_it_yours">आफ्नो अनुसार बनाउनुहोस्</string>
+    <string name="hub_section_own_your_calendar">आफ्नो पात्रो आफ्नै बनाउनुहोस्</string>
+    <string name="hub_privacy_data_ownership">तपाईंको डेटा कसरी तपाईंकै रहन्छ</string>
     <string name="hub_accounts_and_settings">खाता र सेटिङ</string>
 
     <!-- ==================== Share Availability ==================== -->

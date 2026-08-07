@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:kashcal-seed-photo-url-0002
+FN:KashCal Photo URL Probe
+N:Probe;PhotoUrl;;;
+EMAIL;TYPE=INTERNET:photo-url@example.test
+TEL;TYPE=CELL:+1-555-0102
+PHOTO;VALUE=URI:https://photos.example.test/seed/kashcal-url.jpg
+END:VCARD

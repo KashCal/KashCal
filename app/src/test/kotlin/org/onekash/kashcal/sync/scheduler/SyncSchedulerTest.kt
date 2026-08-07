@@ -135,6 +135,117 @@ class SyncSchedulerTest {
         assertEquals(1, workInfos.size)
     }
 
+    @Test
+    fun `schedulePeriodicSync also enqueues the contact-sync job`() {
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_SYNC))
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_PERIODIC))
+    }
+
+    @Test
+    fun `updatePeriodicSyncInterval keeps a single contact-sync job`() {
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
+
+        scheduler.updatePeriodicSyncInterval(intervalMinutes = 60)
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+    }
+
+    @Test
+    fun `cancelPeriodicSync removes the contact-sync job too`() {
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
+
+        scheduler.cancelPeriodicSync()
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK).get()
+        assertTrue(workInfos.isEmpty() || workInfos[0].state == WorkInfo.State.CANCELLED)
+    }
+
+    @Test
+    fun `requestImmediateContactSync enqueues a one-shot contact-sync job`() {
+        val workId = scheduler.requestImmediateContactSync()
+
+        assertNotNull(workId)
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_SYNC))
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_ONE_SHOT))
+    }
+
+    @Test
+    fun `requestImmediateContactSync scoped to an account still enqueues one contact-sync job`() {
+        // The scoped-id plumbing itself (input data → worker filter) is proven in
+        // ContactSyncWorkerTest; here we only confirm the scoped overload enqueues
+        // the same single one-shot job. WorkInfo does not expose a request's input
+        // data, so the id round-trip is verified at the worker, not here.
+        val workId = scheduler.requestImmediateContactSync(accountId = 42L)
+
+        assertNotNull(workId)
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+    }
+
+    @Test
+    fun `requestImmediateContactSync replaces existing one-shot contact work`() {
+        scheduler.requestImmediateContactSync()
+
+        scheduler.requestImmediateContactSync()
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+    }
+
+    @Test
+    fun `requestImmediateContactSync requires internet without requiring validation`() {
+        scheduler.requestImmediateContactSync()
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_CONTACT_SYNC_WORK).get()
+        val request = workInfos[0].constraints.requiredNetworkRequest
+        assertNotNull("Contact sync work should carry a custom NetworkRequest", request)
+        assertTrue(request!!.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET))
+        assertFalse(
+            "Contact sync must NOT require VALIDATED (would block LAN/VPN servers, #296)",
+            request.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+        )
+    }
+
+    @Test
+    fun `ensureContactSyncScheduled enqueues the periodic contact job on its own`() {
+        // A login that enabled contacts AFTER periodic calendar sync was last
+        // scheduled (or was set up before the feature shipped) has no periodic
+        // contact job. Enabling must be able to schedule it without rescheduling
+        // calendar sync.
+        scheduler.ensureContactSyncScheduled(intervalMinutes = 30)
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_PERIODIC))
+    }
+
+    @Test
+    fun `ensureContactSyncScheduled keeps an already-scheduled contact job`() {
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
+
+        // KEEP policy: a second ensure must not tear down / duplicate the job.
+        scheduler.ensureContactSyncScheduled(intervalMinutes = 60)
+
+        val workInfos =
+            workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+    }
+
     // ==================== Network Constraint Tests (#296) ====================
 
     @Test

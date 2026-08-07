@@ -12,6 +12,7 @@ import org.onekash.vcard.model.Phone
 import org.onekash.vcard.model.PostalAddress
 import org.onekash.vcard.model.Relation
 import org.onekash.vcard.model.StructuredName
+import org.onekash.vcard.model.WebAddress
 import java.time.LocalDate
 
 /**
@@ -49,15 +50,29 @@ class VCardParser {
         parse(bytes.decodeToString(), requestedVersion)
 
     private fun toContact(card: VCard, rawOverride: String?): Contact {
-        val structuredName = card.structuredName?.let {
-            StructuredName(
-                family = it.family.blankToNull(),
-                given = it.given.blankToNull(),
-                middle = it.additionalNames.firstOrNull().blankToNull(),
-                prefix = it.prefixes.firstOrNull().blankToNull(),
-                suffix = it.suffixes.firstOrNull().blankToNull(),
-            )
-        } ?: StructuredName()
+        // Custom labels attached to any grouped property (itemN.X-ABLabel) — Apple's
+        // 3.0 idiom, but the group is retained on native EMAIL/TEL/ADR/URL too, so a
+        // labeled email/phone/address/url can recover its label instead of collapsing
+        // to a generic type. ez-vcard leaves X-ABLabel as a raw/extended property.
+        val labelsByGroup = card.extendedProperties
+            .filter { it.propertyName.equals("X-ABLabel", ignoreCase = true) && it.group != null }
+            .associate { it.group to normalizeAppleLabel(it.value) }
+
+        // Phonetic reading aids come from X-PHONETIC-* properties, independent of N, so
+        // they're read once and attached whether or not the card carries a structured N.
+        val n = card.structuredName
+        val structuredName = StructuredName(
+            family = n?.family.blankToNull(),
+            given = n?.given.blankToNull(),
+            // Each N component is a comma-separated list; join the extras (a second
+            // middle name, "Dr. Prof.") rather than keeping only the first.
+            middle = n?.additionalNames?.joinNonBlank(),
+            prefix = n?.prefixes?.joinNonBlank(),
+            suffix = n?.suffixes?.joinNonBlank(),
+            phoneticGiven = card.phonetic("X-PHONETIC-FIRST-NAME"),
+            phoneticMiddle = card.phonetic("X-PHONETIC-MIDDLE-NAME"),
+            phoneticFamily = card.phonetic("X-PHONETIC-LAST-NAME"),
+        )
 
         val displayName = card.formattedName?.value.blankToNull() ?: structuredName.toDisplayName()
 
@@ -67,17 +82,18 @@ class VCardParser {
                 address = e.value.orEmpty(),
                 types = types.filter { it != "pref" },
                 preferred = e.pref != null || types.contains("pref"),
+                label = e.group?.let { labelsByGroup[it] },
             )
         }
 
         val phones = card.telephoneNumbers.map { t ->
-            val number = (t.text.blankToNull() ?: t.uri?.number ?: t.uri?.toString().orEmpty())
-                .removePrefix("tel:")
+            val number = phoneNumber(t).removePrefix("tel:")
             val types = t.types.map { it.value.lowercase() }
             Phone(
                 number = number,
                 types = types.filter { it != "pref" },
                 preferred = t.pref != null || types.contains("pref"),
+                label = t.group?.let { labelsByGroup[it] },
             )
         }
 
@@ -91,6 +107,7 @@ class VCardParser {
                 postalCode = a.postalCode.blankToNull(),
                 country = a.country.blankToNull(),
                 types = a.types.map { it.value.lowercase() },
+                label = a.group?.let { labelsByGroup[it] },
             )
         }
 
@@ -120,11 +137,8 @@ class VCardParser {
         val birthday = card.birthday?.let { toContactDate(it) }
 
         // Hand-route the 3.0 Apple itemN.X-… forms that ez-vcard leaves as raw properties.
+        // (labelsByGroup was resolved above to also label native EMAIL/TEL/ADR/URL.)
         val raw = card.extendedProperties
-        val labelsByGroup = raw
-            .filter { it.propertyName.equals("X-ABLabel", ignoreCase = true) && it.group != null }
-            .associate { it.group to normalizeAppleLabel(it.value) }
-
         for (prop in raw) {
             when {
                 prop.propertyName.equals("X-ABDATE", ignoreCase = true) -> {
@@ -149,9 +163,17 @@ class VCardParser {
             }
         }
 
+        // KIND (RFC 6350 §6.1.4): native 4.0 property, else the 3.0 Apple
+        // X-ADDRESSBOOKSERVER-KIND fallback. Lower-cased so callers can compare
+        // against "group" regardless of the source syntax or server casing.
+        val kind = (card.kind?.value.blankToNull()
+            ?: card.getExtendedProperty("X-ADDRESSBOOKSERVER-KIND")?.value.blankToNull())
+            ?.lowercase()
+
         return Contact(
             version = card.version?.version ?: "3.0",
             uid = card.uid?.value.orEmpty(),
+            kind = kind,
             structuredName = structuredName,
             displayName = displayName,
             nickname = card.nickname?.values?.firstOrNull().blankToNull(),
@@ -160,7 +182,10 @@ class VCardParser {
             addresses = addresses,
             organization = card.organization?.values.orEmpty(),
             title = card.titles.firstOrNull()?.value.blankToNull(),
-            urls = card.urls.mapNotNull { it.value.blankToNull() },
+            role = card.roles.firstOrNull()?.value.blankToNull(),
+            urls = card.urls.mapNotNull { u ->
+                u.value.blankToNull()?.let { WebAddress(url = it, label = u.group?.let { g -> labelsByGroup[g] }) }
+            },
             notes = card.notes.mapNotNull { it.value.blankToNull() },
             imHandles = imHandles,
             relations = relations,
@@ -197,7 +222,30 @@ class VCardParser {
         return ContactDate(date = localDate, text = v)
     }
 
+    /**
+     * The dialable text of a TEL property, degrading rather than dropping the
+     * contact on a malformed value. A 4.0 `TEL;VALUE=uri` whose value isn't a
+     * spec-valid tel URI (e.g. a global number missing the leading "+") makes
+     * ez-vcard reject it: the current reader falls back to the raw `text`, but a
+     * URI that parses yet fails a lazy accessor (`uri.number` / `uri.toString()`)
+     * would throw and, via the caller's per-body catch, discard the WHOLE contact.
+     * Guard each source so a bad phone costs only that number, never the contact.
+     */
+    private fun phoneNumber(t: ezvcard.property.Telephone): String {
+        t.text.blankToNull()?.let { return it }
+        runCatching { t.uri?.number }.getOrNull().blankToNull()?.let { return it }
+        return runCatching { t.uri?.toString() }.getOrNull().orEmpty()
+    }
+
     private fun String?.blankToNull(): String? = this?.takeIf { it.isNotBlank() }
+
+    /** Space-join the non-blank values of a multi-valued `N` component; null when empty. */
+    private fun List<String>.joinNonBlank(): String? =
+        filter { it.isNotBlank() }.joinToString(" ").blankToNull()
+
+    /** First non-blank value of a phonetic X- property (e.g. X-PHONETIC-FIRST-NAME). */
+    private fun VCard.phonetic(name: String): String? =
+        getExtendedProperty(name)?.value.blankToNull()
 
     /** Apple wraps custom labels as `_$!<Anniversary>!$_`; unwrap to the inner text. */
     private fun normalizeAppleLabel(raw: String?): String? {

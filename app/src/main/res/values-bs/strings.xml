@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgeti</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Naglasak</string>
+    <string name="hub_widget_theme">Tema widgeta</string>
+    <string name="hub_widget_accent">Naglasak widgeta</string>
     <string name="settings_widget_color_follow_app">Prati aplikaciju</string>
     <string name="settings_widget_color_follow_app_desc">Koristi boju naglaska i izvor aplikacije</string>
     <string name="settings_widget_theme_follow_app">Prati aplikaciju</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendari i računi</string>
     <string name="settings_section_appearance">Izgled</string>
     <string name="settings_section_creating_events">Postavke događaja</string>
-    <string name="settings_section_sync">Obavještenja i sinhronizacija</string>
+    <string name="settings_section_sync">Sinhronizacija</string>
     <string name="settings_section_data">Rezervna kopija i vraćanje</string>
-    <string name="settings_section_privacy">Privatnost</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zaključavanje aplikacije</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Ovaj server izgleda kao da je na tvojoj lokalnoj mreži. Dozvoli pristup lokalnoj mreži kako bi se KashCal mogao povezati s njim.</string>
     <string name="local_network_banner_allow">Dozvoli pristup</string>
     <string name="local_network_banner_dismiss">Ne sada</string>
+    <string name="hub_app_permissions">Dozvole aplikacije</string>
+    <string name="status_allowed">Dozvoljeno</string>
+    <string name="permission_name_notifications">Obavještenja</string>
+    <string name="permission_why_notifications">Kako bi te KashCal mogao podsjetiti na tvoje događaje. Bez toga podsjetnici ostaju tihi.</string>
+    <string name="permission_name_contacts">Kontakti</string>
+    <string name="permission_why_contacts">Predlaže goste dok dodaješ ljude u događaj i prikazuje rođendane kontakata. Tvoji kontakti ostaju na tvom uređaju.</string>
+    <string name="permission_name_calendars">Kalendari</string>
+    <string name="permission_why_calendars">Prikazuje događaje iz drugih kalendara na tvom uređaju uz tvoje vlastite.</string>
+    <string name="permission_name_local_network">Lokalna mreža</string>
+    <string name="permission_why_local_network">Pristupa serveru kalendara na tvojoj kućnoj ili uredskoj mreži. Android 17 to traži odvojeno od pristupa internetu.</string>
     <string name="password_change_error_account_not_found">Račun nije pronađen</string>
     <string name="password_change_error_no_credentials">Nema postojećih vjerodajnica</string>
     <string name="password_change_error_unsupported_provider">Ovaj davalac usluga ne podržava promjenu lozinke</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">RAČUN</string>
     <string name="account_detail_enabled">Omogućeno</string>
     <string name="account_detail_enabled_subtitle">Automatski sinhronizuj ovaj račun</string>
+    <string name="account_detail_sync_calendar">Kalendar</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinhronizuj kalendare ovog računa</string>
+    <string name="account_detail_sync_contacts">Kontakti</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinhronizuj kontakte ovog računa na telefon</string>
+    <string name="account_detail_contacts_permission_needed">Dozvola za kontakte je isključena. Dozvoli pristup da bi se kontakti nastavili sinhronizirati.</string>
+    <string name="account_detail_contacts_grant">Dozvoli pristup</string>
+    <string name="contact_sync_enabled_for">Sinhronizacija kontakata za %1$s</string>
+    <string name="contact_sync_disabled_for">Kontakti uređaja za %1$s uklonjeni</string>
+    <string name="contact_sync_disabled_kept">Sinhronizacija kontakata za %1$s isključena. Kontakti ostaju jer ih druga prijava još sinhronizuje.</string>
+    <string name="contact_sync_disabled_incomplete">Sinhronizacija kontakata za %1$s isključena, ali neki kontakti uređaja mogu ostati. Provjeri dozvolu za Kontakte.</string>
     <string name="account_detail_sync_now">Sinhronizuj</string>
     <string name="account_detail_syncing">Sinhronizacija…</string>
     <string name="account_detail_discovering">Otkrivanje…</string>
@@ -1249,6 +1270,8 @@
     <string name="hub_initials_save">Sačuvaj</string>
     <string name="hub_initials_cancel">Otkaži</string>
     <string name="hub_section_make_it_yours">Prilagodi sebi</string>
+    <string name="hub_section_own_your_calendar">Tvoj kalendar, tvoja pravila</string>
+    <string name="hub_privacy_data_ownership">Kako tvoji podaci ostaju tvoji</string>
     <string name="hub_accounts_and_settings">Računi i postavke</string>
 
     <!-- ==================== Share Availability ==================== -->

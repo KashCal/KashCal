@@ -47,6 +47,9 @@ class AndroidPermissionChecker @Inject constructor(
     override fun hasReadContactsPermission(): Boolean =
         checkGranted(Manifest.permission.READ_CONTACTS)
 
+    override fun hasWriteContactsPermission(): Boolean =
+        checkGranted(Manifest.permission.WRITE_CONTACTS)
+
     override fun hasCalendarReadPermission(): Boolean =
         checkGranted(Manifest.permission.READ_CALENDAR)
 

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Fenestraĵoj</string>
     <string name="settings_widget_theme">Etoso</string>
     <string name="settings_widget_accent_color">Akcento</string>
+    <string name="hub_widget_theme">Fenestraĵa etoso</string>
+    <string name="hub_widget_accent">Fenestraĵa akcento</string>
     <string name="settings_widget_color_follow_app">Sekvi la aplikaĵon</string>
     <string name="settings_widget_color_follow_app_desc">Uzu la akcentan koloron kaj fonton de la aplikaĵo</string>
     <string name="settings_widget_theme_follow_app">Sekvi la aplikaĵon</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendaroj kaj kontoj</string>
     <string name="settings_section_appearance">Aspekto</string>
     <string name="settings_section_creating_events">Eventaj preferoj</string>
-    <string name="settings_section_sync">Sciigoj kaj sinkronigo</string>
+    <string name="settings_section_sync">Sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
-    <string name="settings_section_privacy">Privateco</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Aplikaĵa ŝloso</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Ĉi tiu servilo ŝajnas esti en via loka reto. Permesu aliron al la loka reto por ke KashCal povu konektiĝi al ĝi.</string>
     <string name="local_network_banner_allow">Permesi aliron</string>
     <string name="local_network_banner_dismiss">Ne nun</string>
+    <string name="hub_app_permissions">Permesoj de la aplikaĵo</string>
+    <string name="status_allowed">Permesita</string>
+    <string name="permission_name_notifications">Sciigoj</string>
+    <string name="permission_why_notifications">Por ke KashCal povu memorigi vin pri viaj eventoj. Sen ĝi, memorigoj restas silentaj.</string>
+    <string name="permission_name_contacts">Kontaktoj</string>
+    <string name="permission_why_contacts">Sugestas gastojn dum vi aldonas homojn al evento, kaj montras naskiĝtagojn de kontaktoj. Viaj kontaktoj restas en via aparato.</string>
+    <string name="permission_name_calendars">Kalendaroj</string>
+    <string name="permission_why_calendars">Montras eventojn el la aliaj kalendaroj en via aparato apud viaj propraj.</string>
+    <string name="permission_name_local_network">Loka reto</string>
+    <string name="permission_why_local_network">Atingas kalendaran servilon en via hejma aŭ oficeja reto. Android 17 petas ĉi tion aparte de la aliro al Interreto.</string>
     <string name="password_change_error_account_not_found">Konto ne trovita</string>
     <string name="password_change_error_no_credentials">Neniuj ekzistantaj akreditaĵoj</string>
     <string name="password_change_error_unsupported_provider">Ĉi tiu provizanto ne subtenas ŝanĝon de pasvorto</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">KONTO</string>
     <string name="account_detail_enabled">Ŝaltita</string>
     <string name="account_detail_enabled_subtitle">Aŭtomate sinkronigi ĉi tiun konton</string>
+    <string name="account_detail_sync_calendar">Kalendaro</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinkronigi la kalendarojn de ĉi tiu konto</string>
+    <string name="account_detail_sync_contacts">Kontaktoj</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinkronigi la kontaktojn de ĉi tiu konto al via telefono</string>
+    <string name="account_detail_contacts_permission_needed">La permeso por kontaktoj estas malŝaltita. Donu aliron por daŭrigi sinkronigadon de kontaktoj.</string>
+    <string name="account_detail_contacts_grant">Doni aliron</string>
+    <string name="contact_sync_enabled_for">Sinkronigado de kontaktoj por %1$s</string>
+    <string name="contact_sync_disabled_for">Kontaktoj de la aparato por %1$s forigitaj</string>
+    <string name="contact_sync_disabled_kept">Sinkronigado de kontaktoj malŝaltita por %1$s. La kontaktoj restas ĉar alia ensaluto ankoraŭ sinkronigas ilin.</string>
+    <string name="contact_sync_disabled_incomplete">Sinkronigado de kontaktoj malŝaltita por %1$s, sed kelkaj kontaktoj de la aparato povas resti. Kontrolu la permeson por kontaktoj.</string>
     <string name="account_detail_sync_now">Sinkronigi nun</string>
     <string name="account_detail_syncing">Sinkronigante…</string>
     <string name="account_detail_discovering">Malkovrante…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Konservi</string>
     <string name="hub_initials_cancel">Nuligi</string>
     <string name="hub_section_make_it_yours">Personecigu</string>
+    <string name="hub_section_own_your_calendar">Posedu vian kalendaron</string>
+    <string name="hub_privacy_data_ownership">Kiel viaj datumoj restas viaj</string>
     <string name="hub_accounts_and_settings">Kontoj kaj agordoj</string>
 
     <!-- ==================== Share Availability ==================== -->

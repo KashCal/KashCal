@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Contacts edit-schema for the org.onekash.kashcal.contacts account type.
+
+    Declaring this (referenced from the sync-adapter service via the
+    android.provider.CONTACTS_STRUCTURE meta-data) is what makes the account type a
+    recognized contacts SOURCE: without it the account registers but its contacts do
+    not appear under Contacts -> "Contacts to display", and the source shows no label.
+
+    Synced RawContacts are written RAW_CONTACT_IS_READ_ONLY=1, so this schema does not
+    expose inline editing of mirrored contacts; it declares which data kinds the
+    account can represent so the Contacts app renders them. The kinds below mirror
+    exactly what VCardContactMapper emits (name, phone, email, photo, organization,
+    im, nickname, note, group_membership, postal, website, event, relationship) — no
+    more, no less.
+-->
+<ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditSchema>
+        <DataKind
+            kind="name"
+            maxOccurs="1"
+            supportsDisplayName="true"
+            supportsFamilyName="true"
+            supportsMiddleName="true"
+            supportsPhoneticFamilyName="true"
+            supportsPhoneticGivenName="true"
+            supportsPhoneticMiddleName="true"
+            supportsPrefix="true"
+            supportsSuffix="true" />
+
+        <DataKind kind="phone">
+            <Type type="mobile" />
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="fax_work" />
+            <Type type="fax_home" />
+            <Type type="other" />
+            <Type type="custom" />
+        </DataKind>
+
+        <DataKind kind="email">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+            <Type type="custom" />
+        </DataKind>
+
+        <DataKind kind="photo" maxOccurs="1" />
+
+        <DataKind kind="organization" maxOccurs="1" />
+
+        <DataKind kind="im">
+            <Type type="custom" />
+        </DataKind>
+
+        <DataKind kind="nickname" maxOccurs="1" />
+
+        <DataKind kind="note" maxOccurs="1" />
+
+        <DataKind kind="group_membership" maxOccurs="1" />
+
+        <DataKind kind="postal" needsStructured="true">
+            <Type type="home" />
+            <Type type="work" />
+            <Type type="other" />
+            <Type type="custom" />
+        </DataKind>
+
+        <DataKind kind="website" />
+
+        <DataKind kind="event" dateWithTime="false">
+            <Type maxOccurs="1" type="birthday" yearOptional="true" />
+            <Type maxOccurs="1" type="anniversary" yearOptional="true" />
+        </DataKind>
+
+        <DataKind kind="relationship">
+            <Type type="assistant" />
+            <Type type="brother" />
+            <Type type="child" />
+            <Type type="father" />
+            <Type type="friend" />
+            <Type type="manager" />
+            <Type type="mother" />
+            <Type type="parent" />
+            <Type type="partner" />
+            <Type type="relative" />
+            <Type type="sister" />
+            <Type type="spouse" />
+            <Type type="custom" />
+        </DataKind>
+    </EditSchema>
+
+</ContactsAccountType>

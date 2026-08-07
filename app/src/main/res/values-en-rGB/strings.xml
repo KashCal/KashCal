@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Theme</string>
     <string name="settings_widget_accent_color">Accent</string>
+    <string name="hub_widget_theme">Widget theme</string>
+    <string name="hub_widget_accent">Widget accent</string>
     <string name="settings_widget_color_follow_app">Follow app</string>
     <string name="settings_widget_color_follow_app_desc">Use the app\'s accent colour and source</string>
     <string name="settings_widget_theme_follow_app">Follow app</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Calendars &amp; accounts</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_creating_events">Event preferences</string>
-    <string name="settings_section_sync">Notifications &amp; sync</string>
+    <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
-    <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">App lock</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">This server looks like it\'s on your local network. Allow local network access so KashCal can connect to it.</string>
     <string name="local_network_banner_allow">Allow access</string>
     <string name="local_network_banner_dismiss">Not now</string>
+    <string name="hub_app_permissions">App permissions</string>
+    <string name="status_allowed">Allowed</string>
+    <string name="permission_name_notifications">Notifications</string>
+    <string name="permission_why_notifications">So KashCal can remind you about your events. Without it, reminders stay silent.</string>
+    <string name="permission_name_contacts">Contacts</string>
+    <string name="permission_why_contacts">Suggests guests as you add people to an event, and shows contact birthdays. Your contacts stay on your device.</string>
+    <string name="permission_name_calendars">Calendars</string>
+    <string name="permission_why_calendars">Shows events from the other calendars on your device next to your own.</string>
+    <string name="permission_name_local_network">Local network</string>
+    <string name="permission_why_local_network">Reaches a calendar server on your home or office network. Android 17 asks for this separately from internet access.</string>
     <string name="password_change_error_account_not_found">Account not found</string>
     <string name="password_change_error_no_credentials">No existing credentials</string>
     <string name="password_change_error_unsupported_provider">This provider doesn\'t support changing the password</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ACCOUNT</string>
     <string name="account_detail_enabled">Enabled</string>
     <string name="account_detail_enabled_subtitle">Sync this account automatically</string>
+    <string name="account_detail_sync_calendar">Calendar</string>
+    <string name="account_detail_sync_calendar_subtitle">Sync this account\'s calendars</string>
+    <string name="account_detail_sync_contacts">Contacts</string>
+    <string name="account_detail_sync_contacts_subtitle">Sync this account\'s contacts to your phone</string>
+    <string name="account_detail_contacts_permission_needed">Contacts permission is off. Grant access to keep contacts syncing.</string>
+    <string name="account_detail_contacts_grant">Grant access</string>
+    <string name="contact_sync_enabled_for">Syncing contacts for %1$s</string>
+    <string name="contact_sync_disabled_for">Device contacts for %1$s removed</string>
+    <string name="contact_sync_disabled_kept">Contact sync off for %1$s. Contacts stay because another login still syncs them.</string>
+    <string name="contact_sync_disabled_incomplete">Contact sync off for %1$s, but some device contacts may remain. Check the Contacts permission.</string>
     <string name="account_detail_sync_now">Sync Now</string>
     <string name="account_detail_syncing">Syncing…</string>
     <string name="account_detail_discovering">Discovering…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Save</string>
     <string name="hub_initials_cancel">Cancel</string>
     <string name="hub_section_make_it_yours">Make it yours</string>
+    <string name="hub_section_own_your_calendar">Own your calendar</string>
+    <string name="hub_privacy_data_ownership">How your data stays yours</string>
     <string name="hub_accounts_and_settings">Accounts &amp; Settings</string>
 
     <!-- ==================== Share Availability ==================== -->

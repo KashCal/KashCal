@@ -1280,6 +1280,50 @@ class CalDavXmlParserTest {
     }
 
     @Test
+    fun `extractSyncCollectionData flags truncation from an embedded 507 status`() {
+        // RFC 6578 §3.6: a server that truncates a large sync-collection returns
+        // HTTP 207 (NOT a top-level 507) with a <response> for the collection whose
+        // <status> is "507 Insufficient Storage", plus a partial sync-token to
+        // resume from. The client must page again on the returned token, so the
+        // parser has to surface this as truncated=true.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:">
+                <d:response>
+                    <d:href>/addressbooks/user/contacts/a.vcf</d:href>
+                    <d:propstat>
+                        <d:prop><d:getetag>"etag-a"</d:getetag></d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                    </d:propstat>
+                </d:response>
+                <d:response>
+                    <d:href>/addressbooks/user/contacts/</d:href>
+                    <d:status>HTTP/1.1 507 Insufficient Storage</d:status>
+                </d:response>
+                <d:sync-token>http://example.test/ns/sync/partial-1</d:sync-token>
+            </d:multistatus>
+        """.trimIndent()
+
+        val data = parser.extractSyncCollectionData(xml)
+
+        assertTrue("an embedded 507 status must set truncated", data.truncated)
+        assertEquals("http://example.test/ns/sync/partial-1", data.syncToken)
+        assertEquals("the partial page's changed items are still returned", 1, data.changedItems.size)
+        assertEquals("/addressbooks/user/contacts/a.vcf", data.changedItems[0].first)
+        // The 507 self-row is the collection, not a deleted member.
+        assertTrue("collection self-row is never a deletion", data.deletedHrefs.isEmpty())
+    }
+
+    @Test
+    fun `extractSyncCollectionData leaves truncated false on a normal 207`() {
+        // A complete response (no 507 anywhere) must not be misread as truncated,
+        // or the client would page forever against a non-advancing token.
+        val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
+        val data = parser.extractSyncCollectionData(xml)
+        assertFalse("a complete response is not truncated", data.truncated)
+    }
+
+    @Test
     fun `extractSyncCollectionData consistent with individual extract methods`() {
         // Verify that extractSyncCollectionData returns the same results as
         // calling extractSyncToken, extractChangedItems, and extractDeletedHrefs individually

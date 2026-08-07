@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgety</string>
     <string name="settings_widget_theme">Motiv</string>
     <string name="settings_widget_accent_color">Akcent</string>
+    <string name="hub_widget_theme">Motiv widgetu</string>
+    <string name="hub_widget_accent">Akcent widgetu</string>
     <string name="settings_widget_color_follow_app">Podle aplikace</string>
     <string name="settings_widget_color_follow_app_desc">Použít barvu zvýraznění a zdroj aplikace</string>
     <string name="settings_widget_theme_follow_app">Podle aplikace</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendáře a účty</string>
     <string name="settings_section_appearance">Vzhled</string>
     <string name="settings_section_creating_events">Předvolby událostí</string>
-    <string name="settings_section_sync">Oznámení a synchronizace</string>
+    <string name="settings_section_sync">Synchronizace</string>
     <string name="settings_section_data">Záloha a obnova</string>
-    <string name="settings_section_privacy">Soukromí</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Zámek aplikace</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Tento server vypadá, že je ve vaší místní síti. Povolte přístup k místní síti, aby se k němu KashCal mohl připojit.</string>
     <string name="local_network_banner_allow">Povolit přístup</string>
     <string name="local_network_banner_dismiss">Teď ne</string>
+    <string name="hub_app_permissions">Oprávnění aplikace</string>
+    <string name="status_allowed">Povoleno</string>
+    <string name="permission_name_notifications">Oznámení</string>
+    <string name="permission_why_notifications">Aby ti KashCal mohl připomínat tvé události. Bez toho zůstanou připomínky tiché.</string>
+    <string name="permission_name_contacts">Kontakty</string>
+    <string name="permission_why_contacts">Navrhuje hosty, když k události přidáváš lidi, a zobrazuje narozeniny kontaktů. Tvé kontakty zůstávají v tvém zařízení.</string>
+    <string name="permission_name_calendars">Kalendáře</string>
+    <string name="permission_why_calendars">Zobrazuje události z ostatních kalendářů v tvém zařízení vedle tvých vlastních.</string>
+    <string name="permission_name_local_network">Místní síť</string>
+    <string name="permission_why_local_network">Spojí se s kalendářovým serverem v tvé domácí nebo firemní síti. Android 17 o to žádá zvlášť od přístupu k internetu.</string>
     <string name="password_change_error_account_not_found">Účet nenalezen</string>
     <string name="password_change_error_no_credentials">Žádné existující přihlašovací údaje</string>
     <string name="password_change_error_unsupported_provider">Tento poskytovatel nepodporuje změnu hesla</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ÚČET</string>
     <string name="account_detail_enabled">Povoleno</string>
     <string name="account_detail_enabled_subtitle">Automaticky synchronizovat tento účet</string>
+    <string name="account_detail_sync_calendar">Kalendář</string>
+    <string name="account_detail_sync_calendar_subtitle">Synchronizovat kalendáře tohoto účtu</string>
+    <string name="account_detail_sync_contacts">Kontakty</string>
+    <string name="account_detail_sync_contacts_subtitle">Synchronizovat kontakty tohoto účtu do telefonu</string>
+    <string name="account_detail_contacts_permission_needed">Oprávnění ke kontaktům je vypnuté. Povol přístup, aby se kontakty dál synchronizovaly.</string>
+    <string name="account_detail_contacts_grant">Povolit přístup</string>
+    <string name="contact_sync_enabled_for">Synchronizace kontaktů pro %1$s</string>
+    <string name="contact_sync_disabled_for">Kontakty v zařízení pro %1$s byly odebrány</string>
+    <string name="contact_sync_disabled_kept">Synchronizace kontaktů pro %1$s je vypnutá. Kontakty zůstávají, protože je synchronizuje jiné přihlášení.</string>
+    <string name="contact_sync_disabled_incomplete">Synchronizace kontaktů pro %1$s je vypnutá, ale některé kontakty v zařízení mohou zůstat. Zkontrolujte oprávnění ke Kontaktům.</string>
     <string name="account_detail_sync_now">Synchronizovat</string>
     <string name="account_detail_syncing">Synchronizace…</string>
     <string name="account_detail_discovering">Zjišťování…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Uložit</string>
     <string name="hub_initials_cancel">Zrušit</string>
     <string name="hub_section_make_it_yours">Přizpůsob si to</string>
+    <string name="hub_section_own_your_calendar">Tvůj kalendář, tvá pravidla</string>
+    <string name="hub_privacy_data_ownership">Jak tvá data zůstávají tvá</string>
     <string name="hub_accounts_and_settings">Účty a nastavení</string>
 
     <!-- ==================== Share Availability ==================== -->

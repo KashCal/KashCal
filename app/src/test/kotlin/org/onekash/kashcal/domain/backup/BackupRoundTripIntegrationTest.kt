@@ -116,6 +116,7 @@ class BackupRoundTripIntegrationTest {
     private fun buildAccountRepo(db: KashCalDatabase): AccountRepositoryImpl =
         AccountRepositoryImpl(
             accountsDao = db.accountsDao(),
+            addressBookDao = db.addressBookDao(),
             calendarsDao = db.calendarsDao(),
             eventsDao = db.eventsDao(),
             pendingOperationsDao = db.pendingOperationsDao(),
@@ -123,6 +124,7 @@ class BackupRoundTripIntegrationTest {
             reminderScheduler = mockk<ReminderScheduler>(relaxed = true),
             workManager = mockk<WorkManager>(relaxed = true),
             contactSystemAccountRegistrar = mockk(relaxed = true),
+            contactsProviderRepository = mockk(relaxed = true),
         )
 
     @Test

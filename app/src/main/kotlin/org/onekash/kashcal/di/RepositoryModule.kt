@@ -12,6 +12,8 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.AccountRepositoryImpl
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
+import org.onekash.kashcal.sync.contacts.AndroidContactsProviderRepository
+import org.onekash.kashcal.sync.contacts.ContactsProviderRepository
 import javax.inject.Singleton
 
 /**
@@ -55,4 +57,14 @@ abstract class RepositoryModule {
     abstract fun bindCalendarProviderRepository(
         impl: AndroidCalendarProviderRepository
     ): CalendarProviderRepository
+
+    /**
+     * Bind ContactsProviderRepository to the Android implementation — the only
+     * surface that writes CardDAV-synced contacts to the Contacts Provider.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindContactsProviderRepository(
+        impl: AndroidContactsProviderRepository
+    ): ContactsProviderRepository
 }

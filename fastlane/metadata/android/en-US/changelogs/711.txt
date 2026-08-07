@@ -1,0 +1,4 @@
+• Sync contacts from your CalDAV account to your phone, one direction for now, toggled per account
+• All-new app permissions screen with per-permission shortcuts
+• Widget: a pure black or white accent now renders a crisp monochrome panel
+• Export: keep non-ASCII filenames and escape reminder text in .ics files

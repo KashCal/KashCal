@@ -24,8 +24,8 @@ import java.util.Locale
  * Compose tests for [AccountSettingsScreen] after the hub-alignment restyle.
  *
  * Two jobs:
- *  1. Structural guards — the six sentence-case section headers, the folded
- *     Notifications row, the renamed labels, the split alert rows.
+ *  1. Structural guards — the sentence-case section headers, the renamed
+ *     labels, the split alert rows.
  *  2. **Per-row callback wiring guards.** Every flat-screen callback is injectable
  *     via [render] (see [Rec]), so a test can drive the real affordance the user
  *     touches, assert that row's callback fired with a DISTINCT sentinel value, and
@@ -90,7 +90,6 @@ class AccountSettingsScreenComposeTest {
         var quickAdd: Boolean? = null
         var titleSuggestions: Boolean? = null
         var weekNumbers: Boolean? = null
-        var appLock: Boolean? = null
         var showDeclined: Boolean? = null
         var emojis: Boolean? = null
 
@@ -129,7 +128,6 @@ class AccountSettingsScreenComposeTest {
                     showDeclinedEvents = false,
                     quickAddEnabled = false,
                     titleSuggestionsEnabled = true,
-                    appLockEnabled = false,
                     showEventEmojis = true,
                     // (Int) cluster
                     onWidgetMaxEventsPerDayChange = { rec.widget = it },
@@ -143,7 +141,6 @@ class AccountSettingsScreenComposeTest {
                     onQuickAddEnabledChange = { rec.quickAdd = it },
                     onTitleSuggestionsEnabledChange = { rec.titleSuggestions = it },
                     onShowWeekNumbersChange = { rec.weekNumbers = it },
-                    onToggleAppLock = { rec.appLock = it },
                     onToggleShowDeclinedEvents = { rec.showDeclined = it },
                     onShowEventEmojisChange = { rec.emojis = it },
                     // Navigation cluster
@@ -198,7 +195,6 @@ class AccountSettingsScreenComposeTest {
             "quickAdd" to rec.quickAdd,
             "titleSuggestions" to rec.titleSuggestions,
             "weekNumbers" to rec.weekNumbers,
-            "appLock" to rec.appLock,
             "showDeclined" to rec.showDeclined,
             "emojis" to rec.emojis,
         )
@@ -213,7 +209,6 @@ class AccountSettingsScreenComposeTest {
             "quickAdd" to rec.quickAdd,
             "titleSuggestions" to rec.titleSuggestions,
             "weekNumbers" to rec.weekNumbers,
-            "appLock" to rec.appLock,
             "showDeclined" to rec.showDeclined,
             "emojis" to rec.emojis,
         )
@@ -240,26 +235,22 @@ class AccountSettingsScreenComposeTest {
     // ==================== Structural guards ====================
 
     @Test
-    fun `renders the six sentence-case section headers`() {
+    fun `renders the sentence-case section headers`() {
         render()
         listOf(
             "Calendars & accounts",
             "Appearance",
             "Event preferences",
-            "Notifications & sync",
+            "Sync",
             "Backup & restore",
-            "Privacy",
         ).forEach { header ->
             composeTestRule.onNodeWithText(header).assertExists()
         }
     }
 
     @Test
-    fun `notifications row lives under the notifications and sync section`() {
+    fun `sync section holds the sync-frequency and lookback rows`() {
         render()
-        // The standalone Notifications header is gone; the row itself remains.
-        composeTestRule.onNodeWithText("Notifications").assertIsDisplayed()
-        // Sync frequency and Sync lookback are distinct visible rows in this section.
         composeTestRule.onNodeWithText("Sync frequency").assertExists()
         composeTestRule.onNodeWithText("Sync lookback").assertExists()
     }
@@ -394,14 +385,6 @@ class AccountSettingsScreenComposeTest {
     }
 
     @Test
-    fun `app lock toggle fires only its callback`() {
-        val rec = Rec()
-        render(rec)
-        composeTestRule.onNodeWithText("App lock").performClick()
-        assertOnlyBool(rec, fired = "appLock", expected = true)
-    }
-
-    @Test
     fun `event emojis toggle fires only its callback`() {
         val rec = Rec()
         render(rec)
@@ -447,18 +430,6 @@ class AccountSettingsScreenComposeTest {
             "Adds an emoji to events based on the title, like 🎂 for \"Birthday\".",
         ).assertExists()
         assertNull("Info tap must not fire the toggle", rec.emojis)
-    }
-
-    @Test
-    fun `app lock info tooltip reveals explanation without toggling`() {
-        val rec = Rec()
-        render(rec)
-        composeTestRule.onNodeWithContentDescription("About App lock").performClick()
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText(
-            "Require device authentication to open KashCal.",
-        ).assertExists()
-        assertNull("Info tap must not fire the toggle", rec.appLock)
     }
 
     // ==================== Navigation cluster: fired-once + siblings silent ====================

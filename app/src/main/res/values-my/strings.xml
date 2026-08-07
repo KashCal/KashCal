@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ဝိဂျက်များ</string>
     <string name="settings_widget_theme">အသွင်အပြင်</string>
     <string name="settings_widget_accent_color">အသားပေးအရောင်</string>
+    <string name="hub_widget_theme">ဝိဂျက် အသွင်အပြင်</string>
+    <string name="hub_widget_accent">ဝိဂျက် အသားပေးအရောင်</string>
     <string name="settings_widget_color_follow_app">အက်ပ်ကို လိုက်နာပါ</string>
     <string name="settings_widget_color_follow_app_desc">အက်ပ်၏ အသားပေးအရောင်နှင့် အရင်းအမြစ်ကို အသုံးပြုပါ</string>
     <string name="settings_widget_theme_follow_app">အက်ပ်ကို လိုက်နာပါ</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">ပြက္ခဒိန်များ &amp; အကောင့်များ</string>
     <string name="settings_section_appearance">အသွင်အပြင်</string>
     <string name="settings_section_creating_events">ပွဲ ဦးစားပေးများ</string>
-    <string name="settings_section_sync">အသိပေးချက်များ &amp; ချိန်ကိုက်</string>
+    <string name="settings_section_sync">ချိန်ကိုက်ခြင်း</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
-    <string name="settings_section_privacy">ကိုယ်ရေးကိုယ်တာ</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">အက်ပ်လော့ခ်</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">ဤဆာဗာသည် သင့်ဒေသတွင်း ကွန်ရက်ပေါ်တွင် ရှိပုံရသည်။ KashCal က ၎င်းသို့ ချိတ်ဆက်နိုင်ရန် ဒေသတွင်း ကွန်ရက်သုံးခွင့်ကို ခွင့်ပြုပါ။</string>
     <string name="local_network_banner_allow">သုံးခွင့်ပြု</string>
     <string name="local_network_banner_dismiss">ယခုမလို</string>
+    <string name="hub_app_permissions">အက်ပ် ခွင့်ပြုချက်များ</string>
+    <string name="status_allowed">ခွင့်ပြုထားသည်</string>
+    <string name="permission_name_notifications">အသိပေးချက်များ</string>
+    <string name="permission_why_notifications">KashCal က သင့်ပွဲများအကြောင်း သတိပေးနိုင်ရန်။ ၎င်းမပါဘဲ သတိပေးချက်များ တိတ်ဆိတ်နေမည်။</string>
+    <string name="permission_name_contacts">အဆက်အသွယ်များ</string>
+    <string name="permission_why_contacts">ပွဲတစ်ခုသို့ လူများ ထည့်သွင်းသောအခါ ဧည့်သည်များ အကြံပြုပြီး အဆက်အသွယ် မွေးနေ့များ ပြသသည်။ သင့်အဆက်အသွယ်များ သင့်စက်ပစ္စည်းတွင်သာ ရှိနေမည်။</string>
+    <string name="permission_name_calendars">ပြက္ခဒိန်များ</string>
+    <string name="permission_why_calendars">သင့်စက်ပစ္စည်းရှိ အခြားပြက္ခဒိန်များမှ ပွဲများကို သင့်ကိုယ်ပိုင်ပွဲများနှင့်အတူ ပြသသည်။</string>
+    <string name="permission_name_local_network">ဒေသတွင်း ကွန်ရက်</string>
+    <string name="permission_why_local_network">သင့်အိမ် သို့မဟုတ် ရုံး ကွန်ရက်ရှိ ပြက္ခဒိန်ဆာဗာသို့ ဆက်သွယ်သည်။ Android 17 သည် ၎င်းကို အင်တာနက် သုံးခွင့်နှင့် သီးခြား တောင်းဆိုသည်။</string>
     <string name="password_change_error_account_not_found">အကောင့် မတွေ့ရှိပါ</string>
     <string name="password_change_error_no_credentials">ရှိရင်းစွဲ အထောက်အထား မရှိပါ</string>
     <string name="password_change_error_unsupported_provider">ဤဝန်ဆောင်မှုပေးသူသည် စကားဝှက် ပြောင်းခြင်းကို မပံ့ပိုးပါ</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">အကောင့်</string>
     <string name="account_detail_enabled">ဖွင့်ထား</string>
     <string name="account_detail_enabled_subtitle">ဤအကောင့်ကို အလိုအလျောက် ချိန်ကိုက်</string>
+    <string name="account_detail_sync_calendar">ပြက္ခဒိန်</string>
+    <string name="account_detail_sync_calendar_subtitle">ဤအကောင့်၏ ပြက္ခဒိန်များကို ချိန်ကိုက်ပါ</string>
+    <string name="account_detail_sync_contacts">အဆက်အသွယ်များ</string>
+    <string name="account_detail_sync_contacts_subtitle">ဤအကောင့်၏ အဆက်အသွယ်များကို သင့်ဖုန်းသို့ ချိန်ကိုက်ပါ</string>
+    <string name="account_detail_contacts_permission_needed">အဆက်အသွယ် ခွင့်ပြုချက် ပိတ်ထားသည်။ အဆက်အသွယ်များ ဆက်လက်ချိန်ကိုက်ရန် ဝင်ရောက်ခွင့် ပေးပါ။</string>
+    <string name="account_detail_contacts_grant">ဝင်ရောက်ခွင့်ပေးပါ</string>
+    <string name="contact_sync_enabled_for">%1$s အတွက် အဆက်အသွယ်များ ချိန်ကိုက်နေသည်</string>
+    <string name="contact_sync_disabled_for">%1$s အတွက် စက်ပစ္စည်း အဆက်အသွယ်များ ဖယ်ရှားပြီးပါပြီ</string>
+    <string name="contact_sync_disabled_kept">%1$s အတွက် အဆက်အသွယ် ချိန်ကိုက်ခြင်း ပိတ်ထားသည်။ အခြား အကောင့်ဝင်မှုတစ်ခုက ၎င်းတို့ကို ဆက်လက်ချိန်ကိုက်နေသဖြင့် အဆက်အသွယ်များ ကျန်ရှိနေသည်။</string>
+    <string name="contact_sync_disabled_incomplete">%1$s အတွက် အဆက်အသွယ် ချိန်ကိုက်ခြင်း ပိတ်ထားသည်၊ သို့သော် စက်ပစ္စည်း အဆက်အသွယ်အချို့ ကျန်ရှိနေနိုင်သည်။ အဆက်အသွယ် ခွင့်ပြုချက်ကို စစ်ဆေးပါ။</string>
     <string name="account_detail_sync_now">ယခု ချိန်ကိုက်</string>
     <string name="account_detail_syncing">ချိန်ကိုက်နေသည်…</string>
     <string name="account_detail_discovering">ရှာဖွေနေသည်…</string>
@@ -1150,6 +1171,8 @@
     <string name="hub_initials_save">သိမ်း</string>
     <string name="hub_initials_cancel">ပယ်ဖျက်</string>
     <string name="hub_section_make_it_yours">သင့်စိတ်ကြိုက်ပြင်ဆင်ပါ</string>
+    <string name="hub_section_own_your_calendar">သင့်ပြက္ခဒိန်ကို ပိုင်ဆိုင်ပါ</string>
+    <string name="hub_privacy_data_ownership">သင့်ဒေတာ သင့်လက်ထဲ ဆက်ရှိနေပုံ</string>
     <string name="hub_accounts_and_settings">အကောင့်များ &amp; ဆက်တင်များ</string>
 
     <!-- ==================== Share Availability ==================== -->

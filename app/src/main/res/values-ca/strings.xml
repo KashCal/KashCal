@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Accent</string>
+    <string name="hub_widget_theme">Tema del widget</string>
+    <string name="hub_widget_accent">Accent del widget</string>
     <string name="settings_widget_color_follow_app">Segueix l\'app</string>
     <string name="settings_widget_color_follow_app_desc">Usa el color d\'accent i la font de l\'aplicació</string>
     <string name="settings_widget_theme_follow_app">Segueix l\'app</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Calendaris i comptes</string>
     <string name="settings_section_appearance">Aparença</string>
     <string name="settings_section_creating_events">Preferències dels esdeveniments</string>
-    <string name="settings_section_sync">Notificacions i sincronització</string>
+    <string name="settings_section_sync">Sincronització</string>
     <string name="settings_section_data">Còpia de seguretat i restauració</string>
-    <string name="settings_section_privacy">Privadesa</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Bloqueig de l\'aplicació</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Sembla que aquest servidor és a la vostra xarxa local. Permeteu l\'accés a la xarxa local perquè KashCal s\'hi pugui connectar.</string>
     <string name="local_network_banner_allow">Permet l\'accés</string>
     <string name="local_network_banner_dismiss">Ara no</string>
+    <string name="hub_app_permissions">Permisos de l\'aplicació</string>
+    <string name="status_allowed">Permès</string>
+    <string name="permission_name_notifications">Notificacions</string>
+    <string name="permission_why_notifications">Perquè KashCal et pugui recordar els teus esdeveniments. Sense això, els recordatoris es mantenen silenciats.</string>
+    <string name="permission_name_contacts">Contactes</string>
+    <string name="permission_why_contacts">Suggereix convidats mentre afegeixes persones a un esdeveniment i mostra els aniversaris dels contactes. Els teus contactes es queden al dispositiu.</string>
+    <string name="permission_name_calendars">Calendaris</string>
+    <string name="permission_why_calendars">Mostra els esdeveniments dels altres calendaris del teu dispositiu al costat dels teus.</string>
+    <string name="permission_name_local_network">Xarxa local</string>
+    <string name="permission_why_local_network">Arriba a un servidor de calendari de la teva xarxa domèstica o d\'oficina. Android 17 ho demana per separat de l\'accés a Internet.</string>
     <string name="password_change_error_account_not_found">Compte no trobat</string>
     <string name="password_change_error_no_credentials">No hi ha credencials existents</string>
     <string name="password_change_error_unsupported_provider">Aquest proveïdor no admet canviar la contrasenya</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">COMPTE</string>
     <string name="account_detail_enabled">Activat</string>
     <string name="account_detail_enabled_subtitle">Sincronitzar aquest compte automàticament</string>
+    <string name="account_detail_sync_calendar">Calendari</string>
+    <string name="account_detail_sync_calendar_subtitle">Sincronitza els calendaris d\'aquest compte</string>
+    <string name="account_detail_sync_contacts">Contactes</string>
+    <string name="account_detail_sync_contacts_subtitle">Sincronitza els contactes d\'aquest compte al teu telèfon</string>
+    <string name="account_detail_contacts_permission_needed">El permís de contactes està desactivat. Concedeix accés per continuar sincronitzant els contactes.</string>
+    <string name="account_detail_contacts_grant">Concedeix accés</string>
+    <string name="contact_sync_enabled_for">S\'estan sincronitzant els contactes de %1$s</string>
+    <string name="contact_sync_disabled_for">S\'han eliminat els contactes del dispositiu de %1$s</string>
+    <string name="contact_sync_disabled_kept">Sincronització de contactes desactivada per a %1$s. Els contactes es mantenen perquè un altre inici de sessió encara els sincronitza.</string>
+    <string name="contact_sync_disabled_incomplete">Sincronització de contactes desactivada per a %1$s, però alguns contactes del dispositiu poden romandre. Comprova el permís de contactes.</string>
     <string name="account_detail_sync_now">Sincronitzar ara</string>
     <string name="account_detail_syncing">Sincronitzant…</string>
     <string name="account_detail_discovering">Descobrint…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Desa</string>
     <string name="hub_initials_cancel">Cancel\'la</string>
     <string name="hub_section_make_it_yours">Fes-la teva</string>
+    <string name="hub_section_own_your_calendar">Fes teu el calendari</string>
+    <string name="hub_privacy_data_ownership">Com les teves dades continuen sent teves</string>
     <string name="hub_accounts_and_settings">Comptes i configuració</string>
 
     <!-- ==================== Share Availability ==================== -->

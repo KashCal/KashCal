@@ -20,6 +20,8 @@ data class AccountDetailUiModel(
     val principalUrl: String?,
     val calendarCount: Int,
     val isEnabled: Boolean,
+    val contactSyncEnabled: Boolean,
+    val contactCount: Int,
     val lastSuccessfulSyncAt: Long?,
     val consecutiveSyncFailures: Int
 )
@@ -32,6 +34,29 @@ sealed class AccountDetailSyncStatus {
     data object Idle : AccountDetailSyncStatus()
     data object Syncing : AccountDetailSyncStatus()
     data class Done(val success: Boolean) : AccountDetailSyncStatus()
+}
+
+/**
+ * A short-lived inline confirmation shown inside the account detail sheet after a
+ * contact-sync toggle, carrying its [message] and the [tone] that should style it.
+ *
+ * Message and tone travel together so the sheet can't drift into rendering a
+ * destructive outcome ("Device contacts removed") with the same celebratory glyph
+ * as a benign one ("Syncing contacts"). The tone is decided where the outcome is
+ * known (the ViewModel), not re-derived from the message text downstream.
+ */
+@Immutable
+data class ContactSyncConfirmation(
+    val message: String,
+    val tone: Tone,
+) {
+    enum class Tone {
+        /** A benign result — sync enabled, or contacts kept by a sibling. */
+        POSITIVE,
+
+        /** A destructive or unverified result — contacts removed, or may remain. */
+        WARNING,
+    }
 }
 
 /**
@@ -49,9 +74,11 @@ sealed class AccountDetailDiscoverStatus {
  * Map an Account entity to AccountDetailUiModel for display.
  *
  * @param calendarCount Number of calendars for this account
+ * @param contactCount Number of synced address-book contacts for this account
+ *   (0 when contact sync is off or nothing has synced yet)
  * @return Display-ready UI model with masked email and fallback display name
  */
-fun Account.toDetailUiModel(calendarCount: Int): AccountDetailUiModel {
+fun Account.toDetailUiModel(calendarCount: Int, contactCount: Int = 0): AccountDetailUiModel {
     return AccountDetailUiModel(
         accountId = id,
         provider = provider,
@@ -60,6 +87,8 @@ fun Account.toDetailUiModel(calendarCount: Int): AccountDetailUiModel {
         principalUrl = principalUrl,
         calendarCount = calendarCount,
         isEnabled = isEnabled,
+        contactSyncEnabled = contactSyncEnabled,
+        contactCount = contactCount,
         lastSuccessfulSyncAt = lastSuccessfulSyncAt,
         consecutiveSyncFailures = consecutiveSyncFailures
     )

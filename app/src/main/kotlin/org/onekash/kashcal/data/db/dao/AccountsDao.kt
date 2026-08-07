@@ -199,6 +199,12 @@ interface AccountsDao {
     suspend fun setEnabled(id: Long, enabled: Boolean)
 
     /**
+     * Set the per-login CardDAV contact-sync opt-in flag.
+     */
+    @Query("UPDATE accounts SET contact_sync_enabled = :enabled WHERE id = :id")
+    suspend fun setContactSyncEnabled(id: Long, enabled: Boolean)
+
+    /**
      * Get accounts by provider as reactive Flow.
      * Emits new list when accounts change.
      */

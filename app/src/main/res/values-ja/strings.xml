@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">ウィジェット</string>
     <string name="settings_widget_theme">テーマ</string>
     <string name="settings_widget_accent_color">アクセント</string>
+    <string name="hub_widget_theme">ウィジェットのテーマ</string>
+    <string name="hub_widget_accent">ウィジェットのアクセント</string>
     <string name="settings_widget_color_follow_app">アプリに合わせる</string>
     <string name="settings_widget_color_follow_app_desc">アプリのアクセントカラーとソースを使用します</string>
     <string name="settings_widget_theme_follow_app">アプリに合わせる</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">カレンダーとアカウント</string>
     <string name="settings_section_appearance">外観</string>
     <string name="settings_section_creating_events">予定の設定</string>
-    <string name="settings_section_sync">通知と同期</string>
+    <string name="settings_section_sync">同期</string>
     <string name="settings_section_data">バックアップと復元</string>
-    <string name="settings_section_privacy">プライバシー</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">アプリロック</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">このサーバーはローカルネットワーク上にあるようです。KashCal が接続できるように、ローカルネットワークへのアクセスを許可してください。</string>
     <string name="local_network_banner_allow">アクセスを許可</string>
     <string name="local_network_banner_dismiss">後で</string>
+    <string name="hub_app_permissions">アプリの権限</string>
+    <string name="status_allowed">許可済み</string>
+    <string name="permission_name_notifications">通知</string>
+    <string name="permission_why_notifications">KashCalが予定をリマインドできるようにします。許可しないと、リマインダーは通知されません。</string>
+    <string name="permission_name_contacts">連絡先</string>
+    <string name="permission_why_contacts">予定に人を追加するときにゲストを提案し、連絡先の誕生日を表示します。連絡先は端末内に保持されます。</string>
+    <string name="permission_name_calendars">カレンダー</string>
+    <string name="permission_why_calendars">端末にある他のカレンダーの予定を、自分の予定と並べて表示します。</string>
+    <string name="permission_name_local_network">ローカルネットワーク</string>
+    <string name="permission_why_local_network">自宅や職場のネットワーク上のカレンダーサーバーに接続します。Android 17では、これをインターネットアクセスとは別に確認します。</string>
     <string name="password_change_error_account_not_found">アカウントが見つかりません</string>
     <string name="password_change_error_no_credentials">既存の認証情報がありません</string>
     <string name="password_change_error_unsupported_provider">このプロバイダーはパスワード変更に対応していません</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">アカウント</string>
     <string name="account_detail_enabled">有効</string>
     <string name="account_detail_enabled_subtitle">このアカウントを自動同期</string>
+    <string name="account_detail_sync_calendar">カレンダー</string>
+    <string name="account_detail_sync_calendar_subtitle">このアカウントのカレンダーを同期します</string>
+    <string name="account_detail_sync_contacts">連絡先</string>
+    <string name="account_detail_sync_contacts_subtitle">このアカウントの連絡先を携帯電話に同期します</string>
+    <string name="account_detail_contacts_permission_needed">連絡先の権限がオフです。連絡先の同期を続けるにはアクセスを許可してください。</string>
+    <string name="account_detail_contacts_grant">アクセスを許可</string>
+    <string name="contact_sync_enabled_for">%1$s の連絡先を同期しています</string>
+    <string name="contact_sync_disabled_for">%1$s のデバイスの連絡先を削除しました</string>
+    <string name="contact_sync_disabled_kept">%1$s の連絡先の同期をオフにしました。別のログインが同期を続けているため、連絡先は残ります。</string>
+    <string name="contact_sync_disabled_incomplete">%1$s の連絡先の同期をオフにしましたが、一部のデバイスの連絡先が残っている場合があります。連絡先の権限を確認してください。</string>
     <string name="account_detail_sync_now">今すぐ同期</string>
     <string name="account_detail_syncing">同期中…</string>
     <string name="account_detail_discovering">検出中…</string>
@@ -1148,6 +1169,8 @@
     <string name="hub_initials_save">保存</string>
     <string name="hub_initials_cancel">キャンセル</string>
     <string name="hub_section_make_it_yours">自分仕様に</string>
+    <string name="hub_section_own_your_calendar">あなたのカレンダー</string>
+    <string name="hub_privacy_data_ownership">データがあなたのものであり続ける仕組み</string>
     <string name="hub_accounts_and_settings">アカウントと設定</string>
 
     <!-- ==================== Share Availability ==================== -->

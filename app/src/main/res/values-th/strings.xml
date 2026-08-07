@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">วิดเจ็ต</string>
     <string name="settings_widget_theme">ธีม</string>
     <string name="settings_widget_accent_color">สีเน้น</string>
+    <string name="hub_widget_theme">ธีมวิดเจ็ต</string>
+    <string name="hub_widget_accent">สีเน้นวิดเจ็ต</string>
     <string name="settings_widget_color_follow_app">ตามแอป</string>
     <string name="settings_widget_color_follow_app_desc">ใช้สีเน้นและแหล่งที่มาของแอป</string>
     <string name="settings_widget_theme_follow_app">ตามแอป</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">ปฏิทินและบัญชี</string>
     <string name="settings_section_appearance">รูปลักษณ์</string>
     <string name="settings_section_creating_events">การตั้งค่ากิจกรรม</string>
-    <string name="settings_section_sync">การแจ้งเตือนและการซิงค์</string>
+    <string name="settings_section_sync">การซิงค์</string>
     <string name="settings_section_data">สำรองและกู้คืน</string>
-    <string name="settings_section_privacy">ความเป็นส่วนตัว</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">ล็อกแอป</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">เซิร์ฟเวอร์นี้ดูเหมือนจะอยู่บนเครือข่ายภายในของคุณ อนุญาตการเข้าถึงเครือข่ายภายในเพื่อให้ KashCal เชื่อมต่อได้</string>
     <string name="local_network_banner_allow">อนุญาตการเข้าถึง</string>
     <string name="local_network_banner_dismiss">ไว้ทีหลัง</string>
+    <string name="hub_app_permissions">สิทธิ์ของแอป</string>
+    <string name="status_allowed">อนุญาตแล้ว</string>
+    <string name="permission_name_notifications">การแจ้งเตือน</string>
+    <string name="permission_why_notifications">เพื่อให้ KashCal เตือนคุณเกี่ยวกับกิจกรรมของคุณได้ หากไม่อนุญาต การเตือนจะเงียบไป</string>
+    <string name="permission_name_contacts">ผู้ติดต่อ</string>
+    <string name="permission_why_contacts">แนะนำผู้เข้าร่วมเมื่อคุณเพิ่มคนเข้าในกิจกรรม และแสดงวันเกิดของผู้ติดต่อ ผู้ติดต่อของคุณจะยังคงอยู่ในอุปกรณ์</string>
+    <string name="permission_name_calendars">ปฏิทิน</string>
+    <string name="permission_why_calendars">แสดงกิจกรรมจากปฏิทินอื่นในอุปกรณ์ของคุณควบคู่ไปกับกิจกรรมของคุณเอง</string>
+    <string name="permission_name_local_network">เครือข่ายภายใน</string>
+    <string name="permission_why_local_network">เข้าถึงเซิร์ฟเวอร์ปฏิทินบนเครือข่ายบ้านหรือที่ทำงานของคุณ Android 17 จะขอสิทธิ์นี้แยกจากการเข้าถึงอินเทอร์เน็ต</string>
     <string name="password_change_error_account_not_found">ไม่พบบัญชี</string>
     <string name="password_change_error_no_credentials">ไม่มีข้อมูลรับรองที่มีอยู่</string>
     <string name="password_change_error_unsupported_provider">ผู้ให้บริการนี้ไม่รองรับการเปลี่ยนรหัสผ่าน</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">บัญชี</string>
     <string name="account_detail_enabled">เปิดใช้</string>
     <string name="account_detail_enabled_subtitle">ซิงค์บัญชีนี้อัตโนมัติ</string>
+    <string name="account_detail_sync_calendar">ปฏิทิน</string>
+    <string name="account_detail_sync_calendar_subtitle">ซิงค์ปฏิทินของบัญชีนี้</string>
+    <string name="account_detail_sync_contacts">รายชื่อติดต่อ</string>
+    <string name="account_detail_sync_contacts_subtitle">ซิงค์รายชื่อติดต่อของบัญชีนี้ไปยังโทรศัพท์ของคุณ</string>
+    <string name="account_detail_contacts_permission_needed">สิทธิ์การเข้าถึงรายชื่อติดต่อถูกปิดอยู่ โปรดอนุญาตการเข้าถึงเพื่อให้ซิงค์รายชื่อติดต่อต่อไป</string>
+    <string name="account_detail_contacts_grant">อนุญาตการเข้าถึง</string>
+    <string name="contact_sync_enabled_for">กำลังซิงค์รายชื่อติดต่อสำหรับ %1$s</string>
+    <string name="contact_sync_disabled_for">ลบรายชื่อติดต่อในอุปกรณ์สำหรับ %1$s แล้ว</string>
+    <string name="contact_sync_disabled_kept">ปิดการซิงค์รายชื่อติดต่อสำหรับ %1$s แล้ว รายชื่อติดต่อยังคงอยู่เพราะการเข้าสู่ระบบอื่นยังซิงค์อยู่</string>
+    <string name="contact_sync_disabled_incomplete">ปิดการซิงค์รายชื่อติดต่อสำหรับ %1$s แล้ว แต่รายชื่อติดต่อในอุปกรณ์บางส่วนอาจยังคงอยู่ โปรดตรวจสอบสิทธิ์รายชื่อติดต่อ</string>
     <string name="account_detail_sync_now">ซิงค์เดี๋ยวนี้</string>
     <string name="account_detail_syncing">กำลังซิงค์…</string>
     <string name="account_detail_discovering">กำลังค้นหา…</string>
@@ -1148,6 +1169,8 @@
     <string name="hub_initials_save">บันทึก</string>
     <string name="hub_initials_cancel">ยกเลิก</string>
     <string name="hub_section_make_it_yours">ปรับแต่งให้เป็นของคุณ</string>
+    <string name="hub_section_own_your_calendar">ปฏิทินของคุณ</string>
+    <string name="hub_privacy_data_ownership">ข้อมูลของคุณยังคงเป็นของคุณอย่างไร</string>
     <string name="hub_accounts_and_settings">บัญชีและการตั้งค่า</string>
 
     <!-- ==================== Share Availability ==================== -->

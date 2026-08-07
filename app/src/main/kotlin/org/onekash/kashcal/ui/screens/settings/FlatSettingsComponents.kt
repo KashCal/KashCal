@@ -338,10 +338,15 @@ data class SettingsRowInfo(
  * Trailing ⓘ button that anchors a dismissible [RichTooltip]. Tapping it
  * shows the explanation in place (no sheet); it does not toggle the row
  * because the click is consumed by this [IconButton].
+ *
+ * @param compact when true (the default, for dense settings rows) the button
+ *   opts out of the 48dp minimum touch target so it doesn't inflate the row
+ *   above single-line height. Set false on taller rows that want the full 48dp
+ *   accessible target.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsInfoButton(info: SettingsRowInfo) {
+internal fun SettingsInfoButton(info: SettingsRowInfo, compact: Boolean = true) {
     val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
     TooltipBox(
@@ -354,12 +359,12 @@ private fun SettingsInfoButton(info: SettingsRowInfo) {
         },
         state = tooltipState
     ) {
-        // Opt the icon button out of the 48dp minimum touch target so it doesn't
-        // inflate the row above single-line height (same treatment as the Switch).
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        val button: @Composable () -> Unit = {
             IconButton(
                 onClick = { scope.launch { tooltipState.show() } },
-                modifier = Modifier.size(24.dp)
+                // Compact keeps the button at glyph size; non-compact lets the
+                // IconButton keep its default 48dp accessible touch target.
+                modifier = if (compact) Modifier.size(24.dp) else Modifier
             ) {
                 Icon(
                     Icons.Outlined.Info,
@@ -368,6 +373,15 @@ private fun SettingsInfoButton(info: SettingsRowInfo) {
                     modifier = Modifier.size(20.dp)
                 )
             }
+        }
+        if (compact) {
+            // Opt out of the 48dp minimum touch target so it doesn't inflate the
+            // row above single-line height (same treatment as the Switch).
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                button()
+            }
+        } else {
+            button()
         }
     }
 }

@@ -2,6 +2,7 @@ package org.onekash.kashcal.sync.integration.multiserver
 
 import org.onekash.kashcal.sync.carddav.CardDavQuirks
 import org.onekash.kashcal.sync.carddav.DefaultCardDavQuirks
+import org.onekash.kashcal.sync.carddav.ZohoCardDavQuirks
 import org.onekash.kashcal.sync.carddav.ICloudCardDavQuirks
 
 /**
@@ -25,6 +26,15 @@ data class CardDavServerConfig(
     val quirksFactory: (String) -> CardDavQuirks,
     /** RFC 6764 `/.well-known/carddav` discovery vs. targeting the endpoint directly. */
     val usesWellKnownDiscovery: Boolean = false,
+    /**
+     * The host a real account of this provider has *stored* from CalDAV setup, when
+     * it differs from the CardDAV [defaultServerUrl]. Only split-host providers set
+     * it (Zoho: contacts on `contacts.zoho.com`, calendars on `calendar.zoho.com`).
+     * The well-known discovery probe uses it to answer whether contacts are reachable
+     * from the CalDAV host alone — i.e. whether the fix needs a bootstrap constant or
+     * can derive the contacts host from what the account already knows.
+     */
+    val caldavHostUrl: String? = null,
 ) {
     override fun toString(): String = name
 
@@ -103,8 +113,67 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = true,
         )
 
+        // Zoho serves CardDAV from a DIFFERENT host than its CalDAV endpoint
+        // (contacts.zoho.com, not calendar.zoho.com), so it reuses the ZOHO_*
+        // credentials but pins the contacts host via the production
+        // ZohoCardDavQuirks (which ignores the passed URL and pins its own host),
+        // mirroring iCloud's hosted default. serverKey = null keeps the calendar
+        // URL out of the CardDAV path. Only the characterization probe consumes
+        // this entry, so it is intentionally left OUT of allServers() (see
+        // MultiServerCardDavZohoProbeTest).
+        val ZOHO = CardDavServerConfig(
+            name = "Zoho",
+            serverKey = null,
+            usernameKey = "ZOHO_USERNAME",
+            passwordKey = "ZOHO_PASSWORD",
+            defaultServerUrl = "https://contacts.zoho.com",
+            caldavHostUrl = "https://calendar.zoho.com",
+            quirksFactory = { ZohoCardDavQuirks() },
+            usesWellKnownDiscovery = true,
+        )
+
+        // Fastmail serves CardDAV from carddav.fastmail.com, distinct from its
+        // caldav.fastmail.com CalDAV host — a genuine split-host provider. It
+        // publishes a _carddavs._tcp SRV record, so a proper SRV client would
+        // reach it from the bare domain; the probe measures whether well-known
+        // alone (which is all the client does today) also gets there. App-specific
+        // password required, same as its CalDAV side.
+        val FASTMAIL = CardDavServerConfig(
+            name = "Fastmail",
+            serverKey = null,
+            usernameKey = "FASTMAIL_USERNAME",
+            passwordKey = "FASTMAIL_PASSWORD",
+            defaultServerUrl = "https://carddav.fastmail.com",
+            caldavHostUrl = "https://caldav.fastmail.com",
+            quirksFactory = { url -> DefaultCardDavQuirks(url) },
+            usesWellKnownDiscovery = true,
+        )
+
+        // mailbox.org (Open-Xchange) serves BOTH CalDAV and CardDAV from
+        // dav.mailbox.org — a same-host provider despite publishing SRV records.
+        // Included to characterize a same-host well-known path alongside the
+        // split-host ones. Reuses the MAILBOX_* CalDAV credentials.
+        val MAILBOX = CardDavServerConfig(
+            name = "Mailbox",
+            serverKey = "MAILBOX_SERVER",
+            usernameKey = "MAILBOX_USERNAME",
+            passwordKey = "MAILBOX_PASSWORD",
+            defaultServerUrl = "https://dav.mailbox.org",
+            davEndpointSuffix = "/carddav/",
+            quirksFactory = { url -> DefaultCardDavQuirks(url) },
+            usesWellKnownDiscovery = true,
+        )
+
         fun allServers(): List<CardDavServerConfig> = listOf(
             ICLOUD, RADICALE, BAIKAL, NEXTCLOUD, SOGO, CYRUS
         )
+
+        /**
+         * The full set the discovery-characterization probe walks, including the
+         * hosted providers deliberately kept out of [allServers] (which gates the
+         * assertion-bearing round-trip tests): Zoho, Fastmail, and mailbox.org.
+         */
+        fun allDiscoveryProbeServers(): List<CardDavServerConfig> =
+            allServers() + listOf(ZOHO, FASTMAIL, MAILBOX)
     }
 }

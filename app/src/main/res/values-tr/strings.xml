@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widget\'lar</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Vurgu</string>
+    <string name="hub_widget_theme">Widget teması</string>
+    <string name="hub_widget_accent">Widget vurgusu</string>
     <string name="settings_widget_color_follow_app">Uygulamayı izle</string>
     <string name="settings_widget_color_follow_app_desc">Uygulamanın vurgu rengini ve kaynağını kullan</string>
     <string name="settings_widget_theme_follow_app">Uygulamayı izle</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Takvimler ve hesaplar</string>
     <string name="settings_section_appearance">Görünüm</string>
     <string name="settings_section_creating_events">Etkinlik tercihleri</string>
-    <string name="settings_section_sync">Bildirimler ve eşitleme</string>
+    <string name="settings_section_sync">Eşitleme</string>
     <string name="settings_section_data">Yedekle ve Geri Yükle</string>
-    <string name="settings_section_privacy">Gizlilik</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Uygulama kilidi</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Bu sunucu, yerel ağında gibi görünüyor. KashCal\'ın ona bağlanabilmesi için yerel ağ erişimine izin ver.</string>
     <string name="local_network_banner_allow">Erişime izin ver</string>
     <string name="local_network_banner_dismiss">Şimdi değil</string>
+    <string name="hub_app_permissions">Uygulama izinleri</string>
+    <string name="status_allowed">İzin verildi</string>
+    <string name="permission_name_notifications">Bildirimler</string>
+    <string name="permission_why_notifications">KashCal\'in etkinliklerini sana hatırlatabilmesi için. Bu izin olmadan hatırlatıcılar sessiz kalır.</string>
+    <string name="permission_name_contacts">Kişiler</string>
+    <string name="permission_why_contacts">Bir etkinliğe kişi eklerken konuk önerir ve kişilerin doğum günlerini gösterir. Kişilerin cihazında kalır.</string>
+    <string name="permission_name_calendars">Takvimler</string>
+    <string name="permission_why_calendars">Cihazındaki diğer takvimlerin etkinliklerini kendi etkinliklerinin yanında gösterir.</string>
+    <string name="permission_name_local_network">Yerel ağ</string>
+    <string name="permission_why_local_network">Ev veya iş ağındaki bir takvim sunucusuna erişir. Android 17 bunu internet erişiminden ayrı olarak ister.</string>
     <string name="password_change_error_account_not_found">Hesap bulunamadı</string>
     <string name="password_change_error_no_credentials">Mevcut kimlik bilgisi yok</string>
     <string name="password_change_error_unsupported_provider">Bu sağlayıcı parola değiştirmeyi desteklemiyor</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">HESAP</string>
     <string name="account_detail_enabled">Etkin</string>
     <string name="account_detail_enabled_subtitle">Bu hesabı otomatik eşitle</string>
+    <string name="account_detail_sync_calendar">Takvim</string>
+    <string name="account_detail_sync_calendar_subtitle">Bu hesabın takvimlerini eşitle</string>
+    <string name="account_detail_sync_contacts">Kişiler</string>
+    <string name="account_detail_sync_contacts_subtitle">Bu hesabın kişilerini telefonuna eşitle</string>
+    <string name="account_detail_contacts_permission_needed">Kişiler izni kapalı. Kişilerin eşitlenmesini sürdürmek için erişime izin ver.</string>
+    <string name="account_detail_contacts_grant">Erişime izin ver</string>
+    <string name="contact_sync_enabled_for">%1$s için kişiler senkronize ediliyor</string>
+    <string name="contact_sync_disabled_for">%1$s için cihaz kişileri kaldırıldı</string>
+    <string name="contact_sync_disabled_kept">%1$s için kişi eşitleme kapalı. Aynı e-postayla eşitleyen başka bir oturum olduğu için kişiler kalıyor.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s için kişi eşitleme kapalı, ama bazı cihaz kişileri kalabilir. Kişiler iznini kontrol et.</string>
     <string name="account_detail_sync_now">Şimdi Eşitle</string>
     <string name="account_detail_syncing">Eşitleniyor…</string>
     <string name="account_detail_discovering">Keşfediliyor…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Kaydet</string>
     <string name="hub_initials_cancel">İptal</string>
     <string name="hub_section_make_it_yours">Kendine göre ayarla</string>
+    <string name="hub_section_own_your_calendar">Takvimin senin</string>
+    <string name="hub_privacy_data_ownership">Verilerin nasıl sana ait kalıyor</string>
     <string name="hub_accounts_and_settings">Hesaplar ve ayarlar</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -21,6 +21,7 @@ open class DefaultCardDavQuirks(
     override val providerId: String = "carddav",
     override val displayName: String = "CardDAV",
     override val requiresAppSpecificPassword: Boolean = false,
+    override val discoverHostViaDns: Boolean = true,
 ) : CardDavQuirks {
 
     private val xmlParser = CardDavXmlParser()

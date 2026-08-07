@@ -28,9 +28,8 @@ import java.io.File
  *
  * Implemented as a source scan (no ArchUnit/Konsist on the classpath), matching
  * the sibling boundary tests DevicePathFirewallTest and
- * ContactsProviderWriteBoundaryTest. The CardDAV/contacts source packages do
- * not exist yet, so the forward direction passes vacuously today and starts
- * enforcing the instant the first contact-sync file lands.
+ * ContactsProviderWriteBoundaryTest. The CardDAV/contacts source packages are
+ * populated, so this actively enforces the boundary on every scanned file.
  */
 class CardDavCalDavIsolationTest {
 

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Logrīki</string>
     <string name="settings_widget_theme">Motīvs</string>
     <string name="settings_widget_accent_color">Akcents</string>
+    <string name="hub_widget_theme">Logrīka motīvs</string>
+    <string name="hub_widget_accent">Logrīka akcents</string>
     <string name="settings_widget_color_follow_app">Kā lietotnē</string>
     <string name="settings_widget_color_follow_app_desc">Izmantot lietotnes akcenta krāsu un tās avotu</string>
     <string name="settings_widget_theme_follow_app">Kā lietotnē</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendāri un konti</string>
     <string name="settings_section_appearance">Izskats</string>
     <string name="settings_section_creating_events">Notikumu iestatījumi</string>
-    <string name="settings_section_sync">Paziņojumi un sinhronizācija</string>
+    <string name="settings_section_sync">Sinhronizācija</string>
     <string name="settings_section_data">Dublēšana un atjaunošana</string>
-    <string name="settings_section_privacy">Konfidencialitāte</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Lietotnes bloķēšana</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Šķiet, ka šis serveris ir tavā lokālajā tīklā. Atļauj piekļuvi lokālajam tīklam, lai KashCal varētu ar to izveidot savienojumu.</string>
     <string name="local_network_banner_allow">Atļaut piekļuvi</string>
     <string name="local_network_banner_dismiss">Ne tagad</string>
+    <string name="hub_app_permissions">Lietotnes atļaujas</string>
+    <string name="status_allowed">Atļauts</string>
+    <string name="permission_name_notifications">Paziņojumi</string>
+    <string name="permission_why_notifications">Lai KashCal var atgādināt tev par notikumiem. Bez tā atgādinājumi paliks klusi.</string>
+    <string name="permission_name_contacts">Kontakti</string>
+    <string name="permission_why_contacts">Iesaka viesus, kad notikumam pievieno cilvēkus, un rāda kontaktu dzimšanas dienas. Tavi kontakti paliek tavā ierīcē.</string>
+    <string name="permission_name_calendars">Kalendāri</string>
+    <string name="permission_why_calendars">Rāda notikumus no citiem tavas ierīces kalendāriem līdzās taviem paša.</string>
+    <string name="permission_name_local_network">Vietējais tīkls</string>
+    <string name="permission_why_local_network">Sasniedz kalendāra serveri tavā mājas vai biroja tīklā. Android 17 to prasa atsevišķi no interneta piekļuves.</string>
     <string name="password_change_error_account_not_found">Konts nav atrasts</string>
     <string name="password_change_error_no_credentials">Nav saglabātu pieteikšanās datu</string>
     <string name="password_change_error_unsupported_provider">Šis pakalpojumu sniedzējs neatbalsta paroles maiņu</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">KONTS</string>
     <string name="account_detail_enabled">Iespējots</string>
     <string name="account_detail_enabled_subtitle">Automātiski sinhronizēt šo kontu</string>
+    <string name="account_detail_sync_calendar">Kalendārs</string>
+    <string name="account_detail_sync_calendar_subtitle">Sinhronizēt šī konta kalendārus</string>
+    <string name="account_detail_sync_contacts">Kontakti</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinhronizēt šī konta kontaktus ar tālruni</string>
+    <string name="account_detail_contacts_permission_needed">Piekļuve kontaktiem ir izslēgta. Piešķir piekļuvi, lai kontakti turpinātu sinhronizēties.</string>
+    <string name="account_detail_contacts_grant">Piešķirt piekļuvi</string>
+    <string name="contact_sync_enabled_for">Tiek sinhronizēti %1$s kontakti</string>
+    <string name="contact_sync_disabled_for">Ierīces kontakti kontam %1$s ir noņemti</string>
+    <string name="contact_sync_disabled_kept">Kontaktu sinhronizācija kontam %1$s ir izslēgta. Kontakti paliek, jo tos joprojām sinhronizē cits pieteikšanās konts.</string>
+    <string name="contact_sync_disabled_incomplete">Kontaktu sinhronizācija kontam %1$s ir izslēgta, taču daži ierīces kontakti var palikt. Pārbaudi Kontaktu atļauju.</string>
     <string name="account_detail_sync_now">Sinhronizēt tagad</string>
     <string name="account_detail_syncing">Sinhronizē…</string>
     <string name="account_detail_discovering">Atklāj…</string>
@@ -1249,6 +1270,8 @@
     <string name="hub_initials_save">Saglabāt</string>
     <string name="hub_initials_cancel">Atcelt</string>
     <string name="hub_section_make_it_yours">Pielāgo sev</string>
+    <string name="hub_section_own_your_calendar">Tavs kalendārs</string>
+    <string name="hub_privacy_data_ownership">Kā tavi dati paliek tavi</string>
     <string name="hub_accounts_and_settings">Konti un iestatījumi</string>
 
     <!-- ==================== Share Availability ==================== -->

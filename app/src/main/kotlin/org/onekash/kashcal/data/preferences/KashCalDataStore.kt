@@ -606,6 +606,18 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED, declined)
     }
 
+    /**
+     * True when a background contact sync was skipped because WRITE_CONTACTS
+     * was revoked. Drives an inline re-grant affordance in settings; cleared
+     * on the next run that finds the permission granted.
+     */
+    val contactSyncPermissionNeeded: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED, false)
+
+    suspend fun setContactSyncPermissionNeeded(needed: Boolean) {
+        setPreference(PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED, needed)
+    }
+
     val lastWhatsNewVersionShown: Flow<Int>
         get() = getPreference(PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN, 0)
 

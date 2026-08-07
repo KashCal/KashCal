@@ -205,6 +205,14 @@ object PreferencesKeys {
     /** Number of times notification permission was denied (for rationale/permanently denied logic) */
     val NOTIFICATION_PERMISSION_DENIED_COUNT = intPreferencesKey("notification_permission_denied_count")
 
+    /**
+     * True when a background contact sync ran while WRITE_CONTACTS was revoked,
+     * so settings can surface an inline re-grant affordance. App-global (the
+     * permission is app-wide, not per-account) and device-local runtime state —
+     * excluded from backups, mirroring [NOTIFICATION_PERMISSION_DENIED_COUNT].
+     */
+    val CONTACT_SYNC_PERMISSION_NEEDED = booleanPreferencesKey("contact_sync_permission_needed")
+
     // ========== Contact Birthdays ==========
 
     /** Contact birthdays calendar enabled */

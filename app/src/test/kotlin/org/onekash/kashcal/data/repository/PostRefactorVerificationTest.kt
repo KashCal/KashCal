@@ -90,13 +90,15 @@ class PostRefactorVerificationTest {
 
         accountRepository = AccountRepositoryImpl(
             accountsDao = accountsDao,
+            addressBookDao = mockk(relaxed = true),
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             credentialManager = credentialManager,
             reminderScheduler = reminderScheduler,
             workManager = workManager,
-            contactSystemAccountRegistrar = mockk(relaxed = true)
+            contactSystemAccountRegistrar = mockk(relaxed = true),
+            contactsProviderRepository = mockk(relaxed = true)
         )
     }
 

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Віджэты</string>
     <string name="settings_widget_theme">Тэма</string>
     <string name="settings_widget_accent_color">Акцэнт</string>
+    <string name="hub_widget_theme">Тэма віджэта</string>
+    <string name="hub_widget_accent">Акцэнт віджэта</string>
     <string name="settings_widget_color_follow_app">Як у праграме</string>
     <string name="settings_widget_color_follow_app_desc">Выкарыстоўваць акцэнтны колер праграмы і яго крыніцу</string>
     <string name="settings_widget_theme_follow_app">Як у праграме</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Календары і акаўнты</string>
     <string name="settings_section_appearance">Выгляд</string>
     <string name="settings_section_creating_events">Налады падзей</string>
-    <string name="settings_section_sync">Апавяшчэнні і сінхранізацыя</string>
+    <string name="settings_section_sync">Сінхранізацыя</string>
     <string name="settings_section_data">Рэзервовае капіяванне і аднаўленне</string>
-    <string name="settings_section_privacy">Прыватнасць</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Блакіроўка праграмы</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Падобна, што гэты сервер у тваёй лакальнай сетцы. Дазволь доступ да лакальнай сеткі, каб KashCal мог да яго падлучыцца.</string>
     <string name="local_network_banner_allow">Дазволіць доступ</string>
     <string name="local_network_banner_dismiss">Не зараз</string>
+    <string name="hub_app_permissions">Дазволы праграмы</string>
+    <string name="status_allowed">Дазволена</string>
+    <string name="permission_name_notifications">Апавяшчэнні</string>
+    <string name="permission_why_notifications">Каб KashCal мог нагадваць табе пра падзеі. Без гэтага напаміны застануцца бязгучнымі.</string>
+    <string name="permission_name_contacts">Кантакты</string>
+    <string name="permission_why_contacts">Прапаноўвае гасцей, калі ты дадаеш людзей да падзеі, і паказвае дні нараджэння кантактаў. Твае кантакты застаюцца на прыладзе.</string>
+    <string name="permission_name_calendars">Календары</string>
+    <string name="permission_why_calendars">Паказвае падзеі з іншых календароў на тваёй прыладзе побач з тваімі ўласнымі.</string>
+    <string name="permission_name_local_network">Лакальная сетка</string>
+    <string name="permission_why_local_network">Падключаецца да сервера календара ў тваёй хатняй ці офіснай сетцы. Android 17 запытвае гэта асобна ад доступу да інтэрнэту.</string>
     <string name="password_change_error_account_not_found">Уліковы запіс не знойдзены</string>
     <string name="password_change_error_no_credentials">Няма захаваных уліковых даных</string>
     <string name="password_change_error_unsupported_provider">Гэты правайдэр не падтрымлівае змену пароля</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">УЛІКОВЫ ЗАПІС</string>
     <string name="account_detail_enabled">Уключана</string>
     <string name="account_detail_enabled_subtitle">Аўтаматычная сінхранізацыя</string>
+    <string name="account_detail_sync_calendar">Каляндар</string>
+    <string name="account_detail_sync_calendar_subtitle">Сінхранізаваць календары гэтага ўліковага запісу</string>
+    <string name="account_detail_sync_contacts">Кантакты</string>
+    <string name="account_detail_sync_contacts_subtitle">Сінхранізаваць кантакты гэтага ўліковага запісу з тэлефонам</string>
+    <string name="account_detail_contacts_permission_needed">Доступ да кантактаў выключаны. Дайце доступ, каб кантакты працягвалі сінхранізавацца.</string>
+    <string name="account_detail_contacts_grant">Даць доступ</string>
+    <string name="contact_sync_enabled_for">Сінхранізацыя кантактаў для %1$s</string>
+    <string name="contact_sync_disabled_for">Кантакты прылады для %1$s выдалены</string>
+    <string name="contact_sync_disabled_kept">Сінхранізацыя кантактаў для %1$s адключана. Кантакты застаюцца, бо іх сінхранізуе іншы ўваход.</string>
+    <string name="contact_sync_disabled_incomplete">Сінхранізацыя кантактаў для %1$s адключана, але некаторыя кантакты на прыладзе могуць застацца. Праверце дазвол на доступ да Кантактаў.</string>
     <string name="account_detail_sync_now">Сінхранізаваць</string>
     <string name="account_detail_syncing">Сінхранізацыя…</string>
     <string name="account_detail_discovering">Выяўленне…</string>
@@ -1299,6 +1320,8 @@
     <string name="hub_initials_save">Захаваць</string>
     <string name="hub_initials_cancel">Скасаваць</string>
     <string name="hub_section_make_it_yours">Наладзь пад сябе</string>
+    <string name="hub_section_own_your_calendar">Твой каляндар</string>
+    <string name="hub_privacy_data_ownership">Як твае даныя застаюцца тваімі</string>
     <string name="hub_accounts_and_settings">Уліковыя запісы і налады</string>
 
     <!-- ==================== Share Availability ==================== -->

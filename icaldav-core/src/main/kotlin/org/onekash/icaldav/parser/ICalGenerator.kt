@@ -399,14 +399,14 @@ class ICalGenerator(
         // RFC 5545 §3.6.6: DESCRIPTION is required for both DISPLAY (text to
         // show) and EMAIL (message body); AUDIO has none.
         if (alarm.action == AlarmAction.DISPLAY || alarm.action == AlarmAction.EMAIL) {
-            crlfLine("DESCRIPTION:${alarm.description ?: "Reminder"}")
+            crlfLine("DESCRIPTION:${escapeICalText(alarm.description ?: "Reminder")}")
         }
 
         // RFC 5545 §3.6.6: SUMMARY (message subject) is required for EMAIL.
         // Emit whenever provided, and default it for EMAIL so the required
         // property is never absent.
         (alarm.summary ?: if (alarm.action == AlarmAction.EMAIL) "Reminder" else null)?.let {
-            crlfLine("SUMMARY:$it")
+            crlfLine("SUMMARY:${escapeICalText(it)}")
         }
 
         // Repeat
@@ -423,7 +423,7 @@ class ICalGenerator(
         }
 
         alarm.relatedTo?.let {
-            crlfLine("RELATED-TO:$it")
+            crlfLine("RELATED-TO:${escapeICalText(it)}")
         }
 
         // RFC 9074: DEFAULT-ALARM
@@ -533,6 +533,12 @@ class ICalGenerator(
      */
     private fun escapeICalText(text: String): String {
         return text
+            // Normalize CRLF and lone CR to a single LF first: a bare CR is a
+            // control char excluded from VALUE-CHAR (§3.1), and CRLF must not
+            // become two line breaks. Do this before backslash-escaping so the
+            // resulting LF is escaped to \n like any other newline.
+            .replace("\r\n", "\n")
+            .replace("\r", "\n")
             .replace("\\", "\\\\")
             .replace("\n", "\\n")
             .replace(",", "\\,")

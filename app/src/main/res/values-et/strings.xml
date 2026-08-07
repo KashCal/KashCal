@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Vidinad</string>
     <string name="settings_widget_theme">Teema</string>
     <string name="settings_widget_accent_color">Rõhuvärv</string>
+    <string name="hub_widget_theme">Vidina teema</string>
+    <string name="hub_widget_accent">Vidina rõhuvärv</string>
     <string name="settings_widget_color_follow_app">Nagu rakenduses</string>
     <string name="settings_widget_color_follow_app_desc">Kasuta rakenduse rõhuvärvi ja selle allikat</string>
     <string name="settings_widget_theme_follow_app">Nagu rakenduses</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Kalendrid ja kontod</string>
     <string name="settings_section_appearance">Välimus</string>
     <string name="settings_section_creating_events">Sündmuste seaded</string>
-    <string name="settings_section_sync">Teavitused ja sünkroonimine</string>
+    <string name="settings_section_sync">Sünkroonimine</string>
     <string name="settings_section_data">Varundus ja taastamine</string>
-    <string name="settings_section_privacy">Privaatsus</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Rakenduse lukk</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Tundub, et see server on sinu kohtvõrgus. Luba juurdepääs kohtvõrgule, et KashCal saaks sellega ühenduse luua.</string>
     <string name="local_network_banner_allow">Luba juurdepääs</string>
     <string name="local_network_banner_dismiss">Mitte praegu</string>
+    <string name="hub_app_permissions">Rakenduse load</string>
+    <string name="status_allowed">Lubatud</string>
+    <string name="permission_name_notifications">Teavitused</string>
+    <string name="permission_why_notifications">Et KashCal saaks sulle sündmusi meelde tuletada. Ilma selleta jäävad meeldetuletused vaikseks.</string>
+    <string name="permission_name_contacts">Kontaktid</string>
+    <string name="permission_why_contacts">Soovitab külalisi, kui lisad sündmusele inimesi, ja kuvab kontaktide sünnipäevi. Su kontaktid jäävad sinu seadmesse.</string>
+    <string name="permission_name_calendars">Kalendrid</string>
+    <string name="permission_why_calendars">Kuvab sündmusi su seadme teistest kalendritest sinu enda omade kõrval.</string>
+    <string name="permission_name_local_network">Kohtvõrk</string>
+    <string name="permission_why_local_network">Ühendub kalendriserveriga su kodu- või kontorivõrgus. Android 17 küsib seda internetiühendusest eraldi.</string>
     <string name="password_change_error_account_not_found">Kontot ei leitud</string>
     <string name="password_change_error_no_credentials">Salvestatud sisselogimisandmeid pole</string>
     <string name="password_change_error_unsupported_provider">See teenusepakkuja ei toeta parooli muutmist</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">KONTO</string>
     <string name="account_detail_enabled">Lubatud</string>
     <string name="account_detail_enabled_subtitle">Sünkrooni seda kontot automaatselt</string>
+    <string name="account_detail_sync_calendar">Kalender</string>
+    <string name="account_detail_sync_calendar_subtitle">Sünkrooni selle konto kalendrid</string>
+    <string name="account_detail_sync_contacts">Kontaktid</string>
+    <string name="account_detail_sync_contacts_subtitle">Sünkrooni selle konto kontaktid oma telefoni</string>
+    <string name="account_detail_contacts_permission_needed">Kontaktide luba on välja lülitatud. Anna juurdepääs, et kontaktid jätkaksid sünkroonimist.</string>
+    <string name="account_detail_contacts_grant">Anna juurdepääs</string>
+    <string name="contact_sync_enabled_for">Kontaktide sünkroonimine kontole %1$s</string>
+    <string name="contact_sync_disabled_for">Konto %1$s seadme kontaktid eemaldati</string>
+    <string name="contact_sync_disabled_kept">Konto %1$s kontaktide sünkroonimine on välja lülitatud. Kontaktid jäävad alles, sest teine sisselogimine sünkroonib neid endiselt.</string>
+    <string name="contact_sync_disabled_incomplete">Konto %1$s kontaktide sünkroonimine on välja lülitatud, kuid osa seadme kontakte võib alles jääda. Kontrolli Kontaktide luba.</string>
     <string name="account_detail_sync_now">Sünkrooni kohe</string>
     <string name="account_detail_syncing">Sünkroonib…</string>
     <string name="account_detail_discovering">Avastab…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">Salvesta</string>
     <string name="hub_initials_cancel">Loobu</string>
     <string name="hub_section_make_it_yours">Muuda omaks</string>
+    <string name="hub_section_own_your_calendar">Sinu kalender</string>
+    <string name="hub_privacy_data_ownership">Kuidas su andmed jäävad sinu omaks</string>
     <string name="hub_accounts_and_settings">Kontod ja seaded</string>
 
     <!-- ==================== Share Availability ==================== -->

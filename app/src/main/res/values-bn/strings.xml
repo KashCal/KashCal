@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">উইজেট</string>
     <string name="settings_widget_theme">থিম</string>
     <string name="settings_widget_accent_color">অ্যাকসেন্ট</string>
+    <string name="hub_widget_theme">উইজেট থিম</string>
+    <string name="hub_widget_accent">উইজেট অ্যাকসেন্ট</string>
     <string name="settings_widget_color_follow_app">অ্যাপ অনুসরণ করুন</string>
     <string name="settings_widget_color_follow_app_desc">অ্যাপের অ্যাকসেন্ট রং এবং উৎস ব্যবহার করুন</string>
     <string name="settings_widget_theme_follow_app">অ্যাপ অনুসরণ করুন</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">ক্যালেন্ডার ও অ্যাকাউন্ট</string>
     <string name="settings_section_appearance">চেহারা</string>
     <string name="settings_section_creating_events">ইভেন্ট পছন্দসমূহ</string>
-    <string name="settings_section_sync">বিজ্ঞপ্তি ও সিংক</string>
+    <string name="settings_section_sync">সিংক</string>
     <string name="settings_section_data">ব্যাকআপ ও রিস্টোর</string>
-    <string name="settings_section_privacy">গোপনীয়তা</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">অ্যাপ লক</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">এই সার্ভারটি আপনার লোকাল নেটওয়ার্কে আছে বলে মনে হচ্ছে। লোকাল নেটওয়ার্ক অ্যাক্সেসের অনুমতি দিন যাতে KashCal এর সাথে সংযোগ করতে পারে।</string>
     <string name="local_network_banner_allow">অ্যাক্সেসের অনুমতি দিন</string>
     <string name="local_network_banner_dismiss">এখন নয়</string>
+    <string name="hub_app_permissions">অ্যাপ অনুমতি</string>
+    <string name="status_allowed">অনুমোদিত</string>
+    <string name="permission_name_notifications">বিজ্ঞপ্তি</string>
+    <string name="permission_why_notifications">যাতে KashCal আপনাকে আপনার ইভেন্ট সম্পর্কে মনে করিয়ে দিতে পারে। এটি ছাড়া রিমাইন্ডার নীরব থাকে।</string>
+    <string name="permission_name_contacts">যোগাযোগ</string>
+    <string name="permission_why_contacts">আপনি কোনো ইভেন্টে লোকজন যোগ করার সময় অতিথিদের পরামর্শ দেয় এবং পরিচিতিদের জন্মদিন দেখায়। আপনার পরিচিতি আপনার ডিভাইসেই থাকে।</string>
+    <string name="permission_name_calendars">ক্যালেন্ডার</string>
+    <string name="permission_why_calendars">আপনার ডিভাইসের অন্যান্য ক্যালেন্ডারের ইভেন্ট আপনার নিজের ইভেন্টের পাশাপাশি দেখায়।</string>
+    <string name="permission_name_local_network">স্থানীয় নেটওয়ার্ক</string>
+    <string name="permission_why_local_network">আপনার বাড়ি বা অফিস নেটওয়ার্কে থাকা কোনো ক্যালেন্ডার সার্ভারে পৌঁছায়। Android 17 এটি ইন্টারনেট অ্যাক্সেস থেকে আলাদাভাবে চায়।</string>
     <string name="password_change_error_account_not_found">অ্যাকাউন্ট পাওয়া যায়নি</string>
     <string name="password_change_error_no_credentials">কোনো বিদ্যমান ক্রেডেনশিয়াল নেই</string>
     <string name="password_change_error_unsupported_provider">এই প্রদানকারী পাসওয়ার্ড পরিবর্তন সমর্থন করে না</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">অ্যাকাউন্ট</string>
     <string name="account_detail_enabled">সক্রিয়</string>
     <string name="account_detail_enabled_subtitle">এই অ্যাকাউন্ট স্বয়ংক্রিয়ভাবে সিংক করুন</string>
+    <string name="account_detail_sync_calendar">ক্যালেন্ডার</string>
+    <string name="account_detail_sync_calendar_subtitle">এই অ্যাকাউন্টের ক্যালেন্ডার সিংক করুন</string>
+    <string name="account_detail_sync_contacts">পরিচিতি</string>
+    <string name="account_detail_sync_contacts_subtitle">এই অ্যাকাউন্টের পরিচিতি আপনার ফোনে সিংক করুন</string>
+    <string name="account_detail_contacts_permission_needed">পরিচিতির অনুমতি বন্ধ আছে। পরিচিতি সিংক চালু রাখতে অ্যাক্সেস দিন।</string>
+    <string name="account_detail_contacts_grant">অ্যাক্সেস দিন</string>
+    <string name="contact_sync_enabled_for">%1$s-এর পরিচিতি সিংক করা হচ্ছে</string>
+    <string name="contact_sync_disabled_for">%1$s-এর ডিভাইস পরিচিতি সরানো হয়েছে</string>
+    <string name="contact_sync_disabled_kept">%1$s-এর জন্য পরিচিতি সিংক বন্ধ। পরিচিতিগুলি থেকে যাচ্ছে কারণ আরেকটি লগইন এখনও সেগুলি সিংক করে।</string>
+    <string name="contact_sync_disabled_incomplete">%1$s-এর জন্য পরিচিতি সিংক বন্ধ, তবে কিছু ডিভাইস পরিচিতি থেকে যেতে পারে। পরিচিতি অনুমতি যাচাই করুন।</string>
     <string name="account_detail_sync_now">এখনই সিংক করুন</string>
     <string name="account_detail_syncing">সিংক হচ্ছে…</string>
     <string name="account_detail_discovering">খুঁজছে…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">সংরক্ষণ করুন</string>
     <string name="hub_initials_cancel">বাতিল করুন</string>
     <string name="hub_section_make_it_yours">নিজের মতো সাজান</string>
+    <string name="hub_section_own_your_calendar">আপনার ক্যালেন্ডার আপনার নিয়ন্ত্রণে</string>
+    <string name="hub_privacy_data_ownership">আপনার ডেটা আপনারই থাকে</string>
     <string name="hub_accounts_and_settings">অ্যাকাউন্ট এবং সেটিংস</string>
 
     <!-- ==================== Share Availability ==================== -->

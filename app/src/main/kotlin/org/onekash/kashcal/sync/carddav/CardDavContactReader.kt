@@ -40,6 +40,9 @@ data class ReadContact(
  *   a large book comes back empty. The cap mirrors the CalDAV pull path.
  * - A single unparseable body is logged and skipped — it never aborts the parse
  *   of the other hrefs in the batch.
+ * - A `KIND:group` vCard (RFC 6350 §6.1.4, or the 3.0 Apple
+ *   `X-ADDRESSBOOKSERVER-KIND:group` form) is a distribution list, not a person, so
+ *   it is dropped here rather than mirrored to the device as a phantom empty contact.
  * - A transport error on any batch is returned verbatim (no partial success): the
  *   caller retries the whole read rather than acting on a truncated set.
  * - The parsed version is driven entirely by each body's `VERSION:` line; the
@@ -77,6 +80,13 @@ class CardDavContactReader(
                         // href/etag. Never trust the requested version — parse from
                         // the body's own VERSION line.
                         parser.parse(data.vcardBody).forEach { contact ->
+                            // A KIND:group vCard is a distribution list, not a person;
+                            // mirroring it would create a phantom empty contact on the
+                            // device. Drop it here so it never reaches the write path.
+                            if (contact.kind.equals("group", ignoreCase = true)) {
+                                Log.d(TAG, "Skipping group vCard at ${data.href}")
+                                return@forEach
+                            }
                             contacts += ReadContact(href = data.href, etag = data.etag, contact = contact)
                         }
                     } catch (e: Exception) {

@@ -38,6 +38,7 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.ContactPurgeOutcome
 import org.onekash.kashcal.domain.backup.BackupImportError
 import org.onekash.kashcal.domain.backup.BackupParseResult
 import org.onekash.kashcal.domain.backup.SettingsBackupExporter
@@ -58,6 +59,7 @@ import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.permission.PermissionChecker
+import org.onekash.kashcal.ui.permission.contactSyncPermissionGranted
 import org.onekash.kashcal.ui.permission.reconcileOnResume
 import org.onekash.kashcal.ui.permission.failureIndicatesBlockedLan
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
@@ -65,11 +67,13 @@ import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
+import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.util.UiMessage
@@ -218,10 +222,6 @@ class AccountSettingsViewModel @Inject constructor(
     private val _syncLookbackDays = MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
     val syncLookbackDays: StateFlow<Int> = _syncLookbackDays.asStateFlow()
 
-    // Notification permission
-    private val _notificationsEnabled = MutableStateFlow(true)
-    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
-
     // Default reminders
     private val _defaultReminderTimed = MutableStateFlow(15)
     val defaultReminderTimed: StateFlow<Int> = _defaultReminderTimed.asStateFlow()
@@ -275,6 +275,26 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
+
+    // Contact SYNC needs READ + WRITE (it mirrors server contacts onto the
+    // device), unlike the birthday/anniversary reads above which need READ alone.
+    // Kept separate so a read-granted/write-denied login doesn't flip the sync
+    // toggle on without ever requesting WRITE.
+    private val _hasContactsSyncPermission = MutableStateFlow(false)
+    val hasContactsSyncPermission: StateFlow<Boolean> = _hasContactsSyncPermission.asStateFlow()
+
+    /**
+     * True when a background contact sync was skipped because WRITE_CONTACTS was
+     * revoked. Drives the inline re-grant affordance in the account detail sheet.
+     * App-global because WRITE_CONTACTS is a single app-wide runtime permission,
+     * not per-account.
+     */
+    val contactSyncPermissionNeeded: StateFlow<Boolean> =
+        dataStore.contactSyncPermissionNeeded.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false
+        )
 
     // Local-network permission (Android 17+): resolved by the Activity (needs
     // rationale read) and pushed here so the sign-in sheet can proactively ask
@@ -355,9 +375,6 @@ class AccountSettingsViewModel @Inject constructor(
     private val _titleSuggestionsEnabled = MutableStateFlow(true)
     val titleSuggestionsEnabled: StateFlow<Boolean> = _titleSuggestionsEnabled.asStateFlow()
 
-    private val _appLockEnabled = MutableStateFlow(false)
-    val appLockEnabled: StateFlow<Boolean> = _appLockEnabled.asStateFlow()
-
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
 
@@ -386,7 +403,6 @@ class AccountSettingsViewModel @Inject constructor(
         observeUserPreferences()
         observeDeviceCalendars()
         observeDisplaySettings()
-        checkNotificationPermission()
         checkContactsPermission()
         checkCalendarPermission()
         loadWritableDeviceCalendars()
@@ -717,11 +733,6 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            dataStore.appLockEnabled.collect { enabled ->
-                _appLockEnabled.value = enabled
-            }
-        }
-        viewModelScope.launch {
             dataStore.titleSuggestionsEnabled.collect { enabled ->
                 _titleSuggestionsEnabled.value = enabled
             }
@@ -759,17 +770,6 @@ class AccountSettingsViewModel @Inject constructor(
     fun setQuickAddEnabled(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setQuickAddEnabled(enabled)
-        }
-    }
-
-    /**
-     * Persist the app-lock flag. The capability / enrollment check (and any
-     * routing to the system enrollment flow) happens at the call site, which
-     * has the Android context — the ViewModel only stores the resolved value.
-     */
-    fun setAppLockEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            dataStore.setAppLockEnabled(enabled)
         }
     }
 
@@ -836,12 +836,11 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    private fun checkNotificationPermission() {
-        _notificationsEnabled.value = permissionChecker.hasNotificationPermission()
-    }
-
     private fun checkContactsPermission() {
-        _hasContactsPermission.value = permissionChecker.hasReadContactsPermission()
+        val read = permissionChecker.hasReadContactsPermission()
+        _hasContactsPermission.value = read
+        _hasContactsSyncPermission.value =
+            contactSyncPermissionGranted(read, permissionChecker.hasWriteContactsPermission())
     }
 
     // ==================== Account Actions ====================
@@ -2085,15 +2084,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    // ==================== Notifications ====================
-
-    /**
-     * Refresh permission state (call from Activity onResume).
-     */
-    fun refreshNotificationPermission() {
-        checkNotificationPermission()
-    }
-
     /**
      * Refresh contacts permission state (call from Activity onResume).
      */
@@ -2378,7 +2368,11 @@ class AccountSettingsViewModel @Inject constructor(
             it.copy(
                 accountDetail = null,
                 accountDetailSyncStatus = AccountDetailSyncStatus.Idle,
-                accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle
+                accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
+                // Clear the inline contact-sync confirmation too: it names a masked
+                // account email and otherwise survives the sheet close on the VM
+                // StateFlow, so it would surface again in the next account's sheet.
+                contactSyncConfirmation = null
             )
         }
     }
@@ -2391,6 +2385,31 @@ class AccountSettingsViewModel @Inject constructor(
     fun syncAccountNow(accountId: Long) {
         _uiState.update { it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Syncing) }
         syncObservationJob?.cancel()
+
+        // "Sync now" covers contacts too when contact sync is on for this account
+        // — otherwise the manual sync silently skips them until the next periodic
+        // tick. Gate on the live grant like the enable path: a revoked
+        // WRITE_CONTACTS would only skip-and-flag downstream. And, like the enable
+        // path, own the re-grant banner here rather than leaving it to a background
+        // worker that may never be scheduled: this is a manual entry point that can
+        // run for a login whose periodic contact job never existed, so the worker
+        // never fires to raise/clear it.
+        viewModelScope.launch {
+            val contactSyncOn = accountRepository.getAccountById(accountId)?.contactSyncEnabled == true
+            if (!contactSyncOn) return@launch
+            val granted = contactSyncPermissionGranted(
+                readGranted = permissionChecker.hasReadContactsPermission(),
+                writeGranted = permissionChecker.hasWriteContactsPermission(),
+            )
+            if (granted) {
+                dataStore.setContactSyncPermissionNeeded(false)
+                // Scope the pull to this account — "Sync now" for one login shouldn't
+                // re-sweep every other contact-sync account's address books.
+                syncScheduler.requestImmediateContactSync(accountId)
+            } else {
+                dataStore.setContactSyncPermissionNeeded(true)
+            }
+        }
 
         val workId = syncScheduler.syncAccount(accountId)
         syncObservationJob = viewModelScope.launch {
@@ -2422,6 +2441,105 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             accountRepository.setEnabled(accountId, enabled)
         }
+    }
+
+    /**
+     * Toggle CardDAV contact sync for a single account. Routes through the
+     * repository (which enrols/removes the contacts system account and persists
+     * the flag) — never a DAO directly. Disabling needs no permission.
+     *
+     * The UI gates enabling behind a READ + WRITE_CONTACTS request, but the pull
+     * kick re-checks the live grant here rather than trusting the caller (the
+     * same defense-in-depth the contact-birthday manager applies before its
+     * sync). Without both permissions the flag still persists and we raise the
+     * re-grant signal directly — the inline banner must surface even for a login
+     * whose periodic job was never scheduled (manual-only, or predating this
+     * feature), where the background worker never runs to raise it. With both
+     * permissions we clear that signal and kick the pull.
+     *
+     * @param accountId The account to toggle
+     * @param enabled New contact-sync state
+     */
+    fun onToggleContactSync(accountId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            val purgeOutcome = accountRepository.setContactSyncEnabled(accountId, enabled)
+
+            // Resolve the account label once so both branches can name it. Fall
+            // back to a blank label (maskEmail is null-safe) if the account has
+            // vanished — the confirmation still reads sensibly.
+            val maskedEmail = maskEmail(accountRepository.getAccountById(accountId)?.email)
+
+            if (!enabled) {
+                // Message from what the purge actually did, not a blanket "removed":
+                // a same-email sibling can keep the contacts, and a revoked-permission
+                // purge can't confirm removal. Claiming removal in those cases is a lie.
+                // Tone mirrors the outcome so the sheet styles a destructive removal (or
+                // an unverified "may remain") as a warning, not a celebratory checkmark;
+                // contacts KEPT by a sibling is benign, so it stays positive.
+                val confirmation = when (purgeOutcome) {
+                    ContactPurgeOutcome.PURGED -> ContactSyncConfirmation(
+                        context.getString(R.string.contact_sync_disabled_for, maskedEmail),
+                        ContactSyncConfirmation.Tone.WARNING,
+                    )
+                    ContactPurgeOutcome.NOT_ATTEMPTED -> ContactSyncConfirmation(
+                        context.getString(R.string.contact_sync_disabled_kept, maskedEmail),
+                        ContactSyncConfirmation.Tone.POSITIVE,
+                    )
+                    ContactPurgeOutcome.INCOMPLETE -> ContactSyncConfirmation(
+                        context.getString(R.string.contact_sync_disabled_incomplete, maskedEmail),
+                        ContactSyncConfirmation.Tone.WARNING,
+                    )
+                }
+                showContactSyncConfirmation(confirmation)
+                return@launch
+            }
+
+            val granted = contactSyncPermissionGranted(
+                readGranted = permissionChecker.hasReadContactsPermission(),
+                writeGranted = permissionChecker.hasWriteContactsPermission(),
+            )
+            if (!granted) {
+                // Surface the re-grant banner now rather than waiting for a
+                // background worker that may never be scheduled to run. Don't show
+                // the "Syncing…" confirmation — nothing will actually pull.
+                dataStore.setContactSyncPermissionNeeded(true)
+                return@launch
+            }
+            dataStore.setContactSyncPermissionNeeded(false)
+
+            // Enabling only flips a flag and enrols the system account; nothing
+            // pulls contacts until we kick it. Schedule the recurring job (in
+            // case periodic sync predates this feature) and fire an immediate
+            // one-shot pull so contacts start appearing within seconds, not at
+            // the next periodic tick. Surface the background work inline.
+            val intervalMs = userPreferences.syncIntervalMs.first()
+            // Long.MAX_VALUE is the repository's "manual only" sentinel: as with
+            // calendar sync, don't schedule a periodic job in that mode — but the
+            // one-shot pull below still runs so enabling has an immediate effect.
+            if (intervalMs != Long.MAX_VALUE) {
+                syncScheduler.ensureContactSyncScheduled(intervalMs / (60 * 1000L))
+            }
+            syncScheduler.requestImmediateContactSync()
+            showContactSyncConfirmation(
+                ContactSyncConfirmation(
+                    context.getString(R.string.contact_sync_enabled_for, maskedEmail),
+                    ContactSyncConfirmation.Tone.POSITIVE,
+                )
+            )
+        }
+    }
+
+    /**
+     * Set the inline contact-sync confirmation shown inside the account detail
+     * sheet.
+     */
+    private fun showContactSyncConfirmation(confirmation: ContactSyncConfirmation) {
+        _uiState.update { it.copy(contactSyncConfirmation = confirmation) }
+    }
+
+    /** Clear the inline contact-sync confirmation once it's been shown. */
+    fun clearContactSyncConfirmation() {
+        _uiState.update { it.copy(contactSyncConfirmation = null) }
     }
 
     /**

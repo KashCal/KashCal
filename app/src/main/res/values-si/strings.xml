@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">විජට්</string>
     <string name="settings_widget_theme">තේමාව</string>
     <string name="settings_widget_accent_color">අවධාරකය</string>
+    <string name="hub_widget_theme">විජට් තේමාව</string>
+    <string name="hub_widget_accent">විජට් අවධාරකය</string>
     <string name="settings_widget_color_follow_app">යෙදුම අනුගමනය කරන්න</string>
     <string name="settings_widget_color_follow_app_desc">යෙදුමේ අවධාරක වර්ණය හා මූලාශ්‍රය භාවිත කරන්න</string>
     <string name="settings_widget_theme_follow_app">යෙදුම අනුගමනය කරන්න</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">දින දර්ශන &amp; ගිණුම්</string>
     <string name="settings_section_appearance">පෙනුම</string>
     <string name="settings_section_creating_events">සිදුවීම් අභිප්‍රේත</string>
-    <string name="settings_section_sync">දැනුම්දීම් &amp; සමමුහුර්තය</string>
+    <string name="settings_section_sync">සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
-    <string name="settings_section_privacy">පෞද්ගලිකත්වය</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">යෙදුම් අගුල</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">මෙම සේවාදායකය ඔබේ ස්ථානීය ජාලයේ ඇති බව පෙනේ. KashCal හට එයට සම්බන්ධ විය හැකි වන පරිදි ස්ථානීය ජාල ප්‍රවේශයට ඉඩ දෙන්න.</string>
     <string name="local_network_banner_allow">ප්‍රවේශයට ඉඩ දෙන්න</string>
     <string name="local_network_banner_dismiss">දැන් නොවේ</string>
+    <string name="hub_app_permissions">යෙදුම් අවසර</string>
+    <string name="status_allowed">අවසර ඇත</string>
+    <string name="permission_name_notifications">දැනුම්දීම්</string>
+    <string name="permission_why_notifications">KashCal ට ඔබේ සිදුවීම් ගැන ඔබට සිහිගැන්වීමට හැකි වන පරිදි. එය නොමැති නම්, සිහිකැඳවීම් නිශ්ශබ්දව පවතී.</string>
+    <string name="permission_name_contacts">සම්බන්ධතා</string>
+    <string name="permission_why_contacts">සිදුවීමකට පුද්ගලයන් එක් කරන විට ආරාධිතයන් යෝජනා කරයි, සහ සම්බන්ධතා උපන්දින පෙන්වයි. ඔබේ සම්බන්ධතා ඔබේ උපාංගයේම පවතී.</string>
+    <string name="permission_name_calendars">දින දර්ශන</string>
+    <string name="permission_why_calendars">ඔබේ උපාංගයේ ඇති අනෙක් දින දර්ශනවල සිදුවීම් ඔබේම සිදුවීම් සමඟ පෙන්වයි.</string>
+    <string name="permission_name_local_network">ස්ථානීය ජාලය</string>
+    <string name="permission_why_local_network">ඔබේ නිවසේ හෝ කාර්යාලයේ ජාලයේ ඇති දින දර්ශන සේවාදායකයකට ළඟා වෙයි. Android 17 මෙය අන්තර්ජාල ප්‍රවේශයෙන් වෙන්ව ඉල්ලයි.</string>
     <string name="password_change_error_account_not_found">ගිණුම හමු නොවීය</string>
     <string name="password_change_error_no_credentials">පවතින අක්තපත්‍ර නොමැත</string>
     <string name="password_change_error_unsupported_provider">මෙම සැපයුම්කරු මුරපදය වෙනස් කිරීමට සහාය නොදක්වයි</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ගිණුම</string>
     <string name="account_detail_enabled">සක්‍රියයි</string>
     <string name="account_detail_enabled_subtitle">මෙම ගිණුම ස්වයංක්‍රීයව සමමුහුර්ත කරන්න</string>
+    <string name="account_detail_sync_calendar">දින දර්ශනය</string>
+    <string name="account_detail_sync_calendar_subtitle">මෙම ගිණුමේ දින දර්ශන සමමුහුර්ත කරන්න</string>
+    <string name="account_detail_sync_contacts">සම්බන්ධතා</string>
+    <string name="account_detail_sync_contacts_subtitle">මෙම ගිණුමේ සම්බන්ධතා ඔබගේ දුරකථනයට සමමුහුර්ත කරන්න</string>
+    <string name="account_detail_contacts_permission_needed">සම්බන්ධතා අවසරය අක්‍රියයි. සම්බන්ධතා සමමුහුර්ත වෙමින් තබා ගැනීමට ප්‍රවේශය දෙන්න.</string>
+    <string name="account_detail_contacts_grant">ප්‍රවේශය දෙන්න</string>
+    <string name="contact_sync_enabled_for">%1$s සඳහා සම්බන්ධතා සමමුහුර්ත කරමින්</string>
+    <string name="contact_sync_disabled_for">%1$s සඳහා උපාංග සම්බන්ධතා ඉවත් කරන ලදී</string>
+    <string name="contact_sync_disabled_kept">%1$s සඳහා සම්බන්ධතා සමමුහුර්තකරණය අක්‍රියයි. වෙනත් පිවිසුමක් තවමත් ඒවා සමමුහුර්ත කරන නිසා සම්බන්ධතා පවතී.</string>
+    <string name="contact_sync_disabled_incomplete">%1$s සඳහා සම්බන්ධතා සමමුහුර්තකරණය අක්‍රියයි, නමුත් සමහර උපාංග සම්බන්ධතා පැවතිය හැක. සම්බන්ධතා අවසරය පරීක්ෂා කරන්න.</string>
     <string name="account_detail_sync_now">දැන් සමමුහුර්ත</string>
     <string name="account_detail_syncing">සමමුහුර්ත වෙමින්…</string>
     <string name="account_detail_discovering">සොයා ගනිමින්…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">සුරකින්න</string>
     <string name="hub_initials_cancel">අවලංගු කරන්න</string>
     <string name="hub_section_make_it_yours">ඔබට ගැළපෙන ලෙස සකසන්න</string>
+    <string name="hub_section_own_your_calendar">ඔබේ දින දර්ශනය ඔබ සතු කරගන්න</string>
+    <string name="hub_privacy_data_ownership">ඔබේ දත්ත ඔබ සතුව පවතින ආකාරය</string>
     <string name="hub_accounts_and_settings">ගිණුම් සහ සැකසීම්</string>
 
     <!-- ==================== Share Availability ==================== -->

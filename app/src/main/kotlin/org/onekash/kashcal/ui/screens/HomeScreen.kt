@@ -171,6 +171,8 @@ import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
+import org.onekash.kashcal.ui.permission.AppPermissionKind
+import org.onekash.kashcal.ui.permission.AppPermissionsScreen
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.screens.insights.InsightsScreen
 import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
@@ -238,6 +240,12 @@ fun HomeScreen(
     onSearchDateSelected: (Long) -> Unit = {},
     // Settings callback
     onSettingsClick: () -> Unit = {},
+    // App lock (owned by the host activity's BiometricPrompt; surfaced in the hub)
+    appLockEnabled: Boolean = false,
+    onToggleAppLock: (Boolean) -> Unit = {},
+    // Deep-link to the system settings page for a given permission kind (the
+    // app-permissions screen's granted-row tap and permanently-denied escape hatch)
+    onOpenPermissionSettings: (AppPermissionKind) -> Unit = {},
     // Tag management (launched on top of the hub, like Settings)
     onTagsClick: () -> Unit = {},
     onShareAvailabilityClick: () -> Unit = {},
@@ -409,14 +417,24 @@ fun HomeScreen(
         }
     }
 
+    // Declared before the snackbar effect below because that effect routes to the
+    // hub's own snackbar host while the hub overlay is up (see hubSnackbarHostState).
+    var showHub by rememberSaveable { mutableStateOf(false) }
+
     // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }
+    // A second host mounted on the account-hub overlay. The hub is an opaque
+    // Surface above the Scaffold, so a snackbar shown on the Scaffold's host
+    // would render behind it (invisible). When the hub is up — e.g. the app-lock
+    // toggle confirming — route the message to this host instead.
+    val hubSnackbarHostState = remember { SnackbarHostState() }
     val viewActionLabel = stringResource(R.string.action_view)
 
     // Handle snackbar messages
     LaunchedEffect(uiState.pendingSnackbarMessage) {
         uiState.pendingSnackbarMessage?.let { message ->
-            val result = snackbarHostState.showSnackbar(
+            val host = if (showHub) hubSnackbarHostState else snackbarHostState
+            val result = host.showSnackbar(
                 message = message,
                 actionLabel = if (uiState.pendingSnackbarAction != null) viewActionLabel else null,
                 duration = SnackbarDuration.Short
@@ -489,7 +507,10 @@ fun HomeScreen(
 
     val drawerScope = rememberCoroutineScope()
     var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
-    var showHub by rememberSaveable { mutableStateOf(false) }
+    // App-permissions full-screen destination, opened over the hub (like Manage
+    // tags). It carries its own back-arrow + BackHandler; this flag drives its
+    // opaque overlay below.
+    var showAppPermissions by rememberSaveable { mutableStateOf(false) }
     // Tracks the hub overlay through its enter/exit slide, not just the target flag.
     // Coverage-sensitive behaviour (drawer edge-swipe suppression below) must stay
     // active while the Surface is still animating out, so it keys off this state —
@@ -1127,6 +1148,28 @@ fun HomeScreen(
                 onSettingsClick = onSettingsClick,
                 onAboutClick = onInfoClick,
                 onBack = { showHub = false },
+                appLockEnabled = appLockEnabled,
+                onToggleAppLock = onToggleAppLock,
+                onAppPermissionsClick = { showAppPermissions = true },
+                // App-lock enable/enroll/unsupported confirmations fire while the
+                // hub is up; host them here so they're not hidden behind the overlay.
+                snackbarHost = { SnackbarHost(hostState = hubSnackbarHostState) },
+            )
+        }
+    }
+
+    // App permissions: full-screen destination rendered as an opaque overlay
+    // above the hub (which stays mounted beneath), mirroring how the hub covers
+    // the calendar. Its own back arrow + BackHandler dismiss it back to the hub.
+    AnimatedVisibility(
+        visible = showAppPermissions,
+        enter = slideInHorizontally { width -> hubSlideSign * width } + fadeIn(),
+        exit = slideOutHorizontally { width -> hubSlideSign * width } + fadeOut(),
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            AppPermissionsScreen(
+                onBack = { showAppPermissions = false },
+                onOpenPermissionSettings = onOpenPermissionSettings,
             )
         }
     }

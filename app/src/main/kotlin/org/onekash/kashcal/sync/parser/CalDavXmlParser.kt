@@ -692,6 +692,7 @@ class CalDavXmlParser {
             val changedItems = mutableListOf<Pair<String, String?>>()
             val deletedHrefs = mutableListOf<String>()
             var syncToken: String? = null
+            var truncated = false
 
             var inResponse = false
             val state = ResponseState()
@@ -730,9 +731,17 @@ class CalDavXmlParser {
                             "propstat" -> state.exitPropstat()
                             "resourcetype" -> state.insideResourcetype = false
                             "response" -> {
+                                // A 507 on any <response> means the server truncated the
+                                // listing (RFC 6578 §3.6); note it regardless of which
+                                // href carried it, then fall through so a genuine member
+                                // href on the same page is still classified below.
+                                if (state.isTruncationMarker()) truncated = true
                                 if (state.currentHref != null) {
                                     when {
                                         state.isCollection() -> { /* skip collection self-row */ }
+                                        // A 507-marked response is the truncation signal, not a
+                                        // member change/delete — never emit it as a resource.
+                                        state.isTruncationMarker() -> { /* truncation marker, not a member */ }
                                         state.isDeleted() -> deletedHrefs.add(state.currentHref!!)
                                         state.currentEtag != null ->
                                             changedItems.add(Pair(state.currentHref!!, state.currentEtag))
@@ -753,7 +762,7 @@ class CalDavXmlParser {
                 parser.next()
             }
 
-            CalDavQuirks.SyncCollectionData(syncToken, changedItems, deletedHrefs)
+            CalDavQuirks.SyncCollectionData(syncToken, changedItems, deletedHrefs, truncated)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse sync collection data: ${e.message}")
             CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
@@ -782,6 +791,7 @@ class CalDavXmlParser {
         private var responseLevel404: Boolean = false
         private var sawSuccessfulPropstat: Boolean = false
         private var sawPropstat404: Boolean = false
+        private var sawStatus507: Boolean = false
 
         fun reset() {
             currentHref = null
@@ -792,6 +802,7 @@ class CalDavXmlParser {
             responseLevel404 = false
             sawSuccessfulPropstat = false
             sawPropstat404 = false
+            sawStatus507 = false
         }
 
         fun enterPropstat() { propstatDepth++ }
@@ -802,6 +813,9 @@ class CalDavXmlParser {
             val code = parseHttpStatusCode(statusText) ?: return
             val is404 = code == 404
             val is2xx = code in 200..299
+            // RFC 6578 §3.6: a truncated sync-collection reports 507 on the
+            // collection's own <response> (response-level status), not in a propstat.
+            if (code == 507) sawStatus507 = true
             if (propstatDepth == 0) {
                 if (is404) responseLevel404 = true
             } else {
@@ -809,6 +823,9 @@ class CalDavXmlParser {
                 if (is2xx) sawSuccessfulPropstat = true
             }
         }
+
+        /** True when this `<response>` carried a 507 status (RFC 6578 §3.6 truncation). */
+        fun isTruncationMarker(): Boolean = sawStatus507
 
         /**
          * Parse the 3-digit code from an HTTP status line (`HTTP/<ver> <code> <reason>`),

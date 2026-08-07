@@ -503,6 +503,13 @@
             <meta-data
                 android:name="android.content.SyncAdapter"
                 android:resource="@xml/kashcal_contacts_syncadapter" />
+            <!-- Declares the account type as a recognized contacts source (its
+                 edit-schema / displayable data kinds). Without this the account
+                 registers but its contacts never surface under "Contacts to
+                 display". -->
+            <meta-data
+                android:name="android.provider.CONTACTS_STRUCTURE"
+                android:resource="@xml/contacts" />
         </service>
 
         <!--

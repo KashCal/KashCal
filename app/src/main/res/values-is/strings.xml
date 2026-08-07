@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widgets</string>
     <string name="settings_widget_theme">Þema</string>
     <string name="settings_widget_accent_color">Áhersla</string>
+    <string name="hub_widget_theme">Widget-þema</string>
+    <string name="hub_widget_accent">Widget-áherslulitur</string>
     <string name="settings_widget_color_follow_app">Fylgja forritinu</string>
     <string name="settings_widget_color_follow_app_desc">Nota áherslulit og litagjafa forritsins</string>
     <string name="settings_widget_theme_follow_app">Fylgja forritinu</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Dagatöl &amp; reikningar</string>
     <string name="settings_section_appearance">Útlit</string>
     <string name="settings_section_creating_events">Stillingar viðburða</string>
-    <string name="settings_section_sync">Tilkynningar &amp; samstilling</string>
+    <string name="settings_section_sync">Samstilling</string>
     <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
-    <string name="settings_section_privacy">Persónuvernd</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Forritslæsing</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Þessi þjónn virðist vera á staðarnetinu þínu. Leyfðu aðgang að staðarneti svo KashCal geti tengst honum.</string>
     <string name="local_network_banner_allow">Leyfa aðgang</string>
     <string name="local_network_banner_dismiss">Ekki núna</string>
+    <string name="hub_app_permissions">Forritsheimildir</string>
+    <string name="status_allowed">Leyft</string>
+    <string name="permission_name_notifications">Tilkynningar</string>
+    <string name="permission_why_notifications">Svo KashCal geti minnt þig á viðburðina þína. Án hennar haldast áminningar þöglar.</string>
+    <string name="permission_name_contacts">Tengiliðir</string>
+    <string name="permission_why_contacts">Stingur upp á gestum þegar þú bætir fólki við viðburð og sýnir afmæli tengiliða. Tengiliðirnir þínir haldast í tækinu þínu.</string>
+    <string name="permission_name_calendars">Dagatöl</string>
+    <string name="permission_why_calendars">Sýnir viðburði úr hinum dagatölunum í tækinu þínu ásamt þínum eigin.</string>
+    <string name="permission_name_local_network">Staðarnet</string>
+    <string name="permission_why_local_network">Nær í dagatalsþjón á heima- eða skrifstofunetinu þínu. Android 17 biður um þetta sérstaklega frá netaðgangi.</string>
     <string name="password_change_error_account_not_found">Reikningur fannst ekki</string>
     <string name="password_change_error_no_credentials">Engin innskráningargögn til staðar</string>
     <string name="password_change_error_unsupported_provider">Þessi þjónustuaðili styður ekki breytingu á lykilorði</string>
@@ -516,6 +527,16 @@
     <string name="account_detail_section_account">REIKNINGUR</string>
     <string name="account_detail_enabled">Virkt</string>
     <string name="account_detail_enabled_subtitle">Samstilla þennan reikning sjálfvirkt</string>
+    <string name="account_detail_sync_calendar">Dagatal</string>
+    <string name="account_detail_sync_calendar_subtitle">Samstilla dagatöl þessa reiknings</string>
+    <string name="account_detail_sync_contacts">Tengiliðir</string>
+    <string name="account_detail_sync_contacts_subtitle">Samstilla tengiliði þessa reiknings við símann þinn</string>
+    <string name="account_detail_contacts_permission_needed">Heimild fyrir tengiliði er slökkt. Veittu aðgang til að halda áfram að samstilla tengiliði.</string>
+    <string name="account_detail_contacts_grant">Veita aðgang</string>
+    <string name="contact_sync_enabled_for">Samstilli tengiliði fyrir %1$s</string>
+    <string name="contact_sync_disabled_for">Tengiliðum tækisins fyrir %1$s eytt</string>
+    <string name="contact_sync_disabled_kept">Samstilling tengiliða slökkt fyrir %1$s. Tengiliðir haldast þar sem önnur innskráning samstillir þá enn.</string>
+    <string name="contact_sync_disabled_incomplete">Samstilling tengiliða slökkt fyrir %1$s, en einhverjir tengiliðir í tækinu gætu verið eftir. Athugaðu heimildina fyrir Tengiliði.</string>
     <string name="account_detail_sync_now">Samstilla núna</string>
     <string name="account_detail_syncing">Samstilli…</string>
     <string name="account_detail_discovering">Uppgötva…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Vista</string>
     <string name="hub_initials_cancel">Hætta við</string>
     <string name="hub_section_make_it_yours">Gerðu hana að þinni</string>
+    <string name="hub_section_own_your_calendar">Dagatalið þitt er þitt</string>
+    <string name="hub_privacy_data_ownership">Svona haldast gögnin þín þín</string>
     <string name="hub_accounts_and_settings">Reikningar og stillingar</string>
 
     <!-- ==================== Share Availability ==================== -->

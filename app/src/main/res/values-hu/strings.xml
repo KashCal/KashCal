@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Modulok</string>
     <string name="settings_widget_theme">Téma</string>
     <string name="settings_widget_accent_color">Kiemelőszín</string>
+    <string name="hub_widget_theme">Widget téma</string>
+    <string name="hub_widget_accent">Widget kiemelőszín</string>
     <string name="settings_widget_color_follow_app">Alkalmazás szerint</string>
     <string name="settings_widget_color_follow_app_desc">Az alkalmazás kiemelőszínének és forrásának használata</string>
     <string name="settings_widget_theme_follow_app">Alkalmazás szerint</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Naptárak és fiókok</string>
     <string name="settings_section_appearance">Megjelenés</string>
     <string name="settings_section_creating_events">Eseménybeállítások</string>
-    <string name="settings_section_sync">Értesítések és szinkronizálás</string>
+    <string name="settings_section_sync">Szinkronizálás</string>
     <string name="settings_section_data">Mentés és visszaállítás</string>
-    <string name="settings_section_privacy">Adatvédelem</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Alkalmazászár</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Úgy tűnik, ez a szerver a helyi hálózatodon van. Engedélyezd a helyi hálózati hozzáférést, hogy a KashCal csatlakozhasson hozzá.</string>
     <string name="local_network_banner_allow">Hozzáférés engedélyezése</string>
     <string name="local_network_banner_dismiss">Most nem</string>
+    <string name="hub_app_permissions">Alkalmazásengedélyek</string>
+    <string name="status_allowed">Engedélyezve</string>
+    <string name="permission_name_notifications">Értesítések</string>
+    <string name="permission_why_notifications">Hogy a KashCal emlékeztethessen az eseményeidre. Enélkül az emlékeztetők némák maradnak.</string>
+    <string name="permission_name_contacts">Névjegyek</string>
+    <string name="permission_why_contacts">Vendégeket javasol, amikor résztvevőket adsz egy eseményhez, és megjeleníti a névjegyek születésnapjait. A névjegyeid az eszközödön maradnak.</string>
+    <string name="permission_name_calendars">Naptárak</string>
+    <string name="permission_why_calendars">Megjeleníti az eszközödön lévő többi naptár eseményeit a sajátjaid mellett.</string>
+    <string name="permission_name_local_network">Helyi hálózat</string>
+    <string name="permission_why_local_network">Eléri a naptárkiszolgálót az otthoni vagy irodai hálózatodon. Az Android 17 ezt az internet-hozzáféréstől külön kéri.</string>
     <string name="password_change_error_account_not_found">Fiók nem található</string>
     <string name="password_change_error_no_credentials">Nincsenek meglévő hitelesítő adatok</string>
     <string name="password_change_error_unsupported_provider">Ez a szolgáltató nem támogatja a jelszó módosítását</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">FIÓK</string>
     <string name="account_detail_enabled">Engedélyezve</string>
     <string name="account_detail_enabled_subtitle">Fiók automatikus szinkronizálása</string>
+    <string name="account_detail_sync_calendar">Naptár</string>
+    <string name="account_detail_sync_calendar_subtitle">A fiók naptárainak szinkronizálása</string>
+    <string name="account_detail_sync_contacts">Névjegyek</string>
+    <string name="account_detail_sync_contacts_subtitle">A fiók névjegyeinek szinkronizálása a telefonodra</string>
+    <string name="account_detail_contacts_permission_needed">A Névjegyek engedély ki van kapcsolva. Add meg a hozzáférést, hogy a névjegyek szinkronizálása folytatódjon.</string>
+    <string name="account_detail_contacts_grant">Hozzáférés megadása</string>
+    <string name="contact_sync_enabled_for">Névjegyek szinkronizálása ehhez: %1$s</string>
+    <string name="contact_sync_disabled_for">A(z) %1$s eszközön tárolt névjegyei eltávolítva</string>
+    <string name="contact_sync_disabled_kept">A(z) %1$s névjegy-szinkronizálása ki van kapcsolva. A névjegyek megmaradnak, mert egy másik, ugyanezt az e-mailt használó fiók továbbra is szinkronizálja őket.</string>
+    <string name="contact_sync_disabled_incomplete">A(z) %1$s névjegy-szinkronizálása ki van kapcsolva, de néhány eszközön tárolt névjegy megmaradhat. Ellenőrizd a Névjegyek engedélyt.</string>
     <string name="account_detail_sync_now">Szinkronizálás most</string>
     <string name="account_detail_syncing">Szinkronizálás…</string>
     <string name="account_detail_discovering">Felderítés…</string>
@@ -1198,6 +1219,8 @@
     <string name="hub_initials_save">Mentés</string>
     <string name="hub_initials_cancel">Mégse</string>
     <string name="hub_section_make_it_yours">Szabd testre</string>
+    <string name="hub_section_own_your_calendar">A naptár a tiéd</string>
+    <string name="hub_privacy_data_ownership">Hogyan marad az adatod a tiéd</string>
     <string name="hub_accounts_and_settings">Fiókok és beállítások</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Mga Widget</string>
     <string name="settings_widget_theme">Tema</string>
     <string name="settings_widget_accent_color">Accent</string>
+    <string name="hub_widget_theme">Tema ng widget</string>
+    <string name="hub_widget_accent">Accent ng widget</string>
     <string name="settings_widget_color_follow_app">Sundan ang app</string>
     <string name="settings_widget_color_follow_app_desc">Gamitin ang kulay ng accent at pinagmulan ng app</string>
     <string name="settings_widget_theme_follow_app">Sundan ang app</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Mga kalendaryo &amp; account</string>
     <string name="settings_section_appearance">Hitsura</string>
     <string name="settings_section_creating_events">Mga kagustuhan sa kaganapan</string>
-    <string name="settings_section_sync">Mga notipikasyon &amp; sync</string>
+    <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
-    <string name="settings_section_privacy">Privacy</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Lock ng app</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Mukhang nasa iyong lokal na network ang server na ito. Payagan ang access sa lokal na network para makakonekta dito ang KashCal.</string>
     <string name="local_network_banner_allow">Payagan ang access</string>
     <string name="local_network_banner_dismiss">Hindi muna</string>
+    <string name="hub_app_permissions">Mga pahintulot ng app</string>
+    <string name="status_allowed">Pinapayagan</string>
+    <string name="permission_name_notifications">Mga notipikasyon</string>
+    <string name="permission_why_notifications">Para maipaalala ng KashCal ang iyong mga event. Kung wala ito, mananatiling tahimik ang mga paalala.</string>
+    <string name="permission_name_contacts">Mga contact</string>
+    <string name="permission_why_contacts">Nagmumungkahi ng mga bisita habang nagdaragdag ka ng mga tao sa isang event, at nagpapakita ng mga kaarawan ng contact. Nananatili sa iyong device ang iyong mga contact.</string>
+    <string name="permission_name_calendars">Mga kalendaryo</string>
+    <string name="permission_why_calendars">Ipinapakita ang mga event mula sa iba pang kalendaryo sa iyong device kasama ng sarili mong mga event.</string>
+    <string name="permission_name_local_network">Lokal na network</string>
+    <string name="permission_why_local_network">Inaabot ang isang calendar server sa iyong home o office network. Hiwalay itong hinihingi ng Android 17 mula sa access sa internet.</string>
     <string name="password_change_error_account_not_found">Hindi natagpuan ang account</string>
     <string name="password_change_error_no_credentials">Walang umiiral na kredensyal</string>
     <string name="password_change_error_unsupported_provider">Hindi sinusuportahan ng provider na ito ang pagpapalit ng password</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">ACCOUNT</string>
     <string name="account_detail_enabled">Naka-enable</string>
     <string name="account_detail_enabled_subtitle">Awtomatikong i-sync ang account na ito</string>
+    <string name="account_detail_sync_calendar">Kalendaryo</string>
+    <string name="account_detail_sync_calendar_subtitle">I-sync ang mga kalendaryo ng account na ito</string>
+    <string name="account_detail_sync_contacts">Mga Contact</string>
+    <string name="account_detail_sync_contacts_subtitle">I-sync ang mga contact ng account na ito sa iyong telepono</string>
+    <string name="account_detail_contacts_permission_needed">Naka-off ang pahintulot sa Mga Contact. Magbigay ng access para patuloy na mag-sync ang mga contact.</string>
+    <string name="account_detail_contacts_grant">Magbigay ng access</string>
+    <string name="contact_sync_enabled_for">Sini-sync ang mga contact para sa %1$s</string>
+    <string name="contact_sync_disabled_for">Inalis ang mga contact ng device para sa %1$s</string>
+    <string name="contact_sync_disabled_kept">Naka-off ang pag-sync ng contact para sa %1$s. Nananatili ang mga contact dahil may ibang login na patuloy na nag-sync ng mga ito.</string>
+    <string name="contact_sync_disabled_incomplete">Naka-off ang pag-sync ng contact para sa %1$s, ngunit maaaring nananatili pa ang ilang contact ng device. Tingnan ang pahintulot sa Mga Contact.</string>
     <string name="account_detail_sync_now">I-sync Ngayon</string>
     <string name="account_detail_syncing">Sini-sync…</string>
     <string name="account_detail_discovering">Nagdi-discover…</string>
@@ -1199,6 +1220,8 @@
     <string name="hub_initials_save">I-save</string>
     <string name="hub_initials_cancel">Kanselahin</string>
     <string name="hub_section_make_it_yours">Gawing iyo</string>
+    <string name="hub_section_own_your_calendar">Angkinin ang iyong kalendaryo</string>
+    <string name="hub_privacy_data_ownership">Paano nananatiling sa iyo ang iyong data</string>
     <string name="hub_accounts_and_settings">Mga account at setting</string>
 
     <!-- ==================== Share Availability ==================== -->

@@ -49,6 +49,8 @@ import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.SyncHistorySheet
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.permission.classifyLocalNetworkAfterRequest
+import org.onekash.kashcal.ui.permission.contactSyncPermissionGranted
+import org.onekash.kashcal.ui.permission.contactSyncToggleRequiresPermissionRequest
 import org.onekash.kashcal.ui.permission.shouldShowLanBanner
 import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
 import org.onekash.kashcal.ui.screens.settings.AccountsScreen
@@ -105,8 +107,6 @@ fun SettingsRoute(
     // to the hub rather than revealing the Settings root the user never chose.
     openTagsInitially: Boolean = false,
     onFinish: () -> Unit = {},
-    onOpenNotificationSettings: () -> Unit = {},
-    onToggleAppLock: (Boolean) -> Unit = {},
     onExportCalendar: (Long) -> Unit = {},
     // The four content-resolver I/O lambdas are required, not defaulted: a no-op
     // default would silently write an empty backup / import zero events while
@@ -133,14 +133,12 @@ fun SettingsRoute(
         val syncIntervalMs by viewModel.syncIntervalMs.collectAsStateWithLifecycle()
         val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
         val subscriptionSyncing by viewModel.subscriptionSyncing.collectAsStateWithLifecycle()
-        val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
         val defaultReminderTimed by viewModel.defaultReminderTimed.collectAsStateWithLifecycle()
         val defaultReminderAllDay by viewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
         val defaultEventDuration by viewModel.defaultEventDuration.collectAsStateWithLifecycle()
         val showEventEmojis by viewModel.showEventEmojis.collectAsStateWithLifecycle()
         val quickAddEnabled by viewModel.quickAddEnabled.collectAsStateWithLifecycle()
         val titleSuggestionsEnabled by viewModel.titleSuggestionsEnabled.collectAsStateWithLifecycle()
-        val appLockEnabled by viewModel.appLockEnabled.collectAsStateWithLifecycle()
         val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
         val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
         val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
@@ -202,6 +200,53 @@ fun SettingsRoute(
                 }
             }
             pendingContactPermissionAction = null
+        }
+
+        // Per-account CardDAV contact-sync toggle. Enabling requires BOTH
+        // READ + WRITE_CONTACTS (the sync mirrors server contacts onto the device);
+        // a denial surfaces as an inline banner in the sheet rather than a dialog.
+        val contactSyncPermissionNeeded by viewModel.contactSyncPermissionNeeded
+            .collectAsStateWithLifecycle()
+        var pendingContactSyncAccountId by remember { mutableStateOf<Long?>(null) }
+        val contactSyncPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            viewModel.refreshContactsPermission()
+            val granted = contactSyncPermissionGranted(
+                readGranted = permissions[android.Manifest.permission.READ_CONTACTS] == true,
+                writeGranted = permissions[android.Manifest.permission.WRITE_CONTACTS] == true,
+            )
+            val accountId = pendingContactSyncAccountId
+            if (granted && accountId != null) {
+                viewModel.onToggleContactSync(accountId, true)
+            }
+            pendingContactSyncAccountId = null
+        }
+        val onToggleContactSync: (Long, Boolean) -> Unit = { accountId, enabled ->
+            // Sync needs READ + WRITE, so gate on hasContactsSyncPermission — not
+            // hasContactsPermission, which is READ-only (it gates the birthday
+            // reads). Using the read-only signal here would skip the WRITE request
+            // for a read-granted/write-denied login, leaving a silent dead toggle.
+            if (contactSyncToggleRequiresPermissionRequest(enabled, viewModel.hasContactsSyncPermission.value)) {
+                // Defer the enable until the permission returns granted.
+                pendingContactSyncAccountId = accountId
+                contactSyncPermissionLauncher.launch(
+                    arrayOf(
+                        android.Manifest.permission.READ_CONTACTS,
+                        android.Manifest.permission.WRITE_CONTACTS,
+                    )
+                )
+            } else {
+                viewModel.onToggleContactSync(accountId, enabled)
+            }
+        }
+        val onGrantContactsPermission = {
+            contactSyncPermissionLauncher.launch(
+                arrayOf(
+                    android.Manifest.permission.READ_CONTACTS,
+                    android.Manifest.permission.WRITE_CONTACTS,
+                )
+            )
         }
 
         // Local-network permission (Android 17+) for LAN CalDAV servers.
@@ -473,6 +518,11 @@ fun SettingsRoute(
                             onClearAccountDetail = viewModel::clearAccountDetail,
                             onSyncAccountNow = viewModel::syncAccountNow,
                             onToggleAccountEnabled = viewModel::toggleAccountEnabled,
+                            onToggleContactSync = onToggleContactSync,
+                            contactSyncPermissionNeeded = contactSyncPermissionNeeded,
+                            contactSyncConfirmation = uiState.contactSyncConfirmation,
+                            onDismissContactSyncConfirmation = viewModel::clearContactSyncConfirmation,
+                            onGrantContactsPermission = onGrantContactsPermission,
                             onRenameAccount = viewModel::renameAccount,
                             onChangeAccountPassword = viewModel::changeAccountPassword,
                             onDiscoverCalendars = viewModel::discoverNewCalendars
@@ -639,8 +689,6 @@ fun SettingsRoute(
                             onSubscriptionDialogOpened = onSubscriptionDialogOpened,
                             // System
                             onShowSyncLogs = { showDebugLogSheet = true },
-                            notificationsEnabled = notificationsEnabled,
-                            onRequestNotificationPermission = onOpenNotificationSettings,
                             // Default reminders and event duration
                             defaultReminderTimed = defaultReminderTimed,
                             defaultReminderAllDay = defaultReminderAllDay,
@@ -675,9 +723,6 @@ fun SettingsRoute(
                             onRestoreSettings = {
                                 backupImportLauncher.launch(arrayOf(BACKUP_MIME_TYPE))
                             },
-                            // Privacy / app lock
-                            appLockEnabled = appLockEnabled,
-                            onToggleAppLock = onToggleAppLock,
                             // ICS Export
                             onExportCalendar = onExportCalendar,
                             // Navigate to Subscriptions detail screen

@@ -18,6 +18,7 @@ class AccountDetailUiModelTest {
         displayName: String? = "My Server",
         principalUrl: String? = "https://caldav.example.com/principal/",
         isEnabled: Boolean = true,
+        contactSyncEnabled: Boolean = false,
         lastSuccessfulSyncAt: Long? = 1704067200000L,
         consecutiveSyncFailures: Int = 0
     ) = Account(
@@ -27,14 +28,15 @@ class AccountDetailUiModelTest {
         displayName = displayName,
         principalUrl = principalUrl,
         isEnabled = isEnabled,
+        contactSyncEnabled = contactSyncEnabled,
         lastSuccessfulSyncAt = lastSuccessfulSyncAt,
         consecutiveSyncFailures = consecutiveSyncFailures
     )
 
     @Test
     fun `maps all fields correctly`() {
-        val account = createAccount()
-        val model = account.toDetailUiModel(calendarCount = 5)
+        val account = createAccount(contactSyncEnabled = true)
+        val model = account.toDetailUiModel(calendarCount = 5, contactCount = 42)
 
         assertEquals(1L, model.accountId)
         assertEquals(AccountProvider.CALDAV, model.provider)
@@ -43,8 +45,19 @@ class AccountDetailUiModelTest {
         assertEquals("https://caldav.example.com/principal/", model.principalUrl)
         assertEquals(5, model.calendarCount)
         assertEquals(true, model.isEnabled)
+        assertEquals(true, model.contactSyncEnabled)
+        assertEquals(42, model.contactCount)
         assertEquals(1704067200000L, model.lastSuccessfulSyncAt)
         assertEquals(0, model.consecutiveSyncFailures)
+    }
+
+    @Test
+    fun `contactSyncEnabled defaults false and contactCount carries through`() {
+        val account = createAccount()
+        val model = account.toDetailUiModel(calendarCount = 1, contactCount = 0)
+
+        assertEquals(false, model.contactSyncEnabled)
+        assertEquals(0, model.contactCount)
     }
 
     @Test

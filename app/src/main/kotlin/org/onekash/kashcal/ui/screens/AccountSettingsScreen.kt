@@ -18,9 +18,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
@@ -60,6 +58,7 @@ import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.localizedDisplayName
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
@@ -138,7 +137,14 @@ data class AccountSettingsUiState(
     /** Sync status for account detail sheet */
     val accountDetailSyncStatus: AccountDetailSyncStatus = AccountDetailSyncStatus.Idle,
     /** Discovery status for account detail sheet */
-    val accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle
+    val accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
+    /**
+     * Short-lived inline confirmation shown inside the account detail sheet after
+     * toggling contact sync (e.g. "Syncing contacts for j***@icloud.com"), carrying
+     * the tone that should style it so a destructive outcome doesn't read as
+     * celebratory. Cleared by [AccountSettingsViewModel.clearContactSyncConfirmation].
+     */
+    val contactSyncConfirmation: ContactSyncConfirmation? = null
 )
 
 /**
@@ -203,9 +209,6 @@ fun AccountSettingsScreen(
     onSubscriptionDialogOpened: () -> Unit = {},
     // Sync Logs
     onShowSyncLogs: () -> Unit = {},
-    // Notifications
-    notificationsEnabled: Boolean = true,
-    onRequestNotificationPermission: () -> Unit = {},
     // Default reminder preferences
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 900, // 9 AM the day before (-PT15H)
@@ -219,9 +222,6 @@ fun AccountSettingsScreen(
     // Settings backup/restore
     onBackupSettings: () -> Unit = {},
     onRestoreSettings: () -> Unit = {},
-    // Privacy / app lock
-    appLockEnabled: Boolean = false,
-    onToggleAppLock: (Boolean) -> Unit = {},
     // Navigation to detail screens
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
@@ -667,27 +667,12 @@ fun AccountSettingsScreen(
                         }
                     }
 
-                    // ==================== NOTIFICATIONS & SYNC Section ====================
-                    // The former standalone Notifications row now leads this section so the
-                    // header describes both the notification and sync controls beneath it.
+                    // ==================== Sync Section ====================
                     SearchableSection(
                         query = searchQuery,
                         header = stringResource(R.string.settings_section_sync),
                         tracker = emittedTracker,
                     ) {
-                        val notifValue = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable)
-                        row(label = stringResource(R.string.settings_notifications), subtitle = notifValue, id = "notifications") {
-                            SettingsRow(
-                                icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                                label = stringResource(R.string.settings_notifications),
-                                value = notifValue,
-                                onClick = onRequestNotificationPermission,
-                                showChevron = false,
-                                showDivider = false,
-                                searchQuery = searchQuery
-                            )
-                        }
-
                         val syncFrequencyValue = DateTimeUtils.formatSyncInterval(syncIntervalMs, resources)
                         row(label = stringResource(R.string.settings_sync_frequency), subtitle = syncFrequencyValue, id = "sync-frequency") {
                             SettingsRow(
@@ -763,31 +748,6 @@ fun AccountSettingsScreen(
                                 subtitle = stringResource(R.string.restore_settings_subtitle),
                                 onClick = onRestoreSettings,
                                 showChevron = false,
-                                showDivider = false,
-                                searchQuery = searchQuery
-                            )
-                        }
-                    }
-
-                    // ==================== Privacy Section ====================
-                    SearchableSection(
-                        query = searchQuery,
-                        header = stringResource(R.string.settings_section_privacy),
-                        tracker = emittedTracker,
-                    ) {
-                        // The ⓘ explains what the toggle does; toggling on routes through the
-                        // host (capability / enrollment check) before the flag is actually set.
-                        val appLockInfo = SettingsRowInfo(
-                            title = stringResource(R.string.app_lock_label),
-                            text = stringResource(R.string.settings_app_lock_info)
-                        )
-                        row(label = stringResource(R.string.app_lock_label), id = "app-lock") {
-                            SettingsToggleRow(
-                                icon = Icons.Default.Lock,
-                                label = stringResource(R.string.app_lock_label),
-                                checked = appLockEnabled,
-                                onCheckedChange = onToggleAppLock,
-                                info = appLockInfo,
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )

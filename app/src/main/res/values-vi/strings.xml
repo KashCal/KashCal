@@ -166,6 +166,8 @@
     <string name="settings_widgets_section">Widget</string>
     <string name="settings_widget_theme">Giao diện</string>
     <string name="settings_widget_accent_color">Màu nhấn</string>
+    <string name="hub_widget_theme">Giao diện widget</string>
+    <string name="hub_widget_accent">Màu nhấn widget</string>
     <string name="settings_widget_color_follow_app">Theo ứng dụng</string>
     <string name="settings_widget_color_follow_app_desc">Dùng màu nhấn và nguồn của ứng dụng</string>
     <string name="settings_widget_theme_follow_app">Theo ứng dụng</string>
@@ -192,9 +194,8 @@
     <string name="settings_section_calendars">Lịch và tài khoản</string>
     <string name="settings_section_appearance">Giao diện</string>
     <string name="settings_section_creating_events">Tùy chọn sự kiện</string>
-    <string name="settings_section_sync">Thông báo và đồng bộ</string>
+    <string name="settings_section_sync">Đồng bộ</string>
     <string name="settings_section_data">Sao lưu &amp; khôi phục</string>
-    <string name="settings_section_privacy">Quyền riêng tư</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">Khóa ứng dụng</string>
@@ -315,6 +316,16 @@
     <string name="local_network_banner_body">Máy chủ này có vẻ nằm trên mạng nội bộ của bạn. Hãy cho phép truy cập mạng nội bộ để KashCal có thể kết nối.</string>
     <string name="local_network_banner_allow">Cho phép truy cập</string>
     <string name="local_network_banner_dismiss">Để sau</string>
+    <string name="hub_app_permissions">Quyền ứng dụng</string>
+    <string name="status_allowed">Đã cho phép</string>
+    <string name="permission_name_notifications">Thông báo</string>
+    <string name="permission_why_notifications">Để KashCal nhắc bạn về các sự kiện. Nếu không có, các nhắc nhở sẽ im lặng.</string>
+    <string name="permission_name_contacts">Danh bạ</string>
+    <string name="permission_why_contacts">Gợi ý khách khi bạn thêm người vào sự kiện và hiển thị sinh nhật của người liên hệ. Danh bạ của bạn luôn nằm trên thiết bị.</string>
+    <string name="permission_name_calendars">Lịch</string>
+    <string name="permission_why_calendars">Hiển thị sự kiện từ các lịch khác trên thiết bị cùng với sự kiện của riêng bạn.</string>
+    <string name="permission_name_local_network">Mạng nội bộ</string>
+    <string name="permission_why_local_network">Kết nối tới máy chủ lịch trên mạng nhà hoặc văn phòng của bạn. Android 17 hỏi quyền này riêng với quyền truy cập internet.</string>
     <string name="password_change_error_account_not_found">Không tìm thấy tài khoản</string>
     <string name="password_change_error_no_credentials">Không có thông tin đăng nhập hiện có</string>
     <string name="password_change_error_unsupported_provider">Nhà cung cấp này không hỗ trợ đổi mật khẩu</string>
@@ -517,6 +528,16 @@
     <string name="account_detail_section_account">TÀI KHOẢN</string>
     <string name="account_detail_enabled">Đã bật</string>
     <string name="account_detail_enabled_subtitle">Tự động đồng bộ tài khoản này</string>
+    <string name="account_detail_sync_calendar">Lịch</string>
+    <string name="account_detail_sync_calendar_subtitle">Đồng bộ lịch của tài khoản này</string>
+    <string name="account_detail_sync_contacts">Danh bạ</string>
+    <string name="account_detail_sync_contacts_subtitle">Đồng bộ danh bạ của tài khoản này vào điện thoại của bạn</string>
+    <string name="account_detail_contacts_permission_needed">Quyền truy cập Danh bạ đang tắt. Hãy cấp quyền truy cập để tiếp tục đồng bộ danh bạ.</string>
+    <string name="account_detail_contacts_grant">Cấp quyền truy cập</string>
+    <string name="contact_sync_enabled_for">Đang đồng bộ danh bạ cho %1$s</string>
+    <string name="contact_sync_disabled_for">Đã xóa danh bạ trên thiết bị cho %1$s</string>
+    <string name="contact_sync_disabled_kept">Đã tắt đồng bộ danh bạ cho %1$s. Danh bạ vẫn được giữ vì một lần đăng nhập khác vẫn đang đồng bộ.</string>
+    <string name="contact_sync_disabled_incomplete">Đã tắt đồng bộ danh bạ cho %1$s, nhưng một số danh bạ trên thiết bị có thể vẫn còn. Hãy kiểm tra quyền Danh bạ.</string>
     <string name="account_detail_sync_now">Đồng bộ ngay</string>
     <string name="account_detail_syncing">Đang đồng bộ…</string>
     <string name="account_detail_discovering">Đang tìm kiếm…</string>
@@ -1148,6 +1169,8 @@
     <string name="hub_initials_save">Lưu</string>
     <string name="hub_initials_cancel">Hủy</string>
     <string name="hub_section_make_it_yours">Cá nhân hóa</string>
+    <string name="hub_section_own_your_calendar">Lịch của bạn</string>
+    <string name="hub_privacy_data_ownership">Cách dữ liệu của bạn luôn thuộc về bạn</string>
     <string name="hub_accounts_and_settings">Tài khoản và cài đặt</string>
 
     <!-- ==================== Share Availability ==================== -->

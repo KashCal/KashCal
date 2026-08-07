@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.provider.ContactsContract
 import android.provider.ContactsContract.CommonDataKinds.Email
 import android.provider.ContactsContract.CommonDataKinds.Event
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Im
 import android.provider.ContactsContract.CommonDataKinds.Nickname
 import android.provider.ContactsContract.CommonDataKinds.Note
@@ -91,6 +92,24 @@ class VCardContactMapperTest {
         assertEquals("Dr. KashCal Quincy Probe Jr.", rows.single().getAsString(StructuredName.DISPLAY_NAME))
     }
 
+    @Test
+    fun `phonetic name components map to the provider phonetic columns`() {
+        val name = map("kashcal_field_fidelity_v3.vcf")
+            .dataRows.ofType(StructuredName.CONTENT_ITEM_TYPE).single()
+        assertEquals("kyashikaru", name.getAsString(StructuredName.PHONETIC_GIVEN_NAME))
+        assertEquals("kuinshii", name.getAsString(StructuredName.PHONETIC_MIDDLE_NAME))
+        assertEquals("puroobu", name.getAsString(StructuredName.PHONETIC_FAMILY_NAME))
+    }
+
+    @Test
+    fun `multi-valued N components ride the single provider columns space-joined`() {
+        val name = map("kashcal_field_fidelity_v3.vcf")
+            .dataRows.ofType(StructuredName.CONTENT_ITEM_TYPE).single()
+        assertEquals("Quincy Aloysius", name.getAsString(StructuredName.MIDDLE_NAME))
+        assertEquals("Dr. Prof.", name.getAsString(StructuredName.PREFIX))
+        assertEquals("Jr. III", name.getAsString(StructuredName.SUFFIX))
+    }
+
     // ========== Nickname / Organization / Website / Note ==========
 
     @Test
@@ -113,6 +132,31 @@ class VCardContactMapperTest {
             "Synthetic exhaustive fixture for CardDAV mapper testing.",
             rows.ofType(Note.CONTENT_ITEM_TYPE).single().getAsString(Note.NOTE),
         )
+    }
+
+    @Test
+    fun `ROLE maps to Organization JOB_DESCRIPTION distinct from TITLE`() {
+        val org = map("kashcal_field_fidelity_v3.vcf")
+            .dataRows.ofType(Organization.CONTENT_ITEM_TYPE).single()
+        assertEquals("Fixture Contact", org.getAsString(Organization.TITLE))
+        assertEquals("Chief Sync Officer", org.getAsString(Organization.JOB_DESCRIPTION))
+    }
+
+    @Test
+    fun `organization row is emitted for a role even without company or title`() {
+        val contact = Contact(
+            version = "4.0",
+            uid = "kashcal-role-only",
+            structuredName = VStructuredName(given = "KashCal", family = "Probe"),
+            displayName = "KashCal Probe",
+            role = "Chief Sync Officer",
+            rawVCard = "",
+        )
+        val org = VCardContactMapper.toEntity(contact)
+            .dataRows.ofType(Organization.CONTENT_ITEM_TYPE).single()
+        assertEquals("Chief Sync Officer", org.getAsString(Organization.JOB_DESCRIPTION))
+        assertNull(org.getAsString(Organization.COMPANY))
+        assertNull(org.getAsString(Organization.TITLE))
     }
 
     // ========== Email ==========
@@ -197,6 +241,59 @@ class VCardContactMapperTest {
         assertEquals(Relation.TYPE_SPOUSE, spouse.getAsInteger(Relation.TYPE))
     }
 
+    // ========== Custom X-ABLabel labels ==========
+
+    @Test
+    fun `custom-labeled email tel adr and url map to TYPE_CUSTOM carrying the label`() {
+        val rows = map("kashcal_field_fidelity_v3.vcf").dataRows
+
+        val email = rows.ofType(Email.CONTENT_ITEM_TYPE).single { it.getAsString(Email.ADDRESS) == "school@example.test" }
+        assertEquals(Email.TYPE_CUSTOM, email.getAsInteger(Email.TYPE))
+        assertEquals("School", email.getAsString(Email.LABEL))
+
+        val phone = rows.ofType(Phone.CONTENT_ITEM_TYPE).single { it.getAsString(Phone.NUMBER) == "+15550009999" }
+        assertEquals(Phone.TYPE_CUSTOM, phone.getAsInteger(Phone.TYPE))
+        assertEquals("Beeper", phone.getAsString(Phone.LABEL))
+
+        val adr = rows.ofType(StructuredPostal.CONTENT_ITEM_TYPE).single { it.getAsString(StructuredPostal.STREET) == "9 Custom Way" }
+        assertEquals(StructuredPostal.TYPE_CUSTOM, adr.getAsInteger(StructuredPostal.TYPE))
+        assertEquals("Vacation Home", adr.getAsString(StructuredPostal.LABEL))
+
+        val web = rows.ofType(Website.CONTENT_ITEM_TYPE).single { it.getAsString(Website.URL) == "https://example.test/blog" }
+        assertEquals(Website.TYPE_CUSTOM, web.getAsInteger(Website.TYPE))
+        assertEquals("Blog", web.getAsString(Website.LABEL))
+    }
+
+    @Test
+    fun `unlabeled website falls back to TYPE_OTHER with no custom label`() {
+        val web = map("kashcal_full_v3.vcf").dataRows.ofType(Website.CONTENT_ITEM_TYPE).single()
+        assertEquals(Website.TYPE_OTHER, web.getAsInteger(Website.TYPE))
+        assertNull(web.getAsString(Website.LABEL))
+    }
+
+    // ========== CATEGORIES -> GroupMembership ==========
+
+    @Test
+    fun `categories map to one GroupMembership row each keyed by the category name`() {
+        val rows = map("kashcal_full_v3.vcf").dataRows.ofType(GroupMembership.CONTENT_ITEM_TYPE)
+        val labels = rows.map { it.getAsString(GroupMembership.GROUP_SOURCE_ID) }
+        assertEquals(listOf("Family", "Test"), labels)
+    }
+
+    @Test
+    fun `blank category label emits no GroupMembership row`() {
+        val contact = Contact(
+            version = "4.0",
+            uid = "kashcal-blank-category",
+            structuredName = VStructuredName(given = "KashCal", family = "Probe"),
+            displayName = "KashCal Probe",
+            categories = listOf("Family", "", "  "),
+            rawVCard = "",
+        )
+        val rows = VCardContactMapper.toEntity(contact).dataRows.ofType(GroupMembership.CONTENT_ITEM_TYPE)
+        assertEquals(listOf("Family"), rows.map { it.getAsString(GroupMembership.GROUP_SOURCE_ID) })
+    }
+
     // ========== Photo ==========
 
     @Test
@@ -231,6 +328,63 @@ class VCardContactMapperTest {
         val mapped = VCardContactMapper.toEntity(contact)
         assertTrue(mapped.dataRows.ofType(Photo.CONTENT_ITEM_TYPE).isEmpty())
         assertEquals("https://example.test/photos/fallback.jpg", mapped.photoUrl)
+    }
+
+    @Test
+    fun `an inline photo over the byte cap emits no blob row (would trip TransactionTooLargeException)`() {
+        // The Photo blob rides into an applyBatch insert that crosses Binder (~1MB
+        // ceiling). An oversized inline body would fail the whole batch — so it is
+        // dropped rather than emitted, exactly like the URL-fetch path caps its download.
+        val oversized = ByteArray((MAX_PHOTO_SIZE_BYTES + 1).toInt()) { 1 }
+        val contact = Contact(
+            version = "3.0",
+            uid = "kashcal-oversized-inline-photo",
+            structuredName = VStructuredName(given = "KashCal", family = "Probe"),
+            displayName = "KashCal Probe",
+            photo = VPhoto(data = oversized, contentType = "jpeg"),
+            rawVCard = "",
+        )
+        val mapped = VCardContactMapper.toEntity(contact)
+        assertTrue(
+            "an over-cap inline blob must not be emitted",
+            mapped.dataRows.ofType(Photo.CONTENT_ITEM_TYPE).isEmpty(),
+        )
+        assertNull("no URL was present, so nothing is deferred either", mapped.photoUrl)
+    }
+
+    @Test
+    fun `an over-cap inline photo with a url falls back to the deferred url`() {
+        // Some servers carry BOTH an oversized inline blob and a URI. When the inline
+        // bytes are too large to write, the URL must still be recovered for deferred
+        // fetch rather than the contact ending up with no photo at all.
+        val oversized = ByteArray((MAX_PHOTO_SIZE_BYTES + 1).toInt()) { 1 }
+        val contact = Contact(
+            version = "3.0",
+            uid = "kashcal-oversized-inline-with-url",
+            structuredName = VStructuredName(given = "KashCal", family = "Probe"),
+            displayName = "KashCal Probe",
+            photo = VPhoto(url = "https://example.test/photos/big.jpg", data = oversized, contentType = "jpeg"),
+            rawVCard = "",
+        )
+        val mapped = VCardContactMapper.toEntity(contact)
+        assertTrue(mapped.dataRows.ofType(Photo.CONTENT_ITEM_TYPE).isEmpty())
+        assertEquals("https://example.test/photos/big.jpg", mapped.photoUrl)
+    }
+
+    @Test
+    fun `an inline photo exactly at the byte cap is still emitted`() {
+        val atCap = ByteArray(MAX_PHOTO_SIZE_BYTES.toInt()) { 1 }
+        val contact = Contact(
+            version = "3.0",
+            uid = "kashcal-at-cap-inline-photo",
+            structuredName = VStructuredName(given = "KashCal", family = "Probe"),
+            displayName = "KashCal Probe",
+            photo = VPhoto(data = atCap, contentType = "jpeg"),
+            rawVCard = "",
+        )
+        val mapped = VCardContactMapper.toEntity(contact)
+        val photo = mapped.dataRows.ofType(Photo.CONTENT_ITEM_TYPE).single()
+        assertEquals(MAX_PHOTO_SIZE_BYTES.toInt(), photo.getAsByteArray(Photo.PHOTO).size)
     }
 
     // ========== Event rows — the load-bearing alignment ==========
