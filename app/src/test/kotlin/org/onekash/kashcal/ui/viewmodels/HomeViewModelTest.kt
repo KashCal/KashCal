@@ -52,6 +52,7 @@ import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
+import java.time.LocalDate
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -4436,6 +4437,35 @@ class HomeViewModelTest {
 
         assertEquals(ViewMode.INSIGHTS, viewModel.uiState.value.viewMode)
         coVerify(exactly = 0) { dataStore.setDefaultCalendarView("insights") }
+    }
+
+    @Test
+    fun `tapping a day header drills into Day view`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onWeekViewDayHeaderClick(LocalDate.now())
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.DAY, viewModel.uiState.value.viewMode)
+    }
+
+    @Test
+    fun `tapping a day header switches to Day view without overwriting the startup default`() = runTest {
+        // Start in a non-DAY mode so the header tap is a real transition.
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_WEEK)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_WEEK
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onWeekViewDayHeaderClick(LocalDate.now())
+        advanceUntilIdle()
+
+        // A real transient switch: mode flips to DAY, but the persisted default
+        // must not change. Asserting both here so a regression that stops the
+        // switch entirely can't pass by simply never persisting.
+        assertEquals(ViewMode.DAY, viewModel.uiState.value.viewMode)
+        coVerify(exactly = 0) { dataStore.setDefaultCalendarView("day") }
     }
 
     @Test

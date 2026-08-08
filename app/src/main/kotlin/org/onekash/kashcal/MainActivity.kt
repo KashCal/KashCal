@@ -653,6 +653,7 @@ class MainActivity : FragmentActivity() {
                     // Week view callbacks (infinite day pager)
                     onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
+                    onWeekDayHeaderClick = { date -> homeViewModel.onWeekViewDayHeaderClick(date) },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },

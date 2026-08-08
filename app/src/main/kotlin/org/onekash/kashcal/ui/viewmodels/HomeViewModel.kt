@@ -2036,6 +2036,17 @@ class HomeViewModel(
     }
 
     /**
+     * Drill into a single day from a week/3-day column header. The mode switch
+     * must land first so the navigation resolves against the DAY pager rather
+     * than the week pager it was called from.
+     */
+    fun onWeekViewDayHeaderClick(date: LocalDate) {
+        // Transient: drilling in shouldn't change what the app opens in.
+        setViewMode(ViewMode.DAY, persist = false)
+        onWeekViewDateSelected(WeekViewUtils.dateToEpochMs(date))
+    }
+
+    /**
      * Clear pending pager position after it has been consumed by the UI.
      */
     fun clearPendingWeekViewPagerPosition() {
@@ -2530,8 +2541,11 @@ class HomeViewModel(
     /**
      * Switch calendar view mode and persist as default.
      * Handles data loading for each view type and cancels unnecessary jobs.
+     *
+     * @param persist write the new mode as the startup default. False for
+     *   transient switches, e.g. drilling into a day from a column header.
      */
-    fun setViewMode(mode: ViewMode) {
+    fun setViewMode(mode: ViewMode, persist: Boolean = true) {
         val oldMode = _uiState.value.viewMode
         if (oldMode == mode) return
 
@@ -2546,13 +2560,15 @@ class HomeViewModel(
         if (mode == ViewMode.INSIGHTS) return
 
         // Best-effort persistence; a DataStore setter throw must never crash Looper.main.
-        viewModelScope.launch {
-            try {
-                dataStore.setDefaultCalendarView(mode.key)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Throwable) {
-                Log.e(TAG, "Failed to persist view mode ${mode.key}", e)
+        if (persist) {
+            viewModelScope.launch {
+                try {
+                    dataStore.setDefaultCalendarView(mode.key)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Throwable) {
+                    Log.e(TAG, "Failed to persist view mode ${mode.key}", e)
+                }
             }
         }
 

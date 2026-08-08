@@ -72,6 +72,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -148,6 +149,8 @@ fun WeekViewContent(
     pendingNavigateToPage: Int? = null,
     onNavigationConsumed: () -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
+    /** Tap on a day column header — drills into Day view for that date. */
+    onDayHeaderClick: (LocalDate) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Grid time range: full 24h for both views
@@ -264,6 +267,7 @@ fun WeekViewContent(
                 onScrollPositionChange = onScrollPositionChange,
                 onScrollMinutesChange = onScrollMinutesChange,
                 onReschedule = onReschedule,
+                onDayHeaderClick = onDayHeaderClick,
                 modifier = modifier.fillMaxSize()
             )
         }
@@ -309,6 +313,7 @@ private fun UnifiedTimeGrid(
     onScrollPositionChange: (Int) -> Unit = {},
     onScrollMinutesChange: (Int) -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
+    onDayHeaderClick: (LocalDate) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val is24Hour = timePattern.startsWith("H")
@@ -404,6 +409,7 @@ private fun UnifiedTimeGrid(
                             isToday = date == today,
                             isWeekend = WeekViewUtils.isWeekend(date),
                             compact = visibleDays == 7,
+                            onClick = { onDayHeaderClick(date) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -782,6 +788,7 @@ private fun DayHeaderCell(
     isToday: Boolean,
     isWeekend: Boolean,
     compact: Boolean = false,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val dayName = remember(date, compact) {
@@ -802,7 +809,12 @@ private fun DayHeaderCell(
     if (compact) {
         // Compact vertical layout for 7-day view: single letter + number stacked
         Column(
-            modifier = modifier.padding(vertical = 4.dp),
+            modifier = modifier
+                // Guarantee a 48dp tap target (WCAG / Material minimum): the
+                // stacked letter + number alone are shorter than that.
+                .heightIn(min = 48.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -837,7 +849,11 @@ private fun DayHeaderCell(
     } else {
         // Standard horizontal layout for 3-day view: "Wed 11"
         Row(
-            modifier = modifier.padding(vertical = 8.dp),
+            modifier = modifier
+                // Guarantee a 48dp tap target (WCAG / Material minimum).
+                .heightIn(min = 48.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {

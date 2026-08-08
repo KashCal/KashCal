@@ -276,6 +276,7 @@ fun HomeScreen(
     // Week view callbacks (infinite day pager)
     onDayPagerPageChanged: (Int) -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
+    onWeekDayHeaderClick: (LocalDate) -> Unit = {},
     onWeekDatePickerDismiss: () -> Unit = {},
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
@@ -835,6 +836,18 @@ fun HomeScreen(
                                             pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
                                             onNavigationConsumed = onClearPendingWeekPagerPosition,
                                             onReschedule = onReschedule,
+                                            onDayHeaderClick = { date ->
+                                                // Snapshot the current view + date before
+                                                // drilling into DAY, reusing the same
+                                                // mechanism as "Jump to date" so a back
+                                                // press restores the week/3-day view and
+                                                // date we came from. The drill-in itself
+                                                // stays a transient switch (does not change
+                                                // the startup default).
+                                                preJumpViewMode = uiState.viewMode
+                                                preJumpDate = uiState.selectedDate
+                                                onWeekDayHeaderClick(date)
+                                            },
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
