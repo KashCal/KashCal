@@ -52,8 +52,11 @@ class DefaultQuirks(
         val calendars = xmlParser.extractCalendars(responseBody)
         return calendars.filter { parsed ->
             !shouldSkipCalendar(parsed.href, parsed.displayName) &&
-            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only)
-            // Empty set = server didn't advertise components → keep (name-matching fallback handles it)
+            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only).
+            // An empty set means the server didn't advertise a component set at all, so we can't
+            // tell it's tasks-only and keep it. A VTODO-only list therefore surfaces only on a
+            // server that omits the component set; name matching is deliberately NOT used to hide
+            // it, because a real events calendar the user happened to name "Tasks" must never drop.
             (parsed.supportedComponents.isEmpty() || "VEVENT" in parsed.supportedComponents)
         }
     }
@@ -130,15 +133,18 @@ class DefaultQuirks(
     }
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
-        val hrefLower = href.lowercase()
-        val nameLower = displayName?.lowercase().orEmpty()
-
-        return hrefLower.contains("inbox") ||
-            hrefLower.contains("outbox") ||
-            hrefLower.contains("notification") ||
-            hrefLower.endsWith("/tasks/") ||
-            nameLower == "tasks" ||
-            nameLower == "reminders"
+        // Skip the scheduling (inbox/outbox) and notification collections a server
+        // may expose alongside real calendars, plus a generic server's task list.
+        // Reserved words match only as whole PATH SEGMENTS, never as substrings, so a
+        // user's real calendar "my-inbox-friends" or "outbox-archive" — or any account
+        // whose username embeds one of these words — survives discovery. The task list
+        // is matched only as the FINAL segment in its trailing-slash form (`.../tasks/`):
+        // a server whose account segment is literally "tasks" keeps its calendars, and a
+        // real events calendar the user named "Tasks" is not dropped on its name alone.
+        return matchesReservedCollection(
+            href = href,
+            terminalSegments = setOf("tasks"),
+        )
     }
 
     override fun formatDateForQuery(epochMillis: Long): String {
@@ -152,4 +158,42 @@ class DefaultQuirks(
             cal.get(Calendar.DAY_OF_MONTH)
         )
     }
+}
+
+/**
+ * Path segments identifying the scheduling / notification collections a CalDAV
+ * server exposes alongside real calendars (RFC 6638 §2.1). Matched as whole path
+ * segments, never as substrings. Note "tasks" is deliberately NOT here: iCloud
+ * exposes a real VTODO calendar at `/calendars/tasks/` (carrying the `<calendar>`
+ * resourcetype), so a tasks-segment skip is a generic-server-only concern applied
+ * in [DefaultQuirks] via its `terminalSegments`, not a universal reserved word.
+ */
+internal val RESERVED_CALENDAR_SEGMENTS =
+    setOf("inbox", "outbox", "notification", "notifications")
+
+/**
+ * Shared collection-skip predicate for the CalDAV/CardDAV quirks. A collection is
+ * skipped only when its href carries a reserved word as a whole PATH SEGMENT (never
+ * as a substring). The display name is deliberately NOT a discriminator: this
+ * predicate runs only on collections that already passed the positive
+ * `<calendar>`/`<addressbook>` resourcetype gate, so a name match could only
+ * false-drop a real collection the user named "Tasks"/"Reminders"/"Inbox". A genuine
+ * VTODO-only task list is instead excluded downstream by the VEVENT component gate.
+ *
+ * @param terminalSegments extra segment words matched ONLY as the final path segment
+ *   in its trailing-slash form (e.g. `.../tasks/`), so a real calendar at `.../tasks`
+ *   without the slash — or any account whose *username* segment is "tasks" — is kept.
+ *   Always union with [RESERVED_CALENDAR_SEGMENTS].
+ */
+internal fun matchesReservedCollection(
+    href: String,
+    terminalSegments: Set<String> = emptySet(),
+): Boolean {
+    val lower = href.lowercase()
+    val segments = lower.split('/').filter { it.isNotEmpty() }
+
+    if (segments.any { it in RESERVED_CALENDAR_SEGMENTS }) return true
+    // Terminal-segment words require the trailing-slash form. Only the last path
+    // component qualifies, and it must be followed by `/` in the original href.
+    return terminalSegments.any { lower.endsWith("/$it/") }
 }

@@ -115,7 +115,7 @@ class CardDavQuirksTest {
     // ---- shouldSkipAddressBook ----
 
     @Test
-    fun `skips notification and inbox collections`() {
+    fun `skips notification and inbox collections by path segment`() {
         assertTrue(default.shouldSkipAddressBook("/addressbooks/alice/notifications/", null))
         assertTrue(default.shouldSkipAddressBook("/addressbooks/alice/inbox/", "Inbox"))
     }
@@ -123,6 +123,31 @@ class CardDavQuirksTest {
     @Test
     fun `keeps a normal address book`() {
         assertFalse(default.shouldSkipAddressBook("/addressbooks/alice/default/", "Personal"))
+    }
+
+    @Test
+    fun `keeps a real address book regardless of its display name`() {
+        // The display name never drives the skip. An address book carries the
+        // <addressbook> resourcetype to even reach this filter, and the real
+        // scheduling/notification collections are excluded by their own path
+        // segment — so a user's book named "Inbox" or "Notifications" must survive.
+        assertFalse(default.shouldSkipAddressBook("/addressbooks/alice/personal/", "Inbox"))
+        assertFalse(default.shouldSkipAddressBook("/addressbooks/alice/family/", "Notifications"))
+    }
+
+    @Test
+    fun `keeps a user book whose path merely contains a reserved word as a substring`() {
+        // The reserved names (inbox/outbox/notification) identify scheduling and
+        // notification COLLECTIONS by their own path segment, not any href that
+        // happens to contain those letters. A user's real contacts book called
+        // "notifications-contacts" or "my-inbox-friends" — or any account whose
+        // very username contains one of these words — must NOT be swept away.
+        // Radicale (arbitrary collection paths, path segment = username + book)
+        // is where this bites: it silently hides real contacts.
+        assertFalse(default.shouldSkipAddressBook("/testuser1/notifications-contacts/", "Notifications Contacts"))
+        assertFalse(default.shouldSkipAddressBook("/testuser1/my-inbox-friends/", "Inbox Friends"))
+        assertFalse(default.shouldSkipAddressBook("/inbox-user/contacts/", "Personal"))
+        assertFalse(default.shouldSkipAddressBook("/u/outbox-archive/", "Outbox Archive"))
     }
 
     // ---- URL building ----

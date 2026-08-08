@@ -16,7 +16,6 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroidSize
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -61,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -72,6 +70,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -108,6 +107,11 @@ import java.util.Locale
 import kotlin.math.abs
 
 private const val TAG = "WeekViewContent"
+
+// Test tags for headless layout verification that the all-day strip does not
+// occlude the timed grid's earliest hours.
+internal const val TEST_TAG_ALL_DAY_STRIP = "allDayStrip"
+internal const val TEST_TAG_FIRST_TIME_LABEL = "firstTimeLabel"
 
 /**
  * Main container for the week view with infinite day pager.
@@ -418,8 +422,22 @@ private fun UnifiedTimeGrid(
             }
         }
 
+        // All-day strip sits above the timed grid as its own row: it reserves
+        // its height so the grid starts below it and the earliest hours
+        // (midnight onward) are never hidden behind it.
+        AllDayEventsPagerRow(
+            visibleDates = visibleDates,
+            allDayEventsByDate = allDayEventsByDate,
+            timeColumnWidth = timeColumnWidth,
+            allDayRowsExpanded = allDayRowsExpanded,
+            onAllDayRowsToggle = onAllDayRowsToggle,
+            showEventEmojis = showEventEmojis,
+            onEventClick = onEventClick,
+            onOverflowClick = onOverflowClick
+        )
+
         // Main time grid area (density / hour-height hoisted above the scroll
-        // collectors). The all-day strip is overlaid on top of this box.
+        // collectors).
         Box(modifier = Modifier.weight(1f)) {
             Row(modifier = Modifier.fillMaxSize()) {
                 // Time labels column (fixed)
@@ -430,7 +448,16 @@ private fun UnifiedTimeGrid(
                         .height(totalHeight)
                 ) {
                     for (hour in startHour until endHour) {
-                        TimeLabel(hour = hour, height = hourHeight, is24Hour = is24Hour)
+                        TimeLabel(
+                            hour = hour,
+                            height = hourHeight,
+                            is24Hour = is24Hour,
+                            modifier = if (hour == startHour) {
+                                Modifier.testTag(TEST_TAG_FIRST_TIME_LABEL)
+                            } else {
+                                Modifier
+                            }
+                        )
                     }
                 }
 
@@ -755,26 +782,6 @@ private fun UnifiedTimeGrid(
                     }
                 }
             }
-
-            AllDayEventsPagerRow(
-                visibleDates = visibleDates,
-                allDayEventsByDate = allDayEventsByDate,
-                timeColumnWidth = timeColumnWidth,
-                allDayRowsExpanded = allDayRowsExpanded,
-                onAllDayRowsToggle = onAllDayRowsToggle,
-                showEventEmojis = showEventEmojis,
-                onEventClick = onEventClick,
-                onOverflowClick = onOverflowClick,
-                // Overlaid on the grid (aligned to its top) rather than a
-                // sibling row, so a week gaining all-day events doesn't grow
-                // the strip and shove the grid: the grid keeps constant height
-                // and scrolls beneath the opaque, shadowed strip. Fewer all-day
-                // events means a shorter strip over the same grid, so swiping
-                // between weeks no longer jumps the grid vertically.
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .shadow(elevation = 3.dp)
-            )
         }
 
     }
@@ -949,14 +956,9 @@ private fun AllDayEventsPagerRow(
 
     Row(
         modifier = modifier
+            .testTag(TEST_TAG_ALL_DAY_STRIP)
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            // The strip floats over the timed grid, whose full-column background is
-            // a tap target for creating events. Swallow taps that land on the
-            // strip's own empty areas (gaps between chips, days with no all-day
-            // event, the label gutter) so they don't fall through and spuriously
-            // open event creation at whatever hour is scrolled to the top.
-            .pointerInput(Unit) { detectTapGestures { } }
             // Match the chevron's 300ms tween so the strip resize and the arrow
             // rotation finish together on a toggle.
             .animateContentSize(animationSpec = tween(300))

@@ -548,18 +548,44 @@ END:VCALENDAR</calendar-data>
     }
 
     @Test
-    fun `should skip tasks calendar`() {
-        assertTrue(quirks.shouldSkipCalendar("/user/calendars/tasks/", "Tasks"))
-    }
-
-    @Test
-    fun `should skip reminders calendar`() {
-        assertTrue(quirks.shouldSkipCalendar("/user/calendars/reminders/", "Reminders"))
+    fun `should not skip iCloud tasks calendar by path — the VEVENT gate handles it`() {
+        // iCloud's /tasks/ ("Reminders") is a real <calendar>; ICloudQuirks must NOT
+        // skip it by path. It is VTODO-only, so the VEVENT component gate in
+        // extractCalendars is what keeps it off-screen — not this filter.
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/tasks/", "Tasks"))
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/reminders/", "Reminders"))
     }
 
     @Test
     fun `should not skip regular calendar`() {
         assertFalse(quirks.shouldSkipCalendar("/user/calendars/work/", "Work Calendar"))
+    }
+
+    @Test
+    fun `should skip inbox and outbox even when a trailing slash is absent`() {
+        // Scheduling collections are matched as whole path segments, so the terminal
+        // segment need not carry a trailing slash.
+        assertTrue(quirks.shouldSkipCalendar("/user/calendars/inbox", "Inbox"))
+        assertTrue(quirks.shouldSkipCalendar("/user/calendars/outbox", "Outbox"))
+    }
+
+    @Test
+    fun `should keep calendar whose path merely contains a reserved word as a substring`() {
+        // Reserved words match only as a whole PATH SEGMENT, never as a substring.
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/my-inbox-friends/", "My Inbox Friends"))
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/outbox-archive/", "Outbox Archive"))
+        assertFalse(quirks.shouldSkipCalendar("/inboxman/calendars/work/", "Work"))
+    }
+
+    @Test
+    fun `should keep a real calendar regardless of its display name`() {
+        // The display name never drives the skip: a real events calendar the user named
+        // "Tasks" or "Reminders" (or "Household tasks list") carries <calendar> and must
+        // survive. Only VTODO-only lists are excluded, by the VEVENT gate.
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/household/", "Household tasks list"))
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/mom/", "Reminders from Mom"))
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/todo/", "Tasks"))
+        assertFalse(quirks.shouldSkipCalendar("/user/calendars/rem/", "Reminders"))
     }
 
     // Sync token invalid tests

@@ -1,0 +1,4 @@
+• Contacts: fixed CardDAV contact sync bringing over almost no contacts and no photos on release builds (#10)
+• Sync: fixed calendars and address books being hidden when their path just contained a word like inbox, outbox, or tasks
+• Week view: tap a day-column header to jump into that day (thanks Wqrld)
+• Quick View: Edit, Delete, Duplicate, and Share are now icons (thanks Wqrld)

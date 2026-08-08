@@ -57,3 +57,50 @@ internal fun roomDisplayEvent(
     )
     return DisplayEvent.Room(event = event, occurrence = occ, calendar = cal)
 }
+
+/**
+ * Shared factory for an all-day [DisplayEvent.Room] on a single day. Used by
+ * layout tests that need the all-day strip populated.
+ */
+internal fun allDayDisplayEvent(
+    id: Long,
+    title: String,
+    date: LocalDate,
+): DisplayEvent.Room {
+    val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+    val start = date.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    val end = start + 86_400_000L - 1
+    val event = Event(
+        id = id,
+        uid = "test-allday-$id",
+        calendarId = 1L,
+        title = title,
+        startTs = start,
+        endTs = end,
+        isAllDay = true,
+        timezone = "UTC",
+        syncStatus = SyncStatus.SYNCED,
+        createdAt = start,
+        updatedAt = start,
+        dtstamp = start
+    )
+    val occ = Occurrence(
+        eventId = id,
+        calendarId = 1L,
+        startTs = start,
+        endTs = end,
+        startDay = dayCode,
+        endDay = dayCode,
+        isCancelled = false,
+        exceptionEventId = null
+    )
+    val cal = Calendar(
+        id = 1L,
+        accountId = 1L,
+        caldavUrl = "https://example.invalid/cal/",
+        displayName = "Test",
+        color = 0xFF2196F3.toInt(),
+        isReadOnly = false
+    )
+    return DisplayEvent.Room(event = event, occurrence = occ, calendar = cal)
+}

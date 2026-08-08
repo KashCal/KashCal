@@ -210,6 +210,45 @@
 -dontwarn org.codehaus.groovy.**
 
 # ----------------------------------------------------------------------------
+# ez-vcard (RFC 2426 3.0 / RFC 6350 4.0 vCard parsing)
+# ez-vcard instantiates its property/parameter classes and scribes by
+# reflection (e.g. a (String,String,String) constructor on parameter classes
+# like ImageType, and the TelUri parser), so R8 renaming or removing those
+# constructors makes EVERY vCard fail to parse on release builds — with no
+# failure on debug/unit tests, which run unminified. Symptom when this rule is
+# missing: CardDavContactReader logs "NoSuchMethodException: <obfuscated>.<init>
+# [String,String,String]" for every contact and the whole address book drops.
+# Keep the reflective parse surface (properties, parameters, scribes, vinnie);
+# let R8 drop the unused jCard/hCard writers and their heavy deps (freemarker).
+# ----------------------------------------------------------------------------
+
+# Keep the reflectively-touched parse surface: the property/parameter model
+# classes (constructed by reflection — the (String,String,String) constructor on
+# parameter classes like ImageType is what R8 was stripping) and the scribes that
+# read/write them. The jCard (ezvcard.io.json) and hCard (ezvcard.io.html)
+# serializers are deliberately NOT kept — CardDAV exchanges only text/vcard, so
+# letting R8 drop them also frees their heavy transitive deps (freemarker ~1.3MB).
+-keep,includedescriptorclasses class ezvcard.property.** { *; }
+-keep,includedescriptorclasses class ezvcard.parameter.** { *; }
+-keep,includedescriptorclasses class ezvcard.io.scribe.** { *; }
+-keepclassmembers class ezvcard.** {
+    <init>(...);
+}
+-keep enum ezvcard.** { *; }
+-keep class ezvcard.util.** { *; }
+
+# vinnie: the underlying vObject reader ez-vcard drives reflectively.
+-keep class com.github.mangstadt.vinnie.** { *; }
+-dontwarn com.github.mangstadt.vinnie.**
+
+# ez-vcard's jCard/hCard serializers reference jackson/jsoup/freemarker, all
+# excluded or unreachable (CardDAV exchanges only text/vcard). Silence the
+# dangling references from any of those classes R8 does retain.
+-dontwarn com.fasterxml.jackson.**
+-dontwarn org.jsoup.**
+-dontwarn freemarker.**
+
+# ----------------------------------------------------------------------------
 # icaldav-core subproject — keep reflective/Kotlin-metadata surfaces
 # (iCal model classes parsed/generated dynamically; safer to keep until an
 #  R8 shrink-test verifies which members can be optimized away)

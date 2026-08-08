@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:">
+
+	<response>
+		<href>/REDACTED_ACCOUNT/carddavhome/</href>
+		
+		<propstat>
+			<prop>
+			
+			
+            
+			
+			
+				<current-user-privilege-set>
+					<privilege>
+						<read-current-user-privilege-set/>
+					</privilege>
+					<privilege>
+						<read/>
+					</privilege>
+					<privilege>
+						<read-acl/>
+					</privilege>
+					<privilege>
+						<write/>
+					</privilege>
+					<privilege>
+						<bind/>
+					</privilege>
+				</current-user-privilege-set>
+			
+			
+            
+            
+            
+            
+            
+
+            
+            
+            
+            
+            
+			
+			
+            
+            
+            
+            
+            
+            
+				<resourcetype>
+					<collection/>
+
+				</resourcetype>
+			
+            
+            
+            
+            
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+			    <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADx/UOejRwAAAAAYARgAIhYI+4/tqYe6kdPxARDE4dLt0ozf+akBKAA=</getctag>
+			 
+             
+             
+             
+             
+			</prop>
+			<status>HTTP/1.1 200 OK</status>
+		</propstat>
+		
+		
+		<propstat>
+			<prop>
+				<supported-address-data xmlns="urn:ietf:params:xml:ns:carddav"/>
+<addressbook-description xmlns="urn:ietf:params:xml:ns:carddav"/>
+<displayname/>
+
+			</prop>
+			<status>HTTP/1.1 404 Not Found</status>
+		</propstat>
+        
+	</response>
+
+	<response>
+		<href>/REDACTED_ACCOUNT/carddavhome/card/</href>
+		
+		<propstat>
+			<prop>
+			
+			
+            
+			
+			
+				<current-user-privilege-set>
+					<privilege>
+						<read-current-user-privilege-set/>
+					</privilege>
+					<privilege>
+						<read/>
+					</privilege>
+					<privilege>
+						<read-acl/>
+					</privilege>
+					<privilege>
+						<write/>
+					</privilege>
+					<privilege>
+						<bind/>
+					</privilege>
+				</current-user-privilege-set>
+			
+			
+            
+            
+            
+            
+            
+
+            
+            
+            
+            
+            
+			
+			
+            
+            
+            
+            
+            
+            
+				<resourcetype>
+					<collection/>
+<addressbook xmlns="urn:ietf:params:xml:ns:carddav"/>
+
+				</resourcetype>
+			
+            
+            
+            
+            
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
+			    <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAAEmpCsDZ2QAAAAMYBBgAIhYIvIrNqc6l3Yn0ARCGkMbenv+YuK4BKAA=</getctag>
+			 
+             
+             
+             
+             
+			</prop>
+			<status>HTTP/1.1 200 OK</status>
+		</propstat>
+		
+		
+		<propstat>
+			<prop>
+				<supported-address-data xmlns="urn:ietf:params:xml:ns:carddav"/>
+<addressbook-description xmlns="urn:ietf:params:xml:ns:carddav"/>
+<displayname/>
+
+			</prop>
+			<status>HTTP/1.1 404 Not Found</status>
+		</propstat>
+        
+	</response>
+
+</multistatus>

@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.carddav
 
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.sync.quirks.matchesReservedCollection
 
 /**
  * CardDAV quirks for generic RFC 6352 servers (Radicale, Baikal, SOGo,
@@ -65,13 +66,16 @@ open class DefaultCardDavQuirks(
         responseCode == 410 || responseBody.contains("valid-sync-token", ignoreCase = true)
 
     override fun shouldSkipAddressBook(href: String, displayName: String?): Boolean {
-        val hrefLower = href.lowercase()
-        val nameLower = displayName?.lowercase().orEmpty()
-        return hrefLower.contains("inbox") ||
-            hrefLower.contains("outbox") ||
-            hrefLower.contains("notification") ||
-            nameLower == "inbox" ||
-            nameLower == "notifications"
+        // Skip the scheduling (inbox/outbox) and notification collections a server
+        // may expose alongside real address books. Match a reserved word only as a
+        // whole PATH SEGMENT, never as a substring: a user's real book called
+        // "notifications-contacts" or "my-inbox-friends" — or any account whose
+        // username contains one of these words — must survive. Radicale (arbitrary
+        // collection paths whose segment carries username + book name) is where a
+        // substring match would silently hide real contacts. The display name is not a
+        // discriminator: a book carries the <addressbook> resourcetype to reach this
+        // filter, so one the user named "Inbox" must surface.
+        return matchesReservedCollection(href = href)
     }
 
     /**

@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.provider.icloud
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.sync.quirks.matchesReservedCollection
 import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
@@ -47,8 +48,12 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         val calendars = xmlParser.extractCalendars(responseBody)
         return calendars.filter { parsed ->
             !shouldSkipCalendar(parsed.href, parsed.displayName) &&
-            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only)
-            // Empty set = server didn't advertise components → keep (name-matching fallback handles it)
+            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only).
+            // An empty set means the server didn't advertise a component set at all, so we can't
+            // tell it's tasks-only and keep it. iCloud always advertises the set (its Reminders
+            // list carries VTODO), so this branch keeps iCloud's tasks list off-screen; name
+            // matching is deliberately NOT used to hide it, so a real calendar named "Reminders"
+            // is never dropped.
             (parsed.supportedComponents.isEmpty() || "VEVENT" in parsed.supportedComponents)
         }
     }
@@ -123,14 +128,12 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
     }
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
-        val hrefLower = href.lowercase()
-        val nameLower = displayName?.lowercase().orEmpty()
-
-        return hrefLower.contains("inbox") ||
-            hrefLower.contains("outbox") ||
-            hrefLower.contains("notification") ||
-            nameLower.contains("tasks") ||
-            nameLower.contains("reminders")
+        // Match a reserved word only as a whole PATH SEGMENT, never as a substring, so a
+        // real calendar "my-inbox-friends" or an account whose username embeds one of
+        // these words is not silently hidden. iCloud has NO tasks path-segment skip: its
+        // `/calendars/tasks/` ("Reminders") is a real <calendar> that is VTODO-only, so
+        // the VEVENT component gate — not a display-name match — is what keeps it hidden.
+        return matchesReservedCollection(href = href)
     }
 
     override fun formatDateForQuery(epochMillis: Long): String {

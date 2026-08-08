@@ -2461,18 +2461,19 @@ fun EventFormContent(
                             OutlinedButton(
                                 onClick = { showDeleteConfirmation = false },
                                 enabled = !state.isSaving,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.action_cancel))
+                                Text(
+                                    stringResource(R.string.action_cancel),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center
+                                )
                             }
                             Button(
                                 onClick = { commitDelete() },
                                 enabled = !state.isSaving,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
+                                modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error,
                                     contentColor = MaterialTheme.colorScheme.onError
@@ -2485,7 +2486,12 @@ fun EventFormContent(
                                         color = MaterialTheme.colorScheme.onError
                                     )
                                 } else {
-                                    Text(stringResource(R.string.action_confirm_delete))
+                                    Text(
+                                        stringResource(R.string.action_confirm),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             }
                         }

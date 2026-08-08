@@ -336,6 +336,45 @@ class CardDavXmlParserTest {
     }
 
     @Test
+    fun `keeps the whole vcard body when it contains an escaped ampersand`() {
+        // Regression guard for the address-data reader's single-token text read.
+        // A real contact whose ORG/NOTE/FN contains '&' arrives XML-escaped as
+        // "&amp;" (likewise '<' -> "&lt;"). The worry was that an entity reference
+        // splits the element's character content into separate text segments, so a
+        // one-token read would stop at the first and lose everything after the '&'
+        // (here END:VCARD), failing the BEGIN:VCARD gate and silently dropping the
+        // contact. In practice the pull-parser resolves the five predefined XML
+        // entities inline and reports the whole run as ONE text token, so the body
+        // survives intact. This test pins that behavior: if a parser swap ever
+        // reverts to per-segment entity reporting, the body would truncate and this
+        // fails loudly instead of contacts vanishing in the field.
+        val xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<d:multistatus xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\">\n" +
+            "<d:response>\n" +
+            "<d:href>/ab/acme.vcf</d:href>\n" +
+            "<d:propstat>\n" +
+            "<d:prop>\n" +
+            "<d:getetag>\"etag-acme\"</d:getetag>\n" +
+            "<card:address-data>BEGIN:VCARD\n" +
+            "VERSION:3.0\n" +
+            "UID:acme-1\n" +
+            "FN:Acme Contact\n" +
+            "ORG:Johnson &amp; Johnson\n" +
+            "END:VCARD</card:address-data>\n" +
+            "</d:prop>\n" +
+            "<d:status>HTTP/1.1 200 OK</d:status>\n" +
+            "</d:propstat>\n" +
+            "</d:response>\n" +
+            "</d:multistatus>\n"
+
+        val data = parser.extractAddressData(xml)
+        assertEquals("contact with '&' in body must not be dropped", 1, data.size)
+        val body = data.single().vcardBody
+        assertTrue("literal '&' must be unescaped in the body", body.contains("Johnson & Johnson"))
+        assertTrue("body must survive past the '&' to END:VCARD", body.contains("END:VCARD"))
+    }
+
+    @Test
     fun `skips response with etag but no address-data`() {
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>

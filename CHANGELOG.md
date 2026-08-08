@@ -1,3 +1,15 @@
+## [2026.08.08]
+
+### Everything in this release
+
+- Fixed CardDAV contact sync bringing over almost no contacts and no photos once installed; every vCard was silently failing to parse on release builds, so an account that looked fine in testing landed a nearly empty address book on the phone, #10
+- Fixed real calendars and address books being hidden when their path or account name merely contained a word like inbox, outbox, or tasks; only genuine scheduling and task collections are skipped now
+- Added drilling into Day view by tapping a day-column header in Week or 3-Day view, with a back press returning to the exact week or span you came from, contributed by @Wqrld
+- Changed the Quick View buttons for Edit, Delete, Duplicate, and Share to icons so they no longer wrap in longer languages, contributed by @Wqrld
+- Shortened the all-day overflow badge in Week and 3-Day view to +N with a larger tap target, contributed by @Wqrld
+- Enlarged the week-view day-header letter and date number to match the 3-day header
+- Changed the delete-confirmation buttons to a single centered line and relabeled the editor's "Confirm Delete" to "Confirm" to match Quick View
+
 ## [2026.08.07]
 
 Your calendar account has always known your contacts existed. Now it can bring them with it.

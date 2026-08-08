@@ -653,9 +653,14 @@ END:VCALENDAR</cal:calendar-data>
     }
 
     @Test
-    fun `shouldSkipCalendar returns true for tasks by name`() {
-        assertTrue(quirks.shouldSkipCalendar("/calendars/todo/", "Tasks"))
-        assertTrue(quirks.shouldSkipCalendar("/calendars/reminders-list/", "Reminders"))
+    fun `shouldSkipCalendar does not skip a real calendar by its display name alone`() {
+        // A display name is NOT a safe discriminator: a real events calendar the user
+        // named "Tasks" or "Reminders" carries the <calendar> resourcetype and, when it
+        // advertises VEVENT, must surface. The only genuine task/reminder collection is
+        // VTODO-only, which the co-located VEVENT component gate in extractCalendars
+        // drops on its own — the name filter would only add a false-drop here.
+        assertFalse(quirks.shouldSkipCalendar("/calendars/todo/", "Tasks"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/reminders-list/", "Reminders"))
     }
 
     @Test
@@ -664,9 +669,52 @@ END:VCALENDAR</cal:calendar-data>
     }
 
     @Test
+    fun `shouldSkipCalendar matches tasks terminal segment only WITH a trailing slash`() {
+        // The terminal `tasks` skip requires the trailing-slash segment form
+        // (`.../tasks/`). A collection href without the trailing slash is kept at the
+        // quirk level; a real VTODO-only tasks list is still dropped downstream by the
+        // VEVENT component gate, so nothing surfaces that shouldn't.
+        assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/tasks", null))
+    }
+
+    @Test
     fun `shouldSkipCalendar returns false for regular calendars`() {
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/personal/", "Personal"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/work/", "Work"))
+    }
+
+    @Test
+    fun `shouldSkipCalendar keeps a calendar whose path merely contains a reserved word as a substring`() {
+        // A reserved word must match only as a whole PATH SEGMENT, never as a
+        // substring of one. A user's real calendar — or any account whose
+        // username embeds one of these letters — must survive discovery.
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/my-inbox-friends/", "My Inbox Friends"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/outbox-archive/", "Outbox Archive"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/notifications-events/personal/", "Personal"))
+        // Account whose username segment contains "inbox".
+        assertFalse(quirks.shouldSkipCalendar("/calendars/inboxman/work/", "Work"))
+    }
+
+    @Test
+    fun `shouldSkipCalendar matches tasks only as the final path segment`() {
+        // The task-list skip fires only for a terminal `.../tasks/` segment. An
+        // account whose USERNAME segment is literally "tasks" must keep all its
+        // calendars — an intermediate "tasks" segment must not trigger the skip.
+        assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/personal/", "Personal"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/work/", "Work"))
+    }
+
+    @Test
+    fun `shouldSkipCalendar keeps a real calendar regardless of its display name`() {
+        // The display name never drives the skip: neither a substring ("Household tasks
+        // list") nor an exact match ("Tasks", "Reminders") drops a collection that
+        // carries <calendar>. VTODO-only lists are excluded by the VEVENT gate instead.
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/household/", "Household tasks list"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/mom/", "Reminders from Mom"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/todo/", "Tasks"))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/rem/", "Reminders"))
     }
 
     // ========== isSyncTokenInvalid tests ==========

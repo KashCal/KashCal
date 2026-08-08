@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -472,7 +473,12 @@ fun EventQuickViewSheet(
                             onClick = { showDeleteConfirmation = false },
                             modifier = Modifier.weight(1f),
                         ) {
-                            Text(stringResource(R.string.action_cancel))
+                            Text(
+                                stringResource(R.string.action_cancel),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center
+                            )
                         }
                         FilledTonalButton(
                             onClick = {
@@ -485,7 +491,12 @@ fun EventQuickViewSheet(
                                 contentColor = MaterialTheme.colorScheme.onError
                             )
                         ) {
-                            Text(stringResource(R.string.action_confirm))
+                            Text(
+                                stringResource(R.string.action_confirm),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
 
