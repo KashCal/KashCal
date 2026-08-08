@@ -820,7 +820,11 @@ private fun DayHeaderCell(
         ) {
             Text(
                 text = dayName,
-                style = MaterialTheme.typography.labelSmall,
+                // The 7-day columns are narrow, but a single letter + 1-2 digit
+                // number never fill them, so match the 3-day header's bodyMedium
+                // size for legibility. The cell is already pinned to a 48dp min
+                // height, so the larger text neither wraps nor grows the row.
+                style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
                 textAlign = TextAlign.Center
             )
@@ -831,16 +835,16 @@ private fun DayHeaderCell(
                             Modifier
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.inverseSurface)
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         } else {
-                            Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         }
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = dayNumber,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
                     color = if (isToday) MaterialTheme.colorScheme.inverseOnSurface else textColor,
                     textAlign = TextAlign.Center
