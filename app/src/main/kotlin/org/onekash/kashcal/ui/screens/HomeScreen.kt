@@ -844,8 +844,24 @@ fun HomeScreen(
                                                 // date we came from. The drill-in itself
                                                 // stays a transient switch (does not change
                                                 // the startup default).
+                                                //
+                                                // The week/3-day grid tracks its position in
+                                                // weekViewPagerPosition, not selectedDate (which
+                                                // only month-view taps write), so derive the
+                                                // shown date from the pager page — mode-aware,
+                                                // since WEEK uses week pages and 3-day uses day
+                                                // pages. Restoring selectedDate would jump back
+                                                // to a stale week or, at cold start, to today.
                                                 preJumpViewMode = uiState.viewMode
-                                                preJumpDate = uiState.selectedDate
+                                                val shownDate = if (uiState.viewMode == ViewMode.WEEK) {
+                                                    WeekViewUtils.weekPageToStartDate(
+                                                        uiState.weekViewPagerPosition,
+                                                        uiState.firstDayOfWeek
+                                                    )
+                                                } else {
+                                                    WeekViewUtils.pageToDate(uiState.weekViewPagerPosition)
+                                                }
+                                                preJumpDate = WeekViewUtils.dateToEpochMs(shownDate)
                                                 onWeekDayHeaderClick(date)
                                             },
                                             modifier = Modifier.fillMaxSize()
