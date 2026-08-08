@@ -406,6 +406,8 @@
     <string name="status_no_events_week">No events this week</string>
     <!-- %1$d = number of additional events (for week view overflow) -->
     <string name="status_more_events">+%1$d more</string>
+    <!-- Compact overflow badge for the all-day strip in week/3-day view; just "+N" (e.g. +2). Number only, no words to translate. -->
+    <string name="status_more_events_compact" translatable="false">+%1$d</string>
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
     <!-- %1$d = number of events -->

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -1066,16 +1067,25 @@ private fun CompactEventCell(
         }
 
         if (overflowCount > 0) {
-            Text(
-                text = stringResource(R.string.status_more_events, overflowCount),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
+            // Compact "+N" badge (no "more" text) to fit the narrow all-day
+            // columns. The glyph is small, so the clickable Box carries a
+            // larger min size than the text would occupy, giving a comfortable
+            // tap target to open the overflow sheet.
+            Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .clickable { onOverflowClick(events) }
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            )
+                    .defaultMinSize(minWidth = 32.dp, minHeight = 24.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.status_more_events_compact, overflowCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
