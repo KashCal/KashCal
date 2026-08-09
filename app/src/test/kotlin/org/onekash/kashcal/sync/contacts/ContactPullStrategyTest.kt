@@ -539,6 +539,86 @@ class ContactPullStrategyTest {
             database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken)
     }
 
+    // ---------- an unreadable contact holds the cursor (the R8/parse-skip fix) ----------
+
+    @Test
+    fun `a book with an unreadable contact holds its sync-token and re-lists next run`() = runTest {
+        // One readable contact, one body the read yields no contact from (junk parses
+        // to zero cards in ez-vcard — the testable stand-in for the R8/stripped-ctor
+        // failure that returned nothing on release builds). The good contact
+        // materializes, but the book is left UNCONFIRMED, so its sync-token must NOT
+        // advance. Next run must full-list again and re-fetch the held href rather
+        // than orphan it behind a cursor that falsely claims it is synced (RFC 6578 §3.1).
+        val badBody = "this is not a vcard at all"
+        val bk = book(
+            contacts = mutableListOf(
+                contact("/good.vcf", "eg"),
+                CardDavContactData(href = "/bad.vcf", url = "$BOOK_URL/bad.vcf", etag = "eb", vcardBody = badBody),
+            ),
+        )
+        val client = clientWith(bk)
+
+        val first = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the readable contact still inserts", 1, first.inserted)
+        assertEquals("the unreadable contact marks the book failed", 1, first.booksFailed)
+        assertEquals(
+            "the sync-token is HELD (null), never advanced past the unread contact",
+            null,
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+
+        // Next run: the held null token forces a full listing again (no delta), and
+        // the previously-unreadable href is re-fetched instead of being skipped.
+        val listsBefore = client.listAllHrefsCalls
+        strategy.sync(account, SERVER_URL, client)
+
+        assertTrue(
+            "the held book is re-enumerated next run, not skipped by an incremental delta",
+            client.listAllHrefsCalls > listsBefore,
+        )
+        assertTrue("no incremental probe while the cursor is held", client.syncCollectionCalls.isEmpty())
+        assertTrue(
+            "the previously-unreadable href is re-fetched next run",
+            client.fetchByHrefCalls.any { it.second.contains("/bad.vcf") },
+        )
+    }
+
+    @Test
+    fun `a KIND group contact is confirmed so the book advances its token and never re-lists`() = runTest {
+        // A group vCard is a deliberate DROP, not a parse failure — it must NOT hold
+        // the book's cursor. Otherwise any book containing a distribution list would
+        // re-list forever. A clean run (one real person + one group) advances the
+        // token, and the next run takes the cheap incremental path.
+        val groupBody =
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:team\r\nFN:Team\r\nN:Team;;;;\r\n" +
+                "X-ADDRESSBOOKSERVER-KIND:group\r\nEND:VCARD\r\n"
+        val bk = book(
+            contacts = mutableListOf(
+                contact("/alice.vcf", "ea"),
+                CardDavContactData(href = "/team.vcf", url = "$BOOK_URL/team.vcf", etag = "et", vcardBody = groupBody),
+            ),
+        )
+        val client = clientWith(bk)
+
+        val first = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("only the real person inserts; the group is dropped", 1, first.inserted)
+        assertEquals("a group drop is NOT a failure", 0, first.booksFailed)
+        assertEquals(
+            "the token advances after a clean run (no held cursor for a deliberate drop)",
+            "token-1",
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+
+        // Next run: the stored token drives the incremental path — the group did not
+        // wedge the book into a permanent re-list.
+        strategy.sync(account, SERVER_URL, client)
+
+        assertEquals("the book advanced to the incremental path", listOf(BOOK_URL to "token-1"), client.syncCollectionCalls)
+        assertEquals("no re-listing after the group-containing run", 1, client.listAllHrefsCalls)
+    }
+
     // ---------- ctag skip on no-sync-token servers ----------
 
     /**
@@ -662,6 +742,162 @@ class ContactPullStrategyTest {
         strategy.sync(account, SERVER_URL, client)
 
         assertTrue("no photo GET issued when nothing is pending", client.fetchPhotoCalls.isEmpty())
+    }
+
+    // ---------- iCloud self-href on the delta path ----------
+
+    @Test
+    fun `the collection self-href in a delta is ignored, never held as unreadable`() = runTest {
+        // iCloud's sync-collection REPORT lists the collection ITSELF in its changed
+        // set, without a trailing slash and with no resourcetype, so it slips past the
+        // parser's self-row filter into the requested href set. The multiget drops it
+        // (a non-contact collection href 400s the whole batch), so it never yields a
+        // contact. It must NOT be counted unreadable: otherwise the book would hold its
+        // cursor forever AND booksFailed>0 would permanently disable the orphan sweep.
+        // This reproduces the regression at the delta path, where iCloud actually
+        // delivers it — the unit layer was previously blind to it because the fake and
+        // the example tests only ever used clean member hrefs.
+        provider.seed(ACCOUNT_NAME, "/keep.vcf", "e-keep")
+        seedStoredToken(BOOK_URL, "token-1")
+        val bk = book(contacts = mutableListOf(contact("/keep.vcf", "e-keep"), contact("/new.vcf", "e-new")))
+        // The slashless collection self-href, exactly as iCloud reports it.
+        val selfHref = BOOK_URL.trimEnd('/')
+        bk.syncReports += CalDavResult.success(
+            ContactSyncReport(
+                syncToken = "token-2",
+                changed = listOf(ContactSyncItem(selfHref, null), ContactSyncItem("/new.vcf", "e-new")),
+                deleted = emptyList(),
+            ),
+        )
+        val client = clientWith(bk)
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the real new contact is inserted", 1, result.inserted)
+        assertEquals("the self-href does not fail the book", 0, result.booksFailed)
+        assertEquals(
+            "the token advances — the self-href never holds the cursor",
+            "token-2",
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+
+        // Next run: the book stays on the cheap incremental path; the self-href never
+        // wedged it into a permanent re-list, and the device matches the server.
+        strategy.sync(account, SERVER_URL, client)
+        assertEquals(
+            "stays on the incremental path across runs",
+            listOf(BOOK_URL to "token-1", BOOK_URL to "token-2"),
+            client.syncCollectionCalls,
+        )
+        assertEquals("device converged to the server set", setOf("/keep.vcf", "/new.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+    }
+
+    // ---------- model-based convergence (the poisoned-cursor class) ----------
+
+    @Test
+    fun `random run sequences with transient failures always converge device to server`() = runTest {
+        // Property guard for the poisoned-cursor class: no matter how server mutations
+        // and transient per-run read failures interleave, once the system quiesces the
+        // device MUST equal the server (RFC 6578 §3.1 — keep syncing until reconciled).
+        // A cursor that ever advances past a contact the run didn't actually retrieve
+        // breaks this: on the incremental path the delta never re-reports it, so it is
+        // orphaned permanently. This drives that path with a small model of a real
+        // sync-collection server, which re-delivers the same changes on an un-advanced
+        // token — so a correctly HELD cursor heals and a wrongly ADVANCED one orphans.
+        val rng = java.util.Random(20260809L)
+
+        // The server's current truth (href -> etag) and each contact's body. /c1.vcf is
+        // pinned present so the device never fully empties (an empty device would force
+        // the self-heal full-listing path, off-model for this incremental property).
+        val server = LinkedHashMap<String, String>()
+        val bodies = HashMap<String, String>()
+        val hrefs = (1..6).map { "/c$it.vcf" }
+        fun put(href: String) {
+            server[href] = "e-${href.drop(1)}-${rng.nextInt(100000)}"
+            bodies[href] = vcard(href, "Person $href")
+        }
+        put("/c1.vcf")
+
+        // The (token, state) the client last acknowledged by persisting an advanced
+        // token. Deltas are recomputed from here every run, so a held token re-delivers.
+        var ackedToken: String? = "token-0"
+        var ackedState = HashMap(server)
+        var tokenSeq = 0
+
+        val bk = book(ctag = null)
+        // The initial full listing persists this token, putting the book on the delta
+        // path; delta tokens (token-1, token-2, ...) advance from there.
+        val client = clientWith(bk, syncToken = "token-0")
+
+        fun reflectServerIntoBook() {
+            bk.contacts.clear()
+            server.forEach { (h, e) -> bk.contacts += CardDavContactData(h, "$BOOK_URL$h", e, bodies[h]!!) }
+        }
+
+        // Establish the initial cursor via a full listing.
+        reflectServerIntoBook()
+        strategy.sync(account, SERVER_URL, client)
+
+        fun programDelta(injectFailure: Boolean) {
+            reflectServerIntoBook()
+            // What a real server reports for the client's current (possibly held) token:
+            // everything changed since ackedState, plus everything removed since then.
+            val changed = server.filter { (h, e) -> ackedState[h] != e }.map { ContactSyncItem(it.key, it.value) }
+            val deleted = (ackedState.keys - server.keys).toList()
+            // Corrupt ONE changed body so the reader yields no contact for it: the run
+            // must hold (not advance), and the next run re-delivers and heals.
+            if (injectFailure && changed.isNotEmpty()) {
+                val victim = changed[rng.nextInt(changed.size)].href
+                bk.contacts.replaceAll { if (it.href == victim) it.copy(vcardBody = "not a vcard") else it }
+            }
+            bk.syncReports.clear()
+            bk.syncReports += CalDavResult.success(
+                ContactSyncReport(syncToken = "token-${++tokenSeq}", changed = changed, deleted = deleted),
+            )
+        }
+
+        suspend fun runOnceThenReconcileAck() {
+            strategy.sync(account, SERVER_URL, client)
+            // If the persisted token advanced, the run fully reconciled to the current
+            // server state; snapshot it as the new acked baseline. If it was held, the
+            // baseline is unchanged and the next delta re-delivers.
+            val stored = database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken
+            if (stored != ackedToken) {
+                ackedToken = stored
+                ackedState = HashMap(server)
+            }
+        }
+
+        repeat(20) {
+            // 1-2 mutations: add/modify any href, or delete one of c2..c6 (c1 pinned).
+            repeat(1 + rng.nextInt(2)) {
+                if (rng.nextInt(4) == 0) {
+                    val victim = hrefs.drop(1)[rng.nextInt(hrefs.size - 1)]
+                    server.remove(victim)
+                } else {
+                    put(hrefs[rng.nextInt(hrefs.size)])
+                }
+            }
+            programDelta(injectFailure = rng.nextInt(10) < 4)
+            runOnceThenReconcileAck()
+        }
+
+        // Quiesce: stop mutating and injecting failures, and let it settle. A correct
+        // cursor converges within one clean run; give it a few for any held tail.
+        repeat(4) {
+            programDelta(injectFailure = false)
+            runOnceThenReconcileAck()
+        }
+
+        assertTrue("the server must be non-empty for a meaningful convergence check", server.isNotEmpty())
+        assertEquals(
+            "after settling, the device href set must equal the server's — no orphan left behind a cursor",
+            server.keys,
+            provider.hrefsFor(ACCOUNT_NAME),
+        )
+        server.forEach { (href, etag) ->
+            assertEquals("device etag for $href must match the server", etag, provider.etagFor(ACCOUNT_NAME, href))
+        }
     }
 
     private companion object {

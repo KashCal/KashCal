@@ -128,7 +128,7 @@ class MultiServerCardDavReadTest(
         val hrefs = collectHrefs(c, book.url)
         assumeTrue("${config.name}: no contact hrefs after seeding", hrefs.isNotEmpty())
 
-        val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)?.data.orEmpty()
+        val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)?.data?.contacts.orEmpty()
 
         // Tolerate pre-existing contacts: assert only that OUR seed is present.
         val seed = read.firstOrNull { it.contact.uid == SEED_UID }

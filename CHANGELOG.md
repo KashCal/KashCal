@@ -1,3 +1,11 @@
+## [2026.08.09]
+
+### Everything in this release
+
+- Fixed a deleted event not disappearing from KashCal after another client removed it on the server; when the server echoes the event's address with the `@` in its filename written as `%40`, the deletion is now matched and applied instead of silently skipped, #333
+- Changed pull-to-refresh to sync CardDAV contacts as well as calendar events, so a swipe-down picks up contacts added on the server right away instead of waiting for the next periodic sync
+- Fixed contact sync skipping past a contact it could not read and never coming back to it; a contact whose card failed to parse no longer gets stranded, and the next sync retries it
+
 ## [2026.08.08]
 
 ### Everything in this release

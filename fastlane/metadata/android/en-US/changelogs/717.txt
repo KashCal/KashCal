@@ -1,0 +1,3 @@
+• Sync: a deleted event now disappears from KashCal after another client removes it on the server, even when the server re-encodes the event's address (#333)
+• Contacts: pull-to-refresh now syncs CardDAV contacts too, not just calendar events
+• Contacts: a contact whose card fails to parse is no longer skipped for good; the next sync retries it

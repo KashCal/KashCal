@@ -201,7 +201,7 @@ class ContactPullStrategy @Inject constructor(
                     // A single resource body can hold more than one vCard, so an
                     // href can map to several contacts — group (never associate,
                     // which would drop all but the last) so none are lost.
-                    val writesByHref = read.data.groupBy(
+                    val writesByHref = read.data.contacts.groupBy(
                         keySelector = { it.href },
                         valueTransform = { rc ->
                             MappedContactWrite(
@@ -222,11 +222,21 @@ class ContactPullStrategy @Inject constructor(
                     val replacedNow = applyWrite(replaceWrites, "Replace failed for $bookUrl") {
                         contactsProvider.replaceContacts(accountName, it)
                     }
+                    // An href we requested but couldn't read (a body that threw or
+                    // parsed to zero vCards, or one the server omitted) leaves this
+                    // book unconfirmed: ok=false so the caller holds its sync cursor
+                    // and re-fetches it next run rather than advancing past a contact
+                    // it never actually mirrored (RFC 6578 §3.1 — the client must keep
+                    // synchronizing until the collection reconciles). Group drops are
+                    // NOT unreadable, so a book of only real+group contacts stays ok.
+                    if (read.data.unreadableHrefs.isNotEmpty()) {
+                        Log.w(TAG, "Unreadable contacts in $bookUrl: ${read.data.unreadableHrefs.size} href(s) held for retry")
+                    }
                     MaterializeOutcome(
                         inserted = insertedNow ?: 0,
                         replaced = replacedNow ?: 0,
                         skipped = skippedHere,
-                        ok = insertedNow != null && replacedNow != null,
+                        ok = insertedNow != null && replacedNow != null && read.data.unreadableHrefs.isEmpty(),
                     )
                 }
                 is CalDavResult.Error -> {
@@ -350,10 +360,19 @@ class ContactPullStrategy @Inject constructor(
             inserted += outcome.inserted
             replaced += outcome.replaced
             skipped += outcome.skipped
-            if (!outcome.ok) booksFailed++
-
-            // Persist token/ctag for this book (the token probed before enumeration).
-            addressBookDao.updateSyncToken(bookId, syncToken = newToken, ctag = book.ctag)
+            if (outcome.ok) {
+                // Persist token/ctag for this book (the token probed before enumeration).
+                addressBookDao.updateSyncToken(bookId, syncToken = newToken, ctag = book.ctag)
+            } else {
+                // A partial book (a write failed, or an href couldn't be read) must NOT
+                // advance the cursor: doing so would step the delta past contacts we
+                // never mirrored, orphaning them until an unrelated server change
+                // re-reports them. Hold the stored cursor (carried through the upsert)
+                // so the next run re-enumerates and re-fetches the missing hrefs. This
+                // is what turns a transient parse/write failure into a self-healing
+                // retry instead of a permanent gap (RFC 6578 §3.1).
+                booksFailed++
+            }
         }
 
         // ---- Orphan sweep: union-wide, only when every book was FULLY enumerated ----

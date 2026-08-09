@@ -233,6 +233,69 @@ class PullStrategyTest {
     }
 
     @Test
+    fun `incremental sync deletes event when server re-encodes at-sign in deletion href`() = runTest {
+        // Regression for issue #333: KashCal stores caldav_url with a literal '@'
+        // (its UID contains "@kashcal.onekash.org"). Radicale echoes the deleted href
+        // with the '@' percent-encoded as %40. Exact string match then fails and the
+        // deletion is silently skipped. The stub below mimics real exact-match DB
+        // behavior: it returns the row ONLY for the stored literal-'@' url, null for
+        // the %40 form the server reports.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
+        val deletedHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
+        val storedEvent = createEvent(id = 42, caldavUrl = storedUrl)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref)
+            ))
+        // Real DB semantics: exact match only. %40 url -> no row; literal '@' url -> the row.
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.getByCaldavUrl(storedUrl) } returns storedEvent
+        // Normalized fallback candidate set for the calendar.
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(storedEvent)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        coVerify { eventsDao.deleteById(42) }
+    }
+
+    @Test
+    fun `incremental sync counts a duplicated deletion href only once`() = runTest {
+        // A server may report the same deleted href more than once (iCloud does this
+        // for changed hrefs). The per-loop resolver caches a candidate map, so a
+        // repeated href must not resolve the just-deleted row again and double-count
+        // the deletion / notification. deleteById(id) on a missing row is a no-op.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
+        val deletedHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
+        val storedEvent = createEvent(id = 42, caldavUrl = storedUrl)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref, deletedHref)  // same href twice
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.getByCaldavUrl(storedUrl) } returns storedEvent
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(storedEvent)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        assertEquals(1, result.changes.count { it.type == ChangeType.DELETED })
+        coVerify(exactly = 1) { eventsDao.deleteById(42) }
+    }
+
+    @Test
     fun `incremental sync fetches changed events by href`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val changedHref = "/calendars/home/event.ics"
@@ -350,6 +413,40 @@ class PullStrategyTest {
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
         coVerify { eventsDao.deleteById(orphanEvent.id) }
+    }
+
+    @Test
+    fun `full sync does not delete event when server encodes at-sign differently`() = runTest {
+        // Regression for issue #333 (full-sync stale-deletion path): the local row
+        // stores a literal-'@' url; the server (Radicale) reports the SAME resource
+        // with the '@' percent-encoded as %40. Before the fix, the raw '!in serverUrls'
+        // membership test was true, so the still-present event was deleted (data loss).
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
+        val serverHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
+        val storedEvent = createEvent(id = 77, caldavUrl = storedUrl)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
+        // Server reports the same resource (encoded), same etag as local -> no re-fetch.
+        val serverEvent = CalDavEvent(
+            href = serverHref,
+            url = "https://caldav.example.com$serverHref",
+            etag = "etag-1",
+            icalData = createSimpleIcal("uuid@kashcal.onekash.org", "Kept Event")
+        )
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(serverEvent.href, serverEvent.etag)))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(serverEvent))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns
+            listOf(storedEvent.copy(etag = "etag-1"))
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 0) { eventsDao.deleteById(77) }
     }
 
     @Test

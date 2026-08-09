@@ -260,6 +260,30 @@ class EventsDaoTest {
         assertEquals(caldavUrl, result?.caldavUrl)
     }
 
+    @Test
+    fun `getEventsWithCaldavUrl returns only this calendar's events that have a caldavUrl`() = runTest {
+        // Two events with URLs in the target calendar, one without a URL (must be excluded),
+        // and one URL event in another calendar (must not leak in).
+        eventsDao.insert(createTestEvent(title = "Has URL 1", caldavUrl = "https://test.com/cal/a@x.ics"))
+        eventsDao.insert(createTestEvent(title = "Has URL 2", caldavUrl = "https://test.com/cal/b.ics"))
+        eventsDao.insert(createTestEvent(title = "No URL", caldavUrl = null))
+        eventsDao.insert(createTestEvent(
+            title = "Other calendar",
+            calendarId = secondCalendarId,
+            caldavUrl = "https://test.com/cal2/c.ics"
+        ))
+
+        val result = eventsDao.getEventsWithCaldavUrl(calendarId)
+
+        assertEquals(2, result.size)
+        assertTrue(result.all { it.calendarId == calendarId })
+        assertTrue(result.all { it.caldavUrl != null })
+        assertEquals(
+            setOf("https://test.com/cal/a@x.ics", "https://test.com/cal/b.ics"),
+            result.mapNotNull { it.caldavUrl }.toSet()
+        )
+    }
+
     // ==================== Query by Calendar Tests ====================
 
     @Test

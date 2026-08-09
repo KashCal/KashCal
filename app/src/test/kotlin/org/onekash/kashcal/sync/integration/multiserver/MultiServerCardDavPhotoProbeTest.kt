@@ -134,7 +134,7 @@ class MultiServerCardDavPhotoProbeTest(
         val hrefs = collectHrefs(c, book.url)
         assumeTrue("${config.name}: no contact hrefs after seeding", hrefs.isNotEmpty())
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
-            ?.data.orEmpty()
+            ?.data?.contacts.orEmpty()
 
         val urlSeed = read.firstOrNull { it.contact.uid == URL_UID }
         val inlineSeed = read.firstOrNull { it.contact.uid == INLINE_UID }
@@ -244,7 +244,7 @@ class MultiServerCardDavPhotoProbeTest(
 
         val hrefs = collectHrefs(c, book.url)
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
-            ?.data.orEmpty()
+            ?.data?.contacts.orEmpty()
 
         // Find any read-back contact whose photo is a server-minted URL (not one of
         // our synthetic example.test seed URLs, which resolve to nothing).

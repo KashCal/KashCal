@@ -216,6 +216,11 @@ class FakeCardDavClient(
         fetchByHrefCalls += addressBookUrl to hrefs
         fetchError?.let { return it }
         val pool = looseBodies + books.flatMap { it.contacts }
+        // Resolve requested hrefs by exact string, mirroring the stable-href identity
+        // the whole sync path assumes (device-etag map, write grouping, delete-by-href
+        // all key on the raw href). A requested href with no matching body — the
+        // collection self-href, a deleted contact, an href the server omitted — is
+        // simply absent from the response, exactly as the real multiget behaves.
         return CalDavResult.success(pool.filter { it.href in hrefs })
     }
 

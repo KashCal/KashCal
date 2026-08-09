@@ -116,7 +116,7 @@ class MultiServerContactPhotoFetchTest(
 
         val hrefs = collectHrefs(c, book.url)
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
-            ?.data.orEmpty()
+            ?.data?.contacts.orEmpty()
 
         // A server-minted photo URL: not one of our synthetic example.test seeds.
         val mintedUrl = read

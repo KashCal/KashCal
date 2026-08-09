@@ -118,7 +118,7 @@ class ContactPhotoFetcher @Inject constructor(
                 // URL photo). A body can technically hold several vCards; take the
                 // first non-null photo URL for the href.
                 val urlByHref = HashMap<String, String?>()
-                for (rc in read.data) {
+                for (rc in read.data.contacts) {
                     val url = VCardContactMapper.toEntity(rc.contact).photoUrl
                     if (urlByHref[rc.href] == null) urlByHref[rc.href] = url
                 }

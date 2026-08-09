@@ -1099,6 +1099,9 @@ class HomeViewModel(
         syncScheduler.setShowBannerForSync(false)
         Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
+        // Pull-to-refresh also refreshes CardDAV contacts; the worker self-guards to
+        // contact-sync-enabled accounts, so an unconditional sweep here is cheap and safe.
+        syncScheduler.requestImmediateContactSync()
     }
 
     /**

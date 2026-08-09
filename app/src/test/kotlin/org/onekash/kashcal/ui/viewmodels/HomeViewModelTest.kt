@@ -1521,6 +1521,8 @@ class HomeViewModelTest {
 
         // Sync should NOT have been requested
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+        // Offline must not trigger contact sync either
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
     }
 
     @Test
@@ -1542,6 +1544,52 @@ class HomeViewModelTest {
 
         // Sync should have been requested
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+    fun `refreshSync when online also triggers CardDAV contact sync`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Ensure online
+        networkStateFlow.value = true
+
+        // Clear any init-time sync calls
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Contact sync should also have been requested (sweep all contact-sync accounts)
+        verify { syncScheduler.requestImmediateContactSync() }
+    }
+
+    @Test
+    fun `syncOnResumeIfNeeded does not trigger contact sync`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isConfigured)
+
+        // Clear any init-time sync calls, then resume from background. App-open
+        // resume shares performSync() with pull-to-refresh but must NOT sweep
+        // contacts — only the explicit pull-to-refresh gesture does.
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+
+        // The resume path did run (calendar sync fired) — it just must not
+        // sweep contacts. This guards against the exactly=0 passing because
+        // syncOnResumeIfNeeded early-returned instead.
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
     }
 
     // ==================== Pull-to-Refresh Not Configured / Offline Tests ====================

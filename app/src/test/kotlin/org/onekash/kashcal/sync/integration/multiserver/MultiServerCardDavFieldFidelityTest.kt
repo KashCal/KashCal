@@ -141,7 +141,7 @@ class MultiServerCardDavFieldFidelityTest(
         val hrefs = collectHrefs(c, book.url)
         assumeTrue("${config.name}: no contact hrefs after seeding", hrefs.isNotEmpty())
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
-            ?.data.orEmpty()
+            ?.data?.contacts.orEmpty()
 
         // Tolerate pre-existing contacts: assert only on OUR seed, keyed by UID.
         val seed = read.firstOrNull { it.contact.uid == FIDELITY_UID }?.contact

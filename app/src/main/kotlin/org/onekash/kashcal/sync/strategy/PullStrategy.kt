@@ -36,6 +36,7 @@ import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
+import org.onekash.kashcal.sync.util.CaldavUrlNormalizer
 import org.onekash.kashcal.sync.strategy.PullStrategy.Companion.MULTIGET_BATCH_SIZE
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -383,6 +384,37 @@ class PullStrategy @Inject constructor(
     }
 
     /**
+     * Build a resolver that maps a server-reported resource URL to the local
+     * event whose stored caldav_url matches it, tolerating percent-encoding
+     * differences. Some servers (e.g. Radicale) echo a resource href with
+     * pchar-legal reserved characters percent-encoded (a literal '@' comes back
+     * as %40) while KashCal stored the URL with the literal character. An exact
+     * match is tried first (index-backed and the common case); on a miss the URL
+     * is compared canonically against the calendar's stored URLs.
+     *
+     * Reuse a single resolver across a whole deletion loop: the heavier canonical
+     * candidate map is loaded at most once — on the first exact-match miss — then
+     * reused. This matters on servers that re-encode every href, where every
+     * lookup misses the fast path; a per-lookup reload would be O(deletions x
+     * calendar size). Create it per loop (its cache must not outlive the loop).
+     */
+    private fun caldavUrlResolver(calendarId: Long): suspend (String) -> Event? {
+        var canonicalMap: Map<String, Event>? = null
+        return resolve@{ url ->
+            eventsDao.getByCaldavUrl(url)?.let { return@resolve it }
+            val target = CaldavUrlNormalizer.canonicalize(url) ?: return@resolve null
+            val map = canonicalMap ?: eventsDao.getEventsWithCaldavUrl(calendarId)
+                .mapNotNull { e ->
+                    val u = e.caldavUrl ?: return@mapNotNull null
+                    (CaldavUrlNormalizer.canonicalize(u) ?: u) to e
+                }
+                .toMap()
+                .also { canonicalMap = it }
+            map[target]
+        }
+    }
+
+    /**
      * Incremental sync using sync-collection REPORT.
      * Only fetches changed/deleted items since last sync.
      */
@@ -426,9 +458,14 @@ class PullStrategy @Inject constructor(
         // Handle deletions (respecting pending local changes)
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
-        for (href in syncReport.deleted) {
+        val resolveLocalEvent = caldavUrlResolver(calendar.id)
+        // Dedupe like the changed-href list below: a server may report the same
+        // deleted href more than once (iCloud is known to). The resolver caches a
+        // per-loop candidate map, so a repeated href would otherwise resolve the
+        // just-deleted row again and double-count the deletion + notification.
+        for (href in syncReport.deleted.distinct()) {
             val url = quirks.buildEventUrl(href, calendar.caldavUrl)
-            val event = eventsDao.getByCaldavUrl(url)
+            val event = resolveLocalEvent(url)
             if (event != null) {
                 // LOCAL-FIRST: Don't delete events with pending local changes
                 // They may have been modified/recreated locally while offline
@@ -453,6 +490,8 @@ class PullStrategy @Inject constructor(
                 ))
                 eventsDao.deleteById(event.id)
                 deleted++
+            } else {
+                Log.d(TAG, "Deletion href matched no local event: $url")
             }
         }
 
@@ -638,33 +677,30 @@ class PullStrategy @Inject constructor(
         // The next incremental sync will handle reconciliation properly.
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
+        // Membership is compared on a CANONICAL form of the URL so a resource the
+        // server echoes with different (but equivalent) percent-encoding — e.g.
+        // Radicale re-encoding a literal '@' in the filename as '%40' — is not
+        // mistaken for a server-side deletion and destroyed locally (issue #333).
+        val serverUrls = serverEtags.mapTo(HashSet(serverEtags.size)) { (href, _) ->
+            val url = quirks.buildEventUrl(href, calendar.caldavUrl)
+            CaldavUrlNormalizer.canonicalize(url) ?: url
+        }
+        fun Event.isStaleOnServer(): Boolean =
+            caldavUrl != null &&
+            (CaldavUrlNormalizer.canonicalize(caldavUrl) ?: caldavUrl) !in serverUrls &&
+            !hasPendingChanges() &&
+            id !in recentlyPushedEventIds
         if (forceFullSync) {
-            // Build server URL set to log how many events *would have been* deleted
-            val serverUrls = serverEtags.map { (href, _) ->
-                quirks.buildEventUrl(href, calendar.caldavUrl)
-            }.toSet()
+            // Count how many events *would have been* deleted (skipped to avoid data loss).
             val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
-            val wouldDelete = localEvents.count { event ->
-                event.caldavUrl != null &&
-                event.caldavUrl !in serverUrls &&
-                !event.hasPendingChanges() &&
-                event.id !in recentlyPushedEventIds
-            }
+            val wouldDelete = localEvents.count { it.isStaleOnServer() }
             if (wouldDelete > 0) {
                 Log.d(TAG, "forceFullSync: skipping deletion of $wouldDelete local events not in server response")
             }
         } else {
             // Normal path: delete stale local events
-            val serverUrls = serverEtags.map { (href, _) ->
-                quirks.buildEventUrl(href, calendar.caldavUrl)
-            }.toSet()
             val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
-            val toDelete = localEvents.filter { event ->
-                event.caldavUrl != null &&
-                event.caldavUrl !in serverUrls &&
-                !event.hasPendingChanges() &&
-                event.id !in recentlyPushedEventIds
-            }
+            val toDelete = localEvents.filter { it.isStaleOnServer() }
             for (event in toDelete) {
                 Log.d(TAG, "Deleting stale event: ${event.caldavUrl}")
                 deletedChanges.add(SyncChange(
@@ -682,16 +718,20 @@ class PullStrategy @Inject constructor(
             }
         }
 
-        // Step 2: Compare etags to skip unchanged events (bandwidth optimization)
+        // Step 2: Compare etags to skip unchanged events (bandwidth optimization).
+        // Keyed on the canonical URL form so an '@'-in-filename event the server
+        // re-encodes as '%40' still matches its local etag and isn't re-downloaded.
         val localEtagEntries = eventsDao.getEtagMapForCalendar(calendar.id, startMs, endMs)
-        val localEtagMap = localEtagEntries.associate { it.caldavUrl to it.etag }
+        val localEtagMap = localEtagEntries.associate {
+            (CaldavUrlNormalizer.canonicalize(it.caldavUrl) ?: it.caldavUrl) to it.etag
+        }
 
         val hrefsToFetch = mutableListOf<String>()
         var skippedCount = 0
 
         for ((href, serverEtag) in serverEtags) {
             val eventUrl = quirks.buildEventUrl(href, calendar.caldavUrl)
-            val localEtag = localEtagMap[eventUrl]
+            val localEtag = localEtagMap[CaldavUrlNormalizer.canonicalize(eventUrl) ?: eventUrl]
             if (localEtag == null || localEtag != serverEtag) {
                 hrefsToFetch.add(href)
             } else {
@@ -809,32 +849,49 @@ class PullStrategy @Inject constructor(
         // Changed: etag differs (including null -> non-null)
         // New: on server but not local
         // Deleted: on local but not server (handled separately)
+        //
+        // Membership is compared on a CANONICAL form of the URL so a resource
+        // the server echoes with different (but equivalent) percent-encoding —
+        // e.g. Radicale re-encoding a literal '@' in the filename as '%40' —
+        // is recognized as the same event rather than being misclassified as
+        // both deleted and new. We only canonicalize for comparison; changed/new
+        // keep the ORIGINAL server URL (so multiget fetches the exact server
+        // path) and deleted keeps the ORIGINAL local URL (for the row lookup).
+        val canonicalLocalEtags = HashMap<String, String?>(localEtagMap.size)
+        for ((url, etag) in localEtagMap) {
+            canonicalLocalEtags[CaldavUrlNormalizer.canonicalize(url) ?: url] = etag
+        }
 
         val changedUrls = mutableListOf<String>()
         val newUrls = mutableListOf<String>()
 
         for ((serverUrl, serverEtag) in serverEtagMap) {
-            val localEtag = localEtagMap[serverUrl]
-            if (localEtag == null) {
+            val canonicalServerUrl = CaldavUrlNormalizer.canonicalize(serverUrl) ?: serverUrl
+            if (!canonicalLocalEtags.containsKey(canonicalServerUrl)) {
                 // New event on server
                 newUrls.add(serverUrl)
-            } else if (localEtag != serverEtag) {
+            } else if (canonicalLocalEtags[canonicalServerUrl] != serverEtag) {
                 // Etag differs - event changed
                 changedUrls.add(serverUrl)
             }
             // else: etag matches, no change needed
         }
 
-        // Find deleted events (on local but not server)
-        val deletedUrls = localEtagMap.keys.filter { it !in serverEtagMap }
+        // Find deleted events (on local but not server), comparing canonically.
+        val canonicalServerKeys = serverEtagMap.keys
+            .mapTo(HashSet(serverEtagMap.size)) { CaldavUrlNormalizer.canonicalize(it) ?: it }
+        val deletedUrls = localEtagMap.keys.filter {
+            (CaldavUrlNormalizer.canonicalize(it) ?: it) !in canonicalServerKeys
+        }
 
         Log.d(TAG, "Etag comparison: changed=${changedUrls.size}, new=${newUrls.size}, deleted=${deletedUrls.size}")
 
         // Step 4: Handle deletions (respecting pending local changes)
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
+        val resolveLocalEvent = caldavUrlResolver(calendar.id)
         for (url in deletedUrls) {
-            val event = eventsDao.getByCaldavUrl(url)
+            val event = resolveLocalEvent(url)
             if (event != null) {
                 // LOCAL-FIRST: Don't delete events with pending local changes
                 // RFC 4791: Don't delete recently pushed events — server may not
@@ -857,6 +914,8 @@ class PullStrategy @Inject constructor(
                 ))
                 eventsDao.deleteById(event.id)
                 deleted++
+            } else {
+                Log.d(TAG, "Deletion url matched no local event: $url")
             }
         }
 

@@ -157,6 +157,15 @@ interface EventsDao {
     suspend fun getByCaldavUrl(caldavUrl: String): Event?
 
     /**
+     * All events in a calendar that have a caldav_url, for percent-encoding-tolerant
+     * URL matching. SQLite cannot percent-decode, so callers canonicalize the URL in
+     * Kotlin (see CaldavUrlNormalizer) and compare in memory. Index-backed on
+     * calendar_id; used only as a fallback after the exact getByCaldavUrl() miss.
+     */
+    @Query("SELECT * FROM events WHERE calendar_id = :calendarId AND caldav_url IS NOT NULL")
+    suspend fun getEventsWithCaldavUrl(calendarId: Long): List<Event>
+
+    /**
      * Find master event by UID within a calendar.
      * Master events have original_event_id = NULL.
      * Used as primary lookup since caldavUrl can vary by server (p180 vs p181).

@@ -119,7 +119,7 @@ class MultiServerCardDavZohoProbeTest {
         assumeTrue("Zoho: could not seed a contact — write shape differs, characterize separately", seeded)
 
         val hrefs = collectHrefs(c, book.url)
-        val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)?.data.orEmpty()
+        val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)?.data?.contacts.orEmpty()
         val found = read.any { it.contact.uid == SEED_UID }
         println("=== Zoho CardDAV: read back ${read.size} contact(s); seed present=$found ===")
     }
@@ -156,7 +156,7 @@ class MultiServerCardDavZohoProbeTest {
 
         val hrefs = collectHrefs(c, book.url)
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
-            ?.data.orEmpty()
+            ?.data?.contacts.orEmpty()
 
         val urlSeed = read.firstOrNull { it.contact.uid == URL_PHOTO_UID }
         val inlineSeed = read.firstOrNull { it.contact.uid == INLINE_PHOTO_UID }
@@ -246,7 +246,7 @@ class MultiServerCardDavZohoProbeTest {
         println("=== Zoho CardDAV batch: multi-href multiget (${batchHrefs.size} hrefs) -> ${resultShape(multi)} (bodies=$multiCount) ===")
 
         // The production read path (chunked at MULTIGET_PAGE_SIZE) for comparison.
-        val read = (reader.readContacts(book.url, batchHrefs, book.vcardVersion) as? CalDavResult.Success)?.data.orEmpty()
+        val read = (reader.readContacts(book.url, batchHrefs, book.vcardVersion) as? CalDavResult.Success)?.data?.contacts.orEmpty()
         val seedsRead = read.count { it.contact.uid.startsWith(BATCH_UID_PREFIX) }
         println("=== Zoho CardDAV batch: chunked reader read back $seedsRead / ${batchHrefs.size} seed(s) ===")
 
