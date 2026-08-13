@@ -12,8 +12,8 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 class ExportablePreferencesTest {
 
     @Test
-    fun `allow list contains exactly 41 keys`() {
-        assertEquals(41, ExportablePreferences.KEYS.size)
+    fun `allow list contains exactly 42 keys`() {
+        assertEquals(42, ExportablePreferences.KEYS.size)
     }
 
     @Test
@@ -199,6 +199,18 @@ class ExportablePreferencesTest {
                 allowedNames.contains(key.name),
             )
         }
+    }
+
+    @Test
+    fun `MONTH_WIDGET_EVENT_TITLES is in the allow-list as a persistent widget display choice`() {
+        assertTrue(
+            "MONTH_WIDGET_EVENT_TITLES must be in the allow-list",
+            ExportablePreferences.KEYS.any { it.name == PreferencesKeys.MONTH_WIDGET_EVENT_TITLES.name },
+        )
+        assertFalse(
+            "MONTH_WIDGET_EVENT_TITLES must not be in EXCLUDED_KEY_NAMES",
+            ExportablePreferences.EXCLUDED_KEY_NAMES.contains(PreferencesKeys.MONTH_WIDGET_EVENT_TITLES.name),
+        )
     }
 
     @Test
