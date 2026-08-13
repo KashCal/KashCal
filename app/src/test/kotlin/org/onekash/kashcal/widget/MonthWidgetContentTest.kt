@@ -275,9 +275,10 @@ class MonthWidgetContentTest {
 
     @Test
     fun `ellipsizeTitle trims trailing whitespace before the ellipsis`() {
-        // "Project X" at 8 chars: take(7) = "Project" + "…" — no dangling space
-        assertEquals("Projec…", ellipsizeTitle("Project X", 8))
-        assertEquals("Standup…", ellipsizeTitle("Standup Meeting", 8))
+        // take(7) of "Project X" is "Project" (no trailing space), so the ellipsis
+        // attaches directly; "Team sync" takes "Team sy" -> trimEnd -> "Team sy…"
+        assertEquals("Project…", ellipsizeTitle("Project X", 8))
+        assertEquals("Team sy…", ellipsizeTitle("Team sync", 8))
     }
 
     @Test

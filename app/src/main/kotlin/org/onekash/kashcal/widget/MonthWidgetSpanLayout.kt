@@ -159,11 +159,12 @@ internal fun computeMonthWidgetWeekRender(
         }
     }
 
-    // 4. Drop trailing all-empty rows so short weeks stay compact.
+    // 4. Drop trailing all-empty rows so short weeks stay compact. A week with no events at
+    //    all collapses to zero rows — the caller renders nothing below the day numbers.
     val rows = grid.map { it.toList() }
     var last = rows.size - 1
-    while (last > 0 && rows[last].all { it === MonthWidgetSlot.Empty }) last--
-    return MonthWidgetWeekRender(slots = rows.subList(0, last + 1))
+    while (last >= 0 && rows[last].all { it === MonthWidgetSlot.Empty }) last--
+    return MonthWidgetWeekRender(slots = if (last < 0) emptyList() else rows.subList(0, last + 1))
 }
 
 /** All-day busy = 0; all-day free = 1; timed = 2. Lower sorts first — same as the app. */
