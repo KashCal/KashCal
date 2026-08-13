@@ -149,6 +149,13 @@ object PreferencesKeys {
     val WIDGET_DETAILED_ROWS = booleanPreferencesKey("widget_detailed_rows")
 
     /**
+     * Month widget day-cell event style. false = colored indicator dots below the day
+     * number; true = event title rows (mirroring the in-app month view: timed events as
+     * color stripe + title, all-day events as filled/tinted chips). Default: false (dots).
+     */
+    val MONTH_WIDGET_EVENT_TITLES = booleanPreferencesKey("month_widget_event_titles")
+
+    /**
      * Last vertical scroll position of the Day/3-Day/Week time grid, stored as
      * minutes from midnight (0..1439). Restored on cold launch so the timeline
      * opens where the user last left it instead of the default hour. Stored as

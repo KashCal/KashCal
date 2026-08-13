@@ -575,6 +575,8 @@
     <string name="settings_widget_event_limit_hint">Maximale Anzahl Termine pro Tag in Widgets</string>
     <string name="settings_detailed_widget_rows">Detaillierte Widget-Zeilen</string>
     <string name="settings_detailed_widget_rows_info">Kompakt in einer Zeile oder detailliert in zwei Zeilen mit Endzeit.</string>
+    <string name="settings_month_widget_event_titles">Termintitel im Monats-Widget</string>
+    <string name="settings_month_widget_event_titles_info">Termine in den Tageszellen des Monats-Widgets mit Titel statt als Farbpunkte anzeigen – wie die Monatsansicht in der App.</string>
     <string name="settings_sync_lookback">Sync-Rückblick</string>
     <string name="settings_sync_lookback_hint">Wie weit zurück Termine synchronisiert werden</string>
     <string name="settings_not_set">Nicht festgelegt</string>

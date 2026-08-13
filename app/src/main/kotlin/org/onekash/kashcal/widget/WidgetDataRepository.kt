@@ -38,8 +38,16 @@ class WidgetDataRepository @Inject constructor(
         val isPast: Boolean,
         val isDeviceEvent: Boolean,
         val startDay: Int,
-        val isCancelled: Boolean = false
-    )
+        val isCancelled: Boolean = false,
+        val isFree: Boolean = false,
+        val endDay: Int = startDay
+    ) {
+        /** Multi-day events span more than one day cell and render as continuous bars. */
+        val isMultiDay: Boolean get() = startDay != endDay
+
+        /** Stable identity across the day buckets the event appears in (for span dedup). */
+        val spanKey: String get() = "$eventId:$occurrenceStartTs"
+    }
 
     /**
      * Get today's events for the widget.
@@ -131,7 +139,9 @@ class WidgetDataRepository @Inject constructor(
             isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay),
             isDeviceEvent = displayEvent is DisplayEvent.Device,
             startDay = displayEvent.startDay,
-            isCancelled = displayEvent.isCancelled
+            isCancelled = displayEvent.isCancelled,
+            isFree = displayEvent.isFree,
+            endDay = displayEvent.endDay
         )
     }
 

@@ -261,6 +261,8 @@ fun AccountSettingsScreen(
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     widgetDetailedRows: Boolean = false,
     onWidgetDetailedRowsChange: (Boolean) -> Unit = {},
+    monthWidgetEventTitles: Boolean = false,
+    onMonthWidgetEventTitlesChange: (Boolean) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = "",
     // Settings search
@@ -526,6 +528,22 @@ fun AccountSettingsScreen(
                                 checked = widgetDetailedRows,
                                 onCheckedChange = onWidgetDetailedRowsChange,
                                 info = detailedRowsInfo,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val monthEventTitlesInfo = SettingsRowInfo(
+                            title = stringResource(R.string.settings_month_widget_event_titles),
+                            text = stringResource(R.string.settings_month_widget_event_titles_info)
+                        )
+                        row(label = stringResource(R.string.settings_month_widget_event_titles), id = "month-widget-event-titles") {
+                            SettingsToggleRow(
+                                icon = Icons.Default.CalendarMonth,
+                                label = stringResource(R.string.settings_month_widget_event_titles),
+                                checked = monthWidgetEventTitles,
+                                onCheckedChange = onMonthWidgetEventTitlesChange,
+                                info = monthEventTitlesInfo,
                                 showDivider = false,
                                 searchQuery = searchQuery
                             )

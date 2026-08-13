@@ -224,6 +224,67 @@ class MonthWidgetContentTest {
         assertEquals("March 15, no events", desc)
     }
 
+    // ==================== maxEventRows ====================
+
+    @Test
+    fun `maxEventRows returns 0 when not even one row fits below the day number`() {
+        // 18 (number) + 13 (one row) = 31dp minimum
+        assertEquals(0, maxEventRows(30f))
+    }
+
+    @Test
+    fun `maxEventRows fits exactly one row at the minimum height`() {
+        assertEquals(1, maxEventRows(31f))
+    }
+
+    @Test
+    fun `maxEventRows fits two rows at the standard widget cell height`() {
+        // Standard widget: 304dp tall, 5 weeks -> ~48dp cell. 18 + 13 + 1 + 13 = 45dp.
+        assertEquals(2, maxEventRows(48.2f))
+    }
+
+    @Test
+    fun `maxEventRows caps at MAX_EVENT_ROWS on tall cells`() {
+        assertEquals(MAX_EVENT_ROWS, maxEventRows(200f))
+    }
+
+    // ==================== maxTitleChars ====================
+
+    @Test
+    fun `maxTitleChars estimates characters from cell width`() {
+        // (50 - 8) / 6 = 7
+        assertEquals(7, maxTitleChars(50f))
+    }
+
+    @Test
+    fun `maxTitleChars never drops below 4`() {
+        assertEquals(4, maxTitleChars(20f))
+    }
+
+    // ==================== ellipsizeTitle ====================
+
+    @Test
+    fun `ellipsizeTitle keeps titles that fit`() {
+        assertEquals("Gym", ellipsizeTitle("Gym", 7))
+    }
+
+    @Test
+    fun `ellipsizeTitle truncates with ellipsis`() {
+        assertEquals("Desi…", ellipsizeTitle("Design Review", 5))
+    }
+
+    @Test
+    fun `ellipsizeTitle trims trailing whitespace before the ellipsis`() {
+        // "Project X" at 8 chars: take(7) = "Project" + "…" — no dangling space
+        assertEquals("Projec…", ellipsizeTitle("Project X", 8))
+        assertEquals("Standup…", ellipsizeTitle("Standup Meeting", 8))
+    }
+
+    @Test
+    fun `ellipsizeTitle returns the title untouched for degenerate budgets`() {
+        assertEquals("Gym", ellipsizeTitle("Gym", 0))
+    }
+
     private fun createWidgetEvent(
         calendarColor: Int = 0xFF2196F3.toInt()
     ): WidgetDataRepository.WidgetEvent {
