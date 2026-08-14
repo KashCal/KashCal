@@ -1,3 +1,12 @@
+## [2026.08.14]
+
+### Everything in this release
+
+- Fixed CardDAV contacts failing to sync on accounts whose server hands back a broken auto-discovery response, such as a server running behind a reverse proxy on a non-standard port, or one that rejects the discovery probe outright; contact sync now reuses the connection details the account already worked out when you set up its calendar, so contacts come through on servers where before only the calendars synced
+- Fixed a rare case where all of an account's synced contacts could be wiped from the phone when contact discovery momentarily returned no address books; an empty discovery is now treated as no signal rather than a reason to remove contacts already synced
+- Added a Beta badge to the Contacts toggle in each account's settings, marking read-only contact sync as still stabilizing
+- Improved the change-password field so it uses a password keyboard and lets your credential manager offer to fill and save the new password, matching the sign-in fields
+
 ## [2026.08.09]
 
 ### Everything in this release

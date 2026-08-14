@@ -83,8 +83,24 @@ class FakeCardDavClient(
      */
     val principalErrorUrls: MutableSet<String> = mutableSetOf()
 
+    /** Every [discoverWellKnown] server URL, in call order. Lets a test assert the
+     *  well-known step was SKIPPED when discovery seeds from a stored principal. */
+    val discoverWellKnownCalls: MutableList<String> = mutableListOf()
+
     /** Every [discoverPrincipal] server URL, in call order. */
     val discoverPrincipalCalls: MutableList<String> = mutableListOf()
+
+    /** Every [discoverAddressBookHome] principal URL, in call order. Lets a test
+     *  assert the home-set was PROPFINDed directly against the seeded principal. */
+    val discoverAddressBookHomeCalls: MutableList<String> = mutableListOf()
+
+    /**
+     * Principal URLs for which [discoverAddressBookHome] returns an error instead of
+     * [addressBookHomes] — models a principal that carries no `addressbook-home-set`
+     * (the empty-home-set 500 the real client returns) so a test can assert the
+     * seed path falls through to the well-known chain rather than failing.
+     */
+    val addressBookHomeErrorUrls: MutableSet<String> = mutableSetOf()
 
     /** [discoverAddressBookHome] result (RFC allows more than one home). */
     val addressBookHomes: MutableList<String> = mutableListOf("https://dav.example.test/ab/")
@@ -135,6 +151,7 @@ class FakeCardDavClient(
 
     override suspend fun discoverWellKnown(serverUrl: String): CalDavResult<String> {
         nonFetchCalls++
+        discoverWellKnownCalls += serverUrl
         return CalDavResult.success(wellKnownUrl ?: serverUrl)
     }
 
@@ -149,6 +166,10 @@ class FakeCardDavClient(
 
     override suspend fun discoverAddressBookHome(principalUrl: String): CalDavResult<List<String>> {
         nonFetchCalls++
+        discoverAddressBookHomeCalls += principalUrl
+        if (principalUrl in addressBookHomeErrorUrls) {
+            return CalDavResult.error(500, "no addressbook-home-set at $principalUrl")
+        }
         return CalDavResult.success(addressBookHomes.toList())
     }
 

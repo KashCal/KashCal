@@ -1,0 +1,4 @@
+• Contacts: fixed CardDAV contact sync on servers with a broken auto-discovery response (reverse proxy on a non-standard port, or discovery probe rejected); contacts now reuse the account's working calendar connection
+• Contacts: fixed a rare case where an empty discovery could wipe already-synced contacts from the phone
+• Added a Beta badge to the Contacts sync toggle in account settings
+• Improved the change-password field to use a password keyboard and offer credential-manager fill and save

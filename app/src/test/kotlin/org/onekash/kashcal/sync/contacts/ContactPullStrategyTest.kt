@@ -266,6 +266,53 @@ class ContactPullStrategyTest {
         assertEquals("device contacts untouched", setOf("/a.vcf", "/b.vcf"), provider.hrefsFor(ACCOUNT_NAME))
     }
 
+    // ---------- zero books discovered must not masquerade as an empty server ----------
+
+    @Test
+    fun `discovery that succeeds with zero address books never sweeps existing device contacts`() = runTest {
+        // The account already holds contacts on the device, but this run's discovery
+        // SUCCEEDS while enumerating ZERO address books — a real server shape (some
+        // servers return an empty home-set, and a broken well-known can dead-end at a
+        // principal that lists no books). Zero books is *no observation* of the server's
+        // contacts, NOT "the server has zero contacts", so it must never authorize the
+        // union orphan sweep — otherwise every device contact is wiped on a transient or
+        // misconfigured discovery. Contrast the sibling test above: a listing ERROR is a
+        // systemic Error; an empty-but-successful listing is a Success that simply sweeps
+        // nothing. Deletion must follow a positive signal (a listed book that no longer
+        // holds the href, or a server-reported removal), never the mere absence of a book.
+        provider.seed(ACCOUNT_NAME, "/a.vcf", "ea")
+        provider.seed(ACCOUNT_NAME, "/b.vcf", "eb")
+        val client = clientWith() // no books -> listAddressBooks succeeds with an empty list
+
+        val result = strategy.sync(account, SERVER_URL, client)
+
+        assertTrue("zero-book discovery is a Success, not an Error", result is ContactPullResult.Success)
+        assertEquals("no contact may be swept when no book was enumerated", 0, (result as ContactPullResult.Success).deleted)
+        assertTrue("no delete statement issued", provider.deleteCalls.isEmpty())
+        assertEquals(
+            "both device contacts survive an empty discovery",
+            setOf("/a.vcf", "/b.vcf"),
+            provider.hrefsFor(ACCOUNT_NAME),
+        )
+    }
+
+    @Test
+    fun `a discovered book that legitimately lists zero contacts still sweeps device orphans`() = runTest {
+        // Distinct from zero-BOOKS discovery: here a book IS discovered and successfully
+        // enumerated, and it genuinely holds no contacts (the user emptied it on the
+        // server). That is a positive observation of an empty collection, so its device
+        // contact IS an orphan and must be swept. This pins the guard to "at least one
+        // book was enumerated", NOT "the union is non-empty" — an over-broad guard on the
+        // union would wrongly spare a legitimately-emptied book's stale device contacts.
+        provider.seed(ACCOUNT_NAME, "/gone.vcf", "e-gone")
+        val client = clientWith(book(contacts = mutableListOf())) // book exists, zero cards
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the emptied book's device contact is swept", 1, result.deleted)
+        assertTrue("device now empty for the account", provider.hrefsFor(ACCOUNT_NAME).isEmpty())
+    }
+
     // ---------- stale context path falls back to the host root ----------
 
     @Test
@@ -320,6 +367,141 @@ class ContactPullStrategyTest {
             "a trailing-slash root is not retried against the trimmed-identical root",
             listOf(rootWithSlash),
             client.discoverPrincipalCalls,
+        )
+    }
+
+    // ---------- principal-seed discovery (well-known-redirect / 405 robustness) ----------
+
+    /**
+     * An account carrying a stored CalDAV principal — the shape every account created
+     * via CalDAV login has (account creation hard-fails without a resolved principal).
+     * A null [principalUrl] models the only case that can be null: a legacy row
+     * migrated from before that column existed.
+     */
+    private fun accountWithPrincipal(principalUrl: String?): Account =
+        Account(id = accountId, provider = AccountProvider.ICLOUD, email = ACCOUNT_NAME, principalUrl = principalUrl)
+
+    @Test
+    fun `a same-authority stored principal seeds discovery directly, skipping well-known and principal rediscovery`() = runTest {
+        // The stored principal lives on SERVER_URL's authority. Discovery must PROPFIND
+        // it directly for the address-book home — there is no well-known step to break
+        // on a port-dropping redirect (Baikal) or a 405 (SOGo).
+        val storedPrincipal = "https://dav.example.test/dav.php/principals/testuser1/"
+        val client = clientWith(book(contacts = mutableListOf(contact("/a.vcf", "e1"))))
+
+        val result = strategy.sync(accountWithPrincipal(storedPrincipal), SERVER_URL, client)
+
+        assertTrue("the seeded run syncs contacts", result is ContactPullResult.Success)
+        assertEquals("contact synced via the seed path", setOf("/a.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+        assertTrue(
+            "well-known is not probed when seeding from the stored principal",
+            client.discoverWellKnownCalls.isEmpty(),
+        )
+        assertTrue(
+            "principal is not re-discovered when seeding from the stored principal",
+            client.discoverPrincipalCalls.isEmpty(),
+        )
+        assertEquals(
+            "the home-set is PROPFINDed directly against the stored principal",
+            listOf(storedPrincipal),
+            client.discoverAddressBookHomeCalls,
+        )
+    }
+
+    @Test
+    fun `an account with no stored principal falls back to the well-known discovery chain`() = runTest {
+        // Only legacy rows migrated from before the principalUrl column existed are
+        // null; they must degrade gracefully to today's well-known -> principal chain.
+        val client = clientWith(book(contacts = mutableListOf(contact("/a.vcf", "e1"))))
+
+        val result = strategy.sync(accountWithPrincipal(null), SERVER_URL, client)
+
+        assertTrue("a null-principal account still syncs via well-known", result is ContactPullResult.Success)
+        assertEquals(setOf("/a.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+        assertTrue("well-known is probed on the fallback path", client.discoverWellKnownCalls.isNotEmpty())
+        assertTrue("principal is discovered on the fallback path", client.discoverPrincipalCalls.isNotEmpty())
+    }
+
+    @Test
+    fun `a stored principal differing only in host case still seeds discovery`() = runTest {
+        // Host is case-insensitive (RFC 3986). A principal whose host case differs from
+        // the CardDAV base must still match the same-authority gate and take the seed —
+        // otherwise it would silently degrade to the well-known path the seed bypasses.
+        val storedPrincipal = "https://DAV.example.test/dav.php/principals/testuser1/"
+        val client = clientWith(book(contacts = mutableListOf(contact("/a.vcf", "e1"))))
+
+        val result = strategy.sync(accountWithPrincipal(storedPrincipal), SERVER_URL, client)
+
+        assertTrue("the case-differing seed still syncs", result is ContactPullResult.Success)
+        assertTrue(
+            "host case must not defeat the same-authority gate",
+            client.discoverWellKnownCalls.isEmpty(),
+        )
+        assertEquals(
+            "the home-set is PROPFINDed directly against the stored principal",
+            listOf(storedPrincipal),
+            client.discoverAddressBookHomeCalls,
+        )
+    }
+
+    @Test
+    fun `a stored principal on a different authority is not used as the seed`() = runTest {
+        // Split-host providers (iCloud pins CardDAV to contacts.icloud.com, Zoho to
+        // contacts.zoho.com) keep the CalDAV principal on a different host than the
+        // CardDAV base — seeding from it would PROPFIND the wrong host, so the
+        // same-authority gate must reject it and take the well-known chain.
+        val splitHostPrincipal = "https://caldav.example.test/principals/me/"
+        val client = clientWith(book(contacts = mutableListOf(contact("/a.vcf", "e1"))))
+
+        val result = strategy.sync(accountWithPrincipal(splitHostPrincipal), SERVER_URL, client)
+
+        assertTrue("a split-host account still syncs via well-known", result is ContactPullResult.Success)
+        assertTrue("well-known is probed for a split-host principal", client.discoverWellKnownCalls.isNotEmpty())
+        assertTrue("principal is discovered for a split-host principal", client.discoverPrincipalCalls.isNotEmpty())
+        assertFalse(
+            "the split-host principal is never PROPFINDed as the seed",
+            client.discoverAddressBookHomeCalls.contains(splitHostPrincipal),
+        )
+    }
+
+    @Test
+    fun `a seed-path listing failure surfaces the same systemic error as the fallback path`() = runTest {
+        // The seed and fallback share the listAddressBooks tail: a per-home listing
+        // failure with nothing discovered must surface a systemic error and never
+        // sweep, exactly as on the null-principal path — a home-set that resolved but
+        // whose books can't be listed is NOT a seed miss, so it must not fall through.
+        provider.seed(ACCOUNT_NAME, "/a.vcf", "ea")
+        val storedPrincipal = "https://dav.example.test/dav.php/principals/testuser1/"
+        val client = clientWith().apply {
+            listAddressBooksError =
+                org.onekash.kashcal.sync.client.model.CalDavResult.Error(503, "unavailable", isRetryable = true)
+        }
+
+        val result = strategy.sync(accountWithPrincipal(storedPrincipal), SERVER_URL, client)
+
+        assertTrue("the shared tail surfaces a systemic error on the seed path too", result is ContactPullResult.Error)
+        assertTrue("no delete issued when the seed-path listing failed", provider.deleteCalls.isEmpty())
+        assertEquals("device contact untouched", setOf("/a.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+    }
+
+    @Test
+    fun `a seed whose principal carries no home-set falls through to well-known`() = runTest {
+        // The seed is a pure optimization: if the same-authority principal yields no
+        // address-book home, discovery must fall through to well-known rather than
+        // failing — so a server that only answers via well-known never regresses.
+        val storedPrincipal = "https://dav.example.test/dav.php/principals/testuser1/"
+        val client = clientWith(book(contacts = mutableListOf(contact("/a.vcf", "e1")))).apply {
+            addressBookHomeErrorUrls += storedPrincipal
+        }
+
+        val result = strategy.sync(accountWithPrincipal(storedPrincipal), SERVER_URL, client)
+
+        assertTrue("the run recovers via the well-known fallback", result is ContactPullResult.Success)
+        assertEquals("contact synced after falling through", setOf("/a.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+        assertTrue("well-known is probed after the seed misses", client.discoverWellKnownCalls.isNotEmpty())
+        assertTrue(
+            "the seed principal was tried first, before the well-known fallback",
+            client.discoverAddressBookHomeCalls.contains(storedPrincipal),
         )
     }
 

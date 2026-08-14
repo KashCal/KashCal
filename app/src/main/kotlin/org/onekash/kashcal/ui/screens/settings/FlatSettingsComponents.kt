@@ -217,6 +217,7 @@ fun SettingsRow(
  * @param iconEmoji Optional emoji icon (alternative to Material icon)
  * @param info Optional rich-tooltip explanation shown by a trailing ⓘ button;
  *   tapping ⓘ reveals the tooltip without toggling the row.
+ * @param badge Optional composable rendered inline after the label (e.g., BetaBadge)
  * @param showDivider Whether to show bottom divider
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -230,6 +231,7 @@ fun SettingsToggleRow(
     icon: ImageVector? = null,
     iconEmoji: String? = null,
     info: SettingsRowInfo? = null,
+    badge: @Composable (() -> Unit)? = null,
     showDivider: Boolean = true,
     searchQuery: String = ""
 ) {
@@ -263,18 +265,24 @@ fun SettingsToggleRow(
                     }
                 }
 
-                // Label and (optional) subtitle
+                // Label (+ optional inline badge) and (optional) subtitle
                 Column {
-                    if (searchQuery.isBlank()) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    } else {
-                        Text(
-                            highlighted(label, searchQuery, settingsSearchHighlightStyle()),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (searchQuery.isBlank()) {
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        } else {
+                            Text(
+                                highlighted(label, searchQuery, settingsSearchHighlightStyle()),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        badge?.invoke()
                     }
                     if (subtitle != null) {
                         if (searchQuery.isBlank()) {

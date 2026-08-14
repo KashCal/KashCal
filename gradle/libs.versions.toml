@@ -1,8 +1,8 @@
 [versions]
-# Core - LATEST STABLE (May 2026)
-agp = "9.2.0"
+# Core - LATEST STABLE (Aug 2026). Kotlin held at 2.3.x: no stable KSP 2.4.x yet.
+agp = "9.3.1"
 kotlin = "2.3.21"
-ksp = "2.3.7"
+ksp = "2.3.11"
 
 # AndroidX
 coreKtx = "1.19.0"
@@ -11,23 +11,23 @@ activityCompose = "1.13.0"
 biometric = "1.1.0"
 
 # Compose
-composeBom = "2026.06.00"
+composeBom = "2026.08.00"
 
 # Room
 room = "2.8.4"
 
 # Coroutines
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 
 # Collections
-collectionsImmutable = "0.4.0"
+collectionsImmutable = "0.5.1"
 
 # DI
-hilt = "2.59.2"
-hiltNavigationCompose = "1.3.0"
+hilt = "2.60.1"
+hiltNavigationCompose = "1.4.0"
 
 # Material
-material = "1.13.0"
+material = "1.14.0"
 
 # JSON
 kotlinxSerializationJson = "1.11.0"
@@ -44,7 +44,7 @@ securityCrypto = "1.1.0"
 
 # WorkManager
 workManager = "2.11.2"
-hiltWork = "1.3.0"
+hiltWork = "1.4.0"
 
 # Glance (App Widgets)
 glance = "1.2.0-rc01"
@@ -53,7 +53,7 @@ glance = "1.2.0-rc01"
 materialkolor = "4.1.1"
 
 # Code Coverage
-kover = "0.9.8"
+kover = "0.9.9"
 
 # Documentation
 dokka = "2.2.0"
@@ -62,9 +62,9 @@ dokka = "2.2.0"
 junit = "4.13.2"
 junitExt = "1.3.0"
 espressoCore = "3.7.0"
-mockk = "1.14.9"
+mockk = "1.14.11"
 turbine = "1.2.1"
-coroutinesTest = "1.10.2"
+coroutinesTest = "1.11.0"
 archCoreTesting = "2.2.0"
 robolectric = "4.16.1"
 androidxTestCore = "1.7.0"

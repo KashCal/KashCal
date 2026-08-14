@@ -144,6 +144,21 @@ class SettingsToggleRowTest {
     }
 
     @Test
+    fun `badge renders inline after the label`() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                SettingsToggleRow(
+                    label = "Contacts",
+                    checked = false,
+                    onCheckedChange = {},
+                    badge = { BetaBadge() },
+                )
+            }
+        }
+        composeTestRule.onNodeWithText("Beta").assertExists()
+    }
+
+    @Test
     fun `row body still toggles when an info button is present`() {
         var toggled: Boolean? = null
         composeTestRule.setContent {

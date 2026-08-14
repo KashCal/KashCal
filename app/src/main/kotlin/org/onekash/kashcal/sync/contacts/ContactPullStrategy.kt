@@ -83,9 +83,11 @@ sealed class ContactPullResult {
  *    is in none of the enumerated books — computed ONCE against the UNION across
  *    all books, never per-book (a per-book delete would wipe other books' contacts,
  *    since the provider store is account-scoped, not book-scoped). The sweep is
- *    skipped entirely if any book failed to enumerate OR any book synced by delta
- *    (whose full href set isn't in the union), so a transient error or a partial
- *    delta can never masquerade as "the server has zero contacts."
+ *    skipped entirely if any book failed to enumerate, any book synced by delta
+ *    (whose full href set isn't in the union), OR discovery returned zero books at
+ *    all — so a transient error, a partial delta, or a book-less discovery can never
+ *    masquerade as "the server has zero contacts." A book that IS discovered but
+ *    lists zero cards still sweeps: that is a positive signal the collection emptied.
  *  - Persist each book's sync-token + ctag after a successful run.
  *
  * Parallel multiget is deliberately deferred; fetches are sequential-batched.
@@ -116,7 +118,7 @@ class ContactPullStrategy @Inject constructor(
         contactsProvider.ensureContactVisibility(accountName)
 
         // ---- Re-discover the address books every run ----
-        val discovery = when (val discovered = discoverBooks(client, serverUrl)) {
+        val discovery = when (val discovered = discoverBooks(client, serverUrl, account.principalUrl)) {
             is CalDavResult.Success -> discovered.data
             is CalDavResult.Error -> return ContactPullResult.Error(
                 code = discovered.code,
@@ -376,10 +378,17 @@ class ContactPullStrategy @Inject constructor(
         }
 
         // ---- Orphan sweep: union-wide, only when every book was FULLY enumerated ----
-        // Requires both no failed book AND no book synced by delta: a delta book's
-        // hrefs aren't in the union, so a sweep would false-delete them. Those books
-        // rely on the server's own deleted set applied inline above instead.
-        if (booksFailed == 0 && !sweepUnsafe) {
+        // Requires no failed book AND no book synced by delta AND at least one book
+        // actually discovered. A delta book's hrefs aren't in the union, so a sweep
+        // would false-delete them (those books rely on the server's own deleted set
+        // applied inline above). And discovering ZERO books is *no observation* of the
+        // server's contacts — not "the server has zero contacts" — so it must never
+        // authorize the sweep, or a transient/misconfigured discovery (an empty home-set,
+        // or a broken well-known that dead-ends at a book-less principal) would wipe every
+        // device contact. A book that IS discovered but lists zero cards still sweeps
+        // (books.isNotEmpty() holds there): that empty listing is a positive signal the
+        // collection was emptied, whereas no book at all is the absence of any signal.
+        if (booksFailed == 0 && !sweepUnsafe && books.isNotEmpty()) {
             // The pre-run device snapshot (deviceEtags.keys) is the correct basis:
             // hrefs inserted this run are in serverHrefsUnion so they'd never be
             // swept anyway, and reusing it avoids a second full provider query.
@@ -389,6 +398,8 @@ class ContactPullStrategy @Inject constructor(
             }
         } else if (booksFailed > 0) {
             Log.w(TAG, "Skipping orphan sweep: $booksFailed book(s) failed to enumerate")
+        } else if (books.isEmpty() && deviceEtags.isNotEmpty()) {
+            Log.w(TAG, "Skipping orphan sweep: discovery returned no address books; keeping ${deviceEtags.size} device contact(s)")
         }
 
         // ---- Deferred photo fetch: drain the photo-pending worklist ----
@@ -416,18 +427,52 @@ class ContactPullStrategy @Inject constructor(
     private data class Discovery(val books: List<CardDavAddressBook>, val homesFailed: Int)
 
     /**
-     * Re-run the discovery chain (well-known -> principal -> home-set ->
-     * list books). Auth/permission failures at any pre-listing step are systemic
-     * and surfaced as an error. A per-home listing failure is counted (not
-     * swallowed): when at least one home listed successfully the run proceeds with
-     * the sweep disabled, but if EVERY home failed to list and nothing was
-     * discovered, that's surfaced as a systemic error so an empty book list can
-     * never be mistaken for "the server has zero contacts."
+     * Re-discover the address books every run and list them.
+     *
+     * Prefers the account's stored, already-authenticated CalDAV principal
+     * ([storedPrincipal]) as the discovery seed: the DAV principal is shared across
+     * CalDAV and CardDAV (RFC 3744) and carries `addressbook-home-set`, so PROPFINDing
+     * it directly for the home-set skips the fragile well-known step — which breaks on
+     * a port-dropping well-known redirect (a server behind a non-standard port) or a
+     * 405 to the well-known PROPFIND, both of which leave discovery dead-ending at the
+     * bare host root and syncing zero contacts. The seed is only used when the
+     * principal lives on the SAME authority (scheme+host+port) as the CardDAV base, so
+     * split-host providers (which pin CardDAV to a different host than the CalDAV
+     * principal) keep the well-known chain.
+     *
+     * The seed is a pure optimization, never a new failure mode: if it is not
+     * applicable, or the seeded principal yields no home-set, discovery falls through
+     * to the well-known -> principal -> home-set chain. So routing every same-host
+     * server onto the seed path cannot regress a server that only answers via
+     * well-known. [storedPrincipal] is null only for legacy rows migrated from before
+     * that column existed; new accounts always carry it.
+     *
+     * Auth/permission failures at any pre-listing step of the fallback chain are
+     * systemic and surfaced as an error. A per-home listing failure is counted (not
+     * swallowed): when at least one home listed successfully the run proceeds with the
+     * sweep disabled, but if EVERY home failed to list and nothing was discovered,
+     * that's surfaced as a systemic error so an empty book list can never be mistaken
+     * for "the server has zero contacts."
      */
     private suspend fun discoverBooks(
         client: CardDavClient,
         serverUrl: String,
+        storedPrincipal: String?,
     ): CalDavResult<Discovery> {
+        // Seed from the stored principal when it shares the CardDAV base's authority.
+        if (storedPrincipal != null && sameAuthority(storedPrincipal, serverUrl)) {
+            val seededHomes = client.discoverAddressBookHome(storedPrincipal)
+            if (seededHomes is CalDavResult.Success && seededHomes.data.isNotEmpty()) {
+                return listBooksAcrossHomes(client, seededHomes.data)
+            }
+            val reason = if (seededHomes is CalDavResult.Error) {
+                "errored (${seededHomes.code})"
+            } else {
+                "returned no home-set"
+            }
+            Log.w(TAG, "Stored-principal seed $reason; falling back to well-known discovery")
+        }
+
         val wellKnown = client.discoverWellKnown(serverUrl)
         if (wellKnown is CalDavResult.Error) return wellKnown
         val base = (wellKnown as CalDavResult.Success).data
@@ -453,11 +498,24 @@ class ContactPullStrategy @Inject constructor(
 
         val homes = client.discoverAddressBookHome((principal as CalDavResult.Success).data)
         if (homes is CalDavResult.Error) return homes
+        return listBooksAcrossHomes(client, (homes as CalDavResult.Success).data)
+    }
 
+    /**
+     * List the books under every home-set URL. Shared by the principal-seed and
+     * well-known paths so the orphan-sweep-safety contract is identical regardless of
+     * how the home-set was discovered: a per-home listing failure is counted, and
+     * discovering nothing while a listing errored is surfaced as a systemic error
+     * rather than an empty (sweep-triggering) success.
+     */
+    private suspend fun listBooksAcrossHomes(
+        client: CardDavClient,
+        homes: List<String>,
+    ): CalDavResult<Discovery> {
         val allBooks = ArrayList<CardDavAddressBook>()
         var homesFailed = 0
         var lastError: CalDavResult.Error? = null
-        for (home in (homes as CalDavResult.Success).data) {
+        for (home in homes) {
             when (val listed = client.listAddressBooks(home)) {
                 is CalDavResult.Success -> allBooks += listed.data
                 is CalDavResult.Error -> {
@@ -472,6 +530,46 @@ class ContactPullStrategy @Inject constructor(
         // orphan sweep wipe every device contact on a transient discovery error.
         if (allBooks.isEmpty() && lastError != null) return lastError
         return CalDavResult.success(Discovery(allBooks, homesFailed))
+    }
+
+    /**
+     * True when [a] and [b] share scheme+host+port. A stored CalDAV principal is only
+     * trustworthy as a CardDAV discovery seed when it lives on the same authority as
+     * the CardDAV base — split-host providers keep CardDAV on a different host, and an
+     * SRV-redirected base likewise diverges, so both correctly fall back.
+     */
+    private fun sameAuthority(a: String, b: String): Boolean {
+        val keyA = authorityKey(a) ?: return false
+        val keyB = authorityKey(b) ?: return false
+        return keyA == keyB
+    }
+
+    /**
+     * A normalized scheme+host+port key for authority comparison, or null when [url]
+     * can't be parsed or has no host. Scheme and host are lowercased (both are
+     * case-insensitive per RFC 3986) and the scheme's default port is coerced in, so a
+     * stored principal and a CardDAV base that differ only in host case or an
+     * implicit-vs-explicit default port still match and take the seed rather than
+     * silently degrading to the well-known path this seed exists to bypass.
+     */
+    private fun authorityKey(url: String): String? = try {
+        val uri = java.net.URI(url)
+        val host = uri.host?.lowercase()
+        if (host.isNullOrBlank()) {
+            null
+        } else {
+            val scheme = uri.scheme?.lowercase()
+            val port = if (uri.port != -1) uri.port else defaultPortForScheme(scheme)
+            "$scheme://$host:$port"
+        }
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun defaultPortForScheme(scheme: String?): Int = when (scheme) {
+        "https" -> 443
+        "http" -> 80
+        else -> -1
     }
 
     /**
