@@ -478,6 +478,18 @@ class KashCalDataStore(
     }
 
     /**
+     * Whether the month widget renders event title rows in day cells (timed events as
+     * color stripe + title, all-day events as chips, mirroring the in-app month view)
+     * instead of the colored indicator dots. Default: false (dots).
+     */
+    val monthWidgetEventTitles: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.MONTH_WIDGET_EVENT_TITLES, false)
+
+    suspend fun setMonthWidgetEventTitles(titles: Boolean) {
+        setPreference(PreferencesKeys.MONTH_WIDGET_EVENT_TITLES, titles)
+    }
+
+    /**
      * Last time-grid scroll position as minutes from midnight (0..1439).
      * -1 means never saved: fresh installs fall back to the default scroll hour.
      */

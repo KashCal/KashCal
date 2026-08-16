@@ -121,6 +121,7 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.showWeekNumbers } returns MutableStateFlow(weekNumbers)
         every { vm.widgetMaxEventsPerDay } returns MutableStateFlow(widget)
         every { vm.widgetDetailedRows } returns MutableStateFlow(false)
+        every { vm.monthWidgetEventTitles } returns MutableStateFlow(false)
         every { vm.syncLookbackDays } returns MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
         every { vm.isSearchActive } returns MutableStateFlow(false)
         every { vm.searchQuery } returns MutableStateFlow("")

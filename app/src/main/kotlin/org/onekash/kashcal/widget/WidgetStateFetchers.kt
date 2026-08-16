@@ -5,6 +5,7 @@ import android.text.format.DateFormat
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 
@@ -18,6 +19,24 @@ import org.onekash.kashcal.util.DateTimeUtils
  */
 
 private const val TAG = "WidgetStateFetchers"
+
+/**
+ * Upper bound for a widget's data fetch. A fetch that exceeds this is abandoned and the
+ * caller falls back to its empty/error state — the widget's Glance session must never be
+ * parked inside a fetch for minutes, because actionRunCallback taps (month navigation,
+ * refresh) are processed on that same session and would appear frozen. The prime suspect
+ * for multi-minute stalls is a CalendarProvider Instances query while the system's sync
+ * adapter holds the provider (contentResolver.query has no timeout of its own).
+ */
+internal const val WIDGET_FETCH_TIMEOUT_MS = 10_000L
+
+/**
+ * Thrown when a widget data fetch exceeds [WIDGET_FETCH_TIMEOUT_MS]. Distinct from
+ * [kotlinx.coroutines.TimeoutCancellationException] (a [CancellationException] subclass)
+ * so the generic `catch (e: Exception)` fallback below handles it — a fetch timeout must
+ * degrade to the widget's empty/error state, not cancel the session's producer coroutine.
+ */
+internal class WidgetFetchTimeoutException(message: String) : Exception(message)
 
 /**
  * Sealed state for [UpcomingWidget]. The scaffold composable branches on this to render
@@ -50,7 +69,9 @@ internal suspend fun fetchUpcomingState(
             nowMs = System.currentTimeMillis(),
             horizonDays = horizonDays
         )
-        val eventsByDay = repository.getEventsInRange(startDayCode, endDayCode)
+        val eventsByDay = withTimeoutOrNull(WIDGET_FETCH_TIMEOUT_MS) {
+            repository.getEventsInRange(startDayCode, endDayCode)
+        } ?: throw WidgetFetchTimeoutException("getEventsInRange exceeded ${WIDGET_FETCH_TIMEOUT_MS}ms")
         val showEventEmojis = dataStore.showEventEmojis.first()
         val timeFormatPref = dataStore.getTimeFormat()
         val is24Hour = DateFormat.is24HourFormat(context)
@@ -102,7 +123,9 @@ internal suspend fun fetchAgendaData(
     context: Context
 ): AgendaData {
     return try {
-        val events = repository.getTodayEvents()
+        val events = withTimeoutOrNull(WIDGET_FETCH_TIMEOUT_MS) {
+            repository.getTodayEvents()
+        } ?: throw WidgetFetchTimeoutException("getTodayEvents exceeded ${WIDGET_FETCH_TIMEOUT_MS}ms")
         val showEventEmojis = dataStore.showEventEmojis.first()
         val maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first()
         val timeFormatPref = dataStore.getTimeFormat()
@@ -144,7 +167,9 @@ internal suspend fun fetchWeekData(
     context: Context
 ): WeekData {
     return try {
-        val weekEvents = repository.getWeekEvents()
+        val weekEvents = withTimeoutOrNull(WIDGET_FETCH_TIMEOUT_MS) {
+            repository.getWeekEvents()
+        } ?: throw WidgetFetchTimeoutException("getWeekEvents exceeded ${WIDGET_FETCH_TIMEOUT_MS}ms")
         val showEventEmojis = dataStore.showEventEmojis.first()
         val maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first()
         val timeFormatPref = dataStore.getTimeFormat()
@@ -177,7 +202,12 @@ internal suspend fun fetchMonthEvents(
     endDayCode: Int
 ): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
     return try {
-        repository.getEventsInRange(startDayCode, endDayCode)
+        withTimeoutOrNull(WIDGET_FETCH_TIMEOUT_MS) {
+            repository.getEventsInRange(startDayCode, endDayCode)
+        } ?: run {
+            Log.w(TAG, "fetchMonthEvents timed out after ${WIDGET_FETCH_TIMEOUT_MS}ms; keeping previous content")
+            emptyMap()
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
