@@ -3,10 +3,6 @@ package org.onekash.kashcal.domain.identity
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.util.AddressNormalizer
 
-// Loose email-shape check for the empty-set fallback below — rejects
-// non-email logins like Nextcloud's "alice" while accepting "alice@x.com".
-private val EMAIL_SHAPE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
-
 /**
  * This account's usable calendar-user-addresses, in preference order.
  * Returns [Account.calendarUserAddresses] when populated (discovery hoists a
@@ -20,7 +16,9 @@ private val EMAIL_SHAPE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
  */
 fun Account.effectiveAddresses(): List<String> =
     calendarUserAddresses.ifEmpty {
-        if (email.matches(EMAIL_SHAPE)) listOf(email) else emptyList()
+        // The login is only usable as an address when it is itself email-shaped
+        // (rejects non-email logins like Nextcloud's "alice").
+        if (AddressNormalizer.isEmailShaped(email)) listOf(email) else emptyList()
     }
 
 /**

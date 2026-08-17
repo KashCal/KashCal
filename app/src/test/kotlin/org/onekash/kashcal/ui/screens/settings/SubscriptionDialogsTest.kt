@@ -75,23 +75,6 @@ class SubscriptionDialogsTest {
         assertNotNull(AccentColors.SuccessDark)
     }
 
-    // ==================== SyncInterval Integration Tests ====================
-
-    @Test
-    fun `getSyncIntervalLabel works for all standard intervals`() {
-        assertEquals("Every hour", getSyncIntervalLabel(1))
-        assertEquals("Every 6 hours", getSyncIntervalLabel(6))
-        assertEquals("Every 12 hours", getSyncIntervalLabel(12))
-        assertEquals("Daily", getSyncIntervalLabel(24))
-        assertEquals("Weekly", getSyncIntervalLabel(168))
-    }
-
-    @Test
-    fun `getSyncIntervalLabel returns fallback for non-standard interval`() {
-        val result = getSyncIntervalLabel(3)
-        assertTrue(result.contains("3"))
-    }
-
     // ==================== SubscriptionColors Usage Tests ====================
 
     @Test
@@ -114,26 +97,6 @@ class SubscriptionDialogsTest {
         assertTrue(SubscriptionColors.all.contains(SubscriptionColors.Orange))
         assertTrue(SubscriptionColors.all.contains(SubscriptionColors.Pink))
         assertTrue(SubscriptionColors.all.contains(SubscriptionColors.Purple))
-    }
-
-    // ==================== URL Validation for Dialogs ====================
-
-    @Test
-    fun `AddSubscriptionDialog accepts https URLs`() {
-        val error = validateSubscriptionUrl("https://calendar.example.com/feed.ics")
-        assertEquals(null, error)
-    }
-
-    @Test
-    fun `AddSubscriptionDialog accepts webcal URLs`() {
-        val error = validateSubscriptionUrl("webcal://calendar.example.com/feed.ics")
-        assertEquals(null, error)
-    }
-
-    @Test
-    fun `AddSubscriptionDialog rejects empty URL`() {
-        val error = validateSubscriptionUrl("")
-        assertNotNull(error)
     }
 
     // ==================== IcsSubscriptionUiModel for EditDialog ====================

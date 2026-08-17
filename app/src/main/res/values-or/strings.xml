@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ଏହି ଆକାଉଣ୍ଟର କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ ସିଙ୍କ କରନ୍ତୁ</string>
     <string name="account_detail_sync_contacts">ଯୋଗାଯୋଗ</string>
     <string name="account_detail_sync_contacts_subtitle">ଏହି ଆକାଉଣ୍ଟର ଯୋଗାଯୋଗ ଆପଣଙ୍କ ଫୋନରେ ସିଙ୍କ କରନ୍ତୁ</string>
+    <string name="account_detail_sync_contacts_info_text">ଯୋଗାଯୋଗଗୁଡ଼ିକୁ ଆପଣଙ୍କ ଫୋନରେ କପି କରେ। ବର୍ତ୍ତମାନ ପାଇଁ କେବଳ-ପଢ଼ିବା ପାଇଁ: କେବଳ ସର୍ଭରରୁ ଫୋନକୁ।</string>
     <string name="account_detail_contacts_permission_needed">ଯୋଗାଯୋଗ ଅନୁମତି ବନ୍ଦ ଅଛି। ଯୋଗାଯୋଗ ସିଙ୍କ ଜାରି ରଖିବାକୁ ଆକ୍ସେସ ଦିଅନ୍ତୁ।</string>
     <string name="account_detail_contacts_grant">ଆକ୍ସେସ ଦିଅନ୍ତୁ</string>
     <string name="contact_sync_enabled_for">%1$s ପାଇଁ ଯୋଗାଯୋଗ ସିଙ୍କ ହେଉଛି</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">ପ୍ରତି %1$d ଘଣ୍ଟାରେ</string>
     <string name="ics_sync_daily">ଦୈନିକ</string>
     <string name="ics_sync_weekly">ସାପ୍ତାହିକ</string>
+    <string name="default_calendar_name">କ୍ୟାଲେଣ୍ଡର</string>
     <string name="ics_url_required">URL ଆବଶ୍ୟକ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, କିମ୍ବା webcal:// ରେ ଆରମ୍ଭ ହେବା ଉଚିତ</string>
     <string name="ics_fetch_error_http">ସର୍ଭର ଏକ ତ୍ରୁଟି ଫେରାଇଲା (%1$d)। ଦୟାକରି URL ଯାଞ୍ଚ କରନ୍ତୁ।</string>

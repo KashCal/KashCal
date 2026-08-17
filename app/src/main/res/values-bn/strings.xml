@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">এই অ্যাকাউন্টের ক্যালেন্ডার সিংক করুন</string>
     <string name="account_detail_sync_contacts">পরিচিতি</string>
     <string name="account_detail_sync_contacts_subtitle">এই অ্যাকাউন্টের পরিচিতি আপনার ফোনে সিংক করুন</string>
+    <string name="account_detail_sync_contacts_info_text">পরিচিতিগুলি আপনার ফোনে কপি করে। আপাতত শুধু-পড়ার জন্য: শুধু সার্ভার থেকে ফোনে।</string>
     <string name="account_detail_contacts_permission_needed">পরিচিতির অনুমতি বন্ধ আছে। পরিচিতি সিংক চালু রাখতে অ্যাক্সেস দিন।</string>
     <string name="account_detail_contacts_grant">অ্যাক্সেস দিন</string>
     <string name="contact_sync_enabled_for">%1$s-এর পরিচিতি সিংক করা হচ্ছে</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">প্রতি %1$d ঘণ্টায়</string>
     <string name="ics_sync_daily">দৈনিক</string>
     <string name="ics_sync_weekly">সাপ্তাহিক</string>
+    <string name="default_calendar_name">ক্যালেন্ডার</string>
     <string name="ics_url_required">URL প্রয়োজন</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, বা webcal:// দিয়ে শুরু হতে হবে</string>
     <string name="ics_fetch_error_http">সার্ভার একটি ত্রুটি ফেরত দিয়েছে (%1$d)। অনুগ্রহ করে URL পরীক্ষা করুন।</string>

@@ -283,6 +283,9 @@ class MainActivity : FragmentActivity() {
                 val shownShareCardTooltip by homeViewModel.shownShareCardTooltip
                     .collectAsStateWithLifecycle(initialValue = false)
                 val quickViewAttendees by homeViewModel.quickViewAttendees.collectAsStateWithLifecycle()
+                // Live event body for the active QuickView, re-read by id so an
+                // edit's new title/time shows even if the tapped snapshot was stale.
+                val liveQuickViewEvent by homeViewModel.quickViewEventLive.collectAsStateWithLifecycle()
                 val formAttendees by homeViewModel.formAttendees.collectAsStateWithLifecycle()
                 val formIsReadOnly by homeViewModel.formIsReadOnly.collectAsStateWithLifecycle()
                 val contactsDeclined by homeViewModel.contactSuggestionsDeclined.collectAsStateWithLifecycle()
@@ -342,6 +345,33 @@ class MainActivity : FragmentActivity() {
                         homeViewModel.getDeviceEventAttendeeState(
                             eventId = event.instance.eventId,
                             calendarId = event.instance.calendarId,
+                        )
+                    }
+                }
+                // Fresh device event body, re-read directly from the provider
+                // whenever the active occurrence changes. The tapped snapshot
+                // can come from a list that hasn't refreshed since an edit
+                // (device changes only propagate through a debounced signal),
+                // so re-query by id so the sheet renders the new title/details.
+                // A provider read here bypasses that debounce. Falls back to the
+                // snapshot when the fresh read misses (e.g. the occurrence moved).
+                var deviceQuickViewEventLive by remember { mutableStateOf<DisplayEvent.Device?>(null) }
+                LaunchedEffect(deviceQuickViewEvent?.instance?.eventId, deviceQuickViewEvent?.startTs) {
+                    val snapshot = deviceQuickViewEvent
+                    deviceQuickViewEventLive = when {
+                        snapshot == null -> null
+                        // Non-recurring single instance: re-resolve by id so a
+                        // changed start time or all-day toggle still lands — the
+                        // tapped snapshot's old start no longer exists on the
+                        // provider, so a start-keyed lookup would miss it.
+                        !snapshot.instance.hasRrule && snapshot.instance.originalId == null ->
+                            homeViewModel.getDeviceEventForQuickViewById(snapshot.instance.eventId)
+                        // Recurring/exception: preserve the tapped occurrence by
+                        // its start (which occurrence to show is otherwise
+                        // ambiguous); a moved occurrence falls back to the snapshot.
+                        else -> homeViewModel.getDeviceEventForQuickView(
+                            eventId = snapshot.instance.eventId,
+                            occurrenceTs = snapshot.startTs,
                         )
                     }
                 }
@@ -742,7 +772,12 @@ class MainActivity : FragmentActivity() {
 
                 // Event Quick View Sheet
                 if (showQuickViewSheet && quickViewEvent != null) {
-                    val event = quickViewEvent!!
+                    val snapshot = quickViewEvent!!
+                    // Prefer the reactively re-read event when it's for the active
+                    // id; fall back to the tapped snapshot until the by-id flow
+                    // warms up (or if the event was just deleted). Guarding on id
+                    // prevents a lagging flow from briefly showing the prior event.
+                    val event = liveQuickViewEvent?.takeIf { it.id == snapshot.id } ?: snapshot
                     val calendar = uiState.calendars.find { it.id == event.calendarId }
                     val calendarColor = calendar?.color ?: 0xFF6200EE.toInt()
                     val calendarName = calendar?.localizedDisplayName(LocalContext.current.resources)
@@ -1131,28 +1166,52 @@ class MainActivity : FragmentActivity() {
                         android.Manifest.permission.WRITE_CALENDAR
                     ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
+                    // Render the freshly re-read event when it still matches the
+                    // active occurrence; fall back to the tapped snapshot until
+                    // the re-read lands (or if it missed).
+                    val deviceSnapshot = deviceQuickViewEvent!!
+                    val deviceIsSingleInstance =
+                        !deviceSnapshot.instance.hasRrule && deviceSnapshot.instance.originalId == null
+                    val deviceDisplayEvent = deviceQuickViewEventLive
+                        ?.takeIf {
+                            it.instance.eventId == deviceSnapshot.instance.eventId &&
+                                // A non-recurring event has one instance, so id
+                                // alone identifies it (and its start may have
+                                // legitimately moved on an edit) — but only when
+                                // the live read agrees it's still a single
+                                // instance, so a snapshot that went stale before
+                                // gaining an RRULE can't swap in a future
+                                // occurrence. Recurring events match by occurrence.
+                                (
+                                    (
+                                        deviceIsSingleInstance &&
+                                            !it.instance.hasRrule &&
+                                            it.instance.originalId == null
+                                    ) || it.startTs == deviceSnapshot.startTs
+                                )
+                        }
+                        ?: deviceSnapshot
+
                     DeviceEventQuickViewSheet(
-                        displayEvent = deviceQuickViewEvent!!,
+                        displayEvent = deviceDisplayEvent,
                         showEventEmojis = uiState.showEventEmojis,
                         hasWritePermission = hasWriteCalendarPermission,
-                        isWritableCalendar = !deviceQuickViewEvent!!.isReadOnly,
+                        isWritableCalendar = !deviceDisplayEvent.isReadOnly,
                         attendees = deviceQuickViewAttendees?.models ?: emptyList(),
                         isCurrentUserOnList = deviceQuickViewAttendees?.isCurrentUserOnList ?: false,
                         onRsvp = { status ->
-                            val event = deviceQuickViewEvent
-                            if (event != null) {
-                                coroutineScope.launch {
-                                    homeViewModel.replyDeviceRsvp(
-                                        eventId = event.instance.eventId,
-                                        calendarId = event.instance.calendarId,
-                                        status = status,
-                                    )
-                                    // Refresh the chip row so the new status shows.
-                                    deviceQuickViewAttendees = homeViewModel.getDeviceEventAttendeeState(
-                                        eventId = event.instance.eventId,
-                                        calendarId = event.instance.calendarId,
-                                    )
-                                }
+                            val event = deviceDisplayEvent
+                            coroutineScope.launch {
+                                homeViewModel.replyDeviceRsvp(
+                                    eventId = event.instance.eventId,
+                                    calendarId = event.instance.calendarId,
+                                    status = status,
+                                )
+                                // Refresh the chip row so the new status shows.
+                                deviceQuickViewAttendees = homeViewModel.getDeviceEventAttendeeState(
+                                    eventId = event.instance.eventId,
+                                    calendarId = event.instance.calendarId,
+                                )
                             }
                         },
                         onDismiss = {
@@ -1165,7 +1224,7 @@ class MainActivity : FragmentActivity() {
                             // event is recurring; otherwise open the
                             // master directly with no occurrenceTs.
                             // Scope is decided at save-time.
-                            val event = deviceQuickViewEvent!!
+                            val event = deviceDisplayEvent
                             val isException = event.instance.originalId != null
                             val isRecurringMaster = event.instance.hasRrule && !isException
                             val masterEventId = event.instance.originalId ?: event.instance.eventId
@@ -1191,7 +1250,7 @@ class MainActivity : FragmentActivity() {
                             // - exception (originalId set): deleteDeviceSingleOccurrence
                             //   on the master with the original instance time.
                             // - recurring master: scope sheet via requestDeleteDevice.
-                            val event = deviceQuickViewEvent!!
+                            val event = deviceDisplayEvent
                             val isException = event.instance.originalId != null
                             val isRecurringMaster = event.instance.hasRrule && !isException
                             when {
@@ -1237,7 +1296,7 @@ class MainActivity : FragmentActivity() {
                             }
                         },
                         onDuplicate = {
-                            val event = deviceQuickViewEvent!!
+                            val event = deviceDisplayEvent
                             duplicateFromEvent = event.toEventForDuplicate()
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
@@ -1247,7 +1306,7 @@ class MainActivity : FragmentActivity() {
                             showEventFormSheet = true
                         },
                         onShare = {
-                            val event = deviceQuickViewEvent!!
+                            val event = deviceDisplayEvent
                             val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
                             val timePattern = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
                             val shareText = event.buildShareText(
@@ -1271,7 +1330,7 @@ class MainActivity : FragmentActivity() {
                             // Fetches master + exceptions directly from Events (preserving
                             // STATUS_CANCELED), maps each to a synthetic Room Event, then
                             // routes through the same icsExporter.exportEvent as Room events.
-                            val event = deviceQuickViewEvent!!
+                            val event = deviceDisplayEvent
                             val masterEventId = event.instance.originalId ?: event.instance.eventId
                             coroutineScope.launch {
                                 val pair = calendarProviderRepository.getDeviceEventWithExceptions(masterEventId)
@@ -1317,7 +1376,7 @@ class MainActivity : FragmentActivity() {
                             // never persisted, and attendee/organizer
                             // data can't sneak in because we don't
                             // read it from CalendarProvider here.
-                            openShareCard(deviceQuickViewEvent!!.toEventForShareCard())
+                            openShareCard(deviceDisplayEvent.toEventForShareCard())
                         },
                         showShareCardTooltip = !shownShareCardTooltip,
                         onShareCardTooltipDismissed = {

@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Đồng bộ lịch của tài khoản này</string>
     <string name="account_detail_sync_contacts">Danh bạ</string>
     <string name="account_detail_sync_contacts_subtitle">Đồng bộ danh bạ của tài khoản này vào điện thoại của bạn</string>
+    <string name="account_detail_sync_contacts_info_text">Sao chép danh bạ vào điện thoại của bạn. Hiện chỉ đọc: chỉ một chiều từ máy chủ đến điện thoại.</string>
     <string name="account_detail_contacts_permission_needed">Quyền truy cập Danh bạ đang tắt. Hãy cấp quyền truy cập để tiếp tục đồng bộ danh bạ.</string>
     <string name="account_detail_contacts_grant">Cấp quyền truy cập</string>
     <string name="contact_sync_enabled_for">Đang đồng bộ danh bạ cho %1$s</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">Mỗi %1$d giờ</string>
     <string name="ics_sync_daily">Hàng ngày</string>
     <string name="ics_sync_weekly">Hàng tuần</string>
+    <string name="default_calendar_name">Lịch</string>
     <string name="ics_url_required">Cần có URL</string>
     <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
     <string name="ics_fetch_error_http">Máy chủ trả về lỗi (%1$d). Vui lòng kiểm tra URL.</string>

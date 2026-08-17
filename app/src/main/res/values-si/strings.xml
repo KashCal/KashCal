@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">මෙම ගිණුමේ දින දර්ශන සමමුහුර්ත කරන්න</string>
     <string name="account_detail_sync_contacts">සම්බන්ධතා</string>
     <string name="account_detail_sync_contacts_subtitle">මෙම ගිණුමේ සම්බන්ධතා ඔබගේ දුරකථනයට සමමුහුර්ත කරන්න</string>
+    <string name="account_detail_sync_contacts_info_text">සම්බන්ධතා ඔබගේ දුරකථනයට පිටපත් කරයි. දැනට කියවීමට පමණි: සේවාදායකයේ සිට දුරකථනයට පමණි.</string>
     <string name="account_detail_contacts_permission_needed">සම්බන්ධතා අවසරය අක්‍රියයි. සම්බන්ධතා සමමුහුර්ත වෙමින් තබා ගැනීමට ප්‍රවේශය දෙන්න.</string>
     <string name="account_detail_contacts_grant">ප්‍රවේශය දෙන්න</string>
     <string name="contact_sync_enabled_for">%1$s සඳහා සම්බන්ධතා සමමුහුර්ත කරමින්</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">සෑම පැය %1$d කටම</string>
     <string name="ics_sync_daily">දිනපතා</string>
     <string name="ics_sync_weekly">සතිපතා</string>
+    <string name="default_calendar_name">දින දර්ශනය</string>
     <string name="ics_url_required">URL අවශ්‍යයි</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
     <string name="ics_fetch_error_http">සේවාදායකය දෝෂයක් ලබා දුන්නේය (%1$d). කරුණාකර URL පරීක්ෂා කරන්න.</string>

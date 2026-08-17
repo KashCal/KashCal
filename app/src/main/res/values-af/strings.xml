@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinkroniseer hierdie rekening se kalenders</string>
     <string name="account_detail_sync_contacts">Kontakte</string>
     <string name="account_detail_sync_contacts_subtitle">Sinkroniseer hierdie rekening se kontakte na jou foon</string>
+    <string name="account_detail_sync_contacts_info_text">Kopieer kontakte na jou foon. Vir eers slegs-lees: net bediener na foon.</string>
     <string name="account_detail_contacts_permission_needed">Kontaktoestemming is af. Verleen toegang om kontakte te bly sinkroniseer.</string>
     <string name="account_detail_contacts_grant">Verleen toegang</string>
     <string name="contact_sync_enabled_for">Sinchroniseer kontakte vir %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Elke %1$d ure</string>
     <string name="ics_sync_daily">Daagliks</string>
     <string name="ics_sync_weekly">Weekliks</string>
+    <string name="default_calendar_name">Kalender</string>
     <string name="ics_url_required">URL is verpligtend</string>
     <string name="ics_url_invalid_scheme">URL moet begin met http://, https://, of webcal://</string>
     <string name="ics_fetch_error_http">Bediener het \'n fout teruggestuur (%1$d). Gaan asseblief die URL na.</string>

@@ -50,7 +50,6 @@ object SubscriptionColors {
  * Sync interval option for subscription calendars.
  */
 data class SyncIntervalOption(
-    val label: String,
     val hours: Int
 )
 
@@ -58,24 +57,19 @@ data class SyncIntervalOption(
  * Available sync interval options for subscription calendars.
  */
 val subscriptionSyncIntervalOptions = listOf(
-    SyncIntervalOption("Every hour", 1),
-    SyncIntervalOption("Every 6 hours", 6),
-    SyncIntervalOption("Every 12 hours", 12),
-    SyncIntervalOption("Daily", 24),
-    SyncIntervalOption("Weekly", 168)
+    SyncIntervalOption(1),
+    SyncIntervalOption(6),
+    SyncIntervalOption(12),
+    SyncIntervalOption(24),
+    SyncIntervalOption(168)
 )
 
 /**
- * Get display label for a sync interval.
+ * Get the localized display label for a sync interval.
  *
  * @param hours Sync interval in hours
- * @return Human-readable label
+ * @return Human-readable, localized label
  */
-fun getSyncIntervalLabel(hours: Int): String {
-    return subscriptionSyncIntervalOptions.find { it.hours == hours }?.label
-        ?: "Every $hours hours"
-}
-
 fun getSyncIntervalLabel(hours: Int, resources: Resources): String {
     return when (hours) {
         1 -> resources.getString(R.string.ics_sync_every_hour)
@@ -86,23 +80,12 @@ fun getSyncIntervalLabel(hours: Int, resources: Resources): String {
 }
 
 /**
- * Validate an ICS subscription URL.
+ * Validate an ICS subscription URL, returning a localized error message if invalid.
  *
  * @param url URL to validate
- * @return Error message if invalid, null if valid
+ * @param resources for resolving the localized error message
+ * @return Localized error message if invalid, null if valid
  */
-fun validateSubscriptionUrl(url: String): String? {
-    val trimmed = url.trim()
-    return when {
-        trimmed.isBlank() -> "URL is required"
-        !trimmed.startsWith("http://") && !trimmed.startsWith("https://") &&
-            !trimmed.startsWith("webcal://") -> "URL must start with http://, https://, or webcal://"
-        !trimmed.endsWith(".ics") && !trimmed.contains("calendar") && !trimmed.contains("ical") ->
-            null // Could be valid, just unusual
-        else -> null // Valid
-    }
-}
-
 fun validateSubscriptionUrl(url: String, resources: Resources): String? {
     val trimmed = url.trim()
     return when {

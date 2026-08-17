@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">यो खाताका पात्रोहरू सिंक गर्नुहोस्</string>
     <string name="account_detail_sync_contacts">सम्पर्कहरू</string>
     <string name="account_detail_sync_contacts_subtitle">यो खाताका सम्पर्कहरू तपाईंको फोनमा सिंक गर्नुहोस्</string>
+    <string name="account_detail_sync_contacts_info_text">सम्पर्कहरू तपाईंको फोनमा प्रतिलिपि गर्छ। अहिलेका लागि पढ्न-मात्र: सर्भरबाट फोनमा मात्र।</string>
     <string name="account_detail_contacts_permission_needed">सम्पर्क अनुमति बन्द छ। सम्पर्कहरू सिंक भइरहन पहुँच दिनुहोस्।</string>
     <string name="account_detail_contacts_grant">पहुँच दिनुहोस्</string>
     <string name="contact_sync_enabled_for">%1$s का लागि सम्पर्कहरू सिंक गर्दै</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">प्रत्येक %1$d घण्टा</string>
     <string name="ics_sync_daily">दैनिक</string>
     <string name="ics_sync_weekly">साप्ताहिक</string>
+    <string name="default_calendar_name">पात्रो</string>
     <string name="ics_url_required">URL आवश्यक छ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, वा webcal:// बाट सुरु हुनुपर्छ</string>
     <string name="ics_fetch_error_http">सर्भरले त्रुटि फर्कायो (%1$d)। कृपया URL जाँच गर्नुहोस्।</string>

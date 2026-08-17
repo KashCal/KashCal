@@ -205,7 +205,7 @@ internal suspend fun fetchMonthEvents(
         withTimeoutOrNull(WIDGET_FETCH_TIMEOUT_MS) {
             repository.getEventsInRange(startDayCode, endDayCode)
         } ?: run {
-            Log.w(TAG, "fetchMonthEvents timed out after ${WIDGET_FETCH_TIMEOUT_MS}ms; keeping previous content")
+            Log.w(TAG, "fetchMonthEvents timed out after ${WIDGET_FETCH_TIMEOUT_MS}ms; rendering the grid with no events")
             emptyMap()
         }
     } catch (e: CancellationException) {

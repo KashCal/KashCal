@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">I-sync ang mga kalendaryo ng account na ito</string>
     <string name="account_detail_sync_contacts">Mga Contact</string>
     <string name="account_detail_sync_contacts_subtitle">I-sync ang mga contact ng account na ito sa iyong telepono</string>
+    <string name="account_detail_sync_contacts_info_text">Kinokopya ang mga contact sa iyong telepono. Basahin-lamang sa ngayon: mula sa server papunta sa telepono lang.</string>
     <string name="account_detail_contacts_permission_needed">Naka-off ang pahintulot sa Mga Contact. Magbigay ng access para patuloy na mag-sync ang mga contact.</string>
     <string name="account_detail_contacts_grant">Magbigay ng access</string>
     <string name="contact_sync_enabled_for">Sini-sync ang mga contact para sa %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Bawat %1$d oras</string>
     <string name="ics_sync_daily">Araw-araw</string>
     <string name="ics_sync_weekly">Lingguhan</string>
+    <string name="default_calendar_name">Kalendaryo</string>
     <string name="ics_url_required">Kinakailangan ang URL</string>
     <string name="ics_url_invalid_scheme">Ang URL ay dapat magsimula sa http://, https://, o webcal://</string>
     <string name="ics_fetch_error_http">Nagbalik ng error ang server (%1$d). Pakisuri ang URL.</string>

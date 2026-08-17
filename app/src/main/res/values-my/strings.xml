@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ဤအကောင့်၏ ပြက္ခဒိန်များကို ချိန်ကိုက်ပါ</string>
     <string name="account_detail_sync_contacts">အဆက်အသွယ်များ</string>
     <string name="account_detail_sync_contacts_subtitle">ဤအကောင့်၏ အဆက်အသွယ်များကို သင့်ဖုန်းသို့ ချိန်ကိုက်ပါ</string>
+    <string name="account_detail_sync_contacts_info_text">အဆက်အသွယ်များကို သင့်ဖုန်းသို့ ကူးယူသည်။ ယခုအတွက် ဖတ်ရုံသာ- ဆာဗာမှ ဖုန်းသို့သာ။</string>
     <string name="account_detail_contacts_permission_needed">အဆက်အသွယ် ခွင့်ပြုချက် ပိတ်ထားသည်။ အဆက်အသွယ်များ ဆက်လက်ချိန်ကိုက်ရန် ဝင်ရောက်ခွင့် ပေးပါ။</string>
     <string name="account_detail_contacts_grant">ဝင်ရောက်ခွင့်ပေးပါ</string>
     <string name="contact_sync_enabled_for">%1$s အတွက် အဆက်အသွယ်များ ချိန်ကိုက်နေသည်</string>
@@ -1060,6 +1061,7 @@
     <string name="ics_sync_every_n_hours">%1$d နာရီတိုင်း</string>
     <string name="ics_sync_daily">နေ့စဉ်</string>
     <string name="ics_sync_weekly">အပတ်စဉ်</string>
+    <string name="default_calendar_name">ပြက္ခဒိန်</string>
     <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
     <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
     <string name="ics_fetch_error_http">ဆာဗာက အမှားတစ်ခု ပြန်ပို့ခဲ့သည် (%1$d)။ URL ကို စစ်ဆေးပါ။</string>

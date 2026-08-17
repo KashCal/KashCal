@@ -25,9 +25,9 @@ import java.time.YearMonth
  * Month View widget showing a full month calendar grid.
  *
  * Features:
- * - 6x7 calendar grid with day numbers; events show as colored indicator dots by default,
- *   or as event title rows when the "month widget event titles" setting is on — then with
- *   continuous bars for multi-day events, mirroring the in-app month view
+ * - 6x7 calendar grid with day numbers; when the widget is tall enough to fit them, events
+ *   show as title rows with continuous bars for multi-day events (mirroring the in-app month
+ *   view), and otherwise fall back to colored indicator dots — decided purely by widget size
  * - Today highlighted with accent color
  * - Past days dimmed
  * - Tap day → navigate to that day in app
@@ -76,7 +76,6 @@ class MonthWidget : GlanceAppWidget() {
         val dataStore = KashCalDataStore(context)
         val initialFirstDayOfWeek = dataStore.getFirstDayOfWeek()
         val initialShowWeekNumbers = dataStore.showWeekNumbers.first()
-        val initialShowEventTitles = dataStore.monthWidgetEventTitles.first()
         // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
         // picked seed. Seeding produceState with null would render one frame on the platform dynamic
         // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
@@ -101,11 +100,6 @@ class MonthWidget : GlanceAppWidget() {
             }
             val showWeekNumbers by produceState(initialValue = initialShowWeekNumbers, key1 = refreshStamp) {
                 value = dataStore.showWeekNumbers.first()
-            }
-            // Same reactive pattern as showWeekNumbers: toggling the titles setting bumps the
-            // refresh stamp via WidgetUpdateManager, recomposing with the new day-cell style.
-            val showEventTitles by produceState(initialValue = initialShowEventTitles, key1 = refreshStamp) {
-                value = dataStore.monthWidgetEventTitles.first()
             }
 
             // Compute target month and grid (pure computation, no suspend needed)
@@ -140,7 +134,6 @@ class MonthWidget : GlanceAppWidget() {
                     targetMonth0 = targetMonth.monthValue - 1,
                     firstDayOfWeek = firstDayOfWeek,
                     showWeekNumbers = showWeekNumbers,
-                    showEventTitles = showEventTitles,
                     forcedDark = colorConfig.forcedDark
                 )
             }

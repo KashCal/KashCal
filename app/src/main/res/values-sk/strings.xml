@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Synchronizovať kalendáre tohto účtu</string>
     <string name="account_detail_sync_contacts">Kontakty</string>
     <string name="account_detail_sync_contacts_subtitle">Synchronizovať kontakty tohto účtu do telefónu</string>
+    <string name="account_detail_sync_contacts_info_text">Skopíruje kontakty do telefónu. Zatiaľ len na čítanie: zo servera do telefónu.</string>
     <string name="account_detail_contacts_permission_needed">Povolenie na kontakty je vypnuté. Povoľ prístup, aby sa kontakty ďalej synchronizovali.</string>
     <string name="account_detail_contacts_grant">Povoliť prístup</string>
     <string name="contact_sync_enabled_for">Synchronizácia kontaktov pre %1$s</string>
@@ -1203,6 +1204,7 @@
     <string name="ics_sync_every_n_hours">Každých %1$d hodín</string>
     <string name="ics_sync_daily">Denne</string>
     <string name="ics_sync_weekly">Týždenne</string>
+    <string name="default_calendar_name">Kalendár</string>
     <string name="ics_url_required">URL je povinné</string>
     <string name="ics_url_invalid_scheme">URL musí začínať http://, https:// alebo webcal://</string>
     <string name="ics_fetch_error_http">Server vrátil chybu (%1$d). Skontrolujte URL.</string>

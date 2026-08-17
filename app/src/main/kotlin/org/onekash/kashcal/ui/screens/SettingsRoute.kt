@@ -144,7 +144,6 @@ fun SettingsRoute(
         val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
         val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
         val widgetDetailedRows by viewModel.widgetDetailedRows.collectAsStateWithLifecycle()
-        val monthWidgetEventTitles by viewModel.monthWidgetEventTitles.collectAsStateWithLifecycle()
         val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
         val isSearchActive by viewModel.isSearchActive.collectAsStateWithLifecycle()
         val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -776,8 +775,6 @@ fun SettingsRoute(
                             onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
                             widgetDetailedRows = widgetDetailedRows,
                             onWidgetDetailedRowsChange = viewModel::setWidgetDetailedRows,
-                            monthWidgetEventTitles = monthWidgetEventTitles,
-                            onMonthWidgetEventTitlesChange = viewModel::setMonthWidgetEventTitles,
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen

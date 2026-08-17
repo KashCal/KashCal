@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sincronitza els calendaris d\'aquest compte</string>
     <string name="account_detail_sync_contacts">Contactes</string>
     <string name="account_detail_sync_contacts_subtitle">Sincronitza els contactes d\'aquest compte al teu telèfon</string>
+    <string name="account_detail_sync_contacts_info_text">Copia els contactes al teu telèfon. De moment només de lectura: del servidor al telèfon.</string>
     <string name="account_detail_contacts_permission_needed">El permís de contactes està desactivat. Concedeix accés per continuar sincronitzant els contactes.</string>
     <string name="account_detail_contacts_grant">Concedeix accés</string>
     <string name="contact_sync_enabled_for">S\'estan sincronitzant els contactes de %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Cada %1$d hores</string>
     <string name="ics_sync_daily">Diàriament</string>
     <string name="ics_sync_weekly">Setmanalment</string>
+    <string name="default_calendar_name">Calendari</string>
     <string name="ics_url_required">Cal una URL</string>
     <string name="ics_url_invalid_scheme">La URL ha de començar amb http://, https://, o webcal://</string>
     <string name="ics_fetch_error_http">El servidor ha retornat un error (%1$d). Comproveu la URL.</string>

@@ -146,6 +146,36 @@ class MonthWidgetSpanLayoutTest {
     }
 
     @Test
+    fun `a single-row week shows the top event's title instead of a bare overflow marker`() {
+        // With only one row for the whole week there is no room for both a title and a "+n". A
+        // lone "+n" with no event name reads worse than naming the top event, so the extras are
+        // hidden silently (like the dots cap). No overflow marker should appear anywhere.
+        val events = mapOf(week[2] to List(3) { timed(day = 5, title = "E$it") })
+        val render = computeMonthWidgetWeekRender(week, events, maxSlots = 1)
+        assertEquals(1, render.slots.size)
+        assertTrue(render.slots[0][2] is MonthWidgetSlot.CellEvent)
+        assertTrue(render.slots.none { row -> row.any { it is MonthWidgetSlot.Overflow } })
+    }
+
+    @Test
+    fun `a multi-row week keeps the overflow marker even when a bar leaves one free slot`() {
+        // The one-row title-instead-of-marker rule is scoped to single-row weeks only. Here a
+        // week-long bar takes one of two lanes, leaving a single free slot for two single-day
+        // events; the marker still appears (the bar gives the cell context), so the day reports
+        // its real count rather than silently dropping to one title.
+        val bar = multiDay(startDay = 20260803, endDay = 20260809, title = "Trip")
+        val events = mapOf(
+            week[0] to listOf(bar),
+            week[2] to listOf(timed(day = 5, title = "A"), timed(day = 5, title = "B"))
+        )
+        val render = computeMonthWidgetWeekRender(week, events, maxSlots = 2)
+        assertEquals(2, render.slots.size)
+        assertTrue(render.slots[0][2] is MonthWidgetSlot.BarSegment)
+        val overflow = render.slots[1][2] as MonthWidgetSlot.Overflow
+        assertEquals(2, overflow.count)
+    }
+
+    @Test
     fun `lanes win over cell events when a column is fully bar-occupied`() {
         // Two bars cover the whole week in lanes 0 and 1; with maxSlots = 2 the column has
         // no free slot left, so its single-day event drops without an overflow marker.

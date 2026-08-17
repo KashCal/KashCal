@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">የዚህን መለያ የቀን መቁጠሪያዎች አመሳስል</string>
     <string name="account_detail_sync_contacts">እውቂያዎች</string>
     <string name="account_detail_sync_contacts_subtitle">የዚህን መለያ እውቂያዎች ወደ ስልክዎ አመሳስል</string>
+    <string name="account_detail_sync_contacts_info_text">እውቂያዎችን ወደ ስልክዎ ይቀዳል። ለአሁኑ ለንባብ ብቻ፦ ከአገልጋይ ወደ ስልክ ብቻ።</string>
     <string name="account_detail_contacts_permission_needed">የእውቂያ ፈቃድ ጠፍቷል። እውቂያዎች መመሳሰላቸውን እንዲቀጥሉ መዳረሻ ይፍቀዱ።</string>
     <string name="account_detail_contacts_grant">መዳረሻ ይፍቀዱ</string>
     <string name="contact_sync_enabled_for">የ%1$s ዕውቂያዎች እየተመሳሰሉ ነው</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">በየ%1$d ሰዓቱ</string>
     <string name="ics_sync_daily">በየቀኑ</string>
     <string name="ics_sync_weekly">በየሳምንቱ</string>
+    <string name="default_calendar_name">የቀን መቁጠሪያ</string>
     <string name="ics_url_required">URL ያስፈልጋል</string>
     <string name="ics_url_invalid_scheme">URL በhttp://፣ https://፣ ወይም webcal:// መጀመር አለበት</string>
     <string name="ics_fetch_error_http">አገልጋዩ ስህተት መልሷል (%1$d)። እባክዎ URL ን ያረጋግጡ።</string>

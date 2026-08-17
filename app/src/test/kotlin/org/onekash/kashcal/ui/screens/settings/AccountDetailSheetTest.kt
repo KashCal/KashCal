@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
@@ -60,6 +61,13 @@ class AccountDetailSheetTest {
         renderSheet(AccountProvider.CALDAV)
         composeTestRule.onNodeWithText(str(R.string.account_detail_sync_contacts)).assertIsDisplayed()
         composeTestRule.onNodeWithText(str(R.string.badge_beta)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `CardDAV account shows an info button explaining contact sync`() {
+        renderSheet(AccountProvider.CALDAV)
+        val cd = str(R.string.cd_about_setting).format(str(R.string.account_detail_sync_contacts))
+        composeTestRule.onNodeWithContentDescription(cd).assertIsDisplayed()
     }
 
     @Test

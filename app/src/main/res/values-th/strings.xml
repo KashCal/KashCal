@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ซิงค์ปฏิทินของบัญชีนี้</string>
     <string name="account_detail_sync_contacts">รายชื่อติดต่อ</string>
     <string name="account_detail_sync_contacts_subtitle">ซิงค์รายชื่อติดต่อของบัญชีนี้ไปยังโทรศัพท์ของคุณ</string>
+    <string name="account_detail_sync_contacts_info_text">คัดลอกรายชื่อติดต่อมายังโทรศัพท์ของคุณ ขณะนี้เป็นแบบอ่านอย่างเดียว: จากเซิร์ฟเวอร์มายังโทรศัพท์ทางเดียวเท่านั้น</string>
     <string name="account_detail_contacts_permission_needed">สิทธิ์การเข้าถึงรายชื่อติดต่อถูกปิดอยู่ โปรดอนุญาตการเข้าถึงเพื่อให้ซิงค์รายชื่อติดต่อต่อไป</string>
     <string name="account_detail_contacts_grant">อนุญาตการเข้าถึง</string>
     <string name="contact_sync_enabled_for">กำลังซิงค์รายชื่อติดต่อสำหรับ %1$s</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">ทุก %1$d ชั่วโมง</string>
     <string name="ics_sync_daily">ทุกวัน</string>
     <string name="ics_sync_weekly">ทุกสัปดาห์</string>
+    <string name="default_calendar_name">ปฏิทิน</string>
     <string name="ics_url_required">ต้องระบุ URL</string>
     <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
     <string name="ics_fetch_error_http">เซิร์ฟเวอร์แสดงข้อผิดพลาด (%1$d) โปรดตรวจสอบ URL</string>

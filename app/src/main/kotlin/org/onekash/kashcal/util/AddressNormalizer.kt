@@ -1,5 +1,7 @@
 package org.onekash.kashcal.util
 
+import org.onekash.icaldav.util.CalAddress
+
 /**
  * Canonicalize a CAL-ADDRESS (RFC 5545 §3.3.3) for compare-time equality.
  *
@@ -10,12 +12,13 @@ package org.onekash.kashcal.util
  */
 object AddressNormalizer {
 
-    // Lenient RFC 5322 §3.4.1 email shape: local@domain.tld. Rejects bare
-    // logins ("alice"), dotless internal hosts ("user@localhost"), and
-    // non-mailto CAL-ADDRESS forms (urn:uuid:, principal paths). Single source
-    // of truth for "is this a mailto-emittable address" across the organizer
-    // resolution + attendee-entity + integration-test paths.
-    private val EMAIL_SHAPE = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+    // Mailbox shape: local@domain.tld. Rejects bare logins ("alice"), dotless
+    // internal hosts ("user@localhost"), and non-mailto CAL-ADDRESS forms
+    // (urn:uuid:, principal paths — including a principal path whose login
+    // segment is itself an email, which a "/"-permissive char class would wrongly
+    // match). Reuses the CAL-ADDRESS mailbox pattern that the ICS parser/generator
+    // already share, so the store-side and wire-side decisions cannot diverge.
+    private val EMAIL_SHAPE = CalAddress.mailtoShape
 
     /**
      * True when [raw] (after any `mailto:` strip) is email-shaped — i.e. safe

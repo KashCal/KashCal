@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinhroniziraj koledarje tega računa</string>
     <string name="account_detail_sync_contacts">Stiki</string>
     <string name="account_detail_sync_contacts_subtitle">Sinhroniziraj stike tega računa v telefon</string>
+    <string name="account_detail_sync_contacts_info_text">Kopira stike v telefon. Zaenkrat samo za branje: s strežnika v telefon.</string>
     <string name="account_detail_contacts_permission_needed">Dovoljenje za stike je izklopljeno. Dovoli dostop, da se stiki še naprej sinhronizirajo.</string>
     <string name="account_detail_contacts_grant">Dovoli dostop</string>
     <string name="contact_sync_enabled_for">Sinhroniziranje stikov za %1$s</string>
@@ -1203,6 +1204,7 @@
     <string name="ics_sync_every_n_hours">Vsakih %1$d ur</string>
     <string name="ics_sync_daily">Dnevno</string>
     <string name="ics_sync_weekly">Tedensko</string>
+    <string name="default_calendar_name">Koledar</string>
     <string name="ics_url_required">URL je obvezen</string>
     <string name="ics_url_invalid_scheme">URL se mora začeti s http://, https:// ali webcal://</string>
     <string name="ics_fetch_error_http">Strežnik je vrnil napako (%1$d). Preverite URL.</string>

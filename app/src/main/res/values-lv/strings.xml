@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinhronizēt šī konta kalendārus</string>
     <string name="account_detail_sync_contacts">Kontakti</string>
     <string name="account_detail_sync_contacts_subtitle">Sinhronizēt šī konta kontaktus ar tālruni</string>
+    <string name="account_detail_sync_contacts_info_text">Kopē kontaktus uz tālruni. Pagaidām tikai lasāmi: serveris → tālrunis.</string>
     <string name="account_detail_contacts_permission_needed">Piekļuve kontaktiem ir izslēgta. Piešķir piekļuvi, lai kontakti turpinātu sinhronizēties.</string>
     <string name="account_detail_contacts_grant">Piešķirt piekļuvi</string>
     <string name="contact_sync_enabled_for">Tiek sinhronizēti %1$s kontakti</string>
@@ -1155,6 +1156,7 @@
     <string name="ics_sync_every_n_hours">Ik pēc %1$d stundām</string>
     <string name="ics_sync_daily">Katru dienu</string>
     <string name="ics_sync_weekly">Katru nedēļu</string>
+    <string name="default_calendar_name">Kalendārs</string>
     <string name="ics_url_required">Nepieciešams URL</string>
     <string name="ics_url_invalid_scheme">URL jāsākas ar http://, https:// vai webcal://</string>
     <string name="ics_fetch_error_http">Serveris atgrieza kļūdu (%1$d). Pārbaudi URL.</string>

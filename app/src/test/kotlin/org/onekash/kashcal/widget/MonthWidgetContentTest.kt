@@ -4,6 +4,7 @@ import android.content.res.Resources
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -228,24 +229,69 @@ class MonthWidgetContentTest {
 
     @Test
     fun `maxEventRows returns 0 when not even one row fits below the day number`() {
-        // 18 (number) + 13 (one row) = 31dp minimum
-        assertEquals(0, maxEventRows(30f))
+        // 21 (number) + 16 (row) + 1 (its leading gap) = 38dp minimum; below that the cell
+        // falls back to dots rather than commit to a title row the number would clip away.
+        assertEquals(0, maxEventRows(37f))
     }
 
     @Test
     fun `maxEventRows fits exactly one row at the minimum height`() {
-        assertEquals(1, maxEventRows(31f))
+        assertEquals(1, maxEventRows(38f))
     }
 
     @Test
-    fun `maxEventRows fits two rows at the standard widget cell height`() {
-        // Standard widget: 304dp tall, 5 weeks -> ~48dp cell. 18 + 13 + 1 + 13 = 45dp.
-        assertEquals(2, maxEventRows(48.2f))
+    fun `maxEventRows fits two rows once the second row and its gap clear the number`() {
+        // 21 (number) + 2 * (16 row + 1 gap) = 55dp. Every slot row pays its leading gap, so
+        // the second row costs a full 17dp, not 16.
+        assertEquals(2, maxEventRows(55f))
     }
 
     @Test
     fun `maxEventRows caps at MAX_EVENT_ROWS on tall cells`() {
         assertEquals(MAX_EVENT_ROWS, maxEventRows(200f))
+    }
+
+    @Test
+    fun `maxEventRows fits fewer rows at a larger font scale`() {
+        // A cell that fits two rows at font-scale 1.0 fits none at 1.5: the scaled 16dp rows
+        // (24dp each) plus the scaled 21dp number (31.5dp) no longer clear the 55dp cell, so the
+        // layout backs off to dots instead of clipping a row off the bottom.
+        assertEquals(2, maxEventRows(55f, fontScale = 1.0f))
+        assertEquals(0, maxEventRows(55f, fontScale = 1.5f))
+    }
+
+    // ==================== minWidgetHeightForTitlesDp ====================
+
+    @Test
+    fun `minWidgetHeightForTitlesDp derives the two-row threshold from real element heights`() {
+        // Header 40 + day-of-week 23 + 6 weeks * (21 number + 2 * (16 row + 1 gap)) = 393dp,
+        // which is exactly the height a 6-week two-row grid renders at — so a widget past the
+        // threshold fits its rows with none clipped.
+        assertEquals(393f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
+    }
+
+    @Test
+    fun `minWidgetHeightForTitlesDp needs more room for more rows`() {
+        assertTrue(minWidgetHeightForTitlesDp(2) > minWidgetHeightForTitlesDp(1))
+    }
+
+    @Test
+    fun `minWidgetHeightForTitlesDp rises with the font scale`() {
+        // A larger system font grows the text, so titles need a taller widget before they fit —
+        // the threshold tracks the font scale so a scaled-up widget shows dots until it is
+        // genuinely tall enough for un-clipped titles.
+        assertTrue(minWidgetHeightForTitlesDp(2, fontScale = 1.5f) > minWidgetHeightForTitlesDp(2, fontScale = 1.0f))
+    }
+
+    @Test
+    fun `MAX_EVENT_ROWS stays small so the widget never exhausts its view-ID pool`() {
+        // Each widget can allocate at most 500 views, and every slot row draws from that pool across
+        // all 7 columns and 6 week rows — so the row count is the dominant multiplier and the budget
+        // is capped by it, not by widget size. Three rows only fit once each event collapsed from a
+        // Box+Text (two views) to a single Text; a fully-booked six-week month at three rows then
+        // measures well inside the pool at every size. MonthWidgetTranslationTest measures the
+        // worst-case count to hold this margin.
+        assertEquals(3, MAX_EVENT_ROWS)
     }
 
     // ==================== maxTitleChars ====================

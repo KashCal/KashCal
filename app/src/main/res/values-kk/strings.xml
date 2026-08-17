@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Осы есептік жазбаның күнтізбелерін синхрондау</string>
     <string name="account_detail_sync_contacts">Контактілер</string>
     <string name="account_detail_sync_contacts_subtitle">Осы есептік жазбаның контактілерін телефоныңызға синхрондау</string>
+    <string name="account_detail_sync_contacts_info_text">Контактілерді телефоныңызға көшіреді. Әзірге тек оқуға арналған: серверден телефонға ғана.</string>
     <string name="account_detail_contacts_permission_needed">Контактілерге рұқсат өшірулі. Контактілер синхрондалуын жалғастыру үшін рұқсат беріңіз.</string>
     <string name="account_detail_contacts_grant">Рұқсат беру</string>
     <string name="contact_sync_enabled_for">%1$s үшін контактілер синхрондалуда</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">%1$d сағат сайын</string>
     <string name="ics_sync_daily">Күн сайын</string>
     <string name="ics_sync_weekly">Апта сайын</string>
+    <string name="default_calendar_name">Күнтізбе</string>
     <string name="ics_url_required">URL қажет</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, немесе webcal:// арқылы басталуы тиіс</string>
     <string name="ics_fetch_error_http">Сервер қате қайтарды (%1$d). URL мекенжайын тексеріңіз.</string>

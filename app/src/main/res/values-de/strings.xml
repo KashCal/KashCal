@@ -531,6 +531,7 @@
     <string name="account_detail_sync_calendar_subtitle">Kalender dieses Kontos synchronisieren</string>
     <string name="account_detail_sync_contacts">Kontakte</string>
     <string name="account_detail_sync_contacts_subtitle">Kontakte dieses Kontos mit deinem Telefon synchronisieren</string>
+    <string name="account_detail_sync_contacts_info_text">Kopiert Kontakte auf dein Telefon. Vorerst nur Lesen: nur vom Server aufs Telefon.</string>
     <string name="account_detail_contacts_permission_needed">Kontakte-Berechtigung ist deaktiviert. Erlaube den Zugriff, damit Kontakte weiter synchronisiert werden.</string>
     <string name="account_detail_contacts_grant">Zugriff erlauben</string>
     <string name="contact_sync_enabled_for">Kontakte werden für %1$s synchronisiert</string>
@@ -575,8 +576,6 @@
     <string name="settings_widget_event_limit_hint">Maximale Anzahl Termine pro Tag in Widgets</string>
     <string name="settings_detailed_widget_rows">Detaillierte Widget-Zeilen</string>
     <string name="settings_detailed_widget_rows_info">Kompakt in einer Zeile oder detailliert in zwei Zeilen mit Endzeit.</string>
-    <string name="settings_month_widget_event_titles">Termintitel im Monats-Widget</string>
-    <string name="settings_month_widget_event_titles_info">Termine in den Tageszellen des Monats-Widgets mit Titel statt als Farbpunkte anzeigen – wie die Monatsansicht in der App.</string>
     <string name="settings_sync_lookback">Sync-Rückblick</string>
     <string name="settings_sync_lookback_hint">Wie weit zurück Termine synchronisiert werden</string>
     <string name="settings_not_set">Nicht festgelegt</string>
@@ -1108,6 +1107,7 @@
     <string name="ics_sync_every_n_hours">Alle %1$d Stunden</string>
     <string name="ics_sync_daily">Täglich</string>
     <string name="ics_sync_weekly">Wöchentlich</string>
+    <string name="default_calendar_name">Kalender</string>
     <string name="ics_url_required">URL ist erforderlich</string>
     <string name="ics_url_invalid_scheme">URL muss mit http://, https:// oder webcal:// beginnen</string>
     <string name="ics_fetch_error_http">Der Server hat einen Fehler zurückgegeben (%1$d). Bitte überprüfe die URL.</string>

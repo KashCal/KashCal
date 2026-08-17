@@ -84,6 +84,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -329,6 +330,10 @@ private fun UnifiedTimeGrid(
     var dragState by remember { mutableStateOf(WeekViewUtils.DragState.Idle) }
     val isDragging by remember { derivedStateOf { dragState.isDragging } }
     var viewportHeightPx by remember { mutableFloatStateOf(0f) }
+    // Scroll offset a pinch-zoom wants to settle on, applied once the grid has re-measured
+    // to its new height (see the recentring LaunchedEffect below). Applying it inline during
+    // the gesture would let the framework re-clamp against the stale, pre-zoom scroll range.
+    var pendingZoomScrollPx by remember { mutableStateOf<Float?>(null) }
     val hapticFeedback = LocalHapticFeedback.current
 
     val dragScale by animateFloatAsState(
@@ -385,6 +390,24 @@ private fun UnifiedTimeGrid(
             .map { position -> WeekViewUtils.pixelsToMinutesOfDay(position.toFloat(), currentHourHeightPx) }
             .distinctUntilChanged()  // don't re-persist when the settled clock-minute is unchanged
             .collect { minutes -> onScrollMinutesChange(minutes) }
+    }
+
+    // Recenter the grid after a pinch-zoom. The gesture changes the hour-row height (which
+    // grows/shrinks the scrollable content) and records the scroll offset that keeps the
+    // clock time under the viewport center fixed. We wait for the grid to re-measure to its
+    // new height before scrolling, otherwise scrollTo() clamps the target against the stale
+    // pre-zoom max — stranding the recenter short and sliding the current-time line and every
+    // event off their correct time when zooming in.
+    LaunchedEffect(pendingZoomScrollPx) {
+        val target = pendingZoomScrollPx ?: return@LaunchedEffect
+        // Wait for the grid to grow to the target before scrolling; bounded so a rounding
+        // mismatch between our target and the measured max can never suspend forever. By
+        // the timeout the re-measure has long since landed, so scrollTo() clamps correctly.
+        withTimeoutOrNull(250) {
+            snapshotFlow { scrollState.maxValue }.first { it.toFloat() >= target - 1f }
+        }
+        scrollState.scrollTo(target.toInt())
+        pendingZoomScrollPx = null
     }
 
     // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
@@ -477,6 +500,17 @@ private fun UnifiedTimeGrid(
                                 awaitEachGesture {
                                     awaitFirstDown(requireUnconsumed = false, pass = pass)
                                     var pastSlop = false
+                                    // Track the scroll offset and hour-height this gesture is
+                                    // steering toward. The applied hour-height (currentHourHeightPx)
+                                    // and the scroll offset (scrollState.value) each settle a frame
+                                    // apart from a pinch — reading the live values mid-gesture pairs
+                                    // a fresh height with a stale scroll and drifts the center. These
+                                    // locals advance together every frame so the center math stays
+                                    // self-consistent regardless of recomposition timing.
+                                    // Seed from a still-settling recenter if one exists, so a rapid
+                                    // re-pinch doesn't anchor to a scroll offset that hasn't landed.
+                                    var zoomScrollPx = pendingZoomScrollPx ?: scrollState.value.toFloat()
+                                    var zoomHourHeightPx = currentHourHeightPx
                                     do {
                                         val event = awaitPointerEvent(pass)
                                         if (event.changes.count { it.pressed } < 2) continue
@@ -491,18 +525,39 @@ private fun UnifiedTimeGrid(
                                         }
                                         event.changes.forEach { it.consume() }
                                         if (abs(zoom - 1f) > 0.001f) {
-                                            val oldHourHeightPx = currentHourHeightPx
-                                            val newHourHeight = (currentHourHeight.value * zoom)
-                                                .coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)
-                                            if (abs(newHourHeight - currentHourHeight.value) > 0.01f) {
-                                                val newHourHeightPx = newHourHeight * density.density
-                                                val viewportCenterTime = (scrollState.value + localViewportHeight / 2) / oldHourHeightPx
-                                                val newScrollPx = viewportCenterTime * newHourHeightPx - localViewportHeight / 2
-                                                onHourHeightChange(newHourHeight)
-                                                scrollState.dispatchRawDelta(newScrollPx - scrollState.value - pan.y)
+                                            val newHourHeightPx = (zoomHourHeightPx * zoom)
+                                                .coerceIn(
+                                                    WeekViewUtils.MIN_HOUR_HEIGHT_DP * density.density,
+                                                    WeekViewUtils.MAX_HOUR_HEIGHT_DP * density.density
+                                                )
+                                            if (abs(newHourHeightPx - zoomHourHeightPx) > 0.01f) {
+                                                val recenter = WeekViewUtils.resolveZoomScrollPx(
+                                                    currentScrollPx = zoomScrollPx,
+                                                    viewportHeightPx = localViewportHeight,
+                                                    oldHourHeightPx = zoomHourHeightPx,
+                                                    newHourHeightPx = newHourHeightPx,
+                                                    totalHours = totalHours,
+                                                    panYPx = pan.y
+                                                )
+                                                onHourHeightChange(newHourHeightPx / density.density)
+                                                zoomScrollPx = recenter
+                                                zoomHourHeightPx = newHourHeightPx
+                                                // Move toward the target this frame for continuity.
+                                                // This is self-clamped to the not-yet-grown range, so
+                                                // it lands short when zooming in; the recentring effect
+                                                // snaps to the exact target once the grid re-measures.
+                                                scrollState.dispatchRawDelta(recenter - scrollState.value.toFloat())
+                                                pendingZoomScrollPx = recenter
                                             }
                                         } else if (abs(pan.y) > 0.5f) {
                                             scrollState.dispatchRawDelta(-pan.y)
+                                            // Advance the tracked offset by the pan (not the possibly
+                                            // not-yet-applied scrollState.value), and fold it into any
+                                            // settling recenter so the deferred scrollTo keeps the pan.
+                                            zoomScrollPx = (zoomScrollPx - pan.y).coerceAtLeast(0f)
+                                            pendingZoomScrollPx?.let {
+                                                pendingZoomScrollPx = (it - pan.y).coerceAtLeast(0f)
+                                            }
                                         }
                                     } while (event.changes.any { it.pressed })
                                 }
@@ -1254,23 +1309,30 @@ private fun CurrentTimeIndicator(
     val xOffset = columnWidth * todayVisibleOffset
     val indicatorColor = MaterialTheme.colorScheme.error
 
+    // Density-independent sizing. The marker box is as tall as the dot and offset up by
+    // half its height so the line lands exactly on the current minute.
+    val lineThickness = 2.dp
+    val dotRadius = 4.dp
+    val markerHeight = dotRadius * 2
+
     Box(
         modifier = modifier
-            .offset(x = xOffset, y = yOffset)
+            .offset(x = xOffset, y = yOffset - markerHeight / 2)
             .width(columnWidth)
-            .height(2.dp)
+            .height(markerHeight)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
+            val centerY = size.height / 2
             drawLine(
                 color = indicatorColor,
-                start = Offset(0f, size.height / 2),
-                end = Offset(size.width, size.height / 2),
-                strokeWidth = 2f
+                start = Offset(0f, centerY),
+                end = Offset(size.width, centerY),
+                strokeWidth = lineThickness.toPx()
             )
             drawCircle(
                 color = indicatorColor,
-                radius = 4f,
-                center = Offset(4f, size.height / 2)
+                radius = dotRadius.toPx(),
+                center = Offset(dotRadius.toPx(), centerY)
             )
         }
     }

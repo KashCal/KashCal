@@ -788,6 +788,8 @@
     <string name="account_detail_sync_calendar_subtitle">Sync this account\'s calendars</string>
     <string name="account_detail_sync_contacts">Contacts</string>
     <string name="account_detail_sync_contacts_subtitle">Sync this account\'s contacts to your phone</string>
+    <!-- Body of the ⓘ tooltip next to the Contacts sync toggle -->
+    <string name="account_detail_sync_contacts_info_text">Copies contacts to your phone. Read-only for now: server to phone only.</string>
     <!-- Inline banner shown when contact sync is on but the Contacts permission was revoked -->
     <string name="account_detail_contacts_permission_needed">Contacts permission is off. Grant access to keep contacts syncing.</string>
     <string name="account_detail_contacts_grant">Grant access</string>
@@ -853,10 +855,6 @@
     <string name="settings_detailed_widget_rows">Detailed widget rows</string>
     <!-- Info tooltip explaining the Detailed widget rows toggle -->
     <string name="settings_detailed_widget_rows_info">Compact single line, or detailed two lines with end time.</string>
-    <!-- "Widget" = Android home screen widget. Toggle: month widget day cells show event titles instead of color dots. -->
-    <string name="settings_month_widget_event_titles">Month widget event titles</string>
-    <!-- Info tooltip explaining the Month widget event titles toggle -->
-    <string name="settings_month_widget_event_titles_info">Show event titles in the month widget’s day cells instead of color dots, like the month view in the app.</string>
     <!-- "Lookback" = how far back in time to sync -->
     <string name="settings_sync_lookback">Sync lookback</string>
     <!-- Subtitle hint under the Sync lookback row -->
@@ -1588,6 +1586,8 @@
     <string name="ics_sync_every_n_hours">Every %1$d hours</string>
     <string name="ics_sync_daily">Daily</string>
     <string name="ics_sync_weekly">Weekly</string>
+    <!-- Default name pre-filled for a subscribed feed that provides no calendar name -->
+    <string name="default_calendar_name">Calendar</string>
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL is required</string>
     <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>

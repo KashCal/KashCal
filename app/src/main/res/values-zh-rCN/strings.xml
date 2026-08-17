@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">同步此账户的日历</string>
     <string name="account_detail_sync_contacts">联系人</string>
     <string name="account_detail_sync_contacts_subtitle">将此账户的联系人同步到手机</string>
+    <string name="account_detail_sync_contacts_info_text">将联系人复制到手机。目前为只读：仅从服务器同步到手机。</string>
     <string name="account_detail_contacts_permission_needed">联系人权限已关闭。请授予访问权限以继续同步联系人。</string>
     <string name="account_detail_contacts_grant">授予访问权限</string>
     <string name="contact_sync_enabled_for">正在同步 %1$s 的联系人</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">每%1$d小时</string>
     <string name="ics_sync_daily">每天</string>
     <string name="ics_sync_weekly">每周</string>
+    <string name="default_calendar_name">日历</string>
     <string name="ics_url_required">需要URL</string>
     <string name="ics_url_invalid_scheme">URL必须以http://、https://或webcal://开头</string>
     <string name="ics_fetch_error_http">服务器返回了错误（%1$d）。请检查URL。</string>

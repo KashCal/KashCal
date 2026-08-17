@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sincronizează calendarele acestui cont</string>
     <string name="account_detail_sync_contacts">Contacte</string>
     <string name="account_detail_sync_contacts_subtitle">Sincronizează contactele acestui cont pe telefonul tău</string>
+    <string name="account_detail_sync_contacts_info_text">Copiază contactele pe telefonul tău. Deocamdată doar citire: doar de la server la telefon.</string>
     <string name="account_detail_contacts_permission_needed">Permisiunea pentru Contacte este dezactivată. Acordă accesul pentru a menține sincronizarea contactelor.</string>
     <string name="account_detail_contacts_grant">Acordă acces</string>
     <string name="contact_sync_enabled_for">Se sincronizează contactele pentru %1$s</string>
@@ -1155,6 +1156,7 @@
     <string name="ics_sync_every_n_hours">La fiecare %1$d ore</string>
     <string name="ics_sync_daily">Zilnic</string>
     <string name="ics_sync_weekly">Săptămânal</string>
+    <string name="default_calendar_name">Calendar</string>
     <string name="ics_url_required">URL-ul este obligatoriu</string>
     <string name="ics_url_invalid_scheme">URL-ul trebuie să înceapă cu http://, https:// sau webcal://</string>
     <string name="ics_fetch_error_http">Serverul a returnat o eroare (%1$d). Verifică URL-ul.</string>

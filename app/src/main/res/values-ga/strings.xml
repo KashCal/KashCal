@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sioncronaigh féilirí an chuntais seo</string>
     <string name="account_detail_sync_contacts">Teagmhálacha</string>
     <string name="account_detail_sync_contacts_subtitle">Sioncronaigh teagmhálacha an chuntais seo le do ghuthán</string>
+    <string name="account_detail_sync_contacts_info_text">Cóipeálann sé teagmhálacha chuig do ghuthán. Inléite amháin faoi láthair: ón bhfreastalaí chuig an nguthán.</string>
     <string name="account_detail_contacts_permission_needed">Tá cead teagmhálacha múchta. Tabhair rochtain chun leanúint le sioncronú teagmhálacha.</string>
     <string name="account_detail_contacts_grant">Tabhair rochtain</string>
     <string name="contact_sync_enabled_for">Teagmhálaithe %1$s á sioncronú</string>
@@ -1251,6 +1252,7 @@
     <string name="ics_sync_every_n_hours">Gach %1$d uair</string>
     <string name="ics_sync_daily">Go laethúil</string>
     <string name="ics_sync_weekly">Go seachtainiúil</string>
+    <string name="default_calendar_name">Féilire</string>
     <string name="ics_url_required">Tá URL ag teastáil</string>
     <string name="ics_url_invalid_scheme">Caithfidh an URL tosú le http://, https://, nó webcal://</string>
     <string name="ics_fetch_error_http">Sheol an freastalaí earráid ar ais (%1$d). Seiceáil an URL le do thoil.</string>

@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinkronizatu kontu honen egutegiak</string>
     <string name="account_detail_sync_contacts">Kontaktuak</string>
     <string name="account_detail_sync_contacts_subtitle">Sinkronizatu kontu honen kontaktuak zure telefonoan</string>
+    <string name="account_detail_sync_contacts_info_text">Kontaktuak zure telefonora kopiatzen ditu. Oraingoz irakurtzeko soilik: zerbitzaritik telefonora.</string>
     <string name="account_detail_contacts_permission_needed">Kontaktuen baimena desaktibatuta dago. Eman sarbidea kontaktuak sinkronizatzen jarraitzeko.</string>
     <string name="account_detail_contacts_grant">Eman sarbidea</string>
     <string name="contact_sync_enabled_for">%1$s kontuaren kontaktuak sinkronizatzen</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">%1$d orduro</string>
     <string name="ics_sync_daily">Egunero</string>
     <string name="ics_sync_weekly">Astero</string>
+    <string name="default_calendar_name">Egutegia</string>
     <string name="ics_url_required">URL behar da</string>
     <string name="ics_url_invalid_scheme">URLa http://, https://, edo webcal:// bidez hasi behar da</string>
     <string name="ics_fetch_error_http">Zerbitzariak errore bat itzuli du (%1$d). Egiaztatu URLa.</string>

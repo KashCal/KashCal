@@ -381,9 +381,6 @@ class AccountSettingsViewModel @Inject constructor(
     private val _widgetDetailedRows = MutableStateFlow(false)
     val widgetDetailedRows: StateFlow<Boolean> = _widgetDetailedRows.asStateFlow()
 
-    private val _monthWidgetEventTitles = MutableStateFlow(false)
-    val monthWidgetEventTitles: StateFlow<Boolean> = _monthWidgetEventTitles.asStateFlow()
-
     // Backup & Restore dialog state
     private val _backupRestoreState = MutableStateFlow<BackupRestoreUiState>(BackupRestoreUiState.Idle)
     val backupRestoreState: StateFlow<BackupRestoreUiState> = _backupRestoreState.asStateFlow()
@@ -726,11 +723,6 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            dataStore.monthWidgetEventTitles.collect { titles ->
-                _monthWidgetEventTitles.value = titles
-            }
-        }
-        viewModelScope.launch {
             dataStore.syncPastDays.collect { days ->
                 _syncLookbackDays.value = days
             }
@@ -841,17 +833,6 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.setWidgetDetailedRows(detailed)
             widgetUpdateManager.updateAllWidgets("widget_detailed_rows_changed")
-        }
-    }
-
-    /**
-     * Update the month-widget day-cell style preference (indicator dots vs event title rows).
-     * Also triggers widget refresh since it changes how the month grid renders.
-     */
-    fun setMonthWidgetEventTitles(titles: Boolean) {
-        viewModelScope.launch {
-            dataStore.setMonthWidgetEventTitles(titles)
-            widgetUpdateManager.updateAllWidgets("month_widget_event_titles_changed")
         }
     }
 

@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Synkronoi tämän tilin kalenterit</string>
     <string name="account_detail_sync_contacts">Yhteystiedot</string>
     <string name="account_detail_sync_contacts_subtitle">Synkronoi tämän tilin yhteystiedot puhelimeesi</string>
+    <string name="account_detail_sync_contacts_info_text">Kopioi yhteystiedot puhelimeesi. Toistaiseksi vain luku: palvelimelta puhelimeen.</string>
     <string name="account_detail_contacts_permission_needed">Yhteystietojen käyttöoikeus on pois päältä. Myönnä käyttöoikeus, jotta yhteystietojen synkronointi jatkuu.</string>
     <string name="account_detail_contacts_grant">Myönnä käyttöoikeus</string>
     <string name="contact_sync_enabled_for">Synkronoidaan tilin %1$s yhteystietoja</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Joka %1$d tunti</string>
     <string name="ics_sync_daily">Päivittäin</string>
     <string name="ics_sync_weekly">Viikoittain</string>
+    <string name="default_calendar_name">Kalenteri</string>
     <string name="ics_url_required">URL vaaditaan</string>
     <string name="ics_url_invalid_scheme">URL:n on alettava http://, https:// tai webcal://</string>
     <string name="ics_fetch_error_http">Palvelin palautti virheen (%1$d). Tarkista URL.</string>

@@ -99,6 +99,20 @@ class CalendarProviderManager @Inject constructor(
     }
 
     /**
+     * Bump the change signal immediately for a write the app itself just made.
+     *
+     * The ContentObserver that normally drives [changeSignal] is debounced
+     * (to coalesce bursts of external edits), so relying on it to reflect our
+     * own create/edit/delete would leave the UI stale for the debounce window.
+     * Callers invoke this right after a successful CalendarProvider write so the
+     * reactive views re-query device events with no perceptible lag. Debouncing
+     * still applies to changes we don't originate.
+     */
+    fun notifyLocalChange() {
+        _changeSignal.value++
+    }
+
+    /**
      * Called when user disables device calendar reminders only.
      * Cancels pending alarm but keeps observer running.
      */

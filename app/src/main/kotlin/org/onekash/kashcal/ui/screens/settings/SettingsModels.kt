@@ -217,7 +217,7 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
             .substringBefore("BEGIN:VTODO")
             .substringBefore("BEGIN:VJOURNAL") + "END:VCALENDAR"
         val parsed = ICalParser().parse(preamble).getOrNull()
-        val name = parsed?.effectiveName?.takeIf { it.isNotBlank() } ?: "Calendar"
+        val name = parsed?.effectiveName?.takeIf { it.isNotBlank() }.orEmpty()
         val eventCount = Regex("BEGIN:VEVENT").findAll(content).count()
 
         FetchCalendarState.Success(name, eventCount)

@@ -1,0 +1,4 @@
+• Month widget: day cells now show event titles, switching between dots and titles on their own as you resize the widget (#336)
+• Month widget: tap the +n marker to open that day; Month view gains pull-to-refresh
+• Fixed: calendar invitations not emailed for events on servers like Nextcloud (#340)
+• Fixed: current-time line drifting on pinch-zoom (#339) and the quick-view sheet showing stale details after an edit (#338)

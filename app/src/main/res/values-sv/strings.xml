@@ -531,6 +531,7 @@
     <string name="account_detail_sync_calendar_subtitle">Synkronisera detta kontos kalendrar</string>
     <string name="account_detail_sync_contacts">Kontakter</string>
     <string name="account_detail_sync_contacts_subtitle">Synkronisera detta kontos kontakter till din telefon</string>
+    <string name="account_detail_sync_contacts_info_text">Kopierar kontakter till din telefon. Skrivskyddat tills vidare: bara från server till telefon.</string>
     <string name="account_detail_contacts_permission_needed">Behörighet för kontakter är avstängd. Ge åtkomst för att fortsätta synkronisera kontakter.</string>
     <string name="account_detail_contacts_grant">Ge åtkomst</string>
     <string name="contact_sync_enabled_for">Synkroniserar kontakter för %1$s</string>
@@ -1106,6 +1107,7 @@
     <string name="ics_sync_every_n_hours">Var %1$d:e timme</string>
     <string name="ics_sync_daily">Dagligen</string>
     <string name="ics_sync_weekly">Veckovis</string>
+    <string name="default_calendar_name">Kalender</string>
     <string name="ics_url_required">URL krävs</string>
     <string name="ics_url_invalid_scheme">URL måste börja med http://, https:// eller webcal://</string>
     <string name="ics_fetch_error_http">Servern returnerade ett fel (%1$d). Kontrollera URL:en.</string>

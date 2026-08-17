@@ -17,6 +17,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -887,8 +890,22 @@ fun HomeScreen(
                                 val pageYear = pageCal.get(JavaCalendar.YEAR)
                                 val pageMonth = pageCal.get(JavaCalendar.MONTH)
 
+                                // The grid is fit-to-screen (weighted rows), so it has no
+                                // vertically scrollable child. Material3 pull-to-refresh is
+                                // nested-scroll driven and never sees a drag unless some
+                                // descendant propagates vertical scroll deltas. This
+                                // zero-consuming scrollable donates the vertical gesture to
+                                // the parent pull-to-refresh connection without moving the
+                                // grid (the enclosing HorizontalPager only handles the
+                                // horizontal axis).
+                                val monthFullScrollDonor = rememberScrollableState { 0f }
                                 Column(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .scrollable(
+                                            orientation = Orientation.Vertical,
+                                            state = monthFullScrollDonor
+                                        ),
                                     verticalArrangement = Arrangement.Top
                                 ) {
                                     DayOfWeekHeaders(

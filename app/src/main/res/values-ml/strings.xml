@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ഈ അക്കൗണ്ടിന്റെ കലണ്ടറുകൾ സിങ്ക് ചെയ്യുക</string>
     <string name="account_detail_sync_contacts">കോൺടാക്റ്റുകൾ</string>
     <string name="account_detail_sync_contacts_subtitle">ഈ അക്കൗണ്ടിന്റെ കോൺടാക്റ്റുകൾ നിങ്ങളുടെ ഫോണിലേക്ക് സിങ്ക് ചെയ്യുക</string>
+    <string name="account_detail_sync_contacts_info_text">കോൺടാക്റ്റുകൾ നിങ്ങളുടെ ഫോണിലേക്ക് പകർത്തുന്നു. തൽക്കാലം വായിക്കാൻ-മാത്രം: സെർവറിൽ നിന്ന് ഫോണിലേക്ക് മാത്രം.</string>
     <string name="account_detail_contacts_permission_needed">കോൺടാക്റ്റ് അനുമതി ഓഫാണ്. കോൺടാക്റ്റ് സിങ്ക് തുടരാൻ ആക്‌സസ് നൽകുക.</string>
     <string name="account_detail_contacts_grant">ആക്‌സസ് നൽകുക</string>
     <string name="contact_sync_enabled_for">%1$s-നായി കോൺടാക്റ്റുകൾ സിങ്ക് ചെയ്യുന്നു</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">ഓരോ %1$d മണിക്കൂറിലും</string>
     <string name="ics_sync_daily">ദിവസവും</string>
     <string name="ics_sync_weekly">ആഴ്ചതോറും</string>
+    <string name="default_calendar_name">കലണ്ടർ</string>
     <string name="ics_url_required">URL ആവശ്യമാണ്</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, അല്ലെങ്കിൽ webcal:// ൽ ആരംഭിക്കണം</string>
     <string name="ics_fetch_error_http">സെർവർ ഒരു പിശക് നൽകി (%1$d). ദയവായി URL പരിശോധിക്കുക.</string>

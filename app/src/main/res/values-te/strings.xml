@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ఈ ఖాతా క్యాలెండర్‌లను సింక్ చేయి</string>
     <string name="account_detail_sync_contacts">పరిచయాలు</string>
     <string name="account_detail_sync_contacts_subtitle">ఈ ఖాతా పరిచయాలను మీ ఫోన్‌కు సింక్ చేయి</string>
+    <string name="account_detail_sync_contacts_info_text">పరిచయాలను మీ ఫోన్‌కు కాపీ చేస్తుంది. ప్రస్తుతానికి చదవడానికి-మాత్రమే: సర్వర్ నుండి ఫోన్‌కు మాత్రమే.</string>
     <string name="account_detail_contacts_permission_needed">పరిచయాల అనుమతి ఆఫ్‌లో ఉంది. పరిచయాల సింక్ కొనసాగించడానికి యాక్సెస్ ఇవ్వండి.</string>
     <string name="account_detail_contacts_grant">యాక్సెస్ ఇవ్వండి</string>
     <string name="contact_sync_enabled_for">%1$s కోసం పరిచయాలు సింక్ అవుతున్నాయి</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">ప్రతి %1$d గంటలకు</string>
     <string name="ics_sync_daily">రోజువారీ</string>
     <string name="ics_sync_weekly">వారానికి ఒకసారి</string>
+    <string name="default_calendar_name">క్యాలెండర్</string>
     <string name="ics_url_required">URL అవసరం</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, లేదా webcal:// తో మొదలవ్వాలి</string>
     <string name="ics_fetch_error_http">సర్వర్ ఒక లోపాన్ని అందించింది (%1$d). దయచేసి URL తనిఖీ చేయండి.</string>

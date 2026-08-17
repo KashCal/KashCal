@@ -188,7 +188,7 @@ class CollectionResourceTypeProofFixtureTest {
         private val SERVERS = mapOf(
             "caldav" to listOf(
                 "icloud", "baikal", "baikaldigest", "radicale",
-                "nextcloud", "zoho", "sogo", "cyrus",
+                "nextcloud", "zoho", "sogo", "cyrus", "stalwart", "xandikos",
             ),
             "carddav" to listOf("icloud", "radicale", "baikal", "nextcloud", "cyrus"),
         )

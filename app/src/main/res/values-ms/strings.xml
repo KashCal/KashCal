@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Segerakkan kalendar akaun ini</string>
     <string name="account_detail_sync_contacts">Kenalan</string>
     <string name="account_detail_sync_contacts_subtitle">Segerakkan kenalan akaun ini ke telefon anda</string>
+    <string name="account_detail_sync_contacts_info_text">Menyalin kenalan ke telefon anda. Baca sahaja buat masa ini: sehala dari pelayan ke telefon sahaja.</string>
     <string name="account_detail_contacts_permission_needed">Kebenaran Kenalan dimatikan. Berikan akses untuk terus menyegerakkan kenalan.</string>
     <string name="account_detail_contacts_grant">Berikan akses</string>
     <string name="contact_sync_enabled_for">Menyegerakkan kenalan untuk %1$s</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">Setiap %1$d jam</string>
     <string name="ics_sync_daily">Setiap hari</string>
     <string name="ics_sync_weekly">Setiap minggu</string>
+    <string name="default_calendar_name">Kalendar</string>
     <string name="ics_url_required">URL diperlukan</string>
     <string name="ics_url_invalid_scheme">URL mesti bermula dengan http://, https://, atau webcal://</string>
     <string name="ics_fetch_error_http">Pelayan mengembalikan ralat (%1$d). Sila semak URL.</string>

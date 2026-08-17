@@ -393,6 +393,19 @@ class HomeViewModel(
             .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    /**
+     * Live event body for the active QuickView, re-read reactively by id.
+     * The sheet renders this rather than the snapshot captured at tap time,
+     * so an edit's new title/time/location shows even when the on-screen
+     * list that produced the tapped snapshot was stale (e.g. search results,
+     * which don't re-run after an edit). Null when no event is active or the
+     * event was deleted.
+     */
+    val quickViewEventLive: StateFlow<Event?> =
+        quickViewEventId
+            .flatMapLatest { id -> if (id == null) flowOf(null) else eventReader.getEventByIdFlow(id) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     /** UI projection of attendees for the EventFormSheet's read-only chip row. */
     val formAttendees: StateFlow<EventAttendeeUiState?> =
         formEventId
@@ -2727,6 +2740,25 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Refresh the current view after a write the app just made to a device
+     * calendar (CalendarProvider).
+     *
+     * Device events aren't in Room, so the reactive views (agenda, week,
+     * month dots) only re-query them when the device change signal emits.
+     * That signal is otherwise driven by a debounced ContentObserver, so a
+     * device write we originate wouldn't surface until the debounce elapsed.
+     * Poke it directly here to reflect the change immediately. This mirrors
+     * what the debounced observer already does — invalidate the dot cache and
+     * re-run the device queries — just without the delay, and only for the
+     * app's own device writes (Room/sync refreshes keep using
+     * [reloadCurrentView] alone, which never triggered this invalidation).
+     */
+    private fun reloadAfterDeviceWrite() {
+        displayEventRepository.notifyDeviceCalendarChanged()
+        reloadCurrentView()
+    }
+
     // ==================== Event CRUD Operations ====================
 
     /**
@@ -2855,7 +2887,7 @@ class HomeViewModel(
                 attendeeId = selfRow.id,
                 status = status.toDeviceStatus(),
             ).also { result ->
-                result.onSuccess { reloadCurrentView() }
+                result.onSuccess { reloadAfterDeviceWrite() }
                 result.onFailure { e ->
                     Log.e(TAG, "Failed to update device RSVP", e)
                     showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
@@ -3470,7 +3502,7 @@ class HomeViewModel(
                     }
                 }
 
-                reloadCurrentView()
+                if (displayEvent is DisplayEvent.Device) reloadAfterDeviceWrite() else reloadCurrentView()
                 showSnackbar("Event rescheduled")
             } catch (e: CancellationException) {
                 throw e
@@ -3737,7 +3769,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device event created: id=$it")
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
             }
         }
@@ -3782,7 +3814,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device event updated: id=$eventId")
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
             }
         }
@@ -3800,7 +3832,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device event deleted: id=$eventId")
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
             }
         }
@@ -3827,7 +3859,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device occurrence deleted: master=$masterEventId, ts=$originalInstanceTime")
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
             }
         }
@@ -3912,7 +3944,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device future occurrences deleted: master=$masterEventId, from=$fromTimeMs")
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
             }
         }
@@ -3996,7 +4028,7 @@ class HomeViewModel(
      * @return Count of successfully imported events
      */
     suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
-        return withContext(ioDispatcher) {
+        val count = withContext(ioDispatcher) {
             importEventsToDeviceCalendar(
                 events = events,
                 calendarId = calendarId,
@@ -4005,6 +4037,12 @@ class HomeViewModel(
                 defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
             )
         }
+        // Imported device events are CalendarProvider writes, so the reactive
+        // views need the same immediate refresh as the other device-write
+        // paths; the callers only reload calendar metadata + navigate, which
+        // doesn't re-query the newly imported events until the debounce fires.
+        if (count > 0) reloadAfterDeviceWrite()
+        return count
     }
 
     /**
@@ -4081,7 +4119,7 @@ class HomeViewModel(
                     availability = transpToAvailability(formState.transp),
                     eventColor = formState.eventColor,
                 ).also { result ->
-                    result.onSuccess { reloadCurrentView() }
+                    result.onSuccess { reloadAfterDeviceWrite() }
                 }
             }
 
@@ -4271,7 +4309,7 @@ class HomeViewModel(
                         val cleaned = org.onekash.kashcal.data.calendar_provider.cleanCategoryNames(tags)
                         if (cleaned.isNotEmpty()) eventCoordinator.recordTagUsage(cleaned)
                     }
-                    reloadCurrentView()
+                    reloadAfterDeviceWrite()
                 }
                 result.onFailure { e ->
                     Log.e(TAG, "Failed to save device event", e)

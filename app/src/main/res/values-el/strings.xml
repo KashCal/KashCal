@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Συγχρονισμός των ημερολογίων αυτού του λογαριασμού</string>
     <string name="account_detail_sync_contacts">Επαφές</string>
     <string name="account_detail_sync_contacts_subtitle">Συγχρονισμός των επαφών αυτού του λογαριασμού στο τηλέφωνό σας</string>
+    <string name="account_detail_sync_contacts_info_text">Αντιγράφει τις επαφές στο τηλέφωνό σας. Προς το παρόν μόνο για ανάγνωση: μόνο από τον διακομιστή στο τηλέφωνο.</string>
     <string name="account_detail_contacts_permission_needed">Η άδεια για τις Επαφές είναι απενεργοποιημένη. Παραχωρήστε πρόσβαση για να συνεχιστεί ο συγχρονισμός των επαφών.</string>
     <string name="account_detail_contacts_grant">Παραχώρηση πρόσβασης</string>
     <string name="contact_sync_enabled_for">Συγχρονισμός επαφών για %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Κάθε %1$d ώρες</string>
     <string name="ics_sync_daily">Καθημερινά</string>
     <string name="ics_sync_weekly">Εβδομαδιαία</string>
+    <string name="default_calendar_name">Ημερολόγιο</string>
     <string name="ics_url_required">Το URL είναι υποχρεωτικό</string>
     <string name="ics_url_invalid_scheme">Το URL πρέπει να ξεκινά με http://, https:// ή webcal://</string>
     <string name="ics_fetch_error_http">Ο διακομιστής επέστρεψε σφάλμα (%1$d). Ελέγξτε το URL.</string>

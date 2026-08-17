@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Vumelanisa amakhalenda ale akhawunti</string>
     <string name="account_detail_sync_contacts">Oxhumana nabo</string>
     <string name="account_detail_sync_contacts_subtitle">Vumelanisa oxhumana nabo bale akhawunti kufoni yakho</string>
+    <string name="account_detail_sync_contacts_info_text">Ikopisha oxhumana nabo efonini yakho. Okwamanje ukufunda kuphela: iseva iye efonini kuphela.</string>
     <string name="account_detail_contacts_permission_needed">Imvume yoxhumana nabo ivaliwe. Nikeza ukufinyelela ukuze uqhubeke uvumelanise oxhumana nabo.</string>
     <string name="account_detail_contacts_grant">Nikeza ukufinyelela</string>
     <string name="contact_sync_enabled_for">Kuvumelaniswa oxhumana nabo ku-%1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Njalo emahora angu-%1$d</string>
     <string name="ics_sync_daily">Nsuku zonke</string>
     <string name="ics_sync_weekly">Njalo ngeviki</string>
+    <string name="default_calendar_name">Ikhalenda</string>
     <string name="ics_url_required">I-URL iyadingeka</string>
     <string name="ics_url_invalid_scheme">I-URL kumele iqale nge-http://, https://, noma webcal://</string>
     <string name="ics_fetch_error_http">Iseva ibuyisele iphutha (%1$d). Sicela uhlole i-URL.</string>

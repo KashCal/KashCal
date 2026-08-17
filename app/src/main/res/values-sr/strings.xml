@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinhronizuj kalendare ovog naloga</string>
     <string name="account_detail_sync_contacts">Kontakti</string>
     <string name="account_detail_sync_contacts_subtitle">Sinhronizuj kontakte ovog naloga na telefon</string>
+    <string name="account_detail_sync_contacts_info_text">Kopira kontakte na telefon. Zasad samo za čitanje: sa servera na telefon.</string>
     <string name="account_detail_contacts_permission_needed">Dozvola za kontakte je isključena. Dozvoli pristup da bi se kontakti i dalje sinhronizovali.</string>
     <string name="account_detail_contacts_grant">Dozvoli pristup</string>
     <string name="contact_sync_enabled_for">Sinhronizacija kontakata za %1$s</string>
@@ -1155,6 +1156,7 @@
     <string name="ics_sync_every_n_hours">Svakih %1$d sati</string>
     <string name="ics_sync_daily">Dnevno</string>
     <string name="ics_sync_weekly">Nedeljno</string>
+    <string name="default_calendar_name">Kalendar</string>
     <string name="ics_url_required">URL je obavezan</string>
     <string name="ics_url_invalid_scheme">URL mora počinjati sa http://, https:// ili webcal://</string>
     <string name="ics_fetch_error_http">Server je vratio grešku (%1$d). Proverite URL.</string>

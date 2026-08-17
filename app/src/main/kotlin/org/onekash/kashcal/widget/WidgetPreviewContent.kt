@@ -95,10 +95,9 @@ internal fun MonthPreviewContent(context: Context) {
             monthOffset = 0,
             targetYear = grid.year,
             targetMonth0 = grid.month,
-            firstDayOfWeek = WidgetPreviewData.LOCALE_FIRST_DAY_OF_WEEK,
-            // Show the titles style: it is the richer day-cell look and matches what the
-            // in-app month view advertises.
-            showEventTitles = true
+            firstDayOfWeek = WidgetPreviewData.LOCALE_FIRST_DAY_OF_WEEK
+            // At the picker preview size the day cells render event titles (the richer look
+            // that matches the in-app month view); the content decides that from its size.
         )
     }
 }

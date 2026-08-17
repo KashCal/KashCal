@@ -103,13 +103,15 @@ internal fun computeMonthWidgetWeekRender(
     // 2. Place spans into lanes: earliest start first, longest first on ties, so short
     //    spans can share a freed lane behind a long one.
     val lanes = mutableListOf<MutableList<MonthWidgetSpan>>()
-    var laneOverflow = 0
     for (span in spans.sortedWith(compareBy({ it.startCol }, { -(it.endCol - it.startCol) }))) {
         val laneIndex = lanes.indexOfFirst { lane -> lane.last().endCol < span.startCol }
         when {
             laneIndex >= 0 -> lanes[laneIndex].add(span)
             lanes.size < maxSlots -> lanes.add(mutableListOf(span))
-            else -> laneOverflow++
+            // Span overflows the lane budget and is dropped. At its start column every lane
+            // is already a bar, so there is no free row for it or a "+n" marker (lanes-win
+            // policy). Rare — needs more overlapping multi-day events in one week than rows.
+            else -> Unit
         }
     }
 
@@ -136,25 +138,29 @@ internal fun computeMonthWidgetWeekRender(
                 }
             }
             freeSlots.isEmpty() -> {
-                // Column fully bar-occupied: cell events drop silently (lanes-win policy).
+                // Column fully bar-occupied: this cell's single-day events — and any
+                // multi-day span that overflowed the lane budget and would have started here
+                // — drop with no "+n", because every row is a bar (lanes-win policy leaves no
+                // slot for a marker).
+            }
+            maxSlots == 1 -> {
+                // Only one row for the whole week: reserving it for a "+n" marker would leave the
+                // cell showing a bare count with no event name at all — worse than the dots this row
+                // replaced. Show the top event's title instead and hide the rest silently, the way
+                // the dots fallback caps at three without spelling out the overflow.
+                grid[freeSlots[0]][col] = MonthWidgetSlot.CellEvent(cellEvents[0])
             }
             else -> {
                 // More events than free slots: show what fits, collapse the rest into a
                 // "+n" marker in the LAST free slot — matching the in-app month view. With
-                // exactly one free slot the single visible event yields to the marker, so
-                // the day still reports its real count instead of going silently blank.
+                // exactly one free slot (a bar occupies the others) the visible count is zero, so
+                // the marker still reports the day's real count alongside that bar's context.
                 val visibleCount = (freeSlots.size - 1).coerceAtLeast(0)
                 for (i in 0 until visibleCount) {
                     grid[freeSlots[i]][col] = MonthWidgetSlot.CellEvent(cellEvents[i])
                 }
-                // Lane-overflowed spans belong to this cell's hidden remainder too, but only
-                // in the cell where the span would have started — counting them everywhere
-                // would inflate every column of the week.
-                val hiddenSpansHere = if (laneOverflow > 0) {
-                    spans.count { it.startCol == col && lanes.none { lane -> lane.contains(it) } }
-                } else 0
                 grid[freeSlots[freeSlots.size - 1]][col] =
-                    MonthWidgetSlot.Overflow(cellEvents.size - visibleCount + hiddenSpansHere)
+                    MonthWidgetSlot.Overflow(cellEvents.size - visibleCount)
             }
         }
     }

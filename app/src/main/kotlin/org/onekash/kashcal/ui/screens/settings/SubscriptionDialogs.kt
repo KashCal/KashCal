@@ -51,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -100,6 +101,7 @@ fun AddSubscriptionDialog(
     var fetchState by remember { mutableStateOf<FetchCalendarState>(FetchCalendarState.Idle) }
     var showColorPicker by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val defaultCalendarName = stringResource(R.string.default_calendar_name)
 
     // Local-network banner dismissal for this dialog session. The dialog is only
     // composed while open, so this resets naturally on each open; rememberSaveable
@@ -185,7 +187,7 @@ fun AddSubscriptionDialog(
                         val result = fetchCalendarInfo(url.trim())
                         fetchState = result
                         if (result is FetchCalendarState.Success) {
-                            name = result.name
+                            name = result.name.ifBlank { defaultCalendarName }
                         }
                     }
                 },
@@ -516,12 +518,13 @@ private fun SyncIntervalPicker(
     onTogglePicker: () -> Unit,
     onIntervalSelected: (Int) -> Unit
 ) {
+    val resources = LocalContext.current.resources
     Column {
         Text(stringResource(R.string.label_sync_interval), style = MaterialTheme.typography.bodySmall)
         Spacer(modifier = Modifier.height(8.dp))
 
         // Current selection as clickable row
-        val currentLabel = getSyncIntervalLabel(selectedInterval)
+        val currentLabel = getSyncIntervalLabel(selectedInterval, resources)
 
         Surface(
             modifier = Modifier
@@ -568,7 +571,7 @@ private fun SyncIntervalPicker(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            option.label,
+                            getSyncIntervalLabel(option.hours, resources),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         if (isSelected) {

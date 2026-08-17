@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">이 계정의 캘린더를 동기화해요</string>
     <string name="account_detail_sync_contacts">연락처</string>
     <string name="account_detail_sync_contacts_subtitle">이 계정의 연락처를 휴대폰에 동기화해요</string>
+    <string name="account_detail_sync_contacts_info_text">연락처를 휴대폰에 복사해요. 지금은 읽기 전용이에요: 서버에서 휴대폰으로 한 방향만 돼요.</string>
     <string name="account_detail_contacts_permission_needed">연락처 권한이 꺼져 있어요. 연락처 동기화를 계속하려면 접근을 허용해 주세요.</string>
     <string name="account_detail_contacts_grant">접근 허용</string>
     <string name="contact_sync_enabled_for">%1$s의 연락처를 동기화하는 중</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">%1$d시간마다</string>
     <string name="ics_sync_daily">매일</string>
     <string name="ics_sync_weekly">매주</string>
+    <string name="default_calendar_name">캘린더</string>
     <string name="ics_url_required">URL이 필요해요</string>
     <string name="ics_url_invalid_scheme">URL은 http://, https://, 또는 webcal://로 시작해야 해요</string>
     <string name="ics_fetch_error_http">서버에서 오류(%1$d)를 반환했어요. URL을 확인해 주세요.</string>

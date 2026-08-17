@@ -531,6 +531,7 @@
     <string name="account_detail_sync_calendar_subtitle">Agenda\'s van dit account synchroniseren</string>
     <string name="account_detail_sync_contacts">Contacten</string>
     <string name="account_detail_sync_contacts_subtitle">Contacten van dit account met je telefoon synchroniseren</string>
+    <string name="account_detail_sync_contacts_info_text">Kopieert contacten naar je telefoon. Voorlopig alleen-lezen: alleen van server naar telefoon.</string>
     <string name="account_detail_contacts_permission_needed">Toestemming voor contacten staat uit. Geef toegang om contacten te blijven synchroniseren.</string>
     <string name="account_detail_contacts_grant">Toegang geven</string>
     <string name="contact_sync_enabled_for">Contacten synchroniseren voor %1$s</string>
@@ -1106,6 +1107,7 @@
     <string name="ics_sync_every_n_hours">Elke %1$d uur</string>
     <string name="ics_sync_daily">Dagelijks</string>
     <string name="ics_sync_weekly">Wekelijks</string>
+    <string name="default_calendar_name">Agenda</string>
     <string name="ics_url_required">URL is vereist</string>
     <string name="ics_url_invalid_scheme">URL moet beginnen met http://, https:// of webcal://</string>
     <string name="ics_fetch_error_http">De server gaf een foutmelding (%1$d). Controleer de URL.</string>

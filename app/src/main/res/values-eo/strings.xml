@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinkronigi la kalendarojn de ĉi tiu konto</string>
     <string name="account_detail_sync_contacts">Kontaktoj</string>
     <string name="account_detail_sync_contacts_subtitle">Sinkronigi la kontaktojn de ĉi tiu konto al via telefono</string>
+    <string name="account_detail_sync_contacts_info_text">Kopias kontaktojn al via telefono. Nuntempe nur legebla: de servilo al telefono.</string>
     <string name="account_detail_contacts_permission_needed">La permeso por kontaktoj estas malŝaltita. Donu aliron por daŭrigi sinkronigadon de kontaktoj.</string>
     <string name="account_detail_contacts_grant">Doni aliron</string>
     <string name="contact_sync_enabled_for">Sinkronigado de kontaktoj por %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Ĉiujn %1$d horojn</string>
     <string name="ics_sync_daily">Ĉiutage</string>
     <string name="ics_sync_weekly">Ĉiusemajne</string>
+    <string name="default_calendar_name">Kalendaro</string>
     <string name="ics_url_required">URL estas postulata</string>
     <string name="ics_url_invalid_scheme">URL devas komenciĝi per http://, https://, aŭ webcal://</string>
     <string name="ics_fetch_error_http">La servilo redonis eraron (%1$d). Bonvolu kontroli la URL.</string>

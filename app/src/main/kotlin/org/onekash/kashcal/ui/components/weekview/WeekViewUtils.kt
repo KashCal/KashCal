@@ -425,6 +425,43 @@ object WeekViewUtils {
     }
 
     /**
+     * Compute the vertical scroll offset (px) that keeps the clock time at the viewport's
+     * vertical center fixed while the hour-row height changes during a pinch-zoom.
+     *
+     * The center time is derived from the pre-zoom geometry, re-projected onto the new
+     * hour-row height, then clamped to the scrollable range. Clamping must use the
+     * POST-zoom content height (`newHourHeightPx * totalHours`): when zooming in the grid
+     * grows taller, so a target that is valid once the grid re-measures gets wrongly
+     * clamped if measured against the smaller pre-zoom range — parking the current-time
+     * line and every event away from center.
+     *
+     * @param currentScrollPx Scroll offset before the zoom step.
+     * @param viewportHeightPx Height of the visible grid viewport in px (> 0).
+     * @param oldHourHeightPx Hour-row height in px before the zoom step (> 0).
+     * @param newHourHeightPx Hour-row height in px after the zoom step (> 0).
+     * @param totalHours Number of hours rendered by the grid ([TOTAL_HOURS]).
+     * @param panYPx Vertical pan (px) applied by the same two-finger gesture, folded in
+     *   before the clamp so the returned offset always stays within the scrollable range —
+     *   an upward pan must not push the target past the post-zoom max, or the caller's
+     *   "wait for the grid to reach this offset" step could never complete.
+     */
+    fun resolveZoomScrollPx(
+        currentScrollPx: Float,
+        viewportHeightPx: Float,
+        oldHourHeightPx: Float,
+        newHourHeightPx: Float,
+        totalHours: Int = TOTAL_HOURS,
+        panYPx: Float = 0f
+    ): Float {
+        if (oldHourHeightPx <= 0f) return currentScrollPx
+        val viewportCenterTime = (currentScrollPx + viewportHeightPx / 2f) / oldHourHeightPx
+        val target = viewportCenterTime * newHourHeightPx - viewportHeightPx / 2f - panYPx
+        val contentHeightPx = newHourHeightPx * totalHours
+        val maxScroll = (contentHeightPx - viewportHeightPx).coerceAtLeast(0f)
+        return target.coerceIn(0f, maxScroll)
+    }
+
+    /**
      * Resolve the hour currently at the top of the visible grid, for callers that
      * need to seed a new event's start time (e.g. the "+" FAB).
      *

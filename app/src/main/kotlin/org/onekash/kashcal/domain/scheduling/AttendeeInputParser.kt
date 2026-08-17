@@ -37,10 +37,11 @@ object AttendeeInputParser {
         }
 
         val email = AddressNormalizer.stripMailto(addressPart).trim()
-        // isEmailShaped's char class permits address-list / angle-bracket
-        // punctuation (< > , ;) inside the local/domain parts, so a stray
-        // "a@b.com>" or "a@b.com,c@d.com" would slip through as one address.
-        // Reject those explicitly — the picker adds one clean address at a time.
+        // Defense-in-depth against address-list / angle-bracket punctuation
+        // (< > , ;) — the picker adds one clean address at a time, never a
+        // "a@b.com>" or "a@b.com,c@d.com" list. The strict shape below already
+        // rejects these chars; this guard keeps that guarantee explicit should
+        // the shared mailbox pattern ever loosen.
         if (email.any { it in "<>,;" }) return AttendeeInput.Invalid
         if (!AddressNormalizer.isEmailShaped(email)) return AttendeeInput.Invalid
 

@@ -58,6 +58,17 @@ class DisplayEventRepository @Inject constructor(
     val deviceCalendarChangeSignal: StateFlow<Int> get() = calendarProviderManager.changeSignal
 
     /**
+     * Signal that the app itself just wrote to a device calendar, so the
+     * reactive views (day pager, agenda, week, month dots) re-query device
+     * events immediately instead of waiting for the debounced ContentObserver.
+     * The re-query still runs when no device calendars are visible; it just
+     * returns no device events.
+     */
+    fun notifyDeviceCalendarChanged() {
+        calendarProviderManager.notifyLocalChange()
+    }
+
+    /**
      * Get display events for a day pager range, grouped by day code.
      *
      * Combines Room Flow + changeSignal. When either emits, re-queries

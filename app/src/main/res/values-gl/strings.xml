@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sincroniza os calendarios desta conta</string>
     <string name="account_detail_sync_contacts">Contactos</string>
     <string name="account_detail_sync_contacts_subtitle">Sincroniza os contactos desta conta no teu teléfono</string>
+    <string name="account_detail_sync_contacts_info_text">Copia os contactos ao teu teléfono. Polo de agora só de lectura: do servidor ao teléfono.</string>
     <string name="account_detail_contacts_permission_needed">O permiso de contactos está desactivado. Concede acceso para seguir sincronizando os contactos.</string>
     <string name="account_detail_contacts_grant">Conceder acceso</string>
     <string name="contact_sync_enabled_for">Sincronizando os contactos de %1$s</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">Cada %1$d horas</string>
     <string name="ics_sync_daily">Diariamente</string>
     <string name="ics_sync_weekly">Semanalmente</string>
+    <string name="default_calendar_name">Calendario</string>
     <string name="ics_url_required">Reqúrese unha URL</string>
     <string name="ics_url_invalid_scheme">A URL debe comezar con http://, https://, ou webcal://</string>
     <string name="ics_fetch_error_http">O servidor devolveu un erro (%1$d). Comproba a URL.</string>

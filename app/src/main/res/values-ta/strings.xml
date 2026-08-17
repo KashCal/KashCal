@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">இந்தக் கணக்கின் நாட்காட்டிகளை ஒத்திசை</string>
     <string name="account_detail_sync_contacts">தொடர்புகள்</string>
     <string name="account_detail_sync_contacts_subtitle">இந்தக் கணக்கின் தொடர்புகளை உங்கள் ஃபோனுடன் ஒத்திசை</string>
+    <string name="account_detail_sync_contacts_info_text">தொடர்புகளை உங்கள் ஃபோனுக்கு நகலெடுக்கும். தற்போதைக்கு படிக்க-மட்டும்: சர்வரிலிருந்து ஃபோனுக்கு மட்டுமே.</string>
     <string name="account_detail_contacts_permission_needed">தொடர்புகள் அனுமதி முடக்கப்பட்டுள்ளது. தொடர்புகள் ஒத்திசைவைத் தொடர அணுகலை வழங்கவும்.</string>
     <string name="account_detail_contacts_grant">அணுகலை வழங்கு</string>
     <string name="contact_sync_enabled_for">%1$s-இன் தொடர்புகள் ஒத்திசைக்கப்படுகின்றன</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">ஒவ்வொரு %1$d மணிநேரமும்</string>
     <string name="ics_sync_daily">தினசரி</string>
     <string name="ics_sync_weekly">வாராந்திர</string>
+    <string name="default_calendar_name">நாட்காட்டி</string>
     <string name="ics_url_required">URL தேவை</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, அல்லது webcal:// உடன் தொடங்க வேண்டும்</string>
     <string name="ics_fetch_error_http">சர்வர் ஒரு பிழையை வழங்கியது (%1$d). URL ஐ சரிபார்க்கவும்.</string>

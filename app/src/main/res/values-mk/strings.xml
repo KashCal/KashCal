@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Синхронизирајте ги календарите на оваа сметка</string>
     <string name="account_detail_sync_contacts">Контакти</string>
     <string name="account_detail_sync_contacts_subtitle">Синхронизирајте ги контактите на оваа сметка со вашиот телефон</string>
+    <string name="account_detail_sync_contacts_info_text">Ги копира контактите на вашиот телефон. Засега само за читање: само од серверот кон телефонот.</string>
     <string name="account_detail_contacts_permission_needed">Дозволата за Контакти е исклучена. Дозволете пристап за да продолжи синхронизацијата на контактите.</string>
     <string name="account_detail_contacts_grant">Дозволи пристап</string>
     <string name="contact_sync_enabled_for">Контактите за %1$s се синхронизираат</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">На секои %1$d часа</string>
     <string name="ics_sync_daily">Дневно</string>
     <string name="ics_sync_weekly">Неделно</string>
+    <string name="default_calendar_name">Календар</string>
     <string name="ics_url_required">URL е задолжителен</string>
     <string name="ics_url_invalid_scheme">URL мора да започне со http://, https:// или webcal://</string>
     <string name="ics_fetch_error_http">Серверот врати грешка (%1$d). Ве молиме, проверете го URL.</string>

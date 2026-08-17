@@ -531,6 +531,7 @@
     <string name="account_detail_sync_calendar_subtitle">Synkroniser kalendrane til denne kontoen</string>
     <string name="account_detail_sync_contacts">Kontakter</string>
     <string name="account_detail_sync_contacts_subtitle">Synkroniser kontaktane til denne kontoen til telefonen din</string>
+    <string name="account_detail_sync_contacts_info_text">Kopierer kontaktar til telefonen din. Berre lesing førebels: berre frå server til telefon.</string>
     <string name="account_detail_contacts_permission_needed">Løyve for kontakter er av. Gi tilgang for å halde fram med å synkronisere kontakter.</string>
     <string name="account_detail_contacts_grant">Gi tilgang</string>
     <string name="contact_sync_enabled_for">Synkroniserer kontakter for %1$s</string>
@@ -1106,6 +1107,7 @@
     <string name="ics_sync_every_n_hours">Kvar %1$d. time</string>
     <string name="ics_sync_daily">Dagleg</string>
     <string name="ics_sync_weekly">Vekevis</string>
+    <string name="default_calendar_name">Kalender</string>
     <string name="ics_url_required">URL er påkrevd</string>
     <string name="ics_url_invalid_scheme">URL må starta med http://, https:// eller webcal://</string>
     <string name="ics_fetch_error_http">Tenaren returnerte ein feil (%1$d). Sjekk URL-en.</string>

@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sioncronaich mìosachain a\' chunntais seo</string>
     <string name="account_detail_sync_contacts">Luchd-aithne</string>
     <string name="account_detail_sync_contacts_subtitle">Sioncronaich luchd-aithne a\' chunntais seo dhan fhòn agad</string>
+    <string name="account_detail_sync_contacts_info_text">Nì e lethbhreac de luchd-aithne dhan fhòn agad. Ri leughadh a-mhàin an-dràsta: bhon fhrithealaiche dhan fhòn.</string>
     <string name="account_detail_contacts_permission_needed">Tha cead luchd-aithne dheth. Thoir cead-inntrigidh gus leantainn air adhart le sioncronachadh luchd-aithne.</string>
     <string name="account_detail_contacts_grant">Thoir cead-inntrigidh</string>
     <string name="contact_sync_enabled_for">A\' sioncronachadh luchd-aithne %1$s</string>
@@ -1203,6 +1204,7 @@
     <string name="ics_sync_every_n_hours">Gach %1$d uairean</string>
     <string name="ics_sync_daily">Gach là</string>
     <string name="ics_sync_weekly">Gach seachdain</string>
+    <string name="default_calendar_name">Mìosachan</string>
     <string name="ics_url_required">Tha feum air URL</string>
     <string name="ics_url_invalid_scheme">Feumaidh an URL tòiseachadh le http://, https://, no webcal://</string>
     <string name="ics_fetch_error_http">Thill am frithealaiche mearachd (%1$d). Thoir sùil air an URL.</string>

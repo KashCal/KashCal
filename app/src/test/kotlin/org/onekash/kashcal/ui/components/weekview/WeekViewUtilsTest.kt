@@ -1058,6 +1058,113 @@ class WeekViewUtilsTest {
         )
     }
 
+    // ==================== resolveZoomScrollPx (pinch-zoom recentring) ====================
+
+    @Test
+    fun `resolveZoomScrollPx keeps the viewport-center clock time fixed when zooming in`() {
+        // xxhdpi density; 1000px viewport; grid centered on 12:00 before the zoom.
+        val density = 2.625f
+        val viewportHeightPx = 1000f
+        val oldPx = 60f * density   // 157.5 px/hr
+        val newPx = 120f * density  // 315 px/hr, a zoom-in
+        val startScroll = 12f * oldPx - viewportHeightPx / 2f  // center = 12:00
+
+        val result = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = startScroll,
+            viewportHeightPx = viewportHeightPx,
+            oldHourHeightPx = oldPx,
+            newHourHeightPx = newPx,
+            totalHours = WeekViewUtils.TOTAL_HOURS
+        )
+
+        // The clock time under the viewport center must still be 12:00 after the zoom.
+        val centerTimeHours = (result + viewportHeightPx / 2f) / newPx
+        assertEquals(
+            "zoom-in shifted the viewport-center clock time away from 12:00",
+            12f, centerTimeHours, 0.02f
+        )
+    }
+
+    @Test
+    fun `resolveZoomScrollPx keeps the viewport-center clock time fixed when zooming out`() {
+        val density = 2.625f
+        val viewportHeightPx = 1000f
+        val oldPx = 120f * density
+        val newPx = 60f * density  // zoom-out
+        val startScroll = 12f * oldPx - viewportHeightPx / 2f
+
+        val result = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = startScroll,
+            viewportHeightPx = viewportHeightPx,
+            oldHourHeightPx = oldPx,
+            newHourHeightPx = newPx,
+            totalHours = WeekViewUtils.TOTAL_HOURS
+        )
+
+        val centerTimeHours = (result + viewportHeightPx / 2f) / newPx
+        assertEquals(12f, centerTimeHours, 0.02f)
+    }
+
+    @Test
+    fun `resolveZoomScrollPx stays within the post-zoom range even with an upward pan`() {
+        // Zoom in from the very bottom of the grid while the centroid drifts upward
+        // (pan.y < 0). The folded target must not exceed the post-zoom scrollable max,
+        // otherwise the caller's "wait until the grid reaches this offset" step can never
+        // complete and the recentre is silently dropped.
+        val density = 2.625f
+        val viewportHeightPx = 1000f
+        val oldPx = 60f * density   // 157.5
+        val newPx = 120f * density  // 315
+        val oldMaxScroll = oldPx * WeekViewUtils.TOTAL_HOURS - viewportHeightPx  // 2780
+        val newMaxScroll = newPx * WeekViewUtils.TOTAL_HOURS - viewportHeightPx  // 6560
+
+        val result = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = oldMaxScroll,   // scrolled to the end of the day
+            viewportHeightPx = viewportHeightPx,
+            oldHourHeightPx = oldPx,
+            newHourHeightPx = newPx,
+            totalHours = WeekViewUtils.TOTAL_HOURS,
+            panYPx = -500f                    // upward centroid drift
+        )
+
+        assertTrue(
+            "target $result exceeded the post-zoom max $newMaxScroll",
+            result <= newMaxScroll + 0.001f
+        )
+        assertTrue("target $result went negative", result >= 0f)
+    }
+
+    @Test
+    fun `resolveZoomScrollPx folds pan into the recentred offset`() {
+        val density = 2.625f
+        val viewportHeightPx = 1000f
+        val oldPx = 60f * density
+        val newPx = 60f * density  // no zoom scale; isolate the pan contribution
+        val startScroll = 12f * oldPx - viewportHeightPx / 2f
+
+        val noPan = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = startScroll, viewportHeightPx = viewportHeightPx,
+            oldHourHeightPx = oldPx, newHourHeightPx = newPx, panYPx = 0f
+        )
+        val downPan = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = startScroll, viewportHeightPx = viewportHeightPx,
+            oldHourHeightPx = oldPx, newHourHeightPx = newPx, panYPx = 100f
+        )
+        // A downward pan (finger content moving up) scrolls the grid down by that many px.
+        assertEquals(noPan - 100f, downPan, 0.001f)
+    }
+
+    @Test
+    fun `resolveZoomScrollPx guards against non-positive old hour height`() {
+        val result = WeekViewUtils.resolveZoomScrollPx(
+            currentScrollPx = 500f,
+            viewportHeightPx = 1000f,
+            oldHourHeightPx = 0f,
+            newHourHeightPx = 157.5f
+        )
+        assertEquals(500f, result, 0.001f)
+    }
+
     // ==================== resolveInitialScrollPx savedMinutes branch ====================
 
     @Test

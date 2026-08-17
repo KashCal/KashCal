@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">ಈ ಖಾತೆಯ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಿ</string>
     <string name="account_detail_sync_contacts">ಸಂಪರ್ಕಗಳು</string>
     <string name="account_detail_sync_contacts_subtitle">ಈ ಖಾತೆಯ ಸಂಪರ್ಕಗಳನ್ನು ನಿಮ್ಮ ಫೋನ್‌ಗೆ ಸಿಂಕ್ ಮಾಡಿ</string>
+    <string name="account_detail_sync_contacts_info_text">ಸಂಪರ್ಕಗಳನ್ನು ನಿಮ್ಮ ಫೋನ್‌ಗೆ ನಕಲಿಸುತ್ತದೆ. ಸದ್ಯಕ್ಕೆ ಓದಲು-ಮಾತ್ರ: ಸರ್ವರ್‌ನಿಂದ ಫೋನ್‌ಗೆ ಮಾತ್ರ.</string>
     <string name="account_detail_contacts_permission_needed">ಸಂಪರ್ಕ ಅನುಮತಿ ಆಫ್ ಆಗಿದೆ. ಸಂಪರ್ಕ ಸಿಂಕ್ ಮುಂದುವರಿಸಲು ಪ್ರವೇಶ ನೀಡಿ.</string>
     <string name="account_detail_contacts_grant">ಪ್ರವೇಶ ನೀಡಿ</string>
     <string name="contact_sync_enabled_for">%1$s ಗಾಗಿ ಸಂಪರ್ಕಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
@@ -1107,6 +1108,7 @@
     <string name="ics_sync_every_n_hours">ಪ್ರತಿ %1$d ಗಂಟೆಗಳಿಗೊಮ್ಮೆ</string>
     <string name="ics_sync_daily">ದೈನಿಕ</string>
     <string name="ics_sync_weekly">ಸಾಪ್ತಾಹಿಕ</string>
+    <string name="default_calendar_name">ಕ್ಯಾಲೆಂಡರ್</string>
     <string name="ics_url_required">URL ಅಗತ್ಯ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, ಅಥವಾ webcal:// ನಿಂದ ಆರಂಭವಾಗಬೇಕು</string>
     <string name="ics_fetch_error_http">ಸರ್ವರ್ ಒಂದು ದೋಷವನ್ನು ಹಿಂತಿರುಗಿಸಿದೆ (%1$d). ದಯವಿಟ್ಟು URL ಪರಿಶೀಲಿಸಿ.</string>

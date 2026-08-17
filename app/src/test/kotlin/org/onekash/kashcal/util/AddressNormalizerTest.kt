@@ -94,6 +94,20 @@ class AddressNormalizerTest {
     }
 
     @Test
+    fun `isEmailShaped rejects a principal path whose login segment is itself an email`() {
+        // A CalDAV principal href for an account whose login is an email address
+        // embeds an '@' and a dot, so a permissive local/domain char class would
+        // match the whole path and wrongly emit it as a mailto ORGANIZER. It is a
+        // DAV path, not an email transport address (RFC 5545 3.3.3).
+        assertFalse(
+            AddressNormalizer.isEmailShaped("/cloud/remote.php/caldav/principals/organizer@example.com/")
+        )
+        assertFalse(
+            AddressNormalizer.isEmailShaped("/remote.php/dav/principals/users/organizer@example.com/")
+        )
+    }
+
+    @Test
     fun `isEmailShaped rejects empty and whitespace and bare prefix`() {
         assertFalse(AddressNormalizer.isEmailShaped(""))
         assertFalse(AddressNormalizer.isEmailShaped("   "))

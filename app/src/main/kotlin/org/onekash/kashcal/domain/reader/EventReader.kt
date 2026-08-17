@@ -97,6 +97,16 @@ class EventReader @Inject constructor(
     }
 
     /**
+     * Reactive single-event read by ID. Re-emits whenever the event row
+     * changes (e.g. after an edit persists a new title/time/location), so
+     * a UI observing this always reflects the latest persisted event
+     * rather than a snapshot captured at tap time. Emits null when the
+     * event doesn't exist (e.g. after deletion).
+     */
+    fun getEventByIdFlow(eventId: Long): Flow<Event?> =
+        eventsDao.getByIdFlow(eventId).distinctUntilChanged()
+
+    /**
      * Get event by UID.
      * Returns list because UID may be shared by master and exceptions.
      */

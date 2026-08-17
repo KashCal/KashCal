@@ -532,6 +532,7 @@
     <string name="account_detail_sync_calendar_subtitle">Sinkronkan kalender akun ini</string>
     <string name="account_detail_sync_contacts">Kontak</string>
     <string name="account_detail_sync_contacts_subtitle">Sinkronkan kontak akun ini ke ponsel Anda</string>
+    <string name="account_detail_sync_contacts_info_text">Menyalin kontak ke ponsel Anda. Hanya-baca untuk saat ini: server ke ponsel saja.</string>
     <string name="account_detail_contacts_permission_needed">Izin Kontak nonaktif. Berikan akses agar kontak tetap tersinkronisasi.</string>
     <string name="account_detail_contacts_grant">Berikan akses</string>
     <string name="contact_sync_enabled_for">Menyinkronkan kontak untuk %1$s</string>
@@ -1059,6 +1060,7 @@
     <string name="ics_sync_every_n_hours">Setiap %1$d jam</string>
     <string name="ics_sync_daily">Harian</string>
     <string name="ics_sync_weekly">Mingguan</string>
+    <string name="default_calendar_name">Kalender</string>
     <string name="ics_url_required">URL diperlukan</string>
     <string name="ics_url_invalid_scheme">URL harus diawali dengan http://, https://, atau webcal://</string>
     <string name="ics_fetch_error_http">Server mengembalikan galat (%1$d). Silakan periksa URL.</string>

@@ -1809,6 +1809,34 @@ class EventCoordinatorTest {
     }
 
     @Test
+    fun `organizer prefers the mailto over an email-shaped principal path listed first`() = runTest {
+        // Some servers (Cyrus/Fastmail, older Nextcloud) return the principal href
+        // BEFORE the mailto in calendar-user-address-set. When the login is itself
+        // an email the principal path embeds an '@', so a permissive email-shape
+        // check wrongly picks the DAV path as ORGANIZER -> the server rejects it
+        // (SCHEDULE-STATUS 3.7 "Invalid Calendar User") and no invite is delivered.
+        val eventSlot = slot<Event>()
+        coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { accountRepository.getAccountById(2L) } returns Account(
+            id = 2L, provider = AccountProvider.CALDAV, email = "organizer@example.com",
+            calendarUserAddresses = listOf(
+                "/remote.php/dav/principals/users/organizer@example.com/",
+                "mailto:organizer@example.com"
+            )
+        )
+
+        coordinator.createEvent(
+            testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null),
+            iCloudCalendarId,
+            attendees = listOf(attendee("bob@example.test"))
+        )
+
+        assertEquals("organizer@example.com", eventSlot.captured.organizerEmail)
+        assertFalse(eventSlot.captured.organizerEmail!!.startsWith("/"))
+    }
+
+    @Test
     fun `organizer degrades to null when address-set is principal-path only`() = runTest {
         // e.g. Radicale/Nextcloud-without-email: a non-mailto ORGANIZER would be
         // mangled by the generator's mailto: prefix, so we emit none.
