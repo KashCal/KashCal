@@ -801,10 +801,15 @@ private fun DayOfWeekRow(firstDayOfWeek: Int, showWeekNumbers: Boolean) {
  */
 @Composable
 private fun WeekNumberGutterCell(label: String) {
+    // Top-aligned, NOT fillMaxHeight(): in a content-height titles week row a fillMaxHeight
+    // gutter demands the row's full height, which makes the row measure itself against the
+    // gutter instead of its content — the first week then expands across the whole grid and
+    // collapses every other week to nothing (the "one week row" bug with week numbers on).
+    // TopCenter pins the number to the same line as the day numbers beside it without
+    // influencing the row's height.
     Box(
         modifier = GlanceModifier
-            .width(WEEK_NUMBER_GUTTER_WIDTH_DP.dp)
-            .fillMaxHeight(),
+            .width(WEEK_NUMBER_GUTTER_WIDTH_DP.dp),
         contentAlignment = Alignment.TopCenter
     ) {
         Text(
