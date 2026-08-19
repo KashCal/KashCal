@@ -554,10 +554,17 @@ private fun SlotRow(
                         endCol++
                     }
                     val width = endCol - col + 1
+                    // A bar deep-links only where it is the day's first event pill (same
+                    // view-pool budget as the single-day pills below).
+                    val isFirstInCell = (0 until col).none { prev ->
+                        slotRow[prev] is MonthWidgetSlot.CellEvent ||
+                            (slotRow[prev] as? MonthWidgetSlot.BarSegment)?.span != null
+                    }
                     SpanBar(
                         span = content.span,
                         width = width,
                         maxTitleChars = maxTitleChars,
+                        deepLink = isFirstInCell,
                         // Fixed width, not defaultWeight(): Glance's defaultWeight() is always
                         // weight(1f) — there is no weight(n) — so a weighted bar collapses to a
                         // single column no matter how many days it spans. The widget knows the
@@ -567,7 +574,14 @@ private fun SlotRow(
                     col = endCol + 1
                 }
                 is MonthWidgetSlot.CellEvent -> {
-                    EventTitleRow(content.event, maxTitleChars, cellModifier)
+                    // Only the FIRST event pill of each day column deep-links to its Quick View;
+                    // the rest fall back to opening the day. A Glance clickable wraps each pill in
+                    // an extra view, and one per pill across a busy month exhausts the widget's
+                    // view-ID pool (see [MAX_EVENT_ROWS]) — the failure the translation test guards.
+                    val isFirstInCell = (0 until col).none { prev ->
+                        slotRow[prev] is MonthWidgetSlot.CellEvent
+                    }
+                    EventTitleRow(content.event, maxTitleChars, cellModifier, deepLink = isFirstInCell)
                     col++
                 }
                 is MonthWidgetSlot.Overflow -> {
@@ -613,6 +627,7 @@ private fun SpanBar(
     span: MonthWidgetSpan,
     width: Int,
     maxTitleChars: Int,
+    deepLink: Boolean,
     modifier: GlanceModifier
 ) {
     val event = span.event
@@ -665,7 +680,7 @@ private fun SpanBar(
         modifier = modifier
             .then(radiusModifier)
             .background(ColorProvider(day = fill, night = fill))
-            .clickable(eventClickAction(event))
+            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
@@ -939,7 +954,8 @@ private fun DayCell(
 private fun EventTitleRow(
     event: WidgetDataRepository.WidgetEvent,
     maxTitleChars: Int,
-    modifier: GlanceModifier
+    modifier: GlanceModifier,
+    deepLink: Boolean
 ) {
     val color = Color(event.calendarColor)
     val title = truncateTitle(event.title, maxTitleChars)
@@ -958,7 +974,9 @@ private fun EventTitleRow(
     // instead of two, multiplied across every cell/row/week, is what lets the grid fit another
     // event row inside the widget's shared view-ID pool (see [MAX_EVENT_ROWS]). The height comes
     // from the text line plus vertical padding rather than a fixed chip height, so the title is
-    // never clipped mid-glyph when its line is taller than a fixed slot.
+    // never clipped mid-glyph when its line is taller than a fixed slot. Only the day's first
+    // pill carries a clickable (deepLink): each clickable wraps the pill in an extra view, and
+    // one per pill across a busy month would exhaust the view-ID pool.
     Text(
         text = title,
         style = TextStyle(
@@ -969,7 +987,7 @@ private fun EventTitleRow(
         modifier = modifier
             .cornerRadius(EVENT_CHIP_CORNER_RADIUS_DP.dp)
             .background(ColorProvider(day = fill, night = fill))
-            .clickable(eventClickAction(event))
+            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
