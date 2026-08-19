@@ -1146,7 +1146,10 @@ class KashCalDataStore(
          * - v0: Pre-v20.12.39 (no version tracking)
          * - v1: VALUE=DATE timezone fix (use UTC instead of local timezone)
          * - v2: Windows timezone name resolution (Issue #45)
+         * - v3: Locally-defined VTIMEZONE with non-IANA TZID no longer drops
+         *   events (Issue #346): resolvable X-LIC-LOCATION zones are honored,
+         *   the rest fall back to floating instead of being lost.
          */
-        const val CURRENT_PARSER_VERSION = 2
+        const val CURRENT_PARSER_VERSION = 3
     }
 }

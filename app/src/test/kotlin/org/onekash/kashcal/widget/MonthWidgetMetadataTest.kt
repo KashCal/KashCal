@@ -32,33 +32,35 @@ class MonthWidgetMetadataTest {
     }
 
     @Test
-    fun `minResizeWidth is 200dp`() {
-        assertContainsAttr("minResizeWidth", "200dp")
+    fun `minResizeWidth is 170dp`() {
+        assertContainsAttr("minResizeWidth", "170dp")
     }
 
     @Test
-    fun `minResizeHeight is 264dp`() {
-        assertContainsAttr("minResizeHeight", "264dp")
+    fun `minResizeHeight is 200dp`() {
+        assertContainsAttr("minResizeHeight", "200dp")
     }
 
     /**
-     * The month grid is a non-scrolling Column of fixed-height cells, so it
-     * crops if the declared resize floor can't even hold all six week-rows.
-     * Assert the grid alone fits within minResizeHeight. This is a necessary
-     * condition (the header and day-of-week row consume further space on top),
-     * and it ties the cell-height constant to the descriptor so a future
-     * cell-height increase that outgrows the floor fails here instead of
-     * silently cropping on-device.
+     * The month grid divides its height evenly among the week rows (the header
+     * and day-of-week row are subtracted first), and each cell must keep at
+     * least enough room for its day number or the number clips on-device. Assert
+     * that at the declared minResizeHeight floor, a worst-case six-week month
+     * still gives every cell at least the day-number block height — mirroring the
+     * production cell-height math so a future chrome or block-height increase
+     * that would clip the numbers fails here instead of silently on-device.
      */
     @Test
-    fun `six week-rows fit within minResizeHeight`() {
-        val gridHeight = MONTH_GRID_WEEK_ROWS * MONTH_DAY_CELL_HEIGHT_DP
+    fun `day numbers fit at minResizeHeight in a six-week month`() {
         val minResize = readDpAttr("minResizeHeight")
+        val cellHeight =
+            (minResize - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP).toFloat() /
+                MONTH_GRID_WEEK_ROWS
         assertTrue(
-            "Month grid needs ${gridHeight}dp for $MONTH_GRID_WEEK_ROWS rows of " +
-                "${MONTH_DAY_CELL_HEIGHT_DP}dp but minResizeHeight is only ${minResize}dp; " +
-                "the bottom week-row will crop. Raise minResizeHeight or shrink the cell.",
-            gridHeight <= minResize
+            "At minResizeHeight ${minResize}dp a $MONTH_GRID_WEEK_ROWS-week month gives each " +
+                "cell only ${cellHeight}dp after chrome, below the ${DAY_NUMBER_BLOCK_HEIGHT_DP}dp " +
+                "day-number block; the numbers will clip. Raise minResizeHeight or shrink the chrome.",
+            cellHeight >= DAY_NUMBER_BLOCK_HEIGHT_DP
         )
     }
 

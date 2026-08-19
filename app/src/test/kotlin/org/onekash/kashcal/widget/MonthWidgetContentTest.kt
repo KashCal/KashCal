@@ -229,21 +229,21 @@ class MonthWidgetContentTest {
 
     @Test
     fun `maxEventRows returns 0 when not even one row fits below the day number`() {
-        // 21 (number) + 16 (row) + 1 (its leading gap) = 38dp minimum; below that the cell
+        // 19 (number) + 16 (row) + 1 (its leading gap) = 36dp minimum; below that the cell
         // falls back to dots rather than commit to a title row the number would clip away.
-        assertEquals(0, maxEventRows(37f))
+        assertEquals(0, maxEventRows(35f))
     }
 
     @Test
     fun `maxEventRows fits exactly one row at the minimum height`() {
-        assertEquals(1, maxEventRows(38f))
+        assertEquals(1, maxEventRows(36f))
     }
 
     @Test
     fun `maxEventRows fits two rows once the second row and its gap clear the number`() {
-        // 21 (number) + 2 * (16 row + 1 gap) = 55dp. Every slot row pays its leading gap, so
+        // 19 (number) + 2 * (16 row + 1 gap) = 53dp. Every slot row pays its leading gap, so
         // the second row costs a full 17dp, not 16.
-        assertEquals(2, maxEventRows(55f))
+        assertEquals(2, maxEventRows(53f))
     }
 
     @Test
@@ -254,20 +254,27 @@ class MonthWidgetContentTest {
     @Test
     fun `maxEventRows fits fewer rows at a larger font scale`() {
         // A cell that fits two rows at font-scale 1.0 fits none at 1.5: the scaled 16dp rows
-        // (24dp each) plus the scaled 21dp number (31.5dp) no longer clear the 55dp cell, so the
+        // (24dp each) plus the scaled 19dp number (28.5dp) no longer clear the 53dp cell, so the
         // layout backs off to dots instead of clipping a row off the bottom.
-        assertEquals(2, maxEventRows(55f, fontScale = 1.0f))
-        assertEquals(0, maxEventRows(55f, fontScale = 1.5f))
+        assertEquals(2, maxEventRows(53f, fontScale = 1.0f))
+        assertEquals(0, maxEventRows(53f, fontScale = 1.5f))
     }
 
     // ==================== minWidgetHeightForTitlesDp ====================
 
     @Test
-    fun `minWidgetHeightForTitlesDp derives the two-row threshold from real element heights`() {
-        // Header 40 + day-of-week 23 + 6 weeks * (21 number + 2 * (16 row + 1 gap)) = 393dp,
-        // which is exactly the height a 6-week two-row grid renders at — so a widget past the
-        // threshold fits its rows with none clipped.
-        assertEquals(393f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
+    fun `minWidgetHeightForTitlesDp derives the one-row threshold from real element heights`() {
+        // Header 40 + day-of-week 21 + 6 weeks * (19 number + 1 * (16 row + 1 gap)) = 277dp,
+        // which is exactly the height a 6-week one-row grid renders at — so a widget past the
+        // threshold fits its row with none clipped. This sits comfortably under the placed 4x4
+        // default (304dp), so a freshly placed widget shows titles and only the smallest resizes fall to dots.
+        assertEquals(277f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
+    }
+
+    @Test
+    fun `minWidgetHeightForTitlesDp for two rows still matches the six-week two-row height`() {
+        // Guards the derivation itself independent of TITLES_MIN_ROWS: 40 + 21 + 6 * (19 + 2*17).
+        assertEquals(379f, minWidgetHeightForTitlesDp(2), 0.001f)
     }
 
     @Test
@@ -307,29 +314,31 @@ class MonthWidgetContentTest {
         assertEquals(4, maxTitleChars(20f))
     }
 
-    // ==================== ellipsizeTitle ====================
+    // ==================== truncateTitle ====================
 
     @Test
-    fun `ellipsizeTitle keeps titles that fit`() {
-        assertEquals("Gym", ellipsizeTitle("Gym", 7))
+    fun `truncateTitle keeps titles that fit`() {
+        assertEquals("Gym", truncateTitle("Gym", 7))
     }
 
     @Test
-    fun `ellipsizeTitle truncates with ellipsis`() {
-        assertEquals("Desi…", ellipsizeTitle("Design Review", 5))
+    fun `truncateTitle clips to whole characters with no ellipsis`() {
+        // The narrow widget cell keeps every character for the title itself, so the whole
+        // budget renders text: take(5) of "Design Review" is "Desig", no trailing "…".
+        assertEquals("Desig", truncateTitle("Design Review", 5))
     }
 
     @Test
-    fun `ellipsizeTitle trims trailing whitespace before the ellipsis`() {
-        // take(7) of "Project X" is "Project" (no trailing space), so the ellipsis
-        // attaches directly; "Team sync" takes "Team sy" -> trimEnd -> "Team sy…"
-        assertEquals("Project…", ellipsizeTitle("Project X", 8))
-        assertEquals("Team sy…", ellipsizeTitle("Team sync", 8))
+    fun `truncateTitle trims a trailing space left at the clip boundary`() {
+        // take(8) of "Project X" is "Project " -> trimEnd -> "Project" (never ends on a blank
+        // glyph); "Team sync" takes "Team syn" which has no trailing space to trim.
+        assertEquals("Project", truncateTitle("Project X", 8))
+        assertEquals("Team syn", truncateTitle("Team sync", 8))
     }
 
     @Test
-    fun `ellipsizeTitle returns the title untouched for degenerate budgets`() {
-        assertEquals("Gym", ellipsizeTitle("Gym", 0))
+    fun `truncateTitle returns the title untouched for degenerate budgets`() {
+        assertEquals("Gym", truncateTitle("Gym", 0))
     }
 
     private fun createWidgetEvent(

@@ -1,3 +1,12 @@
+## [2026.08.19]
+
+### Everything in this release
+
+- Fixed subscribed calendar feeds that showed events in the preview but none after refreshing, when the feed defined its own time zone under a non-standard name; the real zone is now taken from the feed's `X-LIC-LOCATION` hint and any that still cannot be resolved fall back to a floating time instead of dropping every event, #346
+- Changed the month home-screen widget to show event titles at its normal placed size and across more sizes, instead of only when stretched much larger, so a freshly placed widget shows titles and only the smallest sizes fall back to dots
+- Improved month-widget titles to fill each day cell's width without a trailing ellipsis, with a day-of-month number sized to match the in-app month view, so more of each title is readable
+- Changed the month widget's minimum resize size so it can be shrunk smaller on the home screen
+
 ## [2026.08.17]
 
 A colored dot can tell you that a day is busy. It can't tell you with what. The month widget now can.

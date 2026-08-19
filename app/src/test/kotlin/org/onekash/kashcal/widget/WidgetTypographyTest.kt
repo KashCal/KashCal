@@ -62,13 +62,13 @@ class WidgetTypographyTest {
     }
 
     @Test
-    fun `month day number sits between body content and the header title`() {
-        // Month-grid numbers get extra presence over event-title body text, but
-        // must not out-rank the header title — the header stays the most
-        // prominent text in the widget. Keeping the number at or below the
-        // header also bounds its size so that, at the normal system font scale,
-        // the number plus its event-dot row fits the fixed 40dp day cell.
-        assertTrue(WidgetTypography.monthDayNumber.value > WidgetTypography.contentTitle.value)
+    fun `month day number matches body content and stays at or below the header title`() {
+        // The month-grid number shares the body-content size, matching the in-app
+        // month grid, so the number and the event-title row below it read as one
+        // scale. It must not out-rank the header title — the header stays the most
+        // prominent text in the widget. Keeping the number no larger than body
+        // content also leaves vertical room in the day cell for a title row.
+        assertTrue(WidgetTypography.monthDayNumber.value >= WidgetTypography.contentTitle.value)
         assertTrue(WidgetTypography.monthDayNumber.value <= WidgetTypography.headerTitle.value)
     }
 

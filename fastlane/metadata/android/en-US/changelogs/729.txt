@@ -1,0 +1,4 @@
+• Subscriptions: feeds that define their own time zone under a non-standard name no longer lose all their events (#346)
+• Month widget: shows event titles at its normal placed size and across more sizes
+• Month widget: titles fill each day cell without a trailing ellipsis, day number matches the in-app month view
+• Month widget: can now be resized smaller on the home screen

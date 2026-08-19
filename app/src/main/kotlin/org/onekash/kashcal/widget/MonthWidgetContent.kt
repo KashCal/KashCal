@@ -49,9 +49,6 @@ import java.time.Month
 import java.util.Locale
 import java.time.format.TextStyle as JavaTextStyle
 
-/** Fixed height of a single month-grid day cell, in dp. */
-internal const val MONTH_DAY_CELL_HEIGHT_DP = 40
-
 /**
  * Padding around today's day number that forms the solid accent marker, in dp.
  * The marker wraps the number via padding rather than a fixed size, so it grows
@@ -106,20 +103,20 @@ internal const val MONTH_HEADER_HEIGHT_DP = 40
 
 /**
  * Vertical space the day-of-week letter row occupies, in dp: [WidgetTypography.monthDayNumber]
- * (16sp ≈ 21dp at font-scale 1.0) plus the row's vertical padding.
+ * (14sp ≈ 17dp at font-scale 1.0) plus the row's 4dp vertical padding.
  */
-internal const val MONTH_DOW_ROW_HEIGHT_DP = 23
+internal const val MONTH_DOW_ROW_HEIGHT_DP = 21
 
 /**
- * Vertical space the day-number block reserves at the top of a day cell, in dp — the 16sp
- * number (≈21dp at font-scale 1.0) plus the today marker's vertical padding.
+ * Vertical space the day-number block reserves at the top of a day cell, in dp — the 14sp
+ * number (≈17dp at font-scale 1.0) plus the today marker's vertical padding.
  *
  * This must not under-budget the number's real height: the day-number row and the event
  * rows below it share the cell's fixed height, so if this value is too small, [maxEventRows]
  * reports a row that fits when it does not, and the number ends up shoving that row off the
  * cell's bottom — the "numbers show but events don't" failure at small widget sizes.
  */
-internal const val DAY_NUMBER_BLOCK_HEIGHT_DP = 21
+internal const val DAY_NUMBER_BLOCK_HEIGHT_DP = 19
 
 /**
  * Real rendered height of one event title row at font-scale 1.0, in dp: the 11sp text line
@@ -165,13 +162,19 @@ internal const val WORST_CASE_MONTH_WEEKS = 6
 
 /**
  * Event rows a day cell must have room for — in the worst-case 6-week month — before the widget
- * renders titles instead of the compact dots. The dots are the small-widget floor: a freshly
- * placed or minimum-size widget shows them, and titles appear only once the widget is enlarged
- * enough that a cell fits this many rows (an event and its overflow), never a lone cut-off line.
- * Two rows is the smallest count that leaves room for a title AND a "+n" or a second event;
- * one row would reintroduce the cramped single line this size-derived threshold exists to avoid.
+ * renders titles instead of the compact dots. The dots are the small-widget floor: only the
+ * smallest resizes show them, and titles take over as soon as a cell fits this many honest rows.
+ * One row is the floor: dots are the compact minimum, and any extra height becomes a title. A cell
+ * that fits a single row shows the top event's title (a day with more collapses the rest, like the
+ * dots cap) rather than three anonymous dots — more informative, and the widget is lossy by design.
+ *
+ * A single row does NOT clip: the threshold and the row-fitter ([maxEventRows]) share the same
+ * honest row-height baseline ([TIMED_TITLE_ROW_HEIGHT_DP], font-scale-multiplied), so a widget at
+ * the threshold fits its row with none shoved off the cell. Requiring two rows only buys room for a
+ * "+n" marker beside the title, at the cost of holding the whole titles mode back until the widget
+ * is dragged much larger — a poor trade when a placed 4x4 widget already has room for one.
  */
-internal const val TITLES_MIN_ROWS = 2
+internal const val TITLES_MIN_ROWS = 1
 
 /** Tint alpha for a timed multi-day span bar's background (in-app TimedSpan style). */
 internal const val TIMED_SPAN_TINT_ALPHA = 0.18f
@@ -594,7 +597,7 @@ private fun SpanBar(
     // The title only fits across the bar's full span, so it earns roughly `width` times the
     // per-cell character budget (minus the chrome the single-cell rows already deduct).
     val spanChars = (maxTitleChars * width).coerceAtLeast(maxTitleChars)
-    val title = ellipsizeTitle(event.title, spanChars)
+    val title = truncateTitle(event.title, spanChars)
 
     // Corner radius per edge: flush (continuing) edges stay square so the bar reads as one
     // unbroken band across week boundaries; capped edges round off.
@@ -911,7 +914,7 @@ private fun EventTitleRow(
     modifier: GlanceModifier
 ) {
     val color = Color(event.calendarColor)
-    val title = ellipsizeTitle(event.title, maxTitleChars)
+    val title = truncateTitle(event.title, maxTitleChars)
     val isTimed = !event.isAllDay
     val fill = when {
         isTimed -> color.copy(alpha = TIMED_SPAN_TINT_ALPHA)
@@ -1076,7 +1079,7 @@ internal fun minWidgetHeightForTitlesDp(titleRows: Int, fontScale: Float = 1f): 
 
 /**
  * How many title characters fit a day cell of [cellWidthDp] after the row chrome (stripe or
- * chip padding), at [TITLE_CHAR_WIDTH_DP] per character. Minimum 4 so an ellipsis still
+ * chip padding), at [TITLE_CHAR_WIDTH_DP] per character. Minimum 4 so a clipped title still
  * leaves something readable.
  */
 internal fun maxTitleChars(cellWidthDp: Float): Int =
@@ -1085,13 +1088,15 @@ internal fun maxTitleChars(cellWidthDp: Float): Int =
         .coerceAtLeast(4)
 
 /**
- * Truncate [title] to [maxChars] with a trailing ellipsis. Glance's Text clips overflow
- * mid-glyph rather than ellipsizing, so titles are pre-shortened; [maxTitleChars] estimates
- * how much actually fits the cell.
+ * Truncate [title] to [maxChars] whole characters, with no trailing ellipsis. Glance's Text clips
+ * overflow mid-glyph, so titles are pre-shortened on a character boundary; [maxTitleChars] estimates
+ * how much actually fits the cell. The trailing "…" is deliberately omitted so the narrow widget
+ * cell spends every character on the title itself — the cell edge already signals there is more.
+ * A trailing space left at the clip boundary is trimmed so the title never ends on a blank glyph.
  */
-internal fun ellipsizeTitle(title: String, maxChars: Int): String {
-    if (maxChars <= 1 || title.length <= maxChars) return title
-    return title.take(maxChars - 1).trimEnd() + "…"
+internal fun truncateTitle(title: String, maxChars: Int): String {
+    if (maxChars <= 0 || title.length <= maxChars) return title
+    return title.take(maxChars).trimEnd()
 }
 
 /**

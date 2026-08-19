@@ -116,6 +116,18 @@ class ICalParser(
          */
         private val UPPERCASE_NEWLINE_ESCAPE = Regex("""(?<!\\)((?:\\\\)*)\\N""")
 
+        /** Captures the body of each embedded VTIMEZONE component (Fix 4). */
+        private val VTIMEZONE_BLOCK =
+            Regex("""BEGIN:VTIMEZONE\r?\n(.*?)END:VTIMEZONE""", RegexOption.DOT_MATCHES_ALL)
+
+        /** The TZID declared by a VTIMEZONE, e.g. `TZID:TZsfv` (Fix 4). */
+        private val VTIMEZONE_TZID =
+            Regex("""^TZID:(.+)$""", RegexOption.MULTILINE)
+
+        /** The X-LIC-LOCATION hint naming the intended IANA zone (Fix 4). */
+        private val VTIMEZONE_XLIC =
+            Regex("""^X-LIC-LOCATION:(.+)$""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
+
         /**
          * Create an ICalParser with [TimeZoneRegistryImpl] for full timezone support.
          *
@@ -168,6 +180,17 @@ class ICalParser(
             // Enable relaxed parsing for malformed iCal data from various servers
             System.setProperty("ical4j.unfolding.relaxed", "true")
             System.setProperty("ical4j.parsing.relaxed", "true")
+
+            // Relaxed validation: never drop an otherwise-usable VEVENT because
+            // of a validation failure. The load-bearing case is a locally-defined
+            // VTIMEZONE (RFC 5545 §3.2.19) whose TZID is a non-IANA name ical4j
+            // cannot resolve via java.time.ZoneId.of at date-access time — strict
+            // validation makes the per-event parse throw, which would silently
+            // drop every event in the feed. With this hint the event is kept and
+            // its time falls back to the device zone (floating) when the zone is
+            // unresolvable. preprocessICalData rewrites resolvable custom zones to
+            // their IANA equivalent first, so this net only catches the residue.
+            System.setProperty("ical4j.validation.relaxed", "true")
         }
     }
 
@@ -1135,12 +1158,54 @@ class ICalParser(
         // Convert preserves the publisher's date instead of falling back to "now".
         // Anchored start-of-line + exactly three property names; cannot match
         // freetext, folded continuation lines, or X-props.
-        return durationFixed.replace(
+        val dtstampFixed = durationFixed.replace(
             Regex("""^(DTSTAMP|LAST-MODIFIED|CREATED);VALUE=DATE:(\d{8})\s*$""", RegexOption.MULTILINE)
         ) { match ->
             "${match.groupValues[1]}:${match.groupValues[2]}T000000Z"
         }
+
+        // Fix 4: Locally-defined VTIMEZONE with an unresolvable TZID.
+        // RFC 5545 §3.2.19 permits a TZID with no leading solidus to name a
+        // timezone defined only by an embedded VTIMEZONE. ical4j 4.x resolves
+        // TZID via java.time.ZoneId.of(...) at date-access time, so a non-IANA
+        // name (e.g. "TZsfv") throws and every event is dropped. When such a
+        // VTIMEZONE carries X-LIC-LOCATION naming a resolvable IANA zone, rewrite
+        // the custom TZID to that zone so the offset is correct rather than
+        // floating. Zones that stay unresolvable are handled by relaxed
+        // validation (kept at device-local time) instead of being dropped.
+        return rewriteUnresolvableVTimezones(dtstampFixed)
     }
+
+    /**
+     * Rewrite the TZID of any embedded VTIMEZONE whose identifier ical4j cannot
+     * resolve to a real zone but that carries a resolvable X-LIC-LOCATION IANA
+     * zone, replacing every `TZID:`/`TZID=` reference to the custom name with the
+     * IANA zone. Leaves already-resolvable TZIDs untouched. See Fix 4 above.
+     */
+    private fun rewriteUnresolvableVTimezones(data: String): String {
+        if (!data.contains("X-LIC-LOCATION", ignoreCase = true)) return data
+
+        val mapping = LinkedHashMap<String, String>()
+        VTIMEZONE_BLOCK.findAll(data).forEach { block ->
+            val body = block.groupValues[1]
+            val tzid = VTIMEZONE_TZID.find(body)?.groupValues?.get(1)?.trim() ?: return@forEach
+            val iana = VTIMEZONE_XLIC.find(body)?.groupValues?.get(1)?.trim() ?: return@forEach
+            if (tzid.isEmpty() || iana.isEmpty() || tzid == iana) return@forEach
+            if (isResolvableZone(tzid) || !isResolvableZone(iana)) return@forEach
+            mapping.putIfAbsent(tzid, iana)
+        }
+        if (mapping.isEmpty()) return data
+
+        var result = data
+        for ((custom, iana) in mapping) {
+            result = Regex("""(TZID[:=])${Regex.escape(custom)}(?=[;:\r\n])""")
+                .replace(result) { "${it.groupValues[1]}$iana" }
+        }
+        return result
+    }
+
+    private fun isResolvableZone(id: String): Boolean =
+        try { java.time.ZoneId.of(id); true } catch (_: Exception) { false }
 
     /**
      * Normalize the uppercase newline escape `\N` to lowercase `\n` in raw ICS

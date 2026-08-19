@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     // iCalendar parsing - handles RFC 5545 compliance
-    // Using 4.2.2 - duplicate class bug fixed in 4.0.7 (PR #763)
-    implementation("org.mnode.ical4j:ical4j:4.2.2")
+    // (duplicate-class bug was fixed upstream in 4.0.7, PR #763)
+    implementation("org.mnode.ical4j:ical4j:4.3.0")
 
     // Kotlin coroutines (aligned with KashCal's version catalog)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
