@@ -496,6 +496,19 @@ private fun dayClickAction(dayCode: Int) = actionStartActivity<MainActivity>(
 )
 
 /**
+ * Tap action for an event title row / span bar: open the event's Quick View in the app —
+ * the same deep link the agenda, week, and upcoming widgets use ([ACTION_SHOW_EVENT]).
+ */
+private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionStartActivity<MainActivity>(
+    parameters = actionParametersOf(
+        ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_SHOW_EVENT,
+        ActionParameters.Key<Long>(EXTRA_EVENT_ID) to event.eventId,
+        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs,
+        ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
+    )
+)
+
+/**
  * One slot row of a titles-mode week: consecutive [MonthWidgetSlot.BarSegment]s of the same
  * span merge into one continuous bar across their columns; single-day snippets, overflow
  * markers, and empty cells take one column each.
@@ -539,7 +552,6 @@ private fun SlotRow(
                         span = content.span,
                         width = width,
                         maxTitleChars = maxTitleChars,
-                        dayCode = weekDayCodes[col],
                         // Fixed width, not defaultWeight(): Glance's defaultWeight() is always
                         // weight(1f) — there is no weight(n) — so a weighted bar collapses to a
                         // single column no matter how many days it spans. The widget knows the
@@ -595,7 +607,6 @@ private fun SpanBar(
     span: MonthWidgetSpan,
     width: Int,
     maxTitleChars: Int,
-    dayCode: Int,
     modifier: GlanceModifier
 ) {
     val event = span.event
@@ -648,7 +659,7 @@ private fun SpanBar(
         modifier = modifier
             .then(radiusModifier)
             .background(ColorProvider(day = fill, night = fill))
-            .clickable(dayClickAction(dayCode))
+            .clickable(eventClickAction(event))
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
@@ -947,6 +958,7 @@ private fun EventTitleRow(
         modifier = modifier
             .cornerRadius(EVENT_CHIP_CORNER_RADIUS_DP.dp)
             .background(ColorProvider(day = fill, night = fill))
+            .clickable(eventClickAction(event))
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
