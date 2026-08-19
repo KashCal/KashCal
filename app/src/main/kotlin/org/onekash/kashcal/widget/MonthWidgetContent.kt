@@ -496,16 +496,22 @@ private fun dayClickAction(dayCode: Int) = actionStartActivity<MainActivity>(
 )
 
 /**
- * Tap action for an event title row / span bar: open the event's Quick View in the app —
- * the same deep link the agenda, week, and upcoming widgets use ([ACTION_SHOW_EVENT]).
+ * The deep-link extras for an event title row / span bar tap: open the event's Quick View in
+ * the app — the same [ACTION_SHOW_EVENT] payload the agenda, week, and upcoming widgets send.
+ * Extracted as a testable helper (mirroring `footerActionParameters` in the upcoming widget)
+ * so the click-wiring is unit-tested, not just compile-checked.
  */
-private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionStartActivity<MainActivity>(
-    parameters = actionParametersOf(
+internal fun eventActionParameters(event: WidgetDataRepository.WidgetEvent): ActionParameters =
+    actionParametersOf(
         ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_SHOW_EVENT,
         ActionParameters.Key<Long>(EXTRA_EVENT_ID) to event.eventId,
         ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs,
         ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
     )
+
+/** Tap action for an event title row / span bar: open the event's Quick View in the app. */
+private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionStartActivity<MainActivity>(
+    parameters = eventActionParameters(event)
 )
 
 /**
