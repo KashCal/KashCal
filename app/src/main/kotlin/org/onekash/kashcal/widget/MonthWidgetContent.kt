@@ -317,12 +317,12 @@ fun MonthWidgetContent(
                 // continuous bars, single-day events fill the remaining per-cell slots.
                 val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount)
                 TitlesWeekRow(
-                    // Content-height, NOT defaultWeight(): titles-mode rows size to their day
-                    // number plus event rows and no more, so a tall widget's spare height gathers
-                    // once at the bottom of the grid instead of padding an empty tail under every
-                    // week row. Row COUNT already grows with widget height (see eventRowCount), so
-                    // enlarging still shows more events — it just no longer stretches each cell.
-                    modifier = GlanceModifier.fillMaxWidth(),
+                    // Weighted like the dots rows: every week shares the grid height evenly, so
+                    // a week without events still fills its cell — no "stacked from the top,
+                    // cramped empty days" look. The slot CONTENT stays top-aligned inside the
+                    // stretched cell (see TitlesWeekRow's Column), so the spare height pads the
+                    // bottom of each week rather than pulling the event rows apart.
+                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
                     week = week,
                     weekDayCodes = weekDayCodes,
                     weekRender = weekRender,
@@ -385,7 +385,13 @@ private fun TitlesWeekRow(
         if (gutterLabel != null) {
             WeekNumberGutterCell(gutterLabel)
         }
-        Column(modifier = GlanceModifier.defaultWeight()) {
+        // Top-aligned content inside the (possibly stretched) week cell: the day numbers and
+        // event rows pack at the top, spare height gathers below them — matching how the
+        // dots-mode DayCell pins its number+dot column to the top of its weighted cell.
+        Column(
+            modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+            verticalAlignment = Alignment.Top
+        ) {
             // Day-number row, identical in look to the dots-mode cells.
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 week.forEachIndexed { col, cell ->
