@@ -379,6 +379,64 @@ class MonthWidgetContentTest {
         )
     }
 
+    // ==================== deep-link target gating ====================
+
+    @Test
+    fun `isFirstCellEventInLane picks only the leading pill`() {
+        val a = createWidgetEvent().copy(eventId = 1L)
+        val b = createWidgetEvent().copy(eventId = 2L)
+        val c = createWidgetEvent().copy(eventId = 3L)
+        val row = listOf(
+            MonthWidgetSlot.CellEvent(a),
+            MonthWidgetSlot.CellEvent(b),
+            MonthWidgetSlot.CellEvent(c),
+        )
+        // First pill in the lane carries the deep link.
+        assertEquals(true, isFirstCellEventInLane(row, 0))
+        // A pill preceded by another pill does not — this is the view-pool guard.
+        assertEquals(false, isFirstCellEventInLane(row, 1))
+        assertEquals(false, isFirstCellEventInLane(row, 2))
+    }
+
+    @Test
+    fun `isFirstCellEventInLane ignores non-pill slots before the first pill`() {
+        val span = MonthWidgetSpan(
+            event = createWidgetEvent(),
+            startCol = 0,
+            endCol = 0,
+            leftFlush = false,
+            rightFlush = false,
+        )
+        val row = listOf(
+            MonthWidgetSlot.BarSegment(span),
+            MonthWidgetSlot.Overflow(3),
+            MonthWidgetSlot.CellEvent(createWidgetEvent()),
+        )
+        // A leading bar/overflow are not CellEvents, so the pill at col 2 is still "first".
+        assertEquals(true, isFirstCellEventInLane(row, 2))
+    }
+
+    @Test
+    fun `isFirstBarSegmentInLane picks only the leading bar segment`() {
+        val span = MonthWidgetSpan(
+            event = createWidgetEvent(),
+            startCol = 1,
+            endCol = 2,
+            leftFlush = false,
+            rightFlush = false,
+        )
+        val row = listOf(
+            MonthWidgetSlot.BarSegment(span),
+            MonthWidgetSlot.BarSegment(span),
+            MonthWidgetSlot.Empty,
+        )
+        // First segment deep-links to Quick View.
+        assertEquals(true, isFirstBarSegmentInLane(row, 0))
+        // A continuation segment is not the deep-link target, but it still opens the day
+        // (both branches are clickable) — this only chooses which action the segment gets.
+        assertEquals(false, isFirstBarSegmentInLane(row, 1))
+    }
+
     private fun createWidgetEvent(
         calendarColor: Int = 0xFF2196F3.toInt()
     ): WidgetDataRepository.WidgetEvent {

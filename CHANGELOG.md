@@ -1,3 +1,12 @@
+## [2026.08.20]
+
+### Everything in this release
+
+- Fixed a certificate-validation weakness on the subscribed-calendar fetch path: when an `.ics` feed's server offered an incomplete certificate chain, the fallback that retrieves the missing certificate could accept one that did not chain to a trusted root; the fetched certificate is now validated against the system trust store before it is trusted, and the fetch itself is restricted to public addresses and a bounded response size, GHSA-53rw-qfc6-v32g
+- Added tapping an event in the month home-screen widget to open its quick view: in titles mode an event's title opens that event, and in dots mode the day's first event opens, while the rest of a day cell still opens the day
+- Fixed the month widget's week-number gutter collapsing or clipping the day grid to fewer rows when titles and week numbers were both shown, so turning on week numbers no longer distorts the month layout
+- Improved the month widget in titles mode to stretch every week row to an even height with each cell's content aligned to the top
+
 ## [2026.08.19]
 
 ### Everything in this release

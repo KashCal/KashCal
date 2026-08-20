@@ -144,9 +144,10 @@ internal const val EVENT_ROW_GAP_DP = 1
  * single Text (see [EventTitleRow]) roughly halved that, so a fully-booked six-week month at three
  * rows now measures well inside the pool at any size. Crucially the pool is spent per element, not
  * per pixel, so this cap — not the widget's size — bounds the view count: a large widget at the cap
- * costs the same as a medium one. Row count grows with widget height only up to this cap; height
- * beyond what the capped rows need is left as empty space at the bottom of the grid (titles-mode
- * rows are content-height, not stretched), so the view count never climbs with size past the cap.
+ * costs the same as a medium one. Row count grows with widget height only up to this cap; beyond it
+ * the extra height is absorbed by the weighted week rows (each stretches to an equal share of the
+ * grid, its content top-aligned) instead of adding event rows, so the view count never climbs with
+ * size past the cap.
  */
 internal const val MAX_EVENT_ROWS = 3
 
@@ -515,6 +516,23 @@ private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionSt
 )
 
 /**
+ * True when the slot at [col] is the first [MonthWidgetSlot.CellEvent] in its lane. Only that pill
+ * deep-links to its Quick View; the rest are non-interactive, because one clickable per pill across
+ * a busy month would exhaust the widget's view-ID pool (see [MAX_EVENT_ROWS]). Extracted so the
+ * gating is unit-tested rather than left as an inline predicate the tests can't reach.
+ */
+internal fun isFirstCellEventInLane(slotRow: List<MonthWidgetSlot>, col: Int): Boolean =
+    (0 until col).none { slotRow[it] is MonthWidgetSlot.CellEvent }
+
+/**
+ * True when the slot at [col] is the first [MonthWidgetSlot.BarSegment] in its lane. Every bar is
+ * tappable (the first deep-links, the rest open the day), so this only chooses the deep-link target
+ * — never whether a bar has an action. Extracted alongside [isFirstCellEventInLane] for testing.
+ */
+internal fun isFirstBarSegmentInLane(slotRow: List<MonthWidgetSlot>, col: Int): Boolean =
+    (0 until col).none { slotRow[it] is MonthWidgetSlot.BarSegment }
+
+/**
  * One slot row of a titles-mode week: consecutive [MonthWidgetSlot.BarSegment]s of the same
  * span merge into one continuous bar across their columns; single-day snippets, overflow
  * markers, and empty cells take one column each.
@@ -554,17 +572,17 @@ private fun SlotRow(
                         endCol++
                     }
                     val width = endCol - col + 1
-                    // A bar deep-links only where it is the day's first event pill (same
-                    // view-pool budget as the single-day pills below).
-                    val isFirstInCell = (0 until col).none { prev ->
-                        slotRow[prev] is MonthWidgetSlot.CellEvent ||
-                            (slotRow[prev] as? MonthWidgetSlot.BarSegment)?.span != null
-                    }
+                    // The first bar in this lane deep-links to its Quick View; every other bar
+                    // opens the day (all bars carry a tap, as they did before deep-linking — one
+                    // clickable per bar stays within the view-ID pool). Only the deep-link target
+                    // is gated to the lane's first bar.
+                    val isFirstInCell = isFirstBarSegmentInLane(slotRow, col)
                     SpanBar(
                         span = content.span,
                         width = width,
                         maxTitleChars = maxTitleChars,
                         deepLink = isFirstInCell,
+                        dayCode = weekDayCodes[col],
                         // Fixed width, not defaultWeight(): Glance's defaultWeight() is always
                         // weight(1f) — there is no weight(n) — so a weighted bar collapses to a
                         // single column no matter how many days it spans. The widget knows the
@@ -574,13 +592,11 @@ private fun SlotRow(
                     col = endCol + 1
                 }
                 is MonthWidgetSlot.CellEvent -> {
-                    // Only the FIRST event pill of each day column deep-links to its Quick View;
-                    // the rest fall back to opening the day. A Glance clickable wraps each pill in
-                    // an extra view, and one per pill across a busy month exhausts the widget's
+                    // Only the FIRST event pill in this lane carries a tap target (deep-link to its
+                    // Quick View); the rest are non-interactive. A Glance clickable wraps each pill
+                    // in an extra view, and one per pill across a busy month exhausts the widget's
                     // view-ID pool (see [MAX_EVENT_ROWS]) — the failure the translation test guards.
-                    val isFirstInCell = (0 until col).none { prev ->
-                        slotRow[prev] is MonthWidgetSlot.CellEvent
-                    }
+                    val isFirstInCell = isFirstCellEventInLane(slotRow, col)
                     EventTitleRow(content.event, maxTitleChars, cellModifier, deepLink = isFirstInCell)
                     col++
                 }
@@ -628,6 +644,7 @@ private fun SpanBar(
     width: Int,
     maxTitleChars: Int,
     deepLink: Boolean,
+    dayCode: Int,
     modifier: GlanceModifier
 ) {
     val event = span.event
@@ -680,7 +697,9 @@ private fun SpanBar(
         modifier = modifier
             .then(radiusModifier)
             .background(ColorProvider(day = fill, night = fill))
-            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
+            // The day's first event bar deep-links to its Quick View; every other bar falls back
+            // to opening the day (as all bars did before deep-linking), so no bar is a dead tap.
+            .clickable(if (deepLink) eventClickAction(event) else dayClickAction(dayCode))
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
@@ -819,15 +838,17 @@ private fun DayOfWeekRow(firstDayOfWeek: Int, showWeekNumbers: Boolean) {
  * Leading gutter cell showing a week-of-year number, matching the fixed [WEEK_NUMBER_GUTTER_WIDTH_DP]
  * width reserved in the day-of-week header. Rendered in the same muted secondary text as the
  * day-of-week letters so it reads as a quiet index, not a day.
+ *
+ * The cell sizes to its own text height and top-aligns, so the number sits on the same line as the
+ * day numbers beside it. It deliberately does NOT `fillMaxHeight`: back when titles-mode rows were
+ * content-height, a fillMaxHeight gutter forced the (weightless) row to measure against the whole
+ * remaining widget height and ballooned the first week until the rest clipped off the bottom — the
+ * "one visible week" bug. The rows are weighted now, so the row height no longer depends on the
+ * gutter, but sizing the gutter to its text still keeps the number top-aligned in both modes; in
+ * dots mode the sibling day cells define the row height.
  */
 @Composable
 private fun WeekNumberGutterCell(label: String) {
-    // Top-aligned, NOT fillMaxHeight(): in a content-height titles week row a fillMaxHeight
-    // gutter demands the row's full height, which makes the row measure itself against the
-    // gutter instead of its content — the first week then expands across the whole grid and
-    // collapses every other week to nothing (the "one week row" bug with week numbers on).
-    // TopCenter pins the number to the same line as the day numbers beside it without
-    // influencing the row's height.
     Box(
         modifier = GlanceModifier
             .width(WEEK_NUMBER_GUTTER_WIDTH_DP.dp),
@@ -1088,8 +1109,9 @@ internal fun gridHorizontalPaddingDp(showWeekNumbers: Boolean): Int =
  * the fitter returns fewer rows — the layout backs off instead of clipping. Pass the current
  * [android.content.res.Configuration.fontScale]; the default of 1f is the unscaled baseline.
  *
- * The count must be exact, not an over-estimate: titles-mode week rows are content-height (they
- * do not stretch), so a row the fitter claims but the cell can't hold is clipped, not absorbed.
+ * The count must be exact, not an over-estimate: each titles-mode week row is a fixed weighted
+ * share of the grid height, so a row the fitter claims but the cell can't hold is clipped, not
+ * absorbed.
  */
 internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
     // A day cell holds the day-number block plus as many event rows as fit. Every slot row —

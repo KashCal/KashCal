@@ -1,0 +1,3 @@
+• Security: Hardened certificate validation for subscribed calendar (.ics) feeds (GHSA-53rw-qfc6-v32g)
+• Widgets: Tap an event in the month widget to open its quick view
+• Widgets: Fixed the month grid collapsing when week numbers and titles were both on
