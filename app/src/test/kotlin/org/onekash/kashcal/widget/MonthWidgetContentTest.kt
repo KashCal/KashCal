@@ -341,6 +341,44 @@ class MonthWidgetContentTest {
         assertEquals("Gym", truncateTitle("Gym", 0))
     }
 
+    // ==================== eventActionParameters ====================
+
+    @Test
+    fun `eventActionParameters carries the Quick View deep link`() {
+        val event = createWidgetEvent().copy(
+            eventId = 42L,
+            occurrenceStartTs = 1_700_000_000_000L,
+            isDeviceEvent = false
+        )
+        val params = eventActionParameters(event)
+        assertEquals(
+            ACTION_SHOW_EVENT,
+            params[androidx.glance.action.ActionParameters.Key<String>(EXTRA_ACTION)]
+        )
+        assertEquals(
+            42L,
+            params[androidx.glance.action.ActionParameters.Key<Long>(EXTRA_EVENT_ID)]
+        )
+        assertEquals(
+            1_700_000_000_000L,
+            params[androidx.glance.action.ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS)]
+        )
+        assertEquals(
+            false,
+            params[androidx.glance.action.ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT)]
+        )
+    }
+
+    @Test
+    fun `eventActionParameters flags device events for the device quick view`() {
+        val event = createWidgetEvent().copy(isDeviceEvent = true)
+        val params = eventActionParameters(event)
+        assertEquals(
+            true,
+            params[androidx.glance.action.ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT)]
+        )
+    }
+
     private fun createWidgetEvent(
         calendarColor: Int = 0xFF2196F3.toInt()
     ): WidgetDataRepository.WidgetEvent {

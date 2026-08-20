@@ -317,12 +317,12 @@ fun MonthWidgetContent(
                 // continuous bars, single-day events fill the remaining per-cell slots.
                 val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount)
                 TitlesWeekRow(
-                    // Content-height, NOT defaultWeight(): titles-mode rows size to their day
-                    // number plus event rows and no more, so a tall widget's spare height gathers
-                    // once at the bottom of the grid instead of padding an empty tail under every
-                    // week row. Row COUNT already grows with widget height (see eventRowCount), so
-                    // enlarging still shows more events — it just no longer stretches each cell.
-                    modifier = GlanceModifier.fillMaxWidth(),
+                    // Weighted like the dots rows: every week shares the grid height evenly, so
+                    // a week without events still fills its cell — no "stacked from the top,
+                    // cramped empty days" look. The slot CONTENT stays top-aligned inside the
+                    // stretched cell (see TitlesWeekRow's Column), so the spare height pads the
+                    // bottom of each week rather than pulling the event rows apart.
+                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
                     week = week,
                     weekDayCodes = weekDayCodes,
                     weekRender = weekRender,
@@ -385,7 +385,13 @@ private fun TitlesWeekRow(
         if (gutterLabel != null) {
             WeekNumberGutterCell(gutterLabel)
         }
-        Column(modifier = GlanceModifier.defaultWeight()) {
+        // Top-aligned content inside the (possibly stretched) week cell: the day numbers and
+        // event rows pack at the top, spare height gathers below them — matching how the
+        // dots-mode DayCell pins its number+dot column to the top of its weighted cell.
+        Column(
+            modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+            verticalAlignment = Alignment.Top
+        ) {
             // Day-number row, identical in look to the dots-mode cells.
             Row(modifier = GlanceModifier.fillMaxWidth()) {
                 week.forEachIndexed { col, cell ->
@@ -490,6 +496,25 @@ private fun dayClickAction(dayCode: Int) = actionStartActivity<MainActivity>(
 )
 
 /**
+ * The deep-link extras for an event title row / span bar tap: open the event's Quick View in
+ * the app — the same [ACTION_SHOW_EVENT] payload the agenda, week, and upcoming widgets send.
+ * Extracted as a testable helper (mirroring `footerActionParameters` in the upcoming widget)
+ * so the click-wiring is unit-tested, not just compile-checked.
+ */
+internal fun eventActionParameters(event: WidgetDataRepository.WidgetEvent): ActionParameters =
+    actionParametersOf(
+        ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_SHOW_EVENT,
+        ActionParameters.Key<Long>(EXTRA_EVENT_ID) to event.eventId,
+        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs,
+        ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
+    )
+
+/** Tap action for an event title row / span bar: open the event's Quick View in the app. */
+private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionStartActivity<MainActivity>(
+    parameters = eventActionParameters(event)
+)
+
+/**
  * One slot row of a titles-mode week: consecutive [MonthWidgetSlot.BarSegment]s of the same
  * span merge into one continuous bar across their columns; single-day snippets, overflow
  * markers, and empty cells take one column each.
@@ -529,11 +554,17 @@ private fun SlotRow(
                         endCol++
                     }
                     val width = endCol - col + 1
+                    // A bar deep-links only where it is the day's first event pill (same
+                    // view-pool budget as the single-day pills below).
+                    val isFirstInCell = (0 until col).none { prev ->
+                        slotRow[prev] is MonthWidgetSlot.CellEvent ||
+                            (slotRow[prev] as? MonthWidgetSlot.BarSegment)?.span != null
+                    }
                     SpanBar(
                         span = content.span,
                         width = width,
                         maxTitleChars = maxTitleChars,
-                        dayCode = weekDayCodes[col],
+                        deepLink = isFirstInCell,
                         // Fixed width, not defaultWeight(): Glance's defaultWeight() is always
                         // weight(1f) — there is no weight(n) — so a weighted bar collapses to a
                         // single column no matter how many days it spans. The widget knows the
@@ -543,7 +574,14 @@ private fun SlotRow(
                     col = endCol + 1
                 }
                 is MonthWidgetSlot.CellEvent -> {
-                    EventTitleRow(content.event, maxTitleChars, cellModifier)
+                    // Only the FIRST event pill of each day column deep-links to its Quick View;
+                    // the rest fall back to opening the day. A Glance clickable wraps each pill in
+                    // an extra view, and one per pill across a busy month exhausts the widget's
+                    // view-ID pool (see [MAX_EVENT_ROWS]) — the failure the translation test guards.
+                    val isFirstInCell = (0 until col).none { prev ->
+                        slotRow[prev] is MonthWidgetSlot.CellEvent
+                    }
+                    EventTitleRow(content.event, maxTitleChars, cellModifier, deepLink = isFirstInCell)
                     col++
                 }
                 is MonthWidgetSlot.Overflow -> {
@@ -589,7 +627,7 @@ private fun SpanBar(
     span: MonthWidgetSpan,
     width: Int,
     maxTitleChars: Int,
-    dayCode: Int,
+    deepLink: Boolean,
     modifier: GlanceModifier
 ) {
     val event = span.event
@@ -642,7 +680,7 @@ private fun SpanBar(
         modifier = modifier
             .then(radiusModifier)
             .background(ColorProvider(day = fill, night = fill))
-            .clickable(dayClickAction(dayCode))
+            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
@@ -784,10 +822,15 @@ private fun DayOfWeekRow(firstDayOfWeek: Int, showWeekNumbers: Boolean) {
  */
 @Composable
 private fun WeekNumberGutterCell(label: String) {
+    // Top-aligned, NOT fillMaxHeight(): in a content-height titles week row a fillMaxHeight
+    // gutter demands the row's full height, which makes the row measure itself against the
+    // gutter instead of its content — the first week then expands across the whole grid and
+    // collapses every other week to nothing (the "one week row" bug with week numbers on).
+    // TopCenter pins the number to the same line as the day numbers beside it without
+    // influencing the row's height.
     Box(
         modifier = GlanceModifier
-            .width(WEEK_NUMBER_GUTTER_WIDTH_DP.dp)
-            .fillMaxHeight(),
+            .width(WEEK_NUMBER_GUTTER_WIDTH_DP.dp),
         contentAlignment = Alignment.TopCenter
     ) {
         Text(
@@ -911,7 +954,8 @@ private fun DayCell(
 private fun EventTitleRow(
     event: WidgetDataRepository.WidgetEvent,
     maxTitleChars: Int,
-    modifier: GlanceModifier
+    modifier: GlanceModifier,
+    deepLink: Boolean
 ) {
     val color = Color(event.calendarColor)
     val title = truncateTitle(event.title, maxTitleChars)
@@ -930,7 +974,9 @@ private fun EventTitleRow(
     // instead of two, multiplied across every cell/row/week, is what lets the grid fit another
     // event row inside the widget's shared view-ID pool (see [MAX_EVENT_ROWS]). The height comes
     // from the text line plus vertical padding rather than a fixed chip height, so the title is
-    // never clipped mid-glyph when its line is taller than a fixed slot.
+    // never clipped mid-glyph when its line is taller than a fixed slot. Only the day's first
+    // pill carries a clickable (deepLink): each clickable wraps the pill in an extra view, and
+    // one per pill across a busy month would exhaust the view-ID pool.
     Text(
         text = title,
         style = TextStyle(
@@ -941,6 +987,7 @@ private fun EventTitleRow(
         modifier = modifier
             .cornerRadius(EVENT_CHIP_CORNER_RADIUS_DP.dp)
             .background(ColorProvider(day = fill, night = fill))
+            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
