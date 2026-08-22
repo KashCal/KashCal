@@ -22,4 +22,12 @@ val ALL_RELEASE_NOTES: ImmutableList<ReleaseNote> = persistentListOf(
         actionLabelRes = R.string.whats_new_v598_action_label,
         actionUrlRes = R.string.whats_new_v598_action_url,
     ),
+    ReleaseNote(
+        versionCode = 732,
+        titleRes = R.string.whats_new_v732_title,
+        bodyRes = R.string.whats_new_v732_body,
+        captionRes = R.string.whats_new_v732_caption,
+        actionLabelRes = R.string.whats_new_v732_action_label,
+        actionUrlRes = R.string.whats_new_v732_action_url,
+    ),
 )

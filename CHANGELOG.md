@@ -1,3 +1,19 @@
+## [2026.08.22]
+
+This release of KashCal has a name instead of a changelog: Thank You for Supporting Us.
+
+KashCal spends its whole life fussing over recurring events. Today we are celebrating our favorite one: the people who keep KashCal free and open. Here is a look back at what a year of your support built.
+
+**We got out more.** KashCal started life fluent in exactly one server, iCloud, and nothing else. It now holds a conversation with Nextcloud, Fastmail, Radicale, Baikal, SOGo, Zoho, and most of the rest. Bring your calendar from wherever it lives; we have learned the local dialect.
+
+**We stopped talking to ourselves.** A calendar you keep only for yourself is a diary with ambitions. So KashCal learned invitations and replies: the plan now reaches the people in it, and they can say yes before you have booked the room.
+
+**We learned to read your handwriting.** "Lunch with Sam Friday at 1 at the usual place" used to be a sentence you then had to retype into a form. Now you write it the way you would say it, and KashCal sorts out the when, the where, and the what.
+
+None of that built itself. Every server we learned to speak to, someone asked for first. Every rough edge we filed down, someone reported. Some of you sent code, some sent translations, some sent one well-timed bug report that saved everyone else the trouble. If you have ever opened an issue, requested a feature, or fixed a clumsy translation in your language, this thank-you has your name on it too.
+
+You spent this summer on the good things: the trips, the dinners, the plans worth keeping, and KashCal kept every one of them straight. If you want to make it a summer to remember, here is one more date worth marking: a little support to keep this going. https://kashcal.onekash.org/donate/
+
 ## [2026.08.20]
 
 ### Everything in this release

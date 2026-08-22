@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Gå til dato</string>
     <string name="label_week">U</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Innstillingar</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Kopla til iCloud for å sjå hendingane dine her</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Nytt</string>
-    <string name="whats_new_dismiss">Forstått</string>
+    <string name="whats_new_later">Seinare</string>
     <string name="whats_new_v598_title">Hjelp til å halde Android open</string>
     <string name="whats_new_v598_body">Google endrar måten du installerer appar på eininga. Vi treng hjelpa di.</string>
     <string name="whats_new_v598_action_label">Besøk keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Ein varig takk</string>
+    <string name="whats_new_v732_body">Denne versjonen er tileigna dei som støttar KashCal. Eit lite bidrag med stor, gjentakande gevinst.</string>
+    <string name="whats_new_v732_caption">Ikkje støttespelar enno?</string>
+    <string name="whats_new_v732_action_label">Ta oss med i planane dine</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Kopla til iCloud</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Del hending</string>
     <string name="share_as_card_share_failed">Kunne ikkje dele kortet</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

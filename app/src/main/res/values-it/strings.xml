@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Vai alla data</string>
     <string name="label_week">S</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Impostazioni</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Connetti iCloud per vedere i tuoi eventi qui</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Novità</string>
-    <string name="whats_new_dismiss">Ho capito</string>
+    <string name="whats_new_later">Più tardi</string>
     <string name="whats_new_v598_title">Aiuta a mantenere Android aperto</string>
     <string name="whats_new_v598_body">Google sta cambiando il modo in cui installi le app sul tuo dispositivo. Abbiamo bisogno del tuo aiuto.</string>
     <string name="whats_new_v598_action_label">Visita keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Un grazie che dura</string>
+    <string name="whats_new_v732_body">Questa versione è dedicata a chi sostiene KashCal. Un piccolo gesto con un grande vantaggio che si ripete.</string>
+    <string name="whats_new_v732_caption">Non ci sostieni ancora?</string>
+    <string name="whats_new_v732_action_label">Aggiungici ai tuoi piani</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Connetti iCloud</string>
@@ -1303,4 +1305,5 @@
     <string name="share_as_card_chooser_title">Condividi evento</string>
     <string name="share_as_card_share_failed">Impossibile condividere la scheda</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

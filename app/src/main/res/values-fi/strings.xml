@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Siirry päivämäärään</string>
     <string name="label_week">VK</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Asetukset</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Yhdistä iCloud nähdäksesi tapahtumasi täällä</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Mitä uutta</string>
-    <string name="whats_new_dismiss">Selvä</string>
+    <string name="whats_new_later">Myöhemmin</string>
     <string name="whats_new_v598_title">Auta pitämään Android avoimena</string>
     <string name="whats_new_v598_body">Google muuttaa tapaa, jolla asennat sovelluksia laitteellesi. Tarvitsemme apuasi.</string>
     <string name="whats_new_v598_action_label">Vieraile keepandroidopen.org-sivustolla</string>
+    <string name="whats_new_v732_title">Pysyvä kiitos</string>
+    <string name="whats_new_v732_body">Tämä julkaisu on omistettu KashCalin tukijoille. Pieni panostus, suuri toistuva hyöty.</string>
+    <string name="whats_new_v732_caption">Etkö ole vielä tukija?</string>
+    <string name="whats_new_v732_action_label">Lisää meidät suunnitelmiisi</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Yhdistä iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Jaa tapahtuma</string>
     <string name="share_as_card_share_failed">Korttia ei voitu jakaa</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

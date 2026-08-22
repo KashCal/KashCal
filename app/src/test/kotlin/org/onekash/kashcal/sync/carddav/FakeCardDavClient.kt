@@ -2,7 +2,10 @@ package org.onekash.kashcal.sync.carddav
 
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
+import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
+import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
+import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 import org.onekash.kashcal.sync.carddav.model.PhotoBytes
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
@@ -265,6 +268,36 @@ class FakeCardDavClient(
     override suspend fun fetchPhoto(photoUrl: String): CalDavResult<PhotoBytes> {
         fetchPhotoCalls += photoUrl
         return photoResults[photoUrl] ?: defaultPhotoResult
+    }
+
+    // ---------- write verbs (programmable) ----------
+
+    /** Every [putContact] call's (resourceUrl, vcardBody, precondition), in order. */
+    val putContactCalls = mutableListOf<Triple<String, String, ContactPrecondition>>()
+
+    /** Every [deleteContact] call's (resourceUrl, etag), in order. */
+    val deleteContactCalls = mutableListOf<Pair<String, String>>()
+
+    /** [putContact] result; defaults to a success echoing no server etag. */
+    var putContactResult: ContactUploadResult = ContactUploadResult.Success(etag = null)
+
+    /** [deleteContact] result; defaults to a clean delete. */
+    var deleteContactResult: ContactDeleteResult = ContactDeleteResult.Deleted
+
+    override suspend fun putContact(
+        resourceUrl: String,
+        vcardBody: String,
+        precondition: ContactPrecondition,
+    ): ContactUploadResult {
+        nonFetchCalls++
+        putContactCalls += Triple(resourceUrl, vcardBody, precondition)
+        return putContactResult
+    }
+
+    override suspend fun deleteContact(resourceUrl: String, etag: String): ContactDeleteResult {
+        nonFetchCalls++
+        deleteContactCalls += resourceUrl to etag
+        return deleteContactResult
     }
 
     private fun bookByUrl(url: String): FakeAddressBook? =

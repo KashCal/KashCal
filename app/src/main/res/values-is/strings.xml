@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Fara á dagsetningu</string>
     <string name="label_week">V</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Stillingar</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Tengdu iCloud til að sjá viðburðina þína hér</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Nýjungar</string>
-    <string name="whats_new_dismiss">Í lagi</string>
+    <string name="whats_new_later">Seinna</string>
     <string name="whats_new_v598_title">Hjálpaðu til við að halda Android opnu</string>
     <string name="whats_new_v598_body">Google er að breyta því hvernig þú setur upp forrit í tækinu þínu. Við þurfum hjálp þína.</string>
     <string name="whats_new_v598_action_label">Heimsækja keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Varanlegt þakklæti</string>
+    <string name="whats_new_v732_body">Þessi útgáfa er tileinkuð þeim sem styðja KashCal. Lítið framlag með stórum, endurteknum ávinningi.</string>
+    <string name="whats_new_v732_caption">Ekki enn stuðningsmaður?</string>
+    <string name="whats_new_v732_action_label">Bættu okkur við áætlanir þínar</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Tengja iCloud</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Deila viðburði</string>
     <string name="share_as_card_share_failed">Ekki tókst að deila kortinu</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -16,6 +16,8 @@ import androidx.compose.runtime.Immutable
  * @param bulletsRes optional string-array resource — one <item> per bullet —
  *   so translators can't break rendering by mishandling newlines. Pass 0
  *   when the section has no bullets.
+ * @param captionRes optional small caption rendered just above the CTA
+ *   button (e.g. "Not a supporter yet?"). Pass 0 to omit.
  * @param actionLabelRes optional CTA button label rendered below the
  *   content. Pass 0 to omit the button.
  * @param actionUrlRes optional string resource holding the URL the CTA
@@ -28,6 +30,7 @@ data class ReleaseNote(
     @StringRes val titleRes: Int,
     @StringRes val bodyRes: Int = 0,
     @ArrayRes val bulletsRes: Int = 0,
+    @StringRes val captionRes: Int = 0,
     @StringRes val actionLabelRes: Int = 0,
     @StringRes val actionUrlRes: Int = 0,
 )

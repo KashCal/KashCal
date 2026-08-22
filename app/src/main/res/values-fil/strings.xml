@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Pumunta sa petsa</string>
     <string name="label_week">L</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Mga Setting</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Ikonekta ang iCloud para makita ang mga event mo dito</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Bago ngayon</string>
-    <string name="whats_new_dismiss">Nakuha ko</string>
+    <string name="whats_new_later">Mamaya na lang</string>
     <string name="whats_new_v598_title">Tumulong na manatiling bukas ang Android</string>
     <string name="whats_new_v598_body">Binabago ng Google ang paraan ng pag-install mo ng mga app sa iyong device. Kailangan namin ng tulong mo.</string>
     <string name="whats_new_v598_action_label">Bisitahin ang keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Isang habambuhay na pasasalamat</string>
+    <string name="whats_new_v732_body">Ang release na ito ay para sa mga tagasuporta ng KashCal. Isang maliit na ambag na may malaki at patuloy na pakinabang.</string>
+    <string name="whats_new_v732_caption">Hindi ka pa ba tagasuporta?</string>
+    <string name="whats_new_v732_action_label">Isama kami sa iyong mga plano</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ikonekta ang iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Ibahagi ang kaganapan</string>
     <string name="share_as_card_share_failed">Hindi maibahagi ang card</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

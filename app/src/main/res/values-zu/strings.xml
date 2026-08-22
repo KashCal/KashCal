@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Iya osukwini</string>
     <string name="label_week">Iv</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Izilungiselelo</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Xhuma iCloud ukuze ubone imicimbi yakho lapha</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Yini entsha</string>
-    <string name="whats_new_dismiss">Ngizwile</string>
+    <string name="whats_new_later">Kamuva</string>
     <string name="whats_new_v598_title">Siza ukugcina i-Android ivuliwe</string>
     <string name="whats_new_v598_body">I-Google iyashintsha indlela ofaka ngayo izinhlelo zokusebenza ku-divayisi yakho. Sidinga usizo lwakho.</string>
     <string name="whats_new_v598_action_label">Vakashela i-keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Ukubonga okungapheli</string>
+    <string name="whats_new_v732_body">Le nguqulo inikezelwe kubasekeli be-KashCal. Umnikelo omncane onenzuzo enkulu ephindaphindayo.</string>
+    <string name="whats_new_v732_caption">Awukabi ngumsekeli?</string>
+    <string name="whats_new_v732_action_label">Sifake ezinhlelweni zakho</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Xhuma iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Yabelana ngomcimbi</string>
     <string name="share_as_card_share_failed">Ayikwazanga ukwabelana ngekhadi</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

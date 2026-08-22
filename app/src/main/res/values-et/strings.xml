@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Mine kuupäevale</string>
     <string name="label_week">N</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Seaded</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Ühenda iCloud, et näha siin oma sündmusi</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Mis on uut</string>
-    <string name="whats_new_dismiss">Sain aru</string>
+    <string name="whats_new_later">Hiljem</string>
     <string name="whats_new_v598_title">Aita hoida Android avatuna</string>
     <string name="whats_new_v598_body">Google muudab seda, kuidas sa rakendusi seadmesse paigaldad. Vajame sinu abi.</string>
     <string name="whats_new_v598_action_label">Külasta keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Püsiv tänu</string>
+    <string name="whats_new_v732_body">See versioon on pühendatud KashCali toetajatele. Väike panus suure korduva tuluga.</string>
+    <string name="whats_new_v732_caption">Kas sa pole veel toetaja?</string>
+    <string name="whats_new_v732_action_label">Lisa meid oma plaanidesse</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ühenda iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Jaga sündmust</string>
     <string name="share_as_card_share_failed">Kaarti ei saanud jagada</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

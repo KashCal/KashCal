@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Prejsť na dátum</string>
     <string name="label_week">T</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Nastavenia</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Pripojte iCloud a uvidíte svoje udalosti</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Novinky</string>
-    <string name="whats_new_dismiss">Rozumiem</string>
+    <string name="whats_new_later">Neskôr</string>
     <string name="whats_new_v598_title">Pomôžte zachovať otvorenosť Androidu</string>
     <string name="whats_new_v598_body">Google mení spôsob, akým inštalujete aplikácie na svoje zariadenie. Potrebujeme vašu pomoc.</string>
     <string name="whats_new_v598_action_label">Navštíviť keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Trvalé poďakovanie</string>
+    <string name="whats_new_v732_body">Túto verziu venujeme tým, ktorí podporujú KashCal. Malý príspevok, ktorý sa stále vypláca.</string>
+    <string name="whats_new_v732_caption">Ešte nepodporujete?</string>
+    <string name="whats_new_v732_action_label">Pridajte nás do svojich plánov</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Pripojiť iCloud</string>
@@ -1370,4 +1372,5 @@
     <string name="share_as_card_chooser_title">Zdieľať udalosť</string>
     <string name="share_as_card_share_failed">Kartu sa nepodarilo zdieľať</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

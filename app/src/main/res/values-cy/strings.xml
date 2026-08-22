@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Mynd i ddyddiad</string>
     <string name="label_week">W</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Gosodiadau</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Cysylltwch iCloud i weld eich digwyddiadau yma</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Beth sy\'n newydd</string>
-    <string name="whats_new_dismiss">Iawn</string>
+    <string name="whats_new_later">Nes ymlaen</string>
     <string name="whats_new_v598_title">Helpwch i gadw Android yn agored</string>
     <string name="whats_new_v598_body">Mae Google yn newid y ffordd rydych chi\'n gosod apiau ar eich dyfais. Mae arnom angen eich help.</string>
     <string name="whats_new_v598_action_label">Ymwelwch â keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Diolch parhaus</string>
+    <string name="whats_new_v732_body">Mae\'r rhyddhad hwn wedi\'i gyflwyno i gefnogwyr KashCal. Cyfraniad bach gyda budd mawr a pharhaus.</string>
+    <string name="whats_new_v732_caption">Ddim yn gefnogwr eto?</string>
+    <string name="whats_new_v732_action_label">Ychwanegwch ni at eich cynlluniau</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Cysylltu iCloud</string>
@@ -1476,4 +1478,5 @@
     <string name="share_as_card_chooser_title">Rhannu digwyddiad</string>
     <string name="share_as_card_share_failed">Methu rhannu\'r cerdyn</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

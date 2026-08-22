@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Ugrás dátumra</string>
     <string name="label_week">H</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Beállítások</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Csatlakozz az iCloud-hoz, hogy itt lásd az eseményeidet</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Újdonságok</string>
-    <string name="whats_new_dismiss">Értem</string>
+    <string name="whats_new_later">Talán később</string>
     <string name="whats_new_v598_title">Segíts nyitva tartani az Androidot</string>
     <string name="whats_new_v598_body">A Google megváltoztatja, ahogyan alkalmazásokat telepítesz a készülékedre. Szükségünk van a segítségedre.</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org megnyitása</string>
+    <string name="whats_new_v732_title">Egy tartós köszönet</string>
+    <string name="whats_new_v732_body">Ez a kiadás a KashCal támogatóinak szól. Kis hozzájárulás, nagy és visszatérő haszonnal.</string>
+    <string name="whats_new_v732_caption">Még nem vagy támogató?</string>
+    <string name="whats_new_v732_action_label">Vegyél fel minket a terveidbe</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud csatlakoztatása</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Esemény megosztása</string>
     <string name="share_as_card_share_failed">A kártyát nem sikerült megosztani</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

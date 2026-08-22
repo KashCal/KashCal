@@ -1,0 +1,4 @@
+• This release has a name instead of a changelog: Thank You for Supporting Us.
+• To everyone who chipped in, reported a bug, asked for a feature, or sent a translation: thank you.
+• A look back at the year: talks to nearly every CalDAV server now, sends and answers invitations, and turns a plain sentence into an event.
+• Make it a summer to remember and keep KashCal going: https://kashcal.onekash.org/donate/

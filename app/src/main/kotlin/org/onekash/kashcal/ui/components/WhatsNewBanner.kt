@@ -12,14 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -64,7 +64,7 @@ fun WhatsNewBanner(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                imageVector = Icons.Default.AutoAwesome,
+                imageVector = Icons.Default.Favorite,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(48.dp),
@@ -72,30 +72,16 @@ fun WhatsNewBanner(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = stringResource(R.string.whats_new_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
             releases.forEachIndexed { index, release ->
-                if (index > 0) Spacer(modifier = Modifier.height(20.dp))
+                if (index > 0) Spacer(modifier = Modifier.height(28.dp))
                 ReleaseSection(release)
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-            ) {
+            TextButton(onClick = onDismiss) {
                 Text(
-                    text = stringResource(R.string.whats_new_dismiss),
+                    text = stringResource(R.string.whats_new_later),
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -106,20 +92,25 @@ fun WhatsNewBanner(
 @Composable
 private fun ReleaseSection(release: ReleaseNote) {
     val context = LocalContext.current
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = stringResource(release.titleRes),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
         )
 
         if (release.bodyRes != 0) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = stringResource(release.bodyRes),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
 
@@ -148,14 +139,26 @@ private fun ReleaseSection(release: ReleaseNote) {
             }
         }
 
+        if (release.captionRes != 0) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(release.captionRes),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
         if (release.actionLabelRes != 0 && release.actionUrlRes != 0) {
             Spacer(modifier = Modifier.height(12.dp))
             val url = stringResource(release.actionUrlRes)
-            OutlinedButton(
+            Button(
                 onClick = {
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
             ) {
                 Text(text = stringResource(release.actionLabelRes))
             }

@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Datara joan</string>
     <string name="label_week">A</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ezarpenak</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Konektatu iCloud zure gertaerak hemen ikusteko</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Berriak</string>
-    <string name="whats_new_dismiss">Ulertuta</string>
+    <string name="whats_new_later">Geroago</string>
     <string name="whats_new_v598_title">Lagundu Android irekirik mantentzen</string>
     <string name="whats_new_v598_body">Google zure gailuan aplikazioak instalatzeko modua aldatzen ari da. Zure laguntza behar dugu.</string>
     <string name="whats_new_v598_action_label">Bisitatu keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Esker on iraunkor bat</string>
+    <string name="whats_new_v732_body">Bertsio hau KashCal-en babesleei eskaintzen zaie. Ekarpen txiki bat, etekin handi eta errepikakorrarekin.</string>
+    <string name="whats_new_v732_caption">Oraindik ez gaituzu babesten?</string>
+    <string name="whats_new_v732_action_label">Gehitu gaitzazu zure planetara</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud konektatu</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Partekatu gertaera</string>
     <string name="share_as_card_share_failed">Ezin izan da txartela partekatu</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

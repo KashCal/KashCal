@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Μετάβαση σε ημερομηνία</string>
     <string name="label_week">Ε</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ρυθμίσεις</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Συνδέστε το iCloud για να δείτε τα συμβάντα σας εδώ</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Τι νέο</string>
-    <string name="whats_new_dismiss">Κατάλαβα</string>
+    <string name="whats_new_later">Ίσως αργότερα</string>
     <string name="whats_new_v598_title">Βοηθήστε να παραμείνει το Android ανοιχτό</string>
     <string name="whats_new_v598_body">Η Google αλλάζει τον τρόπο με τον οποίο εγκαθιστάτε εφαρμογές στη συσκευή σας. Χρειαζόμαστε τη βοήθειά σας.</string>
     <string name="whats_new_v598_action_label">Επίσκεψη στο keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Ένα διαρκές ευχαριστώ</string>
+    <string name="whats_new_v732_body">Αυτή η έκδοση είναι αφιερωμένη στους υποστηρικτές του KashCal. Μια μικρή συνεισφορά με μεγάλο και διαρκές αντίκρισμα.</string>
+    <string name="whats_new_v732_caption">Δεν είστε ακόμη υποστηρικτής;</string>
+    <string name="whats_new_v732_action_label">Προσθέστε μας στα σχέδιά σας</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Σύνδεση iCloud</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Κοινοποίηση εκδήλωσης</string>
     <string name="share_as_card_share_failed">Δεν ήταν δυνατή η κοινοποίηση της κάρτας</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

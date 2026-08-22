@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Tarihe git</string>
     <string name="label_week">H</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ayarlar</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Etkinliklerini burada görmek için iCloud\'a bağlan</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Yenilikler</string>
-    <string name="whats_new_dismiss">Anladım</string>
+    <string name="whats_new_later">Belki sonra</string>
     <string name="whats_new_v598_title">Android\'ın açık kalmasına yardım et</string>
     <string name="whats_new_v598_body">Google, cihazınıza uygulama yükleme şeklinizi değiştiriyor. Yardımınıza ihtiyacımız var.</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org adresini ziyaret et</string>
+    <string name="whats_new_v732_title">Kalıcı bir teşekkür</string>
+    <string name="whats_new_v732_body">Bu sürüm KashCal\'in destekçilerine adanmıştır. Küçük bir katkı, büyük ve sürekli bir getiri.</string>
+    <string name="whats_new_v732_caption">Henüz destekçi değil misin?</string>
+    <string name="whats_new_v732_action_label">Bizi planlarına ekle</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud\'a Bağlan</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Etkinliği paylaş</string>
     <string name="share_as_card_share_failed">Kart paylaşılamadı</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

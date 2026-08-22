@@ -47,6 +47,14 @@ object WeekViewUtils {
     // Visual constants
     val HOUR_HEIGHT = 60.dp
     val MIN_EVENT_HEIGHT = 20.dp
+
+    /**
+     * Width of the leading time-axis (hour labels) column in the timed grid. The
+     * per-column day headers and the Day view's pinned week strip inset their content
+     * by this width so both align with the day column(s) rather than overrunning the
+     * time gutter.
+     */
+    val TIME_COLUMN_WIDTH = 48.dp
     const val MIN_HOUR_HEIGHT_DP = 30f
     const val MAX_HOUR_HEIGHT_DP = 150f
     const val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
@@ -341,7 +349,7 @@ object WeekViewUtils {
     /**
      * Format a date as "Apr 2026" with abbreviated month name. Used by the
      * top-bar title in month/agenda/week/3-day views; abbreviation keeps the
-     * label short enough to fit alongside the logo and W## suffix.
+     * label short enough to fit alongside the logo and navigation controls.
      */
     fun formatMonthYear(date: LocalDate): String {
         return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())

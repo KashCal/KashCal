@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Перейти к дате</string>
     <string name="label_week">Н</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Настройки</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Подключите iCloud, чтобы видеть свои события здесь</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Что нового</string>
-    <string name="whats_new_dismiss">Понятно</string>
+    <string name="whats_new_later">Позже</string>
     <string name="whats_new_v598_title">Помоги сохранить Android открытым</string>
     <string name="whats_new_v598_body">Google меняет способ установки приложений на устройство. Нам нужна твоя помощь.</string>
     <string name="whats_new_v598_action_label">Перейти на keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Постоянная благодарность</string>
+    <string name="whats_new_v732_body">Этот выпуск посвящён тем, кто поддерживает KashCal. Небольшой вклад с большой регулярной отдачей.</string>
+    <string name="whats_new_v732_caption">Ещё не поддерживаешь нас?</string>
+    <string name="whats_new_v732_action_label">Добавь нас в свои планы</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Подключить iCloud</string>
@@ -1370,4 +1372,5 @@
     <string name="share_as_card_chooser_title">Поделиться событием</string>
     <string name="share_as_card_share_failed">Не удалось поделиться карточкой</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

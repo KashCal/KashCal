@@ -801,7 +801,12 @@ fun HomeScreen(
                                                 onDayClick = { tappedDayCode ->
                                                     onWeekDateSelected(DayPagerUtils.dayCodeToMs(tappedDayCode))
                                                 },
-                                                modifier = Modifier.fillMaxWidth()
+                                                // Inset past the grid's time-axis gutter so the strip
+                                                // aligns with the day column below, like the multi-day
+                                                // views' headers, instead of overrunning the left bar.
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = WeekViewUtils.TIME_COLUMN_WIDTH)
                                             )
                                         }
                                         WeekViewContent(
@@ -817,6 +822,7 @@ fun HomeScreen(
                                             timePattern = timePattern,
                                             visibleDays = uiState.viewMode.visibleDays ?: 3,
                                             firstDayOfWeek = uiState.firstDayOfWeek,
+                                            weekLabelPrefix = stringResource(R.string.label_week),
                                             allDayRowsExpanded = uiState.allDayRowsExpanded,
                                             onAllDayRowsToggle = onAllDayRowsToggle,
                                             onDatePickerRequest = onWeekDatePickerRequest,
@@ -1442,8 +1448,6 @@ private fun HomeTopAppBar(
             )
         }
         else -> {
-            val weekPrefix = stringResource(R.string.label_week)
-            val weekSuffixTemplate = stringResource(R.string.calendar_header_week_suffix, "%1\$s", "%2\$s")
             val yearLabel = stringResource(R.string.view_year)
             // Agenda's title tracks the topmost visible day's month; all other views
             // use their own viewing month. The formatter reads viewingYear/viewingMonth,
@@ -1455,8 +1459,6 @@ private fun HomeTopAppBar(
                 viewingMonth = if (isAgenda) agendaTitleMonth.second else uiState.viewingMonth,
                 weekViewPagerPosition = uiState.weekViewPagerPosition,
                 firstDayOfWeek = uiState.firstDayOfWeek,
-                weekPrefix = weekPrefix,
-                weekSuffixTemplate = weekSuffixTemplate,
                 yearLabel = yearLabel,
                 today = today,
             )
@@ -1469,7 +1471,7 @@ private fun HomeTopAppBar(
             } else {
                 uiState.agendaWeekBarExpanded
             }
-            val titleFontSize = if (uiState.viewMode == ViewMode.WEEK) 18.sp else 20.sp
+            val titleFontSize = 20.sp
             CenterAlignedTopAppBar(
                 title = {
                     if (showWeekBarChevron) {

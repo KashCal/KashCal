@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Ga naar datum</string>
     <string name="label_week">W</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Instellingen</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Koppel iCloud om je afspraken hier te zien</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Wat is nieuw</string>
-    <string name="whats_new_dismiss">Begrepen</string>
+    <string name="whats_new_later">Later</string>
     <string name="whats_new_v598_title">Help Android open te houden</string>
     <string name="whats_new_v598_body">Google verandert de manier waarop je apps op je apparaat installeert. We hebben je hulp nodig.</string>
     <string name="whats_new_v598_action_label">Bezoek keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Een blijvend dankjewel</string>
+    <string name="whats_new_v732_body">Deze versie is opgedragen aan de supporters van KashCal. Een kleine bijdrage met een groot, terugkerend effect.</string>
+    <string name="whats_new_v732_caption">Nog geen supporter?</string>
+    <string name="whats_new_v732_action_label">Voeg ons toe aan je plannen</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud verbinden</string>
@@ -1263,4 +1265,5 @@
     <string name="share_as_card_chooser_title">Afspraak delen</string>
     <string name="share_as_card_share_failed">Kan kaart niet delen</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

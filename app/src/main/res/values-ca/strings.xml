@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Anar a la data</string>
     <string name="label_week">S</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Configuració</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Connecta iCloud per veure els teus esdeveniments aquí</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Novetats</string>
-    <string name="whats_new_dismiss">Entesos</string>
+    <string name="whats_new_later">Més tard</string>
     <string name="whats_new_v598_title">Ajuda a mantenir Android obert</string>
     <string name="whats_new_v598_body">Google està canviant la manera com instal·les aplicacions al dispositiu. Necessitem la teva ajuda.</string>
     <string name="whats_new_v598_action_label">Visita keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Un agraïment permanent</string>
+    <string name="whats_new_v732_body">Aquesta versió està dedicada a qui dóna suport a KashCal. Una petita aportació amb un gran benefici recurrent.</string>
+    <string name="whats_new_v732_caption">Encara no ens dónes suport?</string>
+    <string name="whats_new_v732_action_label">Afegeix-nos als teus plans</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Connectar iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Compartir esdeveniment</string>
     <string name="share_as_card_share_failed">No s\'ha pogut compartir la targeta</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

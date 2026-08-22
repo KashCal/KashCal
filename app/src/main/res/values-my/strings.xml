@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ရက်စွဲသို့ သွားရန်</string>
     <string name="label_week">ပ</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ဆက်တင်များ</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">သင့်ပွဲများကို ဤနေရာတွင် ကြည့်ရန် iCloud ချိတ်ဆက်ပါ</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">အသစ်တင်ထားသောအရာများ</string>
-    <string name="whats_new_dismiss">ရပါပြီ</string>
+    <string name="whats_new_later">နောက်မှ</string>
     <string name="whats_new_v598_title">Android ဖွင့်ထားရန် ကူညီပါ</string>
     <string name="whats_new_v598_body">Google သည် သင့်စက်ပစ္စည်းတွင် အက်ပ်များ တပ်ဆင်ပုံကို ပြောင်းလဲနေသည်။ သင့်အကူအညီ လိုအပ်သည်။</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org သို့ သွားပါ</string>
+    <string name="whats_new_v732_title">ထာဝရ ကျေးဇူးတင်စကား</string>
+    <string name="whats_new_v732_body">ဤဗားရှင်းကို KashCal ကို ထောက်ပံ့သူများအတွက် ရည်စူးပါသည်။ သေးငယ်သော ပံ့ပိုးမှုတစ်ခုက ကြီးမားပြီး အဆက်မပြတ် အကျိုးပြုပါသည်။</string>
+    <string name="whats_new_v732_caption">ထောက်ပံ့သူ မဖြစ်သေးဘူးလား?</string>
+    <string name="whats_new_v732_action_label">သင့်အစီအစဉ်တွင် ကျွန်ုပ်တို့ကို ထည့်ပါ</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud ချိတ်ဆက်</string>
@@ -1212,4 +1214,5 @@
     <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
     <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

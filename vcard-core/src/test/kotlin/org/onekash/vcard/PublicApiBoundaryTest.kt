@@ -37,6 +37,14 @@ class PublicApiBoundaryTest {
     }
 
     @Test
+    fun `VCardWriter public methods reference no ez-vcard type`() {
+        val leaks = VCardWriter::class.java.methods
+            .filter { it.declaringClass == VCardWriter::class.java }
+            .flatMap { leaksIn(it) }
+        assertNoLeaks(leaks)
+    }
+
+    @Test
     fun `neutral model exposes no ez-vcard type`() {
         val leaks = modelClasses.flatMap { cls ->
             val fieldLeaks = cls.declaredFields

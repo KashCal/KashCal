@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Téigh go dáta</string>
     <string name="label_week">S</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Socruithe</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Ceangail iCloud le d\'imeachtaí a fheiceáil anseo</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Cad atá nua</string>
-    <string name="whats_new_dismiss">Tuigthe</string>
+    <string name="whats_new_later">Níos déanaí</string>
     <string name="whats_new_v598_title">Cabhraigh le Android a choinneáil oscailte</string>
     <string name="whats_new_v598_body">Tá Google ag athrú an tslí a ndéanann tú feidhmchláir a shuiteáil ar do ghléas. Tá do chabhair de dhíth orainn.</string>
     <string name="whats_new_v598_action_label">Tabhair cuairt ar keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Buíochas buan</string>
+    <string name="whats_new_v732_body">Tá an eisiúint seo tiomnaithe do lucht tacaíochta KashCal. Ranníocaíocht bheag le sochar mór leanúnach.</string>
+    <string name="whats_new_v732_caption">Nach tacaí thú fós?</string>
+    <string name="whats_new_v732_action_label">Cuir sinn le do phleananna</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Ceangail iCloud</string>
@@ -1423,4 +1425,5 @@
     <string name="share_as_card_chooser_title">Roinn imeacht</string>
     <string name="share_as_card_share_failed">Níorbh fhéidir an cárta a roinnt</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

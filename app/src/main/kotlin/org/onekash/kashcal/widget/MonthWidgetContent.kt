@@ -221,20 +221,25 @@ internal fun visibleWeeks(grid: org.onekash.kashcal.ui.model.MonthGrid): List<Li
 
 /**
  * Format month header text for the widget.
- * Uses abbreviated month name (SHORT style). Includes year only when different from current year.
+ * For the current year the month stands alone, so use the full month name (there's room without
+ * the year suffix). Other years append the year, so fall back to the abbreviated name to fit.
  *
  * @param year Calendar year of the displayed month
  * @param month0 0-indexed month (January = 0)
  * @param currentYear Current year, injectable for testability
- * @return Formatted header string, e.g. "Apr" or "Sep 2025"
+ * @return Formatted header string, e.g. "April" or "Sep 2025"
  */
 internal fun formatMonthHeader(
     year: Int,
     month0: Int,
     currentYear: Int = LocalDate.now().year
 ): String {
-    val monthName = Month.of(month0 + 1).getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())
-    return if (year == currentYear) monthName else "$monthName $year"
+    val month = Month.of(month0 + 1)
+    return if (year == currentYear) {
+        month.getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
+    } else {
+        "${month.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())} $year"
+    }
 }
 
 /**
@@ -762,7 +767,8 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
                     color = WidgetTheme.onHeaderBackground,
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
-                )
+                ),
+                maxLines = 1
             )
         }
 

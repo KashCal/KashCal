@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">मितिमा जानुहोस्</string>
     <string name="label_week">ह</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">सेटिङ</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">तपाईंका कार्यक्रमहरू यहाँ हेर्न iCloud जोड्नुहोस्</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">नयाँ के छ</string>
-    <string name="whats_new_dismiss">बुझेँ</string>
+    <string name="whats_new_later">पछि</string>
     <string name="whats_new_v598_title">Android खुला राख्न मद्दत गर्नुहोस्</string>
     <string name="whats_new_v598_body">Google तपाईंको यन्त्रमा एपहरू स्थापना गर्ने तरिका बदल्दैछ। हामीलाई तपाईंको सहयोग चाहिन्छ।</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org मा जानुहोस्</string>
+    <string name="whats_new_v732_title">एक स्थायी धन्यवाद</string>
+    <string name="whats_new_v732_body">यो रिलिज KashCal का समर्थकहरूलाई समर्पित छ। सानो योगदान, तर ठूलो र निरन्तर प्रतिफल।</string>
+    <string name="whats_new_v732_caption">अझै समर्थक बन्नुभएको छैन?</string>
+    <string name="whats_new_v732_action_label">हामीलाई तपाईंको योजनामा थप्नुहोस्</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud जोड्नुहोस्</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">कार्यक्रम साझेदारी गर्नुहोस्</string>
     <string name="share_as_card_share_failed">कार्ड साझेदारी गर्न सकिएन</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

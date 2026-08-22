@@ -159,9 +159,9 @@ class MonthWidgetContentTest {
     // ==================== formatMonthHeader ====================
 
     @Test
-    fun `formatMonthHeader omits year when same as current year`() {
+    fun `formatMonthHeader omits year and uses full name when same as current year`() {
         val result = formatMonthHeader(year = 2026, month0 = 3, currentYear = 2026) // April
-        assertEquals("Apr", result)
+        assertEquals("April", result)
     }
 
     @Test
@@ -178,8 +178,8 @@ class MonthWidgetContentTest {
 
     @Test
     fun `formatMonthHeader handles December current year`() {
-        val result = formatMonthHeader(year = 2026, month0 = 11, currentYear = 2026) // Dec
-        assertEquals("Dec", result)
+        val result = formatMonthHeader(year = 2026, month0 = 11, currentYear = 2026) // December
+        assertEquals("December", result)
     }
 
     // ==================== buildAccessibilityDescription (dayCode overload) ====================

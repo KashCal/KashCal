@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ወደ ቀን ሂድ</string>
     <string name="label_week">ሳ</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ቅንብሮች</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">ክስተቶችህን እዚህ ለማየት iCloud አገናኝ</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">አዲስ ምን አለ</string>
-    <string name="whats_new_dismiss">ገብቶኛል</string>
+    <string name="whats_new_later">በኋላ</string>
     <string name="whats_new_v598_title">Android ክፍት ሆኖ እንዲቆይ ይርዱ</string>
     <string name="whats_new_v598_body">Google መሣሪያዎ ላይ መተግበሪያዎችን የሚጭኑበትን መንገድ እየለወጠ ነው። እርዳታዎ ያስፈልገናል።</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org ን ይጎብኙ</string>
+    <string name="whats_new_v732_title">ዘላቂ ምስጋና</string>
+    <string name="whats_new_v732_body">ይህ እትም ለKashCal ደጋፊዎች የተሰጠ ነው። ትንሽ አስተዋፅኦ ግን ትልቅ ተደጋጋሚ ጥቅም አለው።</string>
+    <string name="whats_new_v732_caption">ገና ደጋፊ አልሆኑም?</string>
+    <string name="whats_new_v732_action_label">በእቅድዎ ውስጥ ያክሉን</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloud አገናኝ</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">ክስተት አጋራ</string>
     <string name="share_as_card_share_failed">ካርዱን ማጋራት አልተቻለም</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

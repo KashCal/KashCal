@@ -17,10 +17,14 @@ import org.onekash.kashcal.network.readBoundedBody
 import org.onekash.kashcal.network.readBoundedBytes
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
+import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
+import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.carddav.model.ContactSyncItem
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
+import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 import org.onekash.kashcal.sync.carddav.model.PhotoBytes
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.util.EtagUtils
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -96,6 +100,42 @@ fun shouldAttachCredentials(
 }
 
 /**
+ * Longest UID accepted as a resource-name segment before falling back to a random
+ * name. Well under any server's path-length limit and long enough for every real
+ * UID shape (a UUID is 36 chars).
+ */
+private const val MAX_RESOURCE_NAME_UID_LENGTH = 200
+
+/**
+ * Characters permitted in a UID used verbatim as a `.vcf` resource-name segment:
+ * the RFC 3986 "unreserved" set minus `~`. Conservative on purpose — anything
+ * outside this set (slash, space, `%`, `?`, `#`, `:`, `@`, `&`, `=`, `+`, …) could
+ * change how the server parses the path, so such a UID is not used verbatim.
+ */
+private val SAFE_RESOURCE_NAME_UID = Regex("[A-Za-z0-9._-]+")
+
+/**
+ * Name the resource for a contact whose vCard UID is [uid].
+ *
+ * When [uid] is a safe URL path segment we name the file `<uid>.vcf`. This is the
+ * biased-toward default: Zoho rejects arbitrary resource names with a misleading
+ * 401 (looks like an auth failure but is really name-policy), so a stable
+ * UID-derived name keeps writes working there. When [uid] would not be a safe
+ * segment — empty/blank, over-length, `.`/`..`, or containing any character
+ * outside [SAFE_RESOURCE_NAME_UID] — we fall back to a random `UUID.vcf` name,
+ * which is always well-formed and needs no percent-escaping.
+ */
+fun contactResourceName(uid: String): String {
+    val trimmed = uid.trim()
+    val safe = trimmed.isNotEmpty() &&
+        trimmed.length <= MAX_RESOURCE_NAME_UID_LENGTH &&
+        trimmed != "." &&
+        trimmed != ".." &&
+        SAFE_RESOURCE_NAME_UID.matches(trimmed)
+    return if (safe) "$trimmed.vcf" else "${java.util.UUID.randomUUID()}.vcf"
+}
+
+/**
  * OkHttp-based CardDAV (RFC 6352) client — read path only.
  *
  * A standalone sibling of `OkHttpCalDavClient` living entirely inside
@@ -132,6 +172,9 @@ class OkHttpCardDavClient(
         private const val TAG = "OkHttpCardDavClient"
 
         private val XML_MEDIA_TYPE = "application/xml; charset=utf-8".toMediaType()
+
+        /** Body content type for a contact PUT (RFC 6352 §6.3.2). */
+        private val VCARD_MEDIA_TYPE = "text/vcard; charset=utf-8".toMediaType()
 
         private const val MAX_RETRIES = 2
         private const val INITIAL_BACKOFF_MS = 500L
@@ -609,6 +652,102 @@ class OkHttpCardDavClient(
                 CalDavResult.networkError("Photo fetch error: ${e.javaClass.simpleName}")
             }
         }
+
+    // ========== Writing ==========
+
+    // A write's Failed.isRetryable is ADVISORY for the caller, not a signal that
+    // this client will retry — it never does (see putContact). 5xx/429 mean the
+    // server rejected the request, so nothing landed and a caller may re-derive
+    // the resource state (re-pull for a fresh etag) and try again. A caller must
+    // NOT blindly re-send the same conditional write: if the original response was
+    // merely lost in transit, the retry's If-None-Match:*/If-Match would fail the
+    // precondition and misreport a real success.
+    private fun isRetryableWriteStatus(code: Int): Boolean =
+        code in 500..599 || code == 429
+
+    override suspend fun putContact(
+        resourceUrl: String,
+        vcardBody: String,
+        precondition: ContactPrecondition,
+    ): ContactUploadResult = withContext(Dispatchers.IO) {
+        val builder = Request.Builder()
+            .url(resourceUrl)
+            .put(vcardBody.toRequestBody(VCARD_MEDIA_TYPE))
+        when (precondition) {
+            // RFC 4918 §10.4.5: "*" matches any current entity, so If-None-Match:*
+            // means "only if the resource does not already exist".
+            is ContactPrecondition.IfAbsent -> builder.header("If-None-Match", "*")
+            // The stored etag is already normalized (unquoted); re-wrap in quotes
+            // for the header, matching the CalDAV update path.
+            is ContactPrecondition.IfMatch -> builder.header("If-Match", "\"${precondition.etag}\"")
+        }
+
+        // Deliberately NOT routed through executeWithRetry: a blind retry of a
+        // conditional write is unsafe. If the first attempt succeeded but the
+        // response was lost, the retry's If-None-Match:*/If-Match would fail the
+        // precondition and we'd misreport a real success as PreconditionFailed.
+        try {
+            httpClient.newCall(builder.build()).execute().use { response ->
+                when (response.code) {
+                    // 201 on create; 200/204 on update (a conditional update PUT may
+                    // answer 200 OK, so accept it on the shared verb — matching the
+                    // CalDAV update path this mirrors).
+                    200, 201, 204 -> {
+                        // RFC 6352/4791: the server SHOULD return an ETag but MAY
+                        // omit it. A null etag is fine — the next pull reconciles.
+                        val etag = EtagUtils.normalizeEtag(response.header("ETag"))
+                        ContactUploadResult.Success(etag)
+                    }
+                    // 412 is the conditional-header failure; 409 Conflict is folded
+                    // in as a precondition failure because some servers answer a
+                    // failed conditional write with 409 rather than 412. The
+                    // server-wins reconcile on the next pull absorbs either. (409
+                    // can also mean a missing parent collection per RFC 4918 §9.7.1,
+                    // which a pull won't fix; that can't arise here because the
+                    // collection URL comes from a just-discovered address book.)
+                    412, 409 -> ContactUploadResult.PreconditionFailed
+                    403 -> ContactUploadResult.PermissionDenied
+                    404, 410 -> ContactUploadResult.Gone
+                    else -> ContactUploadResult.Failed(
+                        response.code,
+                        "putContact failed: ${response.code}",
+                        isRetryable = isRetryableWriteStatus(response.code),
+                    )
+                }
+            }
+        } catch (e: IOException) {
+            ContactUploadResult.Failed(0, "Network error: ${e.javaClass.simpleName}", isRetryable = true)
+        }
+    }
+
+    override suspend fun deleteContact(
+        resourceUrl: String,
+        etag: String,
+    ): ContactDeleteResult = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url(resourceUrl)
+            .delete()
+            .header("If-Match", "\"$etag\"") // Optimistic locking
+            .build()
+
+        // Not retried, for the same reason as putContact.
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                when (response.code) {
+                    200, 204 -> ContactDeleteResult.Deleted
+                    404, 410 -> ContactDeleteResult.AlreadyGone
+                    412, 409 -> ContactDeleteResult.PreconditionFailed
+                    else -> ContactDeleteResult.Failed(
+                        response.code,
+                        "deleteContact failed: ${response.code}",
+                        isRetryable = isRetryableWriteStatus(response.code),
+                    )
+                }
+            }
+        } catch (e: IOException) {
+            ContactDeleteResult.Failed(0, "Network error: ${e.javaClass.simpleName}", isRetryable = true)
+        }
+    }
 
     // ========== HTTP plumbing (mirrors OkHttpCalDavClient) ==========
 

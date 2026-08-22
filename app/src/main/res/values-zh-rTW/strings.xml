@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">前往日期</string>
     <string name="label_week">週</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">設定</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">連接 iCloud 查看你的事件</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">新功能</string>
-    <string name="whats_new_dismiss">知道了</string>
+    <string name="whats_new_later">稍後再說</string>
     <string name="whats_new_v598_title">協助保持 Android 開放</string>
     <string name="whats_new_v598_body">Google 正在改變你在裝置上安裝應用程式的方式。我們需要你的協助。</string>
     <string name="whats_new_v598_action_label">前往 keepandroidopen.org</string>
+    <string name="whats_new_v732_title">長久的謝意</string>
+    <string name="whats_new_v732_body">這次更新獻給 KashCal 的支持者。一份小小的心意，卻能帶來源源不絕的回饋。</string>
+    <string name="whats_new_v732_caption">還不是支持者嗎？</string>
+    <string name="whats_new_v732_action_label">加入你的計畫</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">連接 iCloud</string>
@@ -1210,4 +1212,5 @@
     <string name="share_as_card_chooser_title">分享活動</string>
     <string name="share_as_card_share_failed">無法分享卡片</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

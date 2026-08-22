@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Đi tới ngày</string>
     <string name="label_week">Tu</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Cài đặt</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Kết nối iCloud để xem sự kiện tại đây</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Có gì mới</string>
-    <string name="whats_new_dismiss">Đã hiểu</string>
+    <string name="whats_new_later">Để sau</string>
     <string name="whats_new_v598_title">Hãy giúp giữ Android luôn mở</string>
     <string name="whats_new_v598_body">Google đang thay đổi cách bạn cài đặt ứng dụng trên thiết bị của mình. Chúng tôi cần sự giúp đỡ của bạn.</string>
     <string name="whats_new_v598_action_label">Truy cập keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Lời cảm ơn bền lâu</string>
+    <string name="whats_new_v732_body">Bản cập nhật này xin dành tặng những người ủng hộ KashCal. Một đóng góp nhỏ mang lại lợi ích lớn lâu dài.</string>
+    <string name="whats_new_v732_caption">Bạn chưa phải là người ủng hộ?</string>
+    <string name="whats_new_v732_action_label">Thêm chúng tôi vào kế hoạch</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Kết nối iCloud</string>
@@ -1210,4 +1212,5 @@
     <string name="share_as_card_chooser_title">Chia sẻ sự kiện</string>
     <string name="share_as_card_share_failed">Không thể chia sẻ thẻ</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

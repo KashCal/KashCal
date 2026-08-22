@@ -43,6 +43,18 @@ class MonthWidgetTranslationTest {
      */
     private val SAFE_VIEW_CEILING = 400
 
+    /**
+     * View-count ceiling for the titles-mode BAR path, which legitimately costs more per event than
+     * the pill/dot path: a multi-day [SpanBar] carries a `.background()`, and Glance renders a
+     * backgrounded element as a wrapper plus a backing image view around the text, so each bar is a
+     * few views rather than one. The densest month a user could construct (see [busyMonthWithSpans])
+     * still translates well under the device's ~500 view-ID pool; this bound sits below that pool
+     * with margin so a regression that inflates the per-bar cost trips here — before it can reach a
+     * device and show "Can't show content" — while not holding the bar path to the pill path's
+     * tighter [SAFE_VIEW_CEILING], which it was never meant to meet.
+     */
+    private val SPAN_MODE_VIEW_CEILING = 490
+
     /** Every in-month day carries [perDay] timed events — the worst case for the view budget. */
     private fun busyMonth(grid: MonthGrid, year: Int, month0: Int, perDay: Int): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
         val colors = intArrayOf(0xFF2196F3.toInt(), 0xFF43A047.toInt(), 0xFFF57C00.toInt(), 0xFF7E57C2.toInt())
@@ -65,6 +77,71 @@ class MonthWidgetTranslationTest {
             }
         }
         return byDay
+    }
+
+    /**
+     * Like [busyMonth] but every week also carries [barsPerWeek] staggered multi-day events, which
+     * [busyMonth]'s single-day pills never produce. A multi-day event renders as a continuous
+     * [SpanBar] and every bar segment carries its own clickable (deep-link on the lane's first,
+     * go-to-date on the rest), so a week tiled with short, non-mergeable bars is the worst case for
+     * the bar path's share of the view-ID pool — the path the pill-only fixtures cannot measure.
+     * Each bar covers two adjacent columns and is placed in both day buckets it spans, matching how
+     * the repository buckets a multi-day event so the span layout picks it up.
+     */
+    private fun busyMonthWithSpans(
+        grid: MonthGrid,
+        year: Int,
+        month0: Int,
+        perDay: Int,
+        barsPerWeek: Int
+    ): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
+        val colors = intArrayOf(0xFF2196F3.toInt(), 0xFF43A047.toInt(), 0xFFF57C00.toInt(), 0xFF7E57C2.toInt())
+        val byDay = mutableMapOf<Int, MutableList<WidgetDataRepository.WidgetEvent>>()
+        grid.weeks.forEach { week ->
+            val codes = week.map { MonthGrid.computeDayCodeForCell(it, year, month0) }
+            // Single-day pills on every cell (the existing worst case).
+            codes.forEach { dayCode ->
+                val list = byDay.getOrPut(dayCode) { mutableListOf() }
+                for (i in 0 until perDay) {
+                    list += WidgetDataRepository.WidgetEvent(
+                        eventId = dayCode * 10L + i,
+                        occurrenceStartTs = 0L,
+                        title = "Event $i on $dayCode",
+                        startTs = 0L,
+                        endTs = 0L,
+                        isAllDay = false,
+                        calendarColor = colors[i % colors.size],
+                        isPast = false,
+                        isDeviceEvent = false,
+                        startDay = dayCode
+                    )
+                }
+            }
+            // Staggered two-day bars: bar b covers columns [2b mod 6, +1], so the first three tile
+            // one lane as three distinct SpanBars and the next three overlap into a second lane —
+            // maximizing the count of clickable bars per week rather than one wide merged bar.
+            for (b in 0 until barsPerWeek) {
+                val startCol = (b * 2) % 6
+                val endCol = startCol + 1
+                val bar = WidgetDataRepository.WidgetEvent(
+                    eventId = 900_000L + codes.first() * 10L + b,
+                    occurrenceStartTs = b.toLong(),
+                    title = "Bar $b",
+                    startTs = 0L,
+                    endTs = 0L,
+                    isAllDay = b % 2 == 0,
+                    calendarColor = colors[b % colors.size],
+                    isPast = false,
+                    isDeviceEvent = false,
+                    startDay = codes[startCol],
+                    endDay = codes[endCol]
+                )
+                for (c in startCol..endCol) {
+                    byDay.getOrPut(codes[c]) { mutableListOf() } += bar
+                }
+            }
+        }
+        return byDay.mapValues { it.value.toList() }
     }
 
     private fun translate(size: DpSize, content: @androidx.compose.runtime.Composable () -> Unit) = runBlocking {
@@ -135,6 +212,42 @@ class MonthWidgetTranslationTest {
 
         // Reaching here without IllegalStateException("There are too many views") is the guarantee.
         assertNotNull(result.remoteViews)
+    }
+
+    @Test
+    fun `titles mode with week numbers and multi-day span bars stays under the view pool`() {
+        // busyMonth renders only single-day pills; this adds staggered multi-day span bars and turns
+        // on the week-number gutter — the densest titles-mode layout, and the only one that exercises
+        // the SpanBar path at all. Pill-only fixtures never render a bar, so without this the bar
+        // path's share of the view-ID pool is unmeasured. Bars cost more per event than pills (the
+        // bar's background makes Glance emit a wrapper and a backing image view around the text), so
+        // this holds the bar path to [SPAN_MODE_VIEW_CEILING] rather than the tighter pill ceiling.
+        val year = 2026
+        val month0 = 2 // March 2026 spans a full 6x7 grid.
+        val grid = MonthGrid.compute(year, month0, Calendar.SUNDAY)
+        val events = busyMonthWithSpans(grid, year, month0, perDay = 3, barsPerWeek = 6)
+
+        val result = translate(DpSize(400.dp, 600.dp)) {
+            GlanceTheme {
+                MonthWidgetContent(
+                    monthGrid = grid,
+                    monthEvents = events,
+                    monthOffset = 0,
+                    targetYear = year,
+                    targetMonth0 = month0,
+                    firstDayOfWeek = Calendar.SUNDAY,
+                    showWeekNumbers = true
+                )
+            }
+        }
+
+        // Reaching here without IllegalStateException("There are too many views") already proves the
+        // tree did not overflow the pool; the count bound then guards against creeping back toward it.
+        val views = countViews(result.remoteViews)
+        assertTrue(
+            "titles-mode-with-spans view count $views exceeds ceiling $SPAN_MODE_VIEW_CEILING",
+            views < SPAN_MODE_VIEW_CEILING
+        )
     }
 
     @Test

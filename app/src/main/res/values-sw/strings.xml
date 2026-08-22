@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Nenda tarehe</string>
     <string name="label_week">W</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Mipangilio</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Unganisha iCloud ili uone matukio yako hapa</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Mpya</string>
-    <string name="whats_new_dismiss">Nimeelewa</string>
+    <string name="whats_new_later">Baadaye</string>
     <string name="whats_new_v598_title">Saidia kuhakikisha Android inabaki wazi</string>
     <string name="whats_new_v598_body">Google inabadilisha jinsi unavyoweka programu kwenye kifaa chako. Tunahitaji msaada wako.</string>
     <string name="whats_new_v598_action_label">Tembelea keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Shukrani ya kudumu</string>
+    <string name="whats_new_v732_body">Toleo hili limetolewa kwa wafadhili wa KashCal. Mchango mdogo wenye manufaa makubwa yanayoendelea.</string>
+    <string name="whats_new_v732_caption">Bado hujawa mfadhili?</string>
+    <string name="whats_new_v732_action_label">Tuongeze kwenye mipango yako</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Unganisha iCloud</string>
@@ -1264,4 +1266,5 @@
     <string name="share_as_card_chooser_title">Shiriki tukio</string>
     <string name="share_as_card_share_failed">Imeshindwa kushiriki kadi</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -144,6 +144,11 @@ fun WeekViewContent(
     timePattern: String = "h:mma",
     visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    /**
+     * Localized prefix for the week-number label ("W") shown in the header corner,
+     * left of the day strip. Only rendered in the full 7-day week view; blank hides it.
+     */
+    weekLabelPrefix: String = "",
     allDayRowsExpanded: Boolean = false,
     onAllDayRowsToggle: () -> Unit = {},
     onDatePickerRequest: () -> Unit,
@@ -259,6 +264,7 @@ fun WeekViewContent(
                 totalHours = totalHours,
                 visibleDays = visibleDays,
                 firstDayOfWeek = firstDayOfWeek,
+                weekLabelPrefix = weekLabelPrefix,
                 allDayRowsExpanded = allDayRowsExpanded,
                 onAllDayRowsToggle = onAllDayRowsToggle,
                 hourHeight = hourHeight.dp,
@@ -305,6 +311,7 @@ private fun UnifiedTimeGrid(
     totalHours: Int = WeekViewUtils.TOTAL_HOURS,
     visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    weekLabelPrefix: String = "",
     allDayRowsExpanded: Boolean = false,
     onAllDayRowsToggle: () -> Unit = {},
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
@@ -324,7 +331,7 @@ private fun UnifiedTimeGrid(
 ) {
     val is24Hour = timePattern.startsWith("H")
     val totalHeight = hourHeight * totalHours
-    val timeColumnWidth = 48.dp
+    val timeColumnWidth = WeekViewUtils.TIME_COLUMN_WIDTH
     val today = LocalDate.now()
 
     var dragState by remember { mutableStateOf(WeekViewUtils.DragState.Idle) }
@@ -428,7 +435,29 @@ private fun UnifiedTimeGrid(
         // header already labels the single day.
         if (visibleDays > 1) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Box(modifier = Modifier.width(timeColumnWidth))
+                // Header corner (left of the day strip). In the 7-day week view it
+                // carries the week-number label so the top bar can stay uncrowded;
+                // otherwise it's the blank spacer above the all-day gutter.
+                Box(
+                    modifier = Modifier.width(timeColumnWidth),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (visibleDays == 7 && weekLabelPrefix.isNotEmpty()) {
+                        val weekLabel = remember(visibleDates, firstDayOfWeek, weekLabelPrefix) {
+                            WeekViewUtils.formatWeekLabel(
+                                visibleDates.first(),
+                                firstDayOfWeek,
+                                weekLabelPrefix,
+                            )
+                        }
+                        Text(
+                            text = weekLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
 
                 Row(modifier = Modifier.weight(1f)) {
                     visibleDates.forEach { date ->

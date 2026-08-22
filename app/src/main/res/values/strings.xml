@@ -248,7 +248,6 @@
     <!-- Top-bar prefix for week view week-of-year label, e.g. "W21". Single letter so the label fits next to the month/year title (e.g. "May 2026 · W21"). -->
     <string name="label_week">W</string>
     <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <!-- Settings screen labels. Match Android system Settings terminology where possible. -->
@@ -360,10 +359,8 @@
     <string name="onboarding_connect_prompt">Connect iCloud to see your events here</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <!-- Heading on the post-update sheet that lists release highlights. -->
-    <string name="whats_new_title">What\'s new</string>
-    <!-- Acknowledgement button on the post-update sheet. -->
-    <string name="whats_new_dismiss">Got it</string>
+    <!-- Dismiss button on the post-update sheet; defers the ask without committing to it. -->
+    <string name="whats_new_later">Later</string>
 
     <!-- v23.7.80 release-note: signal-boost for the keep-Android-open campaign. -->
     <!-- Section title. "Android" is a brand name; keep untranslated. -->
@@ -374,6 +371,18 @@
     <string name="whats_new_v598_action_label">Visit keepandroidopen.org</string>
     <!-- URL the CTA opens. Don\'t translate. -->
     <string name="whats_new_v598_action_url" translatable="false">https://keepandroidopen.org/</string>
+
+    <!-- Release-note dedicating the release to the app\'s financial supporters. -->
+    <!-- Section heading (a warm, standing thank-you). -->
+    <string name="whats_new_v732_title">A standing thank-you</string>
+    <!-- Section body. "KashCal" is a brand name; keep untranslated. -->
+    <string name="whats_new_v732_body">This release is dedicated to KashCal\'s supporters. A small entry with a big recurring payoff.</string>
+    <!-- Small caption shown above the support button, inviting non-supporters. -->
+    <string name="whats_new_v732_caption">Not a supporter yet?</string>
+    <!-- Support call-to-action button label. -->
+    <string name="whats_new_v732_action_label">Add us to your plans</string>
+    <!-- URL the support button opens. Don\'t translate. -->
+    <string name="whats_new_v732_action_url" translatable="false">https://kashcal.onekash.org/donate/</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <!-- Keep "iCloud" and "CalDAV" untranslated -->

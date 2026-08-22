@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">Eiti į datą</string>
     <string name="label_week">S</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Nustatymai</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">Prijunkite iCloud, kad matytumėte savo įvykius čia</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">Kas naujo</string>
-    <string name="whats_new_dismiss">Supratau</string>
+    <string name="whats_new_later">Vėliau</string>
     <string name="whats_new_v598_title">Padėk išlaikyti Android atvirą</string>
     <string name="whats_new_v598_body">Google keičia tai, kaip diegi programėles savo įrenginyje. Mums reikia tavo pagalbos.</string>
     <string name="whats_new_v598_action_label">Apsilankyti keepandroidopen.org</string>
+    <string name="whats_new_v732_title">Nuolatinė padėka</string>
+    <string name="whats_new_v732_body">Ši versija skirta KashCal rėmėjams. Mažas indėlis su didele nuolatine grąža.</string>
+    <string name="whats_new_v732_caption">Dar nesi mūsų rėmėjas?</string>
+    <string name="whats_new_v732_action_label">Įtrauk mus į savo planus</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">Prijungti iCloud</string>
@@ -1370,4 +1372,5 @@
     <string name="share_as_card_chooser_title">Bendrinti įvykį</string>
     <string name="share_as_card_share_failed">Nepavyko bendrinti kortelės</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

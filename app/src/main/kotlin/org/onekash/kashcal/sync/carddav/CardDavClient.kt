@@ -2,22 +2,29 @@ package org.onekash.kashcal.sync.carddav
 
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
+import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
+import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
+import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 import org.onekash.kashcal.sync.carddav.model.PhotoBytes
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * CardDAV (RFC 6352) client interface — read path only.
+ * CardDAV (RFC 6352) client interface.
  *
- * The transport surface for read-only contact sync: discover a login's address
- * books, detect changes, and fetch raw vCard bodies. There is deliberately no
- * write-facing method (no PUT/POST/DELETE) — MVP contact sync does not write
- * back to the server.
+ * The transport surface for contact sync: discover a login's address books,
+ * detect changes, fetch raw vCard bodies, and — via the write verbs
+ * ([putContact], [deleteContact]) — upload and delete a contact resource. The
+ * write verbs exist so a later sync path can push local edits; nothing in the
+ * app calls them yet.
  *
- * All methods return [CalDavResult] (reused from the generic `sync.client.model`
- * infrastructure). The client returns raw `text/vcard` bytes untouched;
- * composing those into the neutral contact model is the reader's job
- * ([CardDavContactReader]).
+ * The read methods return [CalDavResult] (reused from the generic
+ * `sync.client.model` infrastructure); the client returns raw `text/vcard` bytes
+ * untouched and composing those into the neutral contact model is the reader's
+ * job ([CardDavContactReader]). The write verbs instead return dedicated sealed
+ * outcome types ([ContactUploadResult] / [ContactDeleteResult]) so a caller can
+ * branch on each business outcome (e.g. a non-fatal precondition failure) without
+ * decoding raw status codes.
  */
 interface CardDavClient {
 
@@ -106,4 +113,43 @@ interface CardDavClient {
      * caller leaves the photo pending for a later retry.
      */
     suspend fun fetchPhoto(photoUrl: String): CalDavResult<PhotoBytes>
+
+    // ========== Writing ==========
+
+    /**
+     * Upload a contact's vCard to [resourceUrl] via a conditional PUT (RFC 6352
+     * §6.3.2, RFC 4918 §9.7). Sends the body as `text/vcard`.
+     *
+     * [precondition] controls the conditional header: [ContactPrecondition.IfAbsent]
+     * sends `If-None-Match: *` (create only if nothing exists there);
+     * [ContactPrecondition.IfMatch] sends `If-Match: "<etag>"` (update only if the
+     * known version still matches). [resourceUrl] is used verbatim — the caller
+     * derives a new resource's name via [contactResourceName] and reuses a stored
+     * href for an update.
+     *
+     * Returns [ContactUploadResult.Success] (with the new ETag, or null when the
+     * server omitted it) on 201/204; a distinct non-fatal
+     * [ContactUploadResult.PreconditionFailed] on 412/409;
+     * [ContactUploadResult.PermissionDenied] on 403; [ContactUploadResult.Gone] on
+     * 404/410; and [ContactUploadResult.Failed] for any other status or a transport
+     * failure. The write is never retried (a blind retry of a conditional write can
+     * misreport a lost-response success as a precondition failure).
+     */
+    suspend fun putContact(
+        resourceUrl: String,
+        vcardBody: String,
+        precondition: ContactPrecondition,
+    ): ContactUploadResult
+
+    /**
+     * Delete the contact resource at [resourceUrl] via a conditional DELETE
+     * (RFC 4918 §9.6) with `If-Match: "<etag>"` for optimistic locking.
+     *
+     * Returns [ContactDeleteResult.Deleted] on 200/204; a swallow-able
+     * [ContactDeleteResult.PreconditionFailed] on 412/409;
+     * [ContactDeleteResult.AlreadyGone] on 404/410 (the intent is satisfied); and
+     * [ContactDeleteResult.Failed] for any other status or a transport failure. Not
+     * retried, for the same reason as [putContact].
+     */
+    suspend fun deleteContact(resourceUrl: String, etag: String): ContactDeleteResult
 }

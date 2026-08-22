@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">ไปที่วันที่</string>
     <string name="label_week">ส</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">การตั้งค่า</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">เชื่อมต่อ iCloud เพื่อดูกิจกรรมของคุณ</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">มีอะไรใหม่</string>
-    <string name="whats_new_dismiss">เข้าใจแล้ว</string>
+    <string name="whats_new_later">ไว้ก่อน</string>
     <string name="whats_new_v598_title">ช่วยให้ Android ยังคงเปิดกว้าง</string>
     <string name="whats_new_v598_body">Google กำลังเปลี่ยนวิธีที่คุณติดตั้งแอปบนอุปกรณ์ของคุณ เราต้องการความช่วยเหลือจากคุณ</string>
     <string name="whats_new_v598_action_label">ไปที่ keepandroidopen.org</string>
+    <string name="whats_new_v732_title">คำขอบคุณที่คงอยู่เสมอ</string>
+    <string name="whats_new_v732_body">อัปเดตนี้ขออุทิศให้ผู้สนับสนุน KashCal การสนับสนุนเพียงเล็กน้อยแต่ให้ผลตอบแทนที่ยิ่งใหญ่อย่างต่อเนื่อง</string>
+    <string name="whats_new_v732_caption">ยังไม่ได้เป็นผู้สนับสนุนใช่ไหม?</string>
+    <string name="whats_new_v732_action_label">เพิ่มเราในแผนของคุณ</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">เชื่อมต่อ iCloud</string>
@@ -1210,4 +1212,5 @@
     <string name="share_as_card_chooser_title">แชร์กิจกรรม</string>
     <string name="share_as_card_share_failed">ไม่สามารถแชร์การ์ดได้</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

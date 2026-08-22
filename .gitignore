@@ -74,13 +74,16 @@ proguard/
 KashCal-*.apk.idsig
 
 # Development documentation (internal, not for public repo)
-AGENTS.md
+TESTING.md
 ARCHITECTURE.md
 CLAUDE.md
 
 # Claude Code local state
 .claude/
 site/
+
+# devloop workflow config
+.devloop/
 
 # TDD tracker files (internal process artifacts)
 *tracker*.json

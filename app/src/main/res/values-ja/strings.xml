@@ -151,7 +151,6 @@
     <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
     <string name="label_go_to_date">日付に移動</string>
     <string name="label_week">週</string>
-    <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">設定</string>
@@ -236,11 +235,14 @@
     <string name="onboarding_connect_prompt">iCloudに接続して予定を表示</string>
 
     <!-- ==================== What\'s New ==================== -->
-    <string name="whats_new_title">新着情報</string>
-    <string name="whats_new_dismiss">OK</string>
+    <string name="whats_new_later">後で</string>
     <string name="whats_new_v598_title">Androidをオープンに保つお手伝いを</string>
     <string name="whats_new_v598_body">Googleは、あなたが端末にアプリをインストールする方法を変更しようとしています。皆さんのご協力が必要です。</string>
     <string name="whats_new_v598_action_label">keepandroidopen.org を開く</string>
+    <string name="whats_new_v732_title">変わらぬ感謝を込めて</string>
+    <string name="whats_new_v732_body">このリリースは、KashCalを支えてくださる皆さまに捧げます。小さなご支援が、繰り返し大きな力になります。</string>
+    <string name="whats_new_v732_caption">まだ支援されていませんか？</string>
+    <string name="whats_new_v732_action_label">予定に加える</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
     <string name="signin_icloud_title">iCloudに接続</string>
@@ -1210,4 +1212,5 @@
     <string name="share_as_card_chooser_title">予定を共有</string>
     <string name="share_as_card_share_failed">カードを共有できませんでした</string>
 
+    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>
