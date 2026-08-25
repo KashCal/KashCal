@@ -138,12 +138,35 @@ data class IcsSubscription(
     /**
      * Check if this subscription is due for a sync based on its interval.
      * Returns false if disabled.
+     *
+     * A tenth of the interval is allowed as slack, and the reason is narrow
+     * enough to be worth stating so it isn't "simplified" away. The periodic
+     * refresh job wakes at the *shortest* interval across all enabled feeds and
+     * checks every feed on each wake, so a feed whose interval is longer than
+     * that job period is only ever checked at job-period multiples. Since
+     * [lastSync] is stamped part-way through a run, the check that lands at
+     * exactly one interval measures a little *less* than the interval, finds the
+     * feed not due, and defers it by a whole extra job period: an hourly feed
+     * alongside a daily one pushes the daily feed out to 25 hours.
+     *
+     * The cost is that a feed becomes due at 90% of its interval, so the
+     * effective refresh rate is up to about a ninth higher than configured — a
+     * daily feed can land at ~22h. Erring slightly fresh is the right direction
+     * for a read-only feed, and the bound is proportional, so no interval is
+     * treated more loosely than another.
      */
     fun isDueForSync(): Boolean {
         if (!enabled) return false
         val now = System.currentTimeMillis()
-        val intervalMs = syncIntervalHours.toLong() * 60 * 60 * 1000
-        return now - lastSync >= intervalMs
+        // Floor the stored value here rather than trusting the column. A 0 would make
+        // this unconditionally true and re-fetch the feed on every wake of the shared
+        // job; restoring a hand-edited or corrupt backup could put one there, and a
+        // row written that way before the importer started flooring it is still on
+        // disk. Guarding the reader covers every writer and every existing row.
+        val hours = syncIntervalHours.coerceAtLeast(MIN_SYNC_INTERVAL_HOURS)
+        val intervalMs = hours.toLong() * 60 * 60 * 1000
+        val slackMs = intervalMs / 10
+        return now - lastSync >= intervalMs - slackMs
     }
 
     /**
@@ -166,6 +189,16 @@ data class IcsSubscription(
     fun hasError(): Boolean = !lastError.isNullOrBlank()
 
     companion object {
+        /**
+         * Shortest interval a feed may be checked at, in hours.
+         *
+         * Lives here because the invariant belongs to the row, not to whoever
+         * writes it: [isDueForSync] enforces it on read, and writers of untrusted
+         * values coerce to it so the stored value stays something the settings UI
+         * can render.
+         */
+        const val MIN_SYNC_INTERVAL_HOURS = 1
+
         /**
          * Default email for ICS subscription account.
          */

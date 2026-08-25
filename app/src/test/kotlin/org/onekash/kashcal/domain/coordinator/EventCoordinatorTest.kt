@@ -32,6 +32,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 
 /**
@@ -60,6 +61,7 @@ class EventCoordinatorTest {
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
+    private lateinit var icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler
     private lateinit var dataStore: KashCalDataStore
 
     // System under test
@@ -126,6 +128,9 @@ class EventCoordinatorTest {
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        // Relaxed is right here and only here: the reconciler is a Unit-returning
+        // side-effect collaborator, so there is no return value to get wrong.
+        icsRefreshScheduleReconciler = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         // The user's configured default reminder. Tests use representative
         // values (15 / 540); the production code reads whatever the user set
@@ -157,6 +162,7 @@ class EventCoordinatorTest {
             reminderScheduler = reminderScheduler,
             widgetUpdateManager = widgetUpdateManager,
             inviteNotifier = mockk(relaxed = true),
+            icsRefreshScheduleReconciler = icsRefreshScheduleReconciler,
             dataStore = dataStore
         )
     }
@@ -771,6 +777,83 @@ class EventCoordinatorTest {
         coordinator.removeIcsSubscription(1L)
 
         coVerify { icsSubscriptionRepository.removeSubscription(1L) }
+    }
+
+    @Test
+    fun `updateIcsSubscriptionSettings delegates to repository`() = runTest {
+        coordinator.updateIcsSubscriptionSettings(1L, "Renamed", 0xFF00FF00.toInt(), 6)
+
+        coVerify {
+            icsSubscriptionRepository.updateSubscriptionSettings(
+                1L, "Renamed", 0xFF00FF00.toInt(), 6,
+            )
+        }
+    }
+
+    @Test
+    fun `setIcsSubscriptionEnabled delegates to repository`() = runTest {
+        coordinator.setIcsSubscriptionEnabled(1L, false)
+
+        coVerify { icsSubscriptionRepository.setSubscriptionEnabled(1L, false) }
+    }
+
+    // The four mutations below are the only ways the set of enabled feeds (or a
+    // feed's interval) can change from the UI, so each one has to leave the
+    // periodic refresh job in agreement with the database. Reconciling here
+    // rather than at each caller is what makes it impossible for a mutation path
+    // to forget: the ViewModel used to own this and only did it on add.
+
+    @Test
+    fun `adding a subscription reconciles the refresh schedule`() = runTest {
+        val subscription = org.onekash.kashcal.data.db.entity.IcsSubscription(
+            id = 1L,
+            url = "https://example.com/calendar.ics",
+            name = "Test Calendar",
+            color = 0xFF000000.toInt(),
+            calendarId = 100L,
+        )
+        coEvery { icsSubscriptionRepository.addSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Success(subscription)
+
+        coordinator.addIcsSubscription("https://example.com/calendar.ics", "Test Calendar", 0)
+
+        coVerify(exactly = 1) { icsRefreshScheduleReconciler.reconcile() }
+    }
+
+    @Test
+    fun `a failed subscription add does not reconcile`() = runTest {
+        // Nothing was written, so there is nothing to reconcile — and re-arming
+        // on a failed add would be a scheduling call on every typo.
+        coEvery { icsSubscriptionRepository.addSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error("unreachable")
+
+        coordinator.addIcsSubscription("https://example.com/bad.ics", "Bad", 0)
+
+        coVerify(exactly = 0) { icsRefreshScheduleReconciler.reconcile() }
+    }
+
+    @Test
+    fun `removing a subscription reconciles the refresh schedule`() = runTest {
+        // Removing the last feed has to stop the job, not leave it waking forever.
+        coordinator.removeIcsSubscription(1L)
+
+        coVerify(exactly = 1) { icsRefreshScheduleReconciler.reconcile() }
+    }
+
+    @Test
+    fun `changing a subscription interval reconciles the refresh schedule`() = runTest {
+        // This is the path that was completely missing: the new interval was
+        // written to the database and the job kept its old period forever.
+        coordinator.updateIcsSubscriptionSettings(1L, "Renamed", 0, syncIntervalHours = 1)
+
+        coVerify(exactly = 1) { icsRefreshScheduleReconciler.reconcile() }
+    }
+
+    @Test
+    fun `toggling a subscription reconciles the refresh schedule`() = runTest {
+        coordinator.setIcsSubscriptionEnabled(1L, false)
+
+        coVerify(exactly = 1) { icsRefreshScheduleReconciler.reconcile() }
     }
 
     @Test

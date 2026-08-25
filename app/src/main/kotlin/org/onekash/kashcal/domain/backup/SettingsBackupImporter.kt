@@ -15,6 +15,7 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,6 +40,7 @@ class SettingsBackupImporter @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
     private val categoryDao: CategoryDao,
+    private val icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler,
     @ApplicationContext private val context: Context,
 ) {
 
@@ -54,6 +56,14 @@ class SettingsBackupImporter @Inject constructor(
                 applySubscriptions(envelope.subscriptions, counts)
                 applyCategories(envelope.categories, counts)
             }
+        }
+
+        // Restored feeds need the periodic refresh job armed for their intervals,
+        // otherwise a restore-to-a-new-device produces feeds that never refresh.
+        // Deliberately outside the transaction above: this reads the feeds back
+        // and talks to WorkManager, neither of which belongs in a DB transaction.
+        if (envelope.subscriptions.isNotEmpty()) {
+            icsRefreshScheduleReconciler.reconcile()
         }
 
         val preferencesApplied = applyPreferences(envelope.preferences)
@@ -84,13 +94,18 @@ class SettingsBackupImporter @Inject constructor(
         if (subscriptions.isEmpty()) return
 
         for (backup in subscriptions) {
+            // A backup file is untrusted input. isDueForSync floors this too, so the
+            // refresh path is safe either way; coercing on the way in keeps the stored
+            // value one the settings UI can render as a real choice.
+            val syncIntervalHours = backup.syncIntervalHours
+                .coerceAtLeast(IcsSubscription.MIN_SYNC_INTERVAL_HOURS)
             val existing = icsSubscriptionsDao.getByUrl(backup.url)
             if (existing != null) {
                 icsSubscriptionsDao.update(
                     existing.copy(
                         name = backup.name,
                         color = backup.color,
-                        syncIntervalHours = backup.syncIntervalHours,
+                        syncIntervalHours = syncIntervalHours,
                         enabled = backup.enabled,
                         username = backup.username,
                     ),
@@ -118,7 +133,7 @@ class SettingsBackupImporter @Inject constructor(
                         name = backup.name,
                         color = backup.color,
                         calendarId = calendarId,
-                        syncIntervalHours = backup.syncIntervalHours,
+                        syncIntervalHours = syncIntervalHours,
                         enabled = backup.enabled,
                         username = backup.username,
                     ),

@@ -3,6 +3,7 @@ package org.onekash.kashcal.data.ics
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -326,6 +327,12 @@ class IcsSubscriptionRepository @Inject constructor(
                     return@withContext SyncResult.Error(fetchResult.message)
                 }
             }
+        } catch (e: CancellationException) {
+            // A stopped refresh is not a failed one. Swallowing this would log an
+            // error against a named feed for a fetch that was merely cut short, and
+            // would let the caller's loop carry on to the next feed on a coroutine
+            // that is already cancelled.
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Error refreshing subscription: ${subscription.name}", e)
             val errorMessage = e.message ?: "Unknown sync error"

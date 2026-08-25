@@ -11,7 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * v23.7.17 F3: `EventCardAttendeeBadge` count must subtract every chip
+ * v23.7.17: `EventCardAttendeeBadge` count must subtract every chip
  * with `isYou=true`, not just one. Real-world trigger: a user whose
  * account has multiple calendar-user-addresses (e.g. me.com + icloud.com)
  * appears twice on the attendee list, both rows synthesized as `isYou=true`

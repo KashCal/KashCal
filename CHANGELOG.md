@@ -1,3 +1,10 @@
+## [2026.08.25]
+
+### Everything in this release
+
+- Fixed a subscribed calendar (`.ics`/webcal) feed's chosen refresh interval not taking effect; background refresh worked, but setting a feed to refresh more often, such as every hour, kept using the default schedule instead, #351
+- Changed the month home-screen widget to keep the full month name on a single line instead of wrapping or clipping it on narrow widgets and in languages with long month names
+
 ## [2026.08.22]
 
 This release of KashCal has a name instead of a changelog: Thank You for Supporting Us.

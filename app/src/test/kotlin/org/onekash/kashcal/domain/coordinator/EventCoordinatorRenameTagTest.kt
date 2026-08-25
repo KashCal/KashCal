@@ -65,6 +65,7 @@ class EventCoordinatorRenameTagTest {
             reminderScheduler,
             widgetUpdateManager,
             mockk(relaxed = true),
+            mockk(relaxed = true),
             mockk(relaxed = true)
         )
     }

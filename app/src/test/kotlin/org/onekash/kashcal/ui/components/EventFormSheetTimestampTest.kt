@@ -10,7 +10,7 @@ import java.util.TimeZone
  * Unit tests for EventFormSheet initialStartTs parameter.
  *
  * These tests verify that the milliseconds-based API works correctly after
- * the refactor from seconds to milliseconds (see plan hidden-booping-crown.md).
+ * the refactor from seconds to milliseconds.
  *
  * The key change was:
  * - Old: calendar.timeInMillis = initialStartTs * 1000 (seconds input)

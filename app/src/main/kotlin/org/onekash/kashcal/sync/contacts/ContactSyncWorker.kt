@@ -21,6 +21,7 @@ import org.onekash.kashcal.sync.carddav.CardDavClient
 import org.onekash.kashcal.sync.carddav.CardDavClientFactory
 import org.onekash.kashcal.sync.carddav.CardDavHostResolver
 import org.onekash.kashcal.sync.provider.ProviderRegistry
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.permission.PermissionChecker
 
 /**
@@ -68,7 +69,25 @@ class ContactSyncWorker @AssistedInject constructor(
     // executes: it re-reads the account list, so a just-enabled account is never
     // dropped, and the read-only pull is idempotent, so re-running is safe.
     override suspend fun doWork(): Result = withContext(ioDispatcher) {
-        syncLock.withLock { runSweep() }
+        try {
+            syncLock.withLock { runSweep() }
+        } catch (e: CancellationException) {
+            // Cooperative cancellation, not a failure — let it propagate.
+            throw e
+        } catch (e: Exception) {
+            // The per-account loop guards each account, but the account query and
+            // the permission-flag writes run outside it, so a locked database or a
+            // full disk throws straight out of the sweep. An uncaught throw reaches
+            // WorkManager as failure, which is terminal for the periodic spec — the
+            // same permanent stop the result branches below exist to avoid, reached
+            // by a different route.
+            Log.e(TAG, "Contact sync sweep failed", e)
+            when {
+                runAttemptCount < MAX_RETRY_ATTEMPTS -> Result.retry()
+                isPeriodicRun() -> Result.success()
+                else -> Result.failure()
+            }
+        }
     }
 
     private suspend fun runSweep(): Result {
@@ -126,10 +145,24 @@ class ContactSyncWorker @AssistedInject constructor(
 
         return when {
             sawRetryable && runAttemptCount < MAX_RETRY_ATTEMPTS -> Result.retry()
-            sawRetryable || sawTerminalError -> Result.failure()
+            // Retries are spent, or the error was never worth retrying. Ending the
+            // run in failure is only safe when there is no future run to lose:
+            // WorkManager treats failure as terminal for a periodic work spec and
+            // stops scheduling it, and nothing re-arms contact sync except account
+            // creation or toggling the feature off and on. So one expired password
+            // used to end contact sync permanently. For the recurring job the next
+            // period is the retry; a one-shot has no future run to lose, so it can
+            // afford to report honestly.
+            !isPeriodicRun() && (sawRetryable || sawTerminalError) -> Result.failure()
             else -> Result.success()
         }
     }
+
+    /**
+     * Whether this run belongs to the recurring background job rather than a
+     * user-initiated sweep. Only the periodic request carries the tag.
+     */
+    private fun isPeriodicRun(): Boolean = SyncScheduler.TAG_PERIODIC in tags
 
     /**
      * Sync one account, returning the strategy's [ContactPullResult] so [doWork]

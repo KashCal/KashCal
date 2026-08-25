@@ -160,8 +160,19 @@ class CalDavSyncWorkerTest {
         unmockkAll()
     }
 
-    private fun createWorker(inputData: Data = Data.EMPTY): CalDavSyncWorker {
+    private fun createWorker(
+        inputData: Data = Data.EMPTY,
+        periodic: Boolean = false,
+    ): CalDavSyncWorker {
         every { workerParams.inputData } returns inputData
+        // Only the recurring request carries the periodic tag. The worker reads it
+        // to decide whether ending a run in failure is safe — the sync trigger
+        // can't answer that, since the expedited and per-calendar requests
+        // inherit the BACKGROUND_PERIODIC default.
+        every { workerParams.tags } returns setOf(
+            SyncScheduler.TAG_SYNC,
+            if (periodic) SyncScheduler.TAG_PERIODIC else SyncScheduler.TAG_ONE_SHOT,
+        )
         return CalDavSyncWorker(
             context = context,
             params = workerParams,
@@ -606,20 +617,49 @@ class CalDavSyncWorkerTest {
     }
 
     @Test
-    fun `top-level exception returns failure when max retries exceeded`() = runTest {
+    fun `top-level exception on a one-shot returns failure when max retries exceeded`() = runTest {
         // Given - attempt 3 (4th try, exceeds MAX_RETRY_ATTEMPTS=3)
         every { workerParams.runAttemptCount } returns 3
         val inputData = CalDavSyncWorker.createFullSyncInput()
-        val worker = createWorker(inputData)
+        val worker = createWorker(inputData, periodic = false)
 
         coEvery { accountRepository.getEnabledAccounts() } throws RuntimeException("Database locked")
 
         // When
         val result = worker.doWork()
 
-        // Then - should fail (not retry) with error message in output
+        // Then - should fail (not retry) with error message in output. A one-shot
+        // has no future run to protect, and the screen that asked for the sync
+        // shows SyncStatus.Failed, so the honest report is failure.
         assertTrue("Expected Failure but got ${result.javaClass.simpleName}",
             result is ListenableWorker.Result.Failure)
+    }
+
+    @Test
+    fun `top-level exception on the periodic run succeeds rather than failing at max retries`() = runTest {
+        // A deterministic throw outside the per-account loop (the pending-operation
+        // lifecycle sweep, a reminder-scheduling limit) recurs on every attempt and
+        // walks the run to this branch. Failure is terminal for a periodic spec:
+        // WorkManager stops running it, and nothing re-arms periodic sync outside
+        // account creation, so background sync would be dead until the user added
+        // another account.
+        every { workerParams.runAttemptCount } returns 3
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData, periodic = true)
+
+        coEvery { accountRepository.getEnabledAccounts() } throws RuntimeException("Database locked")
+
+        val result = worker.doWork()
+
+        assertTrue("A periodic run must not end FAILED; was $result",
+            result is ListenableWorker.Result.Success)
+        assertEquals(
+            "Ending in success must not swallow the error",
+            "Database locked",
+            (result as ListenableWorker.Result.Success)
+                .outputData
+                .getString(CalDavSyncWorker.KEY_ERROR_MESSAGE),
+        )
     }
 
     @Test

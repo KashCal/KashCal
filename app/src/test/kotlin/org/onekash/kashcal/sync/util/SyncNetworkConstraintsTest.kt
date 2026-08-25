@@ -82,7 +82,9 @@ class SyncNetworkConstraintsTest {
 
     @Test
     fun `builder allows composing additional constraints`() {
-        // IcsRefreshWorker adds requiresBatteryNotLow on top of the network request.
+        // The builder returns a Constraints.Builder, so a caller can chain its own
+        // requirements on top of the shared network request. No scheduler in the app
+        // currently requires battery-not-low; this only asserts the seam composes.
         val constraints = SyncNetworkConstraints.builder()
             .setRequiresBatteryNotLow(true)
             .build()

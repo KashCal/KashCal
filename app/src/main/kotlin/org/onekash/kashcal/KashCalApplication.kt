@@ -22,6 +22,7 @@ import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
+import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetPreviewRegistrar
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -94,6 +95,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     lateinit var credentialMigration: CredentialMigration
 
     @Inject
+    lateinit var icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler
+
+    @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
@@ -164,6 +168,18 @@ class KashCalApplication : Application(), Configuration.Provider {
                     this@KashCalApplication,
                     BuildConfig.VERSION_CODE
                 )
+            }
+
+            // Bring the ICS feed refresh job in line with the feeds in the
+            // database. Startup is where this heals itself: WorkManager's database
+            // lives in the no-backup directory, so a job lost to a force-stop, an
+            // OEM task killer, or a device restored from a backup is gone for
+            // good, and until now nothing re-armed it — feeds then only ever
+            // updated when the user pulled to refresh.
+            // No try/catch here on purpose: the reconciler already catches and logs,
+            // so a wrapper would be dead code.
+            applicationScope.launch {
+                icsRefreshScheduleReconciler.reconcile()
             }
         }
 

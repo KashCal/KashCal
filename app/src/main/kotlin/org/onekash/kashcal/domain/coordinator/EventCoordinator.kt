@@ -26,6 +26,7 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.UUID
@@ -71,6 +72,7 @@ class EventCoordinator @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier,
+    private val icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler,
     private val dataStore: KashCalDataStore
 ) {
     // ========== Initialization ==========
@@ -902,6 +904,12 @@ class EventCoordinator @Inject constructor(
     }
 
     // ========== ICS Subscriptions ==========
+    //
+    // Every mutation below reconciles the periodic refresh schedule, because each
+    // one can change which feeds are enabled or how often one wants refreshing.
+    // Doing it here rather than in each caller is deliberate: scheduling used to
+    // live in the settings ViewModel, which armed the job on add and nowhere
+    // else, so a feed's interval never reached WorkManager.
 
     /**
      * Get all ICS subscriptions as reactive Flow.
@@ -934,7 +942,11 @@ class EventCoordinator @Inject constructor(
         name: String,
         color: Int
     ): IcsSubscriptionRepository.SubscriptionResult {
-        return icsSubscriptionRepository.addSubscription(url, name, color)
+        val result = icsSubscriptionRepository.addSubscription(url, name, color)
+        if (result is IcsSubscriptionRepository.SubscriptionResult.Success) {
+            icsRefreshScheduleReconciler.reconcile()
+        }
+        return result
     }
 
     /**
@@ -944,6 +956,7 @@ class EventCoordinator @Inject constructor(
      */
     suspend fun removeIcsSubscription(subscriptionId: Long) {
         icsSubscriptionRepository.removeSubscription(subscriptionId)
+        icsRefreshScheduleReconciler.reconcile()
     }
 
     /**
@@ -963,6 +976,7 @@ class EventCoordinator @Inject constructor(
         icsSubscriptionRepository.updateSubscriptionSettings(
             subscriptionId, name, color, syncIntervalHours
         )
+        icsRefreshScheduleReconciler.reconcile()
     }
 
     /**
@@ -970,6 +984,7 @@ class EventCoordinator @Inject constructor(
      */
     suspend fun setIcsSubscriptionEnabled(subscriptionId: Long, enabled: Boolean) {
         icsSubscriptionRepository.setSubscriptionEnabled(subscriptionId, enabled)
+        icsRefreshScheduleReconciler.reconcile()
     }
 
     /**

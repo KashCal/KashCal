@@ -11,8 +11,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Pre-tests for parsing gaps identified by comparing KashCal's icaldav parser with other CalDAV clients.
- * See: docs/PARSING_GAPS.md
+ * Pre-tests for parsing gaps identified by comparing this parser against other CalDAV clients'
+ * handling of the same inputs.
  *
  * These tests document the EXPECTED behavior after fixes are applied.
  * Before implementation, some of these tests will FAIL — that's the point.
@@ -154,7 +154,7 @@ class ICalParserParsingGapsPreTest {
     // Outlook relaxation flags (ical4j.compatibility.outlook, ical4j.validation.relaxed,
     // negative_dst_supported) are NOT needed. The existing ical4j.parsing.relaxed=true
     // already handles Outlook quirks (spaces in BYDAY, quoted TZID).
-    // Both test cases pass without changes. See docs/PARSING_GAPS.md.
+    // Both test cases pass without changes.
 
     // ==================== Gap 3: Missing UID generation ====================
 

@@ -168,7 +168,11 @@ class IcsRefreshWorkerTest {
     }
 
     @Test
-    fun `all errors return Result_failure`() = runTest {
+    fun `every feed erroring retries rather than failing`() = runTest {
+        // Failure is terminal for a periodic work spec: WorkManager marks it FAILED
+        // and never runs it again. One unreachable server would end background
+        // refresh until the next app start, which is the bug users report as
+        // "feeds only sync manually". Retry keeps the spec alive.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
             .build()
@@ -180,7 +184,55 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertEquals(ListenableWorker.Result.retry(), result)
+    }
+
+    @Test
+    fun `every feed erroring at max attempts succeeds carrying the error message`() = runTest {
+        // Retries are exhausted, so the run has to end. It must still end in a
+        // state the periodic spec survives — the next period is the retry.
+        val inputData = Data.Builder()
+            .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
+            .build()
+        every { workerParams.runAttemptCount } returns 3
+        worker = createWorker(inputData)
+
+        coEvery { repository.forceRefreshAll() } returns listOf(
+            IcsSubscriptionRepository.SyncResult.Error("Failed to connect"),
+            IcsSubscriptionRepository.SyncResult.Error("Server error")
+        )
+
+        val result = worker.doWork()
+        assertTrue(
+            "A periodic run must not end FAILED; was $result",
+            result is ListenableWorker.Result.Success,
+        )
+        assertEquals(
+            "Ending in success must not swallow the error",
+            "Failed to connect",
+            (result as ListenableWorker.Result.Success)
+                .outputData
+                .getString(IcsRefreshWorker.KEY_ERROR_MESSAGE),
+        )
+    }
+
+    @Test
+    fun `a feed erroring while another is not yet due still retries`() = runTest {
+        // Skipped feeds are not counted as refreshed, so a single failing feed
+        // alongside one that simply isn't due yet reaches the all-errored branch.
+        // This is the common case for a multi-feed user, not an edge case.
+        val inputData = Data.Builder()
+            .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_DUE)
+            .build()
+        worker = createWorker(inputData)
+
+        coEvery { repository.refreshAllDueSubscriptions() } returns listOf(
+            IcsSubscriptionRepository.SyncResult.Skipped("Not due yet"),
+            IcsSubscriptionRepository.SyncResult.Error("Server error")
+        )
+
+        val result = worker.doWork()
+        assertEquals(ListenableWorker.Result.retry(), result)
     }
 
     // ==================== Retry logic ====================
@@ -200,7 +252,9 @@ class IcsRefreshWorkerTest {
     }
 
     @Test
-    fun `exception with max retries returns Result_failure`() = runTest {
+    fun `exception at max retries succeeds carrying the error message`() = runTest {
+        // Same reasoning as the all-errored branch: retries are spent, but ending
+        // FAILED would take the periodic spec down permanently.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
             .build()
@@ -210,7 +264,17 @@ class IcsRefreshWorkerTest {
         coEvery { repository.forceRefreshAll() } throws RuntimeException("Unexpected error")
 
         val result = worker.doWork()
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue(
+            "A periodic run must not end FAILED; was $result",
+            result is ListenableWorker.Result.Success,
+        )
+        assertNotEquals(ListenableWorker.Result.retry(), result)
+        assertEquals(
+            "Unexpected error",
+            (result as ListenableWorker.Result.Success)
+                .outputData
+                .getString(IcsRefreshWorker.KEY_ERROR_MESSAGE),
+        )
     }
 
     @Test
@@ -224,9 +288,17 @@ class IcsRefreshWorkerTest {
         coEvery { repository.forceRefreshAll() } throws NullPointerException()
 
         val result = worker.doWork()
-        // Result should be failure (not retry) since max attempts exceeded
-        assertTrue(result is ListenableWorker.Result.Failure)
+        assertTrue(
+            "A periodic run must not end FAILED; was $result",
+            result is ListenableWorker.Result.Success,
+        )
         assertNotEquals(ListenableWorker.Result.retry(), result)
+        assertEquals(
+            "NullPointerException",
+            (result as ListenableWorker.Result.Success)
+                .outputData
+                .getString(IcsRefreshWorker.KEY_ERROR_MESSAGE),
+        )
     }
 
     // ==================== Default refresh type ====================

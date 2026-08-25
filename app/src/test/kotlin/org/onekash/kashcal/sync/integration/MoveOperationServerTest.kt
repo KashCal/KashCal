@@ -162,7 +162,7 @@ class MoveOperationServerTest {
             }
             412 -> {
                 println("⚠️ iCloud returns 412 for MOVE (precondition failed)")
-                println("This confirms EDGE_CASES.md: 'DELETE first, then PUT (not MOVE)'")
+                println("A 412 means the move must be done as DELETE first, then PUT — not MOVE")
             }
             403 -> {
                 println("⚠️ iCloud returns 403 for MOVE (forbidden)")

@@ -93,6 +93,7 @@ class BackupRoundTripIntegrationTest {
             calendarRepository = CalendarRepositoryImpl(targetDb.calendarsDao()),
             icsSubscriptionsDao = targetDb.icsSubscriptionsDao(),
             categoryDao = targetDb.categoryDao(),
+            icsRefreshScheduleReconciler = io.mockk.mockk(relaxed = true),
             context = context,
         )
     }

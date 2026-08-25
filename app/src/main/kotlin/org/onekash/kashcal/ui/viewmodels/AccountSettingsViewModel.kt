@@ -52,7 +52,6 @@ import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
-import org.onekash.kashcal.sync.scheduler.IcsScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -149,7 +148,6 @@ class AccountSettingsViewModel @Inject constructor(
     private val backupExporter: SettingsBackupExporter,
     private val backupImporter: SettingsBackupImporter,
     private val permissionChecker: PermissionChecker,
-    private val icsScheduler: IcsScheduler,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
@@ -1580,14 +1578,19 @@ class AccountSettingsViewModel @Inject constructor(
         color: Int,
         duplicateUrlMessage: String? = null,
     ) {
-        viewModelScope.launch {
+        // applicationScope, not viewModelScope: this fetches the feed and then
+        // brings the periodic refresh job in line with it, and the user may well
+        // close the sheet while the fetch is in flight. On viewModelScope that
+        // cancellation would abandon the mutation part-way and leave the feed
+        // with no refresh job. Same reasoning as commitSubscriptionDeletion.
+        applicationScope.launch {
             Log.i(TAG, "Adding subscription: $url, $name")
 
             when (val result = eventCoordinator.addIcsSubscription(url, name, color)) {
                 is IcsSubscriptionRepository.SubscriptionResult.Success -> {
                     Log.i(TAG, "Subscription added: ${result.subscription.name}")
-                    // Schedule periodic refresh if this is the first subscription
-                    icsScheduler.schedulePeriodicRefresh()
+                    // Arming the refresh job is the coordinator's job: it owns
+                    // every feed mutation, so no screen can forget to do it.
                 }
 
                 is IcsSubscriptionRepository.SubscriptionResult.Error -> {
@@ -1708,9 +1711,12 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Enable or disable an ICS subscription.
+     *
+     * Runs on [applicationScope] so the mutation and the refresh-schedule update
+     * it triggers survive the settings screen closing.
      */
     fun onToggleSubscription(subscriptionId: Long, enabled: Boolean) {
-        viewModelScope.launch {
+        applicationScope.launch {
             Log.i(TAG, "Toggle subscription: $subscriptionId, enabled=$enabled")
             eventCoordinator.setIcsSubscriptionEnabled(subscriptionId, enabled)
         }
@@ -1749,9 +1755,12 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Update subscription settings (name, color, sync interval).
+     *
+     * Runs on [applicationScope]: a changed sync interval has to reach the
+     * periodic refresh job even if the user backs out of the sheet immediately.
      */
     fun onUpdateSubscription(subscriptionId: Long, name: String, color: Int, syncIntervalHours: Int) {
-        viewModelScope.launch {
+        applicationScope.launch {
             Log.i(TAG, "Updating subscription: $subscriptionId, name=$name, interval=${syncIntervalHours}h")
             eventCoordinator.updateIcsSubscriptionSettings(subscriptionId, name, color, syncIntervalHours)
         }

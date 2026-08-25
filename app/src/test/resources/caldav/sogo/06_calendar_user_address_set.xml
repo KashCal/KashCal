@@ -7,7 +7,7 @@
   - 2 entries: 1 mailto + 1 path-relative
   - No preferred attribute
   - Wire order: mailto first, path-relative second
-  - schedule-outbox-URL points at the personal calendar URL — RFC 6638
-    deviation noted in p1-9-discovery-probe.md (T4 follow-up)
+  - schedule-outbox-URL points at the personal calendar URL, not a distinct
+    outbox collection — an RFC 6638 deviation the outbox discovery must tolerate
 -->
 <D:multistatus xmlns:D="DAV:" xmlns:a="urn:ietf:params:xml:ns:caldav"><D:response><D:href>/SOGo/dav/testuser1/</D:href><D:propstat><D:status>HTTP/1.1 200 OK</D:status><D:prop><a:calendar-user-address-set><D:href xmlns:D="DAV:">mailto:testuser1@test.local</D:href><D:href xmlns:D="DAV:">/SOGo/dav/testuser1/</D:href></a:calendar-user-address-set><a:schedule-inbox-URL><D:href xmlns:D="DAV:">/SOGo/dav/testuser1/Calendar/inbox/</D:href></a:schedule-inbox-URL><a:schedule-outbox-URL><D:href xmlns:D="DAV:">/SOGo/dav/testuser1/Calendar/personal/</D:href></a:schedule-outbox-URL></D:prop></D:propstat></D:response></D:multistatus>

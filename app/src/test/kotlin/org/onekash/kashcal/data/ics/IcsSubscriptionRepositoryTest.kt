@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -694,6 +695,23 @@ class IcsSubscriptionRepositoryTest {
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Error)
         assertEquals("Network error", (result as IcsSubscriptionRepository.SyncResult.Error).message)
         coVerify { icsSubscriptionsDao.updateSyncError(1L, "Network error") }
+    }
+
+    @Test
+    fun `refreshSubscription does not record a sync error for a cancelled refresh`() = runTest {
+        // Cancellation is not a feed failure. Turning it into an Error records a
+        // last_error against a named feed for a fetch that was merely cut short, and
+        // lets a caller looping over feeds carry on with a cancelled coroutine.
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } throws CancellationException("refresh cancelled")
+
+        val thrown = runCatching { repository.refreshSubscription(1L) }.exceptionOrNull()
+
+        assertTrue(
+            "refreshSubscription should let cancellation through; got $thrown",
+            thrown is CancellationException,
+        )
+        coVerify(exactly = 0) { icsSubscriptionsDao.updateSyncError(any(), any()) }
     }
 
     @Test

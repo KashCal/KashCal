@@ -145,6 +145,15 @@ class SyncScheduler @Inject constructor(
      * Uses KEEP existing policy to avoid rescheduling if already scheduled.
      * WorkManager ensures this runs even across device restarts.
      *
+     * A recurring request must stay a **full** sync. Failure is terminal for a
+     * periodic work spec — WorkManager stops scheduling it, and only re-arming
+     * with KEEP revives it — and the worker's full-sync path is the only one that
+     * cannot end in failure: it folds each account's auth and transport errors
+     * into a partial success. The per-calendar and per-account paths return
+     * failure directly on an expired password, so scheduling either of them
+     * recurringly would let one bad credential stop background sync for good.
+     * If a narrower recurring sync is ever wanted, give it the same folding first.
+     *
      * @param intervalMinutes Sync interval (minimum 15 per Android)
      * @param forceFullSync If true, ignores ctag/sync-token and fetches all events
      */

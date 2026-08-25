@@ -20,8 +20,9 @@ sdk.dir=/path/to/android/sdk
 # ICLOUD_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 
 # Local CalDAV test servers (optional; only for -Pintegration multiserver tests).
-# See docs/CALDAV_TEST_SERVERS.md for the container provisioning recipe.
-# Standard local user is testuser1 / testpass1 unless noted.
+# Each entry expects the upstream server running in a container on the port below,
+# provisioned with the single user named here. Standard local user is
+# testuser1 / testpass1 unless noted. Tests skip cleanly when a block is absent.
 #
 # NEXTCLOUD_SERVER=http://localhost:8080
 # NEXTCLOUD_USERNAME=testuser1

@@ -360,13 +360,34 @@ class CalDavSyncWorker @AssistedInject constructor(
                 notificationManager.showErrorNotification("Sync Failed", errorMessage)
             }
 
-            if (runAttemptCount >= MAX_RETRY_ATTEMPTS) {
-                Result.failure(createErrorOutput(errorMessage))
-            } else {
+            if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
                 Result.retry()
+            } else if (isPeriodicRun()) {
+                // Retries are spent, but failure is terminal for a periodic work
+                // spec: WorkManager stops scheduling it, and nothing re-arms
+                // periodic sync except creating an account. A throw from outside
+                // the per-account loop (the pending-operation lifecycle sweep, a
+                // reminder-scheduling limit) repeats on every attempt and lands
+                // here, so background sync would be dead for good. The error is
+                // already recorded in sync history above, which is where the user
+                // sees it — nothing observes the periodic work's own state, so the
+                // output data here is diagnostic. Leave the next period to retry.
+                Result.success(createErrorOutput(errorMessage))
+            } else {
+                // A one-shot has no future run to lose, and the screen that asked
+                // for the sync renders SyncStatus.Failed, so failing is honest.
+                Result.failure(createErrorOutput(errorMessage))
             }
         }
     }
+
+    /**
+     * Whether this run belongs to the recurring background job rather than a
+     * one-shot request. Only the periodic request carries the tag; the sync
+     * trigger can't answer this, since the expedited and per-calendar requests
+     * inherit the [SyncTrigger.BACKGROUND_PERIODIC] default.
+     */
+    private fun isPeriodicRun(): Boolean = SyncScheduler.TAG_PERIODIC in tags
 
     /**
      * Create a cancel pending intent for the foreground notification.

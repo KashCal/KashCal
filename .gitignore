@@ -18,6 +18,9 @@ out/
 archive/
 docs/
 
+# Local planning docs (issue triage, sequences — never shipped)
+.local-docs/
+
 # Local WIP notes and experimental skill sandboxes
 R8_Configuration_Analysis.md
 skills/

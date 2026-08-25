@@ -31,6 +31,7 @@ import org.onekash.kashcal.sync.carddav.DefaultCardDavQuirks
 import org.onekash.kashcal.sync.carddav.ICloudCardDavQuirks
 import org.onekash.kashcal.sync.carddav.ZohoCardDavQuirks
 import org.onekash.kashcal.sync.provider.ProviderRegistry
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
 
@@ -73,6 +74,10 @@ class ContactSyncWorkerTest {
         // account 0" and silently drop every real account. The scoped tests
         // override this per-test.
         every { params.inputData } returns Data.EMPTY
+        // Same hazard for tags, and a worse payload: a relaxed default hands back
+        // an empty set, which reads as "not the recurring job" — the one branch
+        // that ends a run in failure and takes the periodic spec down with it.
+        every { params.tags } returns setOf(SyncScheduler.TAG_SYNC, SyncScheduler.TAG_PERIODIC)
         // Data-bearing collaborators: stub explicitly, never relaxed.
         accountRepository = mockk()
         providerRegistry = mockk()
@@ -103,8 +108,16 @@ class ContactSyncWorkerTest {
     private fun createWorker(
         runAttemptCount: Int = 0,
         dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+        periodic: Boolean = true,
     ): ContactSyncWorker {
         every { params.runAttemptCount } returns runAttemptCount
+        // The recurring job and a user-initiated sweep run the same worker class,
+        // and only the recurring one carries the periodic tag. The worker reads
+        // this to decide whether ending in failure is safe.
+        every { params.tags } returns setOf(
+            SyncScheduler.TAG_SYNC,
+            if (periodic) SyncScheduler.TAG_PERIODIC else SyncScheduler.TAG_ONE_SHOT,
+        )
         return ContactSyncWorker(
             context,
             params,
@@ -376,32 +389,86 @@ class ContactSyncWorkerTest {
     }
 
     @Test
-    fun `doWork fails without retry once a retryable error exhausts the attempt budget`() = runTest {
+    fun `a periodic sweep stops retrying but does not fail once the attempt budget is spent`() = runTest {
         coEvery { accountRepository.getEnabledAccounts() } returns
             listOf(account(1, AccountProvider.ICLOUD, contactSyncEnabled = true))
         coEvery { contactPullStrategy.sync(any(), any(), any()) } returns
             ContactPullResult.Error(code = 503, message = "transient", isRetryable = true)
 
-        val result = createWorker(runAttemptCount = 3).doWork()
+        val result = createWorker(runAttemptCount = 3, periodic = true).doWork()
 
-        // At the retry cap, stop looping and report terminal failure for this run.
-        assertTrue("Exhausted retries must terminate, not loop forever", result is Result.Failure)
+        // Retries are spent, so the run has to stop looping — but failure is
+        // terminal for a periodic work spec: WorkManager marks it FAILED and
+        // never runs it again. A server that stays down through one backoff
+        // window would end contact sync for good. The next period is the retry.
+        // Success also proves the run stopped looping — Retry is a different type.
+        assertTrue("A periodic run must not end FAILED; was $result", result is Result.Success)
     }
 
     @Test
-    fun `doWork fails without retry on a non-retryable error`() = runTest {
+    fun `a periodic sweep does not retry or fail on a non-retryable error`() = runTest {
         coEvery { accountRepository.getEnabledAccounts() } returns
             listOf(account(1, AccountProvider.ICLOUD, contactSyncEnabled = true))
-        // e.g. bad credentials / 401: retrying would just hammer the server, so
-        // report terminal failure (never retry) — but not a clean success either.
-        // On a periodic worker, failure() does not cancel future scheduled runs.
+        // Bad credentials / 401. Retrying would just hammer the server, so this
+        // must not spin backoff — but it must not kill the recurring job either,
+        // which is what it did when the user's password expired.
         coEvery { contactPullStrategy.sync(any(), any(), any()) } returns
             ContactPullResult.Error(code = 401, message = "auth", isRetryable = false)
 
-        val result = createWorker(runAttemptCount = 0).doWork()
+        val result = createWorker(runAttemptCount = 0, periodic = true).doWork()
 
-        assertTrue("A non-retryable error must be terminal, not spin backoff", result is Result.Failure)
-        assertTrue("A non-retryable error must not retry", result != Result.retry())
+        // Success is also the proof it didn't spin backoff — Retry is another type.
+        assertTrue("A 401 must not take the periodic job down; was $result", result is Result.Success)
+    }
+
+    @Test
+    fun `a one-shot sweep still reports the error as failure`() = runTest {
+        coEvery { accountRepository.getEnabledAccounts() } returns
+            listOf(account(1, AccountProvider.ICLOUD, contactSyncEnabled = true))
+        coEvery { contactPullStrategy.sync(any(), any(), any()) } returns
+            ContactPullResult.Error(code = 401, message = "auth", isRetryable = false)
+
+        val result = createWorker(runAttemptCount = 0, periodic = false).doWork()
+
+        // A one-shot has no future run to salvage, so an honest report costs
+        // nothing. Only the recurring spec needs protecting from a terminal state.
+        assertTrue("A one-shot must report the error as failure; was $result", result is Result.Failure)
+    }
+
+    @Test
+    fun `a throw outside the per-account loop does not end the periodic run in failure`() = runTest {
+        // The account query and the permission-flag writes sit outside every
+        // per-account try, so a full disk or a locked database throws straight out
+        // of the sweep. That reaches WorkManager as failure, which is terminal for
+        // the periodic spec — the same way an expired password used to be.
+        coEvery { accountRepository.getEnabledAccounts() } throws
+            RuntimeException("database is locked")
+
+        val result = createWorker(runAttemptCount = 3, periodic = true).doWork()
+
+        assertTrue("A periodic run must not end FAILED; was $result", result is Result.Success)
+    }
+
+    @Test
+    fun `a throw outside the per-account loop retries while the budget lasts`() = runTest {
+        coEvery { accountRepository.getEnabledAccounts() } throws
+            RuntimeException("database is locked")
+
+        val result = createWorker(runAttemptCount = 0, periodic = true).doWork()
+
+        // A locked database is usually transient, so spend the retry budget before
+        // writing the period off.
+        assertTrue("An early attempt must retry; was $result", result is Result.Retry)
+    }
+
+    @Test
+    fun `a throw outside the per-account loop still fails a one-shot`() = runTest {
+        coEvery { accountRepository.getEnabledAccounts() } throws
+            RuntimeException("database is locked")
+
+        val result = createWorker(runAttemptCount = 3, periodic = false).doWork()
+
+        assertTrue("A one-shot must report the throw as failure; was $result", result is Result.Failure)
     }
 
     @Test

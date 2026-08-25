@@ -10,9 +10,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -131,25 +133,85 @@ class ReminderRefreshWorkerTest {
     }
 
     @Test
-    fun `exception with retries at 3 returns failure`() = runTest {
+    fun `exception with retries at 3 returns success so the recurring scan survives`() = runTest {
+        // Failure is terminal for a periodic work spec: WorkManager stops scheduling
+        // it, and only re-arming with KEEP brings it back, so reminders would stop
+        // being scanned until the next app start. The next period is the retry.
+        //
+        // The scheduler verification is what tells this apart from the happy path,
+        // which also returns success: the scan never ran here.
         coEvery { dataStore.getReminderMigrationVersion() } throws RuntimeException("DB error")
         every { workerParams.runAttemptCount } returns 3
 
         worker = createWorker()
         val result = worker.doWork()
 
-        assertEquals(ListenableWorker.Result.failure(), result)
+        assertEquals(ListenableWorker.Result.success(), result)
+        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders(any()) }
     }
 
     @Test
-    fun `exception with retries above 3 returns failure`() = runTest {
+    fun `exception with retries above 3 returns success so the recurring scan survives`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } throws RuntimeException("DB error")
         every { workerParams.runAttemptCount } returns 5
 
         worker = createWorker()
         val result = worker.doWork()
 
-        assertEquals(ListenableWorker.Result.failure(), result)
+        assertEquals(ListenableWorker.Result.success(), result)
+        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders(any()) }
+    }
+
+    @Test
+    fun `cancellation is not turned into a retry`() = runTest {
+        // A stopped worker must stay stopped. Catching cancellation and reporting
+        // retry or success logs a scan failure that never happened.
+        coEvery { dataStore.getReminderMigrationVersion() } throws
+            CancellationException("worker stopped")
+
+        worker = createWorker()
+        val thrown = runCatching { worker.doWork() }.exceptionOrNull()
+
+        assertTrue(
+            "doWork should let cancellation through; got $thrown",
+            thrown is CancellationException,
+        )
+    }
+
+    @Test
+    fun `cancellation during best-effort cleanup is not swallowed`() = runTest {
+        // The cleanup catch is deliberately best-effort, but cancellation is not a
+        // failure to shrug off: absorbing it here would carry on scheduling device
+        // reminders and report success on a coroutine that is already cancelled.
+        coEvery { dataStore.getReminderMigrationVersion() } returns 1
+        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 3
+        coEvery { reminderScheduler.cleanupOldReminders() } throws
+            CancellationException("worker stopped")
+
+        worker = createWorker()
+        val thrown = runCatching { worker.doWork() }.exceptionOrNull()
+
+        assertTrue(
+            "cleanup's best-effort catch swallowed cancellation; got $thrown",
+            thrown is CancellationException,
+        )
+        coVerify(exactly = 0) { deviceCalendarReminderScheduler.scheduleNextReminder() }
+    }
+
+    @Test
+    fun `cancellation during device reminder scheduling is not swallowed`() = runTest {
+        coEvery { dataStore.getReminderMigrationVersion() } returns 1
+        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 3
+        coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } throws
+            CancellationException("worker stopped")
+
+        worker = createWorker()
+        val thrown = runCatching { worker.doWork() }.exceptionOrNull()
+
+        assertTrue(
+            "device reminder scheduling's best-effort catch swallowed cancellation; got $thrown",
+            thrown is CancellationException,
+        )
     }
 
     @Test

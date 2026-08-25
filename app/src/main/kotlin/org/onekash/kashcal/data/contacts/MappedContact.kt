@@ -13,9 +13,9 @@ import org.onekash.vcard.model.Contact
  *
  * [dataRows] are mimetype-tagged [ContentValues] for a single RawContact — one row per
  * StructuredName / Email / Phone / … — with **no** `RAW_CONTACT_ID` set. The write
- * layer (a later sprint) supplies that back-reference when it inserts the parent
- * RawContact; a pure mapper can't know the id, which is exactly why this stays a plain
- * row set and not a live provider write.
+ * layer supplies that back-reference when it inserts the parent RawContact; a pure
+ * mapper can't know the id, which is exactly why this stays a plain row set and not a
+ * live provider write.
  *
  * [photoUrl] is the deferred-fetch handoff: a vCard whose `PHOTO` is a remote URL (not
  * inline bytes) can't become a Photo blob row here without network I/O, so the URL rides

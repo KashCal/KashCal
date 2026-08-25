@@ -34,10 +34,10 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Regression tests for bugs documented in BUG_ANALYSIS.md.
+ * Regression tests for a batch of bugs found and fixed in an early hardening sweep.
  *
- * These tests ensure bugs that were fixed don't reappear.
- * Each test is linked to a specific bug number from BUG_ANALYSIS.md.
+ * These tests ensure bugs that were fixed don't reappear. The numbering below is historical —
+ * it comes from that sweep, not from GitHub issues; each section header names the actual defect.
  *
  * Bug Categories:
  * - Critical (crashes/failures): #1, #2, #4, #5, #6

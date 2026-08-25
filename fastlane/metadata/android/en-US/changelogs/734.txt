@@ -1,0 +1,2 @@
+• Subscribed calendar feeds now refresh at the interval you choose, not just the default (#351)
+• Month widget keeps the full month name on one line

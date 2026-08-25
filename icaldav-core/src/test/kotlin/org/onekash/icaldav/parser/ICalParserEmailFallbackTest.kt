@@ -160,7 +160,7 @@ class ICalParserEmailFallbackTest {
     }
 
     @Nested
-    @DisplayName("VFREEBUSY ORGANIZER + ATTENDEE (F1 sibling)")
+    @DisplayName("VFREEBUSY ORGANIZER + ATTENDEE")
     inner class VFreeBusySibling {
 
         @Test
@@ -188,7 +188,7 @@ class ICalParserEmailFallbackTest {
     }
 
     @Nested
-    @DisplayName("Edge cases (F7)")
+    @DisplayName("Edge cases")
     inner class EdgeCases {
 
         @Test

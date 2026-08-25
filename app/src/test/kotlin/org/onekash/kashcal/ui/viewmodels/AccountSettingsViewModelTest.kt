@@ -107,7 +107,6 @@ class AccountSettingsViewModelTest {
     private lateinit var backupExporter: org.onekash.kashcal.domain.backup.SettingsBackupExporter
     private lateinit var backupImporter: org.onekash.kashcal.domain.backup.SettingsBackupImporter
     private lateinit var permissionChecker: org.onekash.kashcal.ui.permission.FakePermissionChecker
-    private lateinit var icsScheduler: org.onekash.kashcal.sync.scheduler.FakeIcsScheduler
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -183,7 +182,6 @@ class AccountSettingsViewModelTest {
         backupExporter = mockk(relaxed = true)
         backupImporter = mockk(relaxed = true)
         permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker()
-        icsScheduler = org.onekash.kashcal.sync.scheduler.FakeIcsScheduler()
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -282,7 +280,6 @@ class AccountSettingsViewModelTest {
             backupExporter = backupExporter,
             backupImporter = backupImporter,
             permissionChecker = permissionChecker,
-            icsScheduler = icsScheduler,
             context = stubContext,
             applicationScope = applicationScope,
         )
@@ -1061,6 +1058,8 @@ class AccountSettingsViewModelTest {
             color = 0xFFFF5722.toInt()
         )
         advanceUntilIdle()
+        // Feed mutations run on applicationScope; drain its scheduler to observe.
+        appDispatcher.scheduler.advanceUntilIdle()
 
         coVerify {
             eventCoordinator.addIcsSubscription(
@@ -1071,46 +1070,9 @@ class AccountSettingsViewModelTest {
         }
     }
 
-    @Test
-    fun `onAddSubscription success schedules periodic ICS refresh via icsScheduler`() = runTest {
-        val testSubscription = IcsSubscription(
-            id = 1L,
-            url = "https://example.com/holidays.ics",
-            name = "US Holidays",
-            color = 0xFFFF5722.toInt(),
-            calendarId = 10L
-        )
-        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
-            IcsSubscriptionRepository.SubscriptionResult.Success(testSubscription)
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onAddSubscription("https://example.com/holidays.ics", "US Holidays", 0xFFFF5722.toInt())
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(org.onekash.kashcal.sync.scheduler.IcsScheduler.DEFAULT_INTERVAL_HOURS),
-            icsScheduler.scheduleCalls
-        )
-    }
-
-    @Test
-    fun `onAddSubscription error does not schedule ICS refresh`() = runTest {
-        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
-            IcsSubscriptionRepository.SubscriptionResult.Error("bad url")
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onAddSubscription("https://example.com/holidays.ics", "US Holidays", 0xFFFF5722.toInt())
-        advanceUntilIdle()
-
-        assertTrue(
-            "scheduler should not be invoked on error; got ${icsScheduler.scheduleCalls}",
-            icsScheduler.scheduleCalls.isEmpty()
-        )
-    }
+    // Scheduling on add-success (and NOT on add-error) is asserted in
+    // EventCoordinatorTest: the coordinator owns every feed mutation, so the
+    // contract lives with it rather than with one of the screens that call it.
 
     @Test
     fun `onAddSubscription handles error gracefully`() = runTest {
@@ -1127,6 +1089,7 @@ class AccountSettingsViewModelTest {
             color = 0xFF000000.toInt()
         )
         advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
 
         // Verify the method was called
         coVerify { eventCoordinator.addIcsSubscription("invalid-url", "Test", 0xFF000000.toInt()) }
@@ -1150,6 +1113,7 @@ class AccountSettingsViewModelTest {
             duplicateUrlMessage = "Already subscribed to this URL"
         )
         advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(
             "Already subscribed to this URL",
@@ -1175,20 +1139,16 @@ class AccountSettingsViewModelTest {
             duplicateUrlMessage = "Already subscribed to this URL"
         )
         advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
-        assertTrue(
-            "scheduler must not be invoked on error path",
-            icsScheduler.scheduleCalls.isEmpty()
-        )
     }
 
     @Test
-    fun `onAddSubscription duplicate with null message stays silent (no snackbar, no scheduler)`() = runTest {
+    fun `onAddSubscription duplicate with null message stays silent`() = runTest {
         // Locks in the contract: if the caller forgets to pass
         // duplicateUrlMessage, a duplicate is logged but does NOT
-        // surface a snackbar (won't crash, won't show wrong text)
-        // and the periodic refresh scheduler is NOT invoked.
+        // surface a snackbar (won't crash, won't show wrong text).
         coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
             IcsSubscriptionRepository.SubscriptionResult.Error(
                 message = "Subscription already exists for this URL",
@@ -1205,12 +1165,82 @@ class AccountSettingsViewModelTest {
             // duplicateUrlMessage omitted — exercises the null default
         )
         advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
-        assertTrue(
-            "scheduler must not be invoked on error path",
-            icsScheduler.scheduleCalls.isEmpty()
+    }
+
+    // Feed mutations run on applicationScope, not viewModelScope. Each one now
+    // ends by bringing the periodic refresh job in line with the database, and
+    // each sits downstream of a network fetch, so closing the settings screen
+    // mid-fetch on viewModelScope would cancel the coroutine before the schedule
+    // was updated and leave the feed with no job at all. Same reasoning as the
+    // deferred delete-commit below.
+
+    @Test
+    fun `onAddSubscription runs on applicationScope so it survives ViewModel destruction`() = runTest {
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Success(
+                IcsSubscription(
+                    id = 1L,
+                    url = "https://example.com/holidays.ics",
+                    name = "US Holidays",
+                    color = 0xFFFF5722.toInt(),
+                    calendarId = 10L,
+                )
+            )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription(
+            url = "https://example.com/holidays.ics",
+            name = "US Holidays",
+            color = 0xFFFF5722.toInt()
         )
+        // Drain ONLY viewModelScope. If the add were queued there, it would run.
+        advanceUntilIdle()
+        coVerify(exactly = 0) { eventCoordinator.addIcsSubscription(any(), any(), any()) }
+
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.addIcsSubscription(any(), any(), any()) }
+    }
+
+    @Test
+    fun `onToggleSubscription runs on applicationScope so it survives ViewModel destruction`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleSubscription(subscriptionId = 1L, enabled = false)
+        advanceUntilIdle()
+        coVerify(exactly = 0) { eventCoordinator.setIcsSubscriptionEnabled(any(), any()) }
+
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.setIcsSubscriptionEnabled(1L, false) }
+    }
+
+    @Test
+    fun `onUpdateSubscription runs on applicationScope so it survives ViewModel destruction`() = runTest {
+        // The interval change is the one that most needs to survive: the user
+        // picks "Every hour" and immediately backs out of the sheet.
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onUpdateSubscription(
+            subscriptionId = 1L,
+            name = "Renamed",
+            color = 0xFF00FF00.toInt(),
+            syncIntervalHours = 1,
+        )
+        advanceUntilIdle()
+        coVerify(exactly = 0) {
+            eventCoordinator.updateIcsSubscriptionSettings(any(), any(), any(), any())
+        }
+
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) {
+            eventCoordinator.updateIcsSubscriptionSettings(1L, "Renamed", 0xFF00FF00.toInt(), 1)
+        }
     }
 
     // ==================== ICS Subscription delete-with-undo (issue #133) ====================
@@ -1558,6 +1588,8 @@ class AccountSettingsViewModelTest {
 
         viewModel.onToggleSubscription(subscriptionId = 1L, enabled = true)
         advanceUntilIdle()
+        // Feed mutations run on applicationScope; drain its scheduler to observe.
+        appDispatcher.scheduler.advanceUntilIdle()
 
         coVerify { eventCoordinator.setIcsSubscriptionEnabled(1L, true) }
     }
@@ -1571,6 +1603,7 @@ class AccountSettingsViewModelTest {
 
         viewModel.onToggleSubscription(subscriptionId = 1L, enabled = false)
         advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
 
         coVerify { eventCoordinator.setIcsSubscriptionEnabled(1L, false) }
     }
@@ -1681,6 +1714,8 @@ class AccountSettingsViewModelTest {
             syncIntervalHours = 12
         )
         advanceUntilIdle()
+        // Feed mutations run on applicationScope; drain its scheduler to observe.
+        appDispatcher.scheduler.advanceUntilIdle()
 
         coVerify {
             eventCoordinator.updateIcsSubscriptionSettings(

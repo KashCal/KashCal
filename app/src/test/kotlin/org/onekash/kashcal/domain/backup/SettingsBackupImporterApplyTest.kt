@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -27,6 +28,7 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 
 /**
  * Unit tests for SettingsBackupImporter.applyBackup.
@@ -44,6 +46,7 @@ class SettingsBackupImporterApplyTest {
     private lateinit var dataStore: DataStore<Preferences>
     private lateinit var kashcalDataStore: KashCalDataStore
     private lateinit var importer: SettingsBackupImporter
+    private lateinit var icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler
     private lateinit var currentPrefs: MutablePreferences
 
     @Before
@@ -71,6 +74,9 @@ class SettingsBackupImporterApplyTest {
             newPrefs
         }
 
+        // Unit-returning side-effect collaborator, so relaxed is safe here.
+        icsRefreshScheduleReconciler = mockk(relaxed = true)
+
         importer = SettingsBackupImporter(
             database = database,
             dataStore = kashcalDataStore,
@@ -78,6 +84,7 @@ class SettingsBackupImporterApplyTest {
             calendarRepository = calendarRepository,
             icsSubscriptionsDao = icsSubscriptionsDao,
             categoryDao = mockk(relaxed = true),
+            icsRefreshScheduleReconciler = icsRefreshScheduleReconciler,
             context = io.mockk.mockk(relaxed = true),
         )
     }
@@ -92,6 +99,59 @@ class SettingsBackupImporterApplyTest {
         preferences = prefs,
         subscriptions = subs,
     )
+
+    @Test
+    fun `restoring subscriptions arms the periodic refresh after the transaction`() = runBlocking {
+        // Restore-to-a-new-device used to leave feeds that never refreshed: rows
+        // were inserted and nothing ever scheduled. Reconciling must happen
+        // outside the transaction — a suspending scheduler call inside a Room
+        // transaction can hop threads and deadlock it.
+        coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICS, any()) } returns null
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 77L
+        coEvery { calendarRepository.createCalendar(any()) } returns 88L
+        coEvery { icsSubscriptionsDao.insert(any()) } returns 90L
+
+        // Count reconciles ourselves and snapshot the count at the moment the
+        // transaction block returns. `coVerifyOrder` alone cannot prove
+        // "after the transaction": MockK records the `runInTransaction` call
+        // before its answer runs, so a reconcile invoked *inside* the block
+        // still records second and the ordered verification passes.
+        var reconcileCalls = 0
+        var reconcilesAtTransactionExit = -1
+        coEvery { icsRefreshScheduleReconciler.reconcile() } coAnswers { reconcileCalls++; Unit }
+        coEvery { database.runInTransaction<Unit>(any<suspend () -> Unit>()) } coAnswers {
+            firstArg<suspend () -> Unit>().invoke()
+            reconcilesAtTransactionExit = reconcileCalls
+        }
+
+        importer.applyBackup(envelope(subs = listOf(
+            BackupSubscription(
+                url = "https://feed/restored.ics",
+                name = "Restored",
+                color = 0x333,
+                syncIntervalHours = 1,
+                enabled = true,
+            )
+        )))
+
+        assertEquals(
+            "Reconcile must not run inside the Room transaction",
+            0,
+            reconcilesAtTransactionExit,
+        )
+        assertEquals("Reconcile must run once, after the transaction", 1, reconcileCalls)
+    }
+
+    @Test
+    fun `restoring a backup with no subscriptions does not touch the refresh schedule`() = runBlocking {
+        importer.applyBackup(envelope(prefs = mapOf(
+            PreferencesKeys.SHOW_WEEK_NUMBERS.name to BackupPreferenceValue.BoolPref(true),
+        )))
+
+        coVerify(exactly = 0) { icsRefreshScheduleReconciler.reconcile() }
+    }
 
     @Test
     fun `subscription match preserves runtime state and calendarId`() = runBlocking {
@@ -139,6 +199,66 @@ class SettingsBackupImporterApplyTest {
         assertEquals(6, r.syncIntervalHours)
         assertFalse(r.enabled)
         assertEquals("newuser", r.username)
+    }
+
+    @Test
+    fun `a new subscription's interval is floored at the minimum refresh period`() = runBlocking {
+        // Nothing validates the interval inside a backup file. A 0 makes
+        // IcsSubscription.isDueForSync() unconditionally true, so the feed would be
+        // re-fetched on every wake of the shared refresh job.
+        coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.ICS, any())
+        } returns Account(id = 5, provider = AccountProvider.ICS, email = "subscriptions")
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 88L
+        val inserted = slot<IcsSubscription>()
+        coEvery { icsSubscriptionsDao.insert(capture(inserted)) } returns 90L
+
+        importer.applyBackup(envelope(subs = listOf(
+            BackupSubscription(
+                url = "https://feed/zero.ics",
+                name = "F",
+                color = 0,
+                syncIntervalHours = 0,
+                enabled = true,
+            )
+        )))
+
+        assertEquals(
+            IcsSubscription.MIN_SYNC_INTERVAL_HOURS,
+            inserted.captured.syncIntervalHours,
+        )
+    }
+
+    @Test
+    fun `an existing subscription's interval is floored at the minimum refresh period`() = runBlocking {
+        val existing = IcsSubscription(
+            id = 8,
+            url = "https://feed/zero.ics",
+            name = "F",
+            color = 0,
+            calendarId = 44,
+            syncIntervalHours = 6,
+        )
+        coEvery { icsSubscriptionsDao.getByUrl("https://feed/zero.ics") } returns existing
+        val updated = slot<IcsSubscription>()
+        coEvery { icsSubscriptionsDao.update(capture(updated)) } coAnswers { }
+
+        importer.applyBackup(envelope(subs = listOf(
+            BackupSubscription(
+                url = "https://feed/zero.ics",
+                name = "F",
+                color = 0,
+                syncIntervalHours = 0,
+                enabled = true,
+            )
+        )))
+
+        assertEquals(
+            IcsSubscription.MIN_SYNC_INTERVAL_HOURS,
+            updated.captured.syncIntervalHours,
+        )
     }
 
     @Test

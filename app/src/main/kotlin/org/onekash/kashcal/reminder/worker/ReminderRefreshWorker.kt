@@ -14,6 +14,7 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
@@ -52,6 +53,9 @@ class ReminderRefreshWorker @AssistedInject constructor(
 
         // Run once per day
         const val REFRESH_INTERVAL_HOURS = 24L
+
+        // Attempts before a run gives up and leaves the next period to try again
+        private const val MAX_RETRY_ATTEMPTS = 3
 
         // Migration versions
         // v1: Timezone fix - recalculate all-day reminder trigger times
@@ -126,6 +130,8 @@ class ReminderRefreshWorker @AssistedInject constructor(
             // Cleanup is best-effort - don't fail job if it throws
             try {
                 reminderScheduler.cleanupOldReminders()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Cleanup failed, continuing", e)
             }
@@ -134,19 +140,37 @@ class ReminderRefreshWorker @AssistedInject constructor(
             try {
                 deviceCalendarReminderScheduler.scheduleNextReminder()
                 Log.d(TAG, "Device calendar reminder scheduled")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w(TAG, "Device calendar reminder scheduling failed, continuing", e)
             }
 
             Log.i(TAG, "Reminder refresh complete: $scheduled new Room reminders scheduled")
             Result.success()
+        } catch (e: CancellationException) {
+            // A stopped worker must stay stopped. Reporting retry or success for a
+            // cancellation logs a scan failure that never happened.
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Reminder refresh failed", e)
 
-            if (runAttemptCount < 3) {
+            if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
                 Result.retry()
             } else {
-                Result.failure()
+                // Never end in failure. Failure is terminal for a periodic work spec:
+                // WorkManager stops scheduling it and only re-arming with KEEP revives
+                // it, so one stretch of bad runs would stop the reminder scan until the
+                // next app start. The next period is the retry.
+                //
+                // This applies to the boot and timezone one-shots from `runNow` too,
+                // even though failure would be the honest answer there, because no
+                // caller reads this worker's result. Telling the periodic run apart by
+                // tag — what the sync workers do — would be worse: `schedule` arms with
+                // KEEP, so a tag added now never reaches a spec that is already
+                // enqueued, and the installs still carrying an untagged one are exactly
+                // the ones this protects.
+                Result.success()
             }
         }
     }

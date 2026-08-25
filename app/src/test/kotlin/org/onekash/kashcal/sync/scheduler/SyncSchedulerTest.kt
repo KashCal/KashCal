@@ -361,6 +361,10 @@ class SyncSchedulerTest {
         val workInfo = workManager.getWorkInfoById(workId).get()
         assertNotNull(workInfo)
         assertTrue(workInfo?.tags?.contains("calendar_$calendarId") == true)
+        // The workers read this tag to decide whether ending a run in failure is
+        // safe, so it must never leak onto a one-shot: the screen that asked for
+        // this sync would show a green "Synced" over a real error.
+        assertFalse(workInfo?.tags?.contains(SyncScheduler.TAG_PERIODIC) == true)
     }
 
     @Test
@@ -402,6 +406,9 @@ class SyncSchedulerTest {
         val workInfo = workManager.getWorkInfoById(workId).get()
         assertNotNull(workInfo)
         assertTrue(workInfo?.tags?.contains("account_$accountId") == true)
+        // This is the request whose Failed state drives the account sheet's sync
+        // result, so a stray periodic tag here would silently mask a failure.
+        assertFalse(workInfo?.tags?.contains(SyncScheduler.TAG_PERIODIC) == true)
     }
 
     @Test

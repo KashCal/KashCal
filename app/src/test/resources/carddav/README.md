@@ -5,7 +5,9 @@ empirically-observed normalization behavior of real servers. **All data here is
 synthetic** — names, emails (`@example.test`), and phone numbers are fabricated;
 no real account data is stored in this tree.
 
-See `docs/CONTACT_SYNC_IMPLEMENTATION_PLAN.md` for the design these back.
+These back the CardDAV contact-sync mapper and pull path: the fixtures below pin the
+vCard→ContactsContract mapping, and the server-behavior notes at the bottom pin the
+wire quirks that path must survive.
 
 ## Fixtures (`fixtures/`)
 
