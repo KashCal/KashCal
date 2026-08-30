@@ -211,6 +211,42 @@ class CalDavSyncWorkerTest {
         verify { notificationManager.createForegroundInfo(any(), null) }
     }
 
+    // ==================== Foreground-notification gate ====================
+
+    @Test
+    fun `silent sync does not post foreground progress notification but still completes`() = runTest {
+        // A silent app-open/resume/periodic sync (showNotification=false, the default
+        // for every non-force enqueue) must NOT surface the OS "Syncing…" foreground
+        // notification for an action the user didn't initiate.
+        val inputData = CalDavSyncWorker.createFullSyncInput(showNotification = false)
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(createTestAccount())
+        coEvery { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 1, durationMs = 100)
+
+        val result = worker.doWork()
+
+        assertTrue(result is ListenableWorker.Result.Success)
+        verify(exactly = 0) { notificationManager.createForegroundInfo(any(), any()) }
+    }
+
+    @Test
+    fun `user-initiated sync posts foreground progress notification`() = runTest {
+        // A force-full-sync opts in (showNotification=true) and does surface the
+        // progress foreground notification.
+        val inputData = CalDavSyncWorker.createFullSyncInput(showNotification = true)
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(createTestAccount())
+        coEvery { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 1, durationMs = 100)
+
+        worker.doWork()
+
+        verify { notificationManager.createForegroundInfo(any(), any()) }
+    }
+
     // ==================== Full Sync Tests ====================
 
     @Test
@@ -704,6 +740,18 @@ class CalDavSyncWorkerTest {
         // Then
         assertEquals(CalDavSyncWorker.SYNC_TYPE_FULL, data.getString(CalDavSyncWorker.KEY_SYNC_TYPE))
         assertTrue(data.getBoolean(CalDavSyncWorker.KEY_FORCE_FULL_SYNC, false))
+    }
+
+    @Test
+    fun `createFullSyncInput threads showNotification into input data`() {
+        assertTrue(
+            CalDavSyncWorker.createFullSyncInput(showNotification = true)
+                .getBoolean(CalDavSyncWorker.KEY_SHOW_NOTIFICATION, false)
+        )
+        assertFalse(
+            CalDavSyncWorker.createFullSyncInput()
+                .getBoolean(CalDavSyncWorker.KEY_SHOW_NOTIFICATION, true)
+        )
     }
 
     @Test

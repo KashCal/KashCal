@@ -102,8 +102,16 @@ data class HomeUiState(
     val hiddenDeviceCalendarIds: PersistentSet<Long> = persistentSetOf(),
 
     // === SYNC STATE ===
-    /** Is sync currently in progress */
+    /** Is sync currently in progress (duplicate-sync guard only; NOT a UI signal). */
     val isSyncing: Boolean = false,
+    /**
+     * Whether the pull-to-refresh spinner should be shown. Set true only for an
+     * in-session, user-initiated pull-to-refresh that is still running; cleared on
+     * every terminal sync status. Deliberately separate from [isSyncing] so a
+     * persisted/replayed WorkManager status on a fresh process can never resurrect
+     * the spinner (that was the offline "stuck spinner" bug).
+     */
+    val showRefreshSpinner: Boolean = false,
     /** Message describing current sync state */
     val syncMessage: String? = null,
     /** Has any sync-capable account with credentials (iCloud or CalDAV) */

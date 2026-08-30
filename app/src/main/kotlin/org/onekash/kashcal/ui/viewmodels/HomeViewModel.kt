@@ -678,10 +678,6 @@ class HomeViewModel(
     // Track current loaded date range to avoid redundant loads
     private var currentLoadedRange: Pair<LocalDate, LocalDate>? = null
 
-    // Suppress sync indicator for silent syncs (cold start, resume, force full sync with banner)
-    // Only pull-to-refresh shows the spinning icon since it's user-initiated
-    private var suppressSyncIndicator = false
-
     // Null until the first resume, so the first resume is record-only —
     // we only snap when we have a prior dayCode to compare against.
     private var lastResumeDayCode: Int? = null
@@ -856,9 +852,8 @@ class HomeViewModel(
             if (_uiState.value.isConfigured && !hasTriggeredStartupSync) {
                 // First sync after account setup - show banner for user feedback
                 hasTriggeredStartupSync = true
-                suppressSyncIndicator = true  // Has banner - no spinning icon needed
                 syncScheduler.setShowBannerForSync(true)  // Initial setup - user expects confirmation
-                Log.d(TAG, "refreshAccountStatus: First sync after account setup (with banner, no icon)")
+                Log.d(TAG, "refreshAccountStatus: First sync after account setup (with banner)")
                 performSync()
             }
 
@@ -883,9 +878,8 @@ class HomeViewModel(
             return
         }
         hasTriggeredStartupSync = true
-        suppressSyncIndicator = true  // Silent cold start - no spinning icon
         syncScheduler.setShowBannerForSync(false)
-        Log.d(TAG, "triggerStartupSync: Starting sync (silent, no icon)")
+        Log.d(TAG, "triggerStartupSync: Starting sync (silent)")
         performSync(SyncTrigger.FOREGROUND_APP_OPEN)
     }
 
@@ -906,11 +900,14 @@ class HomeViewModel(
                 Log.d(TAG, "Sync status changed: $status (showBanner=$showBanner)")
                 when (status) {
                     is SyncStatus.Running, is SyncStatus.Enqueued -> {
-                        // Only show icon if not suppressed (only pull-to-refresh shows icon)
-                        // Only show banner if flag is set (force sync, iCloud setup)
+                        // isSyncing is the duplicate-sync guard, set true whenever work is
+                        // live. It is NOT the spinner: the spinner (showRefreshSpinner) is
+                        // driven solely by an in-session pull-to-refresh, so a persisted/
+                        // replayed status on a fresh process never resurfaces it.
+                        // Banner shows only when the flag is set (force sync, iCloud setup).
                         _uiState.update {
                             it.copy(
-                                isSyncing = !suppressSyncIndicator,
+                                isSyncing = true,
                                 showSyncBanner = showBanner,
                                 syncBannerState = if (status is SyncStatus.Running)
                                     SyncBannerState.Syncing else SyncBannerState.Preparing,
@@ -919,12 +916,12 @@ class HomeViewModel(
                         }
                     }
                     is SyncStatus.Succeeded -> {
-                        suppressSyncIndicator = false  // Reset flag for next sync
                         occurrenceRepairDone = false
                         val hasPartialError = status.errorMessage != null
                         _uiState.update {
                             it.copy(
                                 isSyncing = false,
+                                showRefreshSpinner = false,
                                 showSyncBanner = showBanner || hasPartialError,
                                 syncBannerState = if (hasPartialError)
                                     SyncBannerState.PartialError else SyncBannerState.Success,
@@ -941,26 +938,50 @@ class HomeViewModel(
                         }
                     }
                     is SyncStatus.Failed -> {
-                        suppressSyncIndicator = false  // Reset flag for next sync
-                        // Always show errors regardless of flag
-                        _uiState.update {
-                            it.copy(
-                                isSyncing = false,
-                                showSyncBanner = true,
-                                syncBannerState = SyncBannerState.Error,
-                                syncErrorDetail = status.errorMessage
-                            )
+                        val wasPull = _uiState.value.showRefreshSpinner
+                        if (wasPull) {
+                            // A user-initiated pull-to-refresh failed: surface the error via
+                            // the normal error channel, no banner (the pull owns feedback).
+                            _uiState.update {
+                                it.copy(
+                                    isSyncing = false,
+                                    showRefreshSpinner = false,
+                                    showSyncBanner = false,
+                                    syncBannerState = SyncBannerState.Syncing,
+                                    syncErrorDetail = null
+                                )
+                            }
+                            // Clear any banner intent so a stale flag (e.g. set by a
+                            // concurrent force-sync on another screen) can't leak a banner
+                            // into the next silent startup/resume sync.
+                            syncScheduler.resetBannerFlag()
+                            showError(CalendarError.Unknown(status.errorMessage ?: "Sync failed"))
+                        } else {
+                            // Banner only for syncs the user asked for (force sync / first
+                            // setup set showBannerForSync). A silent background/startup failure
+                            // stays silent — no banner surfaces on a normal app open.
+                            _uiState.update {
+                                it.copy(
+                                    isSyncing = false,
+                                    showRefreshSpinner = false,
+                                    showSyncBanner = showBanner,
+                                    syncBannerState = SyncBannerState.Error,
+                                    syncErrorDetail = status.errorMessage
+                                )
+                            }
+                            if (showBanner) {
+                                // Auto-dismiss after 3 seconds
+                                delay(3000)
+                                _uiState.update { it.copy(showSyncBanner = false) }
+                                syncScheduler.resetBannerFlag()
+                            }
                         }
-                        // Auto-dismiss after 3 seconds
-                        delay(3000)
-                        _uiState.update { it.copy(showSyncBanner = false) }
-                        syncScheduler.resetBannerFlag()
                     }
                     is SyncStatus.Idle, is SyncStatus.Cancelled, is SyncStatus.Blocked -> {
-                        suppressSyncIndicator = false  // Reset flag for next sync
                         _uiState.update {
                             it.copy(
                                 showSyncBanner = false,
+                                showRefreshSpinner = false,
                                 isSyncing = false,
                                 syncBannerState = SyncBannerState.Syncing  // Reset to avoid stale Error flash
                             )
@@ -1108,9 +1129,10 @@ class HomeViewModel(
             showError(CalendarError.Network.Offline)
             return
         }
-        suppressSyncIndicator = false  // User-initiated - show spinning icon
+        // User-initiated pull-to-refresh is the only path that shows the spinner.
+        _uiState.update { it.copy(showRefreshSpinner = true) }
         syncScheduler.setShowBannerForSync(false)
-        Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
+        Log.d(TAG, "Pull-to-refresh: starting sync (with spinner)")
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
         // Pull-to-refresh also refreshes CardDAV contacts; the worker self-guards to
         // contact-sync-enabled accounts, so an unconditional sweep here is cheap and safe.
@@ -1125,16 +1147,19 @@ class HomeViewModel(
             Log.d(TAG, "Sync already in progress, ignoring force sync")
             return
         }
-        suppressSyncIndicator = true  // Has banner - no spinning icon needed
         syncScheduler.setShowBannerForSync(true)
-        Log.d(TAG, "Force full sync requested (with banner, no icon)")
+        Log.d(TAG, "Force full sync requested (with banner)")
 
         // Clear parse failure retry state - force sync gives a fresh start (v16.7.0)
         viewModelScope.launch {
             dataStore.clearAllParseFailureRetries()
         }
 
-        syncScheduler.requestImmediateSync(forceFullSync = true, trigger = SyncTrigger.FOREGROUND_MANUAL)
+        syncScheduler.requestImmediateSync(
+            forceFullSync = true,
+            trigger = SyncTrigger.FOREGROUND_MANUAL,
+            showNotification = true
+        )
     }
 
     /**
@@ -1156,7 +1181,6 @@ class HomeViewModel(
             return
         }
         Log.d(TAG, "syncOnResumeIfNeeded: Triggering sync on app resume")
-        suppressSyncIndicator = true  // Silent sync - no spinning icon
         syncScheduler.setShowBannerForSync(false)
         performSync(SyncTrigger.FOREGROUND_APP_OPEN)
     }
@@ -1175,15 +1199,24 @@ class HomeViewModel(
             Log.d(TAG, "performSync: Not configured, skipping")
             return
         }
+        // A sync is already live; a second enqueue here would REPLACE it and, worse,
+        // could attach an in-flight pull's spinner to a different silent sync (its
+        // failure would then be misread as a pull failure). Every other caller already
+        // guards on isSyncing; guard here too so no path can double-enqueue.
+        if (_uiState.value.isSyncing) {
+            Log.d(TAG, "performSync: Sync already in progress, skipping")
+            return
+        }
 
-        // Set isSyncing immediately to prevent duplicate sync requests (race condition guard)
-        // This closes the window between performSync() and observeSyncStatus() receiving Running status
-        // The UI indicator is controlled separately by observeSyncStatus() using suppressSyncIndicator
+        // Set isSyncing immediately to prevent duplicate sync requests (race condition guard).
+        // This closes the window between performSync() and observeSyncStatus() receiving Running
+        // status. The visible spinner (showRefreshSpinner) is controlled separately — only a
+        // pull-to-refresh sets it — so this guard never surfaces UI on its own.
         _uiState.update { it.copy(isSyncing = true) }
 
         // Request sync - observeSyncStatus() handles all other state updates
         // including calling reloadCurrentView() when sync succeeds
-        Log.d(TAG, "performSync: Requesting immediate sync (trigger=${trigger.name}, showIcon=${!suppressSyncIndicator})")
+        Log.d(TAG, "performSync: Requesting immediate sync (trigger=${trigger.name})")
         syncScheduler.requestImmediateSync(trigger = trigger)
     }
 

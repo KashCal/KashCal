@@ -338,15 +338,19 @@ class SyncScheduler @Inject constructor(
      *
      * @param forceFullSync If true, ignores ctag/sync-token
      * @param trigger The trigger source for sync history tracking
+     * @param showNotification If true, the worker posts user-visible sync notifications
+     *   (progress/completion/error). Only user-initiated force syncs opt in; silent
+     *   app-open/resume syncs leave this false so no notification surfaces.
      * @return UUID of the work request for status tracking
      */
     fun requestImmediateSync(
         forceFullSync: Boolean = false,
-        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
+        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL,
+        showNotification: Boolean = false
     ): java.util.UUID {
         Log.i(TAG, "Requesting immediate sync (force=$forceFullSync, trigger=${trigger.name})")
 
-        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync, trigger = trigger)
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync, showNotification, trigger)
 
         val oneShotWork = OneTimeWorkRequestBuilder<CalDavSyncWorker>()
             .setInputData(inputData)

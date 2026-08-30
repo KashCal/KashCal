@@ -199,11 +199,16 @@ class PostRefactorVerificationTest {
         // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify order
-        assertEquals(
-            listOf("workManager", "reminderScheduler", "pendingOps", "credentials", "cascade"),
-            callOrder
-        )
+        // Verify RELATIVE ordering of the cleanup phases. WorkManager cancellation
+        // runs first (multiple cancels: the per-account job plus the shared
+        // one-shot/expedited jobs), then reminders, pending ops, credentials, and
+        // finally the cascade delete. (A further WorkManager cancel for the shared
+        // periodic jobs trails the cascade — it's decided from the post-delete
+        // account set — so exact list equality no longer holds.)
+        assertTrue(callOrder.indexOf("workManager") < callOrder.indexOf("reminderScheduler"))
+        assertTrue(callOrder.indexOf("reminderScheduler") < callOrder.indexOf("pendingOps"))
+        assertTrue(callOrder.indexOf("pendingOps") < callOrder.indexOf("credentials"))
+        assertTrue(callOrder.indexOf("credentials") < callOrder.indexOf("cascade"))
     }
 
     // ========== ✅ PHASE 7: Discovery Service Migration ==========

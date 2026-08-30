@@ -629,7 +629,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .pullToRefresh(
-                        isRefreshing = uiState.isSyncing,
+                        isRefreshing = uiState.showRefreshSpinner,
                         state = pullToRefreshState,
                         enabled = canPullToRefresh,
                         onRefresh = onRefresh
@@ -1103,11 +1103,16 @@ fun HomeScreen(
                         }
                     }
                 }
-                PullToRefreshDefaults.Indicator(
-                    state = pullToRefreshState,
-                    isRefreshing = uiState.isSyncing,
-                    modifier = Modifier.align(Alignment.TopCenter)
-                )
+                // Defense-in-depth: a device-calendar-only user (isConfigured == false)
+                // structurally never renders the pull-to-refresh indicator, so a replayed
+                // sync status can't surface a spinner for them.
+                if (uiState.isConfigured) {
+                    PullToRefreshDefaults.Indicator(
+                        state = pullToRefreshState,
+                        isRefreshing = uiState.showRefreshSpinner,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                }
             }
         }
     }

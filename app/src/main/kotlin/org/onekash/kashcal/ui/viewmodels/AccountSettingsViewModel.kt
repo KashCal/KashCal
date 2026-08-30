@@ -1033,12 +1033,10 @@ class AccountSettingsViewModel @Inject constructor(
             val account = icloudAccounts.firstOrNull()
             val accountEmail = account?.email
 
-            // Cancel scheduled syncs
-            syncScheduler.cancelPeriodicSync()
-
             // Remove Account, Calendar, and Event entities from Room
             // AccountRepository.deleteAccount() handles:
-            // - WorkManager job cancellation
+            // - WorkManager job cancellation (per-account AND shared one-shot;
+            //   plus periodic work once the last syncable account is gone)
             // - Reminder cancellation
             // - Credentials deletion
             // - Cascade delete account → calendars → events
@@ -2070,7 +2068,7 @@ class AccountSettingsViewModel @Inject constructor(
      */
     fun forceFullSync() {
         syncScheduler.setShowBannerForSync(true)  // Show banner on HomeScreen
-        syncScheduler.requestImmediateSync(forceFullSync = true)
+        syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
     }
 
     // ==================== Reminder Settings ====================

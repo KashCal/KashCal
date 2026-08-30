@@ -47,6 +47,7 @@ import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
@@ -1451,7 +1452,8 @@ class HomeViewModelTest {
         viewModel.forceFullSync()
         advanceUntilIdle()
 
-        verify { syncScheduler.requestImmediateSync(forceFullSync = true) }
+        // Force sync is user-initiated, so it opts into the visible sync notifications.
+        verify { syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true) }
     }
 
     @Test
@@ -1675,8 +1677,133 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
-        // Force Full Sync shows banner but NOT the spinning icon (suppressSyncIndicator = true)
-        assertFalse(viewModel.uiState.value.isSyncing)
+        // Force full sync shows the banner, not the pull-to-refresh spinner.
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+    }
+
+    @Test
+    fun `passive Enqueued replay shows no spinner and no banner`() = runTest {
+        // Reproduces #356: a fresh process replays the persisted ENQUEUED one_shot_sync
+        // (stuck offline) with NO in-session user action. The spinner must stay hidden
+        // and no banner appears — the spinner is only ever driven by a live pull.
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Enqueued
+        advanceUntilIdle()
+
+        assertFalse("Replayed Enqueued must not show the spinner", viewModel.uiState.value.showRefreshSpinner)
+        assertFalse("Replayed Enqueued must not show a banner", viewModel.uiState.value.showSyncBanner)
+    }
+
+    @Test
+    fun `passive Running on cold start shows no spinner and no banner`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+        assertFalse(viewModel.uiState.value.showSyncBanner)
+    }
+
+    @Test
+    fun `startup sync guard keeps isSyncing true while spinner stays false`() = runTest {
+        // The isSyncing duplicate-guard and the visible spinner are distinct: a silent
+        // startup sync marks the guard but never the spinner (pins the #356 fix so the
+        // two roles can't be reconflated later).
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.triggerStartupSync()   // performSync sets the isSyncing guard
+        syncStatusFlow.value = SyncStatus.Enqueued
+        advanceUntilIdle()
+
+        assertTrue("Guard is set while work is live", viewModel.uiState.value.isSyncing)
+        assertFalse("Silent startup never shows the spinner", viewModel.uiState.value.showRefreshSpinner)
+
+        // A concurrent pull-to-refresh is blocked by the guard, so it can't start a spinner.
+        viewModel.refreshSync()
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+    }
+
+    @Test
+    fun `startup sync cannot re-enqueue over an in-flight pull and steal its spinner`() = runTest {
+        // A pull-to-refresh is in flight (isSyncing guard set, spinner showing). If a
+        // startup sync could REPLACE-enqueue a silent sync on top, that silent sync's
+        // later failure would be misread as a pull failure (wasPull reads the spinner).
+        // performSync guards on isSyncing, so triggerStartupSync is a no-op here.
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        networkStateFlow.value = true
+
+        viewModel.refreshSync()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showRefreshSpinner)
+
+        // Startup sync fires while the pull is still live: it must NOT enqueue a
+        // second (silent app-open) sync over the pull.
+        viewModel.triggerStartupSync()
+        advanceUntilIdle()
+
+        verify(exactly = 1) { syncScheduler.requestImmediateSync(trigger = SyncTrigger.FOREGROUND_PULL_TO_REFRESH) }
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(trigger = SyncTrigger.FOREGROUND_APP_OPEN) }
+    }
+
+    @Test
+    fun `pull-to-refresh shows spinner while running and clears on success`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        networkStateFlow.value = true
+
+        viewModel.refreshSync()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        assertTrue("Spinner shows during an in-session pull", viewModel.uiState.value.showRefreshSpinner)
+
+        syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 1, eventsPulled = 1)
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        assertFalse("Spinner clears on terminal status", viewModel.uiState.value.showRefreshSpinner)
+    }
+
+    @Test
+    fun `first-sync-after-account-setup shows the banner`() = runTest {
+        // refreshAccountStatus() is the first-setup path: it opts into the banner via
+        // showBannerForSync even though it is not a pull-to-refresh.
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshAccountStatus()
+        advanceUntilIdle()   // let checkAccountStatus + setShowBannerForSync + performSync run
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        assertTrue("First setup sync shows the banner", viewModel.uiState.value.showSyncBanner)
+        assertFalse("First setup sync is not a pull, so no spinner", viewModel.uiState.value.showRefreshSpinner)
     }
 
     @Test
@@ -1750,21 +1877,75 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `sync failure always shows banner regardless of sync type`() = runTest {
+    fun `pull-to-refresh failure surfaces error without a banner`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Use refreshSync which sets showBannerForCurrentSync = false
+        // Pull-to-refresh sets showBannerForSync = false and shows the spinner.
         viewModel.refreshSync()
 
-        // Emit status changes immediately
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // Errors should ALWAYS show banner
+        syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // A user-initiated pull owns its own feedback: no banner, but the error is
+        // still surfaced (not swallowed), and the spinner is cleared.
+        assertFalse(viewModel.uiState.value.showSyncBanner)
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+        assertNotNull(
+            "Pull-to-refresh failure must surface an error to the user",
+            viewModel.uiState.value.currentError
+        )
+        assertFalse(viewModel.uiState.value.isSyncing)
+    }
+
+    @Test
+    fun `pull-to-refresh failure clears a stale banner flag so it cannot leak into a later silent sync`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Pull-to-refresh sets showBannerForSync = false and shows the spinner.
+        viewModel.refreshSync()
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        // Simulate a concurrent force-sync (e.g. from Settings) flipping the shared
+        // banner flag to true while the pull is still in flight.
+        syncScheduler.setShowBannerForSync(true)
+
+        syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // The pull-failed path must clear the flag so the next silent startup/resume
+        // sync does not surface a banner off the stale intent.
+        verify { syncScheduler.resetBannerFlag() }
+        assertFalse(bannerFlagFlow.value)
+    }
+
+    @Test
+    fun `force-sync failure still shows the error banner`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Force sync sets showBannerForSync = true.
+        viewModel.forceFullSync()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
         // Don't use advanceUntilIdle() - it would advance past the 3s auto-dismiss delay
         testScheduler.advanceTimeBy(100)
@@ -1774,6 +1955,30 @@ class HomeViewModelTest {
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
         assertEquals("Network error", viewModel.uiState.value.syncErrorDetail)
+        assertFalse(viewModel.uiState.value.isSyncing)
+    }
+
+    @Test
+    fun `background startup failure stays silent (no banner, no spinner)`() = runTest {
+        // Reproduces the #356 eagerness: a startup/resume sync (no user action,
+        // showBannerForSync=false) that fails must NOT surface a banner on a normal
+        // app open, and must never show the spinner.
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // No user action: showBannerForSync stays false.
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        assertFalse(viewModel.uiState.value.showSyncBanner)
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
@@ -2998,11 +3203,12 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isSyncing)
         assertFalse(viewModel.uiState.value.showSyncBanner)
 
-        // Start force sync (shows banner but NOT spinning icon)
+        // Start force sync (shows banner, not the pull-to-refresh spinner)
         viewModel.forceFullSync()
 
-        // Force Full Sync uses suppressSyncIndicator=true, so isSyncing stays false
+        // Force sync does not run performSync, so the guard stays false until work starts.
         assertFalse(viewModel.uiState.value.isSyncing)
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
 
         // Simulate WorkManager emitting Enqueued (immediately to avoid Idle processing)
         syncStatusFlow.value = SyncStatus.Enqueued
@@ -3017,8 +3223,9 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
-        // Force Full Sync shows banner but NOT spinning icon (suppressSyncIndicator = true)
-        assertFalse(viewModel.uiState.value.isSyncing)
+        // Force full sync shows the banner, not the pull-to-refresh spinner. isSyncing is the
+        // duplicate-sync guard and is true while work runs (it is not a visible signal).
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
 
         // Simulate WorkManager emitting Succeeded
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 10)
@@ -3098,8 +3305,11 @@ class HomeViewModelTest {
 
         // isSyncing should be false after failure
         assertFalse(viewModel.uiState.value.isSyncing)
-        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
-        assertEquals("Network error", viewModel.uiState.value.syncErrorDetail)
+        // This was a pull-to-refresh failure: it surfaces the error via the error channel
+        // (not a banner), and clears the spinner.
+        assertFalse(viewModel.uiState.value.showRefreshSpinner)
+        assertFalse(viewModel.uiState.value.showSyncBanner)
+        assertNotNull(viewModel.uiState.value.currentError)
 
         // Should be able to start another sync now
         viewModel.refreshSync()

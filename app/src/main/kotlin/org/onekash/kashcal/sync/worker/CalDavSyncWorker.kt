@@ -184,16 +184,20 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         Log.i(TAG, "Starting sync: type=$syncType, force=$forceFullSync, trigger=${trigger.name}, attempt=${runAttemptCount + 1}")
 
-        // Set foreground for expedited work (shows progress notification)
-        try {
-            val foregroundInfo = notificationManager.createForegroundInfo(
-                progress = applicationContext.getString(R.string.sync_banner_syncing),
-                cancelIntent = createCancelPendingIntent()
-            )
-            setForeground(foregroundInfo)
-        } catch (e: Exception) {
-            // setForeground may fail if work is not expedited, that's OK
-            Log.d(TAG, "Could not set foreground (non-expedited work): ${e.message}")
+        // Set foreground (shows the OS progress notification) only when this sync
+        // is meant to be user-visible. Silent syncs (app-open/resume/periodic) must
+        // not post a "Syncing…" notification for an action the user didn't initiate.
+        if (showNotification) {
+            try {
+                val foregroundInfo = notificationManager.createForegroundInfo(
+                    progress = applicationContext.getString(R.string.sync_banner_syncing),
+                    cancelIntent = createCancelPendingIntent()
+                )
+                setForeground(foregroundInfo)
+            } catch (e: Exception) {
+                // setForeground may fail if work is not expedited, that's OK
+                Log.d(TAG, "Could not set foreground (non-expedited work): ${e.message}")
+            }
         }
 
         try {

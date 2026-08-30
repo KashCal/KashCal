@@ -1,0 +1,2 @@
+• Sync: no more stuck refresh spinner, status banner, or "Syncing…" notification on app open for offline or device-calendar-only users (#356)
+• Sync: the refresh spinner no longer survives an app restart or phone reboot when no account is set up (#356)

@@ -781,7 +781,12 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `onSignOut cancels periodic sync`() = runTest {
+    fun `onSignOut delegates removal and does not cancel periodic sync itself`() = runTest {
+        // Periodic sync is shared across accounts, so sign-out must NOT cancel it
+        // unconditionally — that decision (cancel only when the LAST syncable
+        // account is gone) belongs to account removal (deleteAccount), reached
+        // here via removeAccountByEmail. An unconditional cancel here would kill
+        // periodic sync for other accounts that remain.
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
         coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
 
@@ -791,7 +796,26 @@ class AccountSettingsViewModelTest {
         viewModel.onSignOut()
         advanceUntilIdle()
 
-        verify { syncScheduler.cancelPeriodicSync() }
+        coVerify { discoveryService.removeAccountByEmail(testDbAccount.email) }
+        verify(exactly = 0) { syncScheduler.cancelPeriodicSync() }
+    }
+
+    @Test
+    fun `onCalDavSignOut delegates removal so orphaned sync work is cancelled by deleteAccount`() = runTest {
+        // The CalDAV sign-out path funnels through calDavDiscoveryService.removeAccount,
+        // which delegates to AccountRepository.deleteAccount — the single choke point
+        // that cancels the shared one-shot (and last-account periodic) sync work. The
+        // ViewModel must not cancel periodic itself here either.
+        val accountId = 42L
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onCalDavSignOut(accountId)
+        advanceUntilIdle()
+
+        coVerify { calDavDiscoveryService.removeAccount(accountId) }
+        verify(exactly = 0) { syncScheduler.cancelPeriodicSync() }
     }
 
     // ==================== Force Full Sync Tests ====================
@@ -804,10 +828,11 @@ class AccountSettingsViewModelTest {
         viewModel.forceFullSync()
         advanceUntilIdle()
 
-        // Verify banner flag is set BEFORE sync request
+        // Verify banner flag is set BEFORE sync request. Force sync is user-initiated,
+        // so it opts into the visible sync notifications (showNotification=true).
         verify(ordering = io.mockk.Ordering.ORDERED) {
             syncScheduler.setShowBannerForSync(true)
-            syncScheduler.requestImmediateSync(forceFullSync = true)
+            syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
         }
     }
 

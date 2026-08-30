@@ -1,3 +1,12 @@
+## [2026.08.29]
+
+### Everything in this release
+
+- Fixed a pull-to-refresh spinner that stayed stuck at the top of the calendar for anyone with no CalDAV or iCloud account set up, such as a device-calendar-only user; it no longer appears without an account and no longer survives restarting the app or rebooting the phone, #356
+- Fixed app-open and app-resume sync so it stays genuinely silent after the app's process is recreated, instead of a queued background sync resurfacing the spinner on the next cold start, #356
+- Changed the colored sync status strip so a silent startup sync that fails or stays queued while offline no longer forces it open on a normal app open; a force sync and the first sync after adding an account still show it, #356
+- Fixed the "Syncing…" system notification so ordinary background syncs on app open no longer post one; only a user-started force full sync shows it now, #356
+
 ## [2026.08.25]
 
 ### Everything in this release

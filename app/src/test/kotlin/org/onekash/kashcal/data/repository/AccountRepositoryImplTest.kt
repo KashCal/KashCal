@@ -35,6 +35,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.adapter.ContactSystemAccountRegistrar
 import org.onekash.kashcal.sync.contacts.FakeContactsProviderRepository
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
 
 /**
  * Unit tests for AccountRepositoryImpl.
@@ -217,6 +218,91 @@ class AccountRepositoryImplTest {
     }
 
     @Test
+    fun `deleteAccount cancels shared one-shot and periodic work when last syncable account removed`() = runBlocking {
+        // The one-shot/expedited jobs are shared (single work name across all
+        // accounts): cancel them unconditionally so a replayable ENQUEUED one-shot
+        // can't resurface sync UI after the account is gone. Periodic is shared
+        // too but must only die once NO syncable account remains — here none does.
+        val accountId = 1L
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+        coEvery { accountsDao.getAllOnce() } returns emptyList()
+
+        accountRepository.deleteAccount(accountId)
+
+        verify { workManager.cancelUniqueWork("sync_account_1") }
+        verify { workManager.cancelUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK) }
+        verify { workManager.cancelUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK) }
+        verify { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK) }
+        verify { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK) }
+    }
+
+    @Test
+    fun `deleteAccount cancels one-shot but keeps periodic when another syncable account remains`() = runBlocking {
+        // A CalDAV login with stored credentials still remains, so the shared
+        // periodic jobs must survive — but the shared one-shot/expedited jobs are
+        // still cancelled (a remaining account re-enqueues on its next trigger).
+        val accountId = 1L
+        val remaining = mockk<Account>(relaxed = true) {
+            every { id } returns 2L
+            every { email } returns "bob@example.test"
+            every { provider } returns AccountProvider.CALDAV
+        }
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+        coEvery { accountsDao.getAllOnce() } returns listOf(remaining)
+        coEvery { credentialManager.hasCredentials(2L) } returns true
+
+        accountRepository.deleteAccount(accountId)
+
+        verify { workManager.cancelUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK) }
+        verify { workManager.cancelUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK) }
+        verify(exactly = 0) { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK) }
+        verify(exactly = 0) { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK) }
+    }
+
+    @Test
+    fun `deleteAccount keeps periodic when remaining syncable account lacks credentials but another has them`() = runBlocking {
+        // "Syncable" means CalDAV-capable AND has stored credentials. A remaining
+        // CalDAV login without credentials doesn't keep periodic alive on its own,
+        // but a second one with credentials does.
+        val accountId = 1L
+        val noCreds = mockk<Account>(relaxed = true) {
+            every { id } returns 2L
+            every { provider } returns AccountProvider.CALDAV
+        }
+        val withCreds = mockk<Account>(relaxed = true) {
+            every { id } returns 3L
+            every { provider } returns AccountProvider.ICLOUD
+        }
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+        coEvery { accountsDao.getAllOnce() } returns listOf(noCreds, withCreds)
+        coEvery { credentialManager.hasCredentials(2L) } returns false
+        coEvery { credentialManager.hasCredentials(3L) } returns true
+
+        accountRepository.deleteAccount(accountId)
+
+        verify(exactly = 0) { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK) }
+    }
+
+    @Test
+    fun `deleteAccount cancels periodic when only a credential-less CalDAV account remains`() = runBlocking {
+        // A remaining CalDAV login without stored credentials cannot sync, so it
+        // must NOT keep the shared periodic jobs alive.
+        val accountId = 1L
+        val noCreds = mockk<Account>(relaxed = true) {
+            every { id } returns 2L
+            every { provider } returns AccountProvider.CALDAV
+        }
+        coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
+        coEvery { accountsDao.getAllOnce() } returns listOf(noCreds)
+        coEvery { credentialManager.hasCredentials(2L) } returns false
+
+        accountRepository.deleteAccount(accountId)
+
+        verify { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK) }
+        verify { workManager.cancelUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK) }
+    }
+
+    @Test
     fun `deleteAccount removes the per-login contacts system account`() = runBlocking {
         // Setup: a CardDAV login (contacts-capable) resolves to a login email.
         val accountId = 1L
@@ -323,7 +409,8 @@ class AccountRepositoryImplTest {
     @Test
     fun `deleteAccount skips contacts removal for a non-CardDAV account`() = runBlocking {
         // A LOCAL/ICS login never registers a contacts account, so deleting it
-        // must not attempt a removal (and must not run the sibling-scan query).
+        // must not attempt a removal. (A full-table scan still runs — but for the
+        // shared-periodic-work decision, not the contacts sibling scan.)
         val accountId = 1L
         val account = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -336,8 +423,6 @@ class AccountRepositoryImplTest {
         accountRepository.deleteAccount(accountId)
 
         verify(exactly = 0) { contactSystemAccountRegistrar.removeAccount(any()) }
-        // The full-table sibling scan must not run for a non-contacts account.
-        coVerify(exactly = 0) { accountsDao.getAllOnce() }
     }
 
     @Test

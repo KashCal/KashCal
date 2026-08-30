@@ -322,6 +322,21 @@ class SyncSchedulerTest {
         assertNotNull(workInfo)
     }
 
+    @Test
+    fun `requestImmediateSync with showNotification enqueues one-shot work`() {
+        // The showNotification flag (user-initiated force sync opts in) threads
+        // through into the worker input Data via createFullSyncInput; here we only
+        // assert the enqueue still happens with the new param. WorkInfo does not
+        // expose enqueued input Data, so the data mapping is covered in
+        // CalDavSyncWorkerTest.createFullSyncInput.
+        val workId = scheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
+
+        assertNotNull(workId)
+        val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK).get()
+        assertEquals(1, workInfos.size)
+        assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_ONE_SHOT))
+    }
+
     // ==================== Expedited Sync Tests ====================
 
     @Test

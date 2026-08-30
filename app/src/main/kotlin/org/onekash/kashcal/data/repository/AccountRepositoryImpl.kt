@@ -15,6 +15,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.adapter.ContactSystemAccountRegistrar
 import org.onekash.kashcal.sync.contacts.ContactsProviderRepository
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -141,7 +142,15 @@ class AccountRepositoryImpl @Inject constructor(
         val contactsAccountToRemove = account?.let { contactsAccountToPurge(it) }
 
         // 1. Cancel pending sync jobs (prevents orphaned WorkManager jobs).
+        //    The per-account job plus the SHARED one-shot/expedited jobs, which
+        //    are keyed by a single work name across all accounts: an in-flight
+        //    (or replayable ENQUEUED) one-shot enqueued for this account would
+        //    otherwise linger after removal and resurface sync UI for a user who
+        //    no longer has the account. Cancelling them here is unconditional and
+        //    safe — a remaining account simply re-enqueues on its next trigger.
         workManager.cancelUniqueWork("sync_account_$accountId")
+        workManager.cancelUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK)
+        workManager.cancelUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK)
         Log.d(TAG, "Cancelled WorkManager jobs for account $accountId")
 
         // 2. Cancel reminders and delete pending ops BEFORE cascade delete
@@ -173,6 +182,22 @@ class AccountRepositoryImpl @Inject constructor(
         //    Note: scheduled_reminders has FK to events with ON DELETE CASCADE.
         accountsDao.deleteById(accountId)
         Log.i(TAG, "Account $accountId deleted with cascade")
+
+        // 4a. If no syncable account remains, cancel the shared PERIODIC work too.
+        //     Periodic sync/contact-sync are single-named jobs shared by all
+        //     accounts, so they must survive as long as ANY account can still
+        //     sync (CalDAV-capable provider with stored credentials). Once the
+        //     last such account is gone, an orphaned periodic job would keep
+        //     waking with nothing to do — and would replay sync UI on a device
+        //     that is now device-calendar-only.
+        val remainingSyncable = accountsDao.getAllOnce().any {
+            it.provider.supportsCalDAV && credentialManager.hasCredentials(it.id)
+        }
+        if (!remainingSyncable) {
+            workManager.cancelUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK)
+            workManager.cancelUniqueWork(SyncScheduler.PERIODIC_CONTACT_SYNC_WORK)
+            Log.d(TAG, "No syncable account remains; cancelled periodic sync work")
+        }
 
         // 5. Remove the dedicated contacts system account LAST. Deleting a login
         //    must remove its per-login contacts account too, which also purges
