@@ -85,6 +85,7 @@
     <string name="action_delete">Verwyder</string>
     <string name="action_confirm">Bevestig</string>
     <string name="action_discard">Gooi Weg</string>
+    <string name="action_discard_confirm">Gooi weg?</string>
     <string name="action_dismiss">Maak Toe</string>
     <string name="action_show_all">Wys Alles</string>
     <string name="action_connect">Koppel</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Deel gebeurtenis</string>
     <string name="share_as_card_share_failed">Kon nie kaart deel nie</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

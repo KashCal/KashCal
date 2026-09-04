@@ -61,6 +61,23 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
+        // Xandikos serves CardDAV from the same root as CalDAV (local container
+        // launched with --current-user-principal /user/, so principal discovery
+        // resolves the addressbook-home-set from the bare root without well-known).
+        // It advertises the RFC 3744 aggregate <all> privilege rather than the
+        // granular <write>/<write-content>, so it is the live counterpart to the
+        // read-only-misdetection guard (issue #281): a parse regression that fails
+        // to map <all> to a write grant surfaces its book as read-only here.
+        val XANDIKOS = CardDavServerConfig(
+            name = "Xandikos",
+            serverKey = "XANDIKOS_SERVER",
+            usernameKey = "XANDIKOS_USERNAME",
+            passwordKey = "XANDIKOS_PASSWORD",
+            defaultServerUrl = "http://localhost:8999",
+            quirksFactory = { url -> DefaultCardDavQuirks(url) },
+            usesWellKnownDiscovery = false,
+        )
+
         // Baikal (sabre/dav) exposes CardDAV under the same /dav.php/ entry point
         // as its CalDAV; current-user-principal discovery resolves the
         // addressbook-home-set from there.
@@ -165,7 +182,7 @@ data class CardDavServerConfig(
         )
 
         fun allServers(): List<CardDavServerConfig> = listOf(
-            ICLOUD, RADICALE, BAIKAL, NEXTCLOUD, SOGO, CYRUS
+            ICLOUD, RADICALE, XANDIKOS, BAIKAL, NEXTCLOUD, SOGO, CYRUS
         )
 
         /**

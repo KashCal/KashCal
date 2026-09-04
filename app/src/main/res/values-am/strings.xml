@@ -85,6 +85,7 @@
     <string name="action_delete">ሰርዝ</string>
     <string name="action_confirm">አረጋግጥ</string>
     <string name="action_discard">አጥፋ</string>
+    <string name="action_discard_confirm">ይጣል?</string>
     <string name="action_dismiss">አሰናብት</string>
     <string name="action_show_all">ሁሉንም አሳይ</string>
     <string name="action_connect">አገናኝ</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ክስተት አጋራ</string>
     <string name="share_as_card_share_failed">ካርዱን ማጋራት አልተቻለም</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

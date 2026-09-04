@@ -134,7 +134,7 @@ class CardDavContactReader(
                             // A group drop is deliberate, so the href IS confirmed —
                             // it must not be re-fetched forever as if it had failed.
                             if (contact.kind.equals("group", ignoreCase = true)) {
-                                Log.d(TAG, "Skipping group vCard at ${data.href}")
+                                Log.d(TAG, "Skipping a KIND:group vCard (distribution list, not a person)")
                                 confirmed += data.href
                                 return@forEach
                             }
@@ -145,7 +145,9 @@ class CardDavContactReader(
                         // Isolate a malformed body: skip it, keep the rest of the batch.
                         // Leaving data.href out of `confirmed` reports it unreadable so
                         // the caller holds its cursor and retries the fetch next run.
-                        Log.w(TAG, "Skipping unparseable contact at ${data.href}: ${e.message}")
+                        // Log the exception type only: neither the href nor e.message
+                        // (which can embed the vCard body) may reach a log.
+                        Log.w(TAG, "Skipping an unparseable contact: ${e.javaClass.simpleName}")
                     }
                 }
                 // Surface a transport error verbatim rather than returning a truncated

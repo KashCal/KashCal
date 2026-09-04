@@ -85,6 +85,7 @@
     <string name="action_delete">Futa</string>
     <string name="action_confirm">Thibitisha</string>
     <string name="action_discard">Tupa</string>
+    <string name="action_discard_confirm">Utupe?</string>
     <string name="action_dismiss">Ondoa</string>
     <string name="action_show_all">Onyesha Zote</string>
     <string name="action_connect">Unganisha</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Shiriki tukio</string>
     <string name="share_as_card_share_failed">Imeshindwa kushiriki kadi</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

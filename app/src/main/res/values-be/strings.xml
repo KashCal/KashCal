@@ -85,6 +85,7 @@
     <string name="action_delete">Выдаліць</string>
     <string name="action_confirm">Пацвердзіць</string>
     <string name="action_discard">Адхіліць</string>
+    <string name="action_discard_confirm">Адхіліць?</string>
     <string name="action_dismiss">Закрыць</string>
     <string name="action_show_all">Паказаць усё</string>
     <string name="action_connect">Падключыць</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Падзяліцца падзеяй</string>
     <string name="share_as_card_share_failed">Не ўдалося падзяліцца карткай</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

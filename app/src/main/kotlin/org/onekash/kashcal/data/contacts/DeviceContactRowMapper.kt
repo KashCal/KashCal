@@ -69,6 +69,12 @@ object DeviceContactRowMapper {
      * Reconstruct a [Contact] from the [dataRows] of one RawContact. [uid], [version],
      * [kind], and [rawVCard] are RawContact-level identity fields not stored on Data
      * rows; callers supply them (defaults suit row-only unit tests).
+     *
+     * [groupTitlesById] maps a local `Groups._ID` to its title, letting a
+     * `GroupMembership` row that carries only a `GROUP_ROW_ID` (the People app leaves
+     * `GROUP_SOURCE_ID` blank for a user-created label) resolve to a category. It is
+     * likewise supplied by the caller (the sync layer reads the account's groups once
+     * per scan); the empty default degrades to `GROUP_SOURCE_ID`-only categories.
      */
     fun toContact(
         dataRows: List<ContentValues>,
@@ -76,6 +82,7 @@ object DeviceContactRowMapper {
         version: String = "3.0",
         kind: String? = null,
         rawVCard: String = "",
+        groupTitlesById: Map<Long, String> = emptyMap(),
     ): Contact {
         val byMime = dataRows.groupBy { it.getAsString(Data.MIMETYPE) }
 
@@ -109,7 +116,15 @@ object DeviceContactRowMapper {
             imHandles = byMime[Im.CONTENT_ITEM_TYPE].orEmpty().map(::imHandle),
             relations = byMime[Relation.CONTENT_ITEM_TYPE].orEmpty().map(::relation),
             categories = byMime[GroupMembership.CONTENT_ITEM_TYPE].orEmpty()
-                .mapNotNull { it.getAsString(GroupMembership.GROUP_SOURCE_ID).blankToNull() },
+                .mapNotNull { row ->
+                    // Prefer a non-blank GROUP_SOURCE_ID (the sync adapter's own groups
+                    // set SOURCE_ID = title). When it is blank — the People-app label
+                    // case, keyed by GROUP_ROW_ID -> local Groups._ID — fall back to the
+                    // supplied title map; a row resolvable by neither is dropped.
+                    row.getAsString(GroupMembership.GROUP_SOURCE_ID).blankToNull()
+                        ?: row.getAsLong(GroupMembership.GROUP_ROW_ID)?.let { groupTitlesById[it] }
+                }
+                .distinct(),
             photo = photo(byMime[Photo.CONTENT_ITEM_TYPE]?.firstOrNull()),
             birthday = eventDate(byMime[Event.CONTENT_ITEM_TYPE], Event.TYPE_BIRTHDAY),
             anniversary = eventDate(byMime[Event.CONTENT_ITEM_TYPE], Event.TYPE_ANNIVERSARY),

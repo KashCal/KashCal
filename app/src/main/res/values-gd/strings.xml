@@ -85,6 +85,7 @@
     <string name="action_delete">Sguab às</string>
     <string name="action_confirm">Dearbhaich</string>
     <string name="action_discard">Tilg air falbh</string>
+    <string name="action_discard_confirm">Tilg air falbh na h-atharraichean?</string>
     <string name="action_dismiss">Leig seachad</string>
     <string name="action_show_all">Seall na h-Uile</string>
     <string name="action_connect">Ceangail</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Co-roinn tachartas</string>
     <string name="share_as_card_share_failed">Cha b\'urrainn dhuinn an cairt a cho-roinneadh</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

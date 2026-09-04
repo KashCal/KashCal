@@ -156,7 +156,8 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     endTs = endTs,
     isAllDay = isAllDay,
     dtstamp = System.currentTimeMillis(),
-    transp = availabilityIntToTransp(instance.availability)
+    transp = availabilityIntToTransp(instance.availability),
+    categories = categories
 )
 
 /**

@@ -85,6 +85,7 @@
     <string name="action_delete">Eyða</string>
     <string name="action_confirm">Staðfesta</string>
     <string name="action_discard">Henda</string>
+    <string name="action_discard_confirm">Henda?</string>
     <string name="action_dismiss">Hunsa</string>
     <string name="action_show_all">Sýna allt</string>
     <string name="action_connect">Tengja</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Deila viðburði</string>
     <string name="share_as_card_share_failed">Ekki tókst að deila kortinu</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

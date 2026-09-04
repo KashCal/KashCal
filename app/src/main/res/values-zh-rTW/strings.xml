@@ -85,6 +85,7 @@
     <string name="action_delete">刪除</string>
     <string name="action_confirm">確認</string>
     <string name="action_discard">捨棄</string>
+    <string name="action_discard_confirm">捨棄變更？</string>
     <string name="action_dismiss">關閉</string>
     <string name="action_show_all">顯示全部</string>
     <string name="action_connect">連線</string>
@@ -1212,5 +1213,4 @@
     <string name="share_as_card_chooser_title">分享活動</string>
     <string name="share_as_card_share_failed">無法分享卡片</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

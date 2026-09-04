@@ -85,6 +85,7 @@
     <string name="action_delete">मेट्नुहोस्</string>
     <string name="action_confirm">पुष्टि गर्नुहोस्</string>
     <string name="action_discard">खारेज गर्नुहोस्</string>
+    <string name="action_discard_confirm">खारेज गर्ने?</string>
     <string name="action_dismiss">हटाउनुहोस्</string>
     <string name="action_show_all">सबै देखाउनुहोस्</string>
     <string name="action_connect">जोड्नुहोस्</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">कार्यक्रम साझेदारी गर्नुहोस्</string>
     <string name="share_as_card_share_failed">कार्ड साझेदारी गर्न सकिएन</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

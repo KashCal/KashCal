@@ -24,7 +24,8 @@ class DeviceEventActionsTest {
         isAllDay: Boolean = false,
         hasRrule: Boolean = false,
         rrule: String? = null,
-        reminders: List<Int> = emptyList()
+        reminders: List<Int> = emptyList(),
+        categories: List<String> = emptyList()
     ) = DeviceCalendarInstance(
         instanceId = 1L,
         eventId = 100L,
@@ -52,6 +53,7 @@ class DeviceEventActionsTest {
         originalInstanceTime = null,
         timezone = "America/New_York",
         eventStartTs = startTs,
+        categories = categories,
     )
 
     // ========== toEventForDuplicate ==========
@@ -95,6 +97,29 @@ class DeviceEventActionsTest {
         val event = device.toEventForDuplicate()
 
         assertTrue(event.isAllDay)
+    }
+
+    @Test
+    fun `toEventForDuplicate copies categories preserving order`() {
+        val device = DisplayEvent.Device(createTestInstance(
+            categories = listOf("Work", "Urgent")
+        ))
+
+        val event = device.toEventForDuplicate()
+
+        assertEquals(listOf("Work", "Urgent"), event.categories)
+    }
+
+    @Test
+    fun `toEventForDuplicate leaves categories empty when source has none`() {
+        val device = DisplayEvent.Device(createTestInstance())
+
+        val event = device.toEventForDuplicate()
+
+        assertTrue(
+            "categories should be null or empty when the source carries none",
+            event.categories.isNullOrEmpty()
+        )
     }
 
     // ========== buildShareText ==========

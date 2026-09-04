@@ -85,6 +85,7 @@
     <string name="action_delete">Видалити</string>
     <string name="action_confirm">Підтвердити</string>
     <string name="action_discard">Відхилити</string>
+    <string name="action_discard_confirm">Відхилити?</string>
     <string name="action_dismiss">Закрити</string>
     <string name="action_show_all">Показати все</string>
     <string name="action_connect">Підключити</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Поділитися подією</string>
     <string name="share_as_card_share_failed">Не вдалося поділитися карткою</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -259,6 +259,9 @@ class MainActivity : FragmentActivity() {
                 var newEventStartTs by remember { mutableStateOf<Long?>(null) }
                 var eventOccurrenceTs by remember { mutableStateOf<Long?>(null) }
                 var duplicateFromEvent by remember { mutableStateOf<Event?>(null) }
+                // Source device calendar id for a device-event duplicate; null for
+                // Room duplicates (their source id rides on Event.calendarId).
+                var duplicateFromDeviceCalendarId by remember { mutableStateOf<Long?>(null) }
                 var calendarIntentData by remember { mutableStateOf<CalendarIntentData?>(null) }
                 var calendarIntentInvitees by remember { mutableStateOf<List<String>>(emptyList()) }
 
@@ -716,6 +719,7 @@ class MainActivity : FragmentActivity() {
                                     newEventStartTs = null
                                     eventOccurrenceTs = null
                                     duplicateFromEvent = null
+                                    duplicateFromDeviceCalendarId = null
                                     editingDeviceEventId = null
                                     deviceEventOccurrenceTs = null
                                     deviceEventIsAllDay = false
@@ -880,6 +884,7 @@ class MainActivity : FragmentActivity() {
                             newEventStartTs = event.startTs
                             eventOccurrenceTs = null
                             duplicateFromEvent = event
+                            duplicateFromDeviceCalendarId = null // Room duplicate: source id rides on Event.calendarId
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
                             showEventFormSheet = true
@@ -1240,6 +1245,7 @@ class MainActivity : FragmentActivity() {
                             deviceQuickViewEvent = null
                             editingEventId = null // Clear Room edit state
                             duplicateFromEvent = null
+                            duplicateFromDeviceCalendarId = null
                             showEventFormSheet = true
                         },
                         onEditOccurrence = { /* unused after save-time scope */ },
@@ -1298,6 +1304,7 @@ class MainActivity : FragmentActivity() {
                         onDuplicate = {
                             val event = deviceDisplayEvent
                             duplicateFromEvent = event.toEventForDuplicate()
+                            duplicateFromDeviceCalendarId = event.instance.calendarId
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
                             editingEventId = null
@@ -1484,6 +1491,7 @@ class MainActivity : FragmentActivity() {
                         initialStartTs = newEventStartTs,
                         occurrenceTs = eventOccurrenceTs,
                         duplicateFrom = duplicateFromEvent,
+                        duplicateFromDeviceCalendarId = duplicateFromDeviceCalendarId,
                         calendarIntentData = calendarIntentData,
                         calendarIntentInvitees = calendarIntentInvitees,
                         calendars = uiState.calendars,
@@ -1495,6 +1503,7 @@ class MainActivity : FragmentActivity() {
                             newEventStartTs = null
                             eventOccurrenceTs = null
                             duplicateFromEvent = null
+                            duplicateFromDeviceCalendarId = null
                             calendarIntentData = null
                             calendarIntentInvitees = emptyList()
                             // Clear device event state

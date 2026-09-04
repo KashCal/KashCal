@@ -85,6 +85,7 @@
     <string name="action_delete">Susa</string>
     <string name="action_confirm">Qinisekisa</string>
     <string name="action_discard">Lahla</string>
+    <string name="action_discard_confirm">Kulahlwe?</string>
     <string name="action_dismiss">Chitha</string>
     <string name="action_show_all">Bonisa Konke</string>
     <string name="action_connect">Xhuma</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Yabelana ngomcimbi</string>
     <string name="share_as_card_share_failed">Ayikwazanga ukwabelana ngekhadi</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

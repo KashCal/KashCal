@@ -36,8 +36,8 @@ object DateTimeUtils {
 
     // ==================== Locale-Aware Pattern Helper ====================
 
-    fun localizedPattern(skeleton: String): String =
-        DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
+    fun localizedPattern(skeleton: String, locale: Locale = Locale.getDefault()): String =
+        DateFormat.getBestDateTimePattern(locale, skeleton)
 
     /**
      * Returns true if the given locale orders day before month in its short-form date pattern.

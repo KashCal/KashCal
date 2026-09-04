@@ -205,6 +205,31 @@ class CardDavWriteClientTest {
         assertTrue(result.isRetryable)
     }
 
+    // ========== Unusable stored etag (can't build a valid If-Match header) ==========
+
+    @Test
+    fun `put with a control-char etag short-circuits to PreconditionFailed without a request`() = runTest {
+        // A stored etag carrying a char OkHttp would reject in a header value (here an
+        // interior CR) must not throw an uncaught IllegalArgumentException out of the
+        // write verb — that would leave the push holding the token and stall the whole
+        // account's contact sync. The conditional can't be expressed, so the
+        // precondition can't hold: report PreconditionFailed (server-wins next pull).
+        val result = client.putContact(
+            url("/ab/alice/u1.vcf"), vcard, ContactPrecondition.IfMatch("etag\r\nv1"),
+        )
+
+        assertEquals(ContactUploadResult.PreconditionFailed, result)
+        assertEquals("no request should reach the server", 0, server.requestCount)
+    }
+
+    @Test
+    fun `delete with a control-char etag short-circuits to PreconditionFailed without a request`() = runTest {
+        val result = client.deleteContact(url("/ab/alice/u1.vcf"), "etag\r\ndel")
+
+        assertEquals(ContactDeleteResult.PreconditionFailed, result)
+        assertEquals("no request should reach the server", 0, server.requestCount)
+    }
+
     // ========== Server quirks: Zoho name policy, iCloud verbatim href ==========
 
     @Test

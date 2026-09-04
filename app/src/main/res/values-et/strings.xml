@@ -85,6 +85,7 @@
     <string name="action_delete">Kustuta</string>
     <string name="action_confirm">Kinnita</string>
     <string name="action_discard">Loobu</string>
+    <string name="action_discard_confirm">Loobu?</string>
     <string name="action_dismiss">Sulge</string>
     <string name="action_show_all">Kuva kõik</string>
     <string name="action_connect">Ühenda</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Jaga sündmust</string>
     <string name="share_as_card_share_failed">Kaarti ei saanud jagada</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

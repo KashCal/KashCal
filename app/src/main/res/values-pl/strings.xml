@@ -85,6 +85,7 @@
     <string name="action_delete">Usuń</string>
     <string name="action_confirm">Potwierdź</string>
     <string name="action_discard">Odrzuć</string>
+    <string name="action_discard_confirm">Odrzucić?</string>
     <string name="action_dismiss">Odrzuć</string>
     <string name="action_show_all">Pokaż wszystko</string>
     <string name="action_connect">Połącz</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Udostępnij wydarzenie</string>
     <string name="share_as_card_share_failed">Nie udało się udostępnić karty</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

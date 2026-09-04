@@ -75,6 +75,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -258,18 +259,72 @@ fun AccountHubScreen(
     }
 }
 
+/** A small round color chip used as the trailing badge on the accent rows. */
+@Composable
+private fun ColorSwatch(argb: Int) {
+    Box(
+        modifier = Modifier
+            .size(20.dp)
+            .clip(CircleShape)
+            .background(Color(argb)),
+    )
+}
+
 @Composable
 private fun HubDrawerItem(
     label: String,
     icon: ImageVector,
     onClick: () -> Unit,
     selected: Boolean = false,
+    badgeText: String? = null,
+    badgeTrailing: (@Composable () -> Unit)? = null,
     badge: @Composable (() -> Unit)? = null,
 ) {
+    // A row takes either a plain current-value string (badgeText, rendered in the
+    // label row so it truncates rather than squishing the label) or a custom badge
+    // slot (count), never both — passing both would silently drop the badge.
+    require(badgeText == null || badge == null) {
+        "HubDrawerItem takes badgeText or badge, not both"
+    }
+    // badgeTrailing is a fixed-size element (e.g. a color swatch) pinned after the
+    // value string, so it only makes sense alongside badgeText.
+    require(badgeTrailing == null || badgeText != null) {
+        "HubDrawerItem badgeTrailing requires badgeText"
+    }
     NavigationDrawerItem(
-        label = { Text(label) },
+        // A plain current-value string is rendered inside the label row (not the
+        // trailing badge slot) so the label keeps its intrinsic width and the
+        // value takes the leftover, truncating on one line. NavigationDrawerItem's
+        // badge slot is non-weighted, so a long value string would otherwise
+        // collapse the weighted label — squishing e.g. "Theme" in locales where
+        // the current-mode string is long.
+        label = {
+            if (badgeText != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(label, maxLines = 1)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = badgeText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    badgeTrailing?.let {
+                        Spacer(Modifier.width(8.dp))
+                        it()
+                    }
+                }
+            } else {
+                Text(label)
+            }
+        },
         icon = { Icon(icon, contentDescription = null) },
-        badge = badge,
+        badge = if (badgeText != null) null else badge,
         selected = selected,
         onClick = onClick,
         modifier = Modifier.padding(horizontal = 12.dp),
@@ -368,7 +423,7 @@ private fun MakeItYoursSection() {
         label = stringResource(R.string.settings_theme),
         icon = Icons.Default.BrightnessMedium,
         onClick = { showThemeSheet = true },
-        badge = { Text(stringResource(themeMode.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        badgeText = stringResource(themeMode.labelRes),
     )
     val accentSubtitle = when {
         colorSource != ColorSource.SEED -> stringResource(R.string.settings_accent_color_dynamic)
@@ -380,26 +435,18 @@ private fun MakeItYoursSection() {
         label = stringResource(R.string.settings_accent_color),
         icon = Icons.Default.Palette,
         onClick = { showAccentSheet = true },
-        badge = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(accentSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (colorSource == ColorSource.SEED) {
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(accentSeed)),
-                    )
-                }
-            }
+        badgeText = accentSubtitle,
+        badgeTrailing = if (colorSource == ColorSource.SEED) {
+            { ColorSwatch(accentSeed) }
+        } else {
+            null
         },
     )
     HubDrawerItem(
         label = stringResource(R.string.settings_app_icon),
         icon = Icons.Default.AppShortcut,
         onClick = { showAppIconSheet = true },
-        badge = { Text(stringResource(currentAppIcon.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        badgeText = stringResource(currentAppIcon.labelRes),
     )
 
     // Widgets get their own light/dark face and color source, independent of the
@@ -409,7 +456,7 @@ private fun MakeItYoursSection() {
         label = stringResource(R.string.hub_widget_theme),
         icon = Icons.Default.Widgets,
         onClick = { showWidgetThemeSheet = true },
-        badge = { Text(stringResource(widgetThemeSource.labelRes), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        badgeText = stringResource(widgetThemeSource.labelRes),
     )
     val widgetAccentSubtitle = when {
         widgetColorSource == WidgetColorSource.FOLLOW_APP -> stringResource(R.string.settings_widget_color_follow_app)
@@ -422,19 +469,11 @@ private fun MakeItYoursSection() {
         label = stringResource(R.string.hub_widget_accent),
         icon = Icons.Default.Palette,
         onClick = { showWidgetAccentSheet = true },
-        badge = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(widgetAccentSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (widgetColorSource == WidgetColorSource.SEED) {
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(widgetAccentSeed)),
-                    )
-                }
-            }
+        badgeText = widgetAccentSubtitle,
+        badgeTrailing = if (widgetColorSource == WidgetColorSource.SEED) {
+            { ColorSwatch(widgetAccentSeed) }
+        } else {
+            null
         },
     )
 

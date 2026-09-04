@@ -85,6 +85,7 @@
     <string name="action_delete">Жою</string>
     <string name="action_confirm">Растау</string>
     <string name="action_discard">Қабылдамау</string>
+    <string name="action_discard_confirm">Қабылдамай ма?</string>
     <string name="action_dismiss">Жабу</string>
     <string name="action_show_all">Барлығын көрсету</string>
     <string name="action_connect">Қосылу</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Оқиғаны бөлісу</string>
     <string name="share_as_card_share_failed">Картамен бөлісу мүмкін болмады</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

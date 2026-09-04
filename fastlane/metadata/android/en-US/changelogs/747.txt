@@ -1,0 +1,5 @@
+• KashCal is now on Google Play
+• Contacts: two-way CardDAV contact sync (beta), including photos
+• Widget: the date widget is now resizable, from a 1x1 icon up to a full card
+• UI: the top bar shows today's date as a live icon
+• Events: duplicating a form now confirms before discarding unsaved edits

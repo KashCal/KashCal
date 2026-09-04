@@ -2,7 +2,10 @@
 <!--
     Widget metadata for Date widget.
 
-    Size: 1x1 cell (icon-like, approximately 57dp x 57dp)
+    Size-responsive: shrinks to a ~1x1 circular icon (short weekday + day
+    number) and grows into a rounded date-card (full weekday + month/day).
+    Default placement is 1x1 (the icon, matching the long-standing look);
+    the user grows it into the card by dragging it larger.
     Update: Every 30 minutes (1800000ms), primarily updates at midnight
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
@@ -12,8 +15,8 @@
     android:targetCellHeight="1"
     android:minResizeWidth="40dp"
     android:minResizeHeight="40dp"
-    android:maxResizeWidth="80dp"
-    android:maxResizeHeight="80dp"
+    android:maxResizeWidth="250dp"
+    android:maxResizeHeight="110dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:initialLayout="@layout/widget_loading"

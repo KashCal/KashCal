@@ -85,6 +85,7 @@
     <string name="action_delete">Verwijderen</string>
     <string name="action_confirm">Bevestigen</string>
     <string name="action_discard">Verwerpen</string>
+    <string name="action_discard_confirm">Verwerpen?</string>
     <string name="action_dismiss">Sluiten</string>
     <string name="action_show_all">Alles tonen</string>
     <string name="action_connect">Verbinden</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Afspraak delen</string>
     <string name="share_as_card_share_failed">Kan kaart niet delen</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -85,6 +85,7 @@
     <string name="action_delete">削除</string>
     <string name="action_confirm">確認</string>
     <string name="action_discard">破棄</string>
+    <string name="action_discard_confirm">破棄しますか？</string>
     <string name="action_dismiss">閉じる</string>
     <string name="action_show_all">すべて表示</string>
     <string name="action_connect">接続</string>
@@ -1212,5 +1213,4 @@
     <string name="share_as_card_chooser_title">予定を共有</string>
     <string name="share_as_card_share_failed">カードを共有できませんでした</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

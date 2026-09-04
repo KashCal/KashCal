@@ -85,6 +85,7 @@
     <string name="action_delete">Sil</string>
     <string name="action_confirm">Onayla</string>
     <string name="action_discard">At</string>
+    <string name="action_discard_confirm">Atılsın mı?</string>
     <string name="action_dismiss">Kapat</string>
     <string name="action_show_all">Tümünü Göster</string>
     <string name="action_connect">Bağlan</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Etkinliği paylaş</string>
     <string name="share_as_card_share_failed">Kart paylaşılamadı</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

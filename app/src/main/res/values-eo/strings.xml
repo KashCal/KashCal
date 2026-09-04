@@ -85,6 +85,7 @@
     <string name="action_delete">Forigi</string>
     <string name="action_confirm">Konfirmi</string>
     <string name="action_discard">Forjeti</string>
+    <string name="action_discard_confirm">Ĉu forĵeti ŝanĝojn?</string>
     <string name="action_dismiss">Forigi</string>
     <string name="action_show_all">Montri ĉion</string>
     <string name="action_connect">Konekti</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Kunhavigi eventon</string>
     <string name="share_as_card_share_failed">Ne eblis kunhavigi karton</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

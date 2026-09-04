@@ -85,6 +85,7 @@
     <string name="action_delete">Xóa</string>
     <string name="action_confirm">Xác nhận</string>
     <string name="action_discard">Bỏ</string>
+    <string name="action_discard_confirm">Bỏ thay đổi?</string>
     <string name="action_dismiss">Bỏ qua</string>
     <string name="action_show_all">Hiện tất cả</string>
     <string name="action_connect">Kết nối</string>
@@ -1212,5 +1213,4 @@
     <string name="share_as_card_chooser_title">Chia sẻ sự kiện</string>
     <string name="share_as_card_share_failed">Không thể chia sẻ thẻ</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

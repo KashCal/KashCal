@@ -22,6 +22,7 @@ import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
+import org.onekash.kashcal.sync.scheduler.ContactSyncScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetPreviewRegistrar
@@ -96,6 +97,9 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var icsRefreshScheduleReconciler: IcsRefreshScheduleReconciler
+
+    @Inject
+    lateinit var contactSyncScheduleReconciler: ContactSyncScheduleReconciler
 
     @Inject
     @ApplicationScope
@@ -180,6 +184,16 @@ class KashCalApplication : Application(), Configuration.Provider {
             // so a wrapper would be dead code.
             applicationScope.launch {
                 icsRefreshScheduleReconciler.reconcile()
+            }
+
+            // Re-arm the periodic contact-sync job from the accounts in the
+            // database. Startup is where this heals: a login enrolled before
+            // contact sync shipped never had the recurring job armed, and an
+            // install whose spec was lost (force-stop, task killer, backup restore)
+            // has no other way back. The reconciler catches and logs on its own, so
+            // a wrapper here would be dead code.
+            applicationScope.launch {
+                contactSyncScheduleReconciler.reconcile()
             }
         }
 

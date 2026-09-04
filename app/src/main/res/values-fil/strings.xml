@@ -85,6 +85,7 @@
     <string name="action_delete">Burahin</string>
     <string name="action_confirm">Kumpirmahin</string>
     <string name="action_discard">I-discard</string>
+    <string name="action_discard_confirm">Itapon?</string>
     <string name="action_dismiss">I-dismiss</string>
     <string name="action_show_all">Ipakita Lahat</string>
     <string name="action_connect">Ikonekta</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Ibahagi ang kaganapan</string>
     <string name="share_as_card_share_failed">Hindi maibahagi ang card</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

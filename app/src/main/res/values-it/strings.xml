@@ -85,6 +85,7 @@
     <string name="action_delete">Elimina</string>
     <string name="action_confirm">Conferma</string>
     <string name="action_discard">Scarta</string>
+    <string name="action_discard_confirm">Scartare?</string>
     <string name="action_dismiss">Ignora</string>
     <string name="action_show_all">Mostra tutto</string>
     <string name="action_connect">Connetti</string>
@@ -1305,5 +1306,4 @@
     <string name="share_as_card_chooser_title">Condividi evento</string>
     <string name="share_as_card_share_failed">Impossibile condividere la scheda</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

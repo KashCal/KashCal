@@ -34,8 +34,13 @@ class CalDavXmlParser {
          * DAV:write-properties / DAV:bind / DAV:unbind are deliberately excluded:
          * they don't grant content writes, so a calendar offering only those
          * stays read-only.
+         *
+         * This is the single source of truth for the write-privilege vocabulary;
+         * the CardDAV parser references it rather than keeping a parallel copy, so
+         * the two read paths can't drift (trimming this set can't leave the other
+         * silently stale).
          */
-        private val WRITE_PRIVILEGE_ELEMENTS = setOf("all", "write", "write-content")
+        internal val WRITE_PRIVILEGE_ELEMENTS = setOf("all", "write", "write-content")
 
         /**
          * Decode the 5 standard XML entities.

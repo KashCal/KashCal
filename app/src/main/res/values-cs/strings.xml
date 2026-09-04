@@ -85,6 +85,7 @@
     <string name="action_delete">Smazat</string>
     <string name="action_confirm">Potvrdit</string>
     <string name="action_discard">Zahodit</string>
+    <string name="action_discard_confirm">Zahodit?</string>
     <string name="action_dismiss">Zavřít</string>
     <string name="action_show_all">Zobrazit vše</string>
     <string name="action_connect">Připojit</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Sdílet událost</string>
     <string name="share_as_card_share_failed">Kartu se nepodařilo sdílet</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.OperationApplicationException
+import android.database.Cursor
 import android.net.Uri
 import android.os.RemoteException
 import android.provider.ContactsContract
@@ -13,8 +14,10 @@ import android.provider.ContactsContract.Data
 import android.provider.ContactsContract.Groups
 import android.provider.ContactsContract.RawContacts
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.data.contacts.DeviceContactRowMapper
 import org.onekash.kashcal.sync.adapter.KashCalContactsAuthenticator
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -41,6 +44,7 @@ import javax.inject.Singleton
 @Singleton
 class AndroidContactsProviderRepository @Inject constructor(
     private val contentResolver: ContentResolver,
+    private val photoTranscoder: ContactPhotoTranscoder,
 ) : ContactsProviderRepository {
 
     override suspend fun insertContacts(
@@ -167,6 +171,14 @@ class AndroidContactsProviderRepository @Inject constructor(
             contentResolver.query(
                 syncAdapterUri(RawContacts.CONTENT_URI, accountName),
                 arrayOf(RawContacts.SOURCE_ID, RawContacts.SYNC2),
+                // Include tombstones deliberately. A locally-deleted row (DELETED=1) is
+                // awaiting a DELETE push; keeping it in change-detection means an unchanged
+                // server etag is SKIPPED (the delete stays pending) rather than re-inserted
+                // as a fresh live row, and a device holding only tombstones is not misread
+                // as wiped and force-refetched. The etag-refresh hazard this read might
+                // otherwise arm is closed at the in-place-replace target lookup instead
+                // (resolveRawContactIdsByHref excludes DELETED), which is where the refresh
+                // would actually happen.
                 accountScopeSelection(),
                 accountScopeArgs(accountName),
                 null,
@@ -372,7 +384,11 @@ class AndroidContactsProviderRepository @Inject constructor(
         return contentResolver.query(
             syncAdapterUri(RawContacts.CONTENT_URI, accountName),
             arrayOf(RawContacts.SOURCE_ID, RawContacts._ID),
-            accountScopeSelection(),
+            // Live rows only: never resolve a tombstone as the in-place replace target,
+            // or the replace would refresh its etag and arm the queued DELETE to destroy
+            // the concurrently-edited server copy. A delete-pending href falls through to
+            // a fresh insert instead.
+            "${accountScopeSelection()} AND ${RawContacts.DELETED} = 0",
             accountScopeArgs(accountName),
             null,
         )?.use { cursor ->
@@ -484,6 +500,317 @@ class AndroidContactsProviderRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun pendingLocalChanges(accountName: String): LocalContactChanges =
+        withContext(Dispatchers.IO) {
+            try {
+                LocalContactChanges(
+                    edited = queryDirtyEdits(accountName),
+                    deleted = queryTombstones(accountName),
+                )
+            } catch (e: SecurityException) {
+                Log.w(TAG, "READ_CONTACTS revoked; pendingLocalChanges returns empty")
+                LocalContactChanges(emptyList(), emptyList())
+            } catch (e: CancellationException) {
+                // The sync was cancelled mid-scan: propagate rather than reporting an
+                // empty pending set, which would let the run "succeed" having pushed
+                // nothing.
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "pendingLocalChanges scan failed")
+                LocalContactChanges(emptyList(), emptyList())
+            }
+        }
+
+    /**
+     * Scan the account's `DIRTY = 1 AND DELETED = 0` RawContacts (a user edit — or a
+     * device-created contact) into [LocalContactEdit]s. The locators are read fully
+     * before the per-row Data reads so no cursor is held open across a nested query.
+     * `DELETED = 0` keeps a soft-deleted-yet-dirty row out of the edit set (it belongs
+     * to the tombstone scan).
+     */
+    private fun queryDirtyEdits(accountName: String): List<LocalContactEdit> {
+        data class Locator(val id: Long, val href: String, val uid: String, val etag: String?)
+
+        val locators = contentResolver.query(
+            syncAdapterUri(RawContacts.CONTENT_URI, accountName),
+            arrayOf(RawContacts._ID, RawContacts.SOURCE_ID, RawContacts.SYNC1, RawContacts.SYNC2),
+            "${accountScopeSelection()} AND ${RawContacts.DIRTY} = 1 AND ${RawContacts.DELETED} = 0",
+            accountScopeArgs(accountName),
+            null,
+        )?.use { cursor ->
+            val out = ArrayList<Locator>(cursor.count)
+            while (cursor.moveToNext()) {
+                out.add(
+                    Locator(
+                        id = cursor.getLong(0),
+                        href = cursor.getString(1).orEmpty(),
+                        uid = cursor.getString(2).orEmpty(),
+                        etag = cursor.getString(3)?.takeIf { it.isNotEmpty() },
+                    ),
+                )
+            }
+            out
+        }.orEmpty()
+
+        if (locators.isEmpty()) return emptyList()
+
+        // Resolve the account's group titles ONCE per scan so a GroupMembership row that
+        // carries only a GROUP_ROW_ID (a People-app user label, GROUP_SOURCE_ID blank)
+        // maps back to its category instead of dropping silently.
+        val groupTitles = queryGroupTitles(accountName)
+
+        return locators.map { loc ->
+            val mapped = DeviceContactRowMapper.toContact(
+                readDataRows(accountName, loc.id),
+                uid = loc.uid,
+                groupTitlesById = groupTitles,
+            )
+            LocalContactEdit(
+                href = loc.href,
+                uid = loc.uid,
+                storedEtag = loc.etag,
+                // uid/version/rawVCard/kind aren't on Data rows; only the UID is known
+                // here (SYNC1). version + rawVCard are composed by the push strategy at
+                // the book's observed version, so the defaults are left in place.
+                // Normalize the photo (WebP/HEIF -> JPEG) so strict servers store it and
+                // its image type is labeled correctly; every other photo passes through.
+                contact = mapped.copy(photo = photoTranscoder.normalize(mapped.photo)),
+                // The provider _ID: the only stable key a net-new contact (blank
+                // SOURCE_ID) can be written back against after its server create.
+                localId = loc.id,
+            )
+        }
+    }
+
+    /**
+     * Map this account's `Groups._ID` -> `TITLE` (blank titles skipped) for resolving a
+     * [android.provider.ContactsContract.CommonDataKinds.GroupMembership] row that carries
+     * only a `GROUP_ROW_ID`. Failure-safe: a read failure degrades to an empty map
+     * (GROUP_SOURCE_ID-only categories) rather than aborting the whole edit scan; a
+     * cancellation propagates.
+     */
+    private fun queryGroupTitles(accountName: String): Map<Long, String> =
+        try {
+            contentResolver.query(
+                syncAdapterUri(Groups.CONTENT_URI, accountName),
+                arrayOf(Groups._ID, Groups.TITLE),
+                accountScopeSelection(),
+                accountScopeArgs(accountName),
+                null,
+            )?.use { cursor ->
+                val out = HashMap<Long, String>(cursor.count)
+                while (cursor.moveToNext()) {
+                    val title = cursor.getString(1)?.takeIf { it.isNotBlank() } ?: continue
+                    out[cursor.getLong(0)] = title
+                }
+                out
+            }.orEmpty()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: SecurityException) {
+            // Log the message only, never the throwable, so a provider exception that
+            // echoes the account-scoped URI can't leak the account name to logcat
+            // (matching the surrounding edit-scan guards).
+            Log.w(TAG, "READ_CONTACTS revoked; group titles unresolved (labels may drop)")
+            emptyMap()
+        } catch (e: Exception) {
+            Log.w(TAG, "Group title query failed; labels may drop")
+            emptyMap()
+        }
+
+    /** Scan the account's `DELETED = 1` RawContacts into [LocalContactTombstone]s. */
+    private fun queryTombstones(accountName: String): List<LocalContactTombstone> =
+        contentResolver.query(
+            syncAdapterUri(RawContacts.CONTENT_URI, accountName),
+            arrayOf(RawContacts.SOURCE_ID, RawContacts.SYNC2),
+            "${accountScopeSelection()} AND ${RawContacts.DELETED} = 1",
+            accountScopeArgs(accountName),
+            null,
+        )?.use { cursor ->
+            val out = ArrayList<LocalContactTombstone>(cursor.count)
+            while (cursor.moveToNext()) {
+                out.add(
+                    LocalContactTombstone(
+                        href = cursor.getString(0).orEmpty(),
+                        storedEtag = cursor.getString(1)?.takeIf { it.isNotEmpty() },
+                    ),
+                )
+            }
+            out
+        }.orEmpty()
+
+    /** All Data rows of one RawContact as [ContentValues], for the reverse mapper. */
+    private fun readDataRows(accountName: String, rawContactId: Long): List<ContentValues> =
+        contentResolver.query(
+            syncAdapterUri(Data.CONTENT_URI, accountName),
+            null,
+            "${Data.RAW_CONTACT_ID} = ?",
+            arrayOf(rawContactId.toString()),
+            null,
+        )?.use { cursor ->
+            val out = ArrayList<ContentValues>(cursor.count)
+            while (cursor.moveToNext()) out.add(cursorRowToValues(cursor))
+            out
+        }.orEmpty()
+
+    /**
+     * Materialize the current cursor row into [ContentValues], preserving each
+     * column's type. Type-aware (not the String-coercing
+     * `DatabaseUtils.cursorRowToContentValues`) so an INTEGER type column
+     * (`Email.TYPE`, `IS_PRIMARY`) and a BLOB photo survive intact for the reverse
+     * mapper's `getAsInteger` / `getAsByteArray` reads.
+     */
+    private fun cursorRowToValues(cursor: Cursor): ContentValues {
+        val values = ContentValues(cursor.columnCount)
+        for (i in 0 until cursor.columnCount) {
+            val name = cursor.getColumnName(i)
+            when (cursor.getType(i)) {
+                Cursor.FIELD_TYPE_NULL -> {} // leave absent
+                Cursor.FIELD_TYPE_INTEGER -> values.put(name, cursor.getLong(i))
+                Cursor.FIELD_TYPE_FLOAT -> values.put(name, cursor.getDouble(i))
+                Cursor.FIELD_TYPE_BLOB -> values.put(name, cursor.getBlob(i))
+                else -> values.put(name, cursor.getString(i))
+            }
+        }
+        return values
+    }
+
+    override suspend fun markContactUploaded(
+        accountName: String,
+        href: String,
+        newEtag: String,
+    ): Result<Unit> = applyScopedIdWrite("mark-uploaded", resolveRawContactId(accountName, href)) { id ->
+        ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+            .withValue(RawContacts.SYNC2, newEtag)
+            // Clear DIRTY in the SAME sync-adapter write. Sync-adapter mode is what
+            // stops the provider re-flagging DIRTY on our own write (which would spin
+            // the push forever); clearing it removes the row from the next scan.
+            .withValue(RawContacts.DIRTY, 0)
+            .build()
+    }
+
+    override suspend fun assignContactUid(
+        accountName: String,
+        localId: Long,
+        uid: String,
+    ): Result<Unit> =
+        // Keyed by the provider _ID: a net-new row's SOURCE_ID is still blank, so it can
+        // only be reached by _ID. A 0L (unset) _ID no-ops rather than stamping a row.
+        applyScopedIdWrite("assign-uid", localId.takeIf { it > 0L }) { id ->
+            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+                // Persist the synthesized UID so it names the resource and re-attempts reuse
+                // it. DIRTY is left SET: the row stays pending until the server create clears
+                // it. Sync-adapter mode (the rawContactByIdUri) stops this write from itself
+                // re-flagging DIRTY, so keeping DIRTY=1 here reflects the still-pending edit
+                // rather than a fresh one.
+                .withValue(RawContacts.SYNC1, uid)
+                .withValue(RawContacts.DIRTY, 1)
+                .build()
+        }
+
+    override suspend fun markNewContactUploaded(
+        accountName: String,
+        localId: Long,
+        href: String,
+        newEtag: String,
+    ): Result<Unit> =
+        // Keyed by the provider _ID, never a SOURCE_ID resolve: a net-new row's SOURCE_ID
+        // is still blank at this point, so an href lookup would find nothing. A 0L (unset)
+        // _ID passes null to applyScopedIdWrite, which no-ops rather than stamping a row.
+        applyScopedIdWrite("mark-new-uploaded", localId.takeIf { it > 0L }) { id ->
+            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+                // Stamp the freshly-minted server href so the next pull matches this row
+                // (SOURCE_ID = server href) and skips it instead of inserting a duplicate.
+                .withValue(RawContacts.SOURCE_ID, href)
+                .withValue(RawContacts.SYNC2, newEtag)
+                // Clear DIRTY in the SAME sync-adapter write so our own write-back isn't
+                // re-detected as a fresh edit (which would spin the push forever).
+                .withValue(RawContacts.DIRTY, 0)
+                .build()
+        }
+
+    override suspend fun hardDeleteTombstone(accountName: String, href: String): Result<Unit> =
+        applyScopedIdWrite("hard-delete-tombstone", resolveTombstoneId(accountName, href)) { id ->
+            // A delete via the sync-adapter URI is a HARD delete; a non-adapter delete
+            // would only re-set DELETED (soft), leaving the row forever.
+            ContentProviderOperation.newDelete(rawContactByIdUri(accountName, id)).build()
+        }
+
+    override suspend fun restoreTombstone(accountName: String, href: String): Result<Unit> =
+        applyScopedIdWrite("restore-tombstone", resolveTombstoneId(accountName, href)) { id ->
+            ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+                .withValue(RawContacts.DELETED, 0)
+                // Also clear DIRTY: a restored-but-still-dirty row would re-surface as a
+                // pending EDIT on the very next scan.
+                .withValue(RawContacts.DIRTY, 0)
+                .build()
+        }
+
+    /**
+     * Resolve [href] to a RawContact `_ID`, build a single op via [buildOp], and apply
+     * it, validating the applied-op count. A null [rawContactId] (href no longer
+     * resolves, or resolves to no matching row) is a no-op success. A short
+     * `applyBatch` result is a [Result.failure] — per-op counts can lie, but a short
+     * result array is the reliable at-op-granularity signal the write did not fully
+     * apply. Failures are classified as [ContactWriteFailure]; no provider message
+     * (which could embed a href/email/URL) reaches the log or the failure.
+     */
+    private suspend fun applyScopedIdWrite(
+        label: String,
+        rawContactId: Long?,
+        buildOp: (Long) -> ContentProviderOperation,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        val id = rawContactId ?: return@withContext Result.success(Unit)
+        val ops = arrayListOf(buildOp(id))
+        try {
+            val results = contentResolver.applyBatch(ContactsContract.AUTHORITY, ops)
+            if (results.size < ops.size) {
+                Log.w(TAG, "$label: applyBatch returned ${results.size} of ${ops.size} ops")
+                Result.failure(ContactWriteException(ContactWriteFailure.PARTIAL_APPLY))
+            } else {
+                Result.success(Unit)
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "$label: WRITE_CONTACTS revoked")
+            Result.failure(ContactWriteException(ContactWriteFailure.PERMISSION_DENIED))
+        } catch (e: OperationApplicationException) {
+            Log.w(TAG, "$label: batch failed to apply")
+            Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
+        } catch (e: RemoteException) {
+            Log.w(TAG, "$label: Contacts Provider unavailable")
+            Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
+        } catch (e: CancellationException) {
+            // Cancellation is not a provider error: let it unwind so the write-back
+            // isn't reported as a recoverable failure that holds the sync token.
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "$label: batch failed unexpectedly")
+            Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
+        }
+    }
+
+    /** The `_ID` of a live RawContact at [href] under this account, or null. */
+    private fun resolveRawContactId(accountName: String, href: String): Long? =
+        resolveRawContact(accountName, href)?.rawContactId
+
+    /**
+     * The `_ID` of a soft-deleted (`DELETED = 1`) RawContact at [href] under this
+     * account, or null. The `DELETED = 1` constraint is the safety fence: a
+     * tombstone verb can never touch a live row that merely shares the href.
+     */
+    private fun resolveTombstoneId(accountName: String, href: String): Long? =
+        contentResolver.query(
+            syncAdapterUri(RawContacts.CONTENT_URI, accountName),
+            arrayOf(RawContacts._ID),
+            "${accountScopeSelection()} AND ${RawContacts.SOURCE_ID} = ? AND ${RawContacts.DELETED} = 1",
+            accountScopeArgs(accountName) + href,
+            null,
+        )?.use { if (it.moveToFirst()) it.getLong(0) else null }
+
+    /** A sync-adapter, account-scoped URI addressing one RawContact by its `_ID`. */
+    private fun rawContactByIdUri(accountName: String, rawContactId: Long): Uri =
+        ContentUris.withAppendedId(syncAdapterUri(RawContacts.CONTENT_URI, accountName), rawContactId)
 
     /**
      * Build the [ContentProviderOperation] batches for [contacts]. Pure (no I/O)
@@ -635,7 +962,10 @@ class AndroidContactsProviderRepository @Inject constructor(
             put(RawContacts.SYNC2, contact.etag)
             put(RawContacts.SYNC3, contentHash(contact))
             put(RawContacts.SYNC4, flagsFor(contact))
-            put(RawContacts.RAW_CONTACT_IS_READ_ONLY, 1)
+            // Editable iff the owning book is writable: an editable row lets the
+            // provider flip DIRTY on a user edit (the push signal); a read-only book's
+            // contacts stay non-editable since they could never be pushed back.
+            put(RawContacts.RAW_CONTACT_IS_READ_ONLY, if (contact.isReadOnly) 1 else 0)
             // Fully isolate mirrored contacts from every other account. DISABLED (not
             // SUSPENDED) is deliberate: SUSPENDED only stops *automatic* aggregation
             // but still lets a RawContact join another account's contact via a manual

@@ -23,9 +23,12 @@ import org.onekash.kashcal.sync.carddav.FakeAddressBook
 import org.onekash.kashcal.sync.carddav.FakeCardDavClient
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
+import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
 import org.onekash.kashcal.sync.carddav.model.ContactSyncItem
 import org.onekash.kashcal.sync.carddav.model.ContactSyncReport
+import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.vcard.VCardParser
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -73,9 +76,15 @@ class ContactPullStrategyTest {
         )
 
         provider = FakeContactsProviderRepository()
-        // Real fetcher over the same fake provider: with no pending photos seeded it
-        // is an exact no-op, so the full-sync assertions below are unaffected.
-        strategy = ContactPullStrategy(database.addressBookDao(), provider, ContactPhotoFetcher(provider))
+        // Real fetcher + real push strategy over the same fake provider: with no
+        // pending photos or pending local changes seeded, both are exact no-ops, so
+        // the full-sync assertions below are unaffected.
+        strategy = ContactPullStrategy(
+            database.addressBookDao(),
+            provider,
+            ContactPhotoFetcher(provider),
+            ContactPushStrategy(provider),
+        )
     }
 
     @After
@@ -96,8 +105,11 @@ class ContactPullStrategyTest {
         url: String = BOOK_URL,
         ctag: String? = "ctag-1",
         contacts: MutableList<CardDavContactData> = mutableListOf(),
+        isReadOnly: Boolean = true,
     ) = FakeAddressBook(
-        book = CardDavAddressBook(href = url, url = url, displayName = "Contacts", ctag = ctag, vcardVersion = "3.0"),
+        book = CardDavAddressBook(
+            href = url, url = url, displayName = "Contacts", ctag = ctag, vcardVersion = "3.0", isReadOnly = isReadOnly,
+        ),
         contacts = contacts,
     )
 
@@ -700,6 +712,240 @@ class ContactPullStrategyTest {
             database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken)
     }
 
+    // ---------- push (local edits/deletes) runs inside the pull, before the per-book pull ----------
+
+    @Test
+    fun `push uploads the local edit before the per-book pull fetches new server contacts`() = runTest {
+        // A local edit at /ab/default/edit.vcf (stored etag v1, unchanged on server so
+        // the pull would skip it) and a brand-new server contact /ab/default/new.vcf the
+        // pull must insert. The push must GET its patch base BEFORE the pull fetches the
+        // new contact, so the outbound edit is delivered ahead of the reconciling read.
+        val editHref = "$BOOK_PATH/edit.vcf"
+        val newHref = "$BOOK_PATH/new.vcf"
+        val editBody = vcard("edit-uid", "Server Edit")
+        val bk = book(
+            isReadOnly = false,
+            contacts = mutableListOf(
+                CardDavContactData(href = editHref, url = "$BOOK_URL$editHref", etag = "v1", vcardBody = editBody),
+                contact(newHref, "e-new"),
+            ),
+        )
+        val client = clientWith(bk, syncToken = null)
+        // Server copy is unchanged (still v1), so keeping the stored etag at v1 lets the
+        // pull skip /edit.vcf and fetch only the genuinely-new /new.vcf.
+        client.putContactResult = ContactUploadResult.Success(etag = "v1")
+        provider.seed(ACCOUNT_NAME, editHref, "v1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(
+                LocalContactEdit(
+                    href = editHref, uid = "edit-uid", storedEtag = "v1",
+                    contact = VCardParser().parse(editBody).single().copy(displayName = "Edited", rawVCard = ""),
+                ),
+            ),
+            deleted = emptyList(),
+        )
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the edit was PUT during the run", 1, client.putContactCalls.size)
+        assertEquals("only the new server contact is inserted", 1, result.inserted)
+        // The push GET of the edited href precedes the pull's insert-fetch of the new href.
+        val pushGet = client.fetchByHrefCalls.indexOfFirst { editHref in it.second }
+        val pullFetch = client.fetchByHrefCalls.indexOfFirst { newHref in it.second }
+        assertTrue("both the push GET and the pull fetch ran", pushGet >= 0 && pullFetch >= 0)
+        assertTrue("push GET happens before the per-book pull fetch", pushGet < pullFetch)
+    }
+
+    @Test
+    fun `a partial push failure holds the sync token so the run is retried`() = runTest {
+        // The device holds a contact and there is a local tombstone whose server DELETE
+        // fails at the transport layer. That failed delete makes the push not-clean, but it
+        // is NOT pull-unsafe (a delete creates no new server row for the pull to duplicate),
+        // so the pull still runs — yet the not-clean push holds every book's sync token at
+        // its pre-run value so the run replays (RFC 6578: only advance once everything
+        // reconciled).
+        provider.seed(ACCOUNT_NAME, "$BOOK_PATH/a.vcf", "e1")
+        seedStoredToken(BOOK_URL, "token-1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = emptyList(),
+            deleted = listOf(LocalContactTombstone(href = "$BOOK_PATH/gone.vcf", storedEtag = "d1")),
+        )
+        val bk = book(isReadOnly = false, contacts = mutableListOf(contact("$BOOK_PATH/a.vcf", "e1")))
+        bk.syncReports += CalDavResult.success(
+            ContactSyncReport(syncToken = "token-2", changed = emptyList(), deleted = emptyList()),
+        )
+        val client = clientWith(bk)
+        client.deleteContactResult = ContactDeleteResult.Failed(code = 0, message = "network", isRetryable = true)
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the DELETE was attempted", 1, client.deleteContactCalls.size)
+        assertTrue("a failed push counts against the run", result.booksFailed >= 1)
+        assertEquals(
+            "the sync token is HELD at the pre-run value, not advanced past an incomplete push",
+            "token-1",
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+    }
+
+    @Test
+    fun `a push-induced local wipe re-triggers the full-listing self-heal`() = runTest {
+        // A local tombstone deletes the account's only device contact. Because the pull
+        // reads the device snapshot AFTER the push, the now-empty device trips the
+        // wiped-implies-full-listing self-heal: the stored token must NOT drive a delta
+        // (which would report only changes and leave the account under-populated).
+        provider.seed(ACCOUNT_NAME, "$BOOK_PATH/a.vcf", "e1")
+        seedStoredToken(BOOK_URL, "token-1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = emptyList(),
+            deleted = listOf(LocalContactTombstone(href = "$BOOK_PATH/a.vcf", storedEtag = "e1")),
+        )
+        // After the push deletes /a.vcf on the server too, the collection lists only a
+        // separate contact the wiped device must re-fetch via the full listing.
+        val bk = book(isReadOnly = false, contacts = mutableListOf(contact("$BOOK_PATH/c.vcf", "e-c")))
+        val client = clientWith(bk)
+        client.deleteContactResult = ContactDeleteResult.Deleted
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertTrue("the DELETE was delivered and the local row hard-deleted", client.deleteContactCalls.size == 1)
+        assertTrue("the wiped device must NOT drive an incremental delta", client.syncCollectionCalls.isEmpty())
+        assertEquals("the empty device forces a full listing", 1, client.listAllHrefsCalls)
+        assertEquals("the full re-listing repopulates from the server", setOf("$BOOK_PATH/c.vcf"), provider.hrefsFor(ACCOUNT_NAME))
+        assertEquals("the new server contact is inserted", 1, result.inserted)
+    }
+
+    @Test
+    fun `a net-new device contact syncs up once and is not duplicated by the following pull`() = runTest {
+        // A contact created on the device (blank href, DIRTY, no server resource yet) is
+        // pushed as a create. After the successful create, its new server href + etag must
+        // be written back onto the ORIGINATING row by its provider _ID (the href was
+        // blank, so the href-keyed surface can't reach it) and DIRTY cleared — so the pull
+        // that immediately follows sees a matching href and skips it, rather than mirroring
+        // the server copy as a duplicate second row.
+        val createdHref = "$BOOK_PATH/uid-new.vcf"
+        val bk = book(isReadOnly = false, contacts = mutableListOf())
+        val client = clientWith(bk, syncToken = null)
+        client.putContactResult = ContactUploadResult.Success(etag = "srv-1")
+        // FakeCardDavClient.putContact does not add the created resource to the book pool,
+        // so model the server having accepted the create by seeding it into the set the
+        // subsequent pull enumerates.
+        bk.contacts += contact(createdHref, "srv-1", uid = "uid-new", fn = "New Person")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(
+                LocalContactEdit(
+                    href = "", uid = "uid-new", storedEtag = null, localId = 100L,
+                    contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                ),
+            ),
+            deleted = emptyList(),
+        )
+
+        strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the net-new contact was created on the server exactly once", 1, client.putContactCalls.size)
+        assertEquals(
+            "exactly one device row survives: the originating contact, now stamped with its server href (no duplicate)",
+            1,
+            provider.deviceRowCount(ACCOUNT_NAME),
+        )
+        assertEquals("the surviving row carries the created server href", setOf(createdHref), provider.hrefsFor(ACCOUNT_NAME))
+        assertTrue("no net-new edit is left pending", provider.pendingChanges.edited.isEmpty())
+    }
+
+    @Test
+    fun `a net-new create whose write-back fails skips the pull so no duplicate materializes`() = runTest {
+        // The server accepts the net-new create, but the local _ID write-back (which would
+        // stamp SOURCE_ID + clear DIRTY) fails — so the originating row stays blank-href and
+        // DIRTY, i.e. the push is NOT clean. The pull that follows MUST be skipped entirely:
+        // if it enumerated, it would see the just-created server href absent from the (still
+        // empty) device snapshot and insert it as a SECOND row alongside the still-pending
+        // originating edit. Skipping the pull holds all tokens and replays the whole run.
+        val createdHref = "$BOOK_PATH/uid-new.vcf"
+        val bk = book(isReadOnly = false, contacts = mutableListOf())
+        val client = clientWith(bk, syncToken = null)
+        client.putContactResult = ContactUploadResult.Success(etag = "srv-1")
+        // Model the server having accepted the create by seeding the resource the pull would
+        // enumerate — the duplicate source the gate must NOT reach.
+        bk.contacts += contact(createdHref, "srv-1", uid = "uid-new", fn = "New Person")
+        // The write-back fails: markNewContactUploaded returns failure, so the create is
+        // recorded as not-clean and the originating edit stays pending.
+        provider.markNewUploadedResult = Result.failure(RuntimeException("write-back failed"))
+        seedStoredToken(BOOK_URL, "token-1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(
+                LocalContactEdit(
+                    href = "", uid = "uid-new", storedEtag = null, localId = 100L,
+                    contact = VCardParser().parse(vcard("uid-new", "New Person")).single().copy(rawVCard = ""),
+                ),
+            ),
+            deleted = emptyList(),
+        )
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the create was attempted exactly once", 1, client.putContactCalls.size)
+        assertEquals("the write-back was attempted and failed", 1, provider.markNewUploadedCalls.size)
+        assertTrue("the not-clean push counts against the run", result.booksFailed >= 1)
+        // The pull never ran: no enumeration, no delta, no insert.
+        assertEquals("the pull did not enumerate", 0, client.listAllHrefsCalls)
+        assertTrue("the pull did not probe the incremental delta", client.syncCollectionCalls.isEmpty())
+        assertTrue("the pull materialized nothing", provider.insertCalls.isEmpty())
+        assertEquals(
+            "exactly one device row exists: the still-pending originating contact, no server-copy duplicate",
+            1,
+            provider.deviceRowCount(ACCOUNT_NAME),
+        )
+        assertEquals(
+            "the sync token is HELD at the pre-run value for a full replay next run",
+            "token-1",
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+    }
+
+    @Test
+    fun `a non-net-new push failure still lets inbound contacts materialize while holding the token`() = runTest {
+        // A local tombstone's server DELETE fails at the transport layer: the push is
+        // not-clean, but a delete creates no new server row, so it is NOT pull-unsafe. The
+        // pull MUST still run — a single persistently-rejected local change must never freeze
+        // ALL inbound sync — so a brand-new contact the server reports in the delta still
+        // materializes on the device. Yet the not-clean push holds the book's sync-token at
+        // its pre-run value so the whole run replays until the stuck delete reconciles.
+        provider.seed(ACCOUNT_NAME, "$BOOK_PATH/a.vcf", "e1")
+        seedStoredToken(BOOK_URL, "token-1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = emptyList(),
+            deleted = listOf(LocalContactTombstone(href = "$BOOK_PATH/gone.vcf", storedEtag = "d1")),
+        )
+        val bk = book(isReadOnly = false, contacts = mutableListOf(contact("$BOOK_PATH/a.vcf", "e1")))
+        // The server-side delta reports a NEW inbound contact unrelated to the stuck delete.
+        bk.contacts += contact("$BOOK_PATH/inbound.vcf", "e-in", uid = "uid-in", fn = "Inbound Person")
+        bk.syncReports += CalDavResult.success(
+            ContactSyncReport(
+                syncToken = "token-2",
+                changed = listOf(ContactSyncItem("$BOOK_PATH/inbound.vcf", "e-in")),
+                deleted = emptyList(),
+            ),
+        )
+        val client = clientWith(bk)
+        client.deleteContactResult = ContactDeleteResult.Failed(code = 0, message = "network", isRetryable = true)
+
+        val result = strategy.sync(account, SERVER_URL, client) as ContactPullResult.Success
+
+        assertEquals("the DELETE was attempted and failed", 1, client.deleteContactCalls.size)
+        assertTrue("the not-clean push counts against the run", result.booksFailed >= 1)
+        assertEquals("the pull still enumerated the delta despite the stuck delete", 1, result.inserted)
+        assertTrue(
+            "the brand-new inbound contact materialized — inbound sync is NOT frozen by the stuck push",
+            provider.hrefsFor(ACCOUNT_NAME).contains("$BOOK_PATH/inbound.vcf"),
+        )
+        assertEquals(
+            "the sync token is HELD at the pre-run value so the stuck delete replays next run",
+            "token-1",
+            database.addressBookDao().getByAccountIdOnce(accountId).single().syncToken,
+        )
+    }
+
     @Test
     fun `an invalid or expired sync-token falls back to a full listing`() = runTest {
         // Device has a stale contact; the stored token is rejected by the server.
@@ -1087,5 +1333,8 @@ class ContactPullStrategyTest {
         const val SERVER_URL = "https://dav.example.test/"
         const val HOME_URL = "https://dav.example.test/ab/"
         const val BOOK_URL = "https://dav.example.test/ab/default/"
+        // The path portion of BOOK_URL: local push hrefs must sit under this so
+        // ContactPushStrategy.bookForHref (longest-prefix path match) routes them.
+        const val BOOK_PATH = "/ab/default"
     }
 }

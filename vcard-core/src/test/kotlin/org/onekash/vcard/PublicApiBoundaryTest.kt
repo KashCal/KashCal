@@ -45,6 +45,19 @@ class PublicApiBoundaryTest {
     }
 
     @Test
+    fun `ImageFormat public methods reference no ez-vcard type`() {
+        // The magic-byte sniffer is shared with the app module, so its neutrality is
+        // load-bearing: the app must recognize photo formats without an ez-vcard dep.
+        val leaks = ImageFormat::class.java.methods
+            .filter { it.declaringClass == ImageFormat::class.java }
+            .flatMap { leaksIn(it) } +
+            ImageFormat.Companion::class.java.methods
+                .filter { it.declaringClass == ImageFormat.Companion::class.java }
+                .flatMap { leaksIn(it) }
+        assertNoLeaks(leaks)
+    }
+
+    @Test
     fun `neutral model exposes no ez-vcard type`() {
         val leaks = modelClasses.flatMap { cls ->
             val fieldLeaks = cls.declaredFields

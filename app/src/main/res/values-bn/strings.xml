@@ -85,6 +85,7 @@
     <string name="action_delete">মুছুন</string>
     <string name="action_confirm">নিশ্চিত করুন</string>
     <string name="action_discard">বাতিল করুন</string>
+    <string name="action_discard_confirm">পরিবর্তন বাতিল করবেন?</string>
     <string name="action_dismiss">খারিজ করুন</string>
     <string name="action_show_all">সব দেখান</string>
     <string name="action_connect">সংযোগ করুন</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ইভেন্ট শেয়ার করুন</string>
     <string name="share_as_card_share_failed">কার্ড শেয়ার করা যায়নি</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

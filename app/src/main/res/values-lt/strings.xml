@@ -85,6 +85,7 @@
     <string name="action_delete">Ištrinti</string>
     <string name="action_confirm">Patvirtinti</string>
     <string name="action_discard">Atmesti</string>
+    <string name="action_discard_confirm">Atmesti?</string>
     <string name="action_dismiss">Uždaryti</string>
     <string name="action_show_all">Rodyti viską</string>
     <string name="action_connect">Prijungti</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Bendrinti įvykį</string>
     <string name="share_as_card_share_failed">Nepavyko bendrinti kortelės</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

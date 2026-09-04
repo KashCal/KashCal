@@ -85,6 +85,7 @@
     <string name="action_delete">Eliminar</string>
     <string name="action_confirm">Confirmar</string>
     <string name="action_discard">Descartar</string>
+    <string name="action_discard_confirm">Descartar os cambios?</string>
     <string name="action_dismiss">Desbotar</string>
     <string name="action_show_all">Mostrar todo</string>
     <string name="action_connect">Conectar</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Compartir evento</string>
     <string name="share_as_card_share_failed">Non se puido compartir a tarxeta</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

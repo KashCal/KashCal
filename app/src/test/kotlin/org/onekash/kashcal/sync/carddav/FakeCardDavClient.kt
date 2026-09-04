@@ -284,6 +284,13 @@ class FakeCardDavClient(
     /** [deleteContact] result; defaults to a clean delete. */
     var deleteContactResult: ContactDeleteResult = ContactDeleteResult.Deleted
 
+    /**
+     * When set, [putContact] throws this instead of returning — used to exercise a
+     * caller's exception handling (e.g. cooperative cancellation must propagate, not
+     * be swallowed as a failed item).
+     */
+    var putContactThrows: Throwable? = null
+
     override suspend fun putContact(
         resourceUrl: String,
         vcardBody: String,
@@ -291,6 +298,7 @@ class FakeCardDavClient(
     ): ContactUploadResult {
         nonFetchCalls++
         putContactCalls += Triple(resourceUrl, vcardBody, precondition)
+        putContactThrows?.let { throw it }
         return putContactResult
     }
 

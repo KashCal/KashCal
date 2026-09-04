@@ -85,6 +85,7 @@
     <string name="action_delete">Șterge</string>
     <string name="action_confirm">Confirmă</string>
     <string name="action_discard">Renunță</string>
+    <string name="action_discard_confirm">Renunți?</string>
     <string name="action_dismiss">Respinge</string>
     <string name="action_show_all">Arată tot</string>
     <string name="action_connect">Conectează</string>
@@ -1318,5 +1319,4 @@
     <string name="share_as_card_chooser_title">Partajează evenimentul</string>
     <string name="share_as_card_share_failed">Cardul nu a putut fi partajat</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

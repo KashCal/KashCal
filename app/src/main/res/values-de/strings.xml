@@ -85,6 +85,7 @@
     <string name="action_delete">Löschen</string>
     <string name="action_confirm">Bestätigen</string>
     <string name="action_discard">Verwerfen</string>
+    <string name="action_discard_confirm">Verwerfen?</string>
     <string name="action_dismiss">Schließen</string>
     <string name="action_show_all">Alle anzeigen</string>
     <string name="action_connect">Verbinden</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Termin teilen</string>
     <string name="share_as_card_share_failed">Karte konnte nicht geteilt werden</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

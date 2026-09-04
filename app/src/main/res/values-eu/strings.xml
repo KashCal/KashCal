@@ -85,6 +85,7 @@
     <string name="action_delete">Ezabatu</string>
     <string name="action_confirm">Berretsi</string>
     <string name="action_discard">Baztertu</string>
+    <string name="action_discard_confirm">Aldaketak baztertu?</string>
     <string name="action_dismiss">Baztertu</string>
     <string name="action_show_all">Dena erakutsi</string>
     <string name="action_connect">Konektatu</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Partekatu gertaera</string>
     <string name="share_as_card_share_failed">Ezin izan da txartela partekatu</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

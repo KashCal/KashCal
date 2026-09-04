@@ -2,9 +2,11 @@ package org.onekash.kashcal.data.contacts
 
 import android.content.ContentValues
 import android.provider.ContactsContract.CommonDataKinds.Email
+import android.provider.ContactsContract.CommonDataKinds.GroupMembership
 import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.CommonDataKinds.StructuredPostal
+import android.provider.ContactsContract.Data
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -316,6 +318,50 @@ class DeviceContactRowMapperTest {
         val (parsed, reversed) = roundTrip("kashcal_full_v3.vcf")
         assertEquals(listOf("Family", "Test"), reversed.categories)
         assertEquals(parsed.categories, reversed.categories)
+    }
+
+    /** A GroupMembership Data row, keyed by GROUP_SOURCE_ID and/or GROUP_ROW_ID. */
+    private fun groupRow(sourceId: String? = null, rowId: Long? = null) =
+        ContentValues().apply {
+            put(Data.MIMETYPE, GroupMembership.CONTENT_ITEM_TYPE)
+            if (sourceId != null) put(GroupMembership.GROUP_SOURCE_ID, sourceId)
+            if (rowId != null) put(GroupMembership.GROUP_ROW_ID, rowId)
+        }
+
+    @Test
+    fun `a blank-source-id group membership resolves its title by GROUP_ROW_ID`() {
+        val reversed = DeviceContactRowMapper.toContact(
+            dataRows = listOf(groupRow(sourceId = "", rowId = 7L)),
+            groupTitlesById = mapOf(7L to "Friends"),
+        )
+        assertEquals(listOf("Friends"), reversed.categories)
+        // Loop closer: the resolved label is emitted as a CATEGORIES value, not dropped.
+        assertTrue(
+            "CATEGORIES emitted",
+            VCardWriter().write(reversed).contains("CATEGORIES", ignoreCase = true),
+        )
+    }
+
+    @Test
+    fun `source-id and row-id group memberships resolve in order and de-duplicated`() {
+        val reversed = DeviceContactRowMapper.toContact(
+            dataRows = listOf(
+                groupRow(sourceId = "Work"),
+                groupRow(sourceId = "", rowId = 7L),
+                groupRow(sourceId = "Work"), // duplicate by source id
+            ),
+            groupTitlesById = mapOf(7L to "Friends"),
+        )
+        assertEquals(listOf("Work", "Friends"), reversed.categories)
+    }
+
+    @Test
+    fun `a row-id group membership with no map entry is dropped, not emitted blank`() {
+        val reversed = DeviceContactRowMapper.toContact(
+            dataRows = listOf(groupRow(sourceId = "", rowId = 99L)),
+            groupTitlesById = emptyMap(),
+        )
+        assertTrue("no category emitted", reversed.categories.isEmpty())
     }
 
     // ========== Cosmetic provider-only columns tolerated ==========

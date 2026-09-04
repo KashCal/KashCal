@@ -85,6 +85,7 @@
     <string name="action_delete">ଡିଲିଟ</string>
     <string name="action_confirm">ନିଶ୍ଚିତ କରନ୍ତୁ</string>
     <string name="action_discard">ପରିତ୍ୟାଗ</string>
+    <string name="action_discard_confirm">ପରିବର୍ତ୍ତନ ପରିତ୍ୟାଗ କରିବେ?</string>
     <string name="action_dismiss">ଖାରଜ</string>
     <string name="action_show_all">ସମସ୍ତ ଦେଖାନ୍ତୁ</string>
     <string name="action_connect">ସଂଯୋଗ କରନ୍ତୁ</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ଇଭେଣ୍ଟ ସେୟାର କରନ୍ତୁ</string>
     <string name="share_as_card_share_failed">କାର୍ଡ ସେୟାର କରାଯାଇପାରିଲା ନାହିଁ</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

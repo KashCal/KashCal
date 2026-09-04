@@ -85,6 +85,7 @@
     <string name="action_delete">Διαγραφή</string>
     <string name="action_confirm">Επιβεβαίωση</string>
     <string name="action_discard">Απόρριψη</string>
+    <string name="action_discard_confirm">Να γίνει απόρριψη;</string>
     <string name="action_dismiss">Παράβλεψη</string>
     <string name="action_show_all">Εμφάνιση όλων</string>
     <string name="action_connect">Σύνδεση</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Κοινοποίηση εκδήλωσης</string>
     <string name="share_as_card_share_failed">Δεν ήταν δυνατή η κοινοποίηση της κάρτας</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

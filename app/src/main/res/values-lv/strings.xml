@@ -85,6 +85,7 @@
     <string name="action_delete">Dzēst</string>
     <string name="action_confirm">Apstiprināt</string>
     <string name="action_discard">Atmest</string>
+    <string name="action_discard_confirm">Atmest?</string>
     <string name="action_dismiss">Noraidīt</string>
     <string name="action_show_all">Rādīt visus</string>
     <string name="action_connect">Savienot</string>
@@ -1319,5 +1320,4 @@
     <string name="share_as_card_chooser_title">Kopīgot notikumu</string>
     <string name="share_as_card_share_failed">Neizdevās kopīgot kartīti</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -85,6 +85,7 @@
     <string name="action_delete">Obriši</string>
     <string name="action_confirm">Potvrdi</string>
     <string name="action_discard">Odbaci</string>
+    <string name="action_discard_confirm">Odbaciti?</string>
     <string name="action_dismiss">Odbaci</string>
     <string name="action_show_all">Prikaži sve</string>
     <string name="action_connect">Poveži</string>
@@ -1319,5 +1320,4 @@
     <string name="share_as_card_chooser_title">Podijeli događaj</string>
     <string name="share_as_card_share_failed">Karticu nije moguće podijeliti</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

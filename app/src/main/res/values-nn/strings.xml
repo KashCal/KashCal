@@ -85,6 +85,7 @@
     <string name="action_delete">Slett</string>
     <string name="action_confirm">Stadfest</string>
     <string name="action_discard">Forkast</string>
+    <string name="action_discard_confirm">Forkast?</string>
     <string name="action_dismiss">Avvis</string>
     <string name="action_show_all">Vis alle</string>
     <string name="action_connect">Kopla til</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Del hending</string>
     <string name="share_as_card_share_failed">Kunne ikkje dele kortet</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

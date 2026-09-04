@@ -85,6 +85,7 @@
     <string name="action_delete">Dileu</string>
     <string name="action_confirm">Cadarnhau</string>
     <string name="action_discard">Taflu</string>
+    <string name="action_discard_confirm">Taflu\'r newidiadau?</string>
     <string name="action_dismiss">Diswyddo</string>
     <string name="action_show_all">Dangos Popeth</string>
     <string name="action_connect">Cysylltu</string>
@@ -1478,5 +1479,4 @@
     <string name="share_as_card_chooser_title">Rhannu digwyddiad</string>
     <string name="share_as_card_share_failed">Methu rhannu\'r cerdyn</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

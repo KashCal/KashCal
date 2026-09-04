@@ -75,4 +75,14 @@ class CardDavResourceNameTest {
     fun `fallback names are random per call`() {
         assertNotEquals(contactResourceName("bad/uid"), contactResourceName("bad/uid"))
     }
+
+    @Test
+    fun `a synthesized UUID uid names the resource by itself`() {
+        // A device-created contact carries no UID; its caller synthesizes a globally-unique
+        // UUID and passes it here. A bare UUID is a safe path segment, so it names the file
+        // directly — no random re-derivation, so a re-attempt hits the same resource.
+        val uid = "11111111-2222-3333-4444-555555555555"
+        assertEquals("$uid.vcf", contactResourceName(uid))
+        assertEquals("the same uid always yields the same name", contactResourceName(uid), contactResourceName(uid))
+    }
 }

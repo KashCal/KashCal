@@ -15,14 +15,16 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 /**
  * Date widget showing today's date in an icon-like format.
  *
- * Designed to look like an adaptive app icon but displays the current date.
- * Users can use this instead of the app icon for quick access with live date display.
+ * Size-responsive: at a small size it looks like an adaptive app icon showing the
+ * current date; grown larger it becomes a rounded date-card with the full date.
+ * Users can use the small form instead of the app icon for quick access.
  *
  * Features:
- * - 1x1 cell size (icon-like)
- * - Shows day name (e.g., "SUN") and date number (e.g., "19")
- * - Circular background matching system theme
- * - Tap anywhere opens app at today's view
+ * - Small: circular face with short weekday (e.g., "SAT") over the date number (e.g., "19")
+ * - Larger: rounded card with the full weekday (e.g., "Saturday") over the full
+ *   localized month + day (e.g., "September 19"); the face is chosen from the widget size
+ * - Date only — no event content at any size
+ * - Background matching system theme; tap anywhere opens app at today's view
  *
  * Updates:
  * - At midnight (new day)

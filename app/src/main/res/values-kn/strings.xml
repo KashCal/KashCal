@@ -85,6 +85,7 @@
     <string name="action_delete">ಅಳಿಸಿ</string>
     <string name="action_confirm">ದೃಢೀಕರಿಸಿ</string>
     <string name="action_discard">ತ್ಯಜಿಸಿ</string>
+    <string name="action_discard_confirm">ಬದಲಾವಣೆಗಳನ್ನು ತ್ಯಜಿಸಬೇಕೆ?</string>
     <string name="action_dismiss">ವಜಾಮಾಡಿ</string>
     <string name="action_show_all">ಎಲ್ಲಾ ತೋರಿಸಿ</string>
     <string name="action_connect">ಸಂಪರ್ಕಿಸಿ</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ಈವೆಂಟ್ ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="share_as_card_share_failed">ಕಾರ್ಡ್ ಹಂಚಿಕೊಳ್ಳಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

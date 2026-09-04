@@ -85,6 +85,7 @@
     <string name="action_delete">Hapus</string>
     <string name="action_confirm">Konfirmasi</string>
     <string name="action_discard">Buang</string>
+    <string name="action_discard_confirm">Buang?</string>
     <string name="action_dismiss">Abaikan</string>
     <string name="action_show_all">Tampilkan Semua</string>
     <string name="action_connect">Hubungkan</string>
@@ -1213,5 +1214,4 @@
     <string name="share_as_card_chooser_title">Bagikan acara</string>
     <string name="share_as_card_share_failed">Tidak dapat membagikan kartu</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

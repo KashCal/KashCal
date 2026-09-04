@@ -124,15 +124,27 @@ private val SAFE_RESOURCE_NAME_UID = Regex("[A-Za-z0-9._-]+")
  * segment — empty/blank, over-length, `.`/`..`, or containing any character
  * outside [SAFE_RESOURCE_NAME_UID] — we fall back to a random `UUID.vcf` name,
  * which is always well-formed and needs no percent-escaping.
+ *
+ * A device-created contact carries no UID of its own (RFC 6350 §6.7.6 gives UID
+ * cardinality `*1`), so its caller synthesizes a globally-unique UID and persists it
+ * BEFORE the first PUT, then passes that here — the resource is named by a value that
+ * is unique across every device on the account, so two devices can never collide on a
+ * name the way a per-device RawContact `_ID` would.
  */
 fun contactResourceName(uid: String): String {
-    val trimmed = uid.trim()
+    safeResourceSegment(uid)?.let { return "$it.vcf" }
+    return "${java.util.UUID.randomUUID()}.vcf"
+}
+
+/** The trimmed [segment] iff it is safe to use verbatim as a `.vcf` resource-name stem, else null. */
+private fun safeResourceSegment(segment: String): String? {
+    val trimmed = segment.trim()
     val safe = trimmed.isNotEmpty() &&
         trimmed.length <= MAX_RESOURCE_NAME_UID_LENGTH &&
         trimmed != "." &&
         trimmed != ".." &&
         SAFE_RESOURCE_NAME_UID.matches(trimmed)
-    return if (safe) "$trimmed.vcf" else "${java.util.UUID.randomUUID()}.vcf"
+    return if (safe) trimmed else null
 }
 
 /**
@@ -246,7 +258,7 @@ class OkHttpCardDavClient(
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Well-known discovery failed: ${e.message}, using original URL")
+                Log.w(TAG, "Well-known discovery failed: ${e.javaClass.simpleName}, using original URL")
                 CalDavResult.success(serverUrl)
             }
         }
@@ -665,6 +677,18 @@ class OkHttpCardDavClient(
     private fun isRetryableWriteStatus(code: Int): Boolean =
         code in 500..599 || code == 429
 
+    // A stored etag must be placeable in an HTTP header value. OkHttp rejects any
+    // char outside HT / visible-ASCII (` `..`~`) — covering control chars
+    // and obs-text (%x80-FF) — by throwing IllegalArgumentException while building
+    // the request, which the IOException catch below would NOT catch. A server etag
+    // never carries such a char (an interior one would already break the ICS/HTTP
+    // parse upstream), but going wide across many servers we don't want a single
+    // malformed etag to throw and stall the account. When it happens the conditional
+    // header can't be expressed, so the precondition provably can't hold: the write
+    // verbs short-circuit to PreconditionFailed (server-wins on the next pull).
+    private fun isHeaderSafe(value: String): Boolean =
+        value.all { it == '\t' || it in ' '..'~' }
+
     override suspend fun putContact(
         resourceUrl: String,
         vcardBody: String,
@@ -674,12 +698,16 @@ class OkHttpCardDavClient(
             .url(resourceUrl)
             .put(vcardBody.toRequestBody(VCARD_MEDIA_TYPE))
         when (precondition) {
-            // RFC 4918 §10.4.5: "*" matches any current entity, so If-None-Match:*
+            // RFC 7232 §3.2: "*" matches any current representation, so If-None-Match:*
             // means "only if the resource does not already exist".
             is ContactPrecondition.IfAbsent -> builder.header("If-None-Match", "*")
             // The stored etag is already normalized (unquoted); re-wrap in quotes
             // for the header, matching the CalDAV update path.
-            is ContactPrecondition.IfMatch -> builder.header("If-Match", "\"${precondition.etag}\"")
+            is ContactPrecondition.IfMatch -> {
+                // Guard before OkHttp throws on an unusable etag (see isHeaderSafe).
+                if (!isHeaderSafe(precondition.etag)) return@withContext ContactUploadResult.PreconditionFailed
+                builder.header("If-Match", "\"${precondition.etag}\"")
+            }
         }
 
         // Deliberately NOT routed through executeWithRetry: a blind retry of a
@@ -724,6 +752,8 @@ class OkHttpCardDavClient(
         resourceUrl: String,
         etag: String,
     ): ContactDeleteResult = withContext(Dispatchers.IO) {
+        // Guard before OkHttp throws on an unusable etag (see isHeaderSafe).
+        if (!isHeaderSafe(etag)) return@withContext ContactDeleteResult.PreconditionFailed
         val request = Request.Builder()
             .url(resourceUrl)
             .delete()
@@ -796,14 +826,14 @@ class OkHttpCardDavClient(
                 Log.w(TAG, "Unknown host for ${request.url}, retry ${attempt + 1}/$MAX_RETRIES")
                 lastException = e
             } catch (e: SSLHandshakeException) {
-                Log.e(TAG, "SSL error on ${request.url} (not retrying): ${e.message}", e)
+                Log.e(TAG, "SSL error on ${request.url} (not retrying): ${e.javaClass.simpleName}")
                 return CalDavResult.networkError("SSL error: ${e.message}")
             } catch (e: IOException) {
                 if (isRetryableError(e)) {
                     Log.w(TAG, "Retryable IO error on ${request.method} ${request.url}, retry ${attempt + 1}/$MAX_RETRIES")
                     lastException = e
                 } else {
-                    Log.e(TAG, "Non-retryable IO error on ${request.url}: ${e.message}", e)
+                    Log.e(TAG, "Non-retryable IO error on ${request.url}: ${e.javaClass.simpleName}")
                     return CalDavResult.networkError("Network error: ${e.javaClass.simpleName} - ${e.message}")
                 }
             }

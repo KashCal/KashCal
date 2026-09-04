@@ -85,6 +85,7 @@
     <string name="action_delete">Избриши</string>
     <string name="action_confirm">Потврди</string>
     <string name="action_discard">Отфрли</string>
+    <string name="action_discard_confirm">Да се отфрли?</string>
     <string name="action_dismiss">Отфрли</string>
     <string name="action_show_all">Прикажи сè</string>
     <string name="action_connect">Поврзи</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Сподели настан</string>
     <string name="share_as_card_share_failed">Не може да се сподели картичката</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

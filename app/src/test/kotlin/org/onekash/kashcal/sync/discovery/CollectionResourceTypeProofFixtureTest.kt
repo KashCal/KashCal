@@ -190,7 +190,7 @@ class CollectionResourceTypeProofFixtureTest {
                 "icloud", "baikal", "baikaldigest", "radicale",
                 "nextcloud", "zoho", "sogo", "cyrus", "stalwart", "xandikos",
             ),
-            "carddav" to listOf("icloud", "radicale", "baikal", "nextcloud", "cyrus"),
+            "carddav" to listOf("icloud", "radicale", "baikal", "nextcloud", "cyrus", "xandikos"),
         )
     }
 }

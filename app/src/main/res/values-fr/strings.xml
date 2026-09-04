@@ -85,6 +85,7 @@
     <string name="action_delete">Supprimer</string>
     <string name="action_confirm">Confirmer</string>
     <string name="action_discard">Abandonner</string>
+    <string name="action_discard_confirm">Abandonner ?</string>
     <string name="action_dismiss">Ignorer</string>
     <string name="action_show_all">Tout afficher</string>
     <string name="action_connect">Connecter</string>
@@ -1305,5 +1306,4 @@
     <string name="share_as_card_chooser_title">Partager l\'événement</string>
     <string name="share_as_card_share_failed">Impossible de partager la carte</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

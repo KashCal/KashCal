@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.contacts
 
 import org.onekash.kashcal.data.contacts.MappedContact
+import org.onekash.vcard.model.Contact
 
 /**
  * One CardDAV-synced contact ready to be written to the Android Contacts
@@ -20,12 +21,111 @@ import org.onekash.kashcal.data.contacts.MappedContact
  *   already emitted by [org.onekash.kashcal.data.contacts.VCardContactMapper]
  *   (its `dataRows[0]` is the StructuredName; the write layer never synthesizes
  *   its own).
+ * @property isReadOnly whether the owning address book is read-only. When true the
+ *   RawContact is written non-editable (`RAW_CONTACT_IS_READ_ONLY = 1`) so the user
+ *   cannot edit a contact that could never be pushed back; when false the row is
+ *   editable, so a user edit flips the provider's DIRTY bit — the signal the push
+ *   path reads. Defaults to read-only so a forgotten call site fails safe (never
+ *   silently makes a contact editable that has nowhere to push).
  */
 data class MappedContactWrite(
     val href: String,
     val etag: String?,
     val mapped: MappedContact,
+    val isReadOnly: Boolean = true,
 )
+
+/**
+ * A locally-edited contact awaiting push to the server, read back off the
+ * Contacts Provider from a RawContact the provider flagged `DIRTY` after a
+ * device-side edit.
+ *
+ * Book-agnostic by design: it carries the raw sync locators ([href], [uid],
+ * [storedEtag]) exactly as they sit on the RawContact SYNC columns, plus the
+ * device field values reverse-mapped into [contact]. The push strategy joins
+ * each locator to its discovered address book (by [href]) to learn the book's
+ * write-back policy and serialization version — this layer never reaches for a
+ * book.
+ *
+ * @property href the resource `SOURCE_ID`; blank for a contact created on the
+ *   device that has never been pushed (no server resource yet — a create).
+ * @property uid the `SYNC1` UID (blank when the original body carried none).
+ * @property storedEtag the `SYNC2` ETag the row was last written with — the
+ *   If-Match validator for a conditional PUT. Null/blank when the server omitted
+ *   one, in which case the push has no validator and falls back to create-as-fresh.
+ * @property contact the device field values reverse-mapped by
+ *   [org.onekash.kashcal.data.contacts.DeviceContactRowMapper]. Its `rawVCard`
+ *   and `version` are defaults here (not stored on Data rows); the push strategy
+ *   composes the real serialization base (server body for a patch, blank for a
+ *   fresh generate) at its observed book version.
+ * @property localId the originating RawContact's provider `_ID`. The stable,
+ *   always-present key a net-new create writes its freshly-minted server href back
+ *   against — a device-created contact has a blank [href], so it can only be
+ *   reached by `_ID`. Defaults to `0L` for a caller that doesn't populate it (no
+ *   `_ID` is ever 0, so a net-new write-back keyed on `0L` safely no-ops rather
+ *   than stamping the wrong row).
+ */
+data class LocalContactEdit(
+    val href: String,
+    val uid: String,
+    val storedEtag: String?,
+    val contact: Contact,
+    val localId: Long = 0L,
+)
+
+/**
+ * A locally-deleted contact awaiting a server delete. The provider soft-deletes
+ * a sync-adapter RawContact (sets `DELETED = 1`) and keeps the row until the
+ * adapter has pushed the delete and hard-deleted it.
+ *
+ * @property href the resource `SOURCE_ID`; blank for a device-created contact
+ *   deleted before it was ever pushed (nothing to delete server-side, just clean
+ *   up the local tombstone).
+ * @property storedEtag the `SYNC2` ETag — the If-Match validator for a
+ *   conditional DELETE. Null/blank when the server omitted one.
+ */
+data class LocalContactTombstone(
+    val href: String,
+    val storedEtag: String?,
+)
+
+/**
+ * The device-side pending set for one login's account: contacts the user edited
+ * ([edited]) or deleted ([deleted]) on the device, awaiting push. Derived purely
+ * from the provider's `DIRTY` / `DELETED` flags — there is no Room queue; the
+ * flags ARE the pending set.
+ */
+data class LocalContactChanges(
+    val edited: List<LocalContactEdit>,
+    val deleted: List<LocalContactTombstone>,
+)
+
+/**
+ * How a provider write-back failed, kept as a closed enum so a failure never
+ * carries a provider exception message (which could embed a contact href, email,
+ * or URL) into a log or a `Result.failure`.
+ */
+enum class ContactWriteFailure {
+    /** WRITE_CONTACTS was revoked mid-write. */
+    PERMISSION_DENIED,
+
+    /** The provider rejected or could not apply the batch. */
+    PROVIDER_ERROR,
+
+    /**
+     * `applyBatch` returned fewer results than ops submitted — at least one op
+     * was silently dropped. Per-op counts can lie, but a short result array is
+     * the reliable at-op-granularity signal that the write did not fully apply.
+     */
+    PARTIAL_APPLY,
+}
+
+/**
+ * The typed cause on a write-back [Result.failure]. Carries only the [failure]
+ * classification — never the underlying provider exception, so no PII reaches a
+ * failure string.
+ */
+class ContactWriteException(val failure: ContactWriteFailure) : Exception(failure.name)
 
 /**
  * The only surface allowed to WRITE synced contacts to the Android Contacts
@@ -39,11 +139,13 @@ data class MappedContactWrite(
  * edit, or delete another login's contacts. The account predicate on every
  * write and delete is the load-bearing invariant of this layer.
  *
- * **Read-only relative to the *server*** — there is no PUT / write-back / two-way
- * sync. *Locally* it is a full mirror: it inserts new contacts, replaces changed
- * ones, and deletes server-removed ones, so the device reflects the server's
- * current state. All writes run in sync-adapter mode so the provider attributes
- * rows to the account and doesn't spin a dirty-loop back at us.
+ * **Two-way.** The pull side is a full local mirror (insert new, replace changed,
+ * delete server-removed) so the device reflects the server. The push side reads
+ * the provider's own `DIRTY` / `DELETED` flags as the pending set and records the
+ * server outcome back onto the RawContact SYNC columns ([markContactUploaded],
+ * [markNewContactUploaded], [hardDeleteTombstone], [restoreTombstone]). All writes
+ * run in sync-adapter mode so the provider attributes rows to the account and
+ * doesn't spin a dirty-loop back at us from our own write-backs.
  */
 interface ContactsProviderRepository {
 
@@ -212,4 +314,107 @@ interface ContactsProviderRepository {
      * next sync. Graceful [Result.failure] on permission denial.
      */
     suspend fun ensureContactVisibility(accountName: String): Result<Unit>
+
+    /**
+     * The device-side pending set under [accountName]: every RawContact the
+     * provider flagged `DIRTY` (a user edit — or a device-created contact) as an
+     * [LocalContactEdit], and every `DELETED` RawContact as a
+     * [LocalContactTombstone].
+     *
+     * Scoped by `ACCOUNT_NAME` **and** `ACCOUNT_TYPE` (a name-only scan could
+     * cross into the calendar account type). Returns raw locators only —
+     * book-agnostic; the push strategy joins each to its discovered book. Empty
+     * when permission is denied or nothing is pending, so a read failure never
+     * masquerades as "nothing changed" in a way that loses a real edit (the next
+     * run re-detects it — the flags persist).
+     */
+    suspend fun pendingLocalChanges(accountName: String): LocalContactChanges
+
+    /**
+     * Record that the contact at [href] under [accountName] was pushed: set its
+     * `SYNC2` to [newEtag] (the server's post-PUT validator) and clear its `DIRTY`
+     * flag, in a `CALLER_IS_SYNCADAPTER` write so the provider does not re-flag the
+     * row as dirty from our own write — which would otherwise loop the push forever.
+     *
+     * A [href] that no longer resolves (deleted between scan and push) is a no-op
+     * success. The write's applied-op count is validated (a short `applyBatch`
+     * result is a [Result.failure], never a swallowed success). Graceful
+     * [Result.failure] on permission denial — the contact stays `DIRTY` for a retry.
+     */
+    suspend fun markContactUploaded(
+        accountName: String,
+        href: String,
+        newEtag: String,
+    ): Result<Unit>
+
+    /**
+     * Assign a synthesized [uid] to the net-new device contact whose RawContact is
+     * [localId] under [accountName]: write it to `SYNC1` while KEEPING the row `DIRTY`,
+     * so the contact stays in the pending set but now carries a stable, globally-unique
+     * identity.
+     *
+     * A contact created in the device Contacts app has no vCard UID (RFC 6350 §6.7.6
+     * gives `UID` cardinality `*1`), so before its first create the push mints a
+     * globally-unique UID and persists it here. That UID then names the resource
+     * (`<uid>.vcf`) and goes into the vCard body, so (a) two devices sharing the account
+     * can never collide on a resource name the way a per-device `_ID` would, and (b) a
+     * re-attempt after a failed write-back reads the SAME persisted UID, targets the SAME
+     * resource, and can prove ownership by a real UID rather than a blank-vs-blank match.
+     *
+     * DIRTY is deliberately left set: the write-back that clears it happens only once the
+     * server create succeeds. Unlike the other write-backs this is a `CALLER_IS_SYNCADAPTER`
+     * write too, so persisting the UID does not itself re-flag the row as a fresh edit. A
+     * [localId] of `0L` (unpopulated) is a no-op success. The write's applied-op count is
+     * validated (a short `applyBatch` result is a [Result.failure]); graceful
+     * [Result.failure] on permission denial — the caller then skips the PUT and defers.
+     */
+    suspend fun assignContactUid(
+        accountName: String,
+        localId: Long,
+        uid: String,
+    ): Result<Unit>
+
+    /**
+     * Record that the net-new device contact whose RawContact is [localId] under
+     * [accountName] was created on the server: stamp its `SOURCE_ID` to the freshly
+     * minted [href], its `SYNC2` to [newEtag], and clear its `DIRTY` flag — all in one
+     * `CALLER_IS_SYNCADAPTER` write so the row's own write-back is not re-detected as a
+     * new edit.
+     *
+     * The counterpart to [markContactUploaded] for a contact that had **no** server
+     * resource before this push: its `SOURCE_ID` was blank, so it cannot be resolved by
+     * href and must be addressed by its stable provider [localId] instead. Stamping the
+     * href here is what lets the next pull match the server copy to this existing row
+     * (SOURCE_ID = the server href) and skip it, rather than mirroring it as a duplicate.
+     *
+     * A [localId] of `0L` (unpopulated — no real `_ID` is ever 0) is a no-op success, so
+     * a locator that never carried an `_ID` can never stamp the wrong row. The write's
+     * applied-op count is validated (a short `applyBatch` result is a [Result.failure]).
+     * Graceful [Result.failure] on permission denial — the contact stays `DIRTY` for a retry.
+     */
+    suspend fun markNewContactUploaded(
+        accountName: String,
+        localId: Long,
+        href: String,
+        newEtag: String,
+    ): Result<Unit>
+
+    /**
+     * Hard-delete the soft-deleted (`DELETED = 1`) RawContact at [href] under
+     * [accountName] via the sync-adapter URI, once its server delete has been
+     * pushed. Only a tombstoned row is touched (a live row at the same href is
+     * never hard-deleted); a [href] that resolves to no tombstone is a no-op
+     * success. Applied-op count validated; graceful [Result.failure] on denial.
+     */
+    suspend fun hardDeleteTombstone(accountName: String, href: String): Result<Unit>
+
+    /**
+     * Undo a local tombstone: clear the `DELETED` (and `DIRTY`) flag on the
+     * RawContact at [href] under [accountName], so the next pull re-materializes
+     * it from the server. Used when a delete must not be pushed — e.g. the owning
+     * book is read-only, so the server copy is authoritative and the local delete
+     * is reverted rather than uploaded. A [href] that resolves to no tombstone is
+     * a no-op success. Applied-op count validated; graceful [Result.failure] on denial.
+     */
+    suspend fun restoreTombstone(accountName: String, href: String): Result<Unit>
 }

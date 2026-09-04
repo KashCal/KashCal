@@ -85,6 +85,7 @@
     <string name="action_delete">Удалить</string>
     <string name="action_confirm">Подтвердить</string>
     <string name="action_discard">Отклонить</string>
+    <string name="action_discard_confirm">Отклонить?</string>
     <string name="action_dismiss">Закрыть</string>
     <string name="action_show_all">Показать все</string>
     <string name="action_connect">Подключить</string>
@@ -1372,5 +1373,4 @@
     <string name="share_as_card_chooser_title">Поделиться событием</string>
     <string name="share_as_card_share_failed">Не удалось поделиться карточкой</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

@@ -85,6 +85,7 @@
     <string name="action_delete">Изтрий</string>
     <string name="action_confirm">Потвърди</string>
     <string name="action_discard">Отхвърли</string>
+    <string name="action_discard_confirm">Да се отхвърли?</string>
     <string name="action_dismiss">Отхвърли</string>
     <string name="action_show_all">Покажи всичко</string>
     <string name="action_connect">Свържи</string>
@@ -1265,5 +1266,4 @@
     <string name="share_as_card_chooser_title">Споделяне на събитието</string>
     <string name="share_as_card_share_failed">Картата не може да бъде споделена</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

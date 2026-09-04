@@ -85,6 +85,7 @@
     <string name="action_delete">삭제</string>
     <string name="action_confirm">확인</string>
     <string name="action_discard">버리기</string>
+    <string name="action_discard_confirm">변경사항을 버릴까요?</string>
     <string name="action_dismiss">닫기</string>
     <string name="action_show_all">모두 보기</string>
     <string name="action_connect">연결</string>
@@ -1212,5 +1213,4 @@
     <string name="share_as_card_chooser_title">일정 공유</string>
     <string name="share_as_card_share_failed">카드를 공유할 수 없어요</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

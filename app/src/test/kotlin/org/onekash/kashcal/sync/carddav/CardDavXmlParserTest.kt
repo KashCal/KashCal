@@ -244,6 +244,83 @@ class CardDavXmlParserTest {
     }
 
     @Test
+    fun `an aggregated all privilege marks the address book writable`() {
+        // Some servers advertise the RFC 3744 aggregate DAV:all instead of the
+        // leaf DAV:write / DAV:write-content. DAV:all aggregates write, so the book
+        // is writable and must NOT be surfaced as read-only. A server misread here
+        // silently blocks every contact push against it (issue #281).
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+                <d:response>
+                    <d:href>/addressbooks/users/alice/default/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
+                            <d:current-user-privilege-set>
+                                <d:privilege><d:all/></d:privilege>
+                            </d:current-user-privilege-set>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        assertFalse(parser.extractAddressBooks(xml).single().isReadOnly)
+    }
+
+    @Test
+    fun `a write-content privilege marks the address book writable`() {
+        // DAV:write-content is the leaf content-write privilege (RFC 3744 §3.12);
+        // a server may advertise it without the DAV:write aggregate. It confers
+        // content writes, so the book must be writable.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+                <d:response>
+                    <d:href>/addressbooks/users/alice/default/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
+                            <d:current-user-privilege-set>
+                                <d:privilege><d:read/></d:privilege>
+                                <d:privilege><d:write-content/></d:privilege>
+                            </d:current-user-privilege-set>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        assertFalse(parser.extractAddressBooks(xml).single().isReadOnly)
+    }
+
+    @Test
+    fun `an address book advertising no privilege set at all is treated as read-only`() {
+        // When the server returns no current-user-privilege-set, write capability
+        // is unknown, so the book is surfaced read-only (fail-closed) rather than
+        // attempting a push that would 403. Locks the fail-closed default.
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+                <d:response>
+                    <d:href>/addressbooks/users/alice/default/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        assertTrue(parser.extractAddressBooks(xml).single().isReadOnly)
+    }
+
+    @Test
     fun `skips addressbook whose resourcetype propstat returned non-200 (RFC 4918 multi-propstat)`() {
         // A multi-propstat server (Radicale/Stalwart) can echo the addressbook
         // resourcetype inside a 404/403 propstat for a collection the user cannot

@@ -85,6 +85,7 @@
     <string name="action_delete">Padam</string>
     <string name="action_confirm">Sahkan</string>
     <string name="action_discard">Buang</string>
+    <string name="action_discard_confirm">Buang perubahan?</string>
     <string name="action_dismiss">Abaikan</string>
     <string name="action_show_all">Tunjuk Semua</string>
     <string name="action_connect">Sambung</string>
@@ -1213,5 +1214,4 @@
     <string name="share_as_card_chooser_title">Kongsi acara</string>
     <string name="share_as_card_share_failed">Tidak dapat berkongsi kad</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

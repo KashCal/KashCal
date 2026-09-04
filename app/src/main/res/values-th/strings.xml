@@ -85,6 +85,7 @@
     <string name="action_delete">ลบ</string>
     <string name="action_confirm">ยืนยัน</string>
     <string name="action_discard">ละทิ้ง</string>
+    <string name="action_discard_confirm">ละทิ้งการเปลี่ยนแปลงไหม</string>
     <string name="action_dismiss">ปิด</string>
     <string name="action_show_all">แสดงทั้งหมด</string>
     <string name="action_connect">เชื่อมต่อ</string>
@@ -1212,5 +1213,4 @@
     <string name="share_as_card_chooser_title">แชร์กิจกรรม</string>
     <string name="share_as_card_share_failed">ไม่สามารถแชร์การ์ดได้</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

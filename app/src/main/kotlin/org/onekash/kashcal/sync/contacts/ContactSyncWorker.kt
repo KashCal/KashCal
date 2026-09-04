@@ -138,7 +138,7 @@ class ContactSyncWorker @AssistedInject constructor(
             } catch (e: Exception) {
                 // One account's failure must not abort the sweep or crash the
                 // worker; log, mark for retry, and move on to the next.
-                Log.w(TAG, "Contact sync failed for account ${account.id}: ${e.message}")
+                Log.w(TAG, "Contact sync failed for account ${account.id}: ${e.javaClass.simpleName}")
                 sawRetryable = true
             }
         }

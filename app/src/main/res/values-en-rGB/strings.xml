@@ -85,6 +85,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_confirm">Confirm</string>
     <string name="action_discard">Discard</string>
+    <string name="action_discard_confirm">Discard?</string>
     <string name="action_dismiss">Dismiss</string>
     <string name="action_show_all">Show All</string>
     <string name="action_connect">Connect</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Share event</string>
     <string name="share_as_card_share_failed">Could not share card</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

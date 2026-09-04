@@ -85,6 +85,7 @@
     <string name="action_delete">తొలగించు</string>
     <string name="action_confirm">నిర్ధారించు</string>
     <string name="action_discard">విస్మరించు</string>
+    <string name="action_discard_confirm">మార్పులను విస్మరించాలా?</string>
     <string name="action_dismiss">తీసివేయి</string>
     <string name="action_show_all">అన్నీ చూపించు</string>
     <string name="action_connect">కనెక్ట్ చేయి</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ఈవెంట్‌ను షేర్ చేయండి</string>
     <string name="share_as_card_share_failed">కార్డ్‌ను షేర్ చేయడం సాధ్యం కాలేదు</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

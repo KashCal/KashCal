@@ -183,4 +183,118 @@ class FakeContactsProviderRepository : ContactsProviderRepository {
         ensureVisibilityCalls += accountName
         return Result.success(Unit)
     }
+
+    /**
+     * The device-side pending set a run should see, seeded by the test (default
+     * empty). [markContactUploaded] / [hardDeleteTombstone] / [restoreTombstone]
+     * prune the matching entry so a subsequent read reflects the write, mirroring
+     * the real provider clearing DIRTY / hard-deleting the tombstone.
+     */
+    var pendingChanges = LocalContactChanges(edited = emptyList(), deleted = emptyList())
+
+    /** Every [markContactUploaded] call as (accountName, href, newEtag), in order. */
+    val markUploadedCalls = mutableListOf<Triple<String, String, String>>()
+
+    /** One [assignContactUid] call: the pre-create UID persistence keyed by provider _ID. */
+    data class AssignUid(val accountName: String, val localId: Long, val uid: String)
+
+    /** Every [assignContactUid] call, in order. */
+    val assignUidCalls = mutableListOf<AssignUid>()
+
+    /** When failure, [assignContactUid] records the call and returns it without persisting. */
+    var assignUidResult: Result<Unit> = Result.success(Unit)
+
+    /** One [markNewContactUploaded] call: the net-new write-back keyed by provider _ID. */
+    data class MarkNewUploaded(val accountName: String, val localId: Long, val href: String, val newEtag: String)
+
+    /** Every [markNewContactUploaded] call, in order. */
+    val markNewUploadedCalls = mutableListOf<MarkNewUploaded>()
+
+    /** When failure, [markNewContactUploaded] records the call and returns it unmutated. */
+    var markNewUploadedResult: Result<Unit> = Result.success(Unit)
+
+    /** Every [hardDeleteTombstone] call as (accountName, href), in order. */
+    val hardDeleteCalls = mutableListOf<Pair<String, String>>()
+
+    /** Every [restoreTombstone] call as (accountName, href), in order. */
+    val restoreCalls = mutableListOf<Pair<String, String>>()
+
+    /** When failure, the matching write-back verb records the call and returns it unmutated. */
+    var markUploadedResult: Result<Unit> = Result.success(Unit)
+    var hardDeleteResult: Result<Unit> = Result.success(Unit)
+    var restoreResult: Result<Unit> = Result.success(Unit)
+
+    override suspend fun pendingLocalChanges(accountName: String): LocalContactChanges = pendingChanges
+
+    override suspend fun markContactUploaded(
+        accountName: String,
+        href: String,
+        newEtag: String,
+    ): Result<Unit> {
+        markUploadedCalls += Triple(accountName, href, newEtag)
+        if (markUploadedResult.isFailure) return markUploadedResult
+        store.getOrPut(accountName) { HashMap() }[href] = newEtag
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.href == href })
+        return Result.success(Unit)
+    }
+
+    override suspend fun assignContactUid(
+        accountName: String,
+        localId: Long,
+        uid: String,
+    ): Result<Unit> {
+        assignUidCalls += AssignUid(accountName, localId, uid)
+        if (assignUidResult.isFailure) return assignUidResult
+        // Persist the synthesized UID onto the matching pending edit (its SYNC1), KEEPING it
+        // in the pending set (DIRTY still set) — mirroring the real provider. A re-attempt on
+        // a later run then reads the SAME UID and re-targets the same resource rather than
+        // re-synthesizing a fresh one.
+        pendingChanges = pendingChanges.copy(
+            edited = pendingChanges.edited.map {
+                if (localId != 0L && it.localId == localId) it.copy(uid = uid) else it
+            },
+        )
+        return Result.success(Unit)
+    }
+
+    override suspend fun markNewContactUploaded(
+        accountName: String,
+        localId: Long,
+        href: String,
+        newEtag: String,
+    ): Result<Unit> {
+        markNewUploadedCalls += MarkNewUploaded(accountName, localId, href, newEtag)
+        if (markNewUploadedResult.isFailure) return markNewUploadedResult
+        // The originating row is now synced under its freshly-minted server href, and its
+        // net-new pending edit (keyed by the provider _ID, since its href was blank) is
+        // pruned — mirroring the real provider stamping SOURCE_ID + clearing DIRTY.
+        store.getOrPut(accountName) { HashMap() }[href] = newEtag
+        pendingChanges = pendingChanges.copy(edited = pendingChanges.edited.filterNot { it.localId == localId })
+        return Result.success(Unit)
+    }
+
+    /**
+     * The number of distinct device contact rows currently modeled for [accountName]:
+     * every synced row (in [store]) plus every net-new pending edit not yet synced (a
+     * blank-href [LocalContactEdit]). A net-new create that fails to write its server
+     * href back leaves BOTH a synced row under the new href AND its still-pending
+     * blank-href edit — the post-sync duplicate this count exposes (2 vs the expected 1).
+     */
+    fun deviceRowCount(accountName: String): Int =
+        (store[accountName]?.size ?: 0) + pendingChanges.edited.count { it.href.isBlank() }
+
+    override suspend fun hardDeleteTombstone(accountName: String, href: String): Result<Unit> {
+        hardDeleteCalls += accountName to href
+        if (hardDeleteResult.isFailure) return hardDeleteResult
+        store[accountName]?.remove(href)
+        pendingChanges = pendingChanges.copy(deleted = pendingChanges.deleted.filterNot { it.href == href })
+        return Result.success(Unit)
+    }
+
+    override suspend fun restoreTombstone(accountName: String, href: String): Result<Unit> {
+        restoreCalls += accountName to href
+        if (restoreResult.isFailure) return restoreResult
+        pendingChanges = pendingChanges.copy(deleted = pendingChanges.deleted.filterNot { it.href == href })
+        return Result.success(Unit)
+    }
 }

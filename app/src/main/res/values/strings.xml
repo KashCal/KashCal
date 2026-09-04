@@ -123,6 +123,8 @@
     <string name="action_confirm">Confirm</string>
     <!-- Button: throw away unsaved changes -->
     <string name="action_discard">Discard</string>
+    <!-- Button: confirm throwing away unsaved changes; shown after the first Cancel/back tap. Keep it a short question. -->
+    <string name="action_discard_confirm">Discard?</string>
     <!-- Button: dismiss a notification or alert -->
     <string name="action_dismiss">Dismiss</string>
     <string name="action_show_all">Show All</string>

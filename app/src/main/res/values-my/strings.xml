@@ -85,6 +85,7 @@
     <string name="action_delete">ဖျက်</string>
     <string name="action_confirm">အတည်ပြု</string>
     <string name="action_discard">စွန့်ပစ်</string>
+    <string name="action_discard_confirm">စွန့်ပစ်မလား?</string>
     <string name="action_dismiss">ပယ်</string>
     <string name="action_show_all">အားလုံးပြ</string>
     <string name="action_connect">ချိတ်ဆက်</string>
@@ -1214,5 +1215,4 @@
     <string name="share_as_card_chooser_title">ပွဲကို မျှဝေရန်</string>
     <string name="share_as_card_share_failed">ကတ်ကို မျှဝေ၍ မရပါ</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

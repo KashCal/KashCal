@@ -73,7 +73,7 @@
           <d:collection/>
           <c:calendar/>
         </d:resourcetype>
-        <cs:getctag>1785550018-551</cs:getctag>
+        <cs:getctag>1785550020-24</cs:getctag>
         <d:current-user-privilege-set>
           <d:privilege>
             <d:all/>
@@ -144,7 +144,7 @@
           <d:collection/>
           <c:schedule-inbox/>
         </d:resourcetype>
-        <cs:getctag>1785550019-27</cs:getctag>
+        <cs:getctag>1785550021-27</cs:getctag>
         <d:current-user-privilege-set>
           <d:privilege>
             <d:all/>
@@ -224,7 +224,7 @@
           <d:collection/>
           <c:schedule-outbox/>
         </d:resourcetype>
-        <cs:getctag>1785550020-29</cs:getctag>
+        <cs:getctag>1785550022-29</cs:getctag>
         <d:current-user-privilege-set>
           <d:privilege>
             <d:all/>

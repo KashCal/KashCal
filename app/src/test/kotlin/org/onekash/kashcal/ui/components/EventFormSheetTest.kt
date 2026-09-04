@@ -1718,4 +1718,108 @@ class EventFormSheetTest {
             )
         )
     }
+
+    // ========== Unsaved-Changes Detection Tests ==========
+
+    private val baselineFormState = EventFormState(
+        title = "Standup",
+        selectedCalendarId = 7L,
+        location = "Room 1",
+        description = "notes",
+        reminders = listOf(10),
+        rrule = "FREQ=DAILY",
+        eventColor = 0xFF0000,
+        transp = "OPAQUE",
+        categories = listOf("work"),
+    )
+
+    @Test
+    fun `no change when states are identical`() {
+        assertFalse(eventFormHasUnsavedChanges(baselineFormState, baselineFormState.copy()))
+    }
+
+    @Test
+    fun `a change in each tracked field is detected`() {
+        val b = baselineFormState
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(title = "Retro")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(dateMillis = b.dateMillis + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(endDateMillis = b.endDateMillis + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(startHour = b.startHour + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(startMinute = b.startMinute + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(endHour = (b.endHour + 1) % 24)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(endMinute = b.endMinute + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(selectedCalendarId = 99L)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(isAllDay = !b.isAllDay)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(location = "Room 2")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(description = "changed")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(reminders = listOf(10, 30))))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(rrule = "FREQ=WEEKLY")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(timezone = "America/New_York")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(eventColor = 0x00FF00)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(transp = "TRANSPARENT")))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(categories = listOf("home"))))
+    }
+
+    @Test
+    fun `editing the guest list counts as an unsaved change`() {
+        // The attendee picker auto-commits every add/remove into form state
+        // with attendeesEdited=true; adding a guest then dismissing must trip
+        // the two-tap discard guard rather than silently drop the edit.
+        val b = baselineFormState
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(attendeesEdited = true)))
+    }
+
+    @Test
+    fun `untracked UI-only fields do not count as changes`() {
+        val b = baselineFormState
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(selectedCalendarName = "Personal")))
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(selectedCalendarColor = 0x123456)))
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(isLoading = !b.isLoading)))
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(isSaving = !b.isSaving)))
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(error = "boom")))
+        assertFalse(
+            eventFormHasUnsavedChanges(
+                b,
+                b.copy(calendarGroups = b.calendarGroups + org.onekash.kashcal.ui.model.CalendarGroup("g", 1L))
+            )
+        )
+    }
+
+    // ========== Dismiss State-Machine Tests ==========
+
+    @Test
+    fun `dismiss is blocked while saving regardless of other state`() {
+        assertEquals(FormDismissAction.BLOCKED, resolveFormDismiss(true, false, false))
+        assertEquals(FormDismissAction.BLOCKED, resolveFormDismiss(true, true, false))
+        assertEquals(FormDismissAction.BLOCKED, resolveFormDismiss(true, false, true))
+        assertEquals(FormDismissAction.BLOCKED, resolveFormDismiss(true, true, true))
+    }
+
+    @Test
+    fun `no unsaved changes dismisses immediately`() {
+        assertEquals(FormDismissAction.DISMISS, resolveFormDismiss(false, false, false))
+    }
+
+    @Test
+    fun `first dismiss attempt with changes shows the discard confirmation`() {
+        assertEquals(FormDismissAction.SHOW_DISCARD_CONFIRM, resolveFormDismiss(false, true, false))
+    }
+
+    @Test
+    fun `second dismiss attempt with the confirmation showing dismisses`() {
+        assertEquals(FormDismissAction.DISMISS, resolveFormDismiss(false, true, true))
+    }
+
+    // ========== Calendar Re-baseline Tests ==========
+
+    @Test
+    fun `re-baseline fires for a null baseline or an unresolved calendar`() {
+        assertTrue(shouldRebaselineOnCalendarResolve(null))
+        assertTrue(shouldRebaselineOnCalendarResolve(baselineFormState.copy(selectedCalendarId = null)))
+    }
+
+    @Test
+    fun `re-baseline does not fire once the calendar is resolved`() {
+        assertFalse(shouldRebaselineOnCalendarResolve(baselineFormState.copy(selectedCalendarId = 7L)))
+    }
 }

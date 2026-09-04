@@ -1,3 +1,20 @@
+## [2026.09.04]
+
+We put KashCal on [Google Play](https://googleplay.onekash.org). Yes, the open source calendar that runs no ads and phones no one home is now stocked in a store built by an advertising company. Make of that what you will. It is the same build that ships on F-Droid, so install it from whichever store you distrust less.
+
+Contacts get an experiment this release: two-way CardDAV sync, marked beta because it is. Edit or delete a contact and it now travels back up to your server instead of sulking on your phone.
+
+### Everything in this release
+
+- Added a [Google Play listing](https://googleplay.onekash.org) as another way to install KashCal and get updates, alongside F-Droid
+- Added two-way CardDAV contact sync as a beta: local contact edits, deletes, and photos now push to the server
+- Changed the top-bar today button to an outline calendar icon showing the date, with the numeral at full emphasis and the outline dimmed
+- Changed the home-screen date widget to be resizable, starting as a 1x1 icon and growing into a full date card
+- Added a two-tap discard confirmation to the event form: Cancel and the system back button now ask "Discard?" before throwing away an in-progress event
+- Fixed duplicated events losing their tags, so a duplicate now carries the original's categories, #363
+- Fixed duplicating a device-calendar event switching to the default calendar; the copy now defaults to its source device calendar
+- Fixed account-hub row labels being truncated when the value beside them was long
+
 ## [2026.08.29]
 
 ### Everything in this release

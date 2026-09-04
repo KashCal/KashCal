@@ -100,7 +100,7 @@ class CardDavXmlParser {
             }
             urls
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse addressbook home URLs: ${e.message}")
+            Log.w(TAG, "Failed to parse addressbook home URLs: ${e.javaClass.simpleName}")
             emptyList()
         }
     }
@@ -246,7 +246,7 @@ class CardDavXmlParser {
 
             books
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse address books: ${e.message}")
+            Log.w(TAG, "Failed to parse address books: ${e.javaClass.simpleName}")
             emptyList()
         }
     }
@@ -337,7 +337,7 @@ class CardDavXmlParser {
 
             entries
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse address data: ${e.message}")
+            Log.w(TAG, "Failed to parse address data: ${e.javaClass.simpleName}")
             emptyList()
         }
     }
@@ -373,11 +373,12 @@ class CardDavXmlParser {
 
         /**
          * WebDAV privilege local-names that confer content-write rights
-         * (RFC 3744 §3.11/§3.12 aggregation). Same semantics as the CalDAV
-         * skeleton; an address book granting only these is writable, else it is
-         * surfaced as read-only. Contact sync stays read-only regardless.
+         * (RFC 3744 §3.11/§3.12 aggregation): an address book granting any of
+         * these is writable, else it is surfaced as read-only. Shares the single
+         * definition on [CalDavXmlParser] rather than keeping a parallel copy, so
+         * the CalDAV and CardDAV read paths can't drift out of sync.
          */
-        private val WRITE_PRIVILEGE_ELEMENTS = setOf("all", "write", "write-content")
+        private val WRITE_PRIVILEGE_ELEMENTS = CalDavXmlParser.WRITE_PRIVILEGE_ELEMENTS
     }
 }
 

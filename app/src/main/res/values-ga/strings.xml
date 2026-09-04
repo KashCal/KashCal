@@ -85,6 +85,7 @@
     <string name="action_delete">Scrios</string>
     <string name="action_confirm">Deimhnigh</string>
     <string name="action_discard">Caith Amach</string>
+    <string name="action_discard_confirm">Caith amach na hathruithe?</string>
     <string name="action_dismiss">Díláithrigh</string>
     <string name="action_show_all">Taispeáin Uile</string>
     <string name="action_connect">Ceangail</string>
@@ -1425,5 +1426,4 @@
     <string name="share_as_card_chooser_title">Roinn imeacht</string>
     <string name="share_as_card_share_failed">Níorbh fhéidir an cárta a roinnt</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

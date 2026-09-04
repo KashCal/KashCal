@@ -85,6 +85,7 @@
     <string name="action_delete">Poista</string>
     <string name="action_confirm">Vahvista</string>
     <string name="action_discard">Hylkää</string>
+    <string name="action_discard_confirm">Hylätäänkö?</string>
     <string name="action_dismiss">Ohita</string>
     <string name="action_show_all">Näytä kaikki</string>
     <string name="action_connect">Yhdistä</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">Jaa tapahtuma</string>
     <string name="share_as_card_share_failed">Korttia ei voitu jakaa</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

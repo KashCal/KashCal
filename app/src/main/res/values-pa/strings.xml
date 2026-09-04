@@ -85,6 +85,7 @@
     <string name="action_delete">ਮਿਟਾਓ</string>
     <string name="action_confirm">ਪੁਸ਼ਟੀ ਕਰੋ</string>
     <string name="action_discard">ਰੱਦ ਕਰੋ</string>
+    <string name="action_discard_confirm">ਰੱਦ ਕਰਨਾ ਹੈ?</string>
     <string name="action_dismiss">ਖ਼ਾਰਜ ਕਰੋ</string>
     <string name="action_show_all">ਸਭ ਦਿਖਾਓ</string>
     <string name="action_connect">ਕਨੈਕਟ ਕਰੋ</string>
@@ -1266,5 +1267,4 @@
     <string name="share_as_card_chooser_title">ਸਮਾਗਮ ਸਾਂਝਾ ਕਰੋ</string>
     <string name="share_as_card_share_failed">ਕਾਰਡ ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ</string>
 
-    <!-- ==================== Extra keys (not in base) ==================== -->
 </resources>

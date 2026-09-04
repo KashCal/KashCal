@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.components
 
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -303,6 +305,65 @@ data class EventFormState(
 )
 
 /**
+ * True when the user has edited any substantive field since the form loaded.
+ * Compares only user-editable fields against the load-time baseline; UI-only
+ * fields (loading/saving flags, error, the picker's calendar group list, and
+ * the calendar's display name/color, which fill in asynchronously) are
+ * excluded so an unedited open-and-close is not mistaken for a change.
+ */
+internal fun eventFormHasUnsavedChanges(
+    initial: EventFormState,
+    current: EventFormState,
+): Boolean =
+    current.title != initial.title ||
+        current.dateMillis != initial.dateMillis ||
+        current.endDateMillis != initial.endDateMillis ||
+        current.startHour != initial.startHour ||
+        current.startMinute != initial.startMinute ||
+        current.endHour != initial.endHour ||
+        current.endMinute != initial.endMinute ||
+        current.selectedCalendarId != initial.selectedCalendarId ||
+        current.isAllDay != initial.isAllDay ||
+        current.location != initial.location ||
+        current.description != initial.description ||
+        current.reminders != initial.reminders ||
+        current.rrule != initial.rrule ||
+        current.timezone != initial.timezone ||
+        current.eventColor != initial.eventColor ||
+        current.transp != initial.transp ||
+        current.categories != initial.categories ||
+        current.attendeesEdited != initial.attendeesEdited
+
+/** Outcome of a dismiss attempt (Cancel tap or system back press). */
+internal enum class FormDismissAction { DISMISS, SHOW_DISCARD_CONFIRM, BLOCKED }
+
+/**
+ * Resolve what a dismiss attempt should do. A save in progress blocks dismiss
+ * entirely; with no unsaved changes it dismisses immediately; with unsaved
+ * changes the first attempt asks for confirmation and the second (once the
+ * confirmation is already showing) dismisses.
+ */
+internal fun resolveFormDismiss(
+    isSaving: Boolean,
+    hasUnsavedChanges: Boolean,
+    discardConfirmShowing: Boolean,
+): FormDismissAction = when {
+    isSaving -> FormDismissAction.BLOCKED
+    !hasUnsavedChanges -> FormDismissAction.DISMISS
+    discardConfirmShowing -> FormDismissAction.DISMISS
+    else -> FormDismissAction.SHOW_DISCARD_CONFIRM
+}
+
+/**
+ * Whether the load-time baseline should be re-synced when the default calendar
+ * auto-resolves. On a cold start the calendar list arrives after the form is
+ * seeded, so the initial baseline has no calendar id yet; re-baselining then
+ * keeps that async resolution from reading as a user change.
+ */
+internal fun shouldRebaselineOnCalendarResolve(initial: EventFormState?): Boolean =
+    initial == null || initial.selectedCalendarId == null
+
+/**
  * Compute the stored (startTs, endTs) this form state would persist. All-day
  * events store UTC midnight (start) / end-of-day UTC (end); timed events
  * interpret the picker's wall-clock in the selected timezone (or device
@@ -380,6 +441,49 @@ internal fun resolveDefaultCalendar(
 }
 
 /**
+ * Resolve the calendar a duplicated event should default to, keeping the source
+ * calendar the way editing does.
+ *
+ * A Room-backed source carries its calendar id on [Event.calendarId]; a device
+ * source zeroes it (device calendar ids live in a separate namespace from Room
+ * ids) and passes the source device calendar id via [duplicateFromDeviceCalendarId].
+ * Resolution order: the Room source calendar (a real, writable Room id always
+ * wins), then the source device calendar (only if it still exists and is
+ * writable in [deviceCalendarGroups]), else [resolvedDefault] — the same graceful
+ * fallback the form used before device sources were honored.
+ *
+ * Kept pure (no Android [Resources]) like [resolveDefaultCalendar]: the returned
+ * [ResolvedCalendar] carries the raw name; the caller localizes via
+ * [ResolvedCalendar.localizedName].
+ */
+internal fun resolveDuplicateSourceCalendar(
+    duplicateFrom: Event,
+    duplicateFromDeviceCalendarId: Long?,
+    writableCalendars: List<Calendar>,
+    deviceCalendarGroups: List<CalendarGroup>,
+    resolvedDefault: ResolvedCalendar
+): ResolvedCalendar {
+    val roomSource = writableCalendars.find { it.id == duplicateFrom.calendarId }
+    if (roomSource != null) {
+        return ResolvedCalendar(roomSource.id, roomSource.displayName, roomSource.color, isDevice = false)
+    }
+
+    val deviceSource = duplicateFromDeviceCalendarId?.let { deviceId ->
+        deviceCalendarGroups
+            .flatMap { it.pickerCalendars }
+            .filterIsInstance<PickerCalendar.Device>()
+            .filter { it.isWritable }
+            .map { it.calendar }
+            .find { it.id == deviceId }
+    }
+    if (deviceSource != null) {
+        return ResolvedCalendar(deviceSource.id, deviceSource.displayName, deviceSource.color, isDevice = true)
+    }
+
+    return resolvedDefault
+}
+
+/**
  * The display name for a resolved default calendar, localized for Room calendars.
  *
  * [resolveDefaultCalendar] is kept pure (no Android [Resources]), so it returns the raw
@@ -421,6 +525,14 @@ fun EventFormSheet(
     initialStartTs: Long? = null,
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
+    /**
+     * Source device calendar id when duplicating a device-calendar event.
+     * Device calendar ids live in a separate namespace from Room ids (which is
+     * why [DisplayEvent.Device.toEventForDuplicate] zeroes [Event.calendarId]),
+     * so the source device calendar reaches the form on this dedicated channel.
+     * Null for Room/CalDAV duplicates and all non-duplicate flows.
+     */
+    duplicateFromDeviceCalendarId: Long? = null,
     calendarIntentData: CalendarIntentData? = null,
     calendarIntentInvitees: List<String> = emptyList(),
     calendars: List<Calendar>,
@@ -565,19 +677,44 @@ fun EventFormSheet(
     // without holding the full form state (which lives in EventFormContent).
     var isSaving by remember { mutableStateOf(false) }
 
+    // Two-tap discard confirmation, shared across the shell/content boundary:
+    // content mirrors up whether the form has unsaved edits, and the shell
+    // owns the confirmation flag so the Cancel button (content) and the back
+    // button / scrim (this ModalBottomSheet's onDismissRequest) drive the same
+    // state machine.
+    var hasUnsavedChanges by remember { mutableStateOf(false) }
+    var showDiscardConfirm by remember { mutableStateOf(false) }
+
+    val attemptDismiss: () -> Unit = {
+        when (resolveFormDismiss(isSaving, hasUnsavedChanges, showDiscardConfirm)) {
+            FormDismissAction.DISMISS -> onDismiss()
+            FormDismissAction.SHOW_DISCARD_CONFIRM -> showDiscardConfirm = true
+            FormDismissAction.BLOCKED -> {}
+        }
+    }
+
     ModalBottomSheet(
-        onDismissRequest = { if (!isSaving) onDismiss() },
+        onDismissRequest = attemptDismiss,
         sheetState = sheetState,
         dragHandle = {},
-        sheetGesturesEnabled = false
+        sheetGesturesEnabled = false,
+        // Disable the sheet's built-in back-press dismissal: it runs the hide
+        // animation and only then calls onDismissRequest, so the two-tap discard
+        // guard would fire on an already-vanished sheet. The content owns a
+        // BackHandler that routes back through the same dismiss guard instead.
+        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false)
     ) {
         EventFormContent(
             modifier = Modifier.height(sheetHeight),
             onSavingChange = { isSaving = it },
+            onHasChangesChange = { hasUnsavedChanges = it },
+            showDiscardConfirm = showDiscardConfirm,
+            onRequestDismiss = attemptDismiss,
             eventId = eventId,
             initialStartTs = initialStartTs,
             occurrenceTs = occurrenceTs,
             duplicateFrom = duplicateFrom,
+            duplicateFromDeviceCalendarId = duplicateFromDeviceCalendarId,
             calendarIntentData = calendarIntentData,
             calendarIntentInvitees = calendarIntentInvitees,
             calendars = calendars,
@@ -640,11 +777,25 @@ fun EventFormSheet(
 @Composable
 fun EventFormContent(
     onSavingChange: (Boolean) -> Unit,
+    /** Mirror whether the form has unsaved edits up to the shell's dismiss guard. */
+    onHasChangesChange: (Boolean) -> Unit = {},
+    /** When true, the Cancel button renders the discard-confirmation label. */
+    showDiscardConfirm: Boolean = false,
+    /** Invoked by the Cancel button; runs the same dismiss state machine as the back button. */
+    onRequestDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
     eventId: Long? = null,
     initialStartTs: Long? = null,
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
+    /**
+     * Source device calendar id when duplicating a device-calendar event.
+     * Device calendar ids live in a separate namespace from Room ids (which is
+     * why [DisplayEvent.Device.toEventForDuplicate] zeroes [Event.calendarId]),
+     * so the source device calendar reaches the form on this dedicated channel.
+     * Null for Room/CalDAV duplicates and all non-duplicate flows.
+     */
+    duplicateFromDeviceCalendarId: Long? = null,
     calendarIntentData: CalendarIntentData? = null,
     calendarIntentInvitees: List<String> = emptyList(),
     calendars: List<Calendar>,
@@ -793,6 +944,10 @@ fun EventFormContent(
     // Form state
     var state by remember { mutableStateOf(EventFormState()) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    // Baseline captured when the form finishes loading; unsaved-change detection
+    // diffs the live state against it. Null until the load effect seeds it.
+    var initialFormState by remember { mutableStateOf<EventFormState?>(null) }
 
     /**
      * Snapshot of reminders at form-load time. Used by the read-only
@@ -1192,12 +1347,18 @@ fun EventFormContent(
                 // Parse reminders from event (ignore truncation for duplicates)
                 val (dupReminders, _) = parseRemindersFromEvent(duplicateFrom.reminders, duplicateFrom.alarmCount)
 
-                // Use source calendar if writable, otherwise fall back to resolved default
-                val sourceCalendar = writableCalendars.find { it.id == duplicateFrom.calendarId }
-                val sourceCalId = sourceCalendar?.id ?: resolvedCal.id
-                val sourceCalName = sourceCalendar?.localizedDisplayName(context.resources)
-                    ?: resolvedCal.localizedName(writableCalendars, context.resources)
-                val sourceCalColor = sourceCalendar?.color ?: resolvedCal.color
+                // Keep the source calendar (Room or device); fall back to the
+                // resolved default only if it's gone or not writable.
+                val sourceCal = resolveDuplicateSourceCalendar(
+                    duplicateFrom = duplicateFrom,
+                    duplicateFromDeviceCalendarId = duplicateFromDeviceCalendarId,
+                    writableCalendars = writableCalendars,
+                    deviceCalendarGroups = deviceCalendarGroups,
+                    resolvedDefault = resolvedCal
+                )
+                val sourceCalId = sourceCal.id
+                val sourceCalName = sourceCal.localizedName(writableCalendars, context.resources)
+                val sourceCalColor = sourceCal.color
 
                 newState = newState.copy(
                     title = duplicateFrom.title,
@@ -1213,11 +1374,12 @@ fun EventFormContent(
                     selectedCalendarId = sourceCalId,
                     selectedCalendarName = sourceCalName,
                     selectedCalendarColor = sourceCalColor,
-                    isDeviceCalendar = sourceCalendar == null && resolvedCal.isDevice,
+                    isDeviceCalendar = sourceCal.isDevice,
                     reminders = dupReminders,
                     rrule = null,  // Don't copy recurrence (creates independent event)
                     transp = duplicateFrom.transp,
-                    eventColor = duplicateFrom.color
+                    eventColor = duplicateFrom.color,
+                    categories = duplicateFrom.categories.orEmpty()
                 )
             }
 
@@ -1272,6 +1434,8 @@ fun EventFormContent(
         }
 
         state = newState
+        // Snapshot the load-time baseline for unsaved-change detection.
+        initialFormState = newState
     }
 
     // Reactive calendar update: handles async calendar loading on cold start.
@@ -1314,6 +1478,13 @@ fun EventFormContent(
                 selectedCalendarColor = resolved.color,
                 isDeviceCalendar = resolved.isDevice
             )
+            // The default calendar resolved asynchronously (not a user action),
+            // so fold it into the baseline. If the user happened to edit a field
+            // during this sub-second cold-start window, that edit is absorbed
+            // into the baseline — pre-existing parity with the original feature.
+            if (shouldRebaselineOnCalendarResolve(initialFormState)) {
+                initialFormState = state
+            }
         }
 
         // Case 2: Edit mode — calendar ID already set but metadata missing (cold start)
@@ -1328,6 +1499,43 @@ fun EventFormContent(
                     selectedCalendarName = cal.localizedDisplayName(context.resources),
                     selectedCalendarColor = cal.color
                 )
+            }
+        }
+
+        // Case 3: Device duplicate that fell back to the Room default because
+        // deviceCalendarGroups hadn't loaded when the init effect seeded the form.
+        // Once the device groups arrive, re-resolve to the source device calendar.
+        // Only upgrades when the source device calendar is actually resolvable now
+        // (resolved.isDevice); a genuinely gone/non-writable source keeps the
+        // Room fallback. The !isDeviceCalendar guard means this fires at most once.
+        if (duplicateFrom != null &&
+            duplicateFromDeviceCalendarId != null &&
+            !state.isDeviceCalendar &&
+            deviceCalendarGroups.isNotEmpty() &&
+            writableCalendars.isNotEmpty()) {
+            val resolvedDefault = resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
+            val resolved = resolveDuplicateSourceCalendar(
+                duplicateFrom = duplicateFrom,
+                duplicateFromDeviceCalendarId = duplicateFromDeviceCalendarId,
+                writableCalendars = writableCalendars,
+                deviceCalendarGroups = deviceCalendarGroups,
+                resolvedDefault = resolvedDefault
+            )
+            if (resolved.isDevice) {
+                state = state.copy(
+                    selectedCalendarId = resolved.id,
+                    selectedCalendarName = resolved.localizedName(writableCalendars, context.resources),
+                    selectedCalendarColor = resolved.color,
+                    isDeviceCalendar = true
+                )
+                // Unlike the create-mode resolve above, the baseline here already
+                // holds the Room fallback id seeded at init, so the null-guard
+                // predicate would never fire. This upgrade is an async resolution,
+                // never a user action, so fold it into the baseline unconditionally
+                // — otherwise the fallback→source calendar change reads as an unsaved
+                // edit and pops a spurious discard confirmation on a form the user
+                // never touched.
+                initialFormState = state
             }
         }
     }
@@ -1425,6 +1633,23 @@ fun EventFormContent(
     // coroutine dispatch.
     SideEffect { onSavingChange(state.isSaving) }
 
+    // Unsaved-change detection, mirrored up to the shell's dismiss guard the
+    // same way isSaving is. SideEffect (not LaunchedEffect) so a back/Cancel tap
+    // arriving right after an edit sees the up-to-date value at commit rather
+    // than one lagging a coroutine dispatch.
+    val hasUnsavedChanges by remember {
+        derivedStateOf {
+            initialFormState?.let { eventFormHasUnsavedChanges(it, state) } ?: false
+        }
+    }
+    SideEffect { onHasChangesChange(hasUnsavedChanges) }
+
+    // Route the system back button through the same dismiss guard as the Cancel
+    // button, so back gets the two-tap discard confirmation on a dirty form
+    // instead of closing it. Registered on the sheet's own dialog window (this
+    // content is inside it), and the sheet's built-in back dismissal is disabled.
+    BackHandler(onBack = onRequestDismiss)
+
     val paneTitleText = if (state.isEditMode) {
         stringResource(R.string.dialog_edit_event_title)
     } else {
@@ -1442,12 +1667,32 @@ fun EventFormContent(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { onDismiss() }) {
-                Text(
-                    text = stringResource(R.string.action_cancel),
-                    maxLines = 1,
-                    softWrap = false
-                )
+            // Dirty-form dismissal is a two-tap confirm: the plain Cancel text
+            // button turns into a tonal error-container box reading "Discard?" so
+            // the state change reads as a question to answer, not a subtle recolor.
+            if (showDiscardConfirm) {
+                Button(
+                    onClick = onRequestDismiss,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_discard_confirm),
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+            } else {
+                TextButton(onClick = onRequestDismiss) {
+                    Text(
+                        text = stringResource(R.string.action_cancel),
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
             Text(
                 text = if (state.isEditMode) stringResource(R.string.dialog_edit_event_title) else stringResource(R.string.dialog_new_event_title),

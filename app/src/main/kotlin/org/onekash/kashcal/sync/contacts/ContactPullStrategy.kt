@@ -46,9 +46,12 @@ sealed class ContactPullResult {
 }
 
 /**
- * Full-sync pull for CardDAV contacts — the read-only mirror step: re-discover a
- * login's address books, fetch their contents, and reconcile them onto the
- * Android Contacts Provider so the device reflects the server's current state.
+ * Full-sync for CardDAV contacts — re-discover a login's address books, push any
+ * local edits/deletes back to the server, then fetch the books' contents and
+ * reconcile them onto the Android Contacts Provider so the device reflects the
+ * server's current state. The push runs first, inside the same run and before the
+ * device snapshot, so the ensuing pull reconciles against a server that already
+ * carries the local changes (see [pushStrategy] and the push step below).
  *
  * This is the CardDAV sibling of the calendar
  * [org.onekash.kashcal.sync.strategy.PullStrategy] — parallel in shape, NOT
@@ -96,6 +99,7 @@ class ContactPullStrategy @Inject constructor(
     private val addressBookDao: AddressBookDao,
     private val contactsProvider: ContactsProviderRepository,
     private val photoFetcher: ContactPhotoFetcher,
+    private val pushStrategy: ContactPushStrategy,
 ) {
 
     /**
@@ -127,6 +131,36 @@ class ContactPullStrategy @Inject constructor(
             )
         }
         val books = discovery.books
+
+        // ---- Push local edits/deletes BEFORE snapshotting the device ----
+        // The provider's DIRTY/DELETED flags are the pending set; deliver them now,
+        // inside the same run, so (a) the pull that follows reconciles against a
+        // server that already reflects the local changes, and (b) a push that
+        // deletes this account's last contact leaves an empty device, which the
+        // wiped-device self-heal below sees and answers with a full listing rather
+        // than a delta. A not-fully-applied push (a transport error, or a provider
+        // write-back that itself failed) reports not-clean, which holds every book's
+        // sync-token so the whole run replays next time (RFC 6578 §3.1) instead of
+        // advancing a cursor past a change the pull hasn't yet reconciled.
+        val pushOutcome = pushStrategy.push(accountName, books, client)
+
+        // Abort BEFORE the pull enumerates ONLY when a net-new create ended not-clean. Such
+        // a create's originating row is blank-href and DIRTY; if the pull ran, it would find
+        // the just-created server href absent from the device snapshot and mirror it as a
+        // SECOND row (the pull matches by href, and a net-new row has none yet). Skipping the
+        // pull entirely — no enumeration, no delta, no orphan sweep, no photo fetch — holds
+        // every book's sync-token untouched and replays the whole run next time. A non-net-new
+        // push failure does NOT skip the pull: that row already has an href the pull
+        // reconciles correctly, so inbound changes still materialize while its book token
+        // stays held by the `clean` gates below. Those gates remain load-bearing; this early
+        // return does not make them redundant. booksFailed floors at 1 so a pull-unsafe push
+        // that discovered zero books still signals a replay rather than reading as clean.
+        if (pushOutcome.pullUnsafe) {
+            return ContactPullResult.Success(
+                inserted = 0, replaced = 0, skipped = 0, deleted = 0,
+                booksFailed = maxOf(books.size, 1),
+            )
+        }
 
         var inserted = 0
         var replaced = 0
@@ -179,6 +213,7 @@ class ContactPullStrategy @Inject constructor(
         suspend fun materialize(
             bookUrl: String,
             vcardVersion: String,
+            isReadOnly: Boolean,
             serverList: List<Pair<String, String?>>,
         ): MaterializeOutcome {
             val toInsert = ArrayList<String>()
@@ -210,6 +245,7 @@ class ContactPullStrategy @Inject constructor(
                                 href = rc.href,
                                 etag = rc.etag,
                                 mapped = VCardContactMapper.toEntity(rc.contact),
+                                isReadOnly = isReadOnly,
                             )
                         },
                     )
@@ -284,7 +320,7 @@ class ContactPullStrategy @Inject constructor(
                         // A delta reports only changes, so this book's full href set is
                         // absent from the union — the union sweep must not run this run.
                         sweepUnsafe = true
-                        val outcome = materialize(book.url, book.vcardVersion, delta.changed)
+                        val outcome = materialize(book.url, book.vcardVersion, book.isReadOnly, delta.changed)
                         inserted += outcome.inserted
                         replaced += outcome.replaced
                         skipped += outcome.skipped
@@ -292,12 +328,14 @@ class ContactPullStrategy @Inject constructor(
                         val deletesOk = delta.deleted.isEmpty() ||
                             contactsProvider.deleteByHrefs(accountName, delta.deleted).isSuccess
                         if (deletesOk) deleted += delta.deleted.size
-                        if (outcome.ok && deletesOk) {
+                        if (pushOutcome.clean && outcome.ok && deletesOk) {
                             // Advance to the delta's token only when the book fully
-                            // applied. If any change or delete failed, hold the stored
-                            // cursor (carried through the upsert) so the SAME delta
-                            // replays next run: a token advance here would step past the
-                            // server's removed set, orphaning the failed delete forever.
+                            // applied AND the run's push fully delivered. If any change
+                            // or delete failed, or the push was not clean, hold the
+                            // stored cursor (carried through the upsert) so the SAME
+                            // delta replays next run: a token advance here would step
+                            // past the server's removed set — or past a local change the
+                            // push hasn't yet delivered — orphaning it forever.
                             addressBookDao.updateSyncToken(bookId, syncToken = delta.newToken, ctag = book.ctag)
                         } else {
                             booksFailed++
@@ -358,12 +396,14 @@ class ContactPullStrategy @Inject constructor(
             val serverList = (hrefsResult as CalDavResult.Success).data
             serverHrefsUnion += serverList.map { it.first }
 
-            val outcome = materialize(book.url, book.vcardVersion, serverList)
+            val outcome = materialize(book.url, book.vcardVersion, book.isReadOnly, serverList)
             inserted += outcome.inserted
             replaced += outcome.replaced
             skipped += outcome.skipped
-            if (outcome.ok) {
+            if (pushOutcome.clean && outcome.ok) {
                 // Persist token/ctag for this book (the token probed before enumeration).
+                // Gated on a clean push too: a not-fully-delivered push must hold every
+                // book's cursor so the whole run replays, not just the failed leg.
                 addressBookDao.updateSyncToken(bookId, syncToken = newToken, ctag = book.ctag)
             } else {
                 // A partial book (a write failed, or an href couldn't be read) must NOT
