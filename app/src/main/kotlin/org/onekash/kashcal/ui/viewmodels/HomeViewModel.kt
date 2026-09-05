@@ -129,8 +129,10 @@ data class WeekEventsUiState(
         fun ofError(message: String?) = WeekEventsUiState(error = message ?: "Failed to load events")
 
         fun fromEvents(events: List<DisplayEvent>): WeekEventsUiState = WeekEventsUiState(
-            timedEvents = events.filter { !it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
-            allDayEvents = events.filter { it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
+            timedEvents = events.filter { !it.isAllDay && it.endDay == it.startDay }
+                .sortedBy { it.startTs }.toPersistentList(),
+            allDayEvents = events.filter { it.isAllDay || it.endDay > it.startDay }
+                .sortedBy { it.startTs }.toPersistentList(),
             isLoading = false,
             error = null
         )
