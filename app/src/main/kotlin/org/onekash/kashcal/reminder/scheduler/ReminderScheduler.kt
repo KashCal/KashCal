@@ -694,6 +694,18 @@ class ReminderScheduler @Inject constructor(
     }
 
     /**
+     * Ids of the other reminders on the same occurrence as [reminder], so a firing
+     * reminder can clear their notifications. See the query for the predicate.
+     */
+    suspend fun getSiblingReminderIds(reminder: ScheduledReminder): List<Long> {
+        return scheduledRemindersDao.getSiblingIdsForOccurrence(
+            eventId = reminder.eventId,
+            occurrenceTime = reminder.occurrenceTime,
+            excludeId = reminder.id
+        )
+    }
+
+    /**
      * Whether a reminder for the given event should still fire.
      *
      * Reminder rows denormalize event data so the alarm receiver can post a

@@ -401,9 +401,24 @@ class PullStrategy @Inject constructor(
     private fun caldavUrlResolver(calendarId: Long): suspend (String) -> Event? {
         var canonicalMap: Map<String, Event>? = null
         return resolve@{ url ->
-            eventsDao.getByCaldavUrl(url)?.let { return@resolve it }
+            // caldav_url is deliberately non-unique: a recurring master and its
+            // overrides share one server resource, and a row moved to another
+            // calendar keeps the source URL. The exact-match query is global and
+            // returns an arbitrary one of those rows, so short-circuit on it only
+            // when it is in THIS calendar and is a master. An out-of-calendar hit,
+            // or an override that may have a master beside it, falls through to the
+            // canonical map, which is scoped and master-preferring.
+            eventsDao.getByCaldavUrl(url)
+                ?.takeIf { it.calendarId == calendarId && it.originalEventId == null }
+                ?.let { return@resolve it }
             val target = CaldavUrlNormalizer.canonicalize(url) ?: return@resolve null
             val map = canonicalMap ?: eventsDao.getEventsWithCaldavUrl(calendarId)
+                // Several rows can canonicalize to the same key (master + its
+                // overrides). toMap() is last-wins, so order masters last: removing
+                // a master cascades to its overrides, whereas resolving to an
+                // override would drop one occurrence and leave the master pointing
+                // at a resource the server no longer has.
+                .sortedBy { it.originalEventId == null }
                 .mapNotNull { e ->
                     val u = e.caldavUrl ?: return@mapNotNull null
                     (CaldavUrlNormalizer.canonicalize(u) ?: u) to e
@@ -1167,8 +1182,11 @@ class PullStrategy @Inject constructor(
         for (meta in masterEvents) {
             // PRIMARY: UID lookup (stable across server hostname changes like p180 vs p181)
             // SECONDARY: caldavUrl lookup (fallback for edge cases)
+            // The URL fallback is a global query, and a row moved to another
+            // calendar keeps its old URL — adopting it here would overwrite live
+            // data and drag the row back into this calendar.
             val existingEvent = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
-                ?: eventsDao.getByCaldavUrl(meta.caldavUrl)
+                ?: eventsDao.getByCaldavUrl(meta.caldavUrl)?.takeIf { it.calendarId == calendar.id }
 
             // LOCAL-FIRST: Skip events with pending local changes
             // These will be pushed to server first via PushStrategy

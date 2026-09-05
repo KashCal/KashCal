@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Kalendar</string>
     <string name="account_detail_sync_calendar_subtitle">Sinhronizuj kalendare ovog računa</string>
     <string name="account_detail_sync_contacts">Kontakti</string>
-    <string name="account_detail_sync_contacts_subtitle">Sinhronizuj kontakte ovog računa na telefon</string>
-    <string name="account_detail_sync_contacts_info_text">Kopira kontakte na telefon. Zasad samo za čitanje: sa servera na telefon.</string>
+    <string name="account_detail_sync_contacts_subtitle">Sinhronizuj kontakte ovog računa</string>
     <string name="account_detail_contacts_permission_needed">Dozvola za kontakte je isključena. Dozvoli pristup da bi se kontakti nastavili sinhronizirati.</string>
     <string name="account_detail_contacts_grant">Dozvoli pristup</string>
     <string name="contact_sync_enabled_for">Sinhronizacija kontakata za %1$s</string>

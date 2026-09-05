@@ -84,6 +84,41 @@ interface ScheduledRemindersDao {
         reminderOffset: String
     ): ScheduledReminder?
 
+    /**
+     * Ids of the other reminders set on the same occurrence as [excludeId].
+     *
+     * An occurrence with several reminders (say 1 hour and 15 minutes before) has one
+     * row per offset, and each row's notification is keyed to its own id. When one of
+     * them fires it uses this to clear the others' notifications, so the user sees a
+     * single notification for the occurrence instead of one per offset.
+     *
+     * Deliberately does NOT filter on status. The reminder whose notification is
+     * actually on screen has already moved to FIRED, so filtering to
+     * PENDING/SNOOZED would skip the only row that matters, and narrowing to FIRED
+     * alone would miss a sibling that posted moments ago and has not been marked
+     * yet, which is exactly the case when several offsets come due together after a
+     * doze.
+     *
+     * The cost of the wider net is that some returned rows never posted anything.
+     * Cancelling those is normally a no-op, with one bound worth knowing: notification
+     * ids fold the row id modulo 10000, so a cancel for a row that posted nothing
+     * still clears whatever occupies that slot. Rows 10000 apart alias, which stays
+     * theoretical only because reminders past their window are pruned, keeping live
+     * row ids in a narrow band. Widening the id space is the real fix if that ever
+     * stops holding.
+     */
+    @Query("""
+        SELECT id FROM scheduled_reminders
+        WHERE event_id = :eventId
+        AND occurrence_time = :occurrenceTime
+        AND id != :excludeId
+    """)
+    suspend fun getSiblingIdsForOccurrence(
+        eventId: Long,
+        occurrenceTime: Long,
+        excludeId: Long
+    ): List<Long>
+
     // ========== Update Operations ==========
 
     /**

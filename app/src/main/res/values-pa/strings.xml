@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">ਕੈਲੰਡਰ</string>
     <string name="account_detail_sync_calendar_subtitle">ਇਸ ਖਾਤੇ ਦੇ ਕੈਲੰਡਰ ਸਿੰਕ ਕਰੋ</string>
     <string name="account_detail_sync_contacts">ਸੰਪਰਕ</string>
-    <string name="account_detail_sync_contacts_subtitle">ਇਸ ਖਾਤੇ ਦੇ ਸੰਪਰਕ ਆਪਣੇ ਫ਼ੋਨ ਨਾਲ ਸਿੰਕ ਕਰੋ</string>
-    <string name="account_detail_sync_contacts_info_text">ਸੰਪਰਕਾਂ ਨੂੰ ਤੁਹਾਡੇ ਫ਼ੋਨ \'ਤੇ ਕਾਪੀ ਕਰਦਾ ਹੈ। ਫ਼ਿਲਹਾਲ ਸਿਰਫ਼-ਪੜ੍ਹਨ ਲਈ: ਸਰਵਰ ਤੋਂ ਫ਼ੋਨ ਤੱਕ ਹੀ।</string>
+    <string name="account_detail_sync_contacts_subtitle">ਇਸ ਖਾਤੇ ਦੇ ਸੰਪਰਕ ਸਿੰਕ ਕਰੋ</string>
     <string name="account_detail_contacts_permission_needed">ਸੰਪਰਕ ਇਜਾਜ਼ਤ ਬੰਦ ਹੈ। ਸੰਪਰਕ ਸਿੰਕ ਹੁੰਦੇ ਰੱਖਣ ਲਈ ਪਹੁੰਚ ਦਿਓ।</string>
     <string name="account_detail_contacts_grant">ਪਹੁੰਚ ਦਿਓ</string>
     <string name="contact_sync_enabled_for">%1$s ਲਈ ਸੰਪਰਕ ਸਿੰਕ ਹੋ ਰਹੇ ਹਨ</string>

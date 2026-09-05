@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Takvim</string>
     <string name="account_detail_sync_calendar_subtitle">Bu hesabın takvimlerini eşitle</string>
     <string name="account_detail_sync_contacts">Kişiler</string>
-    <string name="account_detail_sync_contacts_subtitle">Bu hesabın kişilerini telefonuna eşitle</string>
-    <string name="account_detail_sync_contacts_info_text">Kişileri telefonuna kopyalar. Şimdilik salt okunur: yalnızca sunucudan telefona.</string>
+    <string name="account_detail_sync_contacts_subtitle">Bu hesabın kişilerini eşitle</string>
     <string name="account_detail_contacts_permission_needed">Kişiler izni kapalı. Kişilerin eşitlenmesini sürdürmek için erişime izin ver.</string>
     <string name="account_detail_contacts_grant">Erişime izin ver</string>
     <string name="contact_sync_enabled_for">%1$s için kişiler senkronize ediliyor</string>

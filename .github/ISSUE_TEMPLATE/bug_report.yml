@@ -69,7 +69,9 @@ body:
       label: Install source
       description: Where did you install KashCal from?
       options:
+        - Google Play
         - F-Droid
+        - IzzyOnDroid
         - GitHub Release
         - Built from source
         - Other

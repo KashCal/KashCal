@@ -1,3 +1,10 @@
+## [2026.09.05]
+
+### Everything in this release
+
+- Fixed an event with two reminders showing both notifications at once; the newer one now replaces the older one, and both still ring, #362
+- Fixed events vanishing on the next sync after you moved them out of a CalDAV calendar, including the edited occurrences of a repeating event, #365
+
 ## [2026.09.04]
 
 We put KashCal on [Google Play](https://googleplay.onekash.org). Yes, the open source calendar that runs no ads and phones no one home is now stocked in a store built by an advertising company. Make of that what you will. It is the same build that ships on F-Droid, so install it from whichever store you distrust less.

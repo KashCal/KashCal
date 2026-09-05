@@ -173,6 +173,9 @@ class PushStrategyExceptionRaceTest {
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        // A bundled override shares the master's resource, so it adopts the
+        // master's url and etag together.
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -185,10 +188,11 @@ class PushStrategyExceptionRaceTest {
 
         // CRITICAL ASSERTIONS:
         // Only exceptionA and exceptionB should have etag updated (exactly 2 calls)
-        coVerify(exactly = 1) { eventsDao.markSynced(exceptionA.id, serverEtag, any()) }
-        coVerify(exactly = 1) { eventsDao.markSynced(exceptionB.id, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, serverUrl, serverEtag, any()) }
 
-        // exceptionC should NOT have its etag updated (it wasn't captured at serialization time)
+        // exceptionC should NOT be marked synced (it wasn't captured at serialization time)
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.markSynced(exceptionC.id, any(), any()) }
     }
 
@@ -226,6 +230,7 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success(newEtag)
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -240,12 +245,14 @@ class PushStrategyExceptionRaceTest {
         // Master event etag updated
         coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, newEtag, any()) }
 
-        // Only exceptionA and exceptionB should have etag updated
-        coVerify(exactly = 1) { eventsDao.markSynced(exceptionA.id, newEtag, any()) }
-        coVerify(exactly = 1) { eventsDao.markSynced(exceptionB.id, newEtag, any()) }
+        // Only exceptionA and exceptionB should be marked synced, against the
+        // master's resource url (which is also theirs).
+        val masterUrl = masterEventWithUrl.caldavUrl!!
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, masterUrl, newEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, masterUrl, newEtag, any()) }
 
-        // exceptionC should NOT have its etag updated
-        coVerify(exactly = 0) { eventsDao.markSynced(exceptionC.id, any(), any()) }
+        // exceptionC should NOT be marked synced
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
     }
 
     /**
@@ -326,6 +333,7 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -337,10 +345,13 @@ class PushStrategyExceptionRaceTest {
         assertEquals(1, capturedExceptions.size)
         assertEquals(exceptionA.id, capturedExceptions[0].id)
 
-        // Only exceptionA (captured at serialization) gets etag update
-        coVerify(exactly = 1) { eventsDao.markSynced(exceptionA.id, "new-etag", any()) }
+        // Only exceptionA (captured at serialization) gets the etag
+        coVerify(exactly = 1) {
+            eventsDao.markCreatedOnServer(exceptionA.id, masterEventWithUrl.caldavUrl!!, "new-etag", any())
+        }
 
-        // Total markSynced calls: 1 for master + 1 for exceptionA = 2
-        coVerify(exactly = 2) { eventsDao.markSynced(any(), any(), any()) }
+        // The master is the only row going through markSynced
+        coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, "new-etag", any()) }
+        coVerify(exactly = 1) { eventsDao.markSynced(any(), any(), any()) }
     }
 }

@@ -66,12 +66,29 @@ class ReminderNotificationManager @Inject constructor(
     /**
      * Show notification for a reminder.
      *
+     * The id is derived from the reminder row, so an occurrence with several
+     * reminders posts one notification per offset unless the caller clears the
+     * others first, as the alarm path does.
+     *
      * @param reminder The scheduled reminder
      * @return The notification ID used
      */
     suspend fun showNotification(reminder: ScheduledReminder): Int {
+        return postNotification(reminder, buildNotification(reminder))
+    }
+
+    /**
+     * Post an already-built [notification] for [reminder], returning the id used.
+     *
+     * Deliberately not a suspending function. Composing the content reads
+     * preferences and can suspend; posting must not, so a caller that clears the
+     * occurrence's other notifications first has no suspension point between the
+     * clear and the post. Without that, a cancelled job (the alarm handler's
+     * timeout expiring, say) could clear the notification already on screen and
+     * then never post its replacement, leaving the user with nothing.
+     */
+    fun postNotification(reminder: ScheduledReminder, notification: Notification): Int {
         val notificationId = channels.getNotificationId(reminder.id)
-        val notification = buildNotification(reminder)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
             as android.app.NotificationManager

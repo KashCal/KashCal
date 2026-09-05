@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Agenda</string>
     <string name="account_detail_sync_calendar_subtitle">Synchroniser les agendas de ce compte</string>
     <string name="account_detail_sync_contacts">Contacts</string>
-    <string name="account_detail_sync_contacts_subtitle">Synchroniser les contacts de ce compte sur ton téléphone</string>
-    <string name="account_detail_sync_contacts_info_text">Copie les contacts sur ton téléphone. Lecture seule pour l\'instant : du serveur vers le téléphone uniquement.</string>
+    <string name="account_detail_sync_contacts_subtitle">Synchroniser les contacts de ce compte</string>
     <string name="account_detail_contacts_permission_needed">L\'autorisation Contacts est désactivée. Accorde l\'accès pour continuer à synchroniser les contacts.</string>
     <string name="account_detail_contacts_grant">Accorder l\'accès</string>
     <string name="contact_sync_enabled_for">Synchronisation des contacts pour %1$s</string>

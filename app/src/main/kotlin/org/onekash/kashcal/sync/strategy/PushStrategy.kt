@@ -139,7 +139,12 @@ class PushStrategy @Inject constructor(
                             updated++
                             pushedEventIds.add(operation.eventId)
                         }
-                        PendingOperation.OPERATION_DELETE -> deleted++
+                        PendingOperation.OPERATION_DELETE -> {
+                            deleted++
+                            // A row the DELETE spared (it moved elsewhere) must be
+                            // shielded from the pull phase of this same cycle too.
+                            result.sparedEventId?.let { pushedEventIds.add(it) }
+                        }
                         PendingOperation.OPERATION_MOVE -> {
                             created++; deleted++
                             pushedEventIds.add(operation.eventId)
@@ -284,7 +289,12 @@ class PushStrategy @Inject constructor(
                             updated++
                             pushedEventIds.add(operation.eventId)
                         }
-                        PendingOperation.OPERATION_DELETE -> deleted++
+                        PendingOperation.OPERATION_DELETE -> {
+                            deleted++
+                            // A row the DELETE spared (it moved elsewhere) must be
+                            // shielded from the pull phase of this same cycle too.
+                            result.sparedEventId?.let { pushedEventIds.add(it) }
+                        }
                         PendingOperation.OPERATION_MOVE -> {
                             created++; deleted++
                             pushedEventIds.add(operation.eventId)
@@ -413,14 +423,7 @@ class PushStrategy @Inject constructor(
                     System.currentTimeMillis()
                 )
 
-                // Update etags only for exceptions that were actually serialized and pushed
-                // (avoids race condition where new exception created during push gets etag but wasn't pushed)
-                for (exception in serializedExceptions) {
-                    eventsDao.markSynced(exception.id, etag, System.currentTimeMillis())
-                }
-                if (serializedExceptions.isNotEmpty()) {
-                    Log.d(TAG, "Updated etag for ${serializedExceptions.size} bundled exceptions")
-                }
+                markBundledExceptionsSynced(serializedExceptions, url, etag)
 
                 // Capture the server's scheduling decision (RFC 6638 §3.2.1).
                 readBackScheduleStatus(event, url, clientToUse, serializedExceptions)
@@ -528,14 +531,7 @@ class PushStrategy @Inject constructor(
                 // Update local event
                 eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
 
-                // Update etags only for exceptions that were actually serialized and pushed
-                // (avoids race condition where new exception created during push gets etag but wasn't pushed)
-                for (exception in serializedExceptions) {
-                    eventsDao.markSynced(exception.id, newEtag, System.currentTimeMillis())
-                }
-                if (serializedExceptions.isNotEmpty()) {
-                    Log.d(TAG, "Updated etag for ${serializedExceptions.size} bundled exceptions")
-                }
+                markBundledExceptionsSynced(serializedExceptions, caldavUrl, newEtag)
 
                 // Capture the server's scheduling decision (RFC 6638 §3.2.1).
                 readBackScheduleStatus(event, caldavUrl, clientToUse, serializedExceptions)
@@ -565,9 +561,7 @@ class PushStrategy @Inject constructor(
                                 ?: return SinglePushResult.Error(-1, "Null result from retry", false)
                             val now = System.currentTimeMillis()
                             eventsDao.markSynced(event.id, newEtag, now)
-                            for (exception in serializedExceptions) {
-                                eventsDao.markSynced(exception.id, newEtag, now)
-                            }
+                            markBundledExceptionsSynced(serializedExceptions, caldavUrl, newEtag)
                             // Capture the server's scheduling decision (RFC 6638 §3.2.1).
                             readBackScheduleStatus(event, caldavUrl, clientToUse, serializedExceptions)
                             drainPendingCancels(event, clientToUse)
@@ -705,6 +699,89 @@ class PushStrategy @Inject constructor(
     }
 
     /**
+     * Adopt the master's server resource for every override that was bundled into
+     * the body just pushed.
+     *
+     * A modified occurrence is stored in the SAME resource as its master (RFC 5545
+     * §3.8.4.4 RECURRENCE-ID), so the master's url IS the override's url and both
+     * carry the resource's one etag. Writing only the etag leaves the row on
+     * whatever url it had before — null on a first create, the source account's
+     * after a move — and a later pull of that calendar finds a row whose resource
+     * is absent from the server and reaps it, so the series survives while the
+     * edited occurrence vanishes (issue #365).
+     *
+     * Only the exceptions handed in are touched: they are the set captured at
+     * serialize time, so an override created while the request was in flight
+     * (never in the pushed body) keeps its pending state instead of being marked
+     * synced against a body it wasn't in.
+     *
+     * One statement per row, not etag-then-url: a crash between two writes would
+     * leave exactly the stale-url state this exists to prevent.
+     */
+    private suspend fun markBundledExceptionsSynced(
+        serializedExceptions: List<Event>,
+        masterUrl: String,
+        etag: String?
+    ) {
+        if (serializedExceptions.isEmpty()) return
+        val now = System.currentTimeMillis()
+        for (exception in serializedExceptions) {
+            eventsDao.markCreatedOnServer(exception.id, masterUrl, etag, now)
+        }
+        Log.d(TAG, "Synced ${serializedExceptions.size} bundled exceptions to the master's resource")
+    }
+
+    /**
+     * A queued DELETE owns a resource in one calendar collection (RFC 4791 §5.3.2
+     * scopes calendar-object identity to the collection), not an event row. A move
+     * out of that collection re-uses the same row for the destination copy, so by
+     * drain time the row can be live data in its new home — reaping it there would
+     * destroy the moved event while reporting success (#365).
+     *
+     * Reap the row only when the DELETE still owns it:
+     * - the row is a real tombstone (a user delete soft-deletes to PENDING_DELETE
+     *   first, and nothing else ever reaps such a row — the pull path skips them),
+     * - or the op carries no source scope at all, so there is no move to protect,
+     * - or the row is still in the collection the DELETE came from.
+     *
+     * Both the tombstone and the scope clause are load-bearing: queueing mutates an
+     * existing pending op in place rather than inserting, so a genuine delete can
+     * inherit a prior move's source scope, and scope alone would then leave an
+     * invisible row behind forever.
+     */
+    private fun deleteOwnsLocalRow(operation: PendingOperation, event: Event): Boolean =
+        event.syncStatus == SyncStatus.PENDING_DELETE ||
+            operation.sourceCalendarId == null ||
+            event.calendarId == operation.sourceCalendarId
+
+    /**
+     * Remove the local row if this DELETE still owns it, and report back the row id
+     * when it was deliberately spared so the caller can shield it from the pull.
+     *
+     * The ownership question is answered against a FRESH read, never the batch
+     * snapshot the push loop took before the network round-trip: the user can move
+     * the event while the server DELETE is in flight, and a stale snapshot would
+     * still show it in the source calendar and destroy the just-moved row.
+     */
+    private suspend fun reapLocalRowIfOwned(
+        operation: PendingOperation,
+        event: Event?
+    ): SinglePushResult.Success {
+        if (event == null) return SinglePushResult.Success()
+        val current = eventsDao.getById(event.id) ?: return SinglePushResult.Success()
+        if (deleteOwnsLocalRow(operation, current)) {
+            eventsDao.deleteById(current.id)
+            return SinglePushResult.Success()
+        }
+        Log.d(
+            TAG,
+            "Server copy deleted but keeping local row ${current.id}: it moved to " +
+                "calendar ${current.calendarId} (delete was scoped to ${operation.sourceCalendarId})"
+        )
+        return SinglePushResult.Success(sparedEventId = current.id)
+    }
+
+    /**
      * Process DELETE operation - delete event from server.
      *
      * Uses operation.targetUrl if available (for calendar moves where
@@ -731,8 +808,7 @@ class PushStrategy @Inject constructor(
         if (caldavUrl == null) {
             // Never synced to server - just delete locally
             Log.d(TAG, "Event was never on server, deleting locally")
-            event?.let { eventsDao.deleteById(it.id) }
-            return SinglePushResult.Success()
+            return reapLocalRowIfOwned(operation, event)
         }
 
         // Delete from server
@@ -743,10 +819,8 @@ class PushStrategy @Inject constructor(
 
         return when {
             result.isSuccess() -> {
-                // Delete locally
-                event?.let { eventsDao.deleteById(it.id) }
                 Log.d(TAG, "Event deleted successfully")
-                SinglePushResult.Success()
+                reapLocalRowIfOwned(operation, event)
             }
             result.isConflict() -> {
                 // 412: the resource still exists but our If-Match etag no longer
@@ -764,8 +838,7 @@ class PushStrategy @Inject constructor(
                     // the refetch) — the delete goal is already met.
                     freshEtagResult.isNotFound() -> {
                         Log.d(TAG, "Refetch shows event already gone, treating delete as done")
-                        event?.let { eventsDao.deleteById(it.id) }
-                        SinglePushResult.Success()
+                        reapLocalRowIfOwned(operation, event)
                     }
                     else -> {
                         val freshEtag = freshEtagResult.getOrNull()
@@ -778,9 +851,8 @@ class PushStrategy @Inject constructor(
                             val retryResult = clientToUse.deleteEvent(caldavUrl, freshEtag)
                             when {
                                 retryResult.isSuccess() || retryResult.isNotFound() -> {
-                                    event?.let { eventsDao.deleteById(it.id) }
                                     Log.d(TAG, "412 delete retry succeeded for ${event?.title}")
-                                    SinglePushResult.Success()
+                                    reapLocalRowIfOwned(operation, event)
                                 }
                                 retryResult.isConflict() -> {
                                     // Still conflicting (rapid re-drift) — defer to
@@ -807,8 +879,7 @@ class PushStrategy @Inject constructor(
             result.isNotFound() -> {
                 // Already deleted on server - delete locally
                 Log.d(TAG, "Event already deleted on server")
-                event?.let { eventsDao.deleteById(it.id) }
-                SinglePushResult.Success()
+                reapLocalRowIfOwned(operation, event)
             }
             else -> {
                 val error = (result as? CalDavResult.Error)
@@ -954,7 +1025,7 @@ class PushStrategy @Inject constructor(
         // Phase 1: CREATE first, then DELETE (safety: ensure event exists before deleting source)
         Log.d(TAG, "MOVE Phase 1: Creating in new calendar: ${calendar.displayName}")
 
-        val (icalData, _) = serializeEventWithExceptions(event)
+        val (icalData, serializedExceptions) = serializeEventWithExceptions(event)
         val createResult = clientToUse.createEvent(calendar.caldavUrl, event.uid, icalData)
 
         return when {
@@ -963,6 +1034,8 @@ class PushStrategy @Inject constructor(
                     ?: return SinglePushResult.Error(-1, "Null result from create", false)
 
                 eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
+                // The overrides that rode in this body live in the new resource too.
+                markBundledExceptionsSynced(serializedExceptions, url, etag)
                 Log.d(TAG, "MOVE Phase 1: Event created successfully at $url")
 
                 // Deliberately NO SCHEDULE-STATUS read-back here: a calendar

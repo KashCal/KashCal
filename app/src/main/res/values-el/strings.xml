@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Ημερολόγιο</string>
     <string name="account_detail_sync_calendar_subtitle">Συγχρονισμός των ημερολογίων αυτού του λογαριασμού</string>
     <string name="account_detail_sync_contacts">Επαφές</string>
-    <string name="account_detail_sync_contacts_subtitle">Συγχρονισμός των επαφών αυτού του λογαριασμού στο τηλέφωνό σας</string>
-    <string name="account_detail_sync_contacts_info_text">Αντιγράφει τις επαφές στο τηλέφωνό σας. Προς το παρόν μόνο για ανάγνωση: μόνο από τον διακομιστή στο τηλέφωνο.</string>
+    <string name="account_detail_sync_contacts_subtitle">Συγχρονισμός των επαφών αυτού του λογαριασμού</string>
     <string name="account_detail_contacts_permission_needed">Η άδεια για τις Επαφές είναι απενεργοποιημένη. Παραχωρήστε πρόσβαση για να συνεχιστεί ο συγχρονισμός των επαφών.</string>
     <string name="account_detail_contacts_grant">Παραχώρηση πρόσβασης</string>
     <string name="contact_sync_enabled_for">Συγχρονισμός επαφών για %1$s</string>

@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Calendr</string>
     <string name="account_detail_sync_calendar_subtitle">Cysoni calendrau\'r cyfrif hwn</string>
     <string name="account_detail_sync_contacts">Cysylltiadau</string>
-    <string name="account_detail_sync_contacts_subtitle">Cysoni cysylltiadau\'r cyfrif hwn i\'ch ffôn</string>
-    <string name="account_detail_sync_contacts_info_text">Yn copïo cysylltiadau i\'ch ffôn. Darllen yn unig am nawr: o\'r gweinydd i\'r ffôn.</string>
+    <string name="account_detail_sync_contacts_subtitle">Cysoni cysylltiadau\'r cyfrif hwn</string>
     <string name="account_detail_contacts_permission_needed">Mae caniatâd cysylltiadau wedi\'i ddiffodd. Rhowch fynediad i barhau i gysoni cysylltiadau.</string>
     <string name="account_detail_contacts_grant">Rhoi mynediad</string>
     <string name="contact_sync_enabled_for">Cysoni cysylltiadau %1$s</string>

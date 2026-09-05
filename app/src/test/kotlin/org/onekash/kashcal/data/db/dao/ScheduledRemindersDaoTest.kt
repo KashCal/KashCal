@@ -214,6 +214,29 @@ class ScheduledRemindersDaoTest {
         assertNull(existing)
     }
 
+    @Test
+    fun `findExisting matches the exact occurrence, not a neighbouring one`() = runTest {
+        // Duplicate prevention keys on a single occurrence. If this predicate ever
+        // relaxed to an inequality, a reminder already set on a neighbouring
+        // occurrence would look like a duplicate of this one and scheduling would be
+        // skipped, so the user would silently lose the reminder. Rows on both sides,
+        // so neither direction of comparison can pass.
+        val queriedOccurrence = 5_000_000L
+        val sharedOffset = "-PT15M"
+        remindersDao.insert(createReminder(
+            occurrenceTime = queriedOccurrence - 3_600_000,
+            reminderOffset = sharedOffset
+        ))
+        remindersDao.insert(createReminder(
+            occurrenceTime = queriedOccurrence + 3_600_000,
+            reminderOffset = sharedOffset
+        ))
+
+        val existing = remindersDao.findExisting(testEventId, queriedOccurrence, sharedOffset)
+
+        assertNull("Neither the earlier nor the later occurrence is a duplicate", existing)
+    }
+
     // ==================== Status Transition Tests ====================
 
     @Test
@@ -432,5 +455,155 @@ class ScheduledRemindersDaoTest {
 
         val retrieved = remindersDao.getById(id)
         assertEquals(farFuture, retrieved?.triggerTime)
+    }
+
+    // ==================== Sibling Lookup Tests ====================
+    //
+    // When one reminder for an occurrence fires, it needs the ids of the *other*
+    // reminders on that same occurrence so it can clear their notifications and
+    // leave only one on screen. These pin the exact shape of that lookup: the
+    // occurrence must match on both event and time, and status must not be
+    // filtered (see below).
+
+    /** Fixed occurrence timestamp: createReminder's default is call-time, so two defaulted rows can land 1 ms apart and silently not be siblings. */
+    private val siblingOccurrence = 1_800_000_000_000L
+
+    @Test
+    fun `sibling lookup returns an already-fired reminder on the same occurrence`() = runTest {
+        // The whole point: the fired reminder is the one whose notification is on
+        // screen, so filtering it out would defeat the lookup entirely.
+        val firedId = remindersDao.insert(
+            createReminder(
+                occurrenceTime = siblingOccurrence,
+                reminderOffset = "-PT1H",
+                status = ReminderStatus.FIRED
+            )
+        )
+        val firingId = remindersDao.insert(
+            createReminder(
+                occurrenceTime = siblingOccurrence,
+                reminderOffset = "-PT15M",
+                status = ReminderStatus.PENDING
+            )
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(
+            eventId = testEventId,
+            occurrenceTime = siblingOccurrence,
+            excludeId = firingId
+        )
+
+        assertEquals(listOf(firedId), siblings)
+    }
+
+    @Test
+    fun `sibling lookup ignores status entirely`() = runTest {
+        // Every status must come back, so no status filter can creep in.
+        val pendingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT1H", status = ReminderStatus.PENDING)
+        )
+        val snoozedId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT45M", status = ReminderStatus.SNOOZED)
+        )
+        val firedId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT30M", status = ReminderStatus.FIRED)
+        )
+        val dismissedId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT20M", status = ReminderStatus.DISMISSED)
+        )
+        val firingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M", status = ReminderStatus.PENDING)
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, firingId)
+
+        assertEquals(
+            setOf(pendingId, snoozedId, firedId, dismissedId),
+            siblings.toSet()
+        )
+    }
+
+    @Test
+    fun `sibling lookup excludes other occurrences on both sides`() = runTest {
+        // Earlier AND later, so neither a >= nor a <= comparison can pass.
+        val earlierId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence - 3_600_000, reminderOffset = "-PT15M")
+        )
+        val laterId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence + 3_600_000, reminderOffset = "-PT15M")
+        )
+        val siblingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT1H")
+        )
+        val firingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M")
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, firingId)
+
+        // Exact match, so the neighbouring occurrences are excluded by assertion
+        // rather than by a follow-up check that could never fail.
+        assertEquals(
+            "Only the same occurrence's reminder is a sibling, not $earlierId or $laterId",
+            listOf(siblingId),
+            siblings
+        )
+    }
+
+    @Test
+    fun `sibling lookup excludes a different event at the same instant`() = runTest {
+        val event2Id = database.eventsDao().insert(
+            Event(
+                id = 0,
+                uid = "test-event-sibling-2",
+                calendarId = testCalendarId,
+                title = "Other Event",
+                startTs = siblingOccurrence,
+                endTs = siblingOccurrence + 3600000,
+                dtstamp = System.currentTimeMillis()
+            )
+        )
+        val otherEventId = remindersDao.insert(
+            createReminder(eventId = event2Id, occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M")
+        )
+        val siblingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT1H")
+        )
+        val firingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M")
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, firingId)
+
+        assertEquals(
+            "Only the same event's reminder is a sibling, not $otherEventId",
+            listOf(siblingId),
+            siblings
+        )
+    }
+
+    @Test
+    fun `sibling lookup never returns the firing reminder itself`() = runTest {
+        val firingId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M")
+        )
+        remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT1H")
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, firingId)
+
+        assertTrue("Firing reminder must never cancel its own notification", firingId !in siblings)
+    }
+
+    @Test
+    fun `sibling lookup returns empty for a lone reminder`() = runTest {
+        val onlyId = remindersDao.insert(
+            createReminder(occurrenceTime = siblingOccurrence, reminderOffset = "-PT15M")
+        )
+
+        val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, onlyId)
+
+        assertTrue("A single reminder has no siblings", siblings.isEmpty())
     }
 }

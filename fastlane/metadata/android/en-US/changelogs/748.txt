@@ -1,0 +1,2 @@
+• Reminders: two reminders on one event no longer stack two notifications; the newer one replaces the older one and both still ring (#362)
+• Sync: events no longer vanish after you move them out of a CalDAV calendar (#365)

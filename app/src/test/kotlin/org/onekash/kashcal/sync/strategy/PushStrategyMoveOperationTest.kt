@@ -563,6 +563,99 @@ class PushStrategyMoveOperationTest {
         coVerify { eventsDao.getExceptionsForMaster(recurringEvent.id) }
     }
 
+    // ========== Moving a series re-points its overrides' resource url ==========
+    //
+    // A modified occurrence rides in the SAME server resource as its master
+    // (RFC 5545 §3.8.4.4 RECURRENCE-ID), so the master's url after a move is
+    // also the override's url. The override's row is carried into the target
+    // calendar by the local move, so if it keeps the source url the target
+    // calendar's next pull sees a row whose resource is absent from the server
+    // and reaps it — the series survives and the edited occurrence vanishes
+    // (issue #365).
+
+    private val seriesMaster = testEvent.copy(rrule = "FREQ=WEEKLY;COUNT=5")
+
+    private val seriesOverride = testEvent.copy(
+        id = 101L,
+        title = "Modified occurrence",
+        rrule = null,
+        originalEventId = testEvent.id,
+        originalInstanceTime = testEvent.startTs + 7 * 86400_000L,
+        // Still pointing at the SOURCE account's resource.
+        caldavUrl = "https://caldav.icloud.com/123/personal/move-test-uid-123.ics",
+        etag = "\"source-etag\"",
+        syncStatus = SyncStatus.SYNCED
+    )
+
+    @Test
+    fun `same-account MOVE re-points bundled overrides at the relocated url`() = runTest {
+        val finalEtag = "\"final-etag\""
+        val relocated = seriesMaster.copy(
+            caldavUrl = newUrl,
+            etag = "\"moved-etag\"",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOp)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(seriesMaster.id) } returns relocated
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { client.moveEvent(moveOp.targetUrl!!, targetCalendar.caldavUrl, seriesMaster.uid) } returns
+            CalDavResult.success(Pair(newUrl, "\"moved-etag\""))
+        coEvery { eventsDao.updateCaldavUrl(seriesMaster.id, newUrl) } just Runs
+        coEvery { eventsDao.updateEtag(seriesMaster.id, any()) } just Runs
+        coEvery { eventsDao.updateSyncStatus(seriesMaster.id, any(), any()) } just Runs
+        coEvery { eventsDao.getExceptionsForMaster(seriesMaster.id) } returns listOf(seriesOverride)
+        coEvery { pendingOperationsDao.update(any()) } just Runs
+        coEvery { client.updateEvent(newUrl, any(), any()) } returns CalDavResult.success(finalEtag)
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        // The override adopts the master's new url AND the body PUT's etag in one
+        // write. An etag-only update would leave it on the source url.
+        coVerify(exactly = 1) {
+            eventsDao.markCreatedOnServer(seriesOverride.id, newUrl, finalEtag, any())
+        }
+        coVerify(exactly = 0) { eventsDao.markSynced(seriesOverride.id, any(), any()) }
+        // The master's own bookkeeping is unchanged on this path.
+        coVerify(exactly = 1) { eventsDao.markSynced(seriesMaster.id, finalEtag, any()) }
+    }
+
+    @Test
+    fun `MOVE fallback CREATE re-points bundled overrides at the new url`() = runTest {
+        // Servers that decline WebDAV MOVE (403/405/412) go through Phase 1
+        // CREATE+DELETE. That CREATE writes a new url for the master, so the
+        // overrides it bundled must be re-pointed too.
+        val createdUrl = "https://caldav.icloud.com/123/work/move-test-uid-123.ics"
+        val createdEtag = "\"created-etag\""
+
+        val phase1Op = moveOp.copy(movePhase = PendingOperation.MOVE_PHASE_CREATE)
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(phase1Op)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(seriesMaster.id) } returns seriesMaster
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { eventsDao.getExceptionsForMaster(seriesMaster.id) } returns listOf(seriesOverride)
+        coEvery { client.createEvent(targetCalendar.caldavUrl, seriesMaster.uid, any()) } returns
+            CalDavResult.success(Pair(createdUrl, createdEtag))
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { client.deleteEvent(phase1Op.targetUrl!!, any()) } returns CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        pushStrategy.pushAll(client)
+
+        coVerify(exactly = 1) {
+            eventsDao.markCreatedOnServer(seriesOverride.id, createdUrl, createdEtag, any())
+        }
+        coVerify(exactly = 1) {
+            eventsDao.markCreatedOnServer(seriesMaster.id, createdUrl, createdEtag, any())
+        }
+    }
+
     // ==================== Error Handling Tests ====================
 
     @Test

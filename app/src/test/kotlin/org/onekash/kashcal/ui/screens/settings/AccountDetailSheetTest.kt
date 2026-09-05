@@ -63,11 +63,21 @@ class AccountDetailSheetTest {
         composeTestRule.onNodeWithText(str(R.string.badge_beta)).assertIsDisplayed()
     }
 
+    /**
+     * The row explains itself with a subtitle and carries no ⓘ button.
+     *
+     * It used to have one, whose body said contact sync was "read-only for now:
+     * server to phone only". That was false — contact push runs on every sync and
+     * sends deletions first — and believing it could cost a user their server-side
+     * contacts. So the absence is asserted, not merely untested: any replacement
+     * affordance has to be written knowing the sync is two-way.
+     */
     @Test
-    fun `CardDAV account shows an info button explaining contact sync`() {
+    fun `contacts toggle explains itself with a subtitle and no info button`() {
         renderSheet(AccountProvider.CALDAV)
+        composeTestRule.onNodeWithText(str(R.string.account_detail_sync_contacts_subtitle)).assertIsDisplayed()
         val cd = str(R.string.cd_about_setting).format(str(R.string.account_detail_sync_contacts))
-        composeTestRule.onNodeWithContentDescription(cd).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(cd).assertDoesNotExist()
     }
 
     @Test

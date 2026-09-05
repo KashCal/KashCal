@@ -798,9 +798,7 @@
     <string name="account_detail_sync_calendar">Calendar</string>
     <string name="account_detail_sync_calendar_subtitle">Sync this account\'s calendars</string>
     <string name="account_detail_sync_contacts">Contacts</string>
-    <string name="account_detail_sync_contacts_subtitle">Sync this account\'s contacts to your phone</string>
-    <!-- Body of the ⓘ tooltip next to the Contacts sync toggle -->
-    <string name="account_detail_sync_contacts_info_text">Copies contacts to your phone. Read-only for now: server to phone only.</string>
+    <string name="account_detail_sync_contacts_subtitle">Sync this account\'s contacts</string>
     <!-- Inline banner shown when contact sync is on but the Contacts permission was revoked -->
     <string name="account_detail_contacts_permission_needed">Contacts permission is off. Grant access to keep contacts syncing.</string>
     <string name="account_detail_contacts_grant">Grant access</string>

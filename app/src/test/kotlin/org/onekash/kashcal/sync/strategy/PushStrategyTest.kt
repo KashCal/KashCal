@@ -171,6 +171,102 @@ class PushStrategyTest {
     }
 
     @Test
+    fun `create re-points bundled exceptions at the master's new server url`() = runTest {
+        // An override rides in the same server resource as its master, so the
+        // master's new url IS the exception's resource url. Leaving the exception
+        // on a stale url makes a later pull of this calendar classify it as
+        // server-deleted and reap it (which is how a cross-account move used to
+        // lose the modified occurrence).
+        val master = testEvent.copy(rrule = "FREQ=WEEKLY")
+        val exception = testEvent.copy(
+            id = 201L,
+            originalEventId = master.id,
+            originalInstanceTime = master.startTs,
+            rrule = null,
+            caldavUrl = "https://old.example/source-account/series.ics",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = PendingOperation(
+            id = 1L,
+            eventId = master.id,
+            operation = PendingOperation.OPERATION_CREATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        val serverUrl = "${testCalendar.caldavUrl}${master.uid}.ics"
+        val serverEtag = "etag-new-123"
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getByIds(any()) } returns listOf(master)
+        coEvery { eventsDao.getById(master.id) } returns master
+        coEvery { calendarRepository.getCalendarById(master.calendarId) } returns testCalendar
+        coEvery { eventsDao.getExceptionsForMaster(master.id) } returns listOf(exception)
+        coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(master.uid), any()) } returns
+            CalDavResult.success(Pair(serverUrl, serverEtag))
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        // One atomic write carries both the new url and the new etag.
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exception.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 0) { eventsDao.markSynced(exception.id, any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(master.id, serverUrl, serverEtag, any()) }
+    }
+
+    @Test
+    fun `create leaves an exception that was not serialized untouched`() = runTest {
+        // Race guard: an exception created while the push was in flight was not in
+        // the pushed body, so it must get neither the new etag nor the new url.
+        val master = testEvent.copy(rrule = "FREQ=WEEKLY")
+        val pushedException = testEvent.copy(
+            id = 201L,
+            originalEventId = master.id,
+            originalInstanceTime = master.startTs,
+            rrule = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val lateException = pushedException.copy(id = 202L)
+        val operation = PendingOperation(
+            id = 1L,
+            eventId = master.id,
+            operation = PendingOperation.OPERATION_CREATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        val serverUrl = "${testCalendar.caldavUrl}${master.uid}.ics"
+        val serverEtag = "etag-new-123"
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getByIds(any()) } returns listOf(master)
+        coEvery { eventsDao.getById(master.id) } returns master
+        coEvery { calendarRepository.getCalendarById(master.calendarId) } returns testCalendar
+        // Only the first exception existed at serialize time; the late one appears
+        // on any subsequent query. An implementation that re-queried instead of
+        // reusing the serialized set would therefore mark it synced.
+        coEvery { eventsDao.getExceptionsForMaster(master.id) } returnsMany listOf(
+            listOf(pushedException),
+            listOf(pushedException, lateException)
+        )
+        coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(master.uid), any()) } returns
+            CalDavResult.success(Pair(serverUrl, serverEtag))
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        pushStrategy.pushForCalendar(testCalendar, client)
+
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServer(lateException.id, any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markSynced(lateException.id, any(), any()) }
+        // The pushed one still adopts the url, including from a null starting value
+        // (this fixture's exception has never been on a server).
+        assertEquals(null, pushedException.caldavUrl)
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(pushedException.id, serverUrl, serverEtag, any()) }
+    }
+
+    @Test
     fun `pushAll handles CREATE conflict (event already exists)`() = runTest {
         val operation = PendingOperation(
             id = 1L,
@@ -808,6 +904,336 @@ class PushStrategyTest {
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
     }
 
+    // ========== DELETE after a calendar move: row ownership ==========
+    //
+    // A move re-uses the event's row id for the destination copy while queueing a
+    // DELETE keyed on that same id. The DELETE owns the source-collection resource,
+    // not the row, so once the row has left sourceCalendarId the local reap must be
+    // suppressed — otherwise the server copy is removed AND the moved event is
+    // destroyed (#365). Genuine deletes soft-delete to PENDING_DELETE first, which
+    // is how they stay distinguishable from a moved row.
+
+    /** Source calendar the move originated from; matches testCalendar.id. */
+    private val sourceCalendarId = 1L
+    private val movedSourceUrl = "https://caldav.icloud.com/123/calendar/test-event.ics"
+
+    private fun moveOriginDeleteOp(
+        eventId: Long = testEvent.id,
+        targetUrl: String? = movedSourceUrl,
+        linkedMoveId: String? = null
+    ) = PendingOperation(
+        id = 3L,
+        eventId = eventId,
+        operation = PendingOperation.OPERATION_DELETE,
+        status = PendingOperation.STATUS_PENDING,
+        targetUrl = targetUrl,
+        sourceCalendarId = sourceCalendarId,
+        linkedMoveId = linkedMoveId
+    )
+
+    @Test
+    fun `delete after move to local calendar removes server copy but keeps the moved row`() = runTest {
+        // #365: the row now lives in a local calendar with its server identity
+        // cleared. The queued DELETE still carries the old server URL.
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+        // deleteById deliberately NOT stubbed: strict mockk throws if it is called.
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assertEquals("server copy should still be deleted", 1, success.eventsDeleted)
+        assertEquals("no failures expected", 0, success.operationsFailed)
+
+        coVerify(exactly = 1) { client.deleteEvent(movedSourceUrl, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify { pendingOperationsDao.deleteById(operation.id) }
+    }
+
+    @Test
+    fun `delete after cross-account move keeps the row now living on the target account`() = runTest {
+        // The linked CREATE already re-pointed this row at the target account.
+        // Reaping it here would destroy the copy that was just created.
+        val movedEvent = testEvent.copy(
+            calendarId = 7L,
+            caldavUrl = "https://other.example/cal/moved.ics",
+            etag = "new-etag",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp(linkedMoveId = "move-1")
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        // The OLD url is deleted, never the row's current (destination) url.
+        coVerify(exactly = 1) { client.deleteEvent(movedSourceUrl, any()) }
+        coVerify(exactly = 0) { client.deleteEvent(movedEvent.caldavUrl!!, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `delete with no source calendar scope still reaps a row that is not a tombstone`() = runTest {
+        // The unscoped-op case: nothing says this row was moved, so the DELETE
+        // still owns it. Existing behavior depends on this — the mixed-operations
+        // test drives a PENDING_CREATE row through the DELETE path.
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = movedSourceUrl,
+            etag = "etag-123",
+            syncStatus = SyncStatus.PENDING_CREATE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        // With no sourceCalendarId the op is routed to a calendar by the row's own
+        // calendarId, which comes from the batch-loaded cache.
+        coEvery { eventsDao.getByIds(any()) } returns listOf(eventWithUrl)
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        pushStrategy.pushForCalendar(testCalendar, client)
+
+        coVerify(exactly = 1) { eventsDao.deleteById(eventWithUrl.id) }
+    }
+
+    @Test
+    fun `delete still reaps a tombstone row whose op inherited a stale source calendar`() = runTest {
+        // queueOperation mutates an existing pending op in place rather than
+        // inserting, so a genuine delete can inherit a prior MOVE's
+        // sourceCalendarId. The row is a real tombstone, so it must still be
+        // reaped — scoping alone would leave an invisible row that nothing
+        // cleans up, since the pull path skips PENDING_DELETE rows.
+        val tombstone = testEvent.copy(
+            calendarId = 7L,
+            caldavUrl = movedSourceUrl,
+            etag = "etag-123",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(tombstone.id) } returns tombstone
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { eventsDao.deleteById(tombstone.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        pushStrategy.pushForCalendar(testCalendar, client)
+
+        coVerify(exactly = 1) { eventsDao.deleteById(tombstone.id) }
+    }
+
+    @Test
+    fun `delete after move keeps the row when the server reports 404`() = runTest {
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns
+            CalDavResult.notFoundError("Not found")
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `delete after move keeps the row when a 412 refetch shows the resource is gone`() = runTest {
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(movedSourceUrl) } returns CalDavResult.notFoundError("Gone")
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `delete after move keeps the row when the 412 retry with a fresh etag succeeds`() = runTest {
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, eq("")) } returns
+            CalDavResult.conflictError("Modified on server")
+        coEvery { client.fetchEtag(movedSourceUrl) } returns CalDavResult.success("etag-fresh")
+        coEvery { client.deleteEvent(movedSourceUrl, eq("etag-fresh")) } returns
+            CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        coVerify(exactly = 1) { client.deleteEvent(movedSourceUrl, eq("etag-fresh")) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `delete after move keeps the row when there is no url to delete`() = runTest {
+        // Defensive: a move-origin op with no captured targetUrl against a row
+        // whose server identity is already cleared. Nothing to delete on the
+        // server, and the row is not ours to reap.
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp(targetUrl = null)
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assert(result is PushResult.Success)
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
+    }
+
+    @Test
+    fun `spared row is reported as recently pushed so the same cycle's pull skips it`() = runTest {
+        val movedEvent = testEvent.copy(
+            calendarId = 9L,
+            caldavUrl = null,
+            etag = null,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val operation = moveOriginDeleteOp()
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        val success = result as PushResult.Success
+        assertTrue(
+            "spared row must be protected from the pull phase of this same cycle",
+            movedEvent.id in success.pushedEventIds
+        )
+    }
+
+    @Test
+    fun `a genuinely reaped row is not reported as recently pushed`() = runTest {
+        val tombstone = testEvent.copy(
+            caldavUrl = movedSourceUrl,
+            etag = "etag-123",
+            syncStatus = SyncStatus.PENDING_DELETE
+        )
+        val operation = PendingOperation(
+            id = 3L,
+            eventId = tombstone.id,
+            operation = PendingOperation.OPERATION_DELETE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getByIds(any()) } returns listOf(tombstone)
+        coEvery { eventsDao.getById(tombstone.id) } returns tombstone
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { eventsDao.deleteById(tombstone.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        val success = result as PushResult.Success
+        assertTrue(
+            "a deleted row has nothing to protect",
+            success.pushedEventIds.isEmpty()
+        )
+    }
+
+    @Test
+    fun `delete decides ownership from current state, not the batch snapshot`() = runTest {
+        // The push loop snapshots rows before the network round-trip. If the user
+        // moves the event out of the source calendar while the server DELETE is in
+        // flight, the snapshot still shows it in the source calendar — deciding from
+        // it would destroy the row the move just re-pointed.
+        val snapshot = testEvent.copy(
+            calendarId = sourceCalendarId,
+            caldavUrl = movedSourceUrl,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val afterMove = snapshot.copy(calendarId = 9L)
+        val operation = moveOriginDeleteOp(snapshot.id, movedSourceUrl)
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getByIds(any()) } returns listOf(snapshot)
+        // Re-read sees the committed move.
+        coEvery { eventsDao.getById(snapshot.id) } returns afterMove
+        coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { eventsDao.deleteById(any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushForCalendar(testCalendar, client)
+
+        assertTrue(result is PushResult.Success)
+        coVerify(exactly = 1) { client.deleteEvent(movedSourceUrl, any()) }
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+        assertTrue(snapshot.id in (result as PushResult.Success).pushedEventIds)
+    }
+
     // ========== Mixed Operations ==========
 
     @Test
@@ -995,13 +1421,14 @@ class PushStrategyTest {
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exceptionEvent)
         coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update exception etags
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         pushStrategy.pushAll(client)
 
-        // Verify exception etag was updated (v14.2.20)
-        coVerify { eventsDao.markSynced(exceptionEvent.id, "etag", any()) }
+        // The bundled exception adopts the master's resource url and etag (v14.2.20).
+        coVerify { eventsDao.markCreatedOnServer(exceptionEvent.id, "url", "etag", any()) }
     }
 
     @Test
@@ -1050,6 +1477,7 @@ class PushStrategyTest {
         )
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val bodySlot = slot<String>()
@@ -1172,6 +1600,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exception1, exception2)
         coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), masterEvent.etag!!) } returns CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update master and exception etags
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1185,8 +1614,8 @@ class PushStrategyTest {
         // Verify master etag was updated
         coVerify { eventsDao.markSynced(masterEvent.id, "new-etag", any()) }
         // Verify exception etags were updated (v14.2.20)
-        coVerify { eventsDao.markSynced(exception1.id, "new-etag", any()) }
-        coVerify { eventsDao.markSynced(exception2.id, "new-etag", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any()) }
     }
 
     // ========== 412 Conflict Retry (v22.5.6) ==========
@@ -1359,6 +1788,7 @@ class PushStrategyTest {
         coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), eq("etag-fresh")) } returns
             CalDavResult.success("etag-new")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1366,10 +1796,11 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 0)
 
-        // Verify master + both exceptions all got markSynced with the new etag
+        // Verify master + both exceptions all picked up the retry's etag, the
+        // exceptions against the master's resource url (which is also theirs).
         coVerify { eventsDao.markSynced(masterEvent.id, "etag-new", any()) }
-        coVerify { eventsDao.markSynced(exception1.id, "etag-new", any()) }
-        coVerify { eventsDao.markSynced(exception2.id, "etag-new", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-new", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-new", any()) }
     }
 
     @Test

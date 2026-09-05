@@ -1,6 +1,7 @@
 package org.onekash.kashcal.reminder.notification
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
@@ -19,7 +20,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -57,6 +60,7 @@ class ReminderNotificationManagerTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var dataStoreScope: CoroutineScope
     private lateinit var context: Context
+    private lateinit var notificationManager: NotificationManager
     private lateinit var channels: ReminderNotificationChannels
     private lateinit var dataStore: KashCalDataStore
     private lateinit var manager: ReminderNotificationManager
@@ -80,6 +84,8 @@ class ReminderNotificationManagerTest {
         every { Log.e(any(), any()) } returns 0
 
         context = RuntimeEnvironment.getApplication()
+        notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         channels = ReminderNotificationChannels(context)
         channels.createChannels()
 
@@ -514,6 +520,53 @@ class ReminderNotificationManagerTest {
             notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN, false)
         )
     }
+
+    // ==================== Post / Cancel Round-trip ====================
+
+    @Test
+    fun `cancelNotification clears the notification showNotification posted`() = runBlocking {
+        // The two sides compute the id independently, so re-keying one without
+        // the other would silently strand notifications in the shade.
+        val reminder = createTestReminder(
+            id = 42L,
+            eventId = 1L,
+            eventTitle = "Standup",
+            occurrenceTime = 1_800_000_000_000L
+        )
+
+        val postedId = manager.showNotification(reminder)
+        assertNotNull(activeById(postedId))
+
+        manager.cancelNotification(reminder.id)
+
+        assertNull("Cancel must target the id that was posted", activeById(postedId))
+    }
+
+    @Test
+    fun `two reminders on the same occurrence post under different ids`() = runBlocking {
+        // Nothing collapses on its own: ids are per-reminder-row, which is why a
+        // firing reminder has to clear its siblings explicitly.
+        val occurrenceTime = 1_800_000_000_000L
+        val hourBefore = createTestReminder(
+            id = 42L, eventId = 1L, eventTitle = "Standup",
+            occurrenceTime = occurrenceTime,
+            triggerTime = occurrenceTime - 3_600_000, reminderOffset = "-PT1H"
+        )
+        val quarterHourBefore = createTestReminder(
+            id = 43L, eventId = 1L, eventTitle = "Standup",
+            occurrenceTime = occurrenceTime
+        )
+
+        val firstId = manager.showNotification(hourBefore)
+        val secondId = manager.showNotification(quarterHourBefore)
+
+        assertNotEquals(firstId, secondId)
+        assertNotNull(activeById(firstId))
+        assertNotNull(activeById(secondId))
+    }
+
+    private fun activeById(id: Int) =
+        notificationManager.activeNotifications.firstOrNull { it.id == id }
 
     // Helper function to create test reminders
     private fun createTestReminder(

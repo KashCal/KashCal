@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">Kalendár</string>
     <string name="account_detail_sync_calendar_subtitle">Synchronizovať kalendáre tohto účtu</string>
     <string name="account_detail_sync_contacts">Kontakty</string>
-    <string name="account_detail_sync_contacts_subtitle">Synchronizovať kontakty tohto účtu do telefónu</string>
-    <string name="account_detail_sync_contacts_info_text">Skopíruje kontakty do telefónu. Zatiaľ len na čítanie: zo servera do telefónu.</string>
+    <string name="account_detail_sync_contacts_subtitle">Synchronizovať kontakty tohto účtu</string>
     <string name="account_detail_contacts_permission_needed">Povolenie na kontakty je vypnuté. Povoľ prístup, aby sa kontakty ďalej synchronizovali.</string>
     <string name="account_detail_contacts_grant">Povoliť prístup</string>
     <string name="contact_sync_enabled_for">Synchronizácia kontaktov pre %1$s</string>

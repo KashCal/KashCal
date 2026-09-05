@@ -534,8 +534,7 @@
     <string name="account_detail_sync_calendar">कैलेंडर</string>
     <string name="account_detail_sync_calendar_subtitle">इस अकाउंट के कैलेंडर सिंक करें</string>
     <string name="account_detail_sync_contacts">संपर्क</string>
-    <string name="account_detail_sync_contacts_subtitle">इस अकाउंट के संपर्क अपने फ़ोन में सिंक करें</string>
-    <string name="account_detail_sync_contacts_info_text">संपर्क आपके फ़ोन में कॉपी करता है। फ़िलहाल केवल-पढ़ने के लिए: सर्वर से फ़ोन तक ही।</string>
+    <string name="account_detail_sync_contacts_subtitle">इस अकाउंट के संपर्क सिंक करें</string>
     <string name="account_detail_contacts_permission_needed">संपर्क अनुमति बंद है। संपर्क सिंक होते रहें, इसके लिए एक्सेस दें।</string>
     <string name="account_detail_contacts_grant">एक्सेस दें</string>
     <string name="contact_sync_enabled_for">%1$s के लिए संपर्क सिंक हो रहे हैं</string>

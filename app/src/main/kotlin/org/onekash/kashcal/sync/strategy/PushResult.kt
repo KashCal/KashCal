@@ -67,11 +67,16 @@ sealed class SinglePushResult {
      * Operation succeeded.
      * @param newEtag Updated ETag from server (for create/update)
      * @param newUrl CalDAV URL (for create)
+     * @param sparedEventId Set when a DELETE removed the server resource but
+     *   deliberately left the local row alone (the row has since been re-pointed
+     *   at a move destination). The caller must treat this row as recently
+     *   pushed so the pull phase of the same cycle does not reap it either.
      */
     data class Success(
         val newEtag: String? = null,
         val newUrl: String? = null,
-        val warning: String? = null
+        val warning: String? = null,
+        val sparedEventId: Long? = null
     ) : SinglePushResult()
 
     /**

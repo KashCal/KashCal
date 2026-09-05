@@ -295,6 +295,171 @@ class PullStrategyTest {
         coVerify(exactly = 1) { eventsDao.deleteById(42) }
     }
 
+    // ========== Deletion resolution is calendar-scoped ==========
+    //
+    // caldav_url is indexed non-uniquely because rows legitimately share it: a
+    // recurring master and its overrides ride in the same server resource. After
+    // an event is moved out of a CalDAV calendar, its exception rows keep the
+    // source resource URL while living in another calendar, so a global URL
+    // lookup lets one calendar's deletion report reap another calendar's rows.
+
+    @Test
+    fun `deletion href matching a row in another calendar deletes nothing`() = runTest {
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val deletedHref = "/calendars/home/moved-event.ics"
+        val deletedUrl = "https://caldav.example.com$deletedHref"
+        // The row still carries the source URL but now lives elsewhere.
+        val movedRow = createEvent(id = 77, caldavUrl = deletedUrl).copy(calendarId = 99L)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref)
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns movedRow
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns emptyList()
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsDeleted)
+        assertEquals(0, result.changes.count { it.type == ChangeType.DELETED })
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `deletion href matching a row in the pulled calendar still deletes it`() = runTest {
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val deletedHref = "/calendars/home/gone.ics"
+        val deletedUrl = "https://caldav.example.com$deletedHref"
+        val localRow = createEvent(id = 77, caldavUrl = deletedUrl)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref)
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns localRow
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(localRow)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        assertEquals(1, result.changes.count { it.type == ChangeType.DELETED })
+        coVerify(exactly = 1) { eventsDao.deleteById(77) }
+    }
+
+    @Test
+    fun `an out-of-calendar url match does not mask an in-calendar match`() = runTest {
+        // Master and override share one resource URL, so the global exact-match
+        // query can return either row. Scoping must not degrade into "no match":
+        // the in-calendar row is still the one that gets deleted.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val deletedHref = "/calendars/home/shared.ics"
+        val deletedUrl = "https://caldav.example.com$deletedHref"
+        val outOfCalendarRow = createEvent(id = 88, caldavUrl = deletedUrl).copy(calendarId = 99L)
+        val inCalendarRow = createEvent(id = 42, caldavUrl = deletedUrl)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref)
+            ))
+        // Exact-match query happens to return the out-of-calendar row.
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns outOfCalendarRow
+        // The calendar-scoped candidate set holds the row that really belongs here.
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(inCalendarRow)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 1) { eventsDao.deleteById(42) }
+        coVerify(exactly = 0) { eventsDao.deleteById(88) }
+    }
+
+    @Test
+    fun `deleted resource resolves to the master, not one of its overrides`() = runTest {
+        // A master and its modified occurrences share one server resource, so several
+        // in-calendar rows carry the same URL. Removing the master cascades to its
+        // overrides; resolving to an override instead would drop one occurrence and
+        // leave the master pointing at a resource the server no longer has.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val deletedHref = "/calendars/home/series.ics"
+        val deletedUrl = "https://caldav.example.com$deletedHref"
+        val master = createEvent(id = 42, caldavUrl = deletedUrl)
+        val override = createEvent(id = 43, caldavUrl = deletedUrl).copy(originalEventId = master.id)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = listOf(deletedHref)
+            ))
+        // The global exact-match query happens to hand back the override.
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns override
+        // Candidate order puts the override first, so a last-wins map would pick it.
+        coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(override, master)
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        coVerify(exactly = 1) { eventsDao.deleteById(master.id) }
+        coVerify(exactly = 0) { eventsDao.deleteById(override.id) }
+    }
+
+    @Test
+    fun `changed href does not adopt a row that lives in another calendar`() = runTest {
+        // The UID lookup is already calendar-scoped; its URL fallback was not, so a
+        // changed resource could overwrite a moved row in place and drag it back
+        // into the pulled calendar.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val changedHref = "/calendars/home/event.ics"
+        val changedUrl = "${calendar.caldavUrl}event.ics"
+        val outOfCalendarRow = createEvent(id = 55, caldavUrl = changedUrl).copy(calendarId = 99L)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = listOf(SyncItem(changedHref, "etag-1", SyncItemStatus.OK)),
+                deleted = emptyList()
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(changedHref)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(
+                    href = changedHref,
+                    url = changedUrl,
+                    etag = "etag-1",
+                    icalData = createSimpleIcal("uid-1", "Test Event")
+                )
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns outOfCalendarRow
+        val upserted = slot<Event>()
+        coEvery { eventsDao.upsert(capture(upserted)) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(
+            "the pulled resource must land in the pulled calendar",
+            calendar.id,
+            upserted.captured.calendarId
+        )
+        assertTrue(
+            "must not overwrite the row that lives in another calendar",
+            upserted.captured.id != outOfCalendarRow.id
+        )
+    }
+
     @Test
     fun `incremental sync fetches changed events by href`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
