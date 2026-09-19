@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">予定のタイトルを提案</string>
     <string name="settings_suggest_titles_info">新しい予定に名前を付けるときに、以前に使ったタイトルを提案するので、繰り返しの予定はワンタップです。使用頻度と最近使ったかどうかで並べ替えられます。</string>
     <string name="settings_week_numbers">週番号</string>
+    <string name="settings_multiday_in_allday_strip">終日欄内の複数日イベント</string>
+    <string name="settings_multiday_in_allday_strip_info">1日を超えて続く時間指定イベントを、時間グリッドではなく、週表示の上部にある終日欄に表示します。オフにすると、毎日時間グリッドに表示されたままになります。</string>
     <string name="settings_show_declined">辞退した予定を表示</string>
     <string name="settings_widget_event_limit">ウィジェットの予定上限</string>
     <string name="settings_widget_event_limit_hint">ウィジェットに1日あたり表示する予定の最大数</string>

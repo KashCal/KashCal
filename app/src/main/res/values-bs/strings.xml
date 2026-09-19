@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Predloži nazive događaja</string>
     <string name="settings_suggest_titles_info">Dok imenujete novi događaj, predlaže naslove koje ste već koristili, pa su ponovljeni događaji jedan dodir. Rangirano prema tome koliko često i koliko nedavno ste ih koristili.</string>
     <string name="settings_week_numbers">Brojevi sedmica</string>
+    <string name="settings_multiday_in_allday_strip">Višednevni događaji u traci za cijeli dan</string>
+    <string name="settings_multiday_in_allday_strip_info">Prikaži događaje s vremenom koji traju duže od jednog dana u traci za cijeli dan na vrhu sedmičnog prikaza, umjesto u mreži s vremenom. Isključite da biste ih zadržali u mreži s vremenom svaki dan.</string>
     <string name="settings_show_declined">Prikaži odbijene događaje</string>
     <string name="settings_widget_event_limit">Ograničenje događaja widgeta</string>
     <string name="settings_widget_event_limit_hint">Najviše događaja prikazanih po danu u widgetima</string>

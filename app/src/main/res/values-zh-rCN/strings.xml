@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">建议事件标题</string>
     <string name="settings_suggest_titles_info">在为新活动命名时，建议你以前用过的标题，让重复的活动一键完成。按使用频率和最近使用情况排序。</string>
     <string name="settings_week_numbers">周数</string>
+    <string name="settings_multiday_in_allday_strip">全天条中的多天事件</string>
+    <string name="settings_multiday_in_allday_strip_info">在周视图顶部的全天条中显示跨越多天的定时事件，而不是在时间网格中显示。关闭此选项可将它们每天保留在时间网格中。</string>
     <string name="settings_show_declined">显示已拒绝的事件</string>
     <string name="settings_widget_event_limit">小部件事件上限</string>
     <string name="settings_widget_event_limit_hint">小部件中每天显示的最多事件数</string>

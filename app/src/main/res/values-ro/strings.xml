@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Sugerează titluri de evenimente</string>
     <string name="settings_suggest_titles_info">Pe măsură ce denumești un eveniment nou, sugerează titluri folosite anterior, astfel încât evenimentele repetate să fie la o singură atingere. Clasificate după cât de des și cât de recent le-ai folosit.</string>
     <string name="settings_week_numbers">Numere săptămâni</string>
+    <string name="settings_multiday_in_allday_strip">Evenimente pe mai multe zile în banda de toată ziua</string>
+    <string name="settings_multiday_in_allday_strip_info">Afișează evenimentele cu oră care se întind pe mai mult de o zi în banda de toată ziua din partea de sus a vizualizării săptămânale, în loc de grila orară. Dezactivează pentru a le păstra în grila orară în fiecare zi.</string>
     <string name="settings_show_declined">Afișează evenimentele refuzate</string>
     <string name="settings_widget_event_limit">Limită evenimente widget</string>
     <string name="settings_widget_event_limit_hint">Numărul maxim de evenimente afișate pe zi în widgeturi</string>

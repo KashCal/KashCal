@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Predlagaj naslove dogodkov</string>
     <string name="settings_suggest_titles_info">Ko poimenujete nov dogodek, predlaga naslove, ki ste jih že uporabili, tako da so ponavljajoči se dogodki en dotik. Razvrščeno glede na to, kako pogosto in kako nedavno ste jih uporabili.</string>
     <string name="settings_week_numbers">Številke tednov</string>
+    <string name="settings_multiday_in_allday_strip">Večdnevni dogodki v celodnevnem traku</string>
+    <string name="settings_multiday_in_allday_strip_info">Prikaži časovno določene dogodke, ki trajajo več kot en dan, v celodnevnem traku na vrhu tedenskega pogleda namesto v časovni mreži. Izklopite, če jih želite obdržati v časovni mreži vsak dan.</string>
     <string name="settings_show_declined">Pokaži zavrnjene dogodke</string>
     <string name="settings_widget_event_limit">Omejitev dogodkov pripomočka</string>
     <string name="settings_widget_event_limit_hint">Največ dogodkov, prikazanih na dan v gradnikih</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
     <string name="settings_suggest_titles_info">ပွဲအသစ်ကို အမည်ပေးနေစဉ် ယခင်က သင်သုံးခဲ့သော ခေါင်းစဉ်များကို အကြံပြုသည်၊ ထို့ကြောင့် ထပ်ခါထပ်ခါ ပွဲများသည် တစ်ချက်နှိပ်ရုံဖြင့် ရသည်။ သင် မည်မျှမကြာခဏနှင့် မကြာသေးမီက သုံးခဲ့သည်ကို အခြေခံ၍ အဆင့်သတ်မှတ်ထားသည်။</string>
     <string name="settings_week_numbers">အပတ် နံပါတ်များ</string>
+    <string name="settings_multiday_in_allday_strip">တစ်နေ့လုံးဇုန်ရှိ ရက်များစွာဖြစ်ရပ်များ</string>
+    <string name="settings_multiday_in_allday_strip_info">တစ်ရက်ထက်ပိုကြာသော အချိန်သတ်မှတ်ဖြစ်ရပ်များကို အချိန်ဇယားအစား ရက်သတ္တပတ်မြင်ကွင်း၏ ထိပ်ရှိ တစ်နေ့လုံးဇုန်တွင် ပြပါ။ နေ့စဉ် အချိန်ဇယားတွင်ထားရှိရန် ပိတ်ထားပါ။</string>
     <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
     <string name="settings_widget_event_limit">ဝစ်ဂျက် ပွဲ ကန့်သတ်ချက်</string>
     <string name="settings_widget_event_limit_hint">ဝိဂျက်များတွင် တစ်ရက်လျှင် ပြသမည့် အများဆုံးဖြစ်ရပ်များ</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
     <string name="settings_suggest_titles_info">Unapotaja tukio jipya, hupendekeza vichwa ulivyotumia awali, ili matukio yanayojirudia yawe gusa moja tu. Vimepangwa kulingana na mara ngapi na hivi karibuni kiasi gani umevitumia.</string>
     <string name="settings_week_numbers">Nambari za Wiki</string>
+    <string name="settings_multiday_in_allday_strip">Matukio ya siku nyingi kwenye ukanda wa siku nzima</string>
+    <string name="settings_multiday_in_allday_strip_info">Onyesha matukio yenye muda yanayodumu zaidi ya siku moja kwenye ukanda wa siku nzima juu ya mwonekano wa wiki, badala ya gridi ya muda. Zima ili kuyaweka kwenye gridi ya muda kila siku.</string>
     <string name="settings_show_declined">Onyesha matukio yaliyokataliwa</string>
     <string name="settings_widget_event_limit">Kikomo cha Matukio ya Wijeti</string>
     <string name="settings_widget_event_limit_hint">Idadi kubwa ya matukio yanayoonyeshwa kwa siku katika wijeti</string>

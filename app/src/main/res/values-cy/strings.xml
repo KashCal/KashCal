@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Awgrymu teitlau digwyddiadau</string>
     <string name="settings_suggest_titles_info">Wrth i chi enwi digwyddiad newydd, mae\'n awgrymu teitlau rydych wedi\'u defnyddio o\'r blaen, fel bod digwyddiadau ailadroddus yn un tap. Wedi\'u trefnu yn ôl pa mor aml a pha mor ddiweddar rydych wedi\'u defnyddio.</string>
     <string name="settings_week_numbers">Rhifau Wythnosau</string>
+    <string name="settings_multiday_in_allday_strip">Digwyddiadau aml-ddiwrnod yn y stribed drwy\'r dydd</string>
+    <string name="settings_multiday_in_allday_strip_info">Dangos digwyddiadau ag amser sy\'n rhychwantu mwy nag un diwrnod yn y stribed drwy\'r dydd ar frig y golwg wythnosol, yn lle\'r grid amser. Diffoddwch i\'w cadw yn y grid amser bob dydd.</string>
     <string name="settings_show_declined">Dangos digwyddiadau a wrthodwyd</string>
     <string name="settings_widget_event_limit">Terfyn Digwyddiadau Widget</string>
     <string name="settings_widget_event_limit_hint">Y mwyaf o ddigwyddiadau a ddangosir bob dydd mewn widgets</string>

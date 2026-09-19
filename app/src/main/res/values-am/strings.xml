@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
     <string name="settings_suggest_titles_info">አዲስ ክስተት ሲሰይሙ፣ ከዚህ በፊት የተጠቀሙባቸውን ርዕሶች ይጠቁማል፣ ስለዚህ ተደጋጋሚ ክስተቶች በአንድ ንካ ይሆናሉ። ምን ያህል ጊዜ እና በቅርቡ በተጠቀሙበት መሠረት ደረጃ ተሰጥቷቸዋል።</string>
     <string name="settings_week_numbers">የሳምንት ቁጥሮች</string>
+    <string name="settings_multiday_in_allday_strip">የብዙ ቀን ክንውኖች በሙሉ ቀን ሰቅ ውስጥ</string>
+    <string name="settings_multiday_in_allday_strip_info">ከአንድ ቀን በላይ የሚዘልቁ በሰዓት የተያዙ ክንውኖችን በሳምንት እይታ አናት ላይ ባለው ሙሉ ቀን ሰቅ ውስጥ አሳይ፣ ከጊዜ ሰሌዳው ይልቅ። በየቀኑ በጊዜ ሰሌዳው ውስጥ እንዲቆዩ ለማድረግ አጥፋ።</string>
     <string name="settings_show_declined">ውድቅ የተደረጉ ክስተቶችን አሳይ</string>
     <string name="settings_widget_event_limit">የዊጀት ክስተት ገደብ</string>
     <string name="settings_widget_event_limit_hint">በመግብሮች ውስጥ በቀን የሚታዩ አብዛኞቹ ክስተቶች</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ଇଭେଣ୍ଟ ଶୀର୍ଷକଗୁଡ଼ିକ ପରାମର୍ଶ ଦିଅନ୍ତୁ</string>
     <string name="settings_suggest_titles_info">ଆପଣ ଏକ ନୂଆ ଇଭେଣ୍ଟର ନାମ ଦେବା ସମୟରେ, ଆପଣ ପୂର୍ବରୁ ବ୍ୟବହାର କରିଥିବା ଶୀର୍ଷକଗୁଡ଼ିକ ପରାମର୍ଶ ଦିଏ, ଯାହା ଫଳରେ ପୁନରାବୃତ୍ତ ଇଭେଣ୍ଟ ଏକ ଟ୍ୟାପରେ ତିଆରି ହୁଏ. ଆପଣ ସେଗୁଡ଼ିକୁ କେତେ ଥର ଓ କେତେ ନିକଟରେ ବ୍ୟବହାର କରିଛନ୍ତି ତାହା ଆଧାରରେ କ୍ରମବଦ୍ଧ କରାଯାଏ.</string>
     <string name="settings_week_numbers">ସପ୍ତାହ ସଂଖ୍ୟା</string>
+    <string name="settings_multiday_in_allday_strip">ପୂର୍ଣ୍ଣ ଦିନ ପଟିରେ ବହୁ-ଦିନିଆ ଘଟଣା</string>
+    <string name="settings_multiday_in_allday_strip_info">ଏକ ଦିନରୁ ଅଧିକ ସମୟ ଧରି ଚାଲୁଥିବା ସମୟ-ନିର୍ଦ୍ଧାରିତ ଘଟଣାଗୁଡ଼ିକୁ ସମୟ ଗ୍ରିଡ଼ ପରିବର୍ତ୍ତେ ସାପ୍ତାହିକ ଦୃଶ୍ୟର ଉପର ଭାଗରେ ଥିବା ପୂର୍ଣ୍ଣ ଦିନ ପଟିରେ ଦେଖାନ୍ତୁ। ପ୍ରତିଦିନ ସେଗୁଡ଼ିକୁ ସମୟ ଗ୍ରିଡ଼ରେ ରଖିବାକୁ ବନ୍ଦ କରନ୍ତୁ।</string>
     <string name="settings_show_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଥିବା ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="settings_widget_event_limit">ୱିଜେଟ ଇଭେଣ୍ଟ ସୀମା</string>
     <string name="settings_widget_event_limit_hint">ୱିଜେଟରେ ଦିନକୁ ଦେଖାଯାଉଥିବା ସର୍ବାଧିକ ଇଭେଣ୍ଟ</string>

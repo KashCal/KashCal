@@ -845,6 +845,21 @@ object WeekViewUtils {
     }
 
     /**
+     * Format a single point in time for display (e.g., "9:00am" or "09:00").
+     *
+     * @param ts Timestamp in milliseconds
+     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
+     * @return Formatted time string
+     */
+    fun formatTime(ts: Long, timePattern: String = "h:mma"): String {
+        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+        val time = Instant.ofEpochMilli(ts)
+            .atZone(ZoneId.systemDefault())
+            .toLocalTime()
+        return time.format(formatter).lowercase()
+    }
+
+    /**
      * Check if a date is today.
      */
     fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
@@ -978,25 +993,6 @@ object WeekViewUtils {
     }
 
     // ==================== All-Day Strip Expand/Collapse ====================
-
-    /**
-     * How many all-day rows to render for a day with [count] events.
-     *
-     * Collapsed keeps today's behavior (at most one row); expanded fills up to
-     * [MAX_ALLDAY_ROWS_EXPANDED] adaptively, so a day with two events shows two,
-     * a day with one shows one, and a day with three or more shows three.
-     */
-    fun allDayVisibleRows(count: Int, expanded: Boolean): Int {
-        val cap = if (expanded) MAX_ALLDAY_ROWS_EXPANDED else MAX_ALLDAY_ROWS_COLLAPSED
-        return count.coerceAtMost(cap)
-    }
-
-    /**
-     * Events beyond the visible rows, surfaced as the "+N more" badge that opens
-     * the overflow sheet. Zero when everything fits.
-     */
-    fun allDayOverflowCount(count: Int, expanded: Boolean): Int =
-        (count - allDayVisibleRows(count, expanded)).coerceAtLeast(0)
 
     /**
      * Whether the expand/collapse chevron is meaningful for the current window:

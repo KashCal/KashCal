@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Föreslå händelsetitlar</string>
     <string name="settings_suggest_titles_info">När du namnger en ny händelse föreslås titlar du använt tidigare, så att återkommande händelser är ett tryck bort. Rangordnade efter hur ofta och hur nyligen du använt dem.</string>
     <string name="settings_week_numbers">Veckonummer</string>
+    <string name="settings_multiday_in_allday_strip">Flerdagshändelser i heldagsfältet</string>
+    <string name="settings_multiday_in_allday_strip_info">Visa tidsangivna händelser som pågår mer än en dag i heldagsfältet högst upp i veckovyn, istället för i tidsrutnätet. Stäng av för att behålla dem i tidsrutnätet varje dag.</string>
     <string name="settings_show_declined">Visa avböjda händelser</string>
     <string name="settings_widget_event_limit">Widget-händelsegräns</string>
     <string name="settings_widget_event_limit_hint">Flest händelser som visas per dag i widgetar</string>

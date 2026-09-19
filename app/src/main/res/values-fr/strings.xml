@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Suggérer des titres d\'événements</string>
     <string name="settings_suggest_titles_info">Pendant que tu nommes un nouvel événement, te propose des titres que tu as déjà utilisés, pour que les événements récurrents se créent d\'un seul geste. Classés selon la fréquence et la récence de leur usage.</string>
     <string name="settings_week_numbers">Numéros de semaine</string>
+    <string name="settings_multiday_in_allday_strip">Événements sur plusieurs jours dans la bande journée entière</string>
+    <string name="settings_multiday_in_allday_strip_info">Afficher les événements avec horaire qui s\'étendent sur plus d\'un jour dans la bande journée entière en haut de la vue hebdomadaire, au lieu de la grille horaire. Désactivez pour les conserver dans la grille horaire chaque jour.</string>
     <string name="settings_show_declined">Afficher les événements refusés</string>
     <string name="settings_widget_event_limit">Limite d\'événements du widget</string>
     <string name="settings_widget_event_limit_hint">Nombre max d\'événements affichés par jour dans les widgets</string>

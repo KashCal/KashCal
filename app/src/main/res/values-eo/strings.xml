@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Sugesti eventajn titolojn</string>
     <string name="settings_suggest_titles_info">Dum vi nomas novan eventon, ĝi sugestas titolojn kiujn vi jam uzis, tiel ke ripetaj eventoj estas je unu tuŝo. Ordigitaj laŭ kiom ofte kaj kiom lastatempe vi uzis ilin.</string>
     <string name="settings_week_numbers">Semajnaj numeroj</string>
+    <string name="settings_multiday_in_allday_strip">Plurtagaj eventoj en la tuttaga strio</string>
+    <string name="settings_multiday_in_allday_strip_info">Montru tempigitajn eventojn kiuj daŭras pli ol unu tagon en la tuttaga strio supre de la semajna vido, anstataŭ en la tempa krado. Malŝaltu por teni ilin en la tempa krado ĉiutage.</string>
     <string name="settings_show_declined">Montri malakceptitajn eventojn</string>
     <string name="settings_widget_event_limit">Fenestraĵa eventlimo</string>
     <string name="settings_widget_event_limit_hint">Plej multaj eventoj montrataj tage en fenestraĵoj</string>

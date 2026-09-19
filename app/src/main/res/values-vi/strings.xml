@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
     <string name="settings_suggest_titles_info">Khi bạn đặt tên cho sự kiện mới, ứng dụng gợi ý những tiêu đề bạn đã dùng trước đây, để các sự kiện lặp lại chỉ cần một chạm. Được xếp hạng theo mức độ thường xuyên và gần đây bạn đã dùng.</string>
     <string name="settings_week_numbers">Số tuần</string>
+    <string name="settings_multiday_in_allday_strip">Sự kiện nhiều ngày trong dải cả ngày</string>
+    <string name="settings_multiday_in_allday_strip_info">Hiển thị các sự kiện có giờ kéo dài hơn một ngày trong dải cả ngày ở đầu chế độ xem tuần, thay vì trong lưới thời gian. Tắt để giữ chúng trong lưới thời gian mỗi ngày.</string>
     <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
     <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
     <string name="settings_widget_event_limit_hint">Số sự kiện tối đa hiển thị mỗi ngày trong widget</string>

@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Titels van afspraken voorstellen</string>
     <string name="settings_suggest_titles_info">Terwijl je een nieuwe afspraak een naam geeft, stelt de app titels voor die je eerder hebt gebruikt, zodat terugkerende afspraken één tik zijn. Gerangschikt op hoe vaak en hoe recent je ze hebt gebruikt.</string>
     <string name="settings_week_numbers">Weeknummers</string>
+    <string name="settings_multiday_in_allday_strip">Meerdaagse afspraken in de hele-dag-balk</string>
+    <string name="settings_multiday_in_allday_strip_info">Toon afspraken met een tijd die langer dan één dag duren in de hele-dag-balk boven aan de weekweergave, in plaats van in het tijdrooster. Zet uit om ze elke dag in het tijdrooster te houden.</string>
     <string name="settings_show_declined">Geweigerde afspraken tonen</string>
     <string name="settings_widget_event_limit">Widget-afspraklimiet</string>
     <string name="settings_widget_event_limit_hint">Maximaal aantal afspraken per dag in widgets</string>

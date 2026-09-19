@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Ieteikt notikumu nosaukumus</string>
     <string name="settings_suggest_titles_info">Kad nosaucat jaunu notikumu, piedāvāt jau iepriekš izmantotus nosaukumus, lai atkārtotus notikumus izveidotu ar vienu pieskārienu. Sakārtoti pēc tā, cik bieži un cik nesen tos esat izmantojis.</string>
     <string name="settings_week_numbers">Nedēļu numuri</string>
+    <string name="settings_multiday_in_allday_strip">Vairāku dienu notikumi visas dienas joslā</string>
+    <string name="settings_multiday_in_allday_strip_info">Rādīt notikumus ar laiku, kas ilgst vairāk par vienu dienu, visas dienas joslā nedēļas skata augšdaļā, nevis laika režģī. Izslēdziet, lai tie paliktu laika režģī katru dienu.</string>
     <string name="settings_show_declined">Rādīt noraidītos notikumus</string>
     <string name="settings_widget_event_limit">Logrīka notikumu limits</string>
     <string name="settings_widget_event_limit_hint">Maksimālais notikumu skaits dienā logrīkos</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ਘਟਨਾ ਟਾਇਟਲ ਸੁਝਾਓ</string>
     <string name="settings_suggest_titles_info">ਜਦੋਂ ਤੁਸੀਂ ਕਿਸੇ ਨਵੇਂ ਸਮਾਗਮ ਦਾ ਨਾਮ ਰੱਖਦੇ ਹੋ, ਤਾਂ ਉਹ ਸਿਰਲੇਖ ਸੁਝਾਉਂਦਾ ਹੈ ਜੋ ਤੁਸੀਂ ਪਹਿਲਾਂ ਵਰਤੇ ਹਨ, ਤਾਂ ਜੋ ਦੁਹਰਾਉਣ ਵਾਲੇ ਸਮਾਗਮ ਇੱਕ ਟੈਪ ਵਿੱਚ ਹੋਣ। ਇਹ ਇਸ ਆਧਾਰ \'ਤੇ ਦਰਜਾਬੰਦੀ ਕੀਤੇ ਜਾਂਦੇ ਹਨ ਕਿ ਤੁਸੀਂ ਉਹਨਾਂ ਨੂੰ ਕਿੰਨੀ ਵਾਰ ਅਤੇ ਕਿੰਨੀ ਹਾਲ ਹੀ ਵਿੱਚ ਵਰਤਿਆ ਹੈ।</string>
     <string name="settings_week_numbers">ਹਫ਼ਤਾ ਨੰਬਰ</string>
+    <string name="settings_multiday_in_allday_strip">ਪੂਰੇ ਦਿਨ ਦੀ ਪੱਟੀ ਵਿੱਚ ਬਹੁ-ਦਿਨੀ ਇਵੈਂਟ</string>
+    <string name="settings_multiday_in_allday_strip_info">ਇੱਕ ਦਿਨ ਤੋਂ ਵੱਧ ਸਮੇਂ ਤੱਕ ਚੱਲਣ ਵਾਲੇ ਸਮਾਂ-ਨਿਰਧਾਰਤ ਇਵੈਂਟਾਂ ਨੂੰ ਸਮਾਂ ਗਰਿੱਡ ਦੀ ਬਜਾਏ ਹਫ਼ਤਾਵਾਰੀ ਦ੍ਰਿਸ਼ ਦੇ ਸਿਖਰ \'ਤੇ ਪੂਰੇ ਦਿਨ ਦੀ ਪੱਟੀ ਵਿੱਚ ਦਿਖਾਓ। ਹਰ ਰੋਜ਼ ਉਹਨਾਂ ਨੂੰ ਸਮਾਂ ਗਰਿੱਡ ਵਿੱਚ ਰੱਖਣ ਲਈ ਬੰਦ ਕਰੋ।</string>
     <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
     <string name="settings_widget_event_limit">ਵਿਜੇਟ ਘਟਨਾ ਸੀਮਾ</string>
     <string name="settings_widget_event_limit_hint">ਵਿਜੇਟਾਂ ਵਿੱਚ ਪ੍ਰਤੀ ਦਿਨ ਵੱਧ ਤੋਂ ਵੱਧ ਦਿਖਾਏ ਜਾਣ ਵਾਲੇ ਸਮਾਗਮ</string>

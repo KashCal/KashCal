@@ -36,6 +36,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.ContactPurgeOutcome
@@ -366,6 +367,10 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _showWeekNumbers = MutableStateFlow(false)
     val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
+
+    private val _showMultiDayTimedInAllDayStrip =
+        MutableStateFlow(PreferencesKeys.DEFAULT_SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP)
+    val showMultiDayTimedInAllDayStrip: StateFlow<Boolean> = _showMultiDayTimedInAllDayStrip.asStateFlow()
 
     private val _quickAddEnabled = MutableStateFlow(false)
     val quickAddEnabled: StateFlow<Boolean> = _quickAddEnabled.asStateFlow()
@@ -711,6 +716,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.showMultiDayTimedInAllDayStrip.collect { show ->
+                _showMultiDayTimedInAllDayStrip.value = show
+            }
+        }
+        viewModelScope.launch {
             dataStore.widgetMaxEventsPerDay.collect { count ->
                 _widgetMaxEventsPerDay.value = count
             }
@@ -809,6 +819,15 @@ class AccountSettingsViewModel @Inject constructor(
             // The month widget's week-number gutter is driven by this preference, so refresh the
             // widgets immediately rather than on the next periodic tick.
             widgetUpdateManager.updateAllWidgets("week_numbers_changed")
+        }
+    }
+
+    /**
+     * Update the show-multi-day-timed-events-in-all-day-strip preference.
+     */
+    fun setShowMultiDayTimedInAllDayStrip(show: Boolean) {
+        viewModelScope.launch {
+            dataStore.setShowMultiDayTimedInAllDayStrip(show)
         }
     }
 

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Πρόταση τίτλων συμβάντων</string>
     <string name="settings_suggest_titles_info">Καθώς ονομάζετε ένα νέο συμβάν, προτείνει τίτλους που έχετε χρησιμοποιήσει στο παρελθόν, ώστε τα επαναλαμβανόμενα συμβάντα να γίνονται με ένα άγγιγμα. Κατατάσσονται ανάλογα με το πόσο συχνά και πόσο πρόσφατα τους έχετε χρησιμοποιήσει.</string>
     <string name="settings_week_numbers">Αριθμοί εβδομάδων</string>
+    <string name="settings_multiday_in_allday_strip">Πολυήμερα συμβάντα στη λωρίδα ολοήμερων</string>
+    <string name="settings_multiday_in_allday_strip_info">Εμφάνιση συμβάντων με ώρα που εκτείνονται σε περισσότερες από μία ημέρες στη λωρίδα ολοήμερων στο πάνω μέρος της εβδομαδιαίας προβολής, αντί στο πλέγμα ωρών. Απενεργοποιήστε το για να παραμένουν στο πλέγμα ωρών κάθε ημέρα.</string>
     <string name="settings_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
     <string name="settings_widget_event_limit">Όριο συμβάντων widget</string>
     <string name="settings_widget_event_limit_hint">Μέγιστος αριθμός συμβάντων που εμφανίζονται ανά ημέρα στα γραφικά στοιχεία</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
     <string name="settings_suggest_titles_info">Njengoba uqamba umcimbi omusha, iphakamisa izihloko osuke wazisebenzisa ngaphambili, ngakho imicimbi ephindaphindwayo ithatha ukuthinta okukodwa. Ihlelwe ngokuthi uzisebenzise kangaki nangokuthi uzisebenzise nini muva nje.</string>
     <string name="settings_week_numbers">Izinombolo Zamasonto</string>
+    <string name="settings_multiday_in_allday_strip">Izehlakalo zezinsuku eziningi kubande losuku lonke</string>
+    <string name="settings_multiday_in_allday_strip_info">Bonisa izehlakalo ezinesikhathi ezithatha isikhathi esingaphezu kosuku olulodwa kubande losuku lonke phezulu kokubukwa kwesonto, esikhundleni sohlaka lwesikhathi. Vala ukuze uzigcine ohlakeni lwesikhathi zonke izinsuku.</string>
     <string name="settings_show_declined">Bonisa imicimbi enqatshelwe</string>
     <string name="settings_widget_event_limit">Umkhawulo Womcimbi We-Widget</string>
     <string name="settings_widget_event_limit_hint">Imicimbi eminingi eboniswa ngosuku kuma-widget</string>

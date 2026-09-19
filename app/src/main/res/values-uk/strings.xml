@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Пропонувати назви подій</string>
     <string name="settings_suggest_titles_info">Коли ви вводите назву нової події, пропонувати назви, які ви вже використовували, щоб повторювані події створювалися одним дотиком. Ранжуються за частотою та давністю використання.</string>
     <string name="settings_week_numbers">Номери тижнів</string>
+    <string name="settings_multiday_in_allday_strip">Багатоденні події в смузі на весь день</string>
+    <string name="settings_multiday_in_allday_strip_info">Показувати події з часом, що тривають більше одного дня, у смузі на весь день у верхній частині тижневого перегляду замість сітки часу. Вимкніть, щоб залишити їх у сітці часу щодня.</string>
     <string name="settings_show_declined">Показувати відхилені події</string>
     <string name="settings_widget_event_limit">Ліміт подій у віджеті</string>
     <string name="settings_widget_event_limit_hint">Максимум подій на день у віджетах</string>

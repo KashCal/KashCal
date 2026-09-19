@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">इवेंट शीर्षक सुझाएँ</string>
     <string name="settings_suggest_titles_info">जब आप कोई नया इवेंट नाम देते हैं, तो पहले इस्तेमाल किए गए शीर्षक सुझाता है, ताकि दोहराए जाने वाले इवेंट एक टैप में बन जाएँ. इन्हें इस आधार पर क्रमबद्ध किया जाता है कि आपने इन्हें कितनी बार और कितनी हाल में इस्तेमाल किया है.</string>
     <string name="settings_week_numbers">सप्ताह संख्या</string>
+    <string name="settings_multiday_in_allday_strip">पूरे दिन की पट्टी में बहु-दिवसीय ईवेंट</string>
+    <string name="settings_multiday_in_allday_strip_info">एक से अधिक दिनों तक चलने वाले समय-निर्धारित ईवेंट को साप्ताहिक दृश्य के शीर्ष पर पूरे दिन की पट्टी में दिखाएं, न कि समय ग्रिड में। हर दिन उन्हें समय ग्रिड में रखने के लिए बंद करें।</string>
     <string name="settings_show_declined">अस्वीकृत कार्यक्रम दिखाएँ</string>
     <string name="settings_widget_event_limit">विजेट इवेंट सीमा</string>
     <string name="settings_widget_event_limit_hint">विजेट में प्रति दिन दिखाई जाने वाली अधिकतम इवेंट</string>

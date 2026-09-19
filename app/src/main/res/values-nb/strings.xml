@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Foreslå hendelsestitler</string>
     <string name="settings_suggest_titles_info">Mens du gir en ny hendelse navn, foreslås titler du har brukt før, slik at gjentakende hendelser er ett trykk unna. Rangert etter hvor ofte og hvor nylig du har brukt dem.</string>
     <string name="settings_week_numbers">Ukenummer</string>
+    <string name="settings_multiday_in_allday_strip">Flerdagshendelser i heldagsfeltet</string>
+    <string name="settings_multiday_in_allday_strip_info">Vis hendelser med klokkeslett som strekker seg over mer enn én dag i heldagsfeltet øverst i ukevisningen, i stedet for i tidsrutenettet. Slå av for å beholde dem i tidsrutenettet hver dag.</string>
     <string name="settings_show_declined">Vis avslåtte hendelser</string>
     <string name="settings_widget_event_limit">Widget-hendelsesgrense</string>
     <string name="settings_widget_event_limit_hint">Flest hendelser vist per dag i moduler</string>

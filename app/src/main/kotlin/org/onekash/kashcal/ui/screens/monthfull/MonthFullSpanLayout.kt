@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.screens.monthfull
 import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
+import org.onekash.kashcal.ui.shared.packSpansIntoLanes
 
 // ============================================================
 // Spanning bars across a week row
@@ -58,22 +59,8 @@ fun computeWeekSpans(
         )
     }
 
-    val sortedForPlacement = rawSpans.sortedWith(
-        compareBy({ it.startCol }, { -(it.endCol - it.startCol) })
-    )
-
-    val lanes = mutableListOf<MutableList<WeekSpan>>()
-    var overflow = 0
-    for (span in sortedForPlacement) {
-        val laneIndex = lanes.indexOfFirst { lane ->
-            lane.last().endCol < span.startCol
-        }
-        when {
-            laneIndex >= 0 -> lanes[laneIndex].add(span)
-            lanes.size < maxLanes -> lanes.add(mutableListOf(span))
-            else -> overflow++
-        }
-    }
+    val lanes = packSpansIntoLanes(rawSpans, maxLanes, startCol = { it.startCol }, endCol = { it.endCol })
+    val overflow = rawSpans.size - lanes.sumOf { it.size }
 
     return WeekSpanLayout(
         lanes = lanes,

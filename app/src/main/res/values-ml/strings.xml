@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
     <string name="settings_suggest_titles_info">നിങ്ങൾ ഒരു പുതിയ ഇവന്റിന് പേരിടുമ്പോൾ, മുമ്പ് ഉപയോഗിച്ച ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുന്നു, അതിനാൽ ആവർത്തിക്കുന്ന ഇവന്റുകൾ ഒരൊറ്റ ടാപ്പിൽ തയ്യാറാകും. നിങ്ങൾ അവ എത്ര തവണ, എത്ര അടുത്തിടെ ഉപയോഗിച്ചു എന്നതിന്റെ അടിസ്ഥാനത്തിൽ ക്രമപ്പെടുത്തുന്നു.</string>
     <string name="settings_week_numbers">ആഴ്ച നമ്പറുകൾ</string>
+    <string name="settings_multiday_in_allday_strip">മുഴുവൻ ദിവസ സ്ട്രിപ്പിലെ ബഹു-ദിവസ ഇവന്റുകൾ</string>
+    <string name="settings_multiday_in_allday_strip_info">ഒരു ദിവസത്തിൽ കൂടുതൽ നീണ്ടുനിൽക്കുന്ന സമയബന്ധിത ഇവന്റുകൾ, ടൈം ഗ്രിഡിന് പകരം ആഴ്ച കാഴ്ചയുടെ മുകളിലുള്ള മുഴുവൻ ദിവസ സ്ട്രിപ്പിൽ കാണിക്കുക. എല്ലാ ദിവസവും അവയെ ടൈം ഗ്രിഡിൽ നിലനിർത്താൻ ഓഫ് ചെയ്യുക.</string>
     <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="settings_widget_event_limit">വിജറ്റ് ഇവന്റ് പരിധി</string>
     <string name="settings_widget_event_limit_hint">വിജറ്റുകളിൽ ഒരു ദിവസം കാണിക്കുന്ന പരമാവധി ഇവന്റുകൾ</string>

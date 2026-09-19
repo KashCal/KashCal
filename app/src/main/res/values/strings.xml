@@ -853,6 +853,10 @@
     <!-- Tooltip explaining the Suggest event titles toggle -->
     <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
     <string name="settings_week_numbers">Show week numbers</string>
+    <!-- Settings row: toggles whether multi-day timed events appear in the all-day strip -->
+    <string name="settings_multiday_in_allday_strip">Multi-day events in all-day strip</string>
+    <!-- Tooltip explaining the Multi-day events in all-day strip toggle -->
+    <string name="settings_multiday_in_allday_strip_info">Show timed events that span more than one day in the all-day strip at the top of the week view, instead of in the timed grid. Turn off to keep them in the timed grid on each day.</string>
     <!-- Display preference: when off, calendar events the user has declined are hidden across all views.
          When on, declined events appear with a strikethrough title and dimmed appearance. -->
     <string name="settings_show_declined">Show declined events</string>

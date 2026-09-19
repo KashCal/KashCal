@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Terminnamen vorschlagen</string>
     <string name="settings_suggest_titles_info">Während du einen neuen Termin benennst, werden dir bereits verwendete Titel vorgeschlagen, sodass wiederkehrende Termine nur einen Tipp entfernt sind. Sortiert danach, wie oft und wie kürzlich du sie verwendet hast.</string>
     <string name="settings_week_numbers">Kalenderwochen</string>
+    <string name="settings_multiday_in_allday_strip">Mehrtägige Termine im Ganztags-Bereich</string>
+    <string name="settings_multiday_in_allday_strip_info">Zeige Termine mit Uhrzeit, die sich über mehr als einen Tag erstrecken, im Ganztags-Bereich oben in der Wochenansicht an, anstatt im Zeitraster. Schalte dies aus, um sie jeden Tag im Zeitraster zu behalten.</string>
     <string name="settings_show_declined">Abgelehnte Termine anzeigen</string>
     <string name="settings_widget_event_limit">Widget-Terminlimit</string>
     <string name="settings_widget_event_limit_hint">Maximale Anzahl Termine pro Tag in Widgets</string>

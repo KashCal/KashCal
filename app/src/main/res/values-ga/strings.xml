@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Mol teidil imeachtaí</string>
     <string name="settings_suggest_titles_info">Agus imeacht nua á ainmniú agat, molann sé teidil a d\'úsáid tú cheana, ionas nach bhfuil ach cnag amháin ag teastáil le himeachtaí athfhillteacha. Rangaithe de réir cé chomh minic agus cé chomh déanach a d\'úsáid tú iad.</string>
     <string name="settings_week_numbers">Uimhreacha Seachtaine</string>
+    <string name="settings_multiday_in_allday_strip">Imeachtaí il-lá sa stiall lá iomlán</string>
+    <string name="settings_multiday_in_allday_strip_info">Taispeáin imeachtaí ama a mhaireann níos mó ná lá amháin sa stiall lá iomlán ag barr an amhairc seachtainiúil, in ionad an eangach ama. Múch é chun iad a choinneáil san eangach ama gach lá.</string>
     <string name="settings_show_declined">Taispeáin imeachtaí diúltaithe</string>
     <string name="settings_widget_event_limit">Teorainn Imeachtaí Giuirléide</string>
     <string name="settings_widget_event_limit_hint">Uaslíon imeachtaí a thaispeántar in aghaidh an lae i ngiuirléidí</string>

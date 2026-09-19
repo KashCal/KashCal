@@ -25,6 +25,7 @@ object ExportablePreferences {
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED.name to PrefKind.BOOL,
         PreferencesKeys.TAGS_ABOVE_NOTES.name to PrefKind.BOOL,
         PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
+        PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP.name to PrefKind.BOOL,
         PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
         PreferencesKeys.DEFAULT_REMINDER_MINUTES.name to PrefKind.INT,
         PreferencesKeys.DEFAULT_ALL_DAY_REMINDER.name to PrefKind.INT,
@@ -76,6 +77,9 @@ object ExportablePreferences {
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
+        // Whether multi-day timed events show in the all-day strip — same rationale as
+        // SHOW_WEEK_NUMBERS: a persistent display choice, so it's exportable.
+        PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
         PreferencesKeys.DEFAULT_EVENT_DURATION,
         // Event defaults (DEFAULT_CALENDAR excluded — stores non-portable row IDs)
         PreferencesKeys.DEFAULT_REMINDER_MINUTES,
@@ -122,8 +126,8 @@ object ExportablePreferences {
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
         // whenever a key is added to or removed from KEYS above.
-        require(it.size == 41) {
-            "KEYS size drifted; expected 41 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        require(it.size == 42) {
+            "KEYS size drifted; expected 42 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
         }
     }
 

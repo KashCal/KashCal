@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
     <string name="settings_suggest_titles_info">Калі вы ўводзіце назву новай падзеі, прапаноўваць назвы, якія вы ўжо выкарыстоўвалі, каб паўтаральныя падзеі ствараліся адным дотыкам. Сартуюцца паводле частаты і нядаўнасці выкарыстання.</string>
     <string name="settings_week_numbers">Нумары тыдняў</string>
+    <string name="settings_multiday_in_allday_strip">Шматдзённыя падзеі ў стужцы на ўвесь дзень</string>
+    <string name="settings_multiday_in_allday_strip_info">Паказваць падзеі з часам, якія доўжацца больш за адзін дзень, у стужцы на ўвесь дзень уверсе тыднёвага прагляду, замест сеткі часу. Адключыце, каб пакінуць іх у сетцы часу кожны дзень.</string>
     <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="settings_widget_event_limit">Ліміт падзей у віджэце</string>
     <string name="settings_widget_event_limit_hint">Максімум падзей у дзень у віджэтах</string>

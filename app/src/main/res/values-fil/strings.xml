@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Magmungkahi ng mga pamagat ng event</string>
     <string name="settings_suggest_titles_info">Habang pinapangalanan mo ang bagong kaganapan, magmumungkahi ng mga pamagat na nagamit mo na dati, kaya ang mga paulit-ulit na kaganapan ay isang tap na lang. Isinaayos ayon sa dalas at kamakailang paggamit mo sa mga ito.</string>
     <string name="settings_week_numbers">Mga Numero ng Linggo</string>
+    <string name="settings_multiday_in_allday_strip">Mga multi-day na kaganapan sa all-day strip</string>
+    <string name="settings_multiday_in_allday_strip_info">Ipakita ang mga naka-iskedyul na kaganapan na tumatagal nang higit sa isang araw sa all-day strip sa itaas ng view ng linggo, sa halip na sa timed grid. I-off para panatilihin ang mga ito sa timed grid sa bawat araw.</string>
     <string name="settings_show_declined">Ipakita ang mga tinanggihang kaganapan</string>
     <string name="settings_widget_event_limit">Limitasyon ng Widget Event</string>
     <string name="settings_widget_event_limit_hint">Pinakamaraming kaganapan bawat araw sa mga widget</string>

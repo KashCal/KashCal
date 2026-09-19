@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Foreslå hendingstitlar</string>
     <string name="settings_suggest_titles_info">Medan du gjev ei ny hending namn, blir titlar du har brukt før foreslått, slik at attkomande hendingar er eitt trykk unna. Rangert etter kor ofte og kor nyleg du har brukt dei.</string>
     <string name="settings_week_numbers">Vekenummer</string>
+    <string name="settings_multiday_in_allday_strip">Fleirdagshendingar i heildagsfeltet</string>
+    <string name="settings_multiday_in_allday_strip_info">Vis hendingar med klokkeslett som strekker seg over meir enn éin dag i heildagsfeltet øvst i vekevisinga, i staden for i tidsrutenettet. Slå av for å halde dei i tidsrutenettet kvar dag.</string>
     <string name="settings_show_declined">Vis avslåtte hendingar</string>
     <string name="settings_widget_event_limit">Widget-hendingsgrense</string>
     <string name="settings_widget_event_limit_hint">Flest hendingar vist per dag i modular</string>

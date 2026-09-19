@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Предлагай заглавия на събития</string>
     <string name="settings_suggest_titles_info">Докато именувате ново събитие, предлага заглавия, които сте използвали преди, така че повтарящите се събития да са на едно докосване. Подредени според това колко често и колко скоро сте ги използвали.</string>
     <string name="settings_week_numbers">Номера на седмици</string>
+    <string name="settings_multiday_in_allday_strip">Многодневни събития в лентата за цял ден</string>
+    <string name="settings_multiday_in_allday_strip_info">Показвайте събития с час, обхващащи повече от един ден, в лентата за цял ден в горната част на седмичния изглед, вместо в часовата мрежа. Изключете, за да ги запазите в часовата мрежа за всеки ден.</string>
     <string name="settings_show_declined">Показване на отказани събития</string>
     <string name="settings_widget_event_limit">Лимит на събития за уиджет</string>
     <string name="settings_widget_event_limit_hint">Максимален брой събития, показвани на ден в приспособленията</string>

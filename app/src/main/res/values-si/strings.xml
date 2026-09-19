@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
     <string name="settings_suggest_titles_info">ඔබ නව සිදුවීමක් නම් කරන විට, ඔබ මීට පෙර භාවිත කළ මාතෘකා යෝජනා කරයි, එවිට නැවත නැවත සිදුවන සිදුවීම් එක් ස්පර්ශයකින් සිදු වේ. ඔබ ඒවා කොපමණ නිතර සහ කොපමණ මෑතකදී භාවිත කළේද යන්න මත පදනම්ව ශ්‍රේණිගත කර ඇත.</string>
     <string name="settings_week_numbers">සතිය අංක</string>
+    <string name="settings_multiday_in_allday_strip">මුළු දින තීරුවේ බහු-දින සිදුවීම්</string>
+    <string name="settings_multiday_in_allday_strip_info">එක් දිනකට වඩා පවතින කාල සටහන් සිදුවීම් කාල පැනලයට වඩා සතිපතා දර්ශනයේ ඉහළින් ඇති මුළු දින තීරුවේ පෙන්වන්න. ඒවා සෑම දිනකම කාල පැනලයේ තබා ගැනීමට අක්‍රිය කරන්න.</string>
     <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
     <string name="settings_widget_event_limit">විජට් සිදුවීම් සීමාව</string>
     <string name="settings_widget_event_limit_hint">විජට්වල දිනකට පෙන්වන උපරිම සිදුවීම් ගණන</string>

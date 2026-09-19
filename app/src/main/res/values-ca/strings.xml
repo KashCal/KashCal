@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Suggereix títols d\'esdeveniments</string>
     <string name="settings_suggest_titles_info">En posar nom a un nou esdeveniment, suggereix títols que ja has fet servir, de manera que els esdeveniments repetits siguin a un sol toc. Ordenats segons la freqüència i la recència amb què els has utilitzat.</string>
     <string name="settings_week_numbers">Números de setmana</string>
+    <string name="settings_multiday_in_allday_strip">Esdeveniments de diversos dies a la franja de tot el dia</string>
+    <string name="settings_multiday_in_allday_strip_info">Mostra els esdeveniments amb hora que s\'estenen més d\'un dia a la franja de tot el dia a la part superior de la vista setmanal, en lloc de la graella horària. Desactiva-ho per mantenir-los a la graella horària cada dia.</string>
     <string name="settings_show_declined">Mostra els esdeveniments rebutjats</string>
     <string name="settings_widget_event_limit">Límit d\'esdeveniments del widget</string>
     <string name="settings_widget_event_limit_hint">Màxim d\'esdeveniments mostrats per dia als widgets</string>

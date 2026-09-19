@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Stinga upp á heiti viðburða</string>
     <string name="settings_suggest_titles_info">Þegar þú nefnir nýjan viðburð eru lögð til heiti sem þú hefur notað áður, svo endurteknir viðburðir eru aðeins eitt bank í burtu. Raðað eftir því hversu oft og hversu nýlega þú hefur notað þau.</string>
     <string name="settings_week_numbers">Vikunúmer</string>
+    <string name="settings_multiday_in_allday_strip">Fjölda daga viðburðir í heilsdagsrönd</string>
+    <string name="settings_multiday_in_allday_strip_info">Sýna tímasetta viðburði sem ná yfir meira en einn dag í heilsdagsrönd efst í vikuyfirliti, í stað tímatöflu. Slökktu til að halda þeim í tímatöflu hvern dag.</string>
     <string name="settings_show_declined">Sýna höfnuð atvik</string>
     <string name="settings_widget_event_limit">Viðburðahámark græju</string>
     <string name="settings_widget_event_limit_hint">Flestir viðburðir sýndir á dag í græjum</string>

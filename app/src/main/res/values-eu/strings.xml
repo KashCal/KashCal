@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Iradoki gertaeren izenburuak</string>
     <string name="settings_suggest_titles_info">Gertaera berri bati izena jartzean, lehen erabili dituzun izenburuak iradokitzen ditu, errepikatzen diren gertaerak ukitu bakarrean egon daitezen. Zenbat aldiz eta noiz arte erabili dituzun arabera sailkatuta.</string>
     <string name="settings_week_numbers">Aste-zenbakiak</string>
+    <string name="settings_multiday_in_allday_strip">Egun anitzeko ekitaldiak egun osoko zerrendan</string>
+    <string name="settings_multiday_in_allday_strip_info">Erakutsi egun bat baino gehiago irauten duten ordu-ekitaldiak asteko ikuspegiaren goiko aldeko egun osoko zerrendan, ordu-saretan erakutsi beharrean. Desaktibatu egunero ordu-saretan mantentzeko.</string>
     <string name="settings_show_declined">Erakutsi ezetsitako gertaerak</string>
     <string name="settings_widget_event_limit">Widget-eko gertaera-muga</string>
     <string name="settings_widget_event_limit_hint">Widgetetan eguneko gehienez erakusten diren gertaerak</string>

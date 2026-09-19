@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">일정 제목 제안</string>
     <string name="settings_suggest_titles_info">새 일정의 이름을 입력하는 동안 이전에 사용한 제목을 제안해, 반복되는 일정은 한 번의 탭으로 만들 수 있어요. 얼마나 자주, 얼마나 최근에 사용했는지에 따라 순위가 정해져요.</string>
     <string name="settings_week_numbers">주 번호</string>
+    <string name="settings_multiday_in_allday_strip">종일 스트립의 여러 날 일정</string>
+    <string name="settings_multiday_in_allday_strip_info">하루를 초과하는 시간 지정 일정을 시간 그리드 대신 주간 보기 상단의 종일 스트립에 표시합니다. 매일 시간 그리드에 유지하려면 끄세요.</string>
     <string name="settings_show_declined">거절한 이벤트 표시</string>
     <string name="settings_widget_event_limit">위젯 일정 제한</string>
     <string name="settings_widget_event_limit_hint">위젯에서 하루에 표시할 최대 일정 수</string>

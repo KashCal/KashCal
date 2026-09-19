@@ -573,6 +573,8 @@
     <string name="settings_suggest_titles">Foreslå begivenhedstitler</string>
     <string name="settings_suggest_titles_info">Når du navngiver en ny begivenhed, foreslås titler, du har brugt før, så tilbagevendende begivenheder kun er ét tryk væk. Rangeret efter hvor ofte og hvor nyligt du har brugt dem.</string>
     <string name="settings_week_numbers">Ugenumre</string>
+    <string name="settings_multiday_in_allday_strip">Flerdages begivenheder i heldagsstrimlen</string>
+    <string name="settings_multiday_in_allday_strip_info">Vis tidsindstillede begivenheder, der spænder over mere end én dag, i heldagsstrimlen øverst i ugevisningen i stedet for i tidsgitteret. Slå fra for at beholde dem i tidsgitteret hver dag.</string>
     <string name="settings_show_declined">Vis afslåede begivenheder</string>
     <string name="settings_widget_event_limit">Widget-begivenhedsgrænse</string>
     <string name="settings_widget_event_limit_hint">Flest begivenheder vist pr. dag i widgets</string>

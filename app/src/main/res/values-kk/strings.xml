@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
     <string name="settings_suggest_titles_info">Жаңа оқиғаны атаған кезде, бұрын пайдаланған тақырыптарды ұсынады, сонда қайталанатын оқиғалар бір түртумен жасалады. Оларды қаншалықты жиі және қаншалықты жақында пайдаланғаныңызға қарай сұрыпталады.</string>
     <string name="settings_week_numbers">Апта нөмірлері</string>
+    <string name="settings_multiday_in_allday_strip">Күні бойы жолағындағы көп күндік оқиғалар</string>
+    <string name="settings_multiday_in_allday_strip_info">Бір күннен астам созылатын уақыты белгіленген оқиғаларды уақыт торының орнына апталық көріністің жоғарғы жағындағы күні бойы жолағында көрсету. Оларды әр күні уақыт торында сақтау үшін өшіріңіз.</string>
     <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="settings_widget_event_limit">Виджет оқиға шектеуі</string>
     <string name="settings_widget_event_limit_hint">Виджеттерде күніне көрсетілетін оқиғалардың ең көбі</string>

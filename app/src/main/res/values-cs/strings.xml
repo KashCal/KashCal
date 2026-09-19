@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Navrhovat názvy událostí</string>
     <string name="settings_suggest_titles_info">Když pojmenováváte novou událost, navrhne dříve použité názvy, takže opakující se události jsou na jedno klepnutí. Seřazeno podle toho, jak často a jak nedávno jste je použili.</string>
     <string name="settings_week_numbers">Čísla týdnů</string>
+    <string name="settings_multiday_in_allday_strip">Vícedenní události v pruhu celodenních událostí</string>
+    <string name="settings_multiday_in_allday_strip_info">Zobrazit časované události trvající déle než jeden den v pruhu celodenních událostí v horní části týdenního zobrazení, místo v časové mřížce. Vypnutím je ponecháte v časové mřížce každý den.</string>
     <string name="settings_show_declined">Zobrazit odmítnuté události</string>
     <string name="settings_widget_event_limit">Limit událostí widgetu</string>
     <string name="settings_widget_event_limit_hint">Nejvíce událostí zobrazených za den ve widgetech</string>

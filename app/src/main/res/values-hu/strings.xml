@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Eseménycímek javaslata</string>
     <string name="settings_suggest_titles_info">Ahogy elnevezel egy új eseményt, felkínálja a korábban használt címeket, így az ismétlődő események egyetlen koppintással létrehozhatók. A gyakoriság és a legutóbbi használat szerint rangsorolva.</string>
     <string name="settings_week_numbers">Hétszámok</string>
+    <string name="settings_multiday_in_allday_strip">Több napos események az egész napos sávban</string>
+    <string name="settings_multiday_in_allday_strip_info">Az egynél több napig tartó, időponthoz kötött eseményeket az egész napos sávban jelenítse meg a heti nézet tetején, az időrács helyett. Kapcsolja ki, hogy minden nap az időrácsban maradjanak.</string>
     <string name="settings_show_declined">Visszautasított események megjelenítése</string>
     <string name="settings_widget_event_limit">Widget eseménykorlát</string>
     <string name="settings_widget_event_limit_hint">Naponta megjelenő események maximális száma a modulokban</string>

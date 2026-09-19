@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ಈವೆಂಟ್ ಶೀರ್ಷಿಕೆಗಳನ್ನು ಸೂಚಿಸಿ</string>
     <string name="settings_suggest_titles_info">ನೀವು ಹೊಸ ಈವೆಂಟ್‌ಗೆ ಹೆಸರಿಡುವಾಗ, ನೀವು ಈ ಹಿಂದೆ ಬಳಸಿದ ಶೀರ್ಷಿಕೆಗಳನ್ನು ಸೂಚಿಸುತ್ತದೆ, ಇದರಿಂದ ಪುನರಾವರ್ತಿತ ಈವೆಂಟ್‌ಗಳು ಒಂದೇ ಟ್ಯಾಪ್‌ನಲ್ಲಿ ಸಿದ್ಧವಾಗುತ್ತವೆ. ನೀವು ಅವುಗಳನ್ನು ಎಷ್ಟು ಬಾರಿ ಮತ್ತು ಎಷ್ಟು ಇತ್ತೀಚೆಗೆ ಬಳಸಿದ್ದೀರಿ ಎಂಬುದರ ಆಧಾರದ ಮೇಲೆ ಕ್ರಮಗೊಳಿಸಲಾಗುತ್ತದೆ.</string>
     <string name="settings_week_numbers">ವಾರ ಸಂಖ್ಯೆಗಳು</string>
+    <string name="settings_multiday_in_allday_strip">ಪೂರ್ಣ ದಿನದ ಪಟ್ಟಿಯಲ್ಲಿ ಬಹು-ದಿನದ ಈವೆಂಟ್\'ಗಳು</string>
+    <string name="settings_multiday_in_allday_strip_info">ಒಂದು ದಿನಕ್ಕಿಂತ ಹೆಚ್ಚು ಕಾಲ ಇರುವ ಸಮಯ-ನಿಗದಿತ ಈವೆಂಟ್\'ಗಳನ್ನು ಸಮಯ ಗ್ರಿಡ್\'ನ ಬದಲು ವಾರದ ವೀಕ್ಷಣೆಯ ಮೇಲ್ಭಾಗದಲ್ಲಿರುವ ಪೂರ್ಣ ದಿನದ ಪಟ್ಟಿಯಲ್ಲಿ ತೋರಿಸಿ. ಪ್ರತಿ ದಿನ ಅವುಗಳನ್ನು ಸಮಯ ಗ್ರಿಡ್\'ನಲ್ಲಿ ಇರಿಸಲು ಆಫ್ ಮಾಡಿ.</string>
     <string name="settings_show_declined">ತಿರಸ್ಕರಿಸಿದ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
     <string name="settings_widget_event_limit">ವಿಜೆಟ್ ಈವೆಂಟ್ ಮಿತಿ</string>
     <string name="settings_widget_event_limit_hint">ವಿಜೆಟ್‌ಗಳಲ್ಲಿ ದಿನಕ್ಕೆ ತೋರಿಸುವ ಗರಿಷ್ಠ ಈವೆಂಟ್‌ಗಳು</string>

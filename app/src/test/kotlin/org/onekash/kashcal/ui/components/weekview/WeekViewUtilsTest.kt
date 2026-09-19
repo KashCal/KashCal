@@ -1231,48 +1231,6 @@ class WeekViewUtilsTest {
     // ==================== All-Day Row Expand/Collapse Tests ====================
 
     @Test
-    fun `allDayVisibleRows collapsed shows at most one row`() {
-        assertEquals(0, WeekViewUtils.allDayVisibleRows(0, expanded = false))
-        assertEquals(1, WeekViewUtils.allDayVisibleRows(1, expanded = false))
-        assertEquals(1, WeekViewUtils.allDayVisibleRows(2, expanded = false))
-        assertEquals(1, WeekViewUtils.allDayVisibleRows(3, expanded = false))
-        assertEquals(1, WeekViewUtils.allDayVisibleRows(5, expanded = false))
-    }
-
-    @Test
-    fun `allDayVisibleRows expanded fills up to three adaptively`() {
-        assertEquals(0, WeekViewUtils.allDayVisibleRows(0, expanded = true))
-        assertEquals(1, WeekViewUtils.allDayVisibleRows(1, expanded = true))
-        assertEquals(2, WeekViewUtils.allDayVisibleRows(2, expanded = true))
-        assertEquals(3, WeekViewUtils.allDayVisibleRows(3, expanded = true))
-        assertEquals(3, WeekViewUtils.allDayVisibleRows(5, expanded = true))
-    }
-
-    @Test
-    fun `allDayVisibleRows expanded cap equals MAX_ALLDAY_ROWS_EXPANDED`() {
-        assertEquals(
-            WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED,
-            WeekViewUtils.allDayVisibleRows(99, expanded = true)
-        )
-    }
-
-    @Test
-    fun `allDayOverflowCount collapsed hides all but the first`() {
-        assertEquals(0, WeekViewUtils.allDayOverflowCount(0, expanded = false))
-        assertEquals(0, WeekViewUtils.allDayOverflowCount(1, expanded = false))
-        assertEquals(1, WeekViewUtils.allDayOverflowCount(2, expanded = false))
-        assertEquals(4, WeekViewUtils.allDayOverflowCount(5, expanded = false))
-    }
-
-    @Test
-    fun `allDayOverflowCount expanded only counts beyond three`() {
-        assertEquals(0, WeekViewUtils.allDayOverflowCount(2, expanded = true))
-        assertEquals(0, WeekViewUtils.allDayOverflowCount(3, expanded = true))
-        assertEquals(1, WeekViewUtils.allDayOverflowCount(4, expanded = true))
-        assertEquals(2, WeekViewUtils.allDayOverflowCount(5, expanded = true))
-    }
-
-    @Test
     fun `anyAllDayColumnHasOverflowWhenCollapsed true only when a column exceeds one`() {
         // Nothing to expand: empty, or every column at most one event.
         assertFalse(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(emptyList()))

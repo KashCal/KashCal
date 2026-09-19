@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ఈవెంట్ శీర్షికలను సూచించండి</string>
     <string name="settings_suggest_titles_info">మీరు కొత్త ఈవెంట్‌కు పేరు పెట్టేటప్పుడు, మీరు ఇంతకు ముందు ఉపయోగించిన శీర్షికలను సూచిస్తుంది, తద్వారా పునరావృత ఈవెంట్‌లు ఒకే ట్యాప్‌లో సిద్ధమవుతాయి. మీరు వాటిని ఎంత తరచుగా, ఎంత ఇటీవల ఉపయోగించారో దాని ఆధారంగా వరుసలో ఉంచబడతాయి.</string>
     <string name="settings_week_numbers">వారం సంఖ్యలు</string>
+    <string name="settings_multiday_in_allday_strip">పూర్తి రోజు స్ట్రిప్\'లో బహుళ-రోజుల ఈవెంట్\'లు</string>
+    <string name="settings_multiday_in_allday_strip_info">ఒక రోజు కంటే ఎక్కువ కాలం ఉండే సమయ-నిర్ధారిత ఈవెంట్\'లను టైమ్ గ్రిడ్\'కు బదులుగా వార వీక్షణ పైభాగంలో ఉన్న పూర్తి రోజు స్ట్రిప్\'లో చూపించు. ప్రతిరోజూ వాటిని టైమ్ గ్రిడ్\'లో ఉంచడానికి ఆఫ్ చేయండి.</string>
     <string name="settings_show_declined">తిరస్కరించిన ఈవెంట్‌లను చూపించు</string>
     <string name="settings_widget_event_limit">విడ్జెట్ ఈవెంట్ పరిమితి</string>
     <string name="settings_widget_event_limit_hint">విడ్జెట్‌లలో రోజుకు చూపబడే గరిష్ఠ ఈవెంట్‌లు</string>

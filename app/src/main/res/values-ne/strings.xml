@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">कार्यक्रम शीर्षकहरू सुझाव</string>
     <string name="settings_suggest_titles_info">तपाईंले नयाँ घटनालाई नाम दिँदा, तपाईंले पहिले प्रयोग गरेका शीर्षकहरू सुझाव दिन्छ, ताकि दोहोरिने घटनाहरू एक ट्यापमै हुन्छन्। तपाईंले कति पटक र कति भर्खरै प्रयोग गर्नुभयो भन्ने आधारमा क्रमबद्ध गरिएको।</string>
     <string name="settings_week_numbers">हप्ता नम्बरहरू</string>
+    <string name="settings_multiday_in_allday_strip">पूरे दिनको स्ट्रिपमा बहु-दिन घटनाहरू</string>
+    <string name="settings_multiday_in_allday_strip_info">एक दिनभन्दा बढी अवधिका समय-निर्धारित घटनाहरूलाई समय ग्रिडको सट्टा साप्ताहिक दृश्यको माथिल्लो भागमा रहेको पूरे दिनको स्ट्रिपमा देखाउनुहोस्। हरेक दिन तिनीहरूलाई समय ग्रिडमा राख्न बन्द गर्नुहोस्।</string>
     <string name="settings_show_declined">अस्वीकार गरिएका कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="settings_widget_event_limit">विजेट कार्यक्रम सीमा</string>
     <string name="settings_widget_event_limit_hint">विजेटमा प्रति दिन देखाइने अधिकतम घटनाहरू</string>

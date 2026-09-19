@@ -49,6 +49,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.domain.identity.canEditAsOrganizer
 import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -126,14 +127,46 @@ data class WeekEventsUiState(
     companion object {
         val EMPTY = WeekEventsUiState()
 
+        /**
+         * Minimum duration for a day-crossing timed event to be treated as "multi-day"
+         * for the all-day strip, rather than left in the timed grid at its actual time.
+         * Per RFC 5545, `endDay > startDay` alone is also true for an ordinary event
+         * that merely spills a few minutes past midnight (e.g. 11pm-12:30am); without
+         * a duration floor, every such event would vanish from the grid and reappear
+         * as a same-width bar across two days.
+         */
+        private const val MIN_MULTIDAY_STRIP_DURATION_MS = 20L * 60 * 60 * 1000
+
         fun ofError(message: String?) = WeekEventsUiState(error = message ?: "Failed to load events")
 
-        fun fromEvents(events: List<DisplayEvent>): WeekEventsUiState = WeekEventsUiState(
-            timedEvents = events.filter { !it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
-            allDayEvents = events.filter { it.isAllDay }.sortedBy { it.startTs }.toPersistentList(),
+        private fun isMultiDayForStrip(event: DisplayEvent): Boolean =
+            event.endDay > event.startDay &&
+                (event.endTs - event.startTs) >= MIN_MULTIDAY_STRIP_DURATION_MS
+
+        fun fromEvents(
+            events: List<DisplayEvent>,
+            showMultiDayTimedInAllDayStrip: Boolean =
+                PreferencesKeys.DEFAULT_SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP
+        ): WeekEventsUiState = WeekEventsUiState(
+            timedEvents = events.filter {
+                !it.isAllDay && (!showMultiDayTimedInAllDayStrip || !isMultiDayForStrip(it))
+            }.sortedBy { it.startTs }.toPersistentList(),
+            allDayEvents = events.filter {
+                it.isAllDay || (showMultiDayTimedInAllDayStrip && isMultiDayForStrip(it))
+            }.sortedBy { it.startTs }.toPersistentList(),
             isLoading = false,
             error = null
         )
+    }
+}
+
+/** Raw range-query result before the multi-day-strip preference partitions it. */
+private data class RawWeekEvents(
+    val events: List<DisplayEvent> = emptyList(),
+    val error: String? = null
+) {
+    companion object {
+        val EMPTY = RawWeekEvents()
     }
 }
 
@@ -493,15 +526,25 @@ class HomeViewModel(
         timeGridRange
             .flatMapLatest { range ->
                 if (range == null) {
-                    flowOf(WeekEventsUiState.EMPTY)
+                    flowOf(RawWeekEvents.EMPTY)
                 } else {
                     displayEventRepository.getDisplayEventsForRange(range.startMs, range.endMs)
-                        .map { events -> WeekEventsUiState.fromEvents(events) }
+                        .map { events -> RawWeekEvents(events) }
                         .catch { e ->
                             if (e is CancellationException) throw e
                             Log.e(TAG, "Error loading time-grid events", e)
-                            emit(WeekEventsUiState.ofError(e.message))
+                            emit(RawWeekEvents(error = e.message ?: "Failed to load events"))
                         }
+                }
+            }
+            // Combined downstream of flatMapLatest so toggling the preference just
+            // re-partitions the events already in memory instead of cancelling and
+            // re-subscribing the whole DB query.
+            .combine(dataStore.showMultiDayTimedInAllDayStrip) { raw, showMultiDayTimedInAllDayStrip ->
+                if (raw.error != null) {
+                    WeekEventsUiState.ofError(raw.error)
+                } else {
+                    WeekEventsUiState.fromEvents(raw.events, showMultiDayTimedInAllDayStrip)
                 }
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeekEventsUiState.EMPTY)

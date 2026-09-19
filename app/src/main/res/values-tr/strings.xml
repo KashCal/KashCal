@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
     <string name="settings_suggest_titles_info">Yeni bir etkinliğe ad verirken daha önce kullandığın başlıkları öner, böylece tekrarlanan etkinlikler tek dokunuş olur. Ne sıklıkta ve ne kadar yakın zamanda kullandığına göre sıralanır.</string>
     <string name="settings_week_numbers">Hafta Numaraları</string>
+    <string name="settings_multiday_in_allday_strip">Tüm gün şeridinde çok günlü etkinlikler</string>
+    <string name="settings_multiday_in_allday_strip_info">Bir günden fazla süren saatli etkinlikleri zaman ızgarası yerine hafta görünümünün üst kısmındaki tüm gün şeridinde göster. Bunları her gün zaman ızgarasında tutmak için kapatın.</string>
     <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="settings_widget_event_limit">Widget Etkinlik Sınırı</string>
     <string name="settings_widget_event_limit_hint">Widget\'larda günde gösterilen en fazla etkinlik</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
     <string name="settings_suggest_titles_info">Kun nimeät uutta tapahtumaa, ehdota aiemmin käyttämiäsi otsikoita, jotta toistuvat tapahtumat syntyvät yhdellä napautuksella. Järjestetty sen mukaan, kuinka usein ja kuinka äskettäin olet käyttänyt niitä.</string>
     <string name="settings_week_numbers">Viikkonumerot</string>
+    <string name="settings_multiday_in_allday_strip">Monipäiväiset tapahtumat koko päivän palkissa</string>
+    <string name="settings_multiday_in_allday_strip_info">Näytä yli yhden päivän mittaiset ajastetut tapahtumat viikkonäkymän yläreunan koko päivän palkissa aikaruudukon sijaan. Poista käytöstä, jos haluat pitää ne aikaruudukossa joka päivä.</string>
     <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="settings_widget_event_limit">Widgetin tapahtumaraja</string>
     <string name="settings_widget_event_limit_hint">Tapahtumien enimmäismäärä päivässä widgeteissä</string>

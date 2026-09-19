@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
     <string name="settings_suggest_titles_info">ขณะที่คุณตั้งชื่อกิจกรรมใหม่ ระบบจะแนะนำชื่อเรื่องที่คุณเคยใช้มาก่อน เพื่อให้กิจกรรมที่เกิดซ้ำทำได้ในแตะเดียว จัดอันดับตามความถี่และความใหม่ของการใช้งาน</string>
     <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
+    <string name="settings_multiday_in_allday_strip">กิจกรรมหลายวันในแถบตลอดวัน</string>
+    <string name="settings_multiday_in_allday_strip_info">แสดงกิจกรรมที่มีเวลาซึ่งกินเวลามากกว่าหนึ่งวันในแถบตลอดวันที่ด้านบนของมุมมองสัปดาห์ แทนที่จะแสดงในตารางเวลา ปิดเพื่อให้กิจกรรมเหล่านี้อยู่ในตารางเวลาในแต่ละวัน</string>
     <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
     <string name="settings_widget_event_limit_hint">จำนวนกิจกรรมสูงสุดที่แสดงต่อวันในวิดเจ็ต</string>

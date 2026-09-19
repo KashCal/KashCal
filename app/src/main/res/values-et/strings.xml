@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
     <string name="settings_suggest_titles_info">Uut sündmust nimetades pakub varem kasutatud pealkirju, nii et korduvad sündmused tekivad ühe puudutusega. Järjestatud selle järgi, kui sageli ja kui hiljuti oled neid kasutanud.</string>
     <string name="settings_week_numbers">Nädalanumbrid</string>
+    <string name="settings_multiday_in_allday_strip">Mitmepäevased sündmused kogu päeva ribal</string>
+    <string name="settings_multiday_in_allday_strip_info">Kuva ajaga sündmused, mis kestavad üle ühe päeva, kogu päeva ribal nädalavaate ülaosas, mitte ajagraafikus. Lülita välja, et hoida neid iga päev ajagraafikus.</string>
     <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
     <string name="settings_widget_event_limit">Vidina sündmuste limiit</string>
     <string name="settings_widget_event_limit_hint">Sündmuste maksimum päevas vidinates</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
     <string name="settings_suggest_titles_info">Kai įvardijate naują įvykį, siūlyti anksčiau naudotus pavadinimus, kad pasikartojantys įvykiai būtų sukuriami vienu palietimu. Rikiuojama pagal tai, kaip dažnai ir kaip neseniai juos naudojote.</string>
     <string name="settings_week_numbers">Savaitės numeriai</string>
+    <string name="settings_multiday_in_allday_strip">Kelių dienų įvykiai visos dienos juostoje</string>
+    <string name="settings_multiday_in_allday_strip_info">Rodyti daugiau nei vieną dieną trunkančius įvykius su laiku visos dienos juostoje savaitės rodinio viršuje, o ne laiko tinklelyje. Išjunkite, kad jie liktų laiko tinklelyje kiekvieną dieną.</string>
     <string name="settings_show_declined">Rodyti atmestus įvykius</string>
     <string name="settings_widget_event_limit">Valdiklio įvykių limitas</string>
     <string name="settings_widget_event_limit_hint">Daugiausiai įvykių per dieną valdikliuose</string>

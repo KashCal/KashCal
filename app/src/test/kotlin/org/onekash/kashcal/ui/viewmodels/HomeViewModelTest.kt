@@ -250,6 +250,10 @@ class HomeViewModelTest {
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
+        // weekEvents combines timeGridRange with this flow, so the relaxed mock's empty
+        // flow would otherwise block weekEvents from ever emitting.
+        every { dataStore.showMultiDayTimedInAllDayStrip } returns flowOf(true)
+
         // Week-view scroll restore: default to the never-saved sentinel so initializeAsync's
         // .first() read doesn't hang/throw on the relaxed mock, and existing tests are unaffected.
         every { dataStore.weekViewScrollMinutes } returns flowOf(-1)

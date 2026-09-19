@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Предложувај наслови на настани</string>
     <string name="settings_suggest_titles_info">Додека именувате нов настан, предлага наслови што сте ги користеле претходно, така што повторливите настани се со едно допирање. Рангирани според тоа колку често и колку неодамна сте ги користеле.</string>
     <string name="settings_week_numbers">Броеви на недели</string>
+    <string name="settings_multiday_in_allday_strip">Повеќедневни настани во лентата за цел ден</string>
+    <string name="settings_multiday_in_allday_strip_info">Прикажи настани со време што траат подолго од еден ден во лентата за цел ден на врвот на неделниот приказ, наместо во временската мрежа. Исклучете за да ги задржите во временската мрежа секој ден.</string>
     <string name="settings_show_declined">Прикажи одбиени настани</string>
     <string name="settings_widget_event_limit">Ограничување на настани за виџет</string>
     <string name="settings_widget_event_limit_hint">Најмногу настани прикажани дневно во виџетите</string>

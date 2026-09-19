@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Mol tiotalan thachartasan</string>
     <string name="settings_suggest_titles_info">Nuair a bheir thu ainm air tachartas ùr, molaidh e tiotalan a chleig thu roimhe, gus am bi tachartasan a-rithist aig aon bhruthadh. Air an òrdachadh a rèir cho tric agus cho o chionn ghoirid \'s a chleachd thu iad.</string>
     <string name="settings_week_numbers">Àireamhan Seachdaine</string>
+    <string name="settings_multiday_in_allday_strip">Tachartasan ioma-latha san stiall latha shlàin</string>
+    <string name="settings_multiday_in_allday_strip_info">Seall tachartasan le àm a mhaireas barrachd air aon latha san stiall latha shlàin aig mullach an t-seallaidh seachdaine, seach anns a\' ghriod ùine. Cuir dheth gus an cumail sa ghriod ùine gach latha.</string>
     <string name="settings_show_declined">Seall tachartasan a dhiùltadh</string>
     <string name="settings_widget_event_limit">Crìoch Thachartasan Widget</string>
     <string name="settings_widget_event_limit_hint">An àireamh as motha de thachartasan gach latha ann an widgets</string>

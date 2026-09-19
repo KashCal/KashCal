@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">ইভেন্টের শিরোনাম প্রস্তাব করুন</string>
     <string name="settings_suggest_titles_info">আপনি যখন নতুন ইভেন্টের নাম দেন, তখন আগে ব্যবহার করা শিরোনামগুলি প্রস্তাব করে, যাতে পুনরাবৃত্ত ইভেন্ট এক ট্যাপেই তৈরি হয়. আপনি সেগুলি কত ঘন ঘন ও কত সম্প্রতি ব্যবহার করেছেন তার ভিত্তিতে ক্রম করা হয়.</string>
     <string name="settings_week_numbers">সপ্তাহ নম্বর</string>
+    <string name="settings_multiday_in_allday_strip">সর্বদিন স্ট্রিপে বহু-দিনের ইভেন্ট</string>
+    <string name="settings_multiday_in_allday_strip_info">একাধিক দিন ধরে চলা সময়-নির্ধারিত ইভেন্টগুলি সাপ্তাহিক দৃশ্যের শীর্ষে সর্বদিন স্ট্রিপে দেখান, সময় গ্রিডের পরিবর্তে। প্রতিদিন সেগুলিকে সময় গ্রিডে রাখতে বন্ধ করুন।</string>
     <string name="settings_show_declined">প্রত্যাখ্যাত ইভেন্ট দেখান</string>
     <string name="settings_widget_event_limit">উইজেট ইভেন্ট সীমা</string>
     <string name="settings_widget_event_limit_hint">উইজেটে প্রতিদিন দেখানো সর্বাধিক ইভেন্ট</string>

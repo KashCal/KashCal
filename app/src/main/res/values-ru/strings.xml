@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Предлагать названия событий</string>
     <string name="settings_suggest_titles_info">При вводе названия нового события предлагать ранее использованные названия, чтобы повторяющиеся события создавались одним касанием. Сортируются по частоте и давности использования.</string>
     <string name="settings_week_numbers">Номера недель</string>
+    <string name="settings_multiday_in_allday_strip">Многодневные события в полосе на весь день</string>
+    <string name="settings_multiday_in_allday_strip_info">Показывать события со временем, длящиеся более одного дня, в полосе на весь день в верхней части недельного вида, вместо временной сетки. Отключите, чтобы они оставались во временной сетке каждый день.</string>
     <string name="settings_show_declined">Показывать отклонённые события</string>
     <string name="settings_widget_event_limit">Лимит событий в виджете</string>
     <string name="settings_widget_event_limit_hint">Максимум событий в день в виджетах</string>

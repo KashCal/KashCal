@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">நிகழ்வு தலைப்புகளை பரிந்துரை</string>
     <string name="settings_suggest_titles_info">நீங்கள் புதிய நிகழ்வுக்குப் பெயரிடும்போது, முன்பு பயன்படுத்திய தலைப்புகளைப் பரிந்துரைக்கிறது, இதனால் மீண்டும் வரும் நிகழ்வுகள் ஒரே தட்டில் உருவாகும். நீங்கள் அவற்றை எவ்வளவு அடிக்கடி, எவ்வளவு சமீபத்தில் பயன்படுத்தினீர்கள் என்பதன் அடிப்படையில் தரவரிசைப்படுத்தப்படும்.</string>
     <string name="settings_week_numbers">வார எண்கள்</string>
+    <string name="settings_multiday_in_allday_strip">முழு நாள் பட்டையில் பல-நாள் நிகழ்வுகள்</string>
+    <string name="settings_multiday_in_allday_strip_info">ஒரு நாளுக்கு மேல் நீடிக்கும் நேரம் குறிக்கப்பட்ட நிகழ்வுகளை நேர கட்டத்திற்குப் பதிலாக வார காட்சியின் மேலே உள்ள முழு நாள் பட்டையில் காட்டு. ஒவ்வொரு நாளும் அவற்றை நேர கட்டத்தில் வைத்திருக்க அணைக்கவும்.</string>
     <string name="settings_show_declined">மறுக்கப்பட்ட நிகழ்வுகளைக் காட்டு</string>
     <string name="settings_widget_event_limit">விட்ஜெட் நிகழ்வு வரம்பு</string>
     <string name="settings_widget_event_limit_hint">விட்ஜெட்டில் ஒரு நாளைக்கு காட்டப்படும் அதிகபட்ச நிகழ்வுகள்</string>

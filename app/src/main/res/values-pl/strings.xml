@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Sugeruj tytuły wydarzeń</string>
     <string name="settings_suggest_titles_info">Gdy nazywasz nowe wydarzenie, proponuje wcześniej używane tytuły, więc powtarzające się wydarzenia to jedno dotknięcie. Uszeregowane według tego, jak często i jak niedawno ich używałeś.</string>
     <string name="settings_week_numbers">Numery tygodni</string>
+    <string name="settings_multiday_in_allday_strip">Wielodniowe wydarzenia na pasku całodniowym</string>
+    <string name="settings_multiday_in_allday_strip_info">Pokazuj wydarzenia z godziną trwające dłużej niż jeden dzień na pasku całodniowym u góry widoku tygodnia, zamiast w siatce godzin. Wyłącz, aby pozostawały w siatce godzin każdego dnia.</string>
     <string name="settings_show_declined">Pokaż odrzucone wydarzenia</string>
     <string name="settings_widget_event_limit">Limit wydarzeń widgetu</string>
     <string name="settings_widget_event_limit_hint">Maksymalna liczba wydarzeń na dzień w widżetach</string>

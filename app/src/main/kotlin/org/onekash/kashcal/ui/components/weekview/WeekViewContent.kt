@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -75,6 +77,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -225,9 +230,7 @@ fun WeekViewContent(
         groupEventsByDate(timedEvents.toList())
     }
 
-    val allDayEventsByDate = remember(allDayEvents) {
-        groupEventsByDate(allDayEvents.toList())
-    }
+    val allDayEventsList = remember(allDayEvents) { allDayEvents.toList() }
 
     // All timed events go directly to the grid (full 24h range, no overflow separation)
     val normalEventsByDate = timedEventsByDate
@@ -258,7 +261,7 @@ fun WeekViewContent(
             UnifiedTimeGrid(
                 pagerState = pagerState,
                 normalEventsByDate = normalEventsByDate,
-                allDayEventsByDate = allDayEventsByDate,
+                allDayEvents = allDayEventsList,
                 startHour = startHour,
                 endHour = endHour,
                 totalHours = totalHours,
@@ -305,7 +308,7 @@ fun WeekViewContent(
 private fun UnifiedTimeGrid(
     pagerState: PagerState,
     normalEventsByDate: Map<LocalDate, List<DisplayEvent>>,
-    allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    allDayEvents: List<DisplayEvent>,
     startHour: Int = WeekViewUtils.START_HOUR,
     endHour: Int = WeekViewUtils.END_HOUR,
     totalHours: Int = WeekViewUtils.TOTAL_HOURS,
@@ -479,11 +482,12 @@ private fun UnifiedTimeGrid(
         // (midnight onward) are never hidden behind it.
         AllDayEventsPagerRow(
             visibleDates = visibleDates,
-            allDayEventsByDate = allDayEventsByDate,
+            allDayEvents = allDayEvents,
             timeColumnWidth = timeColumnWidth,
             allDayRowsExpanded = allDayRowsExpanded,
             onAllDayRowsToggle = onAllDayRowsToggle,
             showEventEmojis = showEventEmojis,
+            timePattern = timePattern,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -990,40 +994,65 @@ private fun DayHeaderCell(
 /**
  * All-day events row with pager synchronization.
  *
- * Collapsed (the default) shows one all-day event per day plus a "+N more" badge —
- * the historical behavior. When [allDayRowsExpanded] is true each day fills up to
- * [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED] rows adaptively. A chevron on the fixed
+ * Collapsed (the default) shows at most one row per day; expanded fills up to
+ * [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED] rows adaptively. A day with events that
+ * don't fit in its visible rows gets a "+N" badge overlaid on that column (see
+ * [computeAllDayStripRender]) rather than a row of its own, so it's never lost even
+ * when every row is taken by a spanning multi-day bar. A chevron on the fixed
  * "All day" label toggles the two states; it is hidden when no visible day has more
  * than one all-day event (nothing to expand).
  */
 @Composable
 private fun AllDayEventsPagerRow(
     visibleDates: List<LocalDate>,
-    allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    allDayEvents: List<DisplayEvent>,
     timeColumnWidth: Dp,
     allDayRowsExpanded: Boolean,
     onAllDayRowsToggle: () -> Unit,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Check if any visible day has all-day events
-    val hasAnyEvents = visibleDates.any { date ->
-        allDayEventsByDate[date]?.isNotEmpty() == true
+    val visibleDayCodes = remember(visibleDates) {
+        visibleDates.map { DayPagerUtils.localDateToDayCode(it) }
     }
 
+    // Per-day raw event counts (each multi-day event counts once per day it
+    // touches) — used only to decide chevron visibility and whether the strip
+    // renders at all, independent of how spans are actually laid out into rows.
+    val perDayCounts = remember(visibleDayCodes, allDayEvents) {
+        visibleDayCodes.map { dayCode ->
+            allDayEvents.count { it.startDay <= dayCode && it.endDay >= dayCode }
+        }
+    }
+
+    val hasAnyEvents = perDayCounts.any { it > 0 }
     if (!hasAnyEvents) return
 
     // Chevron visibility: is there any day with more than one all-day event to
     // expand? Delegated to the unit-tested WeekViewUtils helper (single source of
-    // truth) and memoized so the per-day count pass only re-runs when inputs change.
-    val canToggle by remember(visibleDates, allDayEventsByDate) {
-        derivedStateOf {
-            WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(
-                visibleDates.map { allDayEventsByDate[it]?.size ?: 0 }
-            )
-        }
+    // truth).
+    val canToggle = remember(perDayCounts) {
+        WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(perDayCounts)
+    }
+
+    val maxRows = if (allDayRowsExpanded) {
+        WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED
+    } else {
+        WeekViewUtils.MAX_ALLDAY_ROWS_COLLAPSED
+    }
+
+    // Shared across every chip in the strip instead of one TextMeasurer per chip.
+    val textMeasurer = rememberTextMeasurer()
+
+    // Spanning-bar render grid: multi-day events occupy one lane row across every
+    // column they cover (rendered once, not duplicated per day); each column's
+    // remaining rows fill with that day's own single-day events, with any
+    // remainder collapsed into a "+N" badge.
+    val render = remember(visibleDayCodes, allDayEvents, maxRows) {
+        computeAllDayStripRender(visibleDayCodes, allDayEvents, maxRows)
     }
 
     // Chevron points up when expanded (tap to collapse), down when collapsed.
@@ -1100,81 +1129,114 @@ private fun AllDayEventsPagerRow(
             }
         }
 
-        // All-day events - one column per visible day (up to 7 in WEEK mode),
-        // derived from visibleDates. No HorizontalPager here to avoid gesture
-        // conflicts with the main time grid.
-        Row(modifier = Modifier.weight(1f)) {
-            visibleDates.forEach { date ->
-                val dayEvents = allDayEventsByDate[date].orEmpty()
-
-                CompactEventCell(
-                    events = dayEvents,
-                    expanded = allDayRowsExpanded,
-                    showEventEmojis = showEventEmojis,
-                    onEventClick = onEventClick,
-                    onOverflowClick = onOverflowClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 2.dp)
-                )
+        // All-day events grid: one row per lane, one column per visible day (up
+        // to 7 in WEEK mode). A multi-day event occupies a single wide cell
+        // spanning every column it covers (rendered once, not duplicated per
+        // day); single-day events fill the remaining per-column slots. No
+        // HorizontalPager here to avoid gesture conflicts with the main time grid.
+        //
+        // A "+N" badge is overlaid per column (see the second Row below) rather
+        // than claiming a grid row: a column can run out of free rows entirely
+        // (every row taken by a spanning bar), so a row-based badge slot could
+        // itself get squeezed out and silently drop events with no affordance.
+        Box(modifier = Modifier.weight(1f)) {
+            Column {
+                render.slots.forEach { row ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        var col = 0
+                        while (col < row.size) {
+                            when (val slot = row[col]) {
+                                is AllDaySlot.BarSegment -> {
+                                    val span = slot.span
+                                    val width = span.endCol - span.startCol + 1
+                                    CompactEventChip(
+                                        displayEvent = span.displayEvent,
+                                        onClick = { onEventClick(span.displayEvent) },
+                                        textMeasurer = textMeasurer,
+                                        showEventEmojis = showEventEmojis,
+                                        // The start/end time is only meaningful on the segment that
+                                        // actually contains that day — a leftFlush segment continues
+                                        // from before the visible window, and a rightFlush segment
+                                        // continues past the end of it.
+                                        showStartTime = !span.displayEvent.isAllDay && !span.leftFlush,
+                                        showEndTime = !span.displayEvent.isAllDay && !span.rightFlush,
+                                        timePattern = timePattern,
+                                        shape = RoundedCornerShape(
+                                            topStart = if (span.leftFlush) 0.dp else 4.dp,
+                                            bottomStart = if (span.leftFlush) 0.dp else 4.dp,
+                                            topEnd = if (span.rightFlush) 0.dp else 4.dp,
+                                            bottomEnd = if (span.rightFlush) 0.dp else 4.dp,
+                                        ),
+                                        modifier = Modifier
+                                            .weight(width.toFloat())
+                                            .padding(horizontal = 2.dp)
+                                    )
+                                    col = span.endCol + 1
+                                }
+                                is AllDaySlot.CellEvent -> {
+                                    CompactEventChip(
+                                        displayEvent = slot.event,
+                                        onClick = { onEventClick(slot.event) },
+                                        textMeasurer = textMeasurer,
+                                        showEventEmojis = showEventEmojis,
+                                        // Only show the time when this cell is the event's actual
+                                        // start day (a multi-day event that spilled out of the
+                                        // spanning lanes is duplicated per day it touches).
+                                        showStartTime = !slot.event.isAllDay && slot.event.startDay == visibleDayCodes[col],
+                                        timePattern = timePattern,
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 2.dp)
+                                    )
+                                    col++
+                                }
+                                AllDaySlot.Empty -> {
+                                    Box(modifier = Modifier.weight(1f).padding(horizontal = 2.dp))
+                                    col++
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        }
-    }
-}
 
-
-/**
- * Compact event cell for all-day rows: renders the visible event chips, then a
- * "+N more" badge for any remainder (which opens the overflow sheet). Collapsed
- * ([expanded] = false) shows one row — the historical behavior; expanded fills up
- * to [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED]. Row counts come from the shared
- * [WeekViewUtils] helpers so the unit-tested logic is the single source of truth.
- */
-@Composable
-private fun CompactEventCell(
-    events: List<DisplayEvent>,
-    expanded: Boolean,
-    showEventEmojis: Boolean = true,
-    onEventClick: (DisplayEvent) -> Unit,
-    onOverflowClick: (List<DisplayEvent>) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (events.isEmpty()) {
-        Box(modifier = modifier)
-        return
-    }
-
-    val visibleRows = WeekViewUtils.allDayVisibleRows(events.size, expanded)
-    val overflowCount = WeekViewUtils.allDayOverflowCount(events.size, expanded)
-
-    Column(modifier = modifier) {
-        events.take(visibleRows).forEach { event ->
-            CompactEventChip(
-                displayEvent = event,
-                onClick = { onEventClick(event) },
-                showEventEmojis = showEventEmojis
-            )
-        }
-
-        if (overflowCount > 0) {
-            // Compact "+N" badge (no "more" text) to fit the narrow all-day
-            // columns. The glyph is small, so the clickable Box carries a
-            // larger min size than the text would occupy, giving a comfortable
-            // tap target to open the overflow sheet.
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .clickable { onOverflowClick(events) }
-                    .defaultMinSize(minWidth = 32.dp, minHeight = 24.dp)
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(R.string.status_more_events_compact, overflowCount),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+            // Overflow badges, one per column, overlaid at the bottom-end corner
+            // regardless of what that column's rows are showing (a bar, a cell
+            // event, or nothing at all).
+            Row(modifier = Modifier.matchParentSize()) {
+                for (col in visibleDayCodes.indices) {
+                    val overflow = render.overflowByColumn.getOrNull(col)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        if (overflow != null) {
+                            // Compact "+N" badge (no "more" text) to fit the narrow
+                            // all-day columns. The glyph is small, so the clickable
+                            // Box carries a larger min size than the text would
+                            // occupy, giving a comfortable tap target.
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 3.dp, vertical = 1.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .clickable { onOverflowClick(overflow.events) }
+                                    .defaultMinSize(minWidth = 24.dp, minHeight = 18.dp)
+                                    .padding(horizontal = 3.dp, vertical = 1.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.status_more_events_compact, overflow.count),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -1187,7 +1249,12 @@ private fun CompactEventCell(
 private fun CompactEventChip(
     displayEvent: DisplayEvent,
     onClick: () -> Unit,
+    textMeasurer: TextMeasurer,
     showEventEmojis: Boolean = true,
+    showStartTime: Boolean = false,
+    showEndTime: Boolean = false,
+    timePattern: String = "h:mma",
+    shape: RoundedCornerShape = RoundedCornerShape(4.dp),
     modifier: Modifier = Modifier
 ) {
     val color = displayEvent.eventColor ?: displayEvent.calendarColor
@@ -1208,31 +1275,126 @@ private fun CompactEventChip(
     }
 
     val stateLabel = eventStateDescription(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled)
-    Row(
+    val titleStyle = MaterialTheme.typography.labelSmall
+    val timeText = if (showStartTime) {
+        ", ${WeekViewUtils.formatTime(displayEvent.startTs, timePattern)}"
+    } else {
+        null
+    }
+    // Shown at the bar's right cap (see the Spacer-pushed Text below), distinct from
+    // timeText's start time at the left — a bar with no end time reads ambiguously,
+    // e.g. "Sample event, 6:15am" alone doesn't say when it ends.
+    val endTimeText = if (showEndTime) {
+        WeekViewUtils.formatTime(displayEvent.endTs, timePattern)
+    } else {
+        null
+    }
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp)
             .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled))
             .then(if (stateLabel != null) Modifier.semantics { stateDescription = stateLabel } else Modifier)
-            .clip(RoundedCornerShape(4.dp))
+            .clip(shape)
             .then(
-                if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
+                if (isFree) Modifier.border(2.dp, calColor, shape)
                 else Modifier
             )
             .background(backgroundColor)
             .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
-        Text(
-            text = displayText,
-            style = MaterialTheme.typography.labelSmall,
-            color = textColor,
-            textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        // TextOverflow.Ellipsis can size its box to the full available width
+        // even though the painted glyphs stop short of it, which leaves a
+        // visible gap before sibling text placed right after. Truncating the
+        // title ourselves to the exact pixel budget avoids relying on that
+        // box-sizing behavior, so it sits flush against the time label.
+        val timeWidthPx = remember(timeText, titleStyle) {
+            timeText?.let { measureWidthPx(textMeasurer, it, titleStyle) } ?: 0
+        }
+        val endTimeWidthPx = remember(endTimeText, titleStyle) {
+            // Leading gap ("  ") so the right-capped time never touches the title.
+            endTimeText?.let { measureWidthPx(textMeasurer, "  $it", titleStyle) } ?: 0
+        }
+        val availableTitleWidthPx = (constraints.maxWidth - timeWidthPx - endTimeWidthPx).coerceAtLeast(0)
+        val truncatedTitle = remember(displayText, availableTitleWidthPx, titleStyle) {
+            truncateWithEllipsis(textMeasurer, displayText, titleStyle, availableTitleWidthPx)
+        }
+        // When the chip is too narrow for the title at all, truncatedTitle is empty —
+        // drop timeText's leading ", " separator so the chip doesn't paint a dangling
+        // comma before the time with no title before it.
+        val displayTimeText = if (truncatedTitle.isEmpty()) timeText?.removePrefix(", ") else timeText
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = truncatedTitle,
+                style = titleStyle,
+                color = textColor,
+                textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
+                maxLines = 1,
+                overflow = TextOverflow.Clip
+            )
+            if (displayTimeText != null) {
+                Text(
+                    text = displayTimeText,
+                    style = titleStyle,
+                    color = textColor,
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip
+                )
+            }
+            if (endTimeText != null) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = endTimeText,
+                    style = titleStyle,
+                    color = textColor,
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe, displayEvent.isCancelled),
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip
+                )
+            }
+        }
     }
+}
+
+private fun measureWidthPx(measurer: TextMeasurer, text: String, style: TextStyle): Int =
+    measurer.measure(text = text, style = style, maxLines = 1).size.width
+
+/**
+ * Truncates [text] to fit within [maxWidthPx], appending an ellipsis if it
+ * doesn't already fit. Measures with [measurer]/[style] directly instead of
+ * using Text's built-in overflow handling, so the result's rendered width is
+ * exact rather than settling for "some width no larger than the max".
+ */
+private fun truncateWithEllipsis(
+    measurer: TextMeasurer,
+    text: String,
+    style: TextStyle,
+    maxWidthPx: Int
+): String {
+    if (maxWidthPx <= 0) return ""
+    if (measureWidthPx(measurer, text, style) <= maxWidthPx) return text
+
+    val ellipsis = "…"
+    val budget = maxWidthPx - measureWidthPx(measurer, ellipsis, style)
+    if (budget <= 0) return ellipsis
+
+    var lo = 0
+    var hi = text.length
+    while (lo < hi) {
+        val mid = (lo + hi + 1) / 2
+        val candidate = safeSubstring(text, mid)
+        if (measureWidthPx(measurer, candidate, style) <= budget) lo = mid else hi = mid - 1
+    }
+    return safeSubstring(text, lo) + ellipsis
+}
+
+private fun safeSubstring(text: String, length: Int): String = when {
+    length >= text.length -> text
+    length <= 0 -> ""
+    Character.isHighSurrogate(text[length - 1]) -> text.substring(0, length - 1)
+    else -> text.substring(0, length)
 }
 
 /**

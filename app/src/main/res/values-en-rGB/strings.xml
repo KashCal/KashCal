@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Suggest event titles</string>
     <string name="settings_suggest_titles_info">As you name a new event, suggest titles you\'ve used before, so repeat events are one tap. Ranked by how often and how recently you\'ve used them.</string>
     <string name="settings_week_numbers">Week Numbers</string>
+    <string name="settings_multiday_in_allday_strip">Multi-day events in all-day strip</string>
+    <string name="settings_multiday_in_allday_strip_info">Show timed events that span more than one day in the all-day strip at the top of the week view, instead of in the timed grid. Turn off to keep them in the timed grid on each day.</string>
     <string name="settings_show_declined">Show declined events</string>
     <string name="settings_widget_event_limit">Widget Event Limit</string>
     <string name="settings_widget_event_limit_hint">Most events shown per day in widgets</string>

@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
     <string name="settings_suggest_titles_info">Terwyl jy \'n nuwe gebeurtenis benoem, stel titels voor wat jy voorheen gebruik het, sodat herhalende gebeurtenisse een tik is. Gerangskik volgens hoe gereeld en hoe onlangs jy hulle gebruik het.</string>
     <string name="settings_week_numbers">Weeknommers</string>
+    <string name="settings_multiday_in_allday_strip">Veeldaagse afsprake in heeldag-strook</string>
+    <string name="settings_multiday_in_allday_strip_info">Wys afsprake met tye wat oor meer as een dag strek in die heeldag-strook bo-aan die weekaansig, in plaas van in die tydrooster. Skakel af om hulle in die tydrooster op elke dag te hou.</string>
     <string name="settings_show_declined">Wys afgewysde gebeurtenisse</string>
     <string name="settings_widget_event_limit">Widget-gebeurtenislimiet</string>
     <string name="settings_widget_event_limit_hint">Meeste gebeurtenisse per dag in legstukke gewys</string>

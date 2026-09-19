@@ -574,6 +574,8 @@
     <string name="settings_suggest_titles">Cadangkan tajuk acara</string>
     <string name="settings_suggest_titles_info">Semasa anda menamakan acara baharu, cadangkan tajuk yang pernah anda guna sebelum ini, supaya acara berulang hanya perlu satu ketikan. Diberi kedudukan mengikut kekerapan dan seberapa baharu anda menggunakannya.</string>
     <string name="settings_week_numbers">Nombor Minggu</string>
+    <string name="settings_multiday_in_allday_strip">Acara berbilang hari dalam jalur sepanjang hari</string>
+    <string name="settings_multiday_in_allday_strip_info">Tunjukkan acara berwaktu yang berlangsung lebih daripada satu hari dalam jalur sepanjang hari di bahagian atas paparan minggu, dan bukannya dalam grid masa. Matikan untuk mengekalkannya dalam grid masa pada setiap hari.</string>
     <string name="settings_show_declined">Tunjukkan acara ditolak</string>
     <string name="settings_widget_event_limit">Had Acara Widget</string>
     <string name="settings_widget_event_limit_hint">Bilangan acara maksimum dipaparkan sehari dalam widget</string>
