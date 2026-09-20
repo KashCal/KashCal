@@ -57,7 +57,7 @@ Family stuff on iCloud. Holidays from some website. Birthdays buried in your con
 
 - **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
 - **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, FastMail, Zoho, SOGo, and more. Native sync, no middleware.
-- **Device calendar**: See events from your phone's built-in calendar alongside everything else.
+- **Device calendar**: See and edit events from your phone's built-in calendar alongside everything else.
 - **Holidays & schedules**: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
 - **Contacts**: Two-way CardDAV contact sync, including photos.
 - **Birthdays**: Pulls from your contacts automatically.
@@ -112,6 +112,12 @@ Built something that pairs with KashCal? [Open an issue](https://github.com/Kash
 | [SOGo](https://github.com/Alinto/sogo) | ✓ | [@mdonz](https://github.com/mdonz) |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!
+
+## Device Calendar
+
+KashCal reads and edits your phone's built-in system calendar, so any app that syncs there works too. Google Calendar, Outlook (with Android calendar sync on), an end-to-end-encrypted service like [SilentSuite](https://github.com/silent-suite/silentsuite): their events show up in KashCal, and you can create, edit, and delete them. KashCal writes to the device calendar, and each app syncs its own changes back to its server.
+
+SilentSuite two-way sync was tested by [@silent-suite](https://github.com/silent-suite). Using another app that syncs to your device calendar? [Let us know](https://github.com/KashCal/KashCal/issues)!
 
 ---
 
