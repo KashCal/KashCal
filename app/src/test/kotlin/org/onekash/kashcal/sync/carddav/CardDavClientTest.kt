@@ -76,6 +76,25 @@ class CardDavClientTest {
         assertEquals("/.well-known/carddav", request.path)
     }
 
+    @Test
+    fun `discoverWellKnown adopts the context path a 302 redirect points to`() = runTest {
+        // Some Contacts servers back their CardDAV with Radicale and answer
+        // /.well-known/carddav with a 302 to /carddav/, which then challenges for
+        // auth. RFC 6764 §5 makes well-known a redirect stub whose target IS the
+        // service endpoint, so the client must adopt the redirected context path as
+        // the base — not the well-known stub and not the bare host root — or the
+        // following principal PROPFIND lands nowhere and the login syncs zero
+        // contacts. A 401 at the target still counts: it proves the collection is
+        // there and gated, which is exactly what a fresh unauthenticated probe sees.
+        server.enqueue(MockResponse().setResponseCode(302).setHeader("Location", "/carddav/"))
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        val base = assertSuccess(client.discoverWellKnown(server.url("/").toString()))
+
+        assertTrue("adopts the redirected context path, got $base", base.endsWith("/carddav/"))
+        assertFalse("never keeps the well-known stub as the base", base.contains("/.well-known/"))
+    }
+
     // ========== Discovery: principal (RFC 5397) ==========
 
     @Test

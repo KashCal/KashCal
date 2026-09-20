@@ -1,0 +1,3 @@
+• New events open full-screen with the keyboard ready to type
+• New setting to show multi-day timed events in the week all-day strip (#367)
+• Fixed the month home-screen widget on dense months (#373)

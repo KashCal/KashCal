@@ -172,7 +172,7 @@ fun CalendarDrawer(
             // ===== Calendars Section =====
             if (regularGroups.isNotEmpty()) {
                 item(key = "cal_divider") {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 }
 
                 item(key = "cal_header") {
@@ -182,7 +182,7 @@ fun CalendarDrawer(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
-                            .padding(horizontal = 28.dp, vertical = 8.dp)
+                            .padding(horizontal = 28.dp, vertical = 6.dp)
                             .semantics { heading() }
                     )
                 }
@@ -197,8 +197,7 @@ fun CalendarDrawer(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 28.dp, vertical = 4.dp)
-                                .padding(top = 4.dp)
+                                .padding(horizontal = 28.dp, vertical = 2.dp)
                         )
                     }
 
@@ -226,8 +225,7 @@ fun CalendarDrawer(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
-                            .padding(horizontal = 28.dp, vertical = 8.dp)
-                            .padding(top = 4.dp)
+                            .padding(horizontal = 28.dp, vertical = 6.dp)
                             .semantics { heading() }
                     )
                 }
@@ -251,7 +249,7 @@ fun CalendarDrawer(
             // ===== Device Calendars Section =====
             if (deviceCalendarsEnabled && enabledDeviceCalendars.isNotEmpty()) {
                 item(key = "device_divider") {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 }
 
                 item(key = "device_header") {
@@ -261,7 +259,7 @@ fun CalendarDrawer(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
-                            .padding(horizontal = 28.dp, vertical = 8.dp)
+                            .padding(horizontal = 28.dp, vertical = 6.dp)
                             .semantics { heading() }
                     )
                 }
@@ -275,8 +273,7 @@ fun CalendarDrawer(
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 28.dp, vertical = 4.dp)
-                                .padding(top = 4.dp)
+                                .padding(horizontal = 28.dp, vertical = 2.dp)
                         )
                     }
 
@@ -358,7 +355,7 @@ fun CalendarDrawer(
 }
 
 @Composable
-private fun CalendarCheckboxRow(
+internal fun CalendarCheckboxRow(
     name: String,
     color: Color,
     checked: Boolean,
@@ -369,7 +366,7 @@ private fun CalendarCheckboxRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

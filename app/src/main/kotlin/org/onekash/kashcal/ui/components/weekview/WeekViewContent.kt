@@ -1139,7 +1139,19 @@ private fun AllDayEventsPagerRow(
         // than claiming a grid row: a column can run out of free rows entirely
         // (every row taken by a spanning bar), so a row-based badge slot could
         // itself get squeezed out and silently drop events with no affordance.
-        Box(modifier = Modifier.weight(1f)) {
+        // Only when a column actually overflows do we floor this box to the label's
+        // 48dp tap-target height, so the bottom-anchored badge overlay (which
+        // matchParentSize's this box) reaches the strip's real bottom instead of
+        // hugging short row content and stranding the badge mid-strip over a bar's
+        // end-time. It's a MINIMUM applied conditionally, never fillMaxHeight: the
+        // box still wraps its rows and never expands to the parent's full height, so
+        // it cannot starve the scrollable timed grid; and days with no overflow keep
+        // the strip tight to its content rather than always reserving 48dp.
+        val hasOverflow = render.overflowByColumn.any { it != null }
+        Box(
+            modifier = Modifier.weight(1f)
+                .then(if (hasOverflow) Modifier.heightIn(min = 48.dp) else Modifier)
+        ) {
             Column {
                 render.slots.forEach { row ->
                     Row(modifier = Modifier.fillMaxWidth()) {

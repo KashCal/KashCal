@@ -208,6 +208,21 @@ android {
                     it.maxParallelForks =
                         (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
                 }
+
+                // Forward the screenshot-capture mode from a Gradle -P property into
+                // the test-fork JVM (a daemon-side -D does not reach the fork). When
+                // none is present, screenshot capture is a no-op, so the normal test
+                // sweep stays fast. Record: -Proborazzi.test.record=true; verify (the
+                // CI gate): -Proborazzi.test.verify=true.
+                listOf(
+                    "roborazzi.test.record",
+                    "roborazzi.test.verify",
+                    "roborazzi.test.compare",
+                ).forEach { key ->
+                    if (project.hasProperty(key)) {
+                        it.systemProperty(key, project.property(key).toString())
+                    }
+                }
             }
         }
     }
@@ -317,6 +332,12 @@ dependencies {
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.ui.test.junit4)
     testImplementation(libs.androidx.ui.test.manifest)
+
+    // Roborazzi screenshot-testing spike: JVM-side (Robolectric native graphics)
+    // visual capture, no emulator/device. Libraries only — no Gradle plugin —
+    // to avoid coupling to the AGP variant API on this bleeding-edge toolchain.
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)

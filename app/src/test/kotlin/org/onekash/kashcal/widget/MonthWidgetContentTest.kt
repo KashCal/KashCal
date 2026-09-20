@@ -437,6 +437,123 @@ class MonthWidgetContentTest {
         assertEquals(false, isFirstBarSegmentInLane(row, 1))
     }
 
+    // ==================== estimateMonthWidgetViewUnits (adaptive row budget) ====================
+
+    private fun spanOf(startCol: Int, endCol: Int) = MonthWidgetSpan(
+        event = createWidgetEvent(), startCol = startCol, endCol = endCol, leftFlush = false, rightFlush = false
+    )
+
+    private fun weekOf(vararg rows: List<MonthWidgetSlot>) = MonthWidgetWeekRender(rows.toList())
+
+    @Test
+    fun `estimateMonthWidgetViewUnits is base chrome for an empty grid`() {
+        assertEquals(
+            VIEW_UNITS_CHROME_BASE,
+            estimateMonthWidgetViewUnits(emptyList(), showWeekNumbers = false, hasTodayInMonth = false)
+        )
+    }
+
+    @Test
+    fun `estimateMonthWidgetViewUnits adds per-week day cells, gutter, and today marker`() {
+        val oneEmptyWeek = listOf(weekOf()) // a week that renders no slot rows
+        val base = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = false, hasTodayInMonth = false)
+        assertEquals(VIEW_UNITS_CHROME_BASE + 7 * VIEW_UNITS_DAY_CELL, base)
+
+        val withGutter = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = true, hasTodayInMonth = false)
+        assertEquals(base + VIEW_UNITS_WEEK_GUTTER, withGutter)
+
+        val withToday = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = false, hasTodayInMonth = true)
+        assertEquals(base + VIEW_UNITS_TODAY_MARKER, withToday)
+    }
+
+    @Test
+    fun `estimateMonthWidgetViewUnits weights a bars-or-overflow mix above equal-count pills`() {
+        val pillsWeek = listOf(
+            weekOf(listOf(MonthWidgetSlot.CellEvent(createWidgetEvent()), MonthWidgetSlot.CellEvent(createWidgetEvent()), MonthWidgetSlot.CellEvent(createWidgetEvent())))
+        )
+        val mixWeek = listOf(
+            weekOf(listOf(MonthWidgetSlot.BarSegment(spanOf(0, 0)), MonthWidgetSlot.Overflow(2), MonthWidgetSlot.BarSegment(spanOf(2, 2))))
+        )
+        // Same element COUNT (3) and same chrome, but bars + overflow are the heavy elements —
+        // this is the property the crash hinges on (a mix overflows where plain pills do not).
+        val pills = estimateMonthWidgetViewUnits(pillsWeek, showWeekNumbers = false, hasTodayInMonth = false)
+        val mix = estimateMonthWidgetViewUnits(mixWeek, showWeekNumbers = false, hasTodayInMonth = false)
+        assertTrue("mix ($mix) must estimate higher than equal-count pills ($pills)", mix > pills)
+    }
+
+    @Test
+    fun `estimateMonthWidgetViewUnits counts a merged bar run once, not per column`() {
+        val span = spanOf(0, 1)
+        val mergedRun = listOf(weekOf(listOf(MonthWidgetSlot.BarSegment(span), MonthWidgetSlot.BarSegment(span))))
+        val twoDistinctBars = listOf(weekOf(listOf(MonthWidgetSlot.BarSegment(spanOf(0, 0)), MonthWidgetSlot.BarSegment(spanOf(1, 1)))))
+        val merged = estimateMonthWidgetViewUnits(mergedRun, showWeekNumbers = false, hasTodayInMonth = false)
+        val distinct = estimateMonthWidgetViewUnits(twoDistinctBars, showWeekNumbers = false, hasTodayInMonth = false)
+        // The merged run is one SpanBar; the two distinct spans are two — exactly one bar apart.
+        assertEquals(VIEW_UNITS_BAR, distinct - merged)
+    }
+
+    // ==================== chooseMonthWidgetRowCount (adaptive step-down) ====================
+
+    /** Week w occupies day codes [w*7+1 .. w*7+7] — synthetic, strictly increasing, layout-valid. */
+    private fun weekCodes(nWeeks: Int): List<List<Int>> = (0 until nWeeks).map { w -> (w * 7 + 1..w * 7 + 7).toList() }
+
+    private fun pillOn(code: Int, i: Int) =
+        createWidgetEvent().copy(eventId = code * 10L + i, occurrenceStartTs = i.toLong(), startDay = code, endDay = code)
+
+    /** A two-day bar starting at [startCode]; placed in both buckets it spans, as the repository does. */
+    private fun addBar(map: MutableMap<Int, MutableList<WidgetDataRepository.WidgetEvent>>, startCode: Int, id: Int) {
+        val bar = createWidgetEvent().copy(
+            eventId = 900_000L + id, occurrenceStartTs = id.toLong(), startDay = startCode, endDay = startCode + 1
+        )
+        map.getOrPut(startCode) { mutableListOf() }.add(bar)
+        map.getOrPut(startCode + 1) { mutableListOf() }.add(bar)
+    }
+
+    /** Every cell packed with [perDay] pills, plus optional two-day bars at cols 0/2/4 of each week. */
+    private fun densMonth(weeks: List<List<Int>>, perDay: Int, barsPerWeek: Boolean): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
+        val map = mutableMapOf<Int, MutableList<WidgetDataRepository.WidgetEvent>>()
+        weeks.forEach { codes ->
+            codes.forEach { c -> repeat(perDay) { i -> map.getOrPut(c) { mutableListOf() }.add(pillOn(c, i)) } }
+            if (barsPerWeek) listOf(0, 2, 4).forEachIndexed { k, sc -> addBar(map, codes[sc], codes.first() * 10 + k) }
+        }
+        return map.mapValues { it.value.toList() }
+    }
+
+    @Test
+    fun `chooseMonthWidgetRowCount keeps full height for a sparse month`() {
+        val weeks = weekCodes(6)
+        val sparse = mapOf(weeks[0][1] to listOf(pillOn(weeks[0][1], 0)), weeks[2][3] to listOf(pillOn(weeks[2][3], 0)))
+        assertEquals(3, chooseMonthWidgetRowCount(weeks, sparse, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows)
+    }
+
+    @Test
+    fun `chooseMonthWidgetRowCount steps a dense pills-plus-bars month down below full height`() {
+        val weeks = weekCodes(6)
+        val denseMix = densMonth(weeks, perDay = 3, barsPerWeek = true)
+        val chosen = chooseMonthWidgetRowCount(weeks, denseMix, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows
+        // The 3-row layout of this mix overflows the pool; the chooser must drop below 3 but still
+        // show at least one title row (dots is the last resort, not the first).
+        assertTrue("expected a reduced row count in 1..2, got $chosen", chosen in 1..2)
+    }
+
+    @Test
+    fun `chooseMonthWidgetRowCount pill-heavy full month keeps three rows`() {
+        val weeks = weekCodes(6)
+        val allPills = densMonth(weeks, perDay = 3, barsPerWeek = false)
+        // A fully pill-packed month is measured-safe at 3 rows — pills are the cheap element.
+        assertEquals(3, chooseMonthWidgetRowCount(weeks, allPills, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows)
+    }
+
+    @Test
+    fun `chooseMonthWidgetRowCount returns zero (dots) when nothing fits`() {
+        // A real month is at most 6 weeks and always fits >= 1 title row, so this exercises the
+        // defensive dots floor with an over-large grid whose fixed chrome alone exceeds the budget.
+        val hugeGrid = weekCodes(30)
+        val choice = chooseMonthWidgetRowCount(hugeGrid, emptyMap(), heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false)
+        assertEquals(0, choice.rows)
+        assertTrue("dots fallback should carry no layouts", choice.weekRenders.isEmpty())
+    }
+
     private fun createWidgetEvent(
         calendarColor: Int = 0xFF2196F3.toInt()
     ): WidgetDataRepository.WidgetEvent {

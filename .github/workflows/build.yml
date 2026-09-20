@@ -30,6 +30,27 @@ jobs:
     - name: Run unit tests
       run: ./gradlew testDebugUnitTest --no-daemon
 
+    # Visual-regression gate: renders covered UI on the JVM (Robolectric native
+    # graphics) and compares against committed goldens. Non-blocking for now
+    # (continue-on-error) until the first runs confirm this ubuntu-latest runner
+    # matches the goldens recorded on Linux x86_64 within the comparison
+    # threshold; flip to blocking once that cross-host delta is confirmed.
+    # cleanTestDebugUnitTest + --no-build-cache force the test task to actually
+    # execute (compile stays up-to-date) — otherwise Gradle could restore a
+    # cached result and the visual assertion would never run.
+    - name: Verify screenshots (visual regression)
+      id: screenshot_verify
+      run: ./gradlew cleanTestDebugUnitTest testDebugUnitTest --tests "*Screenshot*" -Proborazzi.test.verify=true --no-build-cache --no-daemon
+      continue-on-error: true
+
+    - name: Upload screenshot diffs
+      if: steps.screenshot_verify.outcome == 'failure'
+      uses: actions/upload-artifact@v4
+      with:
+        name: screenshot-diffs
+        path: app/build/outputs/roborazzi/
+        retention-days: 7
+
     - name: Upload test results
       if: failure()
       uses: actions/upload-artifact@v4

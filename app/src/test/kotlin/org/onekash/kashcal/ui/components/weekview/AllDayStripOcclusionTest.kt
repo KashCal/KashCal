@@ -91,4 +91,27 @@ class AllDayStripOcclusionTest {
         render(events)
         assertMidnightBelowStrip()
     }
+
+    @Test
+    fun all_day_strip_stays_bounded_and_does_not_starve_the_timed_grid() {
+        // Distinct from the occlusion checks above (which only assert midnight is
+        // not *behind* the strip): a fill-height modifier on the strip's day-column
+        // box let the non-weighted strip consume the whole screen height, starving
+        // the weighted, scrollable timed grid below it to zero px (blank screen, no
+        // scroll). Both midnight and the strip bottom then sit at the screen bottom,
+        // so the occlusion assertion still passed and missed it. Use an overflow
+        // scenario (a pile of all-day events -> "+N" badge) so the bottom-anchoring
+        // min-height is actually engaged, then guard the strip height directly: it
+        // must stay bounded to a couple of rows, not balloon toward the ~720dp
+        // viewport, which is what starvation looked like.
+        val events = (1..6).map { allDayDisplayEvent(id = it.toLong(), title = "AllDay $it", date = day) }
+        render(events)
+        val strip = composeTestRule.onNodeWithTag(TEST_TAG_ALL_DAY_STRIP).getUnclippedBoundsInRoot()
+        val stripHeight = strip.bottom - strip.top
+        assertTrue(
+            "All-day strip height ($stripHeight) must stay bounded to its content, " +
+                "not fill the screen and starve the timed grid",
+            stripHeight.value < 200f
+        )
+    }
 }

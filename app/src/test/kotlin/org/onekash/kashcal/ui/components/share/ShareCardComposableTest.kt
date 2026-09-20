@@ -43,19 +43,7 @@ class ShareCardComposableTest {
     fun renders_title_numeral_month_dow_for_regular_timed_event() {
         composeTestRule.setContent {
             MaterialTheme {
-                ShareCardComposable(
-                    title = "Brunch at Sam's",
-                    location = "Sam's Café · Mission St",
-                    timeRangeText = "11:30 AM – 1:00 PM",
-                    style = ShareCardStyle.Standard,
-                    dateChip = regularTimedDateChip,
-                    stripe = regularTimedStripe,
-                    stripeLabels = labels12h,
-                    isAllDay = false,
-                    isMultiDay = false,
-                    multiDayRangeText = null,
-                    attribution = "Made with KashCal",
-                )
+                ShareCardFixtures.StandardTimed()
             }
         }
 
@@ -72,21 +60,7 @@ class ShareCardComposableTest {
     fun all_day_event_shows_All_day_label_and_hides_stripe_and_time_line() {
         composeTestRule.setContent {
             MaterialTheme {
-                ShareCardComposable(
-                    title = "Vacation",
-                    location = null,
-                    // Caller composes the subtitle; for all-day events it
-                    // passes the localized "All day" label as timeRangeText.
-                    timeRangeText = "All day",
-                    style = ShareCardStyle.Standard,
-                    dateChip = regularTimedDateChip,
-                    stripe = StripePosition.Hidden,
-                    stripeLabels = labels12h,
-                    isAllDay = true,
-                    isMultiDay = false,
-                    multiDayRangeText = null,
-                    attribution = "Made with KashCal",
-                )
+                ShareCardFixtures.AllDay()
             }
         }
         composeTestRule.onNodeWithText("All day").assertIsDisplayed()
@@ -126,19 +100,7 @@ class ShareCardComposableTest {
     fun celebration_renders_confetti_overlay_regular_does_not() {
         composeTestRule.setContent {
             MaterialTheme {
-                ShareCardComposable(
-                    title = "🎂 Maya turns 5",
-                    location = null,
-                    timeRangeText = "2:00 – 5:00 PM",
-                    style = ShareCardStyle.Celebration,
-                    dateChip = DateChipText.Single("14", "JUN", "SAT"),
-                    stripe = StripePosition(0.583f, 0.125f, visible = true),
-                    stripeLabels = labels12h,
-                    isAllDay = false,
-                    isMultiDay = false,
-                    multiDayRangeText = null,
-                    attribution = "Made with KashCal",
-                )
+                ShareCardFixtures.Celebration()
             }
         }
         composeTestRule.onNodeWithTag(ShareCardTags.TAG_CONFETTI).assertIsDisplayed()

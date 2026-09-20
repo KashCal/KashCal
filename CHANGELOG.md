@@ -1,3 +1,12 @@
+## [2026.09.19]
+
+### Everything in this release
+
+- Changed the new-event form to open full-screen with the title focused and the keyboard ready to type
+- Added a setting to show multi-day timed events in the week-view all-day strip, #367
+- Fixed the month home-screen widget showing "Can't show content" on dense months, #373
+- Changed the navigation drawer to a tighter calendar-list spacing
+
 ## [2026.09.12]
 
 KashCal is stubborn about exactly one thing: it answers to the person holding the phone and nobody else. Not advertisers, not an engagement dashboard, not whoever hands out design awards. It shows you your day and then gets out of your way. That is, in our unabashedly biased opinion, why nothing else on Android feels quite like it. We make the case in full [over here](https://kashcal.onekash.org/features/beautiful-calendar-android).

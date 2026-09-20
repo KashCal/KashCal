@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -49,14 +51,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -69,15 +69,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -155,6 +164,33 @@ internal const val TAG_SAVE_DIVIDER = "form_save_divider"
 
 /** Test tag on the delete section's leading divider (edit mode only). */
 internal const val TAG_DELETE_DIVIDER = "form_delete_divider"
+
+/** Test tag on the title field, so its focus state on open is assertable. */
+internal const val TAG_TITLE_FIELD = "form_title_field"
+
+/**
+ * Whether a scroll came from the user dragging/flinging the form, as opposed to
+ * a programmatic scroll such as Compose's bring-into-view (auto-scrolling to
+ * reveal a focused field's cursor). Only user-driven scrolls should dismiss the
+ * keyboard; treating bring-into-view as a dismiss would eject the field the user
+ * just tapped or is typing in.
+ */
+internal fun isUserDrivenScroll(source: NestedScrollSource): Boolean =
+    source == NestedScrollSource.UserInput
+
+/**
+ * Whether a scroll should dismiss the keyboard: only when it is user-driven AND a
+ * finger is actually pressed. The source check alone is not enough — when a field
+ * is focused, the animating IME inset shrinks the content and fires a scroll that
+ * is itself dispatched as [NestedScrollSource.UserInput], which would wrongly
+ * dismiss the keyboard the user just summoned. That scroll has no finger down (the
+ * tap already released), so requiring a pressed finger distinguishes a real swipe
+ * (dismiss) from the focus-driven scroll (keep the keyboard).
+ */
+internal fun shouldDismissKeyboardOnScroll(
+    source: NestedScrollSource,
+    isFingerDown: Boolean,
+): Boolean = isUserDrivenScroll(source) && isFingerDown
 
 /**
  * Uniform breathing room above and below the content-section dividers, so their
@@ -518,7 +554,6 @@ private fun ResolvedCalendar.localizedName(
  *        with the permission result (true=granted, false=denied). The event is saved regardless
  *        of the permission result (graceful degradation). Pass null to skip permission check.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventFormSheet(
     eventId: Long? = null,
@@ -659,20 +694,6 @@ fun EventFormSheet(
     /** Persist a new tag-row position (above/below the notes/attendees block). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
 ) {
-    // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
-    // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
-    // tracks the finger, then reverse-animates back when the transition is rejected.
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Pin the sheet height so IME open/close doesn't re-trigger ModalBottomSheet's
-    // height animation (fillMaxHeight(fraction) recomputes against the IME-shrunk
-    // window, producing a visible up-then-down hop on every focus/picker transition).
-    // The configuration-keyed remember ensures rotation still resizes correctly.
-    val configuration = LocalConfiguration.current
-    val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
-        (configuration.screenHeightDp * 0.95f).dp
-    }
-
     // Mirror isSaving up to the shell so the modal's dismiss guard can read it
     // without holding the full form state (which lives in EventFormContent).
     var isSaving by remember { mutableStateOf(false) }
@@ -680,8 +701,7 @@ fun EventFormSheet(
     // Two-tap discard confirmation, shared across the shell/content boundary:
     // content mirrors up whether the form has unsaved edits, and the shell
     // owns the confirmation flag so the Cancel button (content) and the back
-    // button / scrim (this ModalBottomSheet's onDismissRequest) drive the same
-    // state machine.
+    // button (this Dialog's onDismissRequest) drive the same state machine.
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
@@ -693,19 +713,28 @@ fun EventFormSheet(
         }
     }
 
-    ModalBottomSheet(
+    // Full-screen, non-animated container (not a ModalBottomSheet): the event form
+    // appears with no slide-in so the keyboard can rise immediately (like Google
+    // Calendar), instead of the sheet sliding up and the keyboard following it.
+    // decorFitsSystemWindows = false + safeDrawingPadding handles the status bar,
+    // IME, and nav bar insets (mirrors QuickAddDialog). Back is disabled at the
+    // platform level (dismissOnBackPress = false) and routed through the content's
+    // BackHandler -> attemptDismiss, so the two-tap discard guard still fires; the
+    // Cancel button goes through the same guard.
+    Dialog(
         onDismissRequest = attemptDismiss,
-        sheetState = sheetState,
-        dragHandle = {},
-        sheetGesturesEnabled = false,
-        // Disable the sheet's built-in back-press dismissal: it runs the hide
-        // animation and only then calls onDismissRequest, so the two-tap discard
-        // guard would fire on an already-vanished sheet. The content owns a
-        // BackHandler that routes back through the same dismiss guard instead.
-        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+        )
     ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
         EventFormContent(
-            modifier = Modifier.height(sheetHeight),
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding(),
+            isHostSheetSettled = true,
             onSavingChange = { isSaving = it },
             onHasChangesChange = { hasUnsavedChanges = it },
             showDiscardConfirm = showDiscardConfirm,
@@ -758,15 +787,15 @@ fun EventFormSheet(
             tagsAboveNotes = tagsAboveNotes,
             onSetTagsAboveNotes = onSetTagsAboveNotes,
         )
+        }
     }
 }
 
 /**
  * Content of [EventFormSheet], extracted so it can be rendered and tested
- * without the ModalBottomSheet wrapper (whose animation timing makes UI tests
- * flaky). The sheet chrome (sheet state, pinned height, dismiss guard) stays in
- * [EventFormSheet]; everything else — form state, load/save logic, and the
- * field UI — lives here.
+ * without the Dialog wrapper (which needs a real window). The container chrome
+ * (the Dialog + dismiss guard) stays in [EventFormSheet]; everything else — form
+ * state, load/save logic, and the field UI — lives here.
  *
  * @param onSavingChange reports the in-flight save flag up to the host, so the
  *   host can block dismissal/teardown mid-save without owning the form state.
@@ -921,6 +950,14 @@ fun EventFormContent(
     tagsAboveNotes: Boolean = false,
     /** Persist a new tag-row position (above/below the notes/attendees block). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
+    /**
+     * Whether the host bottom sheet has finished its open animation. The title
+     * auto-focus (and the keyboard it raises) is deferred until this is true, so
+     * the keyboard doesn't rise mid-entrance and make the sheet appear to stall
+     * then finish opening. Defaults true for callers with no sheet (tests and any
+     * non-sheet host), which focus as soon as the form loads.
+     */
+    isHostSheetSettled: Boolean = true,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -1032,8 +1069,50 @@ fun EventFormContent(
         focusedContainerColor = Color.Transparent
     )
 
-    // Auto-focus title field
     val titleFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    // Tracks whether a finger is currently pressed on the form, so the
+    // dismiss-on-scroll below fires only for real swipes and not for the
+    // focus-driven scroll that the IME inset triggers when a field is tapped.
+    val isFingerDown = remember { mutableStateOf(false) }
+
+    // Raise the keyboard on the title exactly once, only when a brand-new blank
+    // event opens, so the user can start typing immediately. Suppressed for edits
+    // and for events that open with a title already filled in (duplicate, share,
+    // Quick Add). Deferred until the load settles (isLoading -> false) AND the host
+    // sheet finishes opening (isHostSheetSettled) — both are in the outer guard and
+    // the effect key so the one-shot isn't consumed before the sheet settles, and
+    // so the keyboard doesn't rise mid-entrance and make the sheet appear to stall.
+    // The one-shot flag means clearing the title later never re-grabs focus.
+    var didAutoFocusTitle by remember { mutableStateOf(false) }
+    LaunchedEffect(state.isLoading, isHostSheetSettled) {
+        if (!state.isLoading && isHostSheetSettled && !didAutoFocusTitle) {
+            didAutoFocusTitle = true
+            if (!state.isEditMode && state.title.isBlank() && !isReadOnly && state.error == null) {
+                runCatching { titleFocusRequester.requestFocus() }
+                keyboardController?.show()
+            }
+        }
+    }
+
+    // When the USER scrolls the form (drag/fling), drop focus and lower the IME
+    // so the fields below aren't hidden behind the keyboard. Gated on a pressed
+    // finger (a real swipe): the scroll that the animating IME inset fires when a
+    // field is focused is dispatched as user input too, but has no finger down, so
+    // requiring a pressed finger keeps that from ejecting the field the user just
+    // tapped while still dismissing on a genuine drag.
+    val dismissKeyboardOnUserScroll = remember(focusManager, keyboardController) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (shouldDismissKeyboardOnScroll(source, isFingerDown.value)) {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                }
+                return Offset.Zero
+            }
+        }
+    }
 
     // Perform save with result handling
     val performSave: () -> Unit = {
@@ -1646,8 +1725,8 @@ fun EventFormContent(
 
     // Route the system back button through the same dismiss guard as the Cancel
     // button, so back gets the two-tap discard confirmation on a dirty form
-    // instead of closing it. Registered on the sheet's own dialog window (this
-    // content is inside it), and the sheet's built-in back dismissal is disabled.
+    // instead of closing it. Registered on the form's own dialog window (this
+    // content is inside it), and the Dialog's built-in back dismissal is disabled.
     BackHandler(onBack = onRequestDismiss)
 
     val paneTitleText = if (state.isEditMode) {
@@ -1758,6 +1837,17 @@ fun EventFormContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    // Observe (never consume) pointer presses so the dismiss-on-scroll
+                    // above can tell a real finger swipe from the focus-driven scroll.
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                isFingerDown.value = event.changes.any { it.pressed }
+                            }
+                        }
+                    }
+                    .nestedScroll(dismissKeyboardOnUserScroll)
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp)
             ) {
@@ -1835,6 +1925,7 @@ fun EventFormContent(
                         placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .testTag(TAG_TITLE_FIELD)
                             .focusRequester(titleFocusRequester)
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
                             // Horizontal only: the field's own box already

@@ -306,22 +306,36 @@ fun MonthWidgetContent(
         val cellHeightDp = (widgetHeightDp - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP) / weeks.size
         val cellWidthDp = (widgetSize.width.value - gridHorizontalPaddingDp(showWeekNumbers)) / 7f
         val showTitles = widgetHeightDp >= minWidgetHeightForTitlesDp(TITLES_MIN_ROWS, fontScale)
-        // At or above the threshold a 6-week cell fits >= TITLES_MIN_ROWS rows and any month with
-        // fewer weeks fits at least as many; the floor of 1 is a rounding-edge guard so titles mode
-        // never renders bare day numbers with no room claimed for events.
-        val eventRowCount = if (showTitles) maxEventRows(cellHeightDp, fontScale).coerceAtLeast(1) else 0
+        // Per-week day codes, computed once for both the row-count budget and the render loop.
+        val weekDayCodesList = weeks.map { wk -> wk.map { MonthGrid.computeDayCodeForCell(it, targetYear, targetMonth0) } }
+        val hasTodayInMonth = (todayDayCode / 100) == (targetYear * 100 + targetMonth0 + 1)
+        // Rows that fit by height (floor of 1 is a rounding-edge guard so titles mode never renders
+        // bare day numbers with no room for events), then narrowed so a dense month's translated
+        // tree stays inside the widget's view-ID pool: the chooser steps the whole month down — or
+        // to 0, meaning render dots — rather than letting a busy month overrun the pool and show the
+        // host's "content can't be displayed" error. A normal month stays at its full height.
+        val heightDerivedMax = if (showTitles) maxEventRows(cellHeightDp, fontScale).coerceAtLeast(1) else 0
+        val rowChoice = if (showTitles) {
+            chooseMonthWidgetRowCount(weekDayCodesList, monthEvents, heightDerivedMax, showWeekNumbers, hasTodayInMonth)
+        } else {
+            MonthWidgetRowChoice(0, emptyList())
+        }
+        val eventRowCount = rowChoice.rows
         val titleChars = maxTitleChars(cellWidthDp)
 
         weeks.forEachIndexed { weekIndex, week ->
-            val weekDayCodes = week.map { MonthGrid.computeDayCodeForCell(it, targetYear, targetMonth0) }
+            val weekDayCodes = weekDayCodesList[weekIndex]
             // A week row is always 7 strictly-increasing day codes. If that ever breaks
             // (grid/cell mismatch), fall back to dots rather than render bars anchored on
             // wrong columns — degrade gracefully instead of blanking the widget.
             val dayCodesValid = weekDayCodes.size == 7 && weekDayCodes.zipWithNext().all { (a, b) -> b > a }
-            if (showTitles && dayCodesValid) {
+            // eventRowCount is 0 both when the widget is too short for titles and when the chooser
+            // stepped a dense month all the way down to dots; either way, render the dots grid.
+            if (eventRowCount > 0 && dayCodesValid) {
                 // Titles mode: week slot layout — multi-day events span their columns as
-                // continuous bars, single-day events fill the remaining per-cell slots.
-                val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount)
+                // continuous bars, single-day events fill the remaining per-cell slots. Reuse the
+                // layout the chooser already built for the winning row count (no recompute).
+                val weekRender = rowChoice.weekRenders[weekIndex]
                 TitlesWeekRow(
                     // Weighted like the dots rows: every week shares the grid height evenly, so
                     // a week without events still fills its cell — no "stacked from the top,
@@ -347,8 +361,8 @@ fun MonthWidgetContent(
                     if (showWeekNumbers) {
                         WeekNumberGutterCell(gutterLabels[weekIndex])
                     }
-                    week.forEach { cell ->
-                        val dayCode = MonthGrid.computeDayCodeForCell(cell, targetYear, targetMonth0)
+                    week.forEachIndexed { col, cell ->
+                        val dayCode = weekDayCodes[col]
                         val events = monthEvents[dayCode].orEmpty()
                         val isToday = dayCode == todayDayCode
                         val isPast = dayCode < todayDayCode
@@ -1130,6 +1144,162 @@ internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
     val usable = cellHeightDp - numberBlock
     if (usable < perRow) return 0
     return (usable / perRow).toInt().coerceAtMost(MAX_EVENT_ROWS)
+}
+
+// ==================== View-budget estimation (adaptive row count) ====================
+
+/*
+ * A widget is translated to RemoteViews from a fixed pool of view IDs; a composition that allocates
+ * more IDs than the pool throws IllegalStateException("There are too many views") during translation
+ * and the host shows "content can't be displayed". [maxEventRows] caps rows by widget size, but that
+ * cap alone is not enough: a fully-booked six-week month at the row cap can still exceed the pool.
+ * The weights and budget below let the widget estimate a month's cost BEFORE rendering and step the
+ * row count down (see the chooser) so a dense month degrades to fewer rows / dots instead of erroring.
+ *
+ * Calibration (measured on the worst case: a real six-week month, week numbers on, large size, by
+ * translating fixtures through the real GlanceRemoteViews path and recording which overflow):
+ * the density-varying element cost, weighted as below, measured 144 units for a month fully packed
+ * with single-day pills and 198 units for a bar-dense month — both translated fine — while a
+ * pills + bars + "+n"-overflow MIX measured 234 units and overflowed. The overflow markers and the
+ * backgrounded span bars are the heavy elements (a background makes the translator emit a wrapper
+ * plus a backing image; the "+n" marker is a tap-target box wrapping a text), which is why an equal
+ * count of plain pills is cheaper than a bars/overflow mix. Adding the fixed header + day-number +
+ * gutter cost (constant for a given week count) puts those three at 252 / 306 / 342 absolute units.
+ *
+ * NOTE: the weights track the CURRENT widget layout's per-element view-ID cost under the current
+ * Glance version. A layout change or Glance upgrade can shift the real overflow boundary; the
+ * no-overflow translation gate test is the tripwire that catches such a drift.
+ */
+
+/** A backgrounded multi-day span bar (wrapper + backing image + text). Merged run counts once. */
+internal const val VIEW_UNITS_BAR = 3
+
+/** A single-day event pill (a backgrounded text; only the lane's first is a tap target). */
+internal const val VIEW_UNITS_PILL = 1
+
+/** A "+n more" overflow marker (a tap-target box wrapping a text) — as heavy as a bar. */
+internal const val VIEW_UNITS_OVERFLOW = 3
+
+/** An empty-but-tappable slot cell. */
+internal const val VIEW_UNITS_EMPTY = 1
+
+/** The row container holding one slot row's seven columns. */
+internal const val VIEW_UNITS_SLOT_ROW = 1
+
+/** One day-number cell (box + number text); seven per week row. */
+internal const val VIEW_UNITS_DAY_CELL = 2
+
+/** The optional leading week-of-year gutter cell; one per week row when week numbers are on. */
+internal const val VIEW_UNITS_WEEK_GUTTER = 2
+
+/** Today's accent-marker box, present once when the displayed month contains today. */
+internal const val VIEW_UNITS_TODAY_MARKER = 1
+
+/** Fixed header + day-of-week row + root container cost, independent of month or size. */
+internal const val VIEW_UNITS_CHROME_BASE = 12
+
+/**
+ * Budget, in [estimateMonthWidgetViewUnits] units, at or under which the titles grid is safe to
+ * translate. Calibrated to the top of the confirmed-safe range on the worst-case six-week month
+ * (a fully pill-packed month at 252 units and a bar-dense month at 306 both translated without
+ * overflowing; a pills+bars+overflow mix at 342 overflowed). The chooser steps rows down until the
+ * estimate is at or under this, so the densest confirmed-safe month keeps its rows while a denser
+ * month degrades. Sits 36 units below the measured overflow boundary for margin.
+ */
+internal const val MONTH_WIDGET_VIEW_BUDGET = 306
+
+/**
+ * Estimate the view-ID cost of rendering [weekRenders] as a titles-mode month grid, in the abstract
+ * units defined by the VIEW_UNITS_* weights, for comparison against [MONTH_WIDGET_VIEW_BUDGET].
+ * Sums the density-varying slot elements (bars — each merged run once — pills, overflow markers,
+ * empty cells, and the per-row container) plus the fixed per-week chrome (seven day-number cells,
+ * the week-number gutter when [showWeekNumbers]), the base header/day-of-week chrome, and today's
+ * marker when [hasTodayInMonth]. Font scale is deliberately not an input: a larger scale only
+ * reduces the row count upstream (via [maxEventRows]), which lowers this estimate, so it never
+ * pushes the cost UP.
+ */
+internal fun estimateMonthWidgetViewUnits(
+    weekRenders: List<MonthWidgetWeekRender>,
+    showWeekNumbers: Boolean,
+    hasTodayInMonth: Boolean
+): Int {
+    var units = VIEW_UNITS_CHROME_BASE
+    if (hasTodayInMonth) units += VIEW_UNITS_TODAY_MARKER
+    val perWeekChrome = 7 * VIEW_UNITS_DAY_CELL + if (showWeekNumbers) VIEW_UNITS_WEEK_GUTTER else 0
+    units += weekRenders.size * perWeekChrome
+    for (render in weekRenders) {
+        for (row in render.slots) {
+            units += VIEW_UNITS_SLOT_ROW
+            var col = 0
+            while (col < row.size) {
+                when (val slot = row[col]) {
+                    is MonthWidgetSlot.BarSegment -> {
+                        // One SpanBar spans the whole run of same-span segments, so count it once.
+                        // Identity (===) is safe and matches the render path: computeMonthWidgetWeekRender
+                        // fills every column of a bar with the SAME MonthWidgetSpan instance, and distinct
+                        // lane entries are always different events (deduped by spanKey), so no two
+                        // structurally-equal-but-distinct spans are ever adjacent.
+                        units += VIEW_UNITS_BAR
+                        var end = col
+                        while (end + 1 < row.size &&
+                            (row[end + 1] as? MonthWidgetSlot.BarSegment)?.span === slot.span
+                        ) {
+                            end++
+                        }
+                        col = end + 1
+                        continue
+                    }
+                    is MonthWidgetSlot.CellEvent -> units += VIEW_UNITS_PILL
+                    is MonthWidgetSlot.Overflow -> units += VIEW_UNITS_OVERFLOW
+                    MonthWidgetSlot.Empty -> units += VIEW_UNITS_EMPTY
+                }
+                col++
+            }
+        }
+    }
+    return units
+}
+
+/**
+ * The month-wide row-count decision plus the week layouts that produced it. Returning the layouts
+ * lets the caller render from them directly instead of rebuilding them, so a titles-mode
+ * composition runs [computeMonthWidgetWeekRender] once per week, not twice. [rows] is 0 when the
+ * month must fall back to dots, in which case [weekRenders] is empty.
+ */
+internal data class MonthWidgetRowChoice(val rows: Int, val weekRenders: List<MonthWidgetWeekRender>)
+
+/**
+ * Pick how many event rows the titles-mode month grid can render without overflowing the widget's
+ * view-ID pool, given [heightDerivedMax] rows would fit by widget height alone (from [maxEventRows]).
+ *
+ * Steps the row count down uniformly across the whole month — for each candidate from
+ * [heightDerivedMax] down to 1 it builds that month's week layouts via [computeMonthWidgetWeekRender]
+ * and estimates their cost with [estimateMonthWidgetViewUnits] — and returns the HIGHEST candidate
+ * whose estimate is within [MONTH_WIDGET_VIEW_BUDGET], along with that candidate's built layouts.
+ * Returns [rows] 0 to signal "render dots instead" when even a single title row would exceed the
+ * budget (the guaranteed-safe floor).
+ *
+ * Each candidate is estimated independently rather than assuming cost falls monotonically as rows
+ * drop: dropping a row can turn fitting events into "+n" overflow markers, which are not free, so
+ * the highest-fitting count is found by checking each, not by stopping at the first miss.
+ *
+ * Month-wide (one row count for every week) keeps the grid visually uniform; the step-down only
+ * engages on a month dense enough to otherwise error, leaving normal months at their full height.
+ */
+internal fun chooseMonthWidgetRowCount(
+    weekDayCodesList: List<List<Int>>,
+    monthEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
+    heightDerivedMax: Int,
+    showWeekNumbers: Boolean,
+    hasTodayInMonth: Boolean
+): MonthWidgetRowChoice {
+    for (rows in heightDerivedMax downTo 1) {
+        val weekRenders = weekDayCodesList.map { computeMonthWidgetWeekRender(it, monthEvents, rows) }
+        if (estimateMonthWidgetViewUnits(weekRenders, showWeekNumbers, hasTodayInMonth) <= MONTH_WIDGET_VIEW_BUDGET) {
+            return MonthWidgetRowChoice(rows, weekRenders)
+        }
+    }
+    return MonthWidgetRowChoice(0, emptyList())
 }
 
 /**
